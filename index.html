@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FreedomMMO — First Slice</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #05080b; font-family: ui-monospace, Consolas, monospace; }
+    canvas { display: block; width: 100vw; height: 100vh; image-rendering: pixelated; }
+    #hud { position: fixed; left: 12px; top: 12px; color: #e8f6ff; background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.18); border-radius: 10px; padding: 10px 12px; line-height: 1.45; font-size: 13px; pointer-events: none; text-shadow: 0 1px 2px #000; }
+    #title { color: #9ee7ff; font-weight: 700; font-size: 15px; }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <div id="hud"><div id="title">FreedomMMO — deterministic world slice</div><div id="stats"></div></div>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

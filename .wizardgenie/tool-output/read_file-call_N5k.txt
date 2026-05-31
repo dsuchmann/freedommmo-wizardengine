@@ -1,0 +1,158 @@
+File: MIGRATION_BRIEF.md (156 lines)
+
+1| # FreedomMMO Migration Brief — Godot Specs → Wizard Genie
+2| 
+3| ## Source specs read
+4| 
+5| Imported specs folder contains 26 design/spec files plus `.gitkeep`. The combined source was read from `specs_combined.tmp.txt` and covers architecture, vertical slice, visual slice, world compiler, agent swarm, color algebra tiles, layer architecture, overmap streaming, tile/object systems, tileset framework, visual quality, asset pipeline, biome manifests, dynamic lighting, performance, runtime compositor, subterranean systems, world biomes, elevation/cliffs, hypergraph terrain, terrain shading, PixelLab audit, terrain objects, biome layer stack, Unity migration handoff, and terrain cleanup.
+6| 
+7| ## Game identity
+8| 
+9| **FreedomMMO** is a simulation-first 2D MMORPG/world simulation. The central rule is that visuals are projections of simulation state, not authored tile decorations. A tile is a stack of composable layers/materials/properties. Time is the primary resource. NPCs are complete lifecycle entities rather than simple enemies.
+10| 
+11| ## Core design principles
+12| 
+13| - Deterministic world generation from a single seed.
+14| - World represented as simulation data/hypergraph/layer stacks; tilemap is a rendering projection.
+15| - Terrain, biomes, objects, structures, lighting, and entities derive from composable data layers.
+16| - Large world streamed by chunks; only nearby chunks are active/rendered.
+17| - Visual quality comes from coherent tilesets, transitions, layered objects, lighting, and runtime compositing.
+18| - Performance is achieved through chunk caching, baking, LOD, atlas use, and avoiding per-object rendering when possible.
+19| 
+20| ## Important world scale targets from specs
+21| 
+22| - Overmap: 6,400 × 6,400 chunks.
+23| - Chunk: 64 × 64 tiles.
+24| - Tile: 32px in original Godot design.
+25| - Loaded region target: roughly 5×5 to 7×7 chunks depending on system.
+26| - Determinism: seed + coordinates must produce identical terrain.
+27| 
+28| ## Major systems to rebuild/adapt
+29| 
+30| ### 1. Deterministic world generation
+31| 
+32| Generate terrain from seed, coordinates, and layered noise. Include climate, elevation, biome, moisture, temperature, rivers/coasts, and local terrain features.
+33| 
+34| ### 2. Layer-stack tile model
+35| 
+36| Represent each tile as stacked properties/layers rather than a single sprite:
+37| 
+38| - Base material/terrain.
+39| - Biome layer.
+40| - Elevation/slope/cliff data.
+41| - Surface/debris/detail layers.
+42| - Objects and structures.
+43| - Lighting/visibility overlays.
+44| 
+45| ### 3. Chunk compiler
+46| 
+47| Compile simulation data into render-ready chunk grids. This is the central adapter between deterministic world state and visual rendering.
+48| 
+49| ### 4. Overmap streaming
+50| 
+51| Maintain a camera/player-centered loaded chunk set. Generate, cache, unload, and reuse chunks deterministically.
+52| 
+53| ### 5. Terrain rendering
+54| 
+55| Wizard Genie version should begin with canvas/WebGL tile rendering using generated colors and simple atlas-style sprites, then graduate to richer PixelLab-like tiles, Wang transitions, object overlays, and lighting.
+56| 
+57| ### 6. Biome system
+58| 
+59| Support ocean, beach, grassland, forest, deep forest, dry grass/savanna, desert, hills, rock/mountains, snow, tundra/arctic, wetlands, subterranean zones, and transition bands.
+60| 
+61| ### 7. Tileset/transition framework
+62| 
+63| Original specs emphasize Wang/autotile transitions for material boundaries such as ocean↔beach, beach↔grass, grass↔forest, grass↔dry grass, dry grass↔rock, rock↔snow, forest↔deep forest, tundra↔snow, ice↔snow, and biome/climate transitions.
+64| 
+65| ### 8. Terrain object system
+66| 
+67| Objects are biome-aware and layer-aware: grass tufts, shrubs, trees, rocks, logs, flowers, foam, wet sand, tidal pools, cliffs, ruins, structures, etc. Object density should be deterministic and LOD-aware.
+68| 
+69| ### 9. Runtime compositor / visual projection
+70| 
+71| Visual tile output is built from layers, masks, transitions, overlays, lighting, and objects. The renderer should never be the source of truth.
+72| 
+73| ### 10. Dynamic lighting
+74| 
+75| Day/night, ambient lighting, local light sources, visibility, and tone/color shifts should be added after core terrain and movement work.
+76| 
+77| ### 11. Agent/NPC simulation
+78| 
+79| Agents have lifecycles, needs, time budgets, decisions, and interactions with world resources. This should come after a playable terrain/navigation slice.
+80| 
+81| ### 12. Subterranean/elevation/cliffs
+82| 
+83| Specs include underground spaces, elevation hypergraph terrain, cliff rendering, terrain shading, and cleanup work. These are later-phase systems unless required for the first playable slice.
+84| 
+85| ## Recommended Wizard Genie implementation path
+86| 
+87| ### Phase 1 — First playable terrain slice
+88| 
+89| Deliver an explorable deterministic world with:
+90| 
+91| - `index.html` entry point.
+92| - Canvas or Three.js orthographic 2D renderer.
+93| - Seeded noise/random functions.
+94| - Chunk generation around player.
+95| - 64×64 logical chunks internally, but render only visible tiles.
+96| - Player movement with WASD/arrow keys.
+97| - Basic biome coloring: ocean, beach, grass, forest, hills, mountain, snow.
+98| - Chunk coordinate/debug overlay.
+99| 
+100| ### Phase 2 — Layer-stack compiler
+101| 
+102| Add explicit tile records and chunk compiler:
+103| 
+104| - Elevation, moisture, temperature.
+105| - Biome classification.
+106| - Terrain material.
+107| - Walkability/cost.
+108| - Object spawn candidates.
+109| - Render projection separated from source state.
+110| 
+111| ### Phase 3 — Objects and transitions
+112| 
+113| Add deterministic object placement and visual transitions:
+114| 
+115| - Trees, rocks, shrubs, flowers, driftwood/foam near coasts.
+116| - Simple autotile/edge blending or neighbor-aware tile variants.
+117| - LOD for far chunks.
+118| 
+119| ### Phase 4 — Simulation hooks
+120| 
+121| Add early systems for:
+122| 
+123| - Time/day cycle.
+124| - NPC agent placeholders.
+125| - Resource nodes.
+126| - Interaction/persistence stubs.
+127| 
+128| ### Phase 5 — Visual polish
+129| 
+130| Add:
+131| 
+132| - Lighting/tinting.
+133| - Better terrain shading.
+134| - Cliff/elevation indications.
+135| - Asset atlas or procedural sprites.
+136| - UI panels and minimap/overmap.
+137| 
+138| ## Immediate next build target
+139| 
+140| Create a first playable vertical slice in Wizard Genie: a deterministic, scrolling, top-down 2D world renderer with chunk streaming, biome generation, player movement, and debug UI. This preserves the core architecture while avoiding premature porting of Godot-specific scripts.
+141| 
+142| ## Godot-specific concepts to translate
+143| 
+144| - GDScript systems → JavaScript modules/classes.
+145| - Godot TileMap/ImageTexture rendering → Canvas/WebGL/Three.js renderer.
+146| - Godot resources/manifests → JSON/JS data objects.
+147| - GDExtension optimization plans → later JS performance passes using caching, typed arrays, offscreen canvases, and batching.
+148| - Sprite2D object spam → baked chunk layers and LOD.
+149| 
+150| ## Risks and constraints
+151| 
+152| - Full MMO scope is large; first implementation must be a vertical slice.
+153| - Original specs rely on large asset catalogs; initial version should use procedural/color/primitive art until assets are available.
+154| - Browser performance requires careful chunk culling and caching.
+155| - Simulation must remain authoritative over visuals to honor the design.
+156| 
