@@ -219,3 +219,8 @@
   - Added `scripts/digest-specs.mjs` to summarize the full specs corpus into `docs/SPEC_DIGEST.md`.
   - Generated `docs/SPEC_DIGEST.md` from 26 spec docs.
   - Linked the Sorceress library plan to the living spec protocol and digest.
+- Fixed chunk seams and overmap biome audit coverage:
+  - Removed per-tile elevation offsets from cached terrain chunks to prevent vertical/horizontal seams at chunk image boundaries.
+  - Cached chunks now render and composite at exact `chunkSize * tileSize` dimensions with no extra vertical padding/scaling mismatch.
+  - Overmap biome audit now samples the guaranteed regional/province corpus area instead of the too-small immediate neighborhood.
+  - Audit validation reports `21/21 missing none`.

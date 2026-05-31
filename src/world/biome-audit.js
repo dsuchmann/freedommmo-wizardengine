@@ -4,12 +4,12 @@ import { sampleRegionalMapChunk } from './regional-map.js';
 
 const cache = new Map();
 
-export function auditBiomesAround(player, sampleChunks = 96, strideChunks = 4) {
+export function auditBiomesAround(player, sampleChunks = 608, strideChunks = 4) {
   const pcx = Math.floor(player.x / WORLD.chunkSize);
   const pcy = Math.floor(player.y / WORLD.chunkSize);
-  const bucketX = Math.floor(pcx / 8) * 8;
-  const bucketY = Math.floor(pcy / 8) * 8;
-  const key = `${bucketX},${bucketY},${sampleChunks},${strideChunks}`;
+  const bucketX = Math.floor(pcx / 64) * 64;
+  const bucketY = Math.floor(pcy / 64) * 64;
+  const key = `regional-corpus,${bucketX},${bucketY},${sampleChunks},${strideChunks}`;
   if (cache.has(key)) return cache.get(key);
 
   const counts = new Map();

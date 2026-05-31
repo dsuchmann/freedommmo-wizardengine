@@ -52,8 +52,8 @@ export class CanvasRenderer {
         const sx = Math.floor(cx * WORLD.chunkSize * tilePx - camX);
         const sy = Math.floor(cy * WORLD.chunkSize * tilePx - camY);
         const dw = WORLD.chunkSize * tilePx;
-        const dh = (WORLD.chunkSize * WORLD.tileSize + 24) * camera.zoom;
-        ctx.drawImage(cached, sx, sy - 24 * camera.zoom, dw, dh);
+        const dh = WORLD.chunkSize * tilePx;
+        ctx.drawImage(cached, sx, sy, dw, dh);
       }
     }
 
@@ -153,7 +153,7 @@ export class CanvasRenderer {
     const sun = lighting.sun();
     const now = performance.now();
     if (!this.lastAudit || now - this.lastAuditAt > 1500) {
-      this.lastAudit = auditBiomesAround(player, 96, 8);
+      this.lastAudit = auditBiomesAround(player, 608, 4);
       this.lastAuditAt = now;
     }
     const audit = this.lastAudit;

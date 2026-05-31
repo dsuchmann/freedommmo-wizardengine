@@ -28,7 +28,7 @@ export class ChunkRenderCache {
     }
     const canvas = document.createElement('canvas');
     canvas.width = WORLD.chunkSize * WORLD.tileSize;
-    canvas.height = WORLD.chunkSize * WORLD.tileSize + 24;
+    canvas.height = WORLD.chunkSize * WORLD.tileSize;
     const ctx = canvas.getContext('2d', { alpha: true, willReadFrequently: false });
     this.renderChunk(ctx, chunk, sun);
     this.cache.set(key, { canvas, lastUsed: performance.now() });
@@ -42,7 +42,7 @@ export class ChunkRenderCache {
         const index = y * WORLD.chunkSize + x;
         const tile = chunk.tiles[index];
         const sx = x * WORLD.tileSize;
-        const sy = y * WORLD.tileSize - elevationLift(tile.climate.elevation);
+        const sy = y * WORLD.tileSize;
         paintTerrainTile(ctx, tile, sx, sy, WORLD.tileSize, sun, tile.climate.elevation, this.compositor, 0, this.atlas);
         paintTerrainFeatures(ctx, tile, sx, sy, WORLD.tileSize, sun);
       }

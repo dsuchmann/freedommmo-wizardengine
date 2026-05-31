@@ -1,167 +1,7 @@
 [
   {
     "role": "user",
-    "content": "[Context window: 12 older messages moved to long-term memory. Use the recall_memory tool to retrieve past decisions, code changes, or debugging outcomes as needed.]"
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "text",
-        "text": "Understood. I can use recall_memory to access prior context."
-      },
-      {
-        "type": "tool_use",
-        "id": "call_NsheuNwcsdeSHrX7J4LhogIL",
-        "name": "edit_file",
-        "input": {
-          "path": "src/assets/default-catalog.js",
-          "old_text": "    terrainAsset('grassland_ground', ['grassland', 'savanna', 'steppe'], ['base', 'micro_grass', 'flowers', 'dirt_scars', 'wet_overlay', 'shadow_mask']),\n",
-          "new_text": "    terrainAsset('grassland_ground', ['grassland', 'savanna', 'steppe', 'mystic'], ['base', 'micro_grass', 'flowers', 'dirt_scars', 'wet_overlay', 'mystic_overlay', 'shadow_mask'], {\n      states: ['default', 'wet', 'dry', 'frozen', 'fae_bloom', 'enchanted'],\n      animations: { ambient: idleAnimation({ frames: 8, fps: 3, directions: DIRECTION_OMNI, layers: ['micro_grass', 'flowers', 'mystic_overlay'] }) }\n    }),\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_NsheuNwcsdeSHrX7J4LhogIL",
-        "content": "Applied edit to src/assets/default-catalog.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_tKdQgIJeMXTfqn5mWMzCBtcN",
-        "name": "edit_file",
-        "input": {
-          "path": "src/assets/default-catalog.js",
-          "old_text": "    objectAsset('broadleaf_tree', 'vegetation.tree', ['forest', 'dense_forest', 'grassland', 'hills'], [1, 2], ['shadow', 'trunk', 'branches', 'canopy', 'fruit', 'vine', 'season_overlay', 'damage_overlay', 'snow_overlay', 'lighting_mask'], {\n      states: ['sapling', 'mature', 'ancient', 'spring', 'summer', 'autumn', 'winter', 'cut', 'burnt', 'dead', 'wet', 'wind'],\n",
-          "new_text": "    objectAsset('broadleaf_tree', 'vegetation.tree', ['forest', 'dense_forest', 'grassland', 'hills', 'mystic'], [1, 2], ['shadow', 'trunk', 'branches', 'canopy', 'fruit', 'vine', 'season_overlay', 'damage_overlay', 'snow_overlay', 'mystic_overlay', 'lighting_mask'], {\n      states: ['sapling', 'mature', 'ancient', 'spring', 'summer', 'autumn', 'winter', 'cut', 'burnt', 'charred', 'dead', 'wet', 'waterlogged', 'frozen', 'frosted', 'enchanted', 'glowing', 'wind'],\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_tKdQgIJeMXTfqn5mWMzCBtcN",
-        "content": "Applied edit to src/assets/default-catalog.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_aUPh6rfAvgK5W1Yq8JtS6Vfn",
-        "name": "edit_file",
-        "input": {
-          "path": "src/render/runtime-compositor.js",
-          "old_text": "import { rand2 } from '../core/random.js';\n",
-          "new_text": "import { rand2 } from '../core/random.js';\nimport { reactionStatesForMaterial } from '../world/biome-elements.js';\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_aUPh6rfAvgK5W1Yq8JtS6Vfn",
-        "content": "Applied edit to src/render/runtime-compositor.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_6urZ1oLiRuqCxFN5mnI8xf63",
-        "name": "edit_file",
-        "input": {
-          "path": "src/render/runtime-compositor.js",
-          "old_text": "      states: terrainStatesFor(tile),\n",
-          "new_text": "      states: [...terrainStatesFor(tile), ...reactionStatesForMaterial(materialForTile(tile), tile.biome)],\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_6urZ1oLiRuqCxFN5mnI8xf63",
-        "content": "Applied edit to src/render/runtime-compositor.js\n\n⚠️ LINT: 1 error(s), 0 warning(s) in src/render/runtime-compositor.js:\n  Line 16:72 [ERROR] 'materialForTile' is not defined. (no-undef)\nFix these errors.",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_fxNhsAKKgw87PVKy5Bt0gd6m",
-        "name": "edit_file",
-        "input": {
-          "path": "src/render/runtime-compositor.js",
-          "old_text": "      states: ['default'],\n",
-          "new_text": "      states: ['default', ...reactionStatesForMaterial(materialForObject(kind), biome)],\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_fxNhsAKKgw87PVKy5Bt0gd6m",
-        "content": "Applied edit to src/render/runtime-compositor.js\n\n⚠️ LINT: 2 error(s), 0 warning(s) in src/render/runtime-compositor.js:\n  Line 16:72 [ERROR] 'materialForTile' is not defined. (no-undef)\n  Line 31:56 [ERROR] 'materialForObject' is not defined. (no-undef)\nFix these errors.",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_RX8kzTF6VRpRAibGovUy8TO6",
-        "name": "edit_file",
-        "input": {
-          "path": "src/render/runtime-compositor.js",
-          "old_text": "function terrainLayersFor(tile) {\n",
-          "new_text": "function materialForTile(tile) {\n  if (tile.biome.includes('ocean') || tile.biome === 'river' || tile.biome === 'lake') return 'water';\n  if (tile.biome === 'beach' || tile.biome === 'desert') return 'sand';\n  if (tile.biome === 'hills' || tile.biome === 'mountains' || tile.biome === 'volcanic') return 'stone';\n  return 'grass';\n}\n\nfunction materialForObject(kind) {\n  if (kind === 'tree' || kind.includes('shrub') || kind === 'fallen_log') return 'wood';\n  if (kind.includes('rock') || kind.includes('crystal')) return 'stone';\n  if (kind === 'reed' || kind === 'grass_tuft' || kind === 'flower') return 'grass';\n  return 'wood';\n}\n\nfunction terrainLayersFor(tile) {\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_RX8kzTF6VRpRAibGovUy8TO6",
-        "content": "Applied edit to src/render/runtime-compositor.js",
-        "is_error": false
-      }
-    ]
+    "content": "[Context window: 13 older messages moved to long-term memory. Use the recall_memory tool to retrieve past decisions, code changes, or debugging outcomes as needed.]"
   },
   {
     "role": "assistant",
@@ -6456,6 +6296,303 @@
       {
         "type": "tool_result",
         "tool_use_id": "call_zjSuhqqMXAkP19lZ1g5KBxII",
+        "content": "Applied edit to DONE.md",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Done."
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": "By the way, I'm seeing both vertical and horizontal seams on the chunks. They seem to not be loading where they're perfectly aligned. Also, it says there are missing biomes still in the overmap, so please just double-check that."
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "<plan>\nI’ll fix chunk seam alignment by correcting cached chunk image vertical offsets/scaling, then update overmap biome audit coverage so all 21 guaranteed province biomes are included rather than only the near-player window.\n</plan>\n"
+      },
+      {
+        "type": "tool_use",
+        "id": "call_02cXO6ebVrLBPHKRXv6quvxP",
+        "name": "create_checkpoint",
+        "input": {
+          "message": "Fix chunk seams and overmap biome audit coverage"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_02cXO6ebVrLBPHKRXv6quvxP",
+        "content": "Checkpoint requested: Fix chunk seams and overmap biome audit coverage",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_wGL1wEPilBHpm9DVgYIDgqwZ",
+        "name": "read_file",
+        "input": {
+          "path": "src/render/chunk-render-cache.js",
+          "start_line": 20,
+          "end_line": 55
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_wGL1wEPilBHpm9DVgYIDgqwZ",
+        "content": "File: src/render/chunk-render-cache.js (lines 20-55 of 70)\n\n20| \n21|   get(chunk, sun) {\n22|     const bucket = this.lightBucket(sun);\n23|     const key = this.key(chunk, bucket);\n24|     const hit = this.cache.get(key);\n25|     if (hit) {\n26|       hit.lastUsed = performance.now();\n27|       return hit.canvas;\n28|     }\n29|     const canvas = document.createElement('canvas');\n30|     canvas.width = WORLD.chunkSize * WORLD.tileSize;\n31|     canvas.height = WORLD.chunkSize * WORLD.tileSize + 24;\n32|     const ctx = canvas.getContext('2d', { alpha: true, willReadFrequently: false });\n33|     this.renderChunk(ctx, chunk, sun);\n34|     this.cache.set(key, { canvas, lastUsed: performance.now() });\n35|     this.evict();\n36|     return canvas;\n37|   }\n38| \n39|   renderChunk(ctx, chunk, sun) {\n40|     for (let y = 0; y < WORLD.chunkSize; y++) {\n41|       for (let x = 0; x < WORLD.chunkSize; x++) {\n42|         const index = y * WORLD.chunkSize + x;\n43|         const tile = chunk.tiles[index];\n44|         const sx = x * WORLD.tileSize;\n45|         const sy = y * WORLD.tileSize - elevationLift(tile.climate.elevation);\n46|         paintTerrainTile(ctx, tile, sx, sy, WORLD.tileSize, sun, tile.climate.elevation, this.compositor, 0, this.atlas);\n47|         paintTerrainFeatures(ctx, tile, sx, sy, WORLD.tileSize, sun);\n48|       }\n49|     }\n50|   }\n51| \n52|   evict() {\n53|     if (this.cache.size <= this.maxEntries) return;\n54|     const entries = [...this.cache.entries()].sort((a, b) => a[1].lastUsed - b[1].lastUsed);\n55|     while (entries.length && this.cache.size > this.maxEntries) this.cache.delete(entries.shift()[0]);",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_VjFcnKFpI1khc32EEMceHQA0",
+        "name": "read_file",
+        "input": {
+          "path": "src/render/canvas-renderer.js",
+          "start_line": 44,
+          "end_line": 58
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_VjFcnKFpI1khc32EEMceHQA0",
+        "content": "File: src/render/canvas-renderer.js (lines 44-58 of 268)\n\n44|     const maxCX = floorDiv(Math.ceil((camX + w) / tilePx), WORLD.chunkSize) + 1;\n45|     const maxCY = floorDiv(Math.ceil((camY + h) / tilePx), WORLD.chunkSize) + 1;\n46| \n47|     for (let cy = minCY; cy <= maxCY; cy++) {\n48|       for (let cx = minCX; cx <= maxCX; cx++) {\n49|         const chunk = chunkStore.getIfReady(cx, cy);\n50|         if (!chunk) continue;\n51|         const cached = this.chunkRenderCache.get(chunk, sun);\n52|         const sx = Math.floor(cx * WORLD.chunkSize * tilePx - camX);\n53|         const sy = Math.floor(cy * WORLD.chunkSize * tilePx - camY);\n54|         const dw = WORLD.chunkSize * tilePx;\n55|         const dh = (WORLD.chunkSize * WORLD.tileSize + 24) * camera.zoom;\n56|         ctx.drawImage(cached, sx, sy - 24 * camera.zoom, dw, dh);\n57|       }\n58|     }",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_YTE1RTR2vjoy1EvmEBTnDZy0",
+        "name": "edit_file",
+        "input": {
+          "path": "src/render/chunk-render-cache.js",
+          "old_text": "    canvas.height = WORLD.chunkSize * WORLD.tileSize + 24;\n",
+          "new_text": "    canvas.height = WORLD.chunkSize * WORLD.tileSize;\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_YTE1RTR2vjoy1EvmEBTnDZy0",
+        "content": "Applied edit to src/render/chunk-render-cache.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_Sb1av7zBUn874JItsBlBeIKE",
+        "name": "edit_file",
+        "input": {
+          "path": "src/render/chunk-render-cache.js",
+          "old_text": "        const sy = y * WORLD.tileSize - elevationLift(tile.climate.elevation);\n",
+          "new_text": "        const sy = y * WORLD.tileSize;\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_Sb1av7zBUn874JItsBlBeIKE",
+        "content": "Applied edit to src/render/chunk-render-cache.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_YXd0fMu5iXubBYqRqmGRPDZw",
+        "name": "edit_file",
+        "input": {
+          "path": "src/render/canvas-renderer.js",
+          "old_text": "        const dh = (WORLD.chunkSize * WORLD.tileSize + 24) * camera.zoom;\n        ctx.drawImage(cached, sx, sy - 24 * camera.zoom, dw, dh);\n",
+          "new_text": "        const dh = WORLD.chunkSize * tilePx;\n        ctx.drawImage(cached, sx, sy, dw, dh);\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_YXd0fMu5iXubBYqRqmGRPDZw",
+        "content": "Applied edit to src/render/canvas-renderer.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_mf9JUd4v5QIkJWwSmkYwoVY8",
+        "name": "read_file",
+        "input": {
+          "path": "src/world/biome-audit.js"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_mf9JUd4v5QIkJWwSmkYwoVY8",
+        "content": "File: src/world/biome-audit.js (30 lines)\n\n1| import { WORLD } from '../core/constants.js';\n2| import { SPEC_BIOME_IDS } from './biomes.js';\n3| import { sampleRegionalMapChunk } from './regional-map.js';\n4| \n5| const cache = new Map();\n6| \n7| export function auditBiomesAround(player, sampleChunks = 96, strideChunks = 4) {\n8|   const pcx = Math.floor(player.x / WORLD.chunkSize);\n9|   const pcy = Math.floor(player.y / WORLD.chunkSize);\n10|   const bucketX = Math.floor(pcx / 8) * 8;\n11|   const bucketY = Math.floor(pcy / 8) * 8;\n12|   const key = `${bucketX},${bucketY},${sampleChunks},${strideChunks}`;\n13|   if (cache.has(key)) return cache.get(key);\n14| \n15|   const counts = new Map();\n16|   for (let cy = bucketY - sampleChunks / 2; cy <= bucketY + sampleChunks / 2; cy += strideChunks) {\n17|     for (let cx = bucketX - sampleChunks / 2; cx <= bucketX + sampleChunks / 2; cx += strideChunks) {\n18|       const id = sampleRegionalMapChunk(cx, cy).id;\n19|       counts.set(id, (counts.get(id) ?? 0) + 1);\n20|     }\n21|   }\n22|   const total = [...counts.values()].reduce((sum, value) => sum + value, 0) || 1;\n23|   const seen = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([id, count]) => ({ id, count, pct: count / total }));\n24|   const missing = SPEC_BIOME_IDS.filter(id => !counts.has(id));\n25|   const audit = { seen, missing, total, spec: SPEC_BIOME_IDS };\n26|   cache.set(key, audit);\n27|   if (cache.size > 24) cache.delete(cache.keys().next().value);\n28|   return audit;\n29| }\n30| ",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_B0vnFWPAo7Fz8juwqz7b9vdy",
+        "name": "edit_file",
+        "input": {
+          "path": "src/world/biome-audit.js",
+          "old_text": "export function auditBiomesAround(player, sampleChunks = 96, strideChunks = 4) {\n  const pcx = Math.floor(player.x / WORLD.chunkSize);\n  const pcy = Math.floor(player.y / WORLD.chunkSize);\n  const bucketX = Math.floor(pcx / 8) * 8;\n  const bucketY = Math.floor(pcy / 8) * 8;\n  const key = `${bucketX},${bucketY},${sampleChunks},${strideChunks}`;\n",
+          "new_text": "export function auditBiomesAround(player, sampleChunks = 608, strideChunks = 4) {\n  const pcx = Math.floor(player.x / WORLD.chunkSize);\n  const pcy = Math.floor(player.y / WORLD.chunkSize);\n  const bucketX = Math.floor(pcx / 64) * 64;\n  const bucketY = Math.floor(pcy / 64) * 64;\n  const key = `regional-corpus,${bucketX},${bucketY},${sampleChunks},${strideChunks}`;\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_B0vnFWPAo7Fz8juwqz7b9vdy",
+        "content": "Applied edit to src/world/biome-audit.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_YMVUUsI7XeLJKVpSpuCykZa3",
+        "name": "edit_file",
+        "input": {
+          "path": "src/render/canvas-renderer.js",
+          "old_text": "      this.lastAudit = auditBiomesAround(player, 96, 8);\n",
+          "new_text": "      this.lastAudit = auditBiomesAround(player, 608, 4);\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_YMVUUsI7XeLJKVpSpuCykZa3",
+        "content": "Applied edit to src/render/canvas-renderer.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_FOH5uPUf5D8zWBI3k6hlHubu",
+        "name": "run_command",
+        "input": {
+          "command": "node --check src/render/chunk-render-cache.js && node --check src/render/canvas-renderer.js && node --check src/world/biome-audit.js && node --input-type=module -e \"const {auditBiomesAround}=await import('./src/world/biome-audit.js'); const a=auditBiomesAround({x:0,y:0},608,4); console.log(a.seen.length+'/'+a.spec.length, 'missing', a.missing.join(',')||'none');\""
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_FOH5uPUf5D8zWBI3k6hlHubu",
+        "content": "$ node --check src/render/chunk-render-cache.js && node --check src/render/canvas-renderer.js && node --check src/world/biome-audit.js && node --input-type=module -e \"const {auditBiomesAround}=await import('./src/world/biome-audit.js'); const a=auditBiomesAround({x:0,y:0},608,4); console.log(a.seen.length+'/'+a.spec.length, 'missing', a.missing.join(',')||'none');\"\n\n21/21 missing none\n",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_kKeNV5gsr1rau8UG560R8xhm",
+        "name": "edit_file",
+        "input": {
+          "path": "DONE.md",
+          "old_text": "- Added living-spec reread protocol and digest tooling:\n  - Added `docs/LIVING_SPEC_PROTOCOL.md` requiring spec consultation before significant asset/rendering/world/gameplay changes.\n  - Added `scripts/digest-specs.mjs` to summarize the full specs corpus into `docs/SPEC_DIGEST.md`.\n  - Generated `docs/SPEC_DIGEST.md` from 26 spec docs.\n  - Linked the Sorceress library plan to the living spec protocol and digest.\n",
+          "new_text": "- Added living-spec reread protocol and digest tooling:\n  - Added `docs/LIVING_SPEC_PROTOCOL.md` requiring spec consultation before significant asset/rendering/world/gameplay changes.\n  - Added `scripts/digest-specs.mjs` to summarize the full specs corpus into `docs/SPEC_DIGEST.md`.\n  - Generated `docs/SPEC_DIGEST.md` from 26 spec docs.\n  - Linked the Sorceress library plan to the living spec protocol and digest.\n- Fixed chunk seams and overmap biome audit coverage:\n  - Removed per-tile elevation offsets from cached terrain chunks to prevent vertical/horizontal seams at chunk image boundaries.\n  - Cached chunks now render and composite at exact `chunkSize * tileSize` dimensions with no extra vertical padding/scaling mismatch.\n  - Overmap biome audit now samples the guaranteed regional/province corpus area instead of the too-small immediate neighborhood.\n  - Audit validation reports `21/21 missing none`.\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_kKeNV5gsr1rau8UG560R8xhm",
         "content": "Applied edit to DONE.md",
         "is_error": false
       }
