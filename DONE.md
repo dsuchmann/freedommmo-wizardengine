@@ -137,3 +137,10 @@
   - Biome audit now samples the regional overmap field directly, matching what the player sees/clicks on the map.
   - Regional audit over the canonical local/world-scale area reports no missing biomes across all 21 tracked biome IDs.
   - Coherency audit over 23,409 sampled regional chunks reports 0 dominant chunk/tile biome mismatches.
+- Added tile micro-layer landscape assembly:
+  - Added `src/world/tile-micro-layers.js` to derive soil, ground cover, foliage blades, flowers, debris, aether motes, and water-body layers from biome/climate/fertility/slope.
+  - Added `LAYERS.microLayers` as the next horizontal stack layer in every tile.
+  - Tile stacks now store fertility, vegetation density, per-layer physics hints, reaction states, coverage, blend mode, and animation metadata.
+  - Added `src/render/micro-layer-painter.js` to render layered animated overlays separately from the base terrain color.
+  - Grass/foliage layers now have deterministic wind-sway animation; flowers/debris/aether/water layers render as separate sparse overlays.
+  - HUD now reports micro-layer names, fertility, and vegetation density for the current tile.

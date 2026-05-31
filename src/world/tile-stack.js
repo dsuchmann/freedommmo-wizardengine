@@ -1,4 +1,5 @@
 import { LAYERS } from '../core/constants.js';
+import { createMicroLayers } from './tile-micro-layers.js';
 
 export function createTileStack({ wx, wy, biomeSample }) {
   const { id, definition, climate } = biomeSample;
@@ -12,6 +13,7 @@ export function createTileStack({ wx, wy, biomeSample }) {
       [LAYERS.surface]: { kind: 'surface', detail: chooseSurfaceDetail(id, climate) },
       [LAYERS.objects]: { kind: 'objects', items: [] },
       [LAYERS.structures]: { kind: 'structures', items: [] },
+      [LAYERS.microLayers]: { kind: 'microLayers', fertility: 0, vegetationDensity: 0, layers: [] },
       [LAYERS.terrainForms]: { kind: 'terrainForms', form: 'plains', features: [] },
       [LAYERS.subterranean]: { kind: 'subterranean', entrance: false, depthHint: 0, connected: false },
       [LAYERS.entities]: { kind: 'entities', items: [] },
@@ -50,6 +52,7 @@ export function applyTerrainForm(tile, terrainForm) {
   if (terrainForm.overhang) tile.features.push('overhang');
   if (terrainForm.naturalBridge) tile.features.push('natural_bridge');
   tile.layers[LAYERS.terrainForms] = { kind: 'terrainForms', ...terrainForm, features: tile.features };
+  tile.layers[LAYERS.microLayers] = createMicroLayers(tile);
   if (terrainForm.subterranean) tile.layers[LAYERS.subterranean] = { kind: 'subterranean', entrance: true, depthHint: terrainForm.subterranean.depthHint, connected: true };
 }
 
@@ -63,6 +66,7 @@ export function projectTileForRender(tile, biomeDefinition) {
     terrainForm: tile.terrainForm,
     features: tile.features,
     slope: tile.layers[LAYERS.terrainForms].slope ?? 0,
+    microLayers: tile.layers[LAYERS.microLayers],
     walkable: tile.walkable
   };
 }

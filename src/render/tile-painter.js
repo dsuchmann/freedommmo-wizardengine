@@ -1,7 +1,8 @@
 import { rand2 } from '../core/random.js';
 import { paletteFor } from './palette.js';
+import { paintMicroLayers } from './micro-layer-painter.js';
 
-export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation = tile.climate.elevation, compositor = null) {
+export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation = tile.climate.elevation, compositor = null, timeSeconds = 0) {
   const signature = compositor?.terrainSignature(tile);
   const palette = paletteFor(tile.biome);
   const micro = rand2(tile.wx, tile.wy, 1200);
@@ -12,6 +13,7 @@ export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation = 
   ctx.fillRect(sx, sy, size, size);
   if (signature) paintCompositorDebugLayer(ctx, signature, sx, sy, size, sun);
   paintBiomeTexture(ctx, tile, sx, sy, size, sun);
+  paintMicroLayers(ctx, tile, sx, sy, size, sun, timeSeconds);
 }
 
 function paintCompositorDebugLayer(ctx, signature, sx, sy, size) {

@@ -23,7 +23,7 @@ function paintRidge(ctx, sx, sy, size) {
 }
 
 function paintCliff(ctx, tile, sx, sy, size, sun) {
-  const alpha = Math.min(0.5, 0.20 + tile.layers[6].slope * 2.2);
+  const alpha = Math.min(0.5, 0.20 + tile.layers[7].slope * 2.2);
   ctx.fillStyle = `rgba(18,16,14,${alpha})`;
   ctx.fillRect(sx, sy + size * 0.45, size, size * 0.55);
   ctx.fillStyle = `rgba(235,230,205,${0.12 + sun.height * 0.08})`;
