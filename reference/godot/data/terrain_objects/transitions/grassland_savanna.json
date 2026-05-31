@@ -1,0 +1,23 @@
+{
+  "biome_a": "grassland",
+  "biome_b": "savanna",
+  "blend_width": 5,
+  "edge_objects": [
+    {
+      "object_id": "dry_grass",
+      "density": 0.25
+    },
+    {
+      "object_id": "pampas_grass",
+      "density": 0.12
+    },
+    {
+      "object_id": "flat_rock",
+      "density": 0.06
+    }
+  ],
+  "gradient": {
+    "biome_a_objects": "noise_blend",
+    "biome_b_objects": "noise_blend"
+  }
+}

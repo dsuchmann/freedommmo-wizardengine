@@ -1,0 +1,21 @@
+{
+  "name": "desert",
+  "ground": {
+    "base_color": "#dcc078",
+    "variants": ["#e6d08a", "#c8a85c", "#f0e4a6", "#b8965a"],
+    "roughness": 0.7,
+    "specular": 0.2
+  },
+  "cliff": {
+    "base_color": "#8b6f47",
+    "variants": ["#a08052", "#7a5f3c", "#9c7b4f"],
+    "roughness": 0.85,
+    "specular": 0.1
+  },
+  "water": {
+    "base_color": "#4a8cb8",
+    "foam_color": "#ffffff",
+    "roughness": 0.1,
+    "specular": 0.9
+  }
+}

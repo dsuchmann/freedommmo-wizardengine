@@ -1,0 +1,86 @@
+{
+  "id": "bear_den",
+  "category": "structure_natural/den",
+  "ontology": "inanimate",
+  "blocking": true,
+  "pixel_size": 32,
+  "anchor": "bottom_center",
+  "size": [
+    2,
+    2
+  ],
+  "durability": {
+    "hp": 60,
+    "resistances": {
+      "blunt": 0.7,
+      "sharp": 0.5,
+      "fire": 0.3,
+      "frost": 0.9
+    },
+    "stages": [
+      {
+        "stage": "intact",
+        "hp_threshold": 60,
+        "sprite_set": "bear_den/intact",
+        "interactions": [
+          "idle",
+          "chop",
+          "burn_ignite",
+          "erosion"
+        ]
+      },
+      {
+        "stage": "damaged",
+        "hp_threshold": 0,
+        "sprite_set": "bear_den/damaged",
+        "interactions": [
+          "idle",
+          "chop",
+          "burn_ignite",
+          "collapse",
+          "decompose"
+        ]
+      }
+    ]
+  },
+  "variance": {
+    "scale_variance": {
+      "type": "float",
+      "range": [
+        0.85,
+        1.15
+      ]
+    },
+    "color_shift": {
+      "type": "float",
+      "range": [
+        -0.1,
+        0.1
+      ]
+    }
+  },
+  "break_products": {
+    "on_chop": [
+      {
+        "id": "log",
+        "count": [
+          1,
+          2
+        ]
+      },
+      {
+        "id": "twig",
+        "count": [
+          2,
+          4
+        ]
+      }
+    ],
+    "on_burn": [
+      {
+        "id": "ash_pile",
+        "count": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://freedommmo/terrain_objects/schema/interaction_schema.json",
+  "title": "TerrainObjectInteraction",
+  "description": "Validates a terrain object interaction definition",
+  "type": "object",
+  "required": ["id", "category", "trigger", "animation"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "Snake_case unique identifier"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "traversal",
+        "player_action",
+        "environmental",
+        "ambient",
+        "state_reactive",
+        "biome_blending"
+      ],
+      "description": "High-level interaction category"
+    },
+    "trigger": {
+      "$ref": "#/$defs/trigger"
+    },
+    "animation": {
+      "$ref": "#/$defs/animation"
+    },
+    "effects": {
+      "$ref": "#/$defs/effects"
+    }
+  },
+  "$defs": {
+    "trigger": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "entity_action",
+            "environmental",
+            "proximity",
+            "timer",
+            "state_change",
+            "always",
+            "time_of_day",
+            "season"
+          ]
+        },
+        "requires_tool": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Tool item ID required to trigger (e.g. axe, pickaxe)"
+        },
+        "requires_target": {
+          "$ref": "#/$defs/trigger_target_requirement"
+        },
+        "weather_field": {
+          "type": "string",
+          "description": "Weather property name to test (e.g. wind_speed, precipitation)"
+        },
+        "threshold": {
+          "type": "number",
+          "description": "Numeric threshold for weather_field or proximity distance in tiles"
+        }
+      },
+      "additionalProperties": false
+    },
+    "trigger_target_requirement": {
+      "type": "object",
+      "description": "Constraints on the object that can receive this interaction",
+      "properties": {
+        "ontology": {
+          "type": "string",
+          "enum": ["animate", "inanimate"]
+        },
+        "category_prefix": {
+          "type": "string",
+          "description": "Object category must start with this prefix (e.g. vegetation/tree)"
+        },
+        "min_phase": {
+          "type": "string",
+          "description": "Minimum lifecycle phase ID required (animate objects only)"
+        },
+        "blocking": {
+          "type": "boolean",
+          "description": "Object must have this blocking value"
+        },
+        "property": {
+          "type": "object",
+          "description": "Arbitrary property key-value requirements on the target object",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "animation": {
+      "type": "object",
+      "required": ["frames", "duration_ms", "loop"],
+      "properties": {
+        "frames": {
+          "type": "array",
+          "description": "[min_frames, max_frames]",
+          "items": { "type": "integer", "minimum": 1 },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "duration_ms": {
+          "type": "array",
+          "description": "[min_ms, max_ms]",
+          "items": { "type": "integer", "minimum": 0 },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "loop": {
+          "type": "boolean"
+        },
+        "directional": {
+          "type": "boolean",
+          "description": "Animation has directional variants (8-dir or 4-dir)"
+        },
+        "intensity_variable": {
+          "type": "boolean",
+          "description": "Animation speed/scale varies with a runtime intensity value"
+        },
+        "blend_mode": {
+          "type": "string",
+          "enum": ["replace", "overlay", "additive"],
+          "description": "How this animation layer composites over the base sprite"
+        },
+        "can_composite_with": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "uniqueItems": true,
+          "description": "Interaction IDs whose animations can play simultaneously with this one"
+        }
+      },
+      "additionalProperties": false
+    },
+    "effects": {
+      "type": "object",
+      "description": "Runtime effects produced when this interaction fires",
+      "properties": {
+        "damage": {
+          "type": "object",
+          "required": ["amount", "type"],
+          "properties": {
+            "amount": {
+              "oneOf": [
+                { "type": "number", "minimum": 0 },
+                {
+                  "type": "array",
+                  "items": { "type": "number", "minimum": 0 },
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              ]
+            },
+            "type": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "description": "Damage type key (e.g. slash, blunt, fire, pierce)"
+            }
+          },
+          "additionalProperties": false
+        },
+        "state_transition": {
+          "type": "string",
+          "description": "Target phase or stage ID to transition the object into"
+        },
+        "spawn_products": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["object_id", "count"],
+            "properties": {
+              "object_id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "count": {
+                "oneOf": [
+                  { "type": "integer", "minimum": 0 },
+                  {
+                    "type": "array",
+                    "items": { "type": "integer", "minimum": 0 },
+                    "minItems": 2,
+                    "maxItems": 2
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "particle": {
+          "type": "string",
+          "description": "Particle effect key to play (e.g. leaf_burst, smoke_puff)"
+        },
+        "sound": {
+          "type": "string",
+          "description": "Sound effect key to play (e.g. chop_wood, splash)"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://freedommmo/terrain_objects/schema/transition_schema.json",
+  "title": "BiomeTransition",
+  "description": "Validates a biome transition file defining objects and gradients at biome boundaries",
+  "type": "object",
+  "required": ["biome_a", "biome_b", "blend_width"],
+  "additionalProperties": false,
+  "properties": {
+    "biome_a": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "First biome ID (lexicographically first in canonical ordering)"
+    },
+    "biome_b": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "Second biome ID"
+    },
+    "blend_width": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Width of the transition zone in tiles"
+    },
+    "edge_objects": {
+      "type": "array",
+      "description": "Objects that appear specifically at the boundary edge",
+      "items": { "$ref": "#/$defs/edge_object_entry" }
+    },
+    "gradient": {
+      "$ref": "#/$defs/gradient_settings"
+    }
+  },
+  "$defs": {
+    "edge_object_entry": {
+      "type": "object",
+      "required": ["object_id", "density"],
+      "additionalProperties": false,
+      "properties": {
+        "object_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "References an object definition ID"
+        },
+        "density": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Placement probability 0-1 per eligible edge tile"
+        }
+      }
+    },
+    "gradient_settings": {
+      "type": "object",
+      "description": "Controls how each biome's objects fade in/out across the transition zone",
+      "additionalProperties": false,
+      "properties": {
+        "biome_a_objects": {
+          "type": "string",
+          "enum": ["linear_fadeout", "linear_fadein", "hard_cutoff", "noise_blend"],
+          "description": "Density gradient curve for biome_a objects moving toward biome_b"
+        },
+        "biome_b_objects": {
+          "type": "string",
+          "enum": ["linear_fadeout", "linear_fadein", "hard_cutoff", "noise_blend"],
+          "description": "Density gradient curve for biome_b objects moving toward biome_a"
+        }
+      }
+    }
+  }
+}

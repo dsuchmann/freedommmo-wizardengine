@@ -1,0 +1,22 @@
+{
+  "generated": "2026-05-31",
+  "style": "low top-down, selective outline, basic shading, medium detail, transition_size=0.5",
+  "transitions": {
+    "golden_sand__lush_grass": "9f0edb75-1148-4938-9a58-c8e7e3a92534",
+    "lush_grass__forest_floor": "c36c5daf-2b2f-4e23-9ad4-4705bf89c407",
+    "lush_grass__dry_grass": "c488683e-e808-4d31-abff-a0913535db88",
+    "grey_rock__snow": "07d1d05f-1fce-4923-9f86-e153e6040855",
+    "forest_floor__grey_rock": "ac2beaf1-c1dc-4eae-ad5f-ee79664f96d3",
+    "ocean_water__golden_sand": "430e55bf-0a18-4188-9908-4392e1f0c912",
+    "dry_grass__grey_rock": "7aaebd00-da4c-435f-a3f5-63d0a526a779",
+    "snow__glacial_ice": "64b6fa60-730b-4f2c-969d-3b5c92e9184c",
+    "frozen_earth__snow": "b3a97d0b-5c34-4131-babb-67f98065d4cb",
+    "volcanic_rock__grey_rock": "6e6c2bd1-eba8-4894-90cc-eb67d8f9d096",
+    "golden_sand__dry_grass": "b923d5e9-125d-46ad-aa8d-11a918e02f55",
+    "dark_humus__grey_rock": "6bf4437d-7a37-4846-b420-83ce9251c866",
+    "swamp_mud__forest_floor": "12bf900f-cc06-4ca0-a3cd-58fb99852e35",
+    "frozen_earth__forest_floor": "4406a25e-bae4-4844-9fd9-97aa3ada47e2",
+    "mystic_crystal__grey_rock": "7ac92165-ec68-4d03-8100-b27065c170ee"
+  },
+  "note": "Download with: curl -sL https://api.pixellab.ai/mcp/tilesets/{id}/image -o tileset.png"
+}

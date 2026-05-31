@@ -1,0 +1,27 @@
+{
+  "biome_a": "swamp",
+  "biome_b": "tropical_forest",
+  "blend_width": 4,
+  "edge_objects": [
+    {
+      "object_id": "mangrove_tree",
+      "density": 0.08
+    },
+    {
+      "object_id": "hanging_moss",
+      "density": 0.15
+    },
+    {
+      "object_id": "standing_water",
+      "density": 0.1
+    },
+    {
+      "object_id": "giant_fern",
+      "density": 0.1
+    }
+  ],
+  "gradient": {
+    "biome_a_objects": "noise_blend",
+    "biome_b_objects": "noise_blend"
+  }
+}

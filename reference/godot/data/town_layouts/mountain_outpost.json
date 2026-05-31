@@ -1,0 +1,29 @@
+{
+  "town_id": "mountain_outpost_01",
+  "name": "Ironpeak Watch",
+  "theme": "mountain_outpost",
+  "size": [48, 48],
+  "zones": [
+    {"id": "courtyard", "type": "plaza", "rect": [18, 18, 10, 10], "ground": "cobblestone"}
+  ],
+  "buildings": [
+    {"template": "watchtower", "pos": [22, 4], "facing": "south", "label": "main_tower"},
+    {"template": "forge", "pos": [8, 14], "facing": "south", "label": "armory"},
+    {"template": "house", "pos": [32, 14], "facing": "south", "label": "barracks"},
+    {"template": "house", "pos": [32, 32], "facing": "south", "label": "supply_house"},
+    {"template": "well", "pos": [22, 22], "facing": "south", "label": "well"}
+  ],
+  "roads": [
+    {"type": "cobblestone", "width": 3, "path": [[22, 42], [22, 22], [22, 8]]}
+  ],
+  "decorations": [
+    {"type": "barrel", "pos": [9, 20]},
+    {"type": "barrel", "pos": [10, 20]}
+  ],
+  "npcs": [
+    {"role": "guard", "home": "barracks", "workplace": "main_tower"},
+    {"role": "guard", "home": "barracks", "workplace": "main_tower"},
+    {"role": "blacksmith", "home": "supply_house", "workplace": "armory"},
+    {"role": "merchant", "workplace": "courtyard"}
+  ]
+}

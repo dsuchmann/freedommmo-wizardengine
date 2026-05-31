@@ -1,0 +1,36 @@
+{
+  "id": "whirlpool",
+  "category": "water_feature",
+  "ontology": "inanimate",
+  "blocking": false,
+  "pixel_size": 32,
+  "anchor": "center",
+  "size": [
+    1,
+    1
+  ],
+  "durability": null,
+  "variance": {
+    "scale_variance": {
+      "type": "float",
+      "range": [
+        0.9,
+        1.1
+      ]
+    },
+    "color_shift": {
+      "type": "float",
+      "range": [
+        -0.05,
+        0.05
+      ]
+    }
+  },
+  "interactions": [
+    "idle",
+    "swim_past",
+    "wind",
+    "rain"
+  ],
+  "break_products": {}
+}

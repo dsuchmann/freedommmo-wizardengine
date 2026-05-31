@@ -1,0 +1,32 @@
+{
+  "id": "freeze_cast",
+  "category": "player_action",
+  "trigger": {
+    "type": "entity_action"
+  },
+  "animation": {
+    "frames": [
+      4,
+      6
+    ],
+    "duration_ms": [
+      400,
+      600
+    ],
+    "loop": false,
+    "directional": false,
+    "blend_mode": "overlay"
+  },
+  "effects": {
+    "damage": {
+      "amount": [
+        8,
+        20
+      ],
+      "type": "cold"
+    },
+    "particle": "ice_shards",
+    "sound": "freeze_crack",
+    "state_transition": "frozen"
+  }
+}

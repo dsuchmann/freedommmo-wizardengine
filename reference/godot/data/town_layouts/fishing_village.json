@@ -1,0 +1,42 @@
+{
+  "town_id": "fishing_village_01",
+  "name": "Millhaven",
+  "theme": "fishing_village",
+  "size": [64, 64],
+  "zones": [
+    {"id": "square", "type": "plaza", "rect": [26, 26, 10, 10], "ground": "cobblestone"},
+    {"id": "docks", "type": "waterfront", "rect": [0, 22, 8, 16], "ground": "wood_plank"}
+  ],
+  "buildings": [
+    {"template": "house", "pos": [12, 10], "facing": "south", "label": "fisher_cottage_1"},
+    {"template": "house", "pos": [12, 22], "facing": "south", "label": "fisher_cottage_2"},
+    {"template": "tavern", "pos": [22, 10], "facing": "south", "label": "the_salty_anchor"},
+    {"template": "market_stall", "pos": [28, 40], "facing": "south", "label": "fish_market"},
+    {"template": "forge", "pos": [40, 10], "facing": "south", "label": "blacksmith"},
+    {"template": "house", "pos": [40, 38], "facing": "east", "label": "elder_house"},
+    {"template": "well", "pos": [30, 30], "facing": "south", "label": "village_well"},
+    {"template": "watchtower", "pos": [30, 4], "facing": "south", "label": "north_gate"}
+  ],
+  "roads": [
+    {"type": "dirt", "width": 3, "path": [[4, 30], [24, 30], [30, 30], [30, 8]]},
+    {"type": "dirt", "width": 3, "path": [[24, 30], [24, 18]]},
+    {"type": "dirt", "width": 2, "path": [[30, 30], [44, 30]]}
+  ],
+  "decorations": [
+    {"type": "signpost", "pos": [30, 42]},
+    {"type": "flower_pot", "pos": [23, 10]},
+    {"type": "barrel", "pos": [4, 24]},
+    {"type": "barrel", "pos": [4, 26]},
+    {"type": "bench", "pos": [28, 26]},
+    {"type": "fence", "segments": [[10, 6], [10, 48]]}
+  ],
+  "npcs": [
+    {"role": "fisherman", "home": "fisher_cottage_1", "workplace": "docks"},
+    {"role": "fisherman", "home": "fisher_cottage_2", "workplace": "docks"},
+    {"role": "innkeeper", "home": "the_salty_anchor", "workplace": "the_salty_anchor"},
+    {"role": "merchant", "workplace": "fish_market"},
+    {"role": "blacksmith", "home": "blacksmith", "workplace": "blacksmith"},
+    {"role": "elder", "home": "elder_house", "workplace": "square"},
+    {"role": "guard", "workplace": "north_gate", "patrol": ["north_gate", "square"]}
+  ]
+}

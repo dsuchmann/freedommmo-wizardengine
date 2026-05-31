@@ -1,0 +1,27 @@
+{
+  "biome_a": "forest",
+  "biome_b": "swamp",
+  "blend_width": 4,
+  "edge_objects": [
+    {
+      "object_id": "standing_water",
+      "density": 0.15
+    },
+    {
+      "object_id": "hanging_moss",
+      "density": 0.12
+    },
+    {
+      "object_id": "toadstool",
+      "density": 0.08
+    },
+    {
+      "object_id": "reed",
+      "density": 0.1
+    }
+  ],
+  "gradient": {
+    "biome_a_objects": "linear_fadeout",
+    "biome_b_objects": "linear_fadein"
+  }
+}

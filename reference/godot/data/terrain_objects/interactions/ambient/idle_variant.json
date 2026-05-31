@@ -1,0 +1,19 @@
+{
+  "id": "idle_variant",
+  "category": "ambient",
+  "trigger": {
+    "type": "timer"
+  },
+  "animation": {
+    "frames": [
+      3,
+      6
+    ],
+    "duration_ms": [
+      300,
+      800
+    ],
+    "loop": false,
+    "blend_mode": "replace"
+  }
+}

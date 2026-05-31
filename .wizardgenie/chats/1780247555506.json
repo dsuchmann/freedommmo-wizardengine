@@ -656,5 +656,140 @@
         "text": "You probably **should not start from scratch** if you already have 10,000+ Pixel Lab assets. That asset library is valuable.\n\nBest path:\n\n1. **Use existing Pixel Lab assets as the base library.**\n2. Import/organize them into this project.\n3. Generate only missing pieces with Sorceress/Wizard Genie.\n4. Build a manifest/tagging layer so the engine can select assets by biome, material, transition type, object type, etc.\n\nAs for an **MCP connection to Pixel Lab**: I personally can only use the tools exposed in this Wizard Genie session. Right now, I do **not** have a general MCP connection tool available, so I can’t directly connect to Pixel Lab MCP from here.\n\nIf Wizard Genie supports adding MCP servers in its settings, then yes, you may be able to configure Pixel Lab there. Once configured, if its tools appear in my available tool list, I could use them. But in this current session, I don’t see such a tool.\n\nRecommended practical workflow:\n\n```text\nPixel Lab → export assets + metadata → copy into Wizard Genie project → build/import manifest → use assets in game\n```\n\nSuggested folder:\n\n```text\nC:\\Users\\daves\\AppData\\Roaming\\wizardgenie\\projects\\default\\assets\n```\n\nSuggested structure:\n\n```text\nassets/\n  manifest.json\n  terrain/\n  objects/\n  characters/\n  buildings/\n  transitions/\n  ui/\n```\n\nFor now, I’d reuse Pixel Lab for bulk asset generation and use Sorceress/Wizard Genie for integration, procedural glue, missing variants, and gameplay implementation."
       }
     ]
+  },
+  {
+    "role": "user",
+    "content": "Maybe let's start fresh with Sorceress. I think the starting point is: we had the over map created in the Godot project. Do you want me to bring the entire Godot code base into this project as a reference for you? Is that a starting point, or is that noise?"
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Yes — bring the Godot codebase in, but **as reference only**, not as something we try to port file-by-file.\n\nIt is useful, especially because you already had the **overmap** working. The codebase can answer questions the specs may not fully capture:\n\n- exact overmap generation logic\n- seed/noise formulas\n- biome thresholds\n- chunk coordinate math\n- asset naming conventions\n- what was actually implemented vs only designed\n- any useful debug tools or data structures\n\nBut we should avoid letting it become noise by isolating it.\n\nRecommended path:\n\n```text\nC:\\Users\\daves\\AppData\\Roaming\\wizardgenie\\projects\\default\\reference\\godot\n```\n\nSo the structure would be:\n\n```text\ndefault/\n  specs/\n  reference/\n    godot/\n      project.godot\n      scripts/\n      scenes/\n      assets/\n      ...\n```\n\nI would use it this way:\n\n1. Read the specs for intent.\n2. Inspect the Godot code for proven implementation details.\n3. Extract only the useful algorithms/data.\n4. Rebuild cleanly in Wizard Genie.\n5. Do **not** recreate Godot architecture directly.\n\nSo: **not noise, as long as it lives under `reference/godot/` and we treat it as source material rather than the new foundation.**"
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "text",
+        "text": "Good plan. Now execute it — use the tools to make all the changes. Do not describe what you will do, just do it."
+      }
+    ],
+    "_wgSynthetic": "plan_nudge"
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "<plan>\nI’ll create a dedicated `reference/godot` folder placeholder and update the migration docs so the Godot codebase is clearly treated as reference-only source material, not ported architecture.\n</plan>\n"
+      },
+      {
+        "type": "tool_use",
+        "id": "call_TglUJXg1ONQMzfXDHjuvILsz",
+        "name": "create_checkpoint",
+        "input": {
+          "message": "Prepare reference folder for Godot codebase"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_TglUJXg1ONQMzfXDHjuvILsz",
+        "content": "Checkpoint requested: Prepare reference folder for Godot codebase",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_GsxZNQMINcWSqlIX8gC0junZ",
+        "name": "write_file",
+        "input": {
+          "path": "reference/godot/.gitkeep",
+          "content": ""
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_GsxZNQMINcWSqlIX8gC0junZ",
+        "content": "Written 1 lines to reference/godot/.gitkeep",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_SjKShIBHMTvLQk0YOGa9XbkV",
+        "name": "read_file",
+        "input": {
+          "path": "MIGRATION_NOTES.md"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_SjKShIBHMTvLQk0YOGa9XbkV",
+        "content": "File: MIGRATION_NOTES.md (43 lines)\n\n1| # Godot → Sorceress Wizard Genie Migration Notes\n2| \n3| ## Current workspace status\n4| \n5| This Wizard Genie project currently contains only:\n6| \n7| - `game-config.json`\n8| - `.gitignore`\n9| \n10| I do **not** have direct access to arbitrary files on your local machine outside this project workspace. To read the 26–27 Claude-written Godot specs, they need to be copied or uploaded into this project directory first.\n11| \n12| ## Recommended next step\n13| \n14| Add the Godot specs to this folder:\n15| \n16| ```text\n17| C:\\Users\\daves\\AppData\\Roaming\\wizardgenie\\projects\\default\\specs\n18| ```\n19| \n20| Project-relative path:\n21| \n22| ```text\n23| specs/\n24| ```\n25| \n26| A placeholder file has been added at `specs/.gitkeep` so the folder exists in the workspace.\n27| \n28| Once the spec files are present in the workspace, I can:\n29| \n30| 1. Read every spec.\n31| 2. Extract the game design, mechanics, systems, data models, levels, UI, art/audio requirements, and implementation priorities.\n32| 3. Build a new Wizard Genie version from scratch using web/Three.js-style files suitable for this engine.\n33| 4. Preserve the intended gameplay while adapting Godot-specific concepts to the Wizard Genie runtime.\n34| \n35| ## Migration approach\n36| \n37| When the specs are available, I will create:\n38| \n39| - A consolidated design brief.\n40| - A feature checklist mapped from Godot to Wizard Genie.\n41| - A first playable vertical slice.\n42| - Iterative implementation passes for gameplay, UI, levels, polish, and persistence.\n43| ",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_Gkelo8JPrvhi96kfVeI9tyxp",
+        "name": "edit_file",
+        "input": {
+          "path": "MIGRATION_NOTES.md",
+          "old_text": "## Migration approach\n\nWhen the specs are available, I will create:\n\n- A consolidated design brief.\n- A feature checklist mapped from Godot to Wizard Genie.\n- A first playable vertical slice.\n- Iterative implementation passes for gameplay, UI, levels, polish, and persistence.\n",
+          "new_text": "## Godot codebase reference\n\nPlace the original Godot project here:\n\n```text\nC:\\Users\\daves\\AppData\\Roaming\\wizardgenie\\projects\\default\\reference\\godot\n```\n\nProject-relative path:\n\n```text\nreference/godot/\n```\n\nA placeholder file has been added at `reference/godot/.gitkeep` so the folder exists in the workspace.\n\nThe Godot codebase is **reference-only**. It should be used to extract proven algorithms, thresholds, overmap logic, chunk coordinate math, biome rules, asset conventions, and debug ideas. It should **not** be ported file-by-file or allowed to dictate the new Wizard Genie architecture.\n\n## Migration approach\n\nWhen specs and/or reference code are available, I will create:\n\n- A consolidated design brief.\n- A feature checklist mapped from Godot to Wizard Genie.\n- A first playable vertical slice.\n- Iterative implementation passes for gameplay, UI, levels, polish, and persistence.\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_Gkelo8JPrvhi96kfVeI9tyxp",
+        "content": "Applied edit to MIGRATION_NOTES.md",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Done."
+      }
+    ]
   }
 ]

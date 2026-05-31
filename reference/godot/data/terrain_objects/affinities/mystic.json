@@ -1,0 +1,137 @@
+{
+  "biome_id": "mystic",
+  "display_name": "Mystic",
+  "ambient": {
+    "wind": 0.1,
+    "moisture": 0.5,
+    "light_filter": "mystic_glow"
+  },
+  "object_pools": [
+    {
+      "object_id": "mystic_ground",
+      "density": 0.5,
+      "cluster_mode": "perlin",
+      "variant_count": 10,
+      "cluster_scale": 0.08
+    },
+    {
+      "object_id": "mystic_crystal",
+      "density": 0.045,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "dormant": 0.3,
+        "pulsing": 0.5,
+        "active": 0.2
+      },
+      "cluster_scale": 0.03
+    },
+    {
+      "object_id": "crystal_cluster",
+      "density": 0.03,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "exposed": 0.5,
+        "weathered": 0.35,
+        "depleted": 0.15
+      },
+      "cluster_scale": 0.05
+    },
+    {
+      "object_id": "quartz_formation",
+      "density": 0.015,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "exposed": 0.5,
+        "weathered": 0.35,
+        "depleted": 0.15
+      }
+    },
+    {
+      "object_id": "runic_stone",
+      "density": 0.012,
+      "cluster_mode": "scatter",
+      "variant_count": 2,
+      "lifecycle_distribution": {
+        "intact": 0.6,
+        "weathered": 0.3,
+        "crumbled": 0.1
+      }
+    },
+    {
+      "object_id": "glowing_mushroom",
+      "density": 0.048,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "pinhead": 0.1,
+        "growing": 0.25,
+        "mature": 0.5,
+        "sporing": 0.15
+      },
+      "cluster_scale": 0.05
+    },
+    {
+      "object_id": "spirit_wisp",
+      "density": 0.032,
+      "cluster_mode": "perlin",
+      "variant_count": 2,
+      "lifecycle_distribution": {
+        "flickering": 0.4,
+        "bright": 0.4,
+        "fading": 0.2
+      },
+      "cluster_scale": 0.06
+    },
+    {
+      "object_id": "arcane_flower",
+      "density": 0.024,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "bud": 0.15,
+        "blooming": 0.5,
+        "wilting": 0.2,
+        "seed_head": 0.15
+      }
+    },
+    {
+      "object_id": "ethereal_vine",
+      "density": 0.024,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "growing": 0.15,
+        "mature": 0.55,
+        "flowering": 0.15,
+        "dying": 0.1
+      }
+    },
+    {
+      "object_id": "ground_moss",
+      "density": 0.4,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "growing": 0.3,
+        "lush": 0.5,
+        "dry": 0.2
+      },
+      "cluster_scale": 0.1
+    },
+    {
+      "object_id": "mist_pool",
+      "density": 0.015,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "calm": 0.6,
+        "rippling": 0.3,
+        "churning": 0.1
+      }
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "town_id": "hilltop_fort_01",
+  "name": "Eagle's Rest",
+  "theme": "hilltop_fort",
+  "size": [40, 40],
+  "zones": [
+    {"id": "training_yard", "type": "plaza", "rect": [14, 14, 12, 12], "ground": "cobblestone"},
+    {"id": "inner_ward", "type": "courtyard", "rect": [8, 8, 24, 24], "ground": "packed_dirt"},
+    {"id": "gatehouse", "type": "entrance", "rect": [17, 34, 6, 4], "ground": "cobblestone"}
+  ],
+  "buildings": [
+    {"template": "house", "pos": [14, 8], "facing": "south", "label": "barracks_east"},
+    {"template": "house", "pos": [22, 8], "facing": "south", "label": "barracks_west"},
+    {"template": "house", "pos": [14, 28], "facing": "north", "label": "commanders_quarters"},
+    {"template": "forge", "pos": [8, 14], "facing": "east", "label": "armory_forge"},
+    {"template": "watchtower", "pos": [8, 8], "facing": "south", "label": "tower_northwest"},
+    {"template": "watchtower", "pos": [30, 8], "facing": "south", "label": "tower_northeast"},
+    {"template": "watchtower", "pos": [8, 30], "facing": "north", "label": "tower_southwest"},
+    {"template": "watchtower", "pos": [30, 30], "facing": "north", "label": "tower_southeast"},
+    {"template": "watchtower", "pos": [18, 34], "facing": "south", "label": "main_gate"},
+    {"template": "well", "pos": [20, 20], "facing": "south", "label": "fort_well"},
+    {"template": "market_stall", "pos": [24, 28], "facing": "north", "label": "supply_depot"}
+  ],
+  "roads": [
+    {"type": "cobblestone", "width": 3, "path": [[20, 38], [20, 34], [20, 20]]},
+    {"type": "cobblestone", "width": 3, "path": [[20, 20], [20, 10]]},
+    {"type": "cobblestone", "width": 3, "path": [[12, 20], [20, 20], [28, 20]]},
+    {"type": "cobblestone", "width": 3, "path": [[20, 20], [14, 14]]},
+    {"type": "cobblestone", "width": 3, "path": [[20, 20], [26, 14]]},
+    {"type": "dirt", "width": 3, "path": [[20, 38], [20, 39]]}
+  ],
+  "decorations": [
+    {"type": "weapon_rack", "pos": [16, 16]},
+    {"type": "weapon_rack", "pos": [22, 16]},
+    {"type": "training_dummy", "pos": [18, 22]},
+    {"type": "training_dummy", "pos": [22, 22]},
+    {"type": "banner", "pos": [18, 34]},
+    {"type": "banner", "pos": [22, 34]},
+    {"type": "barrel", "pos": [10, 20]},
+    {"type": "barrel", "pos": [10, 21]},
+    {"type": "crate", "pos": [28, 28]},
+    {"type": "crate", "pos": [29, 28]},
+    {"type": "lantern_post", "pos": [14, 20]},
+    {"type": "lantern_post", "pos": [26, 20]},
+    {"type": "fence", "segments": [[8, 32], [30, 32]]}
+  ],
+  "npcs": [
+    {"role": "guard", "home": "barracks_east", "workplace": "tower_northwest", "patrol": ["tower_northwest", "training_yard", "main_gate"]},
+    {"role": "guard", "home": "barracks_east", "workplace": "tower_northeast", "patrol": ["tower_northeast", "training_yard", "main_gate"]},
+    {"role": "guard", "home": "barracks_west", "workplace": "tower_southwest", "patrol": ["tower_southwest", "main_gate", "training_yard"]},
+    {"role": "guard", "home": "barracks_west", "workplace": "main_gate", "patrol": ["main_gate", "tower_southeast", "training_yard"]},
+    {"role": "blacksmith", "home": "armory_forge", "workplace": "armory_forge"},
+    {"role": "commander", "home": "commanders_quarters", "workplace": "training_yard"}
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "id": "cactus",
+  "category": "vegetation/cactus",
+  "ontology": "animate",
+  "blocking": true,
+  "pixel_size": 32,
+  "anchor": "bottom_center",
+  "size": [
+    1,
+    2
+  ],
+  "lifecycle": {
+    "phases": [
+      {
+        "phase": "mature",
+        "duration_days": 365,
+        "size": [
+          1,
+          2
+        ]
+      }
+    ]
+  },
+  "variance": {
+    "scale_variance": {
+      "type": "float",
+      "range": [
+        0.8,
+        1.2
+      ]
+    },
+    "color_shift": {
+      "type": "float",
+      "range": [
+        -0.1,
+        0.1
+      ]
+    }
+  }
+}

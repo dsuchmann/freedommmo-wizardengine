@@ -1,0 +1,351 @@
+{
+  "biome_id": "tundra",
+  "elevation_stacks": [
+    {
+      "name": "tundra_lowland",
+      "range": [
+        0.35,
+        0.5
+      ],
+      "layers": [
+        {
+          "layer": 1,
+          "name": "ground_texture",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "permafrost",
+              "weight": 0.4,
+              "variant_count": 32
+            },
+            {
+              "object_id": "packed_earth",
+              "weight": 0.35,
+              "variant_count": 16
+            },
+            {
+              "object_id": "frozen_gravel",
+              "weight": 0.25,
+              "variant_count": 32
+            }
+          ],
+          "z_offset": 0,
+          "scale_range": [
+            0.18,
+            0.25
+          ]
+        },
+        {
+          "layer": 2,
+          "name": "small_debris",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "frozen_pebble",
+              "weight": 0.35,
+              "variant_count": 16
+            },
+            {
+              "object_id": "small_stone",
+              "weight": 0.3,
+              "variant_count": 32
+            },
+            {
+              "object_id": "ice_shard",
+              "weight": 0.2,
+              "variant_count": 16
+            },
+            {
+              "object_id": "twig",
+              "weight": 0.15,
+              "variant_count": 16
+            }
+          ],
+          "z_offset": 1,
+          "scale_range": [
+            0.1,
+            0.18
+          ]
+        },
+        {
+          "layer": 3,
+          "name": "ground_flora",
+          "coverage": 0.55,
+          "objects": [
+            {
+              "object_id": "frozen_grass",
+              "weight": 0.4,
+              "variant_count": 32
+            },
+            {
+              "object_id": "hardy_moss",
+              "weight": 0.35,
+              "variant_count": 16
+            },
+            {
+              "object_id": "lichen",
+              "weight": 0.25,
+              "variant_count": 8
+            }
+          ],
+          "z_offset": 2,
+          "scale_range": [
+            0.25,
+            0.4
+          ]
+        },
+        {
+          "layer": 4,
+          "name": "large_objects",
+          "coverage": 0.015,
+          "objects": [
+            {
+              "object_id": "frozen_boulder",
+              "weight": 0.35,
+              "variant_count": 8
+            },
+            {
+              "object_id": "dead_shrub",
+              "weight": 0.35,
+              "variant_count": 8
+            },
+            {
+              "object_id": "ice_formation",
+              "weight": 0.3,
+              "variant_count": 8
+            }
+          ],
+          "z_offset": 3,
+          "scale_range": [
+            0.5,
+            0.8
+          ]
+        }
+      ]
+    },
+    {
+      "name": "tundra_mid",
+      "range": [
+        0.5,
+        0.65
+      ],
+      "layers": [
+        {
+          "layer": 1,
+          "name": "ground_texture",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "frozen_gravel",
+              "weight": 0.45,
+              "variant_count": 32
+            },
+            {
+              "object_id": "permafrost",
+              "weight": 0.3,
+              "variant_count": 32
+            },
+            {
+              "object_id": "packed_snow",
+              "weight": 0.25,
+              "variant_count": 16
+            }
+          ],
+          "z_offset": 0,
+          "scale_range": [
+            0.18,
+            0.25
+          ]
+        },
+        {
+          "layer": 2,
+          "name": "small_debris",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "ice_shard",
+              "weight": 0.35,
+              "variant_count": 16
+            },
+            {
+              "object_id": "frost_crystal",
+              "weight": 0.35,
+              "variant_count": 16
+            },
+            {
+              "object_id": "frozen_pebble",
+              "weight": 0.3,
+              "variant_count": 16
+            }
+          ],
+          "z_offset": 1,
+          "scale_range": [
+            0.1,
+            0.18
+          ]
+        },
+        {
+          "layer": 3,
+          "name": "sparse_flora",
+          "coverage": 0.3,
+          "objects": [
+            {
+              "object_id": "frozen_grass",
+              "weight": 0.45,
+              "variant_count": 32
+            },
+            {
+              "object_id": "lichen",
+              "weight": 0.35,
+              "variant_count": 8
+            },
+            {
+              "object_id": "hardy_moss",
+              "weight": 0.2,
+              "variant_count": 16
+            }
+          ],
+          "z_offset": 2,
+          "scale_range": [
+            0.15,
+            0.28
+          ]
+        },
+        {
+          "layer": 4,
+          "name": "large_objects",
+          "coverage": 0.008,
+          "objects": [
+            {
+              "object_id": "ice_formation",
+              "weight": 0.45,
+              "variant_count": 8
+            },
+            {
+              "object_id": "frozen_boulder",
+              "weight": 0.4,
+              "variant_count": 8
+            },
+            {
+              "object_id": "dead_shrub",
+              "weight": 0.15,
+              "variant_count": 8
+            }
+          ],
+          "z_offset": 3,
+          "scale_range": [
+            0.5,
+            0.8
+          ]
+        }
+      ]
+    },
+    {
+      "name": "tundra_highland",
+      "range": [
+        0.65,
+        1.0
+      ],
+      "layers": [
+        {
+          "layer": 1,
+          "name": "ground_texture",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "packed_snow",
+              "weight": 0.5,
+              "variant_count": 16
+            },
+            {
+              "object_id": "frozen_gravel",
+              "weight": 0.3,
+              "variant_count": 32
+            },
+            {
+              "object_id": "permafrost",
+              "weight": 0.2,
+              "variant_count": 32
+            }
+          ],
+          "z_offset": 0,
+          "scale_range": [
+            0.18,
+            0.25
+          ]
+        },
+        {
+          "layer": 2,
+          "name": "small_debris",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "ice_crystal",
+              "weight": 0.4,
+              "variant_count": 16
+            },
+            {
+              "object_id": "frost_crystal",
+              "weight": 0.35,
+              "variant_count": 16
+            },
+            {
+              "object_id": "ice_shard",
+              "weight": 0.25,
+              "variant_count": 16
+            }
+          ],
+          "z_offset": 1,
+          "scale_range": [
+            0.1,
+            0.18
+          ]
+        },
+        {
+          "layer": 3,
+          "name": "sparse_flora",
+          "coverage": 0.1,
+          "objects": [
+            {
+              "object_id": "lichen",
+              "weight": 0.6,
+              "variant_count": 8
+            },
+            {
+              "object_id": "frozen_grass",
+              "weight": 0.4,
+              "variant_count": 32
+            }
+          ],
+          "z_offset": 2,
+          "scale_range": [
+            0.15,
+            0.28
+          ]
+        },
+        {
+          "layer": 4,
+          "name": "large_objects",
+          "coverage": 0.005,
+          "objects": [
+            {
+              "object_id": "ice_formation",
+              "weight": 0.5,
+              "variant_count": 8
+            },
+            {
+              "object_id": "frozen_boulder",
+              "weight": 0.5,
+              "variant_count": 8
+            }
+          ],
+          "z_offset": 3,
+          "scale_range": [
+            0.5,
+            0.8
+          ]
+        }
+      ]
+    }
+  ]
+}

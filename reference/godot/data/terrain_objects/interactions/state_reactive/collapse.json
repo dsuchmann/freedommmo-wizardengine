@@ -1,0 +1,32 @@
+{
+  "id": "collapse",
+  "category": "state_reactive",
+  "trigger": {
+    "type": "state_change"
+  },
+  "animation": {
+    "frames": [
+      8,
+      12
+    ],
+    "duration_ms": [
+      400,
+      800
+    ],
+    "loop": false,
+    "directional": true,
+    "blend_mode": "replace"
+  },
+  "effects": {
+    "damage": {
+      "amount": [
+        10,
+        30
+      ],
+      "type": "blunt"
+    },
+    "particle": "debris_shower",
+    "sound": "collapse_heavy",
+    "state_transition": "rubble"
+  }
+}

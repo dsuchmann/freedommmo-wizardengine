@@ -1,0 +1,258 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://freedommmo/terrain_objects/schema/object_schema.json",
+  "title": "TerrainObject",
+  "description": "Validates a terrain object definition (animate or inanimate)",
+  "type": "object",
+  "required": ["id", "category", "ontology", "interactions"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "Snake_case unique identifier"
+    },
+    "category": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(\/[a-z][a-z0-9_]*)*$",
+      "description": "Slash-separated category path, e.g. vegetation/tree/deciduous"
+    },
+    "ontology": {
+      "type": "string",
+      "enum": ["animate", "inanimate"],
+      "description": "Whether the object has a living lifecycle"
+    },
+    "interactions": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+      "uniqueItems": true,
+      "description": "List of interaction IDs applicable to this object"
+    },
+    "size": {
+      "type": "array",
+      "items": { "type": "integer", "minimum": 1 },
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "[width, height] in tiles"
+    },
+    "blocking": {
+      "type": "boolean",
+      "description": "Whether the object blocks player movement"
+    },
+    "anchor": {
+      "type": "string",
+      "description": "Anchor point descriptor, e.g. bottom_center"
+    },
+    "pixel_size": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Sprite pixel size (e.g. 48)"
+    },
+    "variance": {
+      "$ref": "#/$defs/variance"
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "ontology": { "const": "animate" } } },
+      "then": { "$ref": "#/$defs/animate_props" }
+    },
+    {
+      "if": { "properties": { "ontology": { "const": "inanimate" } } },
+      "then": { "$ref": "#/$defs/inanimate_props" }
+    }
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "variance": {
+      "type": "object",
+      "description": "Per-instance visual variation parameters",
+      "properties": {
+        "branching_seed": {
+          "type": "boolean",
+          "description": "Use entity ID to seed branch variation"
+        },
+        "leaf_density": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "[min, max] leaf density multiplier"
+        },
+        "lean_angle": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "[min, max] lean angle in degrees"
+        },
+        "color_shift": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "[min, max] hue shift in degrees"
+        },
+        "scale_variance": {
+          "type": "array",
+          "items": { "type": "number", "minimum": 0 },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "[min, max] uniform scale multiplier"
+        }
+      },
+      "additionalProperties": false
+    },
+    "break_product_entry": {
+      "type": "object",
+      "required": ["object_id", "count"],
+      "properties": {
+        "object_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "count": {
+          "oneOf": [
+            { "type": "integer", "minimum": 0 },
+            {
+              "type": "array",
+              "items": { "type": "integer", "minimum": 0 },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ]
+        },
+        "on_stage": {
+          "type": "string",
+          "description": "Stage ID that must be active to produce this drop"
+        }
+      },
+      "additionalProperties": false
+    },
+    "lifecycle_phase": {
+      "type": "object",
+      "required": ["id", "duration_days", "sprite_set"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "duration_days": {
+          "type": "array",
+          "description": "[min, max] duration in game-days; null means indefinite",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "oneOf": [
+              { "type": "number", "minimum": 0 },
+              { "type": "null" }
+            ]
+          }
+        },
+        "size": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 1 },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "sprite_set": {
+          "type": "string",
+          "description": "Path or key for the sprite set to use in this phase"
+        }
+      },
+      "additionalProperties": false
+    },
+    "durability_stage": {
+      "type": "object",
+      "required": ["id", "hp_range", "sprite_set"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "hp_range": {
+          "type": "array",
+          "description": "[min_hp, max_hp] inclusive range for this visual stage",
+          "items": { "type": "integer", "minimum": 0 },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "sprite_set": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "animate_props": {
+      "type": "object",
+      "properties": {
+        "lifecycle": {
+          "type": "object",
+          "required": ["phases"],
+          "properties": {
+            "phases": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/lifecycle_phase" },
+              "minItems": 1
+            },
+            "phase_interactions": {
+              "type": "object",
+              "description": "Map of phase_id -> array of interaction IDs active in that phase",
+              "additionalProperties": {
+                "type": "array",
+                "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "break_products": {
+          "type": "object",
+          "description": "Keyed by trigger (on_chop, on_burn, on_harvest, etc.)",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/break_product_entry" }
+          }
+        }
+      }
+    },
+    "inanimate_props": {
+      "type": "object",
+      "properties": {
+        "durability": {
+          "type": "object",
+          "required": ["hp", "stages"],
+          "properties": {
+            "hp": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Maximum hit points"
+            },
+            "resistances": {
+              "type": "object",
+              "description": "Damage type -> resistance multiplier (0=immune, 1=full damage)",
+              "additionalProperties": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            },
+            "stages": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/durability_stage" },
+              "minItems": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "break_products": {
+          "type": "object",
+          "description": "Keyed by trigger (on_chop, on_mine, on_burn, on_break, etc.)",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/break_product_entry" }
+          }
+        }
+      }
+    }
+  }
+}

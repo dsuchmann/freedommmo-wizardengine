@@ -1,0 +1,1 @@
+Top-down pixel art {phase} {species} grass patch, {variant_desc}, 32x32 pixels, transparent background, 2D RPG tileset style. Phase: {phase_desc}.

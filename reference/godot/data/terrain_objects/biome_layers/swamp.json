@@ -1,0 +1,159 @@
+{
+  "biome_id": "swamp",
+  "layers": [
+    {
+      "layer": 1,
+      "name": "ground_texture",
+      "coverage": 1.0,
+      "objects": [
+        {
+          "object_id": "swamp_mud",
+          "weight": 0.5,
+          "variant_count": 64
+        },
+        {
+          "object_id": "peat_bog",
+          "weight": 0.3,
+          "variant_count": 16
+        },
+        {
+          "object_id": "wet_soil",
+          "weight": 0.2,
+          "variant_count": 16
+        }
+      ],
+      "z_offset": 0,
+      "scale_range": [
+        0.55,
+        0.75
+      ]
+    },
+    {
+      "layer": 2,
+      "name": "small_debris",
+      "coverage": 1.0,
+      "objects": [
+        {
+          "object_id": "wet_leaves",
+          "weight": 0.4,
+          "variant_count": 32
+        },
+        {
+          "object_id": "algae_patch",
+          "weight": 0.35,
+          "variant_count": 16
+        },
+        {
+          "object_id": "swamp_debris",
+          "weight": 0.25,
+          "variant_count": 8
+        }
+      ],
+      "z_offset": 1,
+      "scale_range": [
+        0.12,
+        0.22
+      ]
+    },
+    {
+      "layer": 3,
+      "name": "ground_flora",
+      "coverage": 1.0,
+      "objects": [
+        {
+          "object_id": "reed",
+          "weight": 0.3,
+          "variant_count": 32
+        },
+        {
+          "object_id": "cattail",
+          "weight": 0.25,
+          "variant_count": 16
+        },
+        {
+          "object_id": "ground_moss",
+          "weight": 0.25,
+          "variant_count": 32
+        },
+        {
+          "object_id": "bulrush",
+          "weight": 0.2,
+          "variant_count": 16
+        }
+      ],
+      "z_offset": 2,
+      "scale_range": [
+        0.35,
+        0.65
+      ]
+    },
+    {
+      "layer": 4,
+      "name": "accent_flora",
+      "coverage": 0.2,
+      "objects": [
+        {
+          "object_id": "toadstool",
+          "weight": 0.35,
+          "variant_count": 8
+        },
+        {
+          "object_id": "freshwater_algae",
+          "weight": 0.35,
+          "variant_count": 8
+        },
+        {
+          "object_id": "cocoon",
+          "weight": 0.3,
+          "variant_count": 8
+        }
+      ],
+      "z_offset": 3,
+      "scale_range": [
+        0.25,
+        0.4
+      ]
+    },
+    {
+      "layer": 5,
+      "name": "large_objects",
+      "coverage": 0.03,
+      "cluster_mode": "grouped",
+      "cluster_size": [
+        3,
+        6
+      ],
+      "cluster_spacing": [
+        12,
+        30
+      ],
+      "objects": [
+        {
+          "object_id": "mangrove_tree",
+          "weight": 0.3,
+          "variant_count": 8
+        },
+        {
+          "object_id": "dead_tree",
+          "weight": 0.3,
+          "variant_count": 8
+        },
+        {
+          "object_id": "hollow_log",
+          "weight": 0.2,
+          "variant_count": 8
+        },
+        {
+          "object_id": "mossy_boulder",
+          "weight": 0.2,
+          "variant_count": 8
+        }
+      ],
+      "z_offset": 4,
+      "scale_range": [
+        0.9,
+        1.1
+      ]
+    }
+  ]
+}

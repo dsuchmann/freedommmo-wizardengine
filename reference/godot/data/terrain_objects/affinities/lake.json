@@ -1,0 +1,116 @@
+{
+  "biome_id": "lake",
+  "display_name": "Lake",
+  "ambient": {
+    "wind": 0.2,
+    "moisture": 0.95
+  },
+  "object_pools": [
+    {
+      "object_id": "lake_ripple",
+      "density": 0.18,
+      "cluster_mode": "perlin",
+      "variant_count": 4,
+      "lifecycle_distribution": {
+        "calm": 0.6,
+        "rippling": 0.3,
+        "churning": 0.1
+      }
+    },
+    {
+      "object_id": "reed",
+      "density": 0.4,
+      "cluster_mode": "edge_follow",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "sprout": 0.05,
+        "growing": 0.15,
+        "mature": 0.65,
+        "dry": 0.1,
+        "dead": 0.05
+      }
+    },
+    {
+      "object_id": "cattail",
+      "density": 0.4,
+      "cluster_mode": "edge_follow",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "sprout": 0.05,
+        "growing": 0.15,
+        "mature": 0.65,
+        "dry": 0.1,
+        "dead": 0.05
+      }
+    },
+    {
+      "object_id": "river_stone",
+      "density": 0.024,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.7,
+        "cracked": 0.2,
+        "crumbled": 0.1
+      }
+    },
+    {
+      "object_id": "pebble",
+      "density": 0.03,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.7,
+        "cracked": 0.2,
+        "crumbled": 0.1
+      }
+    },
+    {
+      "object_id": "freshwater_algae",
+      "density": 0.05,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "pinhead": 0.1,
+        "growing": 0.25,
+        "mature": 0.5,
+        "sporing": 0.15
+      }
+    },
+    {
+      "object_id": "lotus",
+      "density": 0.012,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "bud": 0.15,
+        "blooming": 0.5,
+        "wilting": 0.2,
+        "seed_head": 0.15
+      },
+      "cluster_scale": 0.06
+    },
+    {
+      "object_id": "standing_water",
+      "density": 0.03,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "calm": 0.6,
+        "rippling": 0.3,
+        "churning": 0.1
+      }
+    },
+    {
+      "object_id": "fallen_log",
+      "density": 0.003,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "fresh": 0.2,
+        "mossy": 0.5,
+        "rotting": 0.3
+      }
+    }
+  ]
+}

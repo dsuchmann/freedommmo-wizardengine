@@ -1,0 +1,76 @@
+{
+  "biome_id": "river",
+  "layers": [
+    {
+      "layer": 1,
+      "name": "riverbed",
+      "coverage": 1.0,
+      "objects": [
+        {
+          "object_id": "pebble",
+          "weight": 0.5,
+          "variant_count": 16
+        },
+        {
+          "object_id": "gravel_patch",
+          "weight": 0.5,
+          "variant_count": 16
+        }
+      ],
+      "z_offset": 0,
+      "scale_range": [
+        0.55,
+        0.75
+      ]
+    },
+    {
+      "layer": 2,
+      "name": "bank",
+      "coverage": 0.3,
+      "objects": [
+        {
+          "object_id": "reed",
+          "weight": 0.4,
+          "variant_count": 16
+        },
+        {
+          "object_id": "cattail",
+          "weight": 0.3,
+          "variant_count": 8
+        },
+        {
+          "object_id": "wet_leaves",
+          "weight": 0.3,
+          "variant_count": 8
+        }
+      ],
+      "z_offset": 1,
+      "scale_range": [
+        0.12,
+        0.22
+      ]
+    },
+    {
+      "layer": 3,
+      "name": "large_objects",
+      "coverage": 0.03,
+      "objects": [
+        {
+          "object_id": "driftwood",
+          "weight": 0.5,
+          "variant_count": 8
+        },
+        {
+          "object_id": "mossy_boulder",
+          "weight": 0.5,
+          "variant_count": 8
+        }
+      ],
+      "z_offset": 2,
+      "scale_range": [
+        0.6,
+        0.9
+      ]
+    }
+  ]
+}

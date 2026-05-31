@@ -1,0 +1,76 @@
+{
+  "biome_id": "lake",
+  "layers": [
+    {
+      "layer": 1,
+      "name": "underwater",
+      "coverage": 1.0,
+      "objects": [
+        {
+          "object_id": "freshwater_algae",
+          "weight": 0.5,
+          "variant_count": 16
+        },
+        {
+          "object_id": "pebble",
+          "weight": 0.5,
+          "variant_count": 16
+        }
+      ],
+      "z_offset": 0,
+      "scale_range": [
+        0.55,
+        0.75
+      ]
+    },
+    {
+      "layer": 2,
+      "name": "surface",
+      "coverage": 0.4,
+      "objects": [
+        {
+          "object_id": "reed",
+          "weight": 0.35,
+          "variant_count": 16
+        },
+        {
+          "object_id": "cattail",
+          "weight": 0.35,
+          "variant_count": 8
+        },
+        {
+          "object_id": "bulrush",
+          "weight": 0.3,
+          "variant_count": 8
+        }
+      ],
+      "z_offset": 1,
+      "scale_range": [
+        0.12,
+        0.22
+      ]
+    },
+    {
+      "layer": 3,
+      "name": "large_objects",
+      "coverage": 0.05,
+      "objects": [
+        {
+          "object_id": "fallen_log",
+          "weight": 0.5,
+          "variant_count": 4
+        },
+        {
+          "object_id": "mossy_boulder",
+          "weight": 0.5,
+          "variant_count": 4
+        }
+      ],
+      "z_offset": 2,
+      "scale_range": [
+        0.5,
+        0.8
+      ]
+    }
+  ]
+}

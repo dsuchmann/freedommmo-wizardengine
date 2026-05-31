@@ -1,0 +1,71 @@
+[gd_scene load_steps=3 format=3 uid="uid://bvn8xqwrqp8ys"]
+
+[ext_resource type="TileSet" uid="uid://bvn8xqwrqp8ys" path="res://assets/tilesets/WorldTileSet.tres" id="1_worldtileset"]
+[ext_resource type="Material" uid="uid://bvn8xqwrqp8ys" path="res://assets/materials/WaterShader.tres" id="2_watershader"]
+
+[node name="WorldChunk" type="Node2D"]
+
+[node name="WaterTileMap" type="TileMap" parent="."]
+tile_set = ExtResource("1_worldtileset")
+format = 2
+layer_0/name = "Ocean"
+layer_0/enabled = true
+layer_0/modulate = Color(1, 1, 1, 1)
+layer_0/y_sort_enabled = false
+layer_0/y_sort_origin = 0
+layer_0/z_index = -2
+layer_0/tile_data = PackedInt32Array()
+layer_1/name = "Rivers"
+layer_1/enabled = true
+layer_1/modulate = Color(1, 1, 1, 1)
+layer_1/y_sort_enabled = false
+layer_1/y_sort_origin = 0
+layer_1/z_index = 2
+layer_1/tile_data = PackedInt32Array()
+
+[node name="GroundTileMap" type="TileMap" parent="."]
+tile_set = ExtResource("1_worldtileset")
+format = 2
+layer_0/name = "Ground"
+layer_0/enabled = true
+layer_0/modulate = Color(1, 1, 1, 1)
+layer_0/y_sort_enabled = false
+layer_0/y_sort_origin = 0
+layer_0/z_index = 0
+layer_0/tile_data = PackedInt32Array()
+
+[node name="CliffTileMap" type="TileMap" parent="."]
+tile_set = ExtResource("1_worldtileset")
+format = 2
+layer_0/name = "Cliffs"
+layer_0/enabled = true
+layer_0/modulate = Color(1, 1, 1, 1)
+layer_0/y_sort_enabled = false
+layer_0/y_sort_origin = 0
+layer_0/z_index = 1
+layer_0/tile_data = PackedInt32Array()
+
+[node name="DecoTileMap" type="TileMap" parent="."]
+tile_set = ExtResource("1_worldtileset")
+format = 2
+layer_0/name = "Decoration"
+layer_0/enabled = true
+layer_0/modulate = Color(1, 1, 1, 1)
+layer_0/y_sort_enabled = false
+layer_0/y_sort_origin = 0
+layer_0/z_index = 3
+layer_0/tile_data = PackedInt32Array()
+
+[node name="Lighting" type="Node2D" parent="."]
+
+[node name="KeyLight" type="PointLight2D" parent="Lighting"]
+position = Vector2(1024, 512)
+energy = 0.8
+texture_scale = 8.0
+color = Color(1, 0.95, 0.8, 1)
+
+[node name="FillLight" type="PointLight2D" parent="Lighting"]
+position = Vector2(512, 1024)
+energy = 0.4
+texture_scale = 12.0
+color = Color(0.7, 0.8, 1, 1)

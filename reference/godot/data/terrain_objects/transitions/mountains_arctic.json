@@ -1,0 +1,27 @@
+{
+  "biome_a": "mountains",
+  "biome_b": "arctic",
+  "blend_width": 3,
+  "edge_objects": [
+    {
+      "object_id": "sheet_ice",
+      "density": 0.15
+    },
+    {
+      "object_id": "packed_snow",
+      "density": 0.2
+    },
+    {
+      "object_id": "granite_boulder",
+      "density": 0.08
+    },
+    {
+      "object_id": "scree",
+      "density": 0.1
+    }
+  ],
+  "gradient": {
+    "biome_a_objects": "linear_fadeout",
+    "biome_b_objects": "linear_fadein"
+  }
+}

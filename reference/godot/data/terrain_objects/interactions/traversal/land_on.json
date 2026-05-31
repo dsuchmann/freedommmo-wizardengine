@@ -1,0 +1,27 @@
+{
+  "id": "land_on",
+  "category": "traversal",
+  "trigger": {
+    "type": "entity_action",
+    "requires_target": {
+      "blocking": false
+    }
+  },
+  "animation": {
+    "frames": [
+      2,
+      4
+    ],
+    "duration_ms": [
+      150,
+      300
+    ],
+    "loop": false,
+    "directional": false,
+    "blend_mode": "overlay"
+  },
+  "effects": {
+    "particle": "dust_puff",
+    "sound": "land_soft"
+  }
+}

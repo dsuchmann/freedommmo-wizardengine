@@ -1,0 +1,22 @@
+{
+  "chunk_pos": [
+    0,
+    0
+  ],
+  "chunk_size": 128,
+  "seed": 12345,
+  "masks": [
+    "height",
+    "slope",
+    "biome",
+    "river",
+    "blue_noise"
+  ],
+  "biome_counts": {
+    "0": 2595,
+    "1": 691,
+    "2": 5055,
+    "3": 4648,
+    "4": 3395
+  }
+}

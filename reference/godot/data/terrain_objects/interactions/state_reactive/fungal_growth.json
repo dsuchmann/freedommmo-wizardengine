@@ -1,0 +1,23 @@
+{
+  "id": "fungal_growth",
+  "category": "state_reactive",
+  "trigger": {
+    "type": "timer"
+  },
+  "animation": {
+    "frames": [
+      4,
+      8
+    ],
+    "duration_ms": [
+      2000,
+      6000
+    ],
+    "loop": false,
+    "blend_mode": "overlay"
+  },
+  "effects": {
+    "particle": "spore_cloud",
+    "state_transition": "fungal"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "grass",
+  "ground": {
+    "base_color": "#50a050",
+    "variants": ["#60b060", "#409040", "#70c070", "#308030"],
+    "roughness": 0.75,
+    "specular": 0.15
+  },
+  "cliff": {
+    "base_color": "#606060",
+    "variants": ["#707070", "#505050", "#808080"],
+    "roughness": 0.9,
+    "specular": 0.05
+  },
+  "water": {
+    "base_color": "#3a7ca8",
+    "foam_color": "#ffffff",
+    "roughness": 0.1,
+    "specular": 0.9
+  }
+}

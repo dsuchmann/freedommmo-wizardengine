@@ -1,0 +1,23 @@
+{
+  "biome_a": "beach",
+  "biome_b": "ocean",
+  "blend_width": 3,
+  "edge_objects": [
+    {
+      "object_id": "shore_foam",
+      "density": 0.4
+    },
+    {
+      "object_id": "shell_scatter",
+      "density": 0.15
+    },
+    {
+      "object_id": "tidal_pool",
+      "density": 0.08
+    }
+  ],
+  "gradient": {
+    "biome_a_objects": "linear_fadeout",
+    "biome_b_objects": "linear_fadein"
+  }
+}

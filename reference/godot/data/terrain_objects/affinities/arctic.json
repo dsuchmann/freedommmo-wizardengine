@@ -1,0 +1,114 @@
+{
+  "biome_id": "arctic",
+  "display_name": "Arctic",
+  "ambient": {
+    "wind": 0.7,
+    "moisture": 0.2,
+    "light_filter": "arctic_blue"
+  },
+  "object_pools": [
+    {
+      "object_id": "sheet_ice",
+      "density": 0.075,
+      "cluster_mode": "perlin",
+      "variant_count": 4,
+      "lifecycle_distribution": {
+        "forming": 0.2,
+        "solid": 0.6,
+        "cracking": 0.2
+      }
+    },
+    {
+      "object_id": "packed_snow",
+      "density": 0.6,
+      "cluster_mode": "perlin",
+      "variant_count": 10,
+      "lifecycle_distribution": {
+        "fresh": 0.4,
+        "packed": 0.4,
+        "melting": 0.2
+      },
+      "cluster_scale": 0.07
+    },
+    {
+      "object_id": "packed_snow",
+      "density": 0.4,
+      "cluster_mode": "perlin",
+      "variant_count": 10,
+      "lifecycle_distribution": {
+        "fresh": 0.4,
+        "packed": 0.4,
+        "melting": 0.2
+      },
+      "cluster_scale": 0.07
+    },
+    {
+      "object_id": "melting_snow",
+      "density": 0.025,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "fresh": 0.4,
+        "packed": 0.4,
+        "melting": 0.2
+      },
+      "cluster_scale": 0.07
+    },
+    {
+      "object_id": "frost_pattern",
+      "density": 0.4,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "forming": 0.4,
+        "set": 0.5,
+        "thawing": 0.1
+      }
+    },
+    {
+      "object_id": "icicle",
+      "density": 0.015,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "forming": 0.3,
+        "mature": 0.5,
+        "melting": 0.2
+      }
+    },
+    {
+      "object_id": "ice_patch",
+      "density": 0.4,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "forming": 0.2,
+        "solid": 0.6,
+        "cracking": 0.2
+      },
+      "cluster_scale": 0.07
+    },
+    {
+      "object_id": "crystal_cluster",
+      "density": 0.006,
+      "cluster_mode": "scatter",
+      "variant_count": 2,
+      "lifecycle_distribution": {
+        "exposed": 0.5,
+        "weathered": 0.35,
+        "depleted": 0.15
+      }
+    },
+    {
+      "object_id": "amethyst_geode",
+      "density": 0.003,
+      "cluster_mode": "scatter",
+      "variant_count": 1,
+      "lifecycle_distribution": {
+        "exposed": 0.5,
+        "weathered": 0.35,
+        "depleted": 0.15
+      }
+    }
+  ]
+}

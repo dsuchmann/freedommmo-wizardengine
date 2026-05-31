@@ -1,0 +1,164 @@
+{
+  "id": "tundra_shrub",
+  "category": "vegetation/bush",
+  "ontology": "animate",
+  "blocking": false,
+  "pixel_size": 32,
+  "anchor": "bottom_center",
+  "size": [
+    1,
+    1
+  ],
+  "lifecycle": {
+    "phases": [
+      {
+        "phase": "seedling",
+        "duration_days": 7,
+        "size": [
+          1,
+          1
+        ],
+        "sprite_set": "tundra_shrub/seedling",
+        "phase_interactions": [
+          "idle",
+          "walk_through",
+          "wind",
+          "rain",
+          "regrow"
+        ]
+      },
+      {
+        "phase": "growing",
+        "duration_days": 30,
+        "size": [
+          1,
+          1
+        ],
+        "sprite_set": "tundra_shrub/growing",
+        "phase_interactions": [
+          "idle",
+          "push_aside",
+          "wind",
+          "rain",
+          "regrow"
+        ]
+      },
+      {
+        "phase": "mature",
+        "duration_days": 365,
+        "size": [
+          1,
+          1
+        ],
+        "sprite_set": "tundra_shrub/mature",
+        "phase_interactions": [
+          "idle",
+          "idle_variant",
+          "wind",
+          "rain",
+          "chop",
+          "burn_ignite",
+          "pick",
+          "fruit",
+          "insect_swarm"
+        ]
+      },
+      {
+        "phase": "flowering",
+        "duration_days": 30,
+        "size": [
+          1,
+          1
+        ],
+        "sprite_set": "tundra_shrub/flowering",
+        "phase_interactions": [
+          "idle",
+          "idle_variant",
+          "wind",
+          "rain",
+          "chop",
+          "burn_ignite",
+          "pick",
+          "bloom"
+        ]
+      },
+      {
+        "phase": "dying",
+        "duration_days": 60,
+        "size": [
+          1,
+          1
+        ],
+        "sprite_set": "tundra_shrub/dying",
+        "phase_interactions": [
+          "idle",
+          "wind",
+          "chop",
+          "burn_ignite",
+          "wilt",
+          "decompose"
+        ]
+      },
+      {
+        "phase": "dead",
+        "duration_days": 90,
+        "size": [
+          1,
+          1
+        ],
+        "sprite_set": "tundra_shrub/dead",
+        "phase_interactions": [
+          "idle",
+          "wind",
+          "chop",
+          "burn_ignite",
+          "decompose"
+        ]
+      }
+    ]
+  },
+  "variance": {
+    "lean_angle": {
+      "type": "float",
+      "range": [
+        -5.0,
+        5.0
+      ]
+    },
+    "color_shift": {
+      "type": "float",
+      "range": [
+        -0.1,
+        0.1
+      ]
+    },
+    "scale_variance": {
+      "type": "float",
+      "range": [
+        0.8,
+        1.2
+      ]
+    }
+  },
+  "break_products": {
+    "on_chop": [
+      {
+        "id": "twig",
+        "count": [
+          1,
+          3
+        ]
+      },
+      {
+        "id": "leaf_pile",
+        "count": 1
+      }
+    ],
+    "on_burn": [
+      {
+        "id": "ash_pile",
+        "count": 1
+      }
+    ]
+  }
+}

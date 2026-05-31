@@ -1,0 +1,469 @@
+{
+  "biome_id": "grassland",
+  "elevation_stacks": [
+    {
+      "name": "lowland_meadow",
+      "range": [
+        0.35,
+        0.5
+      ],
+      "layers": [
+        {
+          "layer": 1,
+          "name": "ground_texture",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "dirt_patch",
+              "weight": 0.5,
+              "variant_count": 64
+            },
+            {
+              "object_id": "dry_soil",
+              "weight": 0.3,
+              "variant_count": 32
+            },
+            {
+              "object_id": "dark_earth",
+              "weight": 0.2,
+              "variant_count": 16
+            }
+          ],
+          "z_offset": 0,
+          "scale_range": [
+            0.18,
+            0.25
+          ]
+        },
+        {
+          "layer": 2,
+          "name": "small_debris",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "pebble",
+              "weight": 0.3,
+              "variant_count": 64
+            },
+            {
+              "object_id": "dry_leaf",
+              "weight": 0.25,
+              "variant_count": 32
+            },
+            {
+              "object_id": "twig",
+              "weight": 0.2,
+              "variant_count": 16
+            },
+            {
+              "object_id": "small_stone",
+              "weight": 0.15,
+              "variant_count": 32
+            },
+            {
+              "object_id": "seed_pod",
+              "weight": 0.1,
+              "variant_count": 16
+            }
+          ],
+          "z_offset": 1,
+          "scale_range": [
+            0.1,
+            0.18
+          ]
+        },
+        {
+          "layer": 3,
+          "name": "ground_flora",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "short_grass",
+              "weight": 0.3,
+              "variant_count": 64
+            },
+            {
+              "object_id": "tall_grass",
+              "weight": 0.25,
+              "variant_count": 64
+            },
+            {
+              "object_id": "meadow_grass",
+              "weight": 0.2,
+              "variant_count": 32
+            },
+            {
+              "object_id": "clover_patch",
+              "weight": 0.15,
+              "variant_count": 16
+            },
+            {
+              "object_id": "grass_tuft",
+              "weight": 0.1,
+              "variant_count": 32
+            }
+          ],
+          "z_offset": 2,
+          "scale_range": [
+            0.25,
+            0.4
+          ]
+        },
+        {
+          "layer": 4,
+          "name": "accent_flora",
+          "coverage": 0.2,
+          "objects": [
+            {
+              "object_id": "wildflower",
+              "weight": 0.3,
+              "variant_count": 32
+            },
+            {
+              "object_id": "daisy",
+              "weight": 0.2,
+              "variant_count": 16
+            },
+            {
+              "object_id": "dandelion",
+              "weight": 0.2,
+              "variant_count": 16
+            },
+            {
+              "object_id": "poppy",
+              "weight": 0.15,
+              "variant_count": 16
+            },
+            {
+              "object_id": "flowering_bush",
+              "weight": 0.15,
+              "variant_count": 8
+            }
+          ],
+          "z_offset": 3,
+          "scale_range": [
+            0.15,
+            0.25
+          ]
+        },
+        {
+          "layer": 5,
+          "name": "large_objects",
+          "coverage": 0.025,
+          "cluster_mode": "grouped",
+          "cluster_size": [
+            3,
+            8
+          ],
+          "cluster_spacing": [
+            15,
+            40
+          ],
+          "objects": [
+            {
+              "object_id": "oak_tree",
+              "weight": 0.35,
+              "variant_count": 16
+            },
+            {
+              "object_id": "birch_tree",
+              "weight": 0.25,
+              "variant_count": 16
+            },
+            {
+              "object_id": "flowering_bush",
+              "weight": 0.2,
+              "variant_count": 8
+            },
+            {
+              "object_id": "mossy_boulder",
+              "weight": 0.1,
+              "variant_count": 8
+            },
+            {
+              "object_id": "fallen_log",
+              "weight": 0.1,
+              "variant_count": 8
+            }
+          ],
+          "z_offset": 4,
+          "scale_range": [
+            0.6,
+            0.9
+          ]
+        }
+      ]
+    },
+    {
+      "name": "rolling_hills",
+      "range": [
+        0.5,
+        0.65
+      ],
+      "layers": [
+        {
+          "layer": 1,
+          "name": "ground_texture",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "dry_soil",
+              "weight": 0.4,
+              "variant_count": 32
+            },
+            {
+              "object_id": "dirt_patch",
+              "weight": 0.35,
+              "variant_count": 64
+            },
+            {
+              "object_id": "packed_earth",
+              "weight": 0.25,
+              "variant_count": 16
+            }
+          ],
+          "z_offset": 0,
+          "scale_range": [
+            0.18,
+            0.25
+          ]
+        },
+        {
+          "layer": 2,
+          "name": "small_debris",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "small_stone",
+              "weight": 0.35,
+              "variant_count": 32
+            },
+            {
+              "object_id": "pebble",
+              "weight": 0.3,
+              "variant_count": 64
+            },
+            {
+              "object_id": "dry_leaf",
+              "weight": 0.2,
+              "variant_count": 32
+            },
+            {
+              "object_id": "twig",
+              "weight": 0.15,
+              "variant_count": 16
+            }
+          ],
+          "z_offset": 1,
+          "scale_range": [
+            0.1,
+            0.18
+          ]
+        },
+        {
+          "layer": 3,
+          "name": "ground_flora",
+          "coverage": 0.8,
+          "objects": [
+            {
+              "object_id": "short_grass",
+              "weight": 0.4,
+              "variant_count": 64
+            },
+            {
+              "object_id": "grass_tuft",
+              "weight": 0.3,
+              "variant_count": 32
+            },
+            {
+              "object_id": "meadow_grass",
+              "weight": 0.3,
+              "variant_count": 32
+            }
+          ],
+          "z_offset": 2,
+          "scale_range": [
+            0.25,
+            0.4
+          ]
+        },
+        {
+          "layer": 4,
+          "name": "accent_flora",
+          "coverage": 0.1,
+          "objects": [
+            {
+              "object_id": "wildflower",
+              "weight": 0.4,
+              "variant_count": 32
+            },
+            {
+              "object_id": "dandelion",
+              "weight": 0.3,
+              "variant_count": 16
+            },
+            {
+              "object_id": "poppy",
+              "weight": 0.3,
+              "variant_count": 16
+            }
+          ],
+          "z_offset": 3,
+          "scale_range": [
+            0.15,
+            0.25
+          ]
+        },
+        {
+          "layer": 5,
+          "name": "large_objects",
+          "coverage": 0.015,
+          "objects": [
+            {
+              "object_id": "birch_tree",
+              "weight": 0.3,
+              "variant_count": 16
+            },
+            {
+              "object_id": "mossy_boulder",
+              "weight": 0.3,
+              "variant_count": 8
+            },
+            {
+              "object_id": "oak_tree",
+              "weight": 0.25,
+              "variant_count": 16
+            },
+            {
+              "object_id": "fallen_log",
+              "weight": 0.15,
+              "variant_count": 8
+            }
+          ],
+          "z_offset": 4,
+          "scale_range": [
+            0.6,
+            0.9
+          ]
+        }
+      ]
+    },
+    {
+      "name": "highland_plateau",
+      "range": [
+        0.65,
+        1.0
+      ],
+      "layers": [
+        {
+          "layer": 1,
+          "name": "ground_texture",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "packed_earth",
+              "weight": 0.4,
+              "variant_count": 16
+            },
+            {
+              "object_id": "mountain_gravel",
+              "weight": 0.35,
+              "variant_count": 64
+            },
+            {
+              "object_id": "dry_soil",
+              "weight": 0.25,
+              "variant_count": 32
+            }
+          ],
+          "z_offset": 0,
+          "scale_range": [
+            0.18,
+            0.25
+          ]
+        },
+        {
+          "layer": 2,
+          "name": "small_debris",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "loose_stone",
+              "weight": 0.4,
+              "variant_count": 32
+            },
+            {
+              "object_id": "small_stone",
+              "weight": 0.35,
+              "variant_count": 32
+            },
+            {
+              "object_id": "slate_chip",
+              "weight": 0.25,
+              "variant_count": 16
+            }
+          ],
+          "z_offset": 1,
+          "scale_range": [
+            0.1,
+            0.18
+          ]
+        },
+        {
+          "layer": 3,
+          "name": "sparse_flora",
+          "coverage": 0.35,
+          "objects": [
+            {
+              "object_id": "short_grass",
+              "weight": 0.45,
+              "variant_count": 64
+            },
+            {
+              "object_id": "hardy_moss",
+              "weight": 0.3,
+              "variant_count": 32
+            },
+            {
+              "object_id": "lichen",
+              "weight": 0.25,
+              "variant_count": 8
+            }
+          ],
+          "z_offset": 2,
+          "scale_range": [
+            0.15,
+            0.28
+          ]
+        },
+        {
+          "layer": 4,
+          "name": "large_objects",
+          "coverage": 0.01,
+          "objects": [
+            {
+              "object_id": "granite_boulder",
+              "weight": 0.5,
+              "variant_count": 8
+            },
+            {
+              "object_id": "mossy_boulder",
+              "weight": 0.3,
+              "variant_count": 8
+            },
+            {
+              "object_id": "dead_shrub",
+              "weight": 0.2,
+              "variant_count": 8
+            }
+          ],
+          "z_offset": 3,
+          "scale_range": [
+            0.5,
+            0.8
+          ]
+        }
+      ]
+    }
+  ]
+}

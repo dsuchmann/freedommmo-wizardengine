@@ -1,0 +1,27 @@
+{
+  "biome_a": "beach",
+  "biome_b": "grassland",
+  "blend_width": 4,
+  "edge_objects": [
+    {
+      "object_id": "sea_grass",
+      "density": 0.2
+    },
+    {
+      "object_id": "driftwood",
+      "density": 0.1
+    },
+    {
+      "object_id": "pebble",
+      "density": 0.12
+    },
+    {
+      "object_id": "wildflower",
+      "density": 0.08
+    }
+  ],
+  "gradient": {
+    "biome_a_objects": "linear_fadeout",
+    "biome_b_objects": "linear_fadein"
+  }
+}

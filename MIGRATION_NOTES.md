@@ -32,9 +32,27 @@ Once the spec files are present in the workspace, I can:
 3. Build a new Wizard Genie version from scratch using web/Three.js-style files suitable for this engine.
 4. Preserve the intended gameplay while adapting Godot-specific concepts to the Wizard Genie runtime.
 
+## Godot codebase reference
+
+Place the original Godot project here:
+
+```text
+C:\Users\daves\AppData\Roaming\wizardgenie\projects\default\reference\godot
+```
+
+Project-relative path:
+
+```text
+reference/godot/
+```
+
+A placeholder file has been added at `reference/godot/.gitkeep` so the folder exists in the workspace.
+
+The Godot codebase is **reference-only**. It should be used to extract proven algorithms, thresholds, overmap logic, chunk coordinate math, biome rules, asset conventions, and debug ideas. It should **not** be ported file-by-file or allowed to dictate the new Wizard Genie architecture.
+
 ## Migration approach
 
-When the specs are available, I will create:
+When specs and/or reference code are available, I will create:
 
 - A consolidated design brief.
 - A feature checklist mapped from Godot to Wizard Genie.

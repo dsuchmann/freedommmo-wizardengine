@@ -1,0 +1,21 @@
+{
+  "name": "shallow_water",
+  "ground": {
+    "base_color": "#4a8cb8",
+    "variants": ["#5a9cc8", "#3a7ca8", "#6aacdb", "#2a6c98"],
+    "roughness": 0.2,
+    "specular": 0.8
+  },
+  "cliff": {
+    "base_color": "#6b8e5a",
+    "variants": ["#7b9e6a", "#5b7e4a", "#8bae7a"],
+    "roughness": 0.7,
+    "specular": 0.3
+  },
+  "water": {
+    "base_color": "#4a8cb8",
+    "foam_color": "#ffffff",
+    "roughness": 0.05,
+    "specular": 0.95
+  }
+}

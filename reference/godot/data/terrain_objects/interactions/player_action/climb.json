@@ -1,0 +1,28 @@
+{
+  "id": "climb",
+  "category": "player_action",
+  "trigger": {
+    "type": "entity_action",
+    "requires_target": {
+      "ontology": "animate",
+      "category_prefix": "vegetation/tree",
+      "min_phase": "mature"
+    }
+  },
+  "animation": {
+    "frames": [
+      6,
+      10
+    ],
+    "duration_ms": [
+      800,
+      1400
+    ],
+    "loop": false,
+    "directional": true,
+    "blend_mode": "replace"
+  },
+  "effects": {
+    "sound": "climb_wood"
+  }
+}

@@ -1,0 +1,170 @@
+{
+  "transitions": {
+    "ocean_water__golden_sand": [
+      "934fb234-a8f1-4bae-8ac7-b18dce7a3b00",
+      "e5f404d3-e3b5-448b-9a7b-d0d4192beada"
+    ],
+    "golden_sand__lush_grass": [
+      "9971a329-e178-4879-b169-a89087c4e99c",
+      "f425beec-61f0-4d95-8ec7-aa35320fc951",
+      "d518db08-b8ef-4173-a330-c803af7293eb"
+    ],
+    "lush_grass__forest_floor": [
+      "47ff7382-2d0a-4a02-9c30-b8610f01e1bf",
+      "c046debc-d24d-40e5-a0b9-51ad3b20af27",
+      "bbef15c1-c77a-4348-96d4-fadaa3b5fd03"
+    ],
+    "lush_grass__dry_grass": [
+      "bedc7601-429a-4d9b-aeee-14c974a6bbf5",
+      "2349c2cd-6702-4114-9899-daed2205620c"
+    ],
+    "dry_grass__grey_rock": [
+      "5204eafd-092f-4781-8a3c-933ee2171485"
+    ],
+    "forest_floor__grey_rock": [
+      "4675f90b-bdf2-4abb-85cd-72d26b071a69"
+    ],
+    "grey_rock__snow": [
+      "22ac5d04-2711-4453-b7e0-ccce92da1862",
+      "50b0915a-b5a2-47bb-8d36-9454c8518b01"
+    ],
+    "glacial_ice__snow": [
+      "c303819b-c11e-42b5-97c0-4b6a760648a4"
+    ],
+    "frozen_earth__snow": [
+      "8c30af01-8804-48fa-a80e-23b2c4e936ba"
+    ],
+    "frozen_earth__forest_floor": [
+      "6872ffb0-61ed-40ec-adc9-7ec69a723c11",
+      "0dfd68a8-52b8-4dd1-869c-879cac259b4d"
+    ],
+    "volcanic_rock__grey_rock": [
+      "d83666e3-5e55-45fb-bd44-e1c7bd0bde1a"
+    ],
+    "swamp_mud__lush_grass": [
+      "f598746b-ed6d-44c8-bed2-75685e9422ba"
+    ],
+    "swamp_mud__forest_floor": [
+      "948b7154-cca8-4e73-8892-be6759ac87b5"
+    ],
+    "mystic_crystal__grey_rock": [
+      "7966e996-698b-43d2-a55c-f941a5a787f4"
+    ],
+    "lush_grass__golden_sand": [
+      "dc2bb4bb-ea6f-411e-b4d8-2451ac224b07",
+      "4640e741-d947-4e26-8c9d-f22c96930518"
+    ],
+    "grey_rock__glacial_ice": [
+      "dedb871f-f0c2-4a88-b3de-dde1559c2508",
+      "ac639b06-968a-46f8-8203-1621575c1f61"
+    ],
+    "lush_grass__frozen_earth": [
+      "109058ce-353a-414d-8c11-abf58247adc1"
+    ],
+    "golden_sand__dry_grass": [
+      "1ef800e9-0305-4890-93dc-a4dca921a49d",
+      "a684e2c0-b1f1-4eca-88d1-b7219ca29b74"
+    ],
+    "forest_floor__dark_humus": [
+      "28df4cfc-aa46-42d6-a862-126b904ab14f"
+    ],
+    "lush_grass__steppe": [
+      "1b81ce26-2244-46b3-aea1-1e7c795ca6c9"
+    ],
+    "savanna__tropical": [
+      "6e1a58d2-a672-4346-aae4-4c51564bb0a5"
+    ]
+  },
+  "void_edges": {
+    "void__snow": "abd51b4e-60b7-4cb5-b1c5-88db11dd020d",
+    "void__lush_grass": "b36d7e93-73f6-4aad-ba01-18b34855a164",
+    "void__golden_sand": "7a4205af-96e2-440f-8e2d-117c2d72d055",
+    "void__dry_grass": "b3ebf4ec-847b-4607-acec-ed6ba49689bd",
+    "void__forest_floor": "aa48417e-30d7-48ae-9b22-9753a8e5e60a",
+    "void__dark_humus": "5a42c10b-a28c-482d-ad32-18fa37a9bf8b",
+    "void__swamp_mud": "703eb37f-adf5-40cd-a21b-5318043a4df1",
+    "void__grey_rock": "d0082347-c177-490a-9785-8149dd387cf4",
+    "void__volcanic_rock": "7554c257-7618-4b86-b7a2-6d6c445269a7",
+    "void__frozen_earth": "f3213083-ec76-4838-9263-c110539e9fe9",
+    "void__glacial_ice": "74c9aca9-19de-411c-a9de-1c6b47995d56",
+    "void__mystic_crystal": "ec1782b7-713c-4ca8-a4a3-3b4f1a4cd983"
+  },
+  "surfaces": {
+    "lush_grass": [
+      "ac280f19-cbc8-487c-9557-dbf840207134",
+      "4f4c0026-c6f2-42f2-9541-b59bfe079388",
+      "a2dc5484-52da-4da0-b42e-10db7ca3cbb0",
+      "8134007e-e1b7-4dce-97a3-b974f4f870f1",
+      "3d693567-fee0-4343-aa4e-fca6341bb40c",
+      "bef87c74-f767-40f3-b00f-bf7067d48712"
+    ],
+    "snow": [
+      "5a6a0efb-683c-4795-957b-b8be95199e92",
+      "7ad82261-825c-4be1-8f4d-f2d0cfa41096",
+      "45535842-8145-4da1-8a88-aff4935887b2",
+      "c241b0ca-5ed2-4206-96db-c1b3306282a1"
+    ],
+    "forest_floor": [
+      "70815aff-9183-4142-bf65-b71b9f958288",
+      "3a644a3c-dc66-4ba4-8489-3b1adfa5f7a7",
+      "0454f218-0f02-4bbc-b7b1-dea9700ae931",
+      "254a7ef3-59f9-49b8-aba9-a47411ce9b63",
+      "3f7e9b46-b1cc-42df-8e04-c440c2a9f260",
+      "72c2af13-746f-4e9c-aaf6-300352662dea"
+    ],
+    "ocean_water": [
+      "9501a5de-7d36-4788-860d-2edd0320083a",
+      "df96a6c9-0541-4b1d-acb3-4aea03156843"
+    ],
+    "golden_sand": [
+      "13c04106-50fe-4d15-963c-4ccc1427004f",
+      "55dab894-4272-4317-9173-040f9550e7c5",
+      "ad90a767-17b1-42d3-96ac-add8867b3ab5",
+      "e6a681c8-3881-47e9-aba3-8e3ea0b1e5d9"
+    ],
+    "grey_rock": [
+      "e9dee808-0078-45a3-b91b-a4c9fc9091ee",
+      "6e33396d-1f22-4034-a672-2ee534338fad",
+      "90690476-0664-4805-ad7f-93fc05bde013"
+    ],
+    "glacial_ice": [
+      "2ae47592-930b-4f98-ac13-cea4a2c2b7df",
+      "0ac92777-dd93-404d-9bb9-fb009052fb4e"
+    ],
+    "frozen_earth": [
+      "627ba760-6501-4b02-9849-23d7cb7aeb64"
+    ],
+    "volcanic_rock": [
+      "50c7a571-f36b-46b9-a28f-a9bd6934e649",
+      "81944792-c6db-4ba9-a526-ceb901463c59"
+    ],
+    "swamp_mud": [
+      "07a17a8c-d24a-4c42-90f4-26c3882d6203",
+      "21ffae32-b5ee-4a1d-83b0-dd464517ef45",
+      "c66c5821-5f0f-4c46-b0ca-b9ad2aeb9233",
+      "3361f1e6-d15b-4eea-8203-dde9ec21c754",
+      "e41cf7e8-63a1-47b2-87fd-e9d41c460902"
+    ],
+    "dry_grass": [
+      "1f330b67-e60f-40bb-a781-154b2108ca31",
+      "445aba55-60dc-4539-9f10-9888719700b5",
+      "ce72428f-569b-4134-9077-088c5237da33"
+    ],
+    "mystic_crystal": [
+      "54dc133e-6c8d-491b-a543-60853b5f353c",
+      "ec6861e4-a946-43e7-87f9-8abe51195143"
+    ],
+    "dark_humus": [
+      "4fc59d6e-bb50-4cb6-b9c1-528a5635b65a"
+    ],
+    "cobblestone": [
+      "aad34ffe-5303-4d24-8fa3-05411d05767c"
+    ],
+    "wooden_floor": [
+      "ffd17ea6-9cca-424f-b5d4-7629194108af"
+    ],
+    "dungeon_stone": [
+      "6e5e4466-f8b4-41ed-9b91-6dc0238767eb"
+    ]
+  }
+}

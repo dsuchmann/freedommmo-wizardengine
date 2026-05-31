@@ -1,0 +1,241 @@
+{
+  "id": "dead_tree",
+  "category": "vegetation/tree/dead",
+  "ontology": "animate",
+  "blocking": true,
+  "pixel_size": 32,
+  "anchor": "bottom_center",
+  "size": [
+    1,
+    3
+  ],
+  "lifecycle": {
+    "phases": [
+      {
+        "phase": "seedling",
+        "duration_days": 14,
+        "size": [
+          1,
+          1
+        ],
+        "sprite_set": "dead_tree/seedling",
+        "phase_interactions": [
+          "idle",
+          "walk_through",
+          "wind",
+          "rain",
+          "regrow"
+        ]
+      },
+      {
+        "phase": "sapling",
+        "duration_days": 60,
+        "size": [
+          1,
+          1
+        ],
+        "sprite_set": "dead_tree/sapling",
+        "phase_interactions": [
+          "idle",
+          "push_aside",
+          "wind",
+          "rain",
+          "chop",
+          "regrow"
+        ]
+      },
+      {
+        "phase": "juvenile",
+        "duration_days": 180,
+        "size": [
+          1,
+          2
+        ],
+        "sprite_set": "dead_tree/juvenile",
+        "phase_interactions": [
+          "idle",
+          "wind",
+          "rain",
+          "chop",
+          "climb",
+          "regrow"
+        ]
+      },
+      {
+        "phase": "mature",
+        "duration_days": 730,
+        "size": [
+          1,
+          3
+        ],
+        "sprite_set": "dead_tree/mature",
+        "phase_interactions": [
+          "idle",
+          "idle_variant",
+          "wind",
+          "rain",
+          "chop",
+          "burn_ignite",
+          "climb",
+          "lightning_strike",
+          "insect_swarm",
+          "fruit"
+        ]
+      },
+      {
+        "phase": "old_growth",
+        "duration_days": 1825,
+        "size": [
+          1,
+          3
+        ],
+        "sprite_set": "dead_tree/old_growth",
+        "phase_interactions": [
+          "idle",
+          "idle_variant",
+          "wind",
+          "rain",
+          "chop",
+          "burn_ignite",
+          "climb",
+          "lightning_strike",
+          "insect_swarm",
+          "fungal_growth",
+          "fruit"
+        ]
+      },
+      {
+        "phase": "dying",
+        "duration_days": 180,
+        "size": [
+          1,
+          3
+        ],
+        "sprite_set": "dead_tree/dying",
+        "phase_interactions": [
+          "idle",
+          "wind",
+          "chop",
+          "burn_ignite",
+          "lightning_strike",
+          "insect_swarm",
+          "fungal_growth",
+          "wilt"
+        ]
+      },
+      {
+        "phase": "dead",
+        "duration_days": 365,
+        "size": [
+          1,
+          3
+        ],
+        "sprite_set": "dead_tree/dead",
+        "phase_interactions": [
+          "idle",
+          "wind",
+          "chop",
+          "burn_ignite",
+          "collapse",
+          "fungal_growth",
+          "decompose"
+        ]
+      },
+      {
+        "phase": "decomposing",
+        "duration_days": 730,
+        "size": [
+          1,
+          1
+        ],
+        "sprite_set": "dead_tree/decomposing",
+        "phase_interactions": [
+          "idle",
+          "dig",
+          "fungal_growth",
+          "decompose",
+          "overgrowth"
+        ]
+      }
+    ]
+  },
+  "variance": {
+    "branching_seed": {
+      "type": "int",
+      "range": [
+        0,
+        9999
+      ]
+    },
+    "leaf_density": {
+      "type": "float",
+      "range": [
+        0.4,
+        1.0
+      ]
+    },
+    "lean_angle": {
+      "type": "float",
+      "range": [
+        -8.0,
+        8.0
+      ]
+    },
+    "color_shift": {
+      "type": "float",
+      "range": [
+        -0.1,
+        0.1
+      ]
+    },
+    "scale_variance": {
+      "type": "float",
+      "range": [
+        0.85,
+        1.15
+      ]
+    }
+  },
+  "break_products": {
+    "on_chop": [
+      {
+        "id": "dead_tree_stump",
+        "count": 1
+      },
+      {
+        "id": "log",
+        "count": [
+          2,
+          4
+        ]
+      },
+      {
+        "id": "branch",
+        "count": [
+          3,
+          6
+        ]
+      },
+      {
+        "id": "leaf_pile",
+        "count": [
+          1,
+          3
+        ]
+      }
+    ],
+    "on_burn": [
+      {
+        "id": "charred_trunk",
+        "count": 1
+      },
+      {
+        "id": "ash_pile",
+        "count": [
+          2,
+          4
+        ]
+      }
+    ]
+  }
+}

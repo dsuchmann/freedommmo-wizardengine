@@ -1,0 +1,33 @@
+{
+  "id": "mine",
+  "category": "player_action",
+  "trigger": {
+    "type": "entity_action",
+    "requires_tool": "pickaxe",
+    "requires_target": {
+      "ontology": "inanimate",
+      "category_prefix": "mineral"
+    }
+  },
+  "animation": {
+    "frames": [
+      4,
+      6
+    ],
+    "duration_ms": [
+      500,
+      700
+    ],
+    "loop": false,
+    "directional": true,
+    "blend_mode": "replace"
+  },
+  "effects": {
+    "damage": {
+      "amount": 20,
+      "type": "blunt"
+    },
+    "particle": "rock_chips",
+    "sound": "mine_rock"
+  }
+}

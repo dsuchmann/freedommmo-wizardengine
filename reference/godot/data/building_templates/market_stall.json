@@ -1,0 +1,18 @@
+{
+  "template_id": "market_stall",
+  "category": "commerce",
+  "footprint": { "width": 2, "height": 2 },
+  "walls": {
+    "material": "wood",
+    "pattern": "three_sides",
+    "doors": [{ "side": "south", "offset": 0, "width": 2 }]
+  },
+  "floor": { "material": "wood_plank" },
+  "roof": { "material": "canvas", "style": "awning" },
+  "interior_features": [
+    { "type": "counter", "pos": [0, 0], "provides": ["trading"] },
+    { "type": "goods_display", "pos": [1, 0], "provides": ["display"] }
+  ],
+  "requires": { "settlement_tier_min": "village", "population_min": 15 },
+  "npc_slots": [{ "role": "merchant", "workplace": "counter" }]
+}

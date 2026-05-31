@@ -1,0 +1,33 @@
+{
+  "id": "lightning_strike",
+  "category": "environmental",
+  "trigger": {
+    "type": "environmental",
+    "weather_field": "lightning",
+    "threshold": 0.8
+  },
+  "animation": {
+    "frames": [
+      4,
+      6
+    ],
+    "duration_ms": [
+      100,
+      200
+    ],
+    "loop": false,
+    "blend_mode": "additive"
+  },
+  "effects": {
+    "damage": {
+      "amount": [
+        40,
+        80
+      ],
+      "type": "lightning"
+    },
+    "particle": "lightning_flash",
+    "sound": "thunder_crack",
+    "state_transition": "scorched"
+  }
+}

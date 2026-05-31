@@ -1,0 +1,1 @@
+Animate: {object_description} performing {interaction_description}, {frame_count} frames, top-down view, transparent background, consistent with base sprite, 2D RPG pixel art style.

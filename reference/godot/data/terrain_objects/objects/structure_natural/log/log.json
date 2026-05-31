@@ -1,0 +1,79 @@
+{
+  "id": "log",
+  "category": "structure_natural/log",
+  "ontology": "inanimate",
+  "blocking": false,
+  "pixel_size": 32,
+  "anchor": "bottom_center",
+  "size": [
+    1,
+    1
+  ],
+  "durability": {
+    "hp": 30,
+    "resistances": {
+      "blunt": 0.9,
+      "sharp": 0.5,
+      "fire": 0.3,
+      "frost": 0.9
+    },
+    "stages": [
+      {
+        "stage": "fresh",
+        "hp_threshold": 30,
+        "sprite_set": "log/fresh",
+        "interactions": [
+          "idle",
+          "chop",
+          "burn_ignite",
+          "decompose",
+          "fungal_growth"
+        ]
+      },
+      {
+        "stage": "rotting",
+        "hp_threshold": 0,
+        "sprite_set": "log/rotting",
+        "interactions": [
+          "idle",
+          "decompose",
+          "fungal_growth",
+          "overgrowth"
+        ]
+      }
+    ]
+  },
+  "variance": {
+    "scale_variance": {
+      "type": "float",
+      "range": [
+        0.9,
+        1.1
+      ]
+    },
+    "color_shift": {
+      "type": "float",
+      "range": [
+        -0.05,
+        0.05
+      ]
+    }
+  },
+  "break_products": {
+    "on_chop": [
+      {
+        "id": "wood_scrap",
+        "count": [
+          2,
+          3
+        ]
+      }
+    ],
+    "on_burn": [
+      {
+        "id": "ash_pile",
+        "count": 1
+      }
+    ]
+  }
+}

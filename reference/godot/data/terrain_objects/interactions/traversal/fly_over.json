@@ -1,0 +1,20 @@
+{
+  "id": "fly_over",
+  "category": "traversal",
+  "trigger": {
+    "type": "entity_action"
+  },
+  "animation": {
+    "frames": [
+      1,
+      2
+    ],
+    "duration_ms": [
+      100,
+      200
+    ],
+    "loop": false,
+    "directional": true,
+    "blend_mode": "overlay"
+  }
+}

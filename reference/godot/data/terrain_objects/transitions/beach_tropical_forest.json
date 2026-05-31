@@ -1,0 +1,27 @@
+{
+  "biome_a": "beach",
+  "biome_b": "tropical_forest",
+  "blend_width": 3,
+  "edge_objects": [
+    {
+      "object_id": "coconut_palm",
+      "density": 0.1
+    },
+    {
+      "object_id": "sea_grass",
+      "density": 0.15
+    },
+    {
+      "object_id": "hibiscus",
+      "density": 0.06
+    },
+    {
+      "object_id": "climbing_vine",
+      "density": 0.05
+    }
+  ],
+  "gradient": {
+    "biome_a_objects": "linear_fadeout",
+    "biome_b_objects": "linear_fadein"
+  }
+}

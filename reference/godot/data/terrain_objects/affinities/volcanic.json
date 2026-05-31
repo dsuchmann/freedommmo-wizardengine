@@ -1,0 +1,136 @@
+{
+  "biome_id": "volcanic",
+  "display_name": "Volcanic",
+  "ambient": {
+    "wind": 0.2,
+    "moisture": 0.1,
+    "light_filter": "ember_glow"
+  },
+  "object_pools": [
+    {
+      "object_id": "volcanic_rock",
+      "density": 0.06,
+      "cluster_mode": "perlin",
+      "variant_count": 4,
+      "lifecycle_distribution": {
+        "intact": 0.7,
+        "cracked": 0.2,
+        "crumbled": 0.1
+      },
+      "cluster_scale": 0.03
+    },
+    {
+      "object_id": "lava_rock",
+      "density": 0.045,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.7,
+        "cracked": 0.2,
+        "crumbled": 0.1
+      },
+      "cluster_scale": 0.03
+    },
+    {
+      "object_id": "obsidian_shard",
+      "density": 0.024,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.7,
+        "cracked": 0.2,
+        "crumbled": 0.1
+      }
+    },
+    {
+      "object_id": "pumice_stone",
+      "density": 0.018,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.7,
+        "cracked": 0.2,
+        "crumbled": 0.1
+      }
+    },
+    {
+      "object_id": "gravel_patch",
+      "density": 0.4,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "fresh": 0.5,
+        "settling": 0.35,
+        "old": 0.15
+      },
+      "cluster_scale": 0.07
+    },
+    {
+      "object_id": "gravel_patch",
+      "density": 0.4,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "fresh": 0.5,
+        "settling": 0.35,
+        "old": 0.15
+      },
+      "cluster_scale": 0.07
+    },
+    {
+      "object_id": "sulfur_deposit",
+      "density": 0.025,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "exposed": 0.5,
+        "weathered": 0.35,
+        "depleted": 0.15
+      }
+    },
+    {
+      "object_id": "charred_tree",
+      "density": 0.0032,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "standing": 0.6,
+        "fallen": 0.4
+      }
+    },
+    {
+      "object_id": "cracked_earth",
+      "density": 0.4,
+      "cluster_mode": "perlin",
+      "variant_count": 10,
+      "lifecycle_distribution": {
+        "fresh": 0.4,
+        "deep": 0.4,
+        "healed": 0.2
+      },
+      "cluster_scale": 0.07
+    },
+    {
+      "object_id": "basalt_boulder",
+      "density": 0.018,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.7,
+        "cracked": 0.2,
+        "crumbled": 0.1
+      }
+    },
+    {
+      "object_id": "coal_seam",
+      "density": 0.02,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "exposed": 0.5,
+        "weathered": 0.35,
+        "depleted": 0.15
+      }
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "id": "rain",
+  "category": "environmental",
+  "trigger": {
+    "type": "environmental",
+    "weather_field": "precipitation",
+    "threshold": 0.1
+  },
+  "animation": {
+    "frames": [
+      3,
+      5
+    ],
+    "duration_ms": [
+      300,
+      600
+    ],
+    "loop": true,
+    "intensity_variable": true,
+    "blend_mode": "overlay",
+    "can_composite_with": [
+      "wind",
+      "idle"
+    ]
+  },
+  "effects": {
+    "particle": "rain_drip",
+    "sound": "rain_on_leaves"
+  }
+}

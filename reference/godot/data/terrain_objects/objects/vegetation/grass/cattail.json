@@ -1,0 +1,140 @@
+{
+  "id": "cattail",
+  "category": "vegetation/grass",
+  "ontology": "animate",
+  "blocking": false,
+  "pixel_size": 32,
+  "anchor": "bottom_center",
+  "size": [
+    1,
+    1
+  ],
+  "lifecycle": {
+    "phases": [
+      {
+        "phase": "sprout",
+        "duration_days": 5,
+        "size": [
+          1,
+          1
+        ],
+        "sprite_set": "cattail/sprout",
+        "phase_interactions": [
+          "idle",
+          "walk_through",
+          "run_through",
+          "wind",
+          "rain",
+          "regrow"
+        ]
+      },
+      {
+        "phase": "growing",
+        "duration_days": 14,
+        "size": [
+          1,
+          1
+        ],
+        "sprite_set": "cattail/growing",
+        "phase_interactions": [
+          "idle",
+          "walk_through",
+          "run_through",
+          "wind",
+          "rain",
+          "regrow"
+        ]
+      },
+      {
+        "phase": "mature",
+        "duration_days": 90,
+        "size": [
+          1,
+          1
+        ],
+        "sprite_set": "cattail/mature",
+        "phase_interactions": [
+          "idle",
+          "idle_variant",
+          "walk_through",
+          "run_through",
+          "wind",
+          "rain",
+          "burn_ignite",
+          "pick",
+          "wilt"
+        ]
+      },
+      {
+        "phase": "dry",
+        "duration_days": 30,
+        "size": [
+          1,
+          1
+        ],
+        "sprite_set": "cattail/dry",
+        "phase_interactions": [
+          "idle",
+          "walk_through",
+          "run_through",
+          "wind",
+          "burn_ignite",
+          "wilt",
+          "decompose"
+        ]
+      },
+      {
+        "phase": "dead",
+        "duration_days": 30,
+        "size": [
+          1,
+          1
+        ],
+        "sprite_set": "cattail/dead",
+        "phase_interactions": [
+          "idle",
+          "walk_through",
+          "wind",
+          "decompose"
+        ]
+      }
+    ]
+  },
+  "variance": {
+    "lean_angle": {
+      "type": "float",
+      "range": [
+        -10.0,
+        10.0
+      ]
+    },
+    "color_shift": {
+      "type": "float",
+      "range": [
+        -0.15,
+        0.15
+      ]
+    },
+    "scale_variance": {
+      "type": "float",
+      "range": [
+        0.7,
+        1.3
+      ]
+    }
+  },
+  "break_products": {
+    "on_chop": [
+      {
+        "id": "twig",
+        "count": 1
+      }
+    ],
+    "on_burn": [
+      {
+        "id": "ash_pile",
+        "count": 1
+      }
+    ]
+  }
+}

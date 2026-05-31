@@ -1,0 +1,56 @@
+{
+  "town_id": "lakeside_village_01",
+  "name": "Shimmershore",
+  "theme": "lakeside_village",
+  "size": [48, 48],
+  "zones": [
+    {"id": "docks", "type": "waterfront", "rect": [8, 40, 32, 8], "ground": "wood_plank"},
+    {"id": "shore", "type": "beach", "rect": [4, 36, 40, 4], "ground": "sand"},
+    {"id": "chapel_hill", "type": "sacred", "rect": [36, 6, 10, 10], "ground": "grass"}
+  ],
+  "buildings": [
+    {"template": "house", "pos": [8, 28], "facing": "south", "label": "fisher_cottage_1"},
+    {"template": "house", "pos": [16, 26], "facing": "south", "label": "fisher_cottage_2"},
+    {"template": "house", "pos": [24, 26], "facing": "south", "label": "boatwright_workshop"},
+    {"template": "house", "pos": [32, 28], "facing": "south", "label": "elder_house"},
+    {"template": "house", "pos": [38, 10], "facing": "west", "label": "chapel"},
+    {"template": "tavern", "pos": [14, 16], "facing": "south", "label": "lakeside_rest"},
+    {"template": "market_stall", "pos": [10, 42], "facing": "south", "label": "fish_stand"},
+    {"template": "market_stall", "pos": [20, 42], "facing": "south", "label": "bait_stand"},
+    {"template": "well", "pos": [22, 20], "facing": "south", "label": "village_well"}
+  ],
+  "roads": [
+    {"type": "dirt", "width": 3, "path": [[8, 32], [16, 32], [24, 32], [32, 32]]},
+    {"type": "dirt", "width": 3, "path": [[16, 32], [16, 40]]},
+    {"type": "dirt", "width": 3, "path": [[24, 32], [24, 40]]},
+    {"type": "dirt", "width": 3, "path": [[8, 32], [8, 40]]},
+    {"type": "dirt", "width": 3, "path": [[32, 32], [32, 40]]},
+    {"type": "dirt", "width": 3, "path": [[20, 20], [20, 32]]},
+    {"type": "dirt", "width": 3, "path": [[14, 20], [22, 20]]},
+    {"type": "dirt", "width": 3, "path": [[36, 14], [36, 32], [32, 32]]},
+    {"type": "dirt", "width": 3, "path": [[20, 20], [20, 0]]}
+  ],
+  "decorations": [
+    {"type": "dock_post", "pos": [12, 44]},
+    {"type": "dock_post", "pos": [20, 44]},
+    {"type": "dock_post", "pos": [28, 44]},
+    {"type": "dock_post", "pos": [36, 44]},
+    {"type": "boat", "pos": [14, 46]},
+    {"type": "boat", "pos": [26, 46]},
+    {"type": "fishing_net", "pos": [10, 38]},
+    {"type": "fishing_net", "pos": [30, 38]},
+    {"type": "bench", "pos": [38, 14]},
+    {"type": "flower_pot", "pos": [40, 10]},
+    {"type": "lantern_post", "pos": [16, 36]},
+    {"type": "lantern_post", "pos": [24, 36]},
+    {"type": "barrel", "pos": [26, 28]},
+    {"type": "crate", "pos": [12, 42]}
+  ],
+  "npcs": [
+    {"role": "fisherman", "home": "fisher_cottage_1", "workplace": "docks"},
+    {"role": "fisherman", "home": "fisher_cottage_2", "workplace": "docks"},
+    {"role": "boatbuilder", "home": "boatwright_workshop", "workplace": "docks"},
+    {"role": "priestess", "home": "chapel", "workplace": "chapel"},
+    {"role": "elder", "home": "elder_house", "workplace": "chapel_hill"}
+  ]
+}

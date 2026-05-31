@@ -1,0 +1,21 @@
+{
+  "name": "mountains",
+  "ground": {
+    "base_color": "#6a6a6a",
+    "variants": ["#7a7a7a", "#5a5a5a", "#8a8a8a", "#4a4a4a"],
+    "roughness": 0.9,
+    "specular": 0.05
+  },
+  "cliff": {
+    "base_color": "#5a5a5a",
+    "variants": ["#6a6a6a", "#4a4a4a", "#7a7a7a"],
+    "roughness": 0.95,
+    "specular": 0.02
+  },
+  "water": {
+    "base_color": "#2d5a87",
+    "foam_color": "#ffffff",
+    "roughness": 0.1,
+    "specular": 0.9
+  }
+}

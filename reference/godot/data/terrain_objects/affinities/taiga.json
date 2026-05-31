@@ -1,0 +1,191 @@
+{
+  "biome_id": "taiga",
+  "display_name": "Taiga",
+  "ambient": {
+    "wind": 0.2,
+    "moisture": 0.5,
+    "light_filter": "pine_filter"
+  },
+  "object_pools": [
+    {
+      "object_id": "pine_tree",
+      "density": 0.024,
+      "cluster_mode": "perlin",
+      "variant_count": 4,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "sapling": 0.1,
+        "juvenile": 0.15,
+        "mature": 0.5,
+        "old_growth": 0.15,
+        "dying": 0.05
+      },
+      "cluster_scale": 0.02
+    },
+    {
+      "object_id": "spruce_tree",
+      "density": 0.02,
+      "cluster_mode": "perlin",
+      "variant_count": 4,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "sapling": 0.1,
+        "juvenile": 0.15,
+        "mature": 0.5,
+        "old_growth": 0.15,
+        "dying": 0.05
+      },
+      "cluster_scale": 0.02
+    },
+    {
+      "object_id": "fir_tree",
+      "density": 0.008,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "sapling": 0.1,
+        "juvenile": 0.15,
+        "mature": 0.5,
+        "old_growth": 0.15,
+        "dying": 0.05
+      },
+      "cluster_scale": 0.02
+    },
+    {
+      "object_id": "cedar_tree",
+      "density": 0.004,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "sapling": 0.1,
+        "juvenile": 0.15,
+        "mature": 0.5,
+        "old_growth": 0.15,
+        "dying": 0.05
+      },
+      "cluster_scale": 0.02
+    },
+    {
+      "object_id": "juniper_tree",
+      "density": 0.0032,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "sapling": 0.1,
+        "juvenile": 0.15,
+        "mature": 0.5,
+        "old_growth": 0.15,
+        "dying": 0.05
+      },
+      "cluster_scale": 0.02
+    },
+    {
+      "object_id": "pine_needle_bed",
+      "density": 0.5,
+      "cluster_mode": "perlin",
+      "variant_count": 30,
+      "lifecycle_distribution": {
+        "fresh": 0.4,
+        "settled": 0.4,
+        "decomposing": 0.2
+      },
+      "cluster_scale": 0.07,
+      "elevation_range": [
+        0.35,
+        0.55
+      ]
+    },
+    {
+      "object_id": "ground_moss",
+      "density": 0.4,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "growing": 0.3,
+        "lush": 0.5,
+        "dry": 0.2
+      },
+      "cluster_scale": 0.1,
+      "elevation_range": [
+        0.35,
+        0.5
+      ]
+    },
+    {
+      "object_id": "hardy_moss",
+      "density": 0.4,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "growing": 0.4,
+        "lush": 0.4,
+        "frozen": 0.2
+      },
+      "cluster_scale": 0.1,
+      "elevation_range": [
+        0.35,
+        0.5
+      ]
+    },
+    {
+      "object_id": "packed_snow",
+      "density": 0.4,
+      "cluster_mode": "perlin",
+      "variant_count": 10,
+      "lifecycle_distribution": {
+        "fresh": 0.4,
+        "packed": 0.4,
+        "melting": 0.2
+      },
+      "cluster_scale": 0.07
+    },
+    {
+      "object_id": "packed_snow",
+      "density": 0.4,
+      "cluster_mode": "perlin",
+      "variant_count": 10,
+      "lifecycle_distribution": {
+        "fresh": 0.4,
+        "packed": 0.4,
+        "melting": 0.2
+      },
+      "cluster_scale": 0.07
+    },
+    {
+      "object_id": "fallen_log",
+      "density": 0.006,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "fresh": 0.2,
+        "mossy": 0.5,
+        "rotting": 0.3
+      }
+    },
+    {
+      "object_id": "bear_den",
+      "density": 0.0015,
+      "cluster_mode": "scatter",
+      "variant_count": 1,
+      "lifecycle_distribution": {
+        "active": 0.5,
+        "dormant": 0.3,
+        "empty": 0.2
+      }
+    },
+    {
+      "object_id": "mossy_boulder",
+      "density": 0.009,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.7,
+        "cracked": 0.2,
+        "crumbled": 0.1
+      }
+    }
+  ]
+}

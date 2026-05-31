@@ -1,0 +1,115 @@
+{
+  "version": "5.0",
+  "_comment": "Material recipes: primary cover creates surface, secondary adds variation, accents are sparse decoration",
+  "stacks": {
+    "lush_grass": {
+      "wang_flip": true,
+      "primary": {"source": "vegetation/grass/short_grass", "density": 0.85, "scale": 0.80},
+      "secondary": {"source": "vegetation/grass/tall_grass", "density": 0.20, "scale": 0.85},
+      "accents": [
+        {"source": "vegetation/flower/wildflower", "density": 0.03, "scale": 0.35},
+        {"source": "vegetation/flower/dandelion", "density": 0.02, "scale": 0.30},
+        {"source": "mineral/rock/pebble", "density": 0.01, "scale": 0.25}
+      ]
+    },
+    "dry_grass": {
+      "wang_flip": true,
+      "primary": {"source": "vegetation/grass/dry_grass", "density": 0.80, "scale": 0.80},
+      "secondary": {"source": "vegetation/grass/short_grass", "density": 0.15, "scale": 0.75},
+      "accents": [
+        {"source": "vegetation/flower/poppy", "density": 0.02, "scale": 0.30},
+        {"source": "mineral/rock/pebble", "density": 0.02, "scale": 0.25}
+      ]
+    },
+    "forest_floor": {
+      "wang_flip": true,
+      "primary": {"source": "ground_cover/leaf_litter/forest_floor", "density": 0.85, "scale": 0.85},
+      "secondary": {"source": "ground_cover/leaf_litter/wet_leaves", "density": 0.20, "scale": 0.80},
+      "accents": [
+        {"source": "vegetation/fern/forest_fern", "density": 0.04, "scale": 0.40},
+        {"source": "vegetation/mushroom/toadstool", "density": 0.02, "scale": 0.30},
+        {"source": "mineral/rock/pebble", "density": 0.01, "scale": 0.25}
+      ]
+    },
+    "dark_humus": {
+      "wang_flip": true,
+      "primary": {"source": "ground_cover/earth/dark_earth", "density": 0.85, "scale": 0.85},
+      "secondary": {"source": "ground_cover/leaf_litter/wet_leaves", "density": 0.20, "scale": 0.80},
+      "accents": [
+        {"source": "vegetation/mushroom/toadstool", "density": 0.03, "scale": 0.30},
+        {"source": "vegetation/moss/ground_moss", "density": 0.04, "scale": 0.40}
+      ]
+    },
+    "golden_sand": {
+      "wang_flip": true,
+      "primary": {"source": "ground_cover/sand_drift/sand_drift", "density": 0.80, "scale": 0.85},
+      "secondary": {"source": "ground_cover/gravel/gravel_patch", "density": 0.10, "scale": 0.50},
+      "accents": [
+        {"source": "mineral/shell/shell_fragment", "density": 0.02, "scale": 0.25},
+        {"source": "mineral/rock/pebble", "density": 0.01, "scale": 0.22}
+      ]
+    },
+    "grey_rock": {
+      "wang_flip": true,
+      "primary": {"source": "ground_cover/gravel/gravel_patch", "density": 0.85, "scale": 0.80},
+      "secondary": {"source": "ground_cover/gravel/mountain_gravel_batch", "density": 0.15, "scale": 0.70},
+      "accents": [
+        {"source": "vegetation/moss/ground_moss", "density": 0.03, "scale": 0.35},
+        {"source": "mineral/rock/pebble", "density": 0.03, "scale": 0.30}
+      ]
+    },
+    "snow": {
+      "wang_flip": true,
+      "primary": {"source": "ground_cover/snow_drift/packed_snow", "density": 0.85, "scale": 0.85},
+      "secondary": {"source": "ground_cover/snow_drift/fresh_snow_batch", "density": 0.15, "scale": 0.80},
+      "accents": [
+        {"source": "mineral/rock/pebble", "density": 0.01, "scale": 0.22},
+        {"source": "vegetation/grass/frozen_grass", "density": 0.02, "scale": 0.30}
+      ]
+    },
+    "glacial_ice": {
+      "wang_flip": true,
+      "primary": {"source": "ground_cover/ice_sheet/ice_patch", "density": 0.80, "scale": 0.85},
+      "secondary": {"source": "ground_cover/snow_drift/packed_snow", "density": 0.15, "scale": 0.75},
+      "accents": [
+        {"source": "mineral/rock/pebble", "density": 0.01, "scale": 0.20}
+      ]
+    },
+    "frozen_earth": {
+      "wang_flip": true,
+      "primary": {"source": "ground_cover/earth/frozen_soil", "density": 0.85, "scale": 0.85},
+      "secondary": {"source": "ground_cover/snow_drift/packed_snow", "density": 0.20, "scale": 0.75},
+      "accents": [
+        {"source": "mineral/rock/pebble", "density": 0.02, "scale": 0.25}
+      ]
+    },
+    "volcanic_rock": {
+      "wang_flip": true,
+      "primary": {"source": "ground_cover/ash_layer/ash_pile", "density": 0.80, "scale": 0.85},
+      "secondary": {"source": "mineral/rock/lava_rock", "density": 0.12, "scale": 0.45},
+      "accents": [
+        {"source": "mineral/crystal/obsidian_shard", "density": 0.02, "scale": 0.30}
+      ]
+    },
+    "swamp_mud": {
+      "wang_flip": true,
+      "primary": {"source": "ground_cover/mud/mud_patch", "density": 0.85, "scale": 0.85},
+      "secondary": {"source": "vegetation/moss/algae", "density": 0.15, "scale": 0.50},
+      "accents": [
+        {"source": "vegetation/mushroom/toadstool", "density": 0.02, "scale": 0.30},
+        {"source": "vegetation/grass/tall_grass", "density": 0.03, "scale": 0.35}
+      ]
+    },
+    "mystic_crystal": {
+      "wang_flip": true,
+      "primary": {"source": "ground_cover/mystic/mystic_ground_batch", "density": 0.80, "scale": 0.85},
+      "secondary": {"source": "mineral/crystal/gem_deposit", "density": 0.05, "scale": 0.35},
+      "accents": [
+        {"source": "vegetation/flower/mystic", "density": 0.03, "scale": 0.30}
+      ]
+    },
+    "ocean_water": {
+      "wang_flip": false
+    }
+  }
+}

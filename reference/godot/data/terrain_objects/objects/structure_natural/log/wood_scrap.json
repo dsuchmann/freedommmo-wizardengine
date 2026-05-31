@@ -1,0 +1,28 @@
+{
+  "id": "wood_scrap",
+  "category": "structure_natural/log",
+  "ontology": "inanimate",
+  "blocking": false,
+  "pixel_size": 32,
+  "anchor": "center",
+  "size": [
+    1,
+    1
+  ],
+  "durability": null,
+  "variance": {
+    "scale_variance": {
+      "type": "float",
+      "range": [
+        0.8,
+        1.2
+      ]
+    }
+  },
+  "interactions": [
+    "idle",
+    "walk_through",
+    "pick"
+  ],
+  "break_products": {}
+}

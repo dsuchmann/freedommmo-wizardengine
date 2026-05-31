@@ -1,0 +1,27 @@
+{
+  "biome_a": "tropical_forest",
+  "biome_b": "ocean",
+  "blend_width": 2,
+  "edge_objects": [
+    {
+      "object_id": "shore_foam",
+      "density": 0.2
+    },
+    {
+      "object_id": "sea_grass",
+      "density": 0.12
+    },
+    {
+      "object_id": "coconut_palm",
+      "density": 0.05
+    },
+    {
+      "object_id": "shell_scatter",
+      "density": 0.08
+    }
+  ],
+  "gradient": {
+    "biome_a_objects": "linear_fadeout",
+    "biome_b_objects": "linear_fadein"
+  }
+}

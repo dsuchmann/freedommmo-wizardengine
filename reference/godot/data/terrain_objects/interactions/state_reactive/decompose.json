@@ -1,0 +1,23 @@
+{
+  "id": "decompose",
+  "category": "state_reactive",
+  "trigger": {
+    "type": "timer"
+  },
+  "animation": {
+    "frames": [
+      4,
+      8
+    ],
+    "duration_ms": [
+      3000,
+      8000
+    ],
+    "loop": true,
+    "blend_mode": "overlay"
+  },
+  "effects": {
+    "particle": "decay_mist",
+    "state_transition": "decomposed"
+  }
+}

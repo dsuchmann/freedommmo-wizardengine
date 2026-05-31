@@ -1,0 +1,463 @@
+{
+  "biome_id": "taiga",
+  "elevation_stacks": [
+    {
+      "name": "valley_floor",
+      "range": [
+        0.35,
+        0.5
+      ],
+      "layers": [
+        {
+          "layer": 1,
+          "name": "ground_texture",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "pine_needle_bed",
+              "weight": 0.55,
+              "variant_count": 64
+            },
+            {
+              "object_id": "bark_debris",
+              "weight": 0.25,
+              "variant_count": 16
+            },
+            {
+              "object_id": "dark_earth",
+              "weight": 0.2,
+              "variant_count": 16
+            }
+          ],
+          "z_offset": 0,
+          "scale_range": [
+            0.18,
+            0.25
+          ]
+        },
+        {
+          "layer": 2,
+          "name": "small_debris",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "pine_cone",
+              "weight": 0.35,
+              "variant_count": 16
+            },
+            {
+              "object_id": "twig",
+              "weight": 0.3,
+              "variant_count": 16
+            },
+            {
+              "object_id": "dry_leaf",
+              "weight": 0.2,
+              "variant_count": 32
+            },
+            {
+              "object_id": "small_stone",
+              "weight": 0.15,
+              "variant_count": 32
+            }
+          ],
+          "z_offset": 1,
+          "scale_range": [
+            0.1,
+            0.18
+          ]
+        },
+        {
+          "layer": 3,
+          "name": "ground_flora",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "ground_moss",
+              "weight": 0.35,
+              "variant_count": 32
+            },
+            {
+              "object_id": "hardy_moss",
+              "weight": 0.3,
+              "variant_count": 32
+            },
+            {
+              "object_id": "forest_fern",
+              "weight": 0.2,
+              "variant_count": 32
+            },
+            {
+              "object_id": "frozen_grass",
+              "weight": 0.15,
+              "variant_count": 32
+            }
+          ],
+          "z_offset": 2,
+          "scale_range": [
+            0.25,
+            0.4
+          ]
+        },
+        {
+          "layer": 4,
+          "name": "accent",
+          "coverage": 0.12,
+          "objects": [
+            {
+              "object_id": "toadstool",
+              "weight": 0.4,
+              "variant_count": 8
+            },
+            {
+              "object_id": "wildflower",
+              "weight": 0.3,
+              "variant_count": 16
+            },
+            {
+              "object_id": "bracket_fungus",
+              "weight": 0.3,
+              "variant_count": 8
+            }
+          ],
+          "z_offset": 3,
+          "scale_range": [
+            0.15,
+            0.25
+          ]
+        },
+        {
+          "layer": 5,
+          "name": "large_objects",
+          "coverage": 0.04,
+          "cluster_mode": "grouped",
+          "cluster_size": [
+            5,
+            15
+          ],
+          "cluster_spacing": [
+            8,
+            25
+          ],
+          "objects": [
+            {
+              "object_id": "pine_tree",
+              "weight": 0.3,
+              "variant_count": 16
+            },
+            {
+              "object_id": "spruce_tree",
+              "weight": 0.3,
+              "variant_count": 16
+            },
+            {
+              "object_id": "fir_tree",
+              "weight": 0.15,
+              "variant_count": 16
+            },
+            {
+              "object_id": "cedar_tree",
+              "weight": 0.1,
+              "variant_count": 8
+            },
+            {
+              "object_id": "fallen_log",
+              "weight": 0.1,
+              "variant_count": 8
+            },
+            {
+              "object_id": "mossy_boulder",
+              "weight": 0.05,
+              "variant_count": 8
+            }
+          ],
+          "z_offset": 4,
+          "scale_range": [
+            0.6,
+            0.9
+          ]
+        }
+      ]
+    },
+    {
+      "name": "mid_slope",
+      "range": [
+        0.5,
+        0.65
+      ],
+      "layers": [
+        {
+          "layer": 1,
+          "name": "ground_texture",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "frozen_soil",
+              "weight": 0.4,
+              "variant_count": 32
+            },
+            {
+              "object_id": "pine_needle_bed",
+              "weight": 0.3,
+              "variant_count": 64
+            },
+            {
+              "object_id": "packed_earth",
+              "weight": 0.3,
+              "variant_count": 16
+            }
+          ],
+          "z_offset": 0,
+          "scale_range": [
+            0.18,
+            0.25
+          ]
+        },
+        {
+          "layer": 2,
+          "name": "small_debris",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "ice_crystal",
+              "weight": 0.3,
+              "variant_count": 16
+            },
+            {
+              "object_id": "twig",
+              "weight": 0.25,
+              "variant_count": 16
+            },
+            {
+              "object_id": "frozen_leaf",
+              "weight": 0.25,
+              "variant_count": 16
+            },
+            {
+              "object_id": "small_stone",
+              "weight": 0.2,
+              "variant_count": 32
+            }
+          ],
+          "z_offset": 1,
+          "scale_range": [
+            0.1,
+            0.18
+          ]
+        },
+        {
+          "layer": 3,
+          "name": "ground_flora",
+          "coverage": 0.7,
+          "objects": [
+            {
+              "object_id": "frozen_grass",
+              "weight": 0.4,
+              "variant_count": 32
+            },
+            {
+              "object_id": "hardy_moss",
+              "weight": 0.35,
+              "variant_count": 32
+            },
+            {
+              "object_id": "lichen",
+              "weight": 0.25,
+              "variant_count": 8
+            }
+          ],
+          "z_offset": 2,
+          "scale_range": [
+            0.25,
+            0.4
+          ]
+        },
+        {
+          "layer": 4,
+          "name": "accent",
+          "coverage": 0.1,
+          "objects": [
+            {
+              "object_id": "toadstool",
+              "weight": 0.4,
+              "variant_count": 8
+            },
+            {
+              "object_id": "bracket_fungus",
+              "weight": 0.3,
+              "variant_count": 8
+            },
+            {
+              "object_id": "wildflower",
+              "weight": 0.3,
+              "variant_count": 16
+            }
+          ],
+          "z_offset": 3,
+          "scale_range": [
+            0.15,
+            0.25
+          ]
+        },
+        {
+          "layer": 5,
+          "name": "large_objects",
+          "coverage": 0.02,
+          "cluster_mode": "grouped",
+          "cluster_size": [
+            3,
+            8
+          ],
+          "cluster_spacing": [
+            12,
+            30
+          ],
+          "objects": [
+            {
+              "object_id": "spruce_tree",
+              "weight": 0.35,
+              "variant_count": 16
+            },
+            {
+              "object_id": "fir_tree",
+              "weight": 0.3,
+              "variant_count": 16
+            },
+            {
+              "object_id": "mossy_boulder",
+              "weight": 0.2,
+              "variant_count": 8
+            },
+            {
+              "object_id": "fallen_log",
+              "weight": 0.15,
+              "variant_count": 8
+            }
+          ],
+          "z_offset": 4,
+          "scale_range": [
+            0.6,
+            0.9
+          ]
+        }
+      ]
+    },
+    {
+      "name": "high_elevation",
+      "range": [
+        0.65,
+        1.0
+      ],
+      "layers": [
+        {
+          "layer": 1,
+          "name": "ground_texture",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "packed_snow",
+              "weight": 0.45,
+              "variant_count": 16
+            },
+            {
+              "object_id": "frozen_gravel",
+              "weight": 0.3,
+              "variant_count": 32
+            },
+            {
+              "object_id": "frozen_soil",
+              "weight": 0.25,
+              "variant_count": 32
+            }
+          ],
+          "z_offset": 0,
+          "scale_range": [
+            0.18,
+            0.25
+          ]
+        },
+        {
+          "layer": 2,
+          "name": "small_debris",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "ice_crystal",
+              "weight": 0.4,
+              "variant_count": 16
+            },
+            {
+              "object_id": "frost_crystal",
+              "weight": 0.3,
+              "variant_count": 16
+            },
+            {
+              "object_id": "frozen_pebble",
+              "weight": 0.3,
+              "variant_count": 16
+            }
+          ],
+          "z_offset": 1,
+          "scale_range": [
+            0.1,
+            0.18
+          ]
+        },
+        {
+          "layer": 3,
+          "name": "sparse_flora",
+          "coverage": 0.25,
+          "objects": [
+            {
+              "object_id": "frozen_grass",
+              "weight": 0.5,
+              "variant_count": 32
+            },
+            {
+              "object_id": "lichen",
+              "weight": 0.3,
+              "variant_count": 8
+            },
+            {
+              "object_id": "hardy_moss",
+              "weight": 0.2,
+              "variant_count": 32
+            }
+          ],
+          "z_offset": 2,
+          "scale_range": [
+            0.15,
+            0.28
+          ]
+        },
+        {
+          "layer": 4,
+          "name": "large_objects",
+          "coverage": 0.01,
+          "objects": [
+            {
+              "object_id": "frozen_boulder",
+              "weight": 0.4,
+              "variant_count": 8
+            },
+            {
+              "object_id": "ice_formation",
+              "weight": 0.35,
+              "variant_count": 8
+            },
+            {
+              "object_id": "dead_shrub",
+              "weight": 0.25,
+              "variant_count": 8
+            }
+          ],
+          "z_offset": 3,
+          "scale_range": [
+            0.5,
+            0.8
+          ]
+        }
+      ]
+    }
+  ]
+}

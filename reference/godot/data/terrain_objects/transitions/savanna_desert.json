@@ -1,0 +1,27 @@
+{
+  "biome_a": "savanna",
+  "biome_b": "desert",
+  "blend_width": 5,
+  "edge_objects": [
+    {
+      "object_id": "dry_grass",
+      "density": 0.2
+    },
+    {
+      "object_id": "dry_bush",
+      "density": 0.08
+    },
+    {
+      "object_id": "sandstone_boulder",
+      "density": 0.04
+    },
+    {
+      "object_id": "wind_sand_drift",
+      "density": 0.12
+    }
+  ],
+  "gradient": {
+    "biome_a_objects": "linear_fadeout",
+    "biome_b_objects": "linear_fadein"
+  }
+}

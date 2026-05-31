@@ -1,0 +1,22 @@
+{
+  "biome_terrain": {
+    "grassland": ["grass_seamless_00"],
+    "forest": ["grass_seamless_00"],
+    "dense_forest": ["grass_seamless_00"],
+    "ocean": ["water_seamless_00"],
+    "lake": ["water_seamless_00"],
+    "river": ["water_seamless_00"],
+    "beach": ["sand_seamless_00"],
+    "desert": ["sand_seamless_00"],
+    "savanna": ["sand_seamless_00"],
+    "steppe": ["dirt_seamless_00"],
+    "mountains": ["stone_seamless_00"],
+    "tundra": ["snow_seamless_00"],
+    "arctic": ["snow_seamless_00"],
+    "taiga": ["snow_seamless_00"],
+    "swamp": ["water_seamless_00"],
+    "tropical_forest": ["grass_seamless_00"],
+    "volcanic": ["stone_seamless_00"]
+  },
+  "road_tiles": ["dirt_seamless_00"]
+}

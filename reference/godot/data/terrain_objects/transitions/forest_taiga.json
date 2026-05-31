@@ -1,0 +1,27 @@
+{
+  "biome_a": "forest",
+  "biome_b": "taiga",
+  "blend_width": 4,
+  "edge_objects": [
+    {
+      "object_id": "pine_tree",
+      "density": 0.1
+    },
+    {
+      "object_id": "spruce_tree",
+      "density": 0.08
+    },
+    {
+      "object_id": "ground_moss",
+      "density": 0.15
+    },
+    {
+      "object_id": "pine_needle_bed",
+      "density": 0.12
+    }
+  ],
+  "gradient": {
+    "biome_a_objects": "noise_blend",
+    "biome_b_objects": "noise_blend"
+  }
+}

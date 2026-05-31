@@ -1,0 +1,30 @@
+{
+  "id": "frozen_gravel",
+  "category": "ground_cover/gravel",
+  "ontology": "inanimate",
+  "blocking": false,
+  "pixel_size": 32,
+  "anchor": "center",
+  "size": [
+    1,
+    1
+  ],
+  "durability": {
+    "hp": 50,
+    "stages": [
+      {
+        "stage": "intact",
+        "hp_threshold": 100
+      }
+    ]
+  },
+  "variance": {
+    "scale_variance": {
+      "type": "float",
+      "range": [
+        0.85,
+        1.15
+      ]
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "biome_a": "forest",
+  "biome_b": "dense_forest",
+  "blend_width": 3,
+  "edge_objects": [
+    {
+      "object_id": "hanging_vine",
+      "density": 0.12
+    },
+    {
+      "object_id": "ground_moss",
+      "density": 0.18
+    },
+    {
+      "object_id": "toadstool",
+      "density": 0.08
+    },
+    {
+      "object_id": "climbing_vine",
+      "density": 0.1
+    }
+  ],
+  "gradient": {
+    "biome_a_objects": "linear_fadeout",
+    "biome_b_objects": "linear_fadein"
+  }
+}

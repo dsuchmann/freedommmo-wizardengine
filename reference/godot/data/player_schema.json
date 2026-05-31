@@ -1,0 +1,62 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"title": "FreedomMMO Player Data",
+	"description": "Schema for player save data. Compatible with future PostgreSQL/Supabase migration.",
+	"type": "object",
+	"required": ["version", "peer_id", "username", "profile", "position", "stats", "inventory", "progress"],
+	"properties": {
+		"version": { "type": "integer", "description": "Schema version for migration support" },
+		"peer_id": { "type": "integer" },
+		"username": { "type": "string", "minLength": 1, "maxLength": 32 },
+		"profile": {
+			"type": "object",
+			"required": ["display_name", "species", "created_at", "last_login", "play_time_seconds"],
+			"properties": {
+				"display_name": { "type": "string" },
+				"species": { "type": "string", "enum": ["human", "elf", "dwarf", "orc", "goblin", "alien", "dragon"] },
+				"created_at": { "type": "number" },
+				"last_login": { "type": "number" },
+				"play_time_seconds": { "type": "number" }
+			}
+		},
+		"position": {
+			"type": "object",
+			"required": ["x", "y", "region"],
+			"properties": {
+				"x": { "type": "number" },
+				"y": { "type": "number" },
+				"region": { "type": "string" }
+			}
+		},
+		"stats": {
+			"type": "object",
+			"required": ["level", "experience", "health", "max_health", "time_remaining"],
+			"properties": {
+				"level": { "type": "integer", "minimum": 1 },
+				"experience": { "type": "integer", "minimum": 0 },
+				"health": { "type": "number", "minimum": 0 },
+				"max_health": { "type": "number", "minimum": 1 },
+				"time_remaining": { "type": "number", "minimum": 0, "description": "Core game mechanic: finite time resource" }
+			}
+		},
+		"inventory": {
+			"type": "object",
+			"required": ["slots", "max_slots", "currency"],
+			"properties": {
+				"slots": { "type": "array", "items": { "type": "object" } },
+				"max_slots": { "type": "integer", "minimum": 1 },
+				"currency": { "type": "integer", "minimum": 0 }
+			}
+		},
+		"progress": {
+			"type": "object",
+			"required": ["quests_completed", "quests_active", "discoveries", "achievements"],
+			"properties": {
+				"quests_completed": { "type": "array", "items": { "type": "string" } },
+				"quests_active": { "type": "array", "items": { "type": "string" } },
+				"discoveries": { "type": "array", "items": { "type": "string" } },
+				"achievements": { "type": "array", "items": { "type": "string" } }
+			}
+		}
+	}
+}

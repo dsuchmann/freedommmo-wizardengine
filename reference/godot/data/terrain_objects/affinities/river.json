@@ -1,0 +1,92 @@
+{
+  "biome_id": "river",
+  "display_name": "River",
+  "ambient": {
+    "wind": 0.15,
+    "moisture": 1.0
+  },
+  "object_pools": [
+    {
+      "object_id": "river_current",
+      "density": 0.21,
+      "cluster_mode": "perlin",
+      "variant_count": 4,
+      "lifecycle_distribution": {
+        "calm": 0.6,
+        "rippling": 0.3,
+        "churning": 0.1
+      }
+    },
+    {
+      "object_id": "river_stone",
+      "density": 0.03,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.7,
+        "cracked": 0.2,
+        "crumbled": 0.1
+      }
+    },
+    {
+      "object_id": "river_weed",
+      "density": 0.04,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "sprout": 0.05,
+        "growing": 0.15,
+        "mature": 0.65,
+        "dry": 0.1,
+        "dead": 0.05
+      },
+      "cluster_scale": 0.08
+    },
+    {
+      "object_id": "reed",
+      "density": 0.4,
+      "cluster_mode": "edge_follow",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "sprout": 0.05,
+        "growing": 0.15,
+        "mature": 0.65,
+        "dry": 0.1,
+        "dead": 0.05
+      }
+    },
+    {
+      "object_id": "rapid_foam",
+      "density": 0.015,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "calm": 0.6,
+        "rippling": 0.3,
+        "churning": 0.1
+      }
+    },
+    {
+      "object_id": "driftwood",
+      "density": 0.0045,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "fresh": 0.3,
+        "weathered": 0.5,
+        "bleached": 0.2
+      }
+    },
+    {
+      "object_id": "pebble",
+      "density": 0.024,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.7,
+        "cracked": 0.2,
+        "crumbled": 0.1
+      }
+    }
+  ]
+}

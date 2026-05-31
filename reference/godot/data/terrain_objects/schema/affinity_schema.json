@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://freedommmo/terrain_objects/schema/affinity_schema.json",
+  "title": "BiomeAffinity",
+  "description": "Validates a biome affinity file defining which objects appear in a biome and how",
+  "type": "object",
+  "required": ["biome_id", "object_pools"],
+  "additionalProperties": false,
+  "properties": {
+    "biome_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "Snake_case biome identifier"
+    },
+    "object_pools": {
+      "type": "array",
+      "description": "Ordered list of object placement pools for this biome",
+      "items": { "$ref": "#/$defs/pool_entry" },
+      "minItems": 0
+    },
+    "ambient": {
+      "$ref": "#/$defs/ambient_settings"
+    }
+  },
+  "$defs": {
+    "pool_entry": {
+      "type": "object",
+      "required": ["object_id", "density"],
+      "additionalProperties": false,
+      "properties": {
+        "object_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "References an object definition ID"
+        },
+        "density": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Probability 0-1 of placement per eligible tile"
+        },
+        "cluster_mode": {
+          "type": "string",
+          "enum": ["perlin", "scatter", "edge_follow", "water_follow"],
+          "description": "Spatial distribution strategy"
+        },
+        "cluster_scale": {
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMinimum": 0,
+          "description": "Noise frequency scale for perlin clustering"
+        },
+        "elevation_range": {
+          "type": "array",
+          "description": "[min, max] normalized elevation 0-1",
+          "items": { "type": "number", "minimum": 0, "maximum": 1 },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "moisture_range": {
+          "type": "array",
+          "description": "[min, max] normalized moisture 0-1",
+          "items": { "type": "number", "minimum": 0, "maximum": 1 },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "slope_max": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Maximum normalized slope where this object can spawn"
+        },
+        "distance_rules": {
+          "$ref": "#/$defs/distance_rules"
+        },
+        "lifecycle_distribution": {
+          "type": "object",
+          "description": "Map of phase_id -> relative weight for initial phase assignment",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "variant_count": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of visual variant IDs to cycle through"
+        }
+      }
+    },
+    "distance_rules": {
+      "type": "object",
+      "description": "Minimum and maximum tile distances to geographic features",
+      "additionalProperties": false,
+      "properties": {
+        "min_water": {
+          "oneOf": [
+            { "type": "integer", "minimum": 0 },
+            { "type": "null" }
+          ],
+          "description": "Minimum tile distance from water (null = unconstrained)"
+        },
+        "max_water": {
+          "oneOf": [
+            { "type": "integer", "minimum": 0 },
+            { "type": "null" }
+          ],
+          "description": "Maximum tile distance from water (null = unconstrained)"
+        },
+        "min_road": {
+          "oneOf": [
+            { "type": "integer", "minimum": 0 },
+            { "type": "null" }
+          ],
+          "description": "Minimum tile distance from road/path (null = unconstrained)"
+        },
+        "max_road": {
+          "oneOf": [
+            { "type": "integer", "minimum": 0 },
+            { "type": "null" }
+          ],
+          "description": "Maximum tile distance from road/path (null = unconstrained)"
+        }
+      }
+    },
+    "ambient_settings": {
+      "type": "object",
+      "description": "Biome-wide ambient environment parameters",
+      "additionalProperties": false,
+      "properties": {
+        "wind_baseline": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Baseline wind strength 0-1 applied to all animate objects"
+        },
+        "moisture_baseline": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Baseline moisture level 0-1 affecting object appearance and interactions"
+        },
+        "light_filter": {
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "Color filter key applied to the terrain object layer (e.g. canopy_green, fog_grey)"
+            },
+            { "type": "null" }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,1 @@
+Top-down pixel art {stage} {species} rock, {variant_desc}, 32x32 pixels, transparent background, 2D RPG style. Damage stage: {stage_desc}.

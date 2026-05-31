@@ -1,0 +1,23 @@
+{
+  "biome_a": "grassland",
+  "biome_b": "river",
+  "blend_width": 2,
+  "edge_objects": [
+    {
+      "object_id": "reed",
+      "density": 0.15
+    },
+    {
+      "object_id": "pebble",
+      "density": 0.12
+    },
+    {
+      "object_id": "river_weed",
+      "density": 0.08
+    }
+  ],
+  "gradient": {
+    "biome_a_objects": "linear_fadeout",
+    "biome_b_objects": "linear_fadein"
+  }
+}

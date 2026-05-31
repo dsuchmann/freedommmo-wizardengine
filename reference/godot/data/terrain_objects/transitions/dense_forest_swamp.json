@@ -1,0 +1,27 @@
+{
+  "biome_a": "dense_forest",
+  "biome_b": "swamp",
+  "blend_width": 4,
+  "edge_objects": [
+    {
+      "object_id": "mossy_log",
+      "density": 0.08
+    },
+    {
+      "object_id": "toadstool",
+      "density": 0.1
+    },
+    {
+      "object_id": "wet_mud",
+      "density": 0.12
+    },
+    {
+      "object_id": "hanging_moss",
+      "density": 0.12
+    }
+  ],
+  "gradient": {
+    "biome_a_objects": "noise_blend",
+    "biome_b_objects": "noise_blend"
+  }
+}

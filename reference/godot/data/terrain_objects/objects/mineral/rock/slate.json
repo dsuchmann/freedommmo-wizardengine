@@ -1,0 +1,50 @@
+{
+  "id": "slate",
+  "category": "mineral/rock",
+  "ontology": "inanimate",
+  "blocking": false,
+  "pixel_size": 32,
+  "anchor": "bottom_center",
+  "size": [
+    1,
+    1
+  ],
+  "durability": {
+    "hp": 100,
+    "resistances": {
+      "blunt": 0.5,
+      "sharp": 0.8,
+      "fire": 0.9
+    },
+    "stages": [
+      {
+        "stage": "intact",
+        "hp_threshold": 100
+      },
+      {
+        "stage": "cracked",
+        "hp_threshold": 50
+      },
+      {
+        "stage": "shattered",
+        "hp_threshold": 0
+      }
+    ]
+  },
+  "variance": {
+    "scale_variance": {
+      "type": "float",
+      "range": [
+        0.8,
+        1.2
+      ]
+    },
+    "color_shift": {
+      "type": "float",
+      "range": [
+        -0.1,
+        0.1
+      ]
+    }
+  }
+}

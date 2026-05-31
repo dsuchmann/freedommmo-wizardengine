@@ -1,0 +1,27 @@
+{
+  "biome_a": "tundra",
+  "biome_b": "taiga",
+  "blend_width": 4,
+  "edge_objects": [
+    {
+      "object_id": "hardy_moss",
+      "density": 0.12
+    },
+    {
+      "object_id": "frozen_grass",
+      "density": 0.1
+    },
+    {
+      "object_id": "pine_tree",
+      "density": 0.06
+    },
+    {
+      "object_id": "packed_snow",
+      "density": 0.1
+    }
+  ],
+  "gradient": {
+    "biome_a_objects": "noise_blend",
+    "biome_b_objects": "noise_blend"
+  }
+}

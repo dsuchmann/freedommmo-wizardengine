@@ -1,0 +1,13 @@
+{
+  "template_id": "well",
+  "category": "utility",
+  "footprint": { "width": 1, "height": 1 },
+  "walls": { "material": "stone", "pattern": "none" },
+  "floor": { "material": "stone_slab" },
+  "roof": { "material": "none" },
+  "interior_features": [
+    { "type": "water_source", "pos": [0, 0], "provides": ["water"] }
+  ],
+  "requires": { "settlement_tier_min": "hamlet" },
+  "npc_slots": []
+}

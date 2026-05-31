@@ -1,0 +1,27 @@
+{
+  "biome_a": "steppe",
+  "biome_b": "tundra",
+  "blend_width": 4,
+  "edge_objects": [
+    {
+      "object_id": "hardy_moss",
+      "density": 0.1
+    },
+    {
+      "object_id": "frozen_grass",
+      "density": 0.12
+    },
+    {
+      "object_id": "permafrost_crack",
+      "density": 0.06
+    },
+    {
+      "object_id": "pebble",
+      "density": 0.1
+    }
+  ],
+  "gradient": {
+    "biome_a_objects": "linear_fadeout",
+    "biome_b_objects": "linear_fadein"
+  }
+}

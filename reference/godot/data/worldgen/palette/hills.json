@@ -1,0 +1,21 @@
+{
+  "name": "hills",
+  "ground": {
+    "base_color": "#6b8e5a",
+    "variants": ["#7b9e6a", "#5b7e4a", "#8bae7a", "#4b6e3a"],
+    "roughness": 0.8,
+    "specular": 0.15
+  },
+  "cliff": {
+    "base_color": "#5a6b4a",
+    "variants": ["#6a7b5a", "#4a5b3a", "#7a8b6a"],
+    "roughness": 0.85,
+    "specular": 0.1
+  },
+  "water": {
+    "base_color": "#3a7ca8",
+    "foam_color": "#ffffff",
+    "roughness": 0.1,
+    "specular": 0.9
+  }
+}

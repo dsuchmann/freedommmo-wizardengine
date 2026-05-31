@@ -1,0 +1,22 @@
+{
+  "id": "fruit",
+  "category": "state_reactive",
+  "trigger": {
+    "type": "state_change"
+  },
+  "animation": {
+    "frames": [
+      4,
+      6
+    ],
+    "duration_ms": [
+      800,
+      1500
+    ],
+    "loop": false,
+    "blend_mode": "overlay"
+  },
+  "effects": {
+    "state_transition": "fruiting"
+  }
+}

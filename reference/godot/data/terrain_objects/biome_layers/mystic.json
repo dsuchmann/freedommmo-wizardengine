@@ -1,0 +1,150 @@
+{
+  "biome_id": "mystic",
+  "layers": [
+    {
+      "layer": 1,
+      "name": "ground_texture",
+      "coverage": 1.0,
+      "objects": [
+        {
+          "object_id": "mystic_ground",
+          "weight": 0.5,
+          "variant_count": 64
+        },
+        {
+          "object_id": "ethereal_soil",
+          "weight": 0.3,
+          "variant_count": 16
+        },
+        {
+          "object_id": "glowing_earth",
+          "weight": 0.2,
+          "variant_count": 16
+        }
+      ],
+      "z_offset": 0,
+      "scale_range": [
+        0.55,
+        0.75
+      ]
+    },
+    {
+      "layer": 2,
+      "name": "small_debris",
+      "coverage": 1.0,
+      "objects": [
+        {
+          "object_id": "crystal_fragment",
+          "weight": 0.4,
+          "variant_count": 16
+        },
+        {
+          "object_id": "glowing_particle",
+          "weight": 0.35,
+          "variant_count": 16
+        },
+        {
+          "object_id": "amethyst_geode",
+          "weight": 0.25,
+          "variant_count": 8
+        }
+      ],
+      "z_offset": 1,
+      "scale_range": [
+        0.12,
+        0.22
+      ]
+    },
+    {
+      "layer": 3,
+      "name": "ground_flora",
+      "coverage": 1.0,
+      "objects": [
+        {
+          "object_id": "ground_moss",
+          "weight": 0.35,
+          "variant_count": 32
+        },
+        {
+          "object_id": "glowing_mushroom",
+          "weight": 0.35,
+          "variant_count": 16
+        },
+        {
+          "object_id": "hardy_moss",
+          "weight": 0.3,
+          "variant_count": 16
+        }
+      ],
+      "z_offset": 2,
+      "scale_range": [
+        0.35,
+        0.65
+      ]
+    },
+    {
+      "layer": 4,
+      "name": "accent_flora",
+      "coverage": 0.2,
+      "objects": [
+        {
+          "object_id": "arcane_flower",
+          "weight": 0.3,
+          "variant_count": 16
+        },
+        {
+          "object_id": "spirit_wisp",
+          "weight": 0.25,
+          "variant_count": 16
+        },
+        {
+          "object_id": "runic_stone",
+          "weight": 0.25,
+          "variant_count": 8
+        },
+        {
+          "object_id": "ethereal_vine",
+          "weight": 0.2,
+          "variant_count": 8
+        }
+      ],
+      "z_offset": 3,
+      "scale_range": [
+        0.25,
+        0.45
+      ]
+    },
+    {
+      "layer": 5,
+      "name": "large_objects",
+      "coverage": 0.02,
+      "objects": [
+        {
+          "object_id": "crystal_cluster",
+          "weight": 0.35,
+          "variant_count": 8
+        },
+        {
+          "object_id": "dead_tree",
+          "weight": 0.35,
+          "variant_count": 8
+        },
+        {
+          "object_id": "mist_pool",
+          "weight": 0.15,
+          "variant_count": 8
+        },
+        {
+          "object_id": "gem_deposit",
+          "weight": 0.15,
+          "variant_count": 8
+        }
+      ],
+      "z_offset": 4,
+      "scale_range": [
+        0.7,
+        1.0
+      ]
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "biome_a": "desert",
+  "biome_b": "mountains",
+  "blend_width": 3,
+  "edge_objects": [
+    {
+      "object_id": "sandstone_boulder",
+      "density": 0.1
+    },
+    {
+      "object_id": "scree",
+      "density": 0.12
+    },
+    {
+      "object_id": "flat_rock",
+      "density": 0.08
+    },
+    {
+      "object_id": "pebble",
+      "density": 0.1
+    }
+  ],
+  "gradient": {
+    "biome_a_objects": "linear_fadeout",
+    "biome_b_objects": "linear_fadein"
+  }
+}

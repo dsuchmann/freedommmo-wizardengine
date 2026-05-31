@@ -1,0 +1,79 @@
+{
+  "id": "spruce_tree_stump",
+  "category": "structure_natural/log",
+  "ontology": "inanimate",
+  "blocking": false,
+  "pixel_size": 32,
+  "anchor": "bottom_center",
+  "size": [
+    1,
+    1
+  ],
+  "durability": {
+    "hp": 40,
+    "resistances": {
+      "blunt": 0.8,
+      "sharp": 0.6,
+      "fire": 0.4,
+      "frost": 0.9
+    },
+    "stages": [
+      {
+        "stage": "fresh",
+        "hp_threshold": 40,
+        "sprite_set": "spruce_tree_stump/fresh",
+        "interactions": [
+          "idle",
+          "chop",
+          "burn_ignite",
+          "fungal_growth",
+          "decompose"
+        ]
+      },
+      {
+        "stage": "rotting",
+        "hp_threshold": 0,
+        "sprite_set": "spruce_tree_stump/rotting",
+        "interactions": [
+          "idle",
+          "fungal_growth",
+          "decompose",
+          "overgrowth"
+        ]
+      }
+    ]
+  },
+  "variance": {
+    "scale_variance": {
+      "type": "float",
+      "range": [
+        0.9,
+        1.1
+      ]
+    },
+    "color_shift": {
+      "type": "float",
+      "range": [
+        -0.05,
+        0.05
+      ]
+    }
+  },
+  "break_products": {
+    "on_chop": [
+      {
+        "id": "wood_scrap",
+        "count": [
+          1,
+          2
+        ]
+      }
+    ],
+    "on_burn": [
+      {
+        "id": "ash_pile",
+        "count": 1
+      }
+    ]
+  }
+}

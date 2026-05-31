@@ -1,0 +1,31 @@
+{
+  "town_id": "forest_hamlet_01",
+  "name": "Mosshollow",
+  "theme": "forest_hamlet",
+  "size": [44, 44],
+  "zones": [
+    {"id": "clearing", "type": "plaza", "rect": [16, 16, 10, 10], "ground": "dirt"}
+  ],
+  "buildings": [
+    {"template": "house", "pos": [6, 8], "facing": "south", "label": "woodcutter_cabin_1"},
+    {"template": "house", "pos": [28, 8], "facing": "south", "label": "woodcutter_cabin_2"},
+    {"template": "house", "pos": [16, 32], "facing": "north", "label": "herbalist_hut"},
+    {"template": "well", "pos": [20, 20], "facing": "south", "label": "village_well"}
+  ],
+  "roads": [
+    {"type": "dirt", "width": 3, "path": [[8, 14], [20, 20]]},
+    {"type": "dirt", "width": 3, "path": [[30, 14], [20, 20]]},
+    {"type": "dirt", "width": 3, "path": [[18, 32], [20, 20]]}
+  ],
+  "decorations": [
+    {"type": "log_pile", "pos": [4, 10]},
+    {"type": "log_pile", "pos": [30, 10]},
+    {"type": "flower_pot", "pos": [17, 34]},
+    {"type": "barrel", "pos": [7, 10]}
+  ],
+  "npcs": [
+    {"role": "woodcutter", "home": "woodcutter_cabin_1", "workplace": "clearing"},
+    {"role": "woodcutter", "home": "woodcutter_cabin_2", "workplace": "clearing"},
+    {"role": "herbalist", "home": "herbalist_hut", "workplace": "herbalist_hut"}
+  ]
+}

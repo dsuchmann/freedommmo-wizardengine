@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://gro7hqwjlofb"
+path="res://.godot/imported/tile_compute.glsl-bb4896e39c1bfbf78e375cad3dba0a26.res"
+
+[deps]
+
+source_file="res://shaders/tile_compute.glsl"
+dest_files=["res://.godot/imported/tile_compute.glsl-bb4896e39c1bfbf78e375cad3dba0a26.res"]
+
+[params]
+

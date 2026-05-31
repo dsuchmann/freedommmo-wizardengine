@@ -1,0 +1,121 @@
+{
+  "biome_id": "steppe",
+  "display_name": "Steppe",
+  "ambient": {
+    "wind": 0.45,
+    "moisture": 0.15
+  },
+  "object_pools": [
+    {
+      "object_id": "short_grass",
+      "density": 0.6,
+      "cluster_mode": "perlin",
+      "variant_count": 30,
+      "lifecycle_distribution": {
+        "sprout": 0.05,
+        "growing": 0.15,
+        "mature": 0.65,
+        "dry": 0.1,
+        "dead": 0.05
+      },
+      "cluster_scale": 0.08
+    },
+    {
+      "object_id": "dry_grass",
+      "density": 0.5,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "sprout": 0.05,
+        "growing": 0.15,
+        "mature": 0.65,
+        "dry": 0.1,
+        "dead": 0.05
+      },
+      "cluster_scale": 0.08
+    },
+    {
+      "object_id": "cracked_earth",
+      "density": 0.4,
+      "cluster_mode": "perlin",
+      "variant_count": 10,
+      "lifecycle_distribution": {
+        "fresh": 0.4,
+        "deep": 0.4,
+        "healed": 0.2
+      },
+      "cluster_scale": 0.07
+    },
+    {
+      "object_id": "flat_rock",
+      "density": 0.024,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.7,
+        "cracked": 0.2,
+        "crumbled": 0.1
+      }
+    },
+    {
+      "object_id": "slate_slab",
+      "density": 0.015,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.7,
+        "cracked": 0.2,
+        "crumbled": 0.1
+      }
+    },
+    {
+      "object_id": "pebble",
+      "density": 0.03,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.7,
+        "cracked": 0.2,
+        "crumbled": 0.1
+      }
+    },
+    {
+      "object_id": "scrub_brush",
+      "density": 0.01,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "growing": 0.15,
+        "mature": 0.55,
+        "flowering": 0.15,
+        "dying": 0.1
+      }
+    },
+    {
+      "object_id": "gravel_patch",
+      "density": 0.4,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.7,
+        "cracked": 0.2,
+        "crumbled": 0.1
+      },
+      "cluster_scale": 0.07
+    },
+    {
+      "object_id": "tundra_shrub",
+      "density": 0.0075,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "growing": 0.15,
+        "mature": 0.55,
+        "flowering": 0.15,
+        "dying": 0.1
+      }
+    }
+  ]
+}

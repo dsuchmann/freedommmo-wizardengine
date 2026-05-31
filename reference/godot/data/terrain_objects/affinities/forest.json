@@ -1,0 +1,274 @@
+{
+  "biome_id": "forest",
+  "display_name": "Forest",
+  "ambient": {
+    "wind": 0.15,
+    "moisture": 0.6,
+    "light_filter": "green_canopy"
+  },
+  "object_pools": [
+    {
+      "object_id": "forest_floor",
+      "density": 0.7,
+      "cluster_mode": "perlin",
+      "variant_count": 10,
+      "cluster_scale": 0.08
+    },
+    {
+      "object_id": "oak_tree",
+      "density": 0.02,
+      "cluster_mode": "perlin",
+      "variant_count": 4,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "sapling": 0.1,
+        "juvenile": 0.15,
+        "mature": 0.5,
+        "old_growth": 0.15,
+        "dying": 0.05
+      },
+      "cluster_scale": 0.02
+    },
+    {
+      "object_id": "birch_tree",
+      "density": 0.012,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "sapling": 0.1,
+        "juvenile": 0.15,
+        "mature": 0.5,
+        "old_growth": 0.15,
+        "dying": 0.05
+      },
+      "cluster_scale": 0.02
+    },
+    {
+      "object_id": "maple_tree",
+      "density": 0.008,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "sapling": 0.1,
+        "juvenile": 0.15,
+        "mature": 0.5,
+        "old_growth": 0.15,
+        "dying": 0.05
+      },
+      "cluster_scale": 0.02
+    },
+    {
+      "object_id": "elm_tree",
+      "density": 0.0064,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "sapling": 0.1,
+        "juvenile": 0.15,
+        "mature": 0.5,
+        "old_growth": 0.15,
+        "dying": 0.05
+      },
+      "cluster_scale": 0.02
+    },
+    {
+      "object_id": "beech_tree",
+      "density": 0.0048,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "sapling": 0.1,
+        "juvenile": 0.15,
+        "mature": 0.5,
+        "old_growth": 0.15,
+        "dying": 0.05
+      },
+      "cluster_scale": 0.02
+    },
+    {
+      "object_id": "flowering_bush",
+      "density": 0.03,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "growing": 0.15,
+        "mature": 0.55,
+        "flowering": 0.15,
+        "dying": 0.1
+      },
+      "cluster_scale": 0.05
+    },
+    {
+      "object_id": "berry_bush",
+      "density": 0.015,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "growing": 0.15,
+        "mature": 0.55,
+        "flowering": 0.15,
+        "dying": 0.1
+      },
+      "cluster_scale": 0.05
+    },
+    {
+      "object_id": "forest_fern",
+      "density": 0.06,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "sprout": 0.05,
+        "growing": 0.15,
+        "mature": 0.65,
+        "dry": 0.1,
+        "dead": 0.05
+      },
+      "cluster_scale": 0.04
+    },
+    {
+      "object_id": "ground_moss",
+      "density": 0.6,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "growing": 0.3,
+        "lush": 0.5,
+        "dry": 0.2
+      },
+      "cluster_scale": 0.1
+    },
+    {
+      "object_id": "tree_moss",
+      "density": 0.06,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "growing": 0.3,
+        "lush": 0.5,
+        "dry": 0.2
+      },
+      "cluster_scale": 0.1
+    },
+    {
+      "object_id": "toadstool",
+      "density": 0.024,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "pinhead": 0.1,
+        "growing": 0.25,
+        "mature": 0.5,
+        "sporing": 0.15
+      },
+      "cluster_scale": 0.05
+    },
+    {
+      "object_id": "morel",
+      "density": 0.012,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "pinhead": 0.1,
+        "growing": 0.25,
+        "mature": 0.5,
+        "sporing": 0.15
+      },
+      "cluster_scale": 0.05
+    },
+    {
+      "object_id": "fallen_log",
+      "density": 0.0075,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "fresh": 0.2,
+        "mossy": 0.5,
+        "rotting": 0.3
+      }
+    },
+    {
+      "object_id": "hollow_log",
+      "density": 0.003,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.5,
+        "rotting": 0.5
+      }
+    },
+    {
+      "object_id": "mossy_boulder",
+      "density": 0.012,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.7,
+        "cracked": 0.2,
+        "crumbled": 0.1
+      }
+    },
+    {
+      "object_id": "autumn_leaves",
+      "density": 0.5,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "fresh": 0.4,
+        "dry": 0.4,
+        "decomposing": 0.2
+      },
+      "cluster_scale": 0.07
+    },
+    {
+      "object_id": "bird_nest",
+      "density": 0.0045,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "active": 0.5,
+        "empty": 0.5
+      }
+    },
+    {
+      "object_id": "spider_web",
+      "density": 0.003,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.6,
+        "damaged": 0.4
+      }
+    },
+    {
+      "object_id": "climbing_vine",
+      "density": 0.012,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "growing": 0.15,
+        "mature": 0.55,
+        "flowering": 0.15,
+        "dying": 0.1
+      }
+    },
+    {
+      "object_id": "wildflower",
+      "density": 0.02,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "bud": 0.15,
+        "blooming": 0.5,
+        "wilting": 0.2,
+        "seed_head": 0.15
+      }
+    }
+  ]
+}

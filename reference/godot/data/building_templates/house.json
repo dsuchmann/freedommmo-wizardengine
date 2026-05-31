@@ -1,0 +1,20 @@
+{
+  "template_id": "house",
+  "category": "residential",
+  "footprint": { "width": 3, "height": 4 },
+  "walls": {
+    "material": "wood",
+    "pattern": "perimeter",
+    "doors": [{ "side": "south", "offset": 1, "width": 1 }],
+    "windows": [{ "side": "east", "offset": 1 }]
+  },
+  "floor": { "material": "wood_plank" },
+  "roof": { "material": "thatch", "style": "peaked" },
+  "interior_features": [
+    { "type": "bed", "pos": [1, 1], "provides": ["rest"] },
+    { "type": "table", "pos": [1, 2], "provides": ["eating"] },
+    { "type": "storage_chest", "pos": [2, 1], "provides": ["storage"] }
+  ],
+  "requires": { "settlement_tier_min": "hamlet" },
+  "npc_slots": [{ "role": "resident", "sleep": "bed" }]
+}

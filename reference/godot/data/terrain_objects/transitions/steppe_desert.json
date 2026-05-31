@@ -1,0 +1,27 @@
+{
+  "biome_a": "steppe",
+  "biome_b": "desert",
+  "blend_width": 4,
+  "edge_objects": [
+    {
+      "object_id": "cracked_earth",
+      "density": 0.15
+    },
+    {
+      "object_id": "dry_grass",
+      "density": 0.12
+    },
+    {
+      "object_id": "sandstone_slab",
+      "density": 0.06
+    },
+    {
+      "object_id": "pebble",
+      "density": 0.1
+    }
+  ],
+  "gradient": {
+    "biome_a_objects": "linear_fadeout",
+    "biome_b_objects": "linear_fadein"
+  }
+}

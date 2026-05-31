@@ -1,0 +1,22 @@
+{
+  "tile_size": 64,
+  "chunk_size": 128,
+  "noise": {
+    "warp": { "freq": 0.001, "amp": 8.0 },
+    "height": [
+      {"freq": 0.0008, "amp": 0.4, "type": "perlin"},
+      {"freq": 0.003, "amp": 0.25, "type": "perlin"},
+      {"freq": 0.012, "amp": 0.15, "type": "perlin"},
+      {"freq": 0.05, "amp": 0.1, "type": "perlin"},
+      {"freq": 0.2, "amp": 0.05, "type": "perlin"}
+    ],
+    "moisture": [
+      {"freq": 0.005, "amp": 0.6, "type": "perlin"},
+      {"freq": 0.02, "amp": 0.4, "type": "perlin"}
+    ]
+  },
+  "hydro": { "flow_threshold": 240 },
+  "locations": { "radius": 14, "count_min": 8, "count_max": 16 }
+}
+
+

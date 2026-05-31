@@ -1,0 +1,23 @@
+{
+  "id": "overgrowth",
+  "category": "biome_blending",
+  "trigger": {
+    "type": "timer"
+  },
+  "animation": {
+    "frames": [
+      4,
+      8
+    ],
+    "duration_ms": [
+      4000,
+      10000
+    ],
+    "loop": false,
+    "blend_mode": "overlay"
+  },
+  "effects": {
+    "particle": "vine_creep",
+    "state_transition": "overgrown"
+  }
+}

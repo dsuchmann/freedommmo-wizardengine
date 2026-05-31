@@ -1,0 +1,125 @@
+{
+  "biome_id": "ocean",
+  "display_name": "Ocean",
+  "ambient": {
+    "wind": 0.4,
+    "moisture": 1.0
+  },
+  "object_pools": [
+    {
+      "object_id": "ocean_wave",
+      "density": 0.24,
+      "cluster_mode": "perlin",
+      "variant_count": 4,
+      "lifecycle_distribution": {
+        "calm": 0.6,
+        "rippling": 0.3,
+        "churning": 0.1
+      }
+    },
+    {
+      "object_id": "shore_foam",
+      "density": 0.12,
+      "cluster_mode": "edge_follow",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "calm": 0.6,
+        "rippling": 0.3,
+        "churning": 0.1
+      }
+    },
+    {
+      "object_id": "kelp",
+      "density": 0.075,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "moisture_range": [
+        0.8,
+        1.0
+      ],
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "sapling": 0.1,
+        "juvenile": 0.15,
+        "mature": 0.5,
+        "old_growth": 0.15,
+        "dying": 0.05
+      },
+      "cluster_scale": 0.08
+    },
+    {
+      "object_id": "saltwater_algae",
+      "density": 0.1,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "moisture_range": [
+        0.8,
+        1.0
+      ],
+      "lifecycle_distribution": {
+        "pinhead": 0.1,
+        "growing": 0.25,
+        "mature": 0.5,
+        "sporing": 0.15
+      }
+    },
+    {
+      "object_id": "branching_coral",
+      "density": 0.0075,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "young": 0.3,
+        "mature": 0.5,
+        "bleached": 0.2
+      },
+      "cluster_scale": 0.05
+    },
+    {
+      "object_id": "brain_coral",
+      "density": 0.0045,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "young": 0.3,
+        "mature": 0.5,
+        "bleached": 0.2
+      },
+      "cluster_scale": 0.05
+    },
+    {
+      "object_id": "fan_coral",
+      "density": 0.003,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "young": 0.3,
+        "mature": 0.5,
+        "bleached": 0.2
+      },
+      "cluster_scale": 0.05
+    },
+    {
+      "object_id": "shell_scatter",
+      "density": 0.0075,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.7,
+        "cracked": 0.2,
+        "crumbled": 0.1
+      }
+    },
+    {
+      "object_id": "whirlpool",
+      "density": 0.003,
+      "cluster_mode": "perlin",
+      "variant_count": 2,
+      "lifecycle_distribution": {
+        "calm": 0.6,
+        "rippling": 0.3,
+        "churning": 0.1
+      }
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "id": "edge_fade",
+  "category": "biome_blending",
+  "trigger": {
+    "type": "always"
+  },
+  "animation": {
+    "frames": [
+      1,
+      1
+    ],
+    "duration_ms": [
+      0,
+      0
+    ],
+    "loop": true,
+    "blend_mode": "overlay"
+  }
+}

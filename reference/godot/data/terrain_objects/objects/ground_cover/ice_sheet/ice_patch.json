@@ -1,0 +1,70 @@
+{
+  "id": "ice_patch",
+  "category": "ground_cover/ice_sheet",
+  "ontology": "inanimate",
+  "blocking": false,
+  "pixel_size": 32,
+  "anchor": "center",
+  "size": [
+    1,
+    1
+  ],
+  "durability": {
+    "hp": 20,
+    "resistances": {
+      "blunt": 1.0,
+      "sharp": 1.0,
+      "fire": 0.5,
+      "frost": 0.8
+    },
+    "stages": [
+      {
+        "stage": "intact",
+        "hp_threshold": 20,
+        "sprite_set": "ice_patch/intact",
+        "interactions": [
+          "idle",
+          "walk_through",
+          "run_through",
+          "wind",
+          "rain"
+        ]
+      },
+      {
+        "stage": "disturbed",
+        "hp_threshold": 0,
+        "sprite_set": "ice_patch/disturbed",
+        "interactions": [
+          "idle",
+          "walk_through",
+          "run_through",
+          "decompose"
+        ]
+      }
+    ]
+  },
+  "variance": {
+    "scale_variance": {
+      "type": "float",
+      "range": [
+        0.8,
+        1.2
+      ]
+    },
+    "color_shift": {
+      "type": "float",
+      "range": [
+        -0.1,
+        0.1
+      ]
+    }
+  },
+  "break_products": {
+    "on_dig": [
+      {
+        "id": "pebble",
+        "count": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "id": "cliff_face",
+  "category": "mineral/rock",
+  "ontology": "animate",
+  "blocking": true,
+  "pixel_size": 64,
+  "anchor": "bottom_center",
+  "size": [
+    2,
+    2
+  ],
+  "variance": {
+    "scale_variance": {
+      "type": "float",
+      "range": [
+        0.85,
+        1.15
+      ]
+    }
+  },
+  "lifecycle": {
+    "phases": [
+      {
+        "phase": "mature",
+        "duration_days": 365,
+        "size": [
+          2,
+          2
+        ]
+      }
+    ]
+  }
+}

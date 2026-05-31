@@ -1,0 +1,108 @@
+{
+  "id": "mossy_boulder",
+  "category": "mineral/rock",
+  "ontology": "inanimate",
+  "blocking": true,
+  "pixel_size": 32,
+  "anchor": "bottom_center",
+  "size": [
+    2,
+    2
+  ],
+  "durability": {
+    "hp": 100,
+    "resistances": {
+      "blunt": 0.5,
+      "sharp": 0.8,
+      "fire": 0.95,
+      "frost": 0.7
+    },
+    "stages": [
+      {
+        "stage": "intact",
+        "hp_threshold": 100,
+        "sprite_set": "mossy_boulder/intact",
+        "interactions": [
+          "idle",
+          "mine",
+          "erosion",
+          "freeze_cast"
+        ]
+      },
+      {
+        "stage": "cracked",
+        "hp_threshold": 67,
+        "sprite_set": "mossy_boulder/cracked",
+        "interactions": [
+          "idle",
+          "mine",
+          "erosion",
+          "freeze_cast",
+          "crack"
+        ]
+      },
+      {
+        "stage": "fractured",
+        "hp_threshold": 33,
+        "sprite_set": "mossy_boulder/fractured",
+        "interactions": [
+          "idle",
+          "mine",
+          "erosion",
+          "crack",
+          "collapse"
+        ]
+      },
+      {
+        "stage": "shattered",
+        "hp_threshold": 0,
+        "sprite_set": "mossy_boulder/shattered",
+        "interactions": [
+          "idle",
+          "walk_through"
+        ]
+      }
+    ]
+  },
+  "variance": {
+    "scale_variance": {
+      "type": "float",
+      "range": [
+        0.85,
+        1.15
+      ]
+    },
+    "color_shift": {
+      "type": "float",
+      "range": [
+        -0.05,
+        0.05
+      ]
+    }
+  },
+  "break_products": {
+    "on_mine": [
+      {
+        "id": "rock_chunk",
+        "count": [
+          2,
+          4
+        ]
+      },
+      {
+        "id": "pebble",
+        "count": [
+          1,
+          3
+        ]
+      },
+      {
+        "id": "stone_dust",
+        "count": [
+          1,
+          2
+        ]
+      }
+    ]
+  }
+}

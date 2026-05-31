@@ -1,0 +1,22 @@
+{
+  "template_id": "forge",
+  "category": "workshop",
+  "footprint": { "width": 4, "height": 5 },
+  "walls": {
+    "material": "stone",
+    "pattern": "perimeter",
+    "doors": [{ "side": "south", "offset": 1, "width": 1 }],
+    "windows": [{ "side": "east", "offset": 2 }]
+  },
+  "floor": { "material": "stone_slab" },
+  "roof": { "material": "thatch", "style": "peaked" },
+  "interior_features": [
+    { "type": "forge_station", "pos": [1, 1], "provides": ["smelting", "smithing"] },
+    { "type": "anvil", "pos": [2, 1], "provides": ["metalworking"] },
+    { "type": "workbench", "pos": [1, 2], "provides": ["crafting"] },
+    { "type": "storage_chest", "pos": [3, 3], "provides": ["storage"] },
+    { "type": "bed", "pos": [1, 4], "provides": ["rest"] }
+  ],
+  "requires": { "settlement_tier_min": "village", "population_min": 10 },
+  "npc_slots": [{ "role": "blacksmith", "workplace": "forge_station", "sleep": "bed" }]
+}

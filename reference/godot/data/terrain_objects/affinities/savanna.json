@@ -1,0 +1,160 @@
+{
+  "biome_id": "savanna",
+  "display_name": "Savanna",
+  "ambient": {
+    "wind": 0.3,
+    "moisture": 0.2
+  },
+  "object_pools": [
+    {
+      "object_id": "savanna_grass",
+      "density": 0.6,
+      "cluster_mode": "perlin",
+      "variant_count": 10,
+      "cluster_scale": 0.1
+    },
+    {
+      "object_id": "tall_grass",
+      "density": 0.7,
+      "cluster_mode": "perlin",
+      "variant_count": 10,
+      "lifecycle_distribution": {
+        "sprout": 0.05,
+        "growing": 0.15,
+        "mature": 0.65,
+        "dry": 0.1,
+        "dead": 0.05
+      },
+      "cluster_scale": 0.08
+    },
+    {
+      "object_id": "dry_grass",
+      "density": 0.5,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "sprout": 0.05,
+        "growing": 0.15,
+        "mature": 0.65,
+        "dry": 0.1,
+        "dead": 0.05
+      },
+      "cluster_scale": 0.08
+    },
+    {
+      "object_id": "tall_grass",
+      "density": 0.4,
+      "cluster_mode": "perlin",
+      "variant_count": 10,
+      "lifecycle_distribution": {
+        "sprout": 0.05,
+        "growing": 0.15,
+        "mature": 0.65,
+        "dry": 0.1,
+        "dead": 0.05
+      },
+      "cluster_scale": 0.05
+    },
+    {
+      "object_id": "dry_bush",
+      "density": 0.015,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "alive": 0.3,
+        "dry": 0.5,
+        "dead": 0.2
+      }
+    },
+    {
+      "object_id": "thorny_bush",
+      "density": 0.01,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "growing": 0.15,
+        "mature": 0.55,
+        "flowering": 0.15,
+        "dying": 0.1
+      }
+    },
+    {
+      "object_id": "flat_rock",
+      "density": 0.015,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.7,
+        "cracked": 0.2,
+        "crumbled": 0.1
+      }
+    },
+    {
+      "object_id": "granite_boulder",
+      "density": 0.006,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.7,
+        "cracked": 0.2,
+        "crumbled": 0.1
+      }
+    },
+    {
+      "object_id": "termite_mound",
+      "density": 0.0045,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "active": 0.7,
+        "abandoned": 0.3
+      }
+    },
+    {
+      "object_id": "ant_mound",
+      "density": 0.003,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "active": 0.7,
+        "dormant": 0.3
+      }
+    },
+    {
+      "object_id": "bone_pile",
+      "density": 0.0015,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.5,
+        "scattered": 0.5
+      }
+    },
+    {
+      "object_id": "dead_tree",
+      "density": 0.0024,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "standing": 0.6,
+        "fallen": 0.4
+      }
+    },
+    {
+      "object_id": "poplar_tree",
+      "density": 0.0016,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "sapling": 0.1,
+        "juvenile": 0.15,
+        "mature": 0.5,
+        "old_growth": 0.15,
+        "dying": 0.05
+      },
+      "cluster_scale": 0.02
+    }
+  ]
+}

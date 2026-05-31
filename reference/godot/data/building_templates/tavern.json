@@ -1,0 +1,23 @@
+{
+  "template_id": "tavern",
+  "category": "social",
+  "footprint": { "width": 5, "height": 4 },
+  "walls": {
+    "material": "wood",
+    "pattern": "perimeter",
+    "doors": [{ "side": "south", "offset": 2, "width": 1 }],
+    "windows": [{ "side": "west", "offset": 1 }, { "side": "east", "offset": 1 }]
+  },
+  "floor": { "material": "wood_plank" },
+  "roof": { "material": "thatch", "style": "peaked" },
+  "interior_features": [
+    { "type": "bar_counter", "pos": [1, 1], "provides": ["drinks", "socializing"] },
+    { "type": "table", "pos": [3, 1], "provides": ["eating"] },
+    { "type": "table", "pos": [3, 2], "provides": ["eating"] },
+    { "type": "bed", "pos": [1, 3], "provides": ["rest"] },
+    { "type": "bed", "pos": [2, 3], "provides": ["rest"] },
+    { "type": "storage_chest", "pos": [4, 3], "provides": ["storage"] }
+  ],
+  "requires": { "settlement_tier_min": "village", "population_min": 20 },
+  "npc_slots": [{ "role": "innkeeper", "workplace": "bar_counter", "sleep": "bed" }]
+}

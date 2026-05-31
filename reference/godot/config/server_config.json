@@ -1,0 +1,9 @@
+{
+	"max_players": 100,
+	"server_name": "FreedomMMO",
+	"tick_rate": 30,
+	"world_seed": 42,
+	"region_tiles": 512,
+	"tile_size": 64,
+	"chunk_size": 128
+}

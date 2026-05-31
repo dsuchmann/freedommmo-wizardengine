@@ -1,0 +1,27 @@
+{
+  "biome_a": "grassland",
+  "biome_b": "steppe",
+  "blend_width": 5,
+  "edge_objects": [
+    {
+      "object_id": "short_grass",
+      "density": 0.25
+    },
+    {
+      "object_id": "dry_grass",
+      "density": 0.15
+    },
+    {
+      "object_id": "scrub_brush",
+      "density": 0.08
+    },
+    {
+      "object_id": "pebble",
+      "density": 0.1
+    }
+  ],
+  "gradient": {
+    "biome_a_objects": "linear_fadeout",
+    "biome_b_objects": "linear_fadein"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "biome_id": "ocean",
+  "layers": [
+    {
+      "layer": 1,
+      "name": "seafloor",
+      "coverage": 1.0,
+      "objects": [
+        {
+          "object_id": "pebble",
+          "weight": 0.6,
+          "variant_count": 16
+        },
+        {
+          "object_id": "freshwater_algae",
+          "weight": 0.4,
+          "variant_count": 8
+        }
+      ],
+      "z_offset": 0,
+      "scale_range": [
+        0.55,
+        0.75
+      ]
+    },
+    {
+      "layer": 2,
+      "name": "sea_objects",
+      "coverage": 0.1,
+      "objects": [
+        {
+          "object_id": "brain_coral",
+          "weight": 0.3,
+          "variant_count": 8
+        },
+        {
+          "object_id": "fan_coral",
+          "weight": 0.35,
+          "variant_count": 8
+        },
+        {
+          "object_id": "branching_coral",
+          "weight": 0.35,
+          "variant_count": 4
+        }
+      ],
+      "z_offset": 1,
+      "scale_range": [
+        0.12,
+        0.22
+      ]
+    }
+  ]
+}

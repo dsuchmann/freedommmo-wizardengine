@@ -1,0 +1,27 @@
+{
+  "id": "flood",
+  "category": "environmental",
+  "trigger": {
+    "type": "environmental",
+    "weather_field": "water_level",
+    "threshold": 0.6
+  },
+  "animation": {
+    "frames": [
+      4,
+      8
+    ],
+    "duration_ms": [
+      800,
+      2000
+    ],
+    "loop": true,
+    "intensity_variable": true,
+    "blend_mode": "overlay"
+  },
+  "effects": {
+    "particle": "water_surge",
+    "sound": "water_rushing",
+    "state_transition": "submerged"
+  }
+}

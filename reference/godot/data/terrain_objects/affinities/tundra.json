@@ -1,0 +1,147 @@
+{
+  "biome_id": "tundra",
+  "display_name": "Tundra",
+  "ambient": {
+    "wind": 0.5,
+    "moisture": 0.3,
+    "light_filter": "blue_cold"
+  },
+  "object_pools": [
+    {
+      "object_id": "frozen_grass",
+      "density": 0.4,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "sprout": 0.05,
+        "growing": 0.15,
+        "mature": 0.65,
+        "dry": 0.1,
+        "dead": 0.05
+      },
+      "cluster_scale": 0.08
+    },
+    {
+      "object_id": "hardy_moss",
+      "density": 0.4,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "growing": 0.4,
+        "lush": 0.4,
+        "frozen": 0.2
+      },
+      "cluster_scale": 0.1,
+      "elevation_range": [
+        0.35,
+        0.45
+      ]
+    },
+    {
+      "object_id": "lichen_patch",
+      "density": 0.072,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "growing": 0.4,
+        "mature": 0.5,
+        "dry": 0.1
+      }
+    },
+    {
+      "object_id": "tundra_shrub",
+      "density": 0.0125,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "growing": 0.15,
+        "mature": 0.55,
+        "flowering": 0.15,
+        "dying": 0.1
+      }
+    },
+    {
+      "object_id": "ice_patch",
+      "density": 0.4,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "forming": 0.2,
+        "solid": 0.6,
+        "cracking": 0.2
+      },
+      "cluster_scale": 0.07
+    },
+    {
+      "object_id": "cracked_earth",
+      "density": 0.4,
+      "cluster_mode": "perlin",
+      "variant_count": 10,
+      "lifecycle_distribution": {
+        "forming": 0.4,
+        "deep": 0.4,
+        "thawing": 0.2
+      },
+      "cluster_scale": 0.07
+    },
+    {
+      "object_id": "packed_snow",
+      "density": 0.4,
+      "cluster_mode": "perlin",
+      "variant_count": 10,
+      "lifecycle_distribution": {
+        "fresh": 0.4,
+        "packed": 0.4,
+        "melting": 0.2
+      },
+      "cluster_scale": 0.07
+    },
+    {
+      "object_id": "packed_snow",
+      "density": 0.4,
+      "cluster_mode": "perlin",
+      "variant_count": 10,
+      "lifecycle_distribution": {
+        "fresh": 0.4,
+        "packed": 0.4,
+        "melting": 0.2
+      },
+      "cluster_scale": 0.07
+    },
+    {
+      "object_id": "flat_rock",
+      "density": 0.018,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.7,
+        "cracked": 0.2,
+        "crumbled": 0.1
+      }
+    },
+    {
+      "object_id": "pebble",
+      "density": 0.024,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.7,
+        "cracked": 0.2,
+        "crumbled": 0.1
+      }
+    },
+    {
+      "object_id": "arctic_poppy",
+      "density": 0.012,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "bud": 0.15,
+        "blooming": 0.5,
+        "wilting": 0.2,
+        "seed_head": 0.15
+      }
+    }
+  ]
+}

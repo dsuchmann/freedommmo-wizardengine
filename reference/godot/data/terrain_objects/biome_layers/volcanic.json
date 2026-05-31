@@ -1,0 +1,244 @@
+{
+  "biome_id": "volcanic",
+  "elevation_stacks": [
+    {
+      "name": "volcanic_lowland",
+      "range": [
+        0.35,
+        0.5
+      ],
+      "layers": [
+        {
+          "layer": 1,
+          "name": "ground_texture",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "ash_layer",
+              "weight": 0.45,
+              "variant_count": 32
+            },
+            {
+              "object_id": "charred_earth",
+              "weight": 0.35,
+              "variant_count": 32
+            },
+            {
+              "object_id": "cooled_lava",
+              "weight": 0.2,
+              "variant_count": 16
+            }
+          ],
+          "z_offset": 0,
+          "scale_range": [
+            0.18,
+            0.25
+          ]
+        },
+        {
+          "layer": 2,
+          "name": "small_debris",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "obsidian_shard",
+              "weight": 0.3,
+              "variant_count": 16
+            },
+            {
+              "object_id": "pumice_stone",
+              "weight": 0.3,
+              "variant_count": 16
+            },
+            {
+              "object_id": "sulfur_crystal",
+              "weight": 0.2,
+              "variant_count": 8
+            },
+            {
+              "object_id": "small_stone",
+              "weight": 0.2,
+              "variant_count": 32
+            }
+          ],
+          "z_offset": 1,
+          "scale_range": [
+            0.1,
+            0.18
+          ]
+        },
+        {
+          "layer": 3,
+          "name": "sparse_flora",
+          "coverage": 0.18,
+          "objects": [
+            {
+              "object_id": "charred_grass",
+              "weight": 0.4,
+              "variant_count": 16
+            },
+            {
+              "object_id": "sulfur_vent",
+              "weight": 0.3,
+              "variant_count": 8
+            },
+            {
+              "object_id": "ember_patch",
+              "weight": 0.3,
+              "variant_count": 8
+            }
+          ],
+          "z_offset": 2,
+          "scale_range": [
+            0.15,
+            0.28
+          ]
+        },
+        {
+          "layer": 4,
+          "name": "large_objects",
+          "coverage": 0.015,
+          "objects": [
+            {
+              "object_id": "charred_tree",
+              "weight": 0.35,
+              "variant_count": 8
+            },
+            {
+              "object_id": "lava_rock",
+              "weight": 0.35,
+              "variant_count": 8
+            },
+            {
+              "object_id": "sulfur_vent",
+              "weight": 0.3,
+              "variant_count": 8
+            }
+          ],
+          "z_offset": 3,
+          "scale_range": [
+            0.5,
+            0.8
+          ]
+        }
+      ]
+    },
+    {
+      "name": "volcanic_highland",
+      "range": [
+        0.5,
+        1.0
+      ],
+      "layers": [
+        {
+          "layer": 1,
+          "name": "ground_texture",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "cooled_lava",
+              "weight": 0.4,
+              "variant_count": 16
+            },
+            {
+              "object_id": "charred_earth",
+              "weight": 0.35,
+              "variant_count": 32
+            },
+            {
+              "object_id": "ash_layer",
+              "weight": 0.25,
+              "variant_count": 32
+            }
+          ],
+          "z_offset": 0,
+          "scale_range": [
+            0.18,
+            0.25
+          ]
+        },
+        {
+          "layer": 2,
+          "name": "small_debris",
+          "coverage": 1.0,
+          "objects": [
+            {
+              "object_id": "obsidian_shard",
+              "weight": 0.45,
+              "variant_count": 16
+            },
+            {
+              "object_id": "pumice_stone",
+              "weight": 0.3,
+              "variant_count": 16
+            },
+            {
+              "object_id": "sulfur_crystal",
+              "weight": 0.25,
+              "variant_count": 8
+            }
+          ],
+          "z_offset": 1,
+          "scale_range": [
+            0.1,
+            0.18
+          ]
+        },
+        {
+          "layer": 3,
+          "name": "sparse_flora",
+          "coverage": 0.06,
+          "objects": [
+            {
+              "object_id": "ember_patch",
+              "weight": 0.5,
+              "variant_count": 8
+            },
+            {
+              "object_id": "charred_grass",
+              "weight": 0.3,
+              "variant_count": 16
+            },
+            {
+              "object_id": "sulfur_vent",
+              "weight": 0.2,
+              "variant_count": 8
+            }
+          ],
+          "z_offset": 2,
+          "scale_range": [
+            0.15,
+            0.28
+          ]
+        },
+        {
+          "layer": 4,
+          "name": "large_objects",
+          "coverage": 0.008,
+          "objects": [
+            {
+              "object_id": "lava_rock",
+              "weight": 0.5,
+              "variant_count": 8
+            },
+            {
+              "object_id": "charred_tree",
+              "weight": 0.3,
+              "variant_count": 8
+            },
+            {
+              "object_id": "sulfur_vent",
+              "weight": 0.2,
+              "variant_count": 8
+            }
+          ],
+          "z_offset": 3,
+          "scale_range": [
+            0.5,
+            0.8
+          ]
+        }
+      ]
+    }
+  ]
+}

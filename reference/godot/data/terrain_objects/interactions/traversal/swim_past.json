@@ -1,0 +1,27 @@
+{
+  "id": "swim_past",
+  "category": "traversal",
+  "trigger": {
+    "type": "entity_action",
+    "requires_target": {
+      "blocking": false
+    }
+  },
+  "animation": {
+    "frames": [
+      4,
+      6
+    ],
+    "duration_ms": [
+      400,
+      700
+    ],
+    "loop": false,
+    "directional": true,
+    "blend_mode": "overlay"
+  },
+  "effects": {
+    "particle": "water_ripple",
+    "sound": "water_splash_soft"
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "id": "cactus_flower",
+  "category": "vegetation/flower",
+  "ontology": "animate",
+  "blocking": false,
+  "pixel_size": 32,
+  "anchor": "bottom_center",
+  "size": [
+    1,
+    1
+  ],
+  "lifecycle": {
+    "phases": [
+      {
+        "phase": "bud",
+        "duration_days": 7,
+        "size": [
+          1,
+          1
+        ],
+        "sprite_set": "cactus_flower/bud",
+        "phase_interactions": [
+          "idle",
+          "walk_through",
+          "wind",
+          "rain",
+          "regrow"
+        ]
+      },
+      {
+        "phase": "blooming",
+        "duration_days": 21,
+        "size": [
+          1,
+          1
+        ],
+        "sprite_set": "cactus_flower/blooming",
+        "phase_interactions": [
+          "idle",
+          "idle_variant",
+          "walk_through",
+          "wind",
+          "rain",
+          "pick",
+          "bloom",
+          "insect_swarm"
+        ]
+      },
+      {
+        "phase": "wilting",
+        "duration_days": 14,
+        "size": [
+          1,
+          1
+        ],
+        "sprite_set": "cactus_flower/wilting",
+        "phase_interactions": [
+          "idle",
+          "walk_through",
+          "wind",
+          "wilt",
+          "pick"
+        ]
+      },
+      {
+        "phase": "seed_head",
+        "duration_days": 14,
+        "size": [
+          1,
+          1
+        ],
+        "sprite_set": "cactus_flower/seed_head",
+        "phase_interactions": [
+          "idle",
+          "walk_through",
+          "wind",
+          "pick",
+          "decompose"
+        ]
+      }
+    ]
+  },
+  "variance": {
+    "lean_angle": {
+      "type": "float",
+      "range": [
+        -8.0,
+        8.0
+      ]
+    },
+    "color_shift": {
+      "type": "float",
+      "range": [
+        -0.2,
+        0.2
+      ]
+    },
+    "scale_variance": {
+      "type": "float",
+      "range": [
+        0.8,
+        1.2
+      ]
+    }
+  },
+  "break_products": {
+    "on_chop": [
+      {
+        "id": "leaf_pile",
+        "count": 1
+      }
+    ],
+    "on_burn": [
+      {
+        "id": "ash_pile",
+        "count": 1
+      }
+    ]
+  }
+}

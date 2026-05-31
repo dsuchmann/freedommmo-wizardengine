@@ -1,0 +1,59 @@
+{
+  "town_id": "crossroads_market_01",
+  "name": "Trader's Crossing",
+  "theme": "crossroads_market",
+  "size": [56, 56],
+  "zones": [
+    {"id": "crossroads", "type": "plaza", "rect": [24, 24, 8, 8], "ground": "cobblestone"},
+    {"id": "north_market", "type": "market", "rect": [22, 16, 12, 6], "ground": "packed_dirt"},
+    {"id": "south_market", "type": "market", "rect": [22, 34, 12, 6], "ground": "packed_dirt"}
+  ],
+  "buildings": [
+    {"template": "tavern", "pos": [10, 10], "facing": "south", "label": "dusty_flagon_tavern"},
+    {"template": "tavern", "pos": [40, 40], "facing": "north", "label": "wayfarers_inn"},
+    {"template": "market_stall", "pos": [23, 17], "facing": "south", "label": "spice_stall"},
+    {"template": "market_stall", "pos": [27, 17], "facing": "south", "label": "cloth_stall"},
+    {"template": "market_stall", "pos": [31, 17], "facing": "south", "label": "tool_stall"},
+    {"template": "market_stall", "pos": [23, 35], "facing": "north", "label": "pottery_stall"},
+    {"template": "market_stall", "pos": [27, 35], "facing": "north", "label": "food_stall"},
+    {"template": "market_stall", "pos": [31, 35], "facing": "north", "label": "trinket_stall"},
+    {"template": "house", "pos": [42, 10], "facing": "south", "label": "warehouse_north"},
+    {"template": "house", "pos": [10, 42], "facing": "east", "label": "warehouse_south"},
+    {"template": "house", "pos": [48, 24], "facing": "west", "label": "carter_house"},
+    {"template": "watchtower", "pos": [6, 26], "facing": "east", "label": "west_watchpost"},
+    {"template": "watchtower", "pos": [48, 26], "facing": "west", "label": "east_watchpost"},
+    {"template": "well", "pos": [28, 28], "facing": "south", "label": "crossroads_well"}
+  ],
+  "roads": [
+    {"type": "dirt", "width": 3, "path": [[0, 28], [28, 28], [55, 28]]},
+    {"type": "dirt", "width": 3, "path": [[28, 0], [28, 28], [28, 55]]},
+    {"type": "dirt", "width": 3, "path": [[10, 14], [20, 24]]},
+    {"type": "dirt", "width": 3, "path": [[40, 44], [34, 34]]},
+    {"type": "dirt", "width": 3, "path": [[42, 14], [36, 24]]},
+    {"type": "dirt", "width": 3, "path": [[10, 46], [20, 34]]}
+  ],
+  "decorations": [
+    {"type": "signpost", "pos": [26, 26]},
+    {"type": "signpost", "pos": [30, 30]},
+    {"type": "barrel", "pos": [42, 14]},
+    {"type": "barrel", "pos": [43, 14]},
+    {"type": "barrel", "pos": [10, 46]},
+    {"type": "barrel", "pos": [11, 46]},
+    {"type": "crate", "pos": [44, 12]},
+    {"type": "crate", "pos": [12, 44]},
+    {"type": "bench", "pos": [24, 24]},
+    {"type": "bench", "pos": [30, 24]},
+    {"type": "lantern_post", "pos": [24, 30]},
+    {"type": "lantern_post", "pos": [30, 30]}
+  ],
+  "npcs": [
+    {"role": "merchant", "home": "spice_stall", "workplace": "spice_stall"},
+    {"role": "merchant", "home": "cloth_stall", "workplace": "cloth_stall"},
+    {"role": "merchant", "home": "food_stall", "workplace": "food_stall"},
+    {"role": "innkeeper", "home": "dusty_flagon_tavern", "workplace": "dusty_flagon_tavern"},
+    {"role": "innkeeper", "home": "wayfarers_inn", "workplace": "wayfarers_inn"},
+    {"role": "guard", "workplace": "west_watchpost", "patrol": ["west_watchpost", "crossroads", "east_watchpost"]},
+    {"role": "guard", "workplace": "east_watchpost", "patrol": ["east_watchpost", "crossroads", "west_watchpost"]},
+    {"role": "carter", "home": "carter_house", "workplace": "crossroads"}
+  ]
+}

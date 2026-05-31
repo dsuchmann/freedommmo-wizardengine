@@ -1,0 +1,50 @@
+[gd_scene load_steps=2 format=3 uid="uid://chat_ui_scene"]
+
+[ext_resource type="Script" path="res://scripts/chat/ChatUI.gd" id="1"]
+
+[node name="ChatUI" type="Control"]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -250.0
+grow_horizontal = 2
+grow_vertical = 0
+script = ExtResource("1")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+modulate = Color(1, 1, 1, 0.8)
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 4.0
+offset_right = -8.0
+offset_bottom = -4.0
+
+[node name="ChatLog" type="RichTextLabel" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+scroll_following = true
+
+[node name="InputBox" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+
+[node name="MessageInput" type="LineEdit" parent="VBox/InputBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Type a message..."
+
+[node name="SendButton" type="Button" parent="VBox/InputBox"]
+layout_mode = 2
+text = "Send"

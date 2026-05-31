@@ -1,0 +1,27 @@
+{
+  "biome_a": "grassland",
+  "biome_b": "forest",
+  "blend_width": 4,
+  "edge_objects": [
+    {
+      "object_id": "flowering_bush",
+      "density": 0.15
+    },
+    {
+      "object_id": "berry_bush",
+      "density": 0.1
+    },
+    {
+      "object_id": "tall_grass",
+      "density": 0.2
+    },
+    {
+      "object_id": "wildflower",
+      "density": 0.08
+    }
+  ],
+  "gradient": {
+    "biome_a_objects": "linear_fadeout",
+    "biome_b_objects": "linear_fadein"
+  }
+}

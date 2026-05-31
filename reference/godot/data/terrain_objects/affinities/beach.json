@@ -1,0 +1,151 @@
+{
+  "biome_id": "beach",
+  "display_name": "Beach",
+  "ambient": {
+    "wind": 0.35,
+    "moisture": 0.6
+  },
+  "object_pools": [
+    {
+      "object_id": "beach_sand",
+      "density": 0.5,
+      "cluster_mode": "perlin",
+      "variant_count": 10,
+      "cluster_scale": 0.1
+    },
+    {
+      "object_id": "wind_sand_drift",
+      "density": 0.15,
+      "cluster_mode": "perlin",
+      "variant_count": 4,
+      "lifecycle_distribution": {
+        "fresh": 0.5,
+        "settling": 0.35,
+        "old": 0.15
+      },
+      "cluster_scale": 0.07
+    },
+    {
+      "object_id": "dune_ripple",
+      "density": 0.4,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "fresh": 0.5,
+        "settling": 0.35,
+        "old": 0.15
+      },
+      "cluster_scale": 0.07
+    },
+    {
+      "object_id": "conch_shell",
+      "density": 0.012,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.7,
+        "cracked": 0.2,
+        "crumbled": 0.1
+      }
+    },
+    {
+      "object_id": "clam_shell",
+      "density": 0.009,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.7,
+        "cracked": 0.2,
+        "crumbled": 0.1
+      }
+    },
+    {
+      "object_id": "shell_scatter",
+      "density": 0.015,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "intact": 0.7,
+        "cracked": 0.2,
+        "crumbled": 0.1
+      }
+    },
+    {
+      "object_id": "driftwood",
+      "density": 0.0075,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "fresh": 0.3,
+        "weathered": 0.5,
+        "bleached": 0.2
+      }
+    },
+    {
+      "object_id": "crab_burrow",
+      "density": 0.006,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "distance_rules": {
+        "max_water_distance": 8
+      },
+      "lifecycle_distribution": {
+        "active": 0.6,
+        "abandoned": 0.4
+      }
+    },
+    {
+      "object_id": "sea_grass",
+      "density": 0.4,
+      "cluster_mode": "water_follow",
+      "variant_count": 3,
+      "moisture_range": [
+        0.5,
+        1.0
+      ],
+      "distance_rules": {
+        "max_water_distance": 3
+      },
+      "lifecycle_distribution": {
+        "sprout": 0.05,
+        "growing": 0.15,
+        "mature": 0.65,
+        "dry": 0.1,
+        "dead": 0.05
+      }
+    },
+    {
+      "object_id": "coconut_palm",
+      "density": 0.0024,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "elevation_range": [
+        0.05,
+        0.3
+      ],
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "sapling": 0.1,
+        "juvenile": 0.15,
+        "mature": 0.5,
+        "old_growth": 0.15,
+        "dying": 0.05
+      },
+      "cluster_scale": 0.02
+    },
+    {
+      "object_id": "tidal_pool",
+      "density": 0.012,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "distance_rules": {
+        "max_water_distance": 4
+      },
+      "lifecycle_distribution": {
+        "calm": 0.6,
+        "rippling": 0.3,
+        "churning": 0.1
+      }
+    }
+  ]
+}

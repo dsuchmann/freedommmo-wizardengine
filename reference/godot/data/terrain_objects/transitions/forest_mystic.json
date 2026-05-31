@@ -1,0 +1,27 @@
+{
+  "biome_a": "forest",
+  "biome_b": "mystic",
+  "blend_width": 4,
+  "edge_objects": [
+    {
+      "object_id": "glowing_mushroom",
+      "density": 0.08
+    },
+    {
+      "object_id": "ethereal_vine",
+      "density": 0.06
+    },
+    {
+      "object_id": "spirit_wisp",
+      "density": 0.04
+    },
+    {
+      "object_id": "climbing_vine",
+      "density": 0.1
+    }
+  ],
+  "gradient": {
+    "biome_a_objects": "linear_fadeout",
+    "biome_b_objects": "linear_fadein"
+  }
+}

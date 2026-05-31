@@ -1,0 +1,21 @@
+{
+  "name": "forest",
+  "ground": {
+    "base_color": "#5a7d42",
+    "variants": ["#7fb069", "#3a5b2e", "#4d6b35", "#6a8f52"],
+    "roughness": 0.8,
+    "specular": 0.1
+  },
+  "cliff": {
+    "base_color": "#3a3a3a",
+    "variants": ["#4a4a4a", "#2a2a2a", "#505050"],
+    "roughness": 0.9,
+    "specular": 0.05
+  },
+  "water": {
+    "base_color": "#2d5a87",
+    "foam_color": "#ffffff",
+    "roughness": 0.1,
+    "specular": 0.9
+  }
+}

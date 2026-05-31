@@ -1,0 +1,29 @@
+{
+  "id": "plant",
+  "category": "player_action",
+  "trigger": {
+    "type": "entity_action",
+    "requires_target": {
+      "ontology": "inanimate",
+      "category_prefix": "ground"
+    }
+  },
+  "animation": {
+    "frames": [
+      3,
+      5
+    ],
+    "duration_ms": [
+      400,
+      600
+    ],
+    "loop": false,
+    "directional": true,
+    "blend_mode": "replace"
+  },
+  "effects": {
+    "particle": "dirt_scatter",
+    "sound": "dig_earth",
+    "state_transition": "seeded"
+  }
+}

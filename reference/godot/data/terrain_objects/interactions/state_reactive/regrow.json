@@ -1,0 +1,24 @@
+{
+  "id": "regrow",
+  "category": "state_reactive",
+  "trigger": {
+    "type": "timer"
+  },
+  "animation": {
+    "frames": [
+      6,
+      12
+    ],
+    "duration_ms": [
+      2000,
+      5000
+    ],
+    "loop": false,
+    "blend_mode": "replace"
+  },
+  "effects": {
+    "particle": "sprout_burst",
+    "sound": "grow_soft",
+    "state_transition": "sapling"
+  }
+}

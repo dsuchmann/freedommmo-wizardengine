@@ -1,0 +1,18 @@
+#!/usr/bin/env python
+import os
+import sys
+
+env = SConscript("godot-cpp/SConstruct")
+
+# Add our source files
+env.Append(CPPPATH=["src/"])
+sources = Glob("src/*.cpp")
+
+# Build the shared library
+# Output goes to project bin/ directory
+library = env.SharedLibrary(
+    target="../bin/libfreedommmo{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
+    source=sources,
+)
+
+Default(library)

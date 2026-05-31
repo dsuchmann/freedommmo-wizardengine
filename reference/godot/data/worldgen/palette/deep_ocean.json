@@ -1,0 +1,21 @@
+{
+  "name": "deep_ocean",
+  "ground": {
+    "base_color": "#1a4a6b",
+    "variants": ["#2a5a7b", "#0a3a5b", "#3a6a8b", "#0a2a4b"],
+    "roughness": 0.1,
+    "specular": 0.95
+  },
+  "cliff": {
+    "base_color": "#2a4a5a",
+    "variants": ["#3a5a6a", "#1a3a4a", "#4a6a7a"],
+    "roughness": 0.8,
+    "specular": 0.2
+  },
+  "water": {
+    "base_color": "#1a4a6b",
+    "foam_color": "#ffffff",
+    "roughness": 0.05,
+    "specular": 0.98
+  }
+}

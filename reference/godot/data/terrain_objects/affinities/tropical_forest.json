@@ -1,0 +1,224 @@
+{
+  "biome_id": "tropical_forest",
+  "display_name": "Tropical Forest",
+  "ambient": {
+    "wind": 0.1,
+    "moisture": 0.9,
+    "light_filter": "tropical_canopy"
+  },
+  "object_pools": [
+    {
+      "object_id": "jungle_floor",
+      "density": 0.6,
+      "cluster_mode": "perlin",
+      "variant_count": 10,
+      "cluster_scale": 0.08
+    },
+    {
+      "object_id": "jungle_tree",
+      "density": 0.02,
+      "cluster_mode": "perlin",
+      "variant_count": 4,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "sapling": 0.1,
+        "juvenile": 0.15,
+        "mature": 0.5,
+        "old_growth": 0.15,
+        "dying": 0.05
+      },
+      "cluster_scale": 0.02
+    },
+    {
+      "object_id": "kapok_tree",
+      "density": 0.0064,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "sapling": 0.1,
+        "juvenile": 0.15,
+        "mature": 0.5,
+        "old_growth": 0.15,
+        "dying": 0.05
+      },
+      "cluster_scale": 0.02
+    },
+    {
+      "object_id": "palm_tree",
+      "density": 0.008,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "sapling": 0.1,
+        "juvenile": 0.15,
+        "mature": 0.5,
+        "old_growth": 0.15,
+        "dying": 0.05
+      },
+      "cluster_scale": 0.02
+    },
+    {
+      "object_id": "banana_tree",
+      "density": 0.0048,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "sapling": 0.1,
+        "juvenile": 0.15,
+        "mature": 0.5,
+        "old_growth": 0.15,
+        "dying": 0.05
+      },
+      "cluster_scale": 0.05
+    },
+    {
+      "object_id": "tropical_fern",
+      "density": 0.06,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "sprout": 0.05,
+        "growing": 0.15,
+        "mature": 0.65,
+        "dry": 0.1,
+        "dead": 0.05
+      },
+      "cluster_scale": 0.04
+    },
+    {
+      "object_id": "giant_fern",
+      "density": 0.032,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "sprout": 0.05,
+        "growing": 0.15,
+        "mature": 0.65,
+        "dry": 0.1,
+        "dead": 0.05
+      },
+      "cluster_scale": 0.04
+    },
+    {
+      "object_id": "hanging_vine",
+      "density": 0.045,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "growing": 0.15,
+        "mature": 0.55,
+        "flowering": 0.15,
+        "dying": 0.1
+      }
+    },
+    {
+      "object_id": "climbing_vine",
+      "density": 0.03,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "seedling": 0.05,
+        "growing": 0.15,
+        "mature": 0.55,
+        "flowering": 0.15,
+        "dying": 0.1
+      }
+    },
+    {
+      "object_id": "orchid",
+      "density": 0.024,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "bud": 0.15,
+        "blooming": 0.5,
+        "wilting": 0.2,
+        "seed_head": 0.15
+      }
+    },
+    {
+      "object_id": "hibiscus",
+      "density": 0.02,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "bud": 0.15,
+        "blooming": 0.5,
+        "wilting": 0.2,
+        "seed_head": 0.15
+      }
+    },
+    {
+      "object_id": "lotus",
+      "density": 0.012,
+      "cluster_mode": "water_follow",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "bud": 0.15,
+        "blooming": 0.5,
+        "wilting": 0.2,
+        "seed_head": 0.15
+      }
+    },
+    {
+      "object_id": "ground_moss",
+      "density": 0.4,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "growing": 0.3,
+        "lush": 0.5,
+        "dry": 0.2
+      },
+      "cluster_scale": 0.1
+    },
+    {
+      "object_id": "tree_moss",
+      "density": 0.06,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "growing": 0.3,
+        "lush": 0.5,
+        "dry": 0.2
+      },
+      "cluster_scale": 0.1
+    },
+    {
+      "object_id": "wet_leaves",
+      "density": 0.05,
+      "cluster_mode": "perlin",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "fresh": 0.4,
+        "decomposing": 0.6
+      },
+      "cluster_scale": 0.07
+    },
+    {
+      "object_id": "cocoon",
+      "density": 0.0045,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "forming": 0.3,
+        "mature": 0.5,
+        "empty": 0.2
+      }
+    },
+    {
+      "object_id": "bird_nest",
+      "density": 0.006,
+      "cluster_mode": "scatter",
+      "variant_count": 3,
+      "lifecycle_distribution": {
+        "active": 0.5,
+        "empty": 0.5
+      }
+    }
+  ]
+}

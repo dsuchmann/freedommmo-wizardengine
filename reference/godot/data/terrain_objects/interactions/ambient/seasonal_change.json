@@ -1,0 +1,23 @@
+{
+  "id": "seasonal_change",
+  "category": "ambient",
+  "trigger": {
+    "type": "season"
+  },
+  "animation": {
+    "frames": [
+      6,
+      12
+    ],
+    "duration_ms": [
+      2000,
+      4000
+    ],
+    "loop": false,
+    "blend_mode": "replace"
+  },
+  "effects": {
+    "particle": "leaf_fall",
+    "sound": "leaves_rustle"
+  }
+}
