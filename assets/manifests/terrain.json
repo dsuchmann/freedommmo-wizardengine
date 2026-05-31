@@ -1,0 +1,67 @@
+{
+  "schema": "freedommmo.asset-manifest.v1",
+  "domain": "terrain",
+  "tileSize": [32, 32],
+  "assets": [
+    {
+      "id": "grassland_ground",
+      "category": "terrain.ground",
+      "biomes": ["grassland", "savanna", "steppe"],
+      "layers": ["base", "micro_grass", "flowers", "dirt_scars", "wet_overlay", "shadow_mask"],
+      "states": ["spring", "summer", "autumn", "winter", "wet", "dry"],
+      "variants": { "base": 32, "micro_grass": 96, "flowers": 48, "dirt_scars": 32, "palette": 16 },
+      "anchors": { "tile": [16, 16] },
+      "generation": { "promptFamily": "terrain-ground", "priority": 1 }
+    },
+    {
+      "id": "forest_floor",
+      "category": "terrain.ground",
+      "biomes": ["forest", "dense_forest", "taiga", "tropical_forest"],
+      "layers": ["base", "leaf_litter", "roots", "moss", "fungi", "shadow_mask"],
+      "states": ["spring", "summer", "autumn", "winter", "wet", "dry", "burnt"],
+      "variants": { "base": 32, "leaf_litter": 128, "roots": 64, "moss": 48, "fungi": 32, "palette": 20 },
+      "anchors": { "tile": [16, 16] },
+      "generation": { "promptFamily": "terrain-ground", "priority": 1 }
+    },
+    {
+      "id": "sand_ground",
+      "category": "terrain.ground",
+      "biomes": ["beach", "desert"],
+      "layers": ["base", "grain", "ripple", "pebbles", "shells", "shadow_mask"],
+      "states": ["dry", "wet", "wind_swept", "dusk", "night"],
+      "variants": { "base": 24, "grain": 96, "ripple": 48, "pebbles": 36, "shells": 24, "palette": 12 },
+      "anchors": { "tile": [16, 16] },
+      "generation": { "promptFamily": "terrain-ground", "priority": 1 }
+    },
+    {
+      "id": "stone_ground",
+      "category": "terrain.ground",
+      "biomes": ["hills", "mountains", "volcanic", "tundra", "arctic"],
+      "layers": ["base", "strata", "cracks", "pebbles", "snow_overlay", "shadow_mask"],
+      "states": ["bare", "snow", "ice", "wet", "cracked", "lava_warm"],
+      "variants": { "base": 32, "strata": 80, "cracks": 80, "pebbles": 64, "snow_overlay": 48, "palette": 14 },
+      "anchors": { "tile": [16, 16] },
+      "generation": { "promptFamily": "terrain-ground", "priority": 1 }
+    },
+    {
+      "id": "water_surface",
+      "category": "terrain.water",
+      "biomes": ["deep_ocean", "ocean", "shallow_water", "river", "lake", "swamp"],
+      "layers": ["base", "flow", "sparkle", "foam", "depth_shadow", "moon_reflection"],
+      "states": ["calm", "wind", "storm", "night", "dawn", "dusk", "frozen"],
+      "variants": { "base": 24, "flow": 128, "sparkle": 64, "foam": 64, "palette": 18 },
+      "anchors": { "tile": [16, 16] },
+      "generation": { "promptFamily": "terrain-water", "priority": 1 }
+    },
+    {
+      "id": "cliff_wall",
+      "category": "terrain.elevation",
+      "biomes": ["hills", "mountains", "volcanic", "tundra", "arctic", "forest"],
+      "layers": ["wall_base", "strata", "ledge", "cracks", "moss", "shadow_mask", "overhang_shadow"],
+      "states": ["dry", "wet", "snow", "mossy", "collapsed", "overhang"],
+      "variants": { "wall_base": 48, "strata": 128, "ledge": 64, "cracks": 96, "moss": 48, "palette": 20 },
+      "anchors": { "top": [16, 0], "foot": [16, 31] },
+      "generation": { "promptFamily": "terrain-cliff", "priority": 2 }
+    }
+  ]
+}

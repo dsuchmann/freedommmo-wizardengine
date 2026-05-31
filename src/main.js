@@ -8,6 +8,8 @@ import { OvermapController } from './world/overmap.js';
 import { DayNightCycle } from './world/lighting.js';
 import { Camera } from './camera.js';
 import { PerformanceMonitor } from './core/performance.js';
+import { defaultAssetCatalog } from './assets/default-catalog.js';
+import { RuntimeCompositor } from './render/runtime-compositor.js';
 
 const canvas = document.getElementById('game');
 const stats = document.getElementById('stats');
@@ -15,7 +17,8 @@ const overmapCanvas = document.getElementById('overmap');
 const input = new InputState();
 const player = new Player(loadPlayerPosition() ?? { x: 0, y: 0 });
 const chunks = new ChunkStore(new ChunkProvider());
-const renderer = new CanvasRenderer(canvas, stats);
+const compositor = new RuntimeCompositor(defaultAssetCatalog);
+const renderer = new CanvasRenderer(canvas, stats, compositor);
 const lighting = new DayNightCycle();
 const overmap = new OvermapController(overmapCanvas, player, chunks);
 const camera = new Camera();

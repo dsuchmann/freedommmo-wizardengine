@@ -1,0 +1,39 @@
+{
+  "schema": "freedommmo.asset-manifest.v1",
+  "domain": "vegetation",
+  "assets": [
+    {
+      "id": "broadleaf_tree",
+      "category": "vegetation.tree",
+      "biomes": ["forest", "dense_forest", "grassland", "hills"],
+      "sizeTiles": [1, 2],
+      "layers": ["shadow", "trunk", "branches", "canopy", "fruit", "vine", "season_overlay", "damage_overlay", "snow_overlay", "lighting_mask"],
+      "states": ["sapling", "mature", "ancient", "spring", "summer", "autumn", "winter", "cut", "burnt", "dead", "wet"],
+      "variants": { "trunk": 64, "branches": 96, "canopy": 160, "fruit": 32, "palette": 24, "silhouette": 48 },
+      "anchors": { "root": [16, 47], "shadow": [16, 42] },
+      "generation": { "promptFamily": "vegetation-tree", "priority": 2 }
+    },
+    {
+      "id": "conifer_tree",
+      "category": "vegetation.tree",
+      "biomes": ["taiga", "tundra", "mountains", "forest"],
+      "sizeTiles": [1, 2],
+      "layers": ["shadow", "trunk", "needle_body", "snow_overlay", "damage_overlay", "lighting_mask"],
+      "states": ["sapling", "mature", "ancient", "snow", "cut", "burnt", "dead", "wet"],
+      "variants": { "trunk": 48, "needle_body": 144, "snow_overlay": 96, "palette": 18, "silhouette": 40 },
+      "anchors": { "root": [16, 47], "shadow": [16, 42] },
+      "generation": { "promptFamily": "vegetation-tree", "priority": 2 }
+    },
+    {
+      "id": "underbrush_cluster",
+      "category": "vegetation.underbrush",
+      "biomes": ["grassland", "forest", "dense_forest", "tropical_forest", "swamp", "savanna", "steppe"],
+      "sizeTiles": [1, 1],
+      "layers": ["shadow", "stems", "leaves", "flowers", "seed_heads", "wet_overlay", "lighting_mask"],
+      "states": ["spring", "summer", "autumn", "winter", "trampled", "cut", "wet", "dry"],
+      "variants": { "stems": 96, "leaves": 128, "flowers": 96, "seed_heads": 64, "palette": 24 },
+      "anchors": { "root": [16, 28], "shadow": [16, 29] },
+      "generation": { "promptFamily": "vegetation-underbrush", "priority": 1 }
+    }
+  ]
+}

@@ -6,10 +6,11 @@ import { paintTerrainTile, shade, tint } from './tile-painter.js';
 import { paintTerrainFeatures } from './feature-painter.js';
 
 export class CanvasRenderer {
-  constructor(canvas, statsElement) {
+  constructor(canvas, statsElement, compositor = null) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d', { alpha: false });
     this.statsElement = statsElement;
+    this.compositor = compositor;
     this.lastAudit = null;
     this.lastAuditAt = 0;
     window.addEventListener('resize', () => this.resize());
@@ -55,7 +56,7 @@ export class CanvasRenderer {
         const sx = Math.floor(tx * tilePx - camX);
         const sy = Math.floor(ty * tilePx - camY - elevationLift(renderTile.elevation) * camera.zoom);
         const tileSize = Math.ceil(tilePx);
-        paintTerrainTile(ctx, tile, sx, sy, tileSize, sun, focusTile.climate.elevation);
+        paintTerrainTile(ctx, tile, sx, sy, tileSize, sun, focusTile.climate.elevation, this.compositor);
         paintTerrainFeatures(ctx, tile, sx, sy, tileSize, sun);
         if (slope + contour > 0.015) {
           ctx.fillStyle = `rgba(255,255,220,${Math.min(0.18, slope + contour)})`;

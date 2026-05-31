@@ -1,0 +1,39 @@
+{
+  "schema": "freedommmo.asset-manifest.v1",
+  "domain": "geology",
+  "assets": [
+    {
+      "id": "boulder_cluster",
+      "category": "geology.rock",
+      "biomes": ["hills", "mountains", "volcanic", "tundra", "arctic", "desert", "grassland"],
+      "sizeTiles": [1, 1],
+      "layers": ["shadow", "base", "strata", "cracks", "moss", "lichen", "snow_overlay", "lighting_mask"],
+      "states": ["bare", "mossy", "snow", "wet", "cracked", "ore_vein"],
+      "variants": { "base": 128, "strata": 96, "cracks": 128, "moss": 64, "palette": 18 },
+      "anchors": { "base": [16, 27], "shadow": [16, 29] },
+      "generation": { "promptFamily": "geology-rock", "priority": 2 }
+    },
+    {
+      "id": "cave_mouth",
+      "category": "geology.cave",
+      "biomes": ["hills", "mountains", "volcanic", "forest", "tundra"],
+      "sizeTiles": [2, 2],
+      "layers": ["shadow", "opening", "rim", "stalactites", "loose_rocks", "moss", "subsurface_glow", "lighting_mask"],
+      "states": ["open", "hidden", "collapsed", "wet", "snow", "occupied", "lit"],
+      "variants": { "opening": 64, "rim": 96, "stalactites": 64, "loose_rocks": 96, "palette": 18 },
+      "anchors": { "entrance": [32, 42], "shadow": [32, 46] },
+      "generation": { "promptFamily": "geology-cave", "priority": 3 }
+    },
+    {
+      "id": "dry_riverbed",
+      "category": "geology.pathway",
+      "biomes": ["grassland", "savanna", "steppe", "desert", "hills", "forest"],
+      "sizeTiles": [1, 1],
+      "layers": ["base", "silt", "pebbles", "roots", "cracked_mud", "shadow_mask"],
+      "states": ["dry", "muddy", "flash_flood", "overgrown", "snow"],
+      "variants": { "base": 64, "silt": 96, "pebbles": 96, "roots": 48, "cracked_mud": 64, "palette": 16 },
+      "anchors": { "tile": [16, 16] },
+      "generation": { "promptFamily": "geology-riverbed", "priority": 2 }
+    }
+  ]
+}

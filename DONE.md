@@ -95,3 +95,11 @@
   - Overmap now samples low-frequency continent, mountain, moisture, heat, river, and biome fields directly in chunk space instead of using noisy tile-level classifier results per map pixel.
   - Tuned overmap biome distribution so broad regions read as landforms rather than random per-pixel assignment.
   - Updated `fbm` to normalize by amplitude and accept larger base scales/octave counts for regional generation.
+- Added Sorceress-ready asset generation pipeline scaffolding:
+  - Added `assets/manifests/terrain.json` for terrain/water/cliff layered asset families, states, variants, anchors, and generation priorities.
+  - Added `assets/manifests/vegetation.json` for trees and underbrush with layer/state/variant grammar.
+  - Added `assets/manifests/geology.json` for rocks, cave mouths, and dry riverbeds.
+  - Added `assets/prompts/sorceress-style-guide.md`.
+  - Added `assets/prompts/terrain-generation-prompts.md` and `assets/prompts/object-generation-prompts.md`.
+  - Added runtime `AssetCatalog`, `defaultAssetCatalog`, and `RuntimeCompositor` scaffolds.
+  - Wired the renderer through the compositor so procedural placeholders now carry the same asset signatures/layer/state model that future Sorceress assets will use.
