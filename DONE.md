@@ -126,3 +126,8 @@
   - Local tile-level candidates are only allowed in ecotone chunks and only if the candidate is an allowed neighboring biome.
   - Reduced transition intrusion so a clicked tundra chunk remains tundra-dominant instead of randomly showing beach/sand interiors.
   - Static coherency audit over 1,681 chunks now reports only 1 chunk whose sampled dominant tile biome differs from the regional overmap biome.
+- Hardened biome boundaries further after tundra showed beach/ocean intrusions:
+  - Tile transitions are now limited to a 6-tile border strip of a chunk, never the chunk interior.
+  - Border transitions can only use the actual regional neighbor on that side of the chunk.
+  - The candidate must be a valid biome-graph neighbor and must match local climate detail; unrelated ocean/beach candidates inside tundra are ignored.
+  - Static coherency audit over 25,921 chunks now reports 0 chunks whose sampled dominant tile biome differs from the regional overmap biome.

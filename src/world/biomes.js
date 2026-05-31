@@ -1,7 +1,7 @@
 import { fbm } from '../core/random.js';
 import { BIOMES, SPEC_BIOME_IDS } from './biome-definitions.js';
 import { sampleRegionalMapChunk } from './regional-map.js';
-import { transitionBiome } from './biome-graph.js';
+import { areBiomeNeighbors, transitionBiome } from './biome-graph.js';
 
 export { BIOMES, SPEC_BIOME_IDS };
 
@@ -24,11 +24,15 @@ export function classifyBiome(wx, wy) {
   const cy = Math.floor(wy / 64);
   const regional = sampleRegionalMapChunk(cx, cy);
   const localCandidate = classifyLocalCandidate(climate);
-  const edge = regionalEcotoneStrength(cx, cy, regional.id);
+  const edge = regionalEcotone(cx, cy, regional.id);
+  const lx = mod(wx, 64);
+  const ly = mod(wy, 64);
+  const borderCandidate = borderTransitionCandidate(lx, ly, edge);
   const localDetail = fbm(wx + 71000, wy - 91000, 77, undefined, 720, 3);
-  const allowTransition = edge > 0 && localDetail > 0.86;
-  const id = allowTransition ? transitionBiome(regional.id, localCandidate) : regional.id;
-  return { id, definition: BIOMES[id], climate: { ...climate, regionalBiome: regional.id, localCandidate, ecotone: edge } };
+  const allowedBorder = borderCandidate && borderCandidate !== regional.id && areBiomeNeighbors(regional.id, borderCandidate);
+  const allowedLocal = allowedBorder && localCandidate === borderCandidate && localDetail > 0.82;
+  const id = allowedLocal ? transitionBiome(regional.id, borderCandidate) : regional.id;
+  return { id, definition: BIOMES[id], climate: { ...climate, regionalBiome: regional.id, localCandidate, ecotone: edge.strength, borderCandidate } };
 }
 
 function classifyLocalCandidate(climate) {
@@ -53,12 +57,31 @@ function classifyLocalCandidate(climate) {
   return 'grassland';
 }
 
-function regionalEcotoneStrength(cx, cy, id) {
+function regionalEcotone(cx, cy, id) {
   const east = sampleRegionalMapChunk(cx + 1, cy).id;
   const west = sampleRegionalMapChunk(cx - 1, cy).id;
   const north = sampleRegionalMapChunk(cx, cy - 1).id;
   const south = sampleRegionalMapChunk(cx, cy + 1).id;
-  return [east, west, north, south].some(next => next !== id) ? 1 : 0;
+  return {
+    east,
+    west,
+    north,
+    south,
+    strength: [east, west, north, south].some(next => next !== id) ? 1 : 0
+  };
+}
+
+function borderTransitionCandidate(lx, ly, edge) {
+  const border = 6;
+  if (lx >= 64 - border) return edge.east;
+  if (lx < border) return edge.west;
+  if (ly < border) return edge.north;
+  if (ly >= 64 - border) return edge.south;
+  return null;
+}
+
+function mod(value, size) {
+  return ((Math.floor(value) % size) + size) % size;
 }
 
 function clamp01(value) {
