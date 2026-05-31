@@ -224,3 +224,10 @@
   - Cached chunks now render and composite at exact `chunkSize * tileSize` dimensions with no extra vertical padding/scaling mismatch.
   - Overmap biome audit now samples the guaranteed regional/province corpus area instead of the too-small immediate neighborhood.
   - Audit validation reports `21/21 missing none`.
+- Added extreme high-variance biome-unique object generation plan:
+  - Added `scripts/generate-biome-variant-jobs.mjs` to create hundreds of unique variants per biome object family.
+  - Generated `assets/sorceress/biome-variant-job-index.json` with 672 Sorceress jobs targeting 43,008 unique variant assets.
+  - Variant families cover trees, shrubs, flowers, ground cover, stones, vines, canopy, and insects across all 21 biomes.
+  - Added `src/assets/biome-variant-atlas-defs.js` so runtime can discover/load generated variant sheets.
+  - `AtlasManager` now includes biome variant atlas definitions.
+  - Updated Sorceress system prompt metadata to require hundreds of biome-exclusive variants, high-fantasy silhouettes, unique palettes, lush intricate high-resolution feel, and no generic shared assets.

@@ -1,0 +1,20 @@
+{
+  "tool": "sorceress",
+  "systemPrompt": "assets/sorceress/SYSTEM_ART_DIRECTION_PROMPT.md",
+  "style": "Extreme high-variance biome-unique fantasy pixel art. Hundreds of variants per family per biome. Lush, intricate, high-resolution feel, modern, seamless, gameplay readable.",
+  "output": "assets/generated/variants/dense_forest/stones_064_127.png",
+  "kind": "create_map_object_variant_sheet",
+  "cellSize": [
+    32,
+    32
+  ],
+  "columns": 8,
+  "rows": 8,
+  "biome": "dense_forest",
+  "family": "stones",
+  "variantRange": [
+    64,
+    127
+  ],
+  "prompt": "Generate 64 biome-unique stones variants for dense_forest, variants 64-127. These must not be generic shared assets. Every silhouette, palette accent, ornament, micro-detail, growth pattern, and magical/ecological identity must be specific to dense_forest. Target extremely high fantasy, lush, complicated, intricate, high-resolution pixel art compressed into the requested cells. Use organic asymmetry, dense detail clusters, natural imperfection, and strong gameplay readability. If dense_forest is mystic, include aether glow, impossible botany, rune-like growth scars, luminous pollen/motes, crystalline bark/leaf accents, and fae ecology. If dense_forest is forest, include rich moss, layered bark, fungi, leaf clusters, root complexity, animal/insect micro-life, seasonal variants, and deep woodland identity. Transparent background. No UI, text, watermark, square debug marks, or generic asset-pack look."
+}

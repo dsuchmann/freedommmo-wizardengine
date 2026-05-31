@@ -15,7 +15,10 @@
     "organic",
     "gameplay readable",
     "top-down three-quarter RPG",
-    "maximalist real-landscape influence"
+    "maximalist real-landscape influence",
+    "hundreds of unique variants per biome object family",
+    "biome-exclusive silhouettes and palettes",
+    "extreme high-fantasy lush intricate high-resolution feel"
   ],
   "negativePrompt": [
     "flat colored debug tiles",

@@ -2,10 +2,11 @@ import { ImageAtlas } from './image-atlas.js';
 import { ProceduralAtlas } from './procedural-atlas.js';
 import { generatedAtlasDefs } from './generated-atlas-defs.js';
 import { libraryAtlasDefs } from './library-atlas-defs.js';
+import { biomeVariantAtlasDefs } from './biome-variant-atlas-defs.js';
 
 export class AtlasManager {
   constructor() {
-    this.generated = new ImageAtlas([...generatedAtlasDefs, ...libraryAtlasDefs]);
+    this.generated = new ImageAtlas([...generatedAtlasDefs, ...libraryAtlasDefs, ...biomeVariantAtlasDefs]);
     this.fallback = new ProceduralAtlas();
   }
 

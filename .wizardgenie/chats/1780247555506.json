@@ -1,385 +1,15 @@
 [
   {
     "role": "user",
-    "content": "[Context window: 13 older messages moved to long-term memory. Use the recall_memory tool to retrieve past decisions, code changes, or debugging outcomes as needed.]"
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_dqI5nv28JIKfSEuHgv7o0nJF",
-        "name": "edit_file",
-        "input": {
-          "path": "src/render/tile-painter.js",
-          "old_text": "  } else if (tile.biome === 'beach' || tile.biome === 'desert') {\n",
-          "new_text": "  } else if (tile.biome === 'mystic') {\n    ctx.fillStyle = `rgba(130,90,255,${0.10 + r * 0.18})`;\n    ctx.fillRect(x, y, Math.max(1, size * 0.16), Math.max(1, size * 0.16));\n    ctx.fillStyle = `rgba(80,255,220,${0.08 + r * 0.12})`;\n    ctx.fillRect(x + 1, y, 1, Math.max(1, size * 0.30));\n  } else if (tile.biome === 'beach' || tile.biome === 'desert') {\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_dqI5nv28JIKfSEuHgv7o0nJF",
-        "content": "Applied edit to src/render/tile-painter.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_zzoVqsJJccuG3n9LfwKNJAPG",
-        "name": "edit_file",
-        "input": {
-          "path": "src/render/canvas-renderer.js",
-          "old_text": "    } else if (kind.includes('rock')) {\n      ctx.fillStyle = signature?.assetId === 'boulder_cluster' ? '#60666b' : '#555a5f';\n      ctx.fillRect(sx + 4 * zoom, sy + 5 * zoom, 9 * zoom, 8 * zoom);\n",
-          "new_text": "    } else if (kind.includes('crystal')) {\n      ctx.fillStyle = '#7fffea';\n      ctx.beginPath();\n      ctx.moveTo(sx + 8 * zoom, sy + 2 * zoom);\n      ctx.lineTo(sx + 13 * zoom, sy + 13 * zoom);\n      ctx.lineTo(sx + 4 * zoom, sy + 13 * zoom);\n      ctx.closePath();\n      ctx.fill();\n    } else if (kind.includes('rock')) {\n      ctx.fillStyle = signature?.assetId === 'boulder_cluster' ? '#60666b' : '#555a5f';\n      ctx.fillRect(sx + 4 * zoom, sy + 5 * zoom, 9 * zoom, 8 * zoom);\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_zzoVqsJJccuG3n9LfwKNJAPG",
-        "content": "Could not find the specified text in src/render/canvas-renderer.js. Make sure old_text matches the file exactly.\n\nThe file has 194 lines.\n\nClosest matches found:\nLines 174-178:\n    ctx.fillRect(sx + 6 * zoom, sy + 8 * zoom, 4 * zoom, 7 * zoom);\n  } else if (kind.includes('rock')) {\n    ctx.fillStyle = signature?.assetId === 'boulder_cluster' ? '#60666b' : '#555a5f';\n    ctx.fillRect(sx + 4 * zoom, sy + 5 * zoom, 9 * zoom, 8 * zoom);\n  } else if (kind === 'flower') {\n\nLines 180-184:\n    ctx.fillRect(sx + 7 * zoom, sy + 7 * zoom, 3 * zoom, 3 * zoom);\n  } else if (kind.includes('shrub') || kind === 'reed' || kind === 'grass_tuft') {\n    ctx.fillStyle = '#244f27';\n    ctx.fillRect(sx + 5 * zoom, sy + 6 * zoom, 7 * zoom, 7 * zoom);\n  } else {\n\nUse read_file to see the current content, then retry with the exact text.",
-        "is_error": true
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_kWKg0VTDTbUuC7nz2EwUhOPQ",
-        "name": "edit_file",
-        "input": {
-          "path": "src/render/canvas-renderer.js",
-          "old_text": "  } else if (kind.includes('rock')) {\n    ctx.fillStyle = signature?.assetId === 'boulder_cluster' ? '#60666b' : '#555a5f';\n    ctx.fillRect(sx + 4 * zoom, sy + 5 * zoom, 9 * zoom, 8 * zoom);\n  } else if (kind === 'flower') {\n",
-          "new_text": "  } else if (kind.includes('crystal')) {\n    ctx.fillStyle = '#7fffea';\n    ctx.beginPath();\n    ctx.moveTo(sx + 8 * zoom, sy + 2 * zoom);\n    ctx.lineTo(sx + 13 * zoom, sy + 13 * zoom);\n    ctx.lineTo(sx + 4 * zoom, sy + 13 * zoom);\n    ctx.closePath();\n    ctx.fill();\n  } else if (kind.includes('rock')) {\n    ctx.fillStyle = signature?.assetId === 'boulder_cluster' ? '#60666b' : '#555a5f';\n    ctx.fillRect(sx + 4 * zoom, sy + 5 * zoom, 9 * zoom, 8 * zoom);\n  } else if (kind === 'flower') {\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_kWKg0VTDTbUuC7nz2EwUhOPQ",
-        "content": "Applied edit to src/render/canvas-renderer.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_PwuIPCwoPnpw5ew6TfH1FDt7",
-        "name": "run_command",
-        "input": {
-          "command": "node --check src/world/biome-elements.js && node --check src/world/biomes.js && node --check src/world/regional-map.js && node --check src/world/object-placement.js && node --check src/world/tile-stack.js && node --check src/render/palette.js && node --check src/render/runtime-compositor.js && node --check src/render/tile-painter.js && node --check src/render/canvas-renderer.js && node --check src/assets/default-catalog.js"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_PwuIPCwoPnpw5ew6TfH1FDt7",
-        "content": "$ node --check src/world/biome-elements.js && node --check src/world/biomes.js && node --check src/world/regional-map.js && node --check src/world/object-placement.js && node --check src/world/tile-stack.js && node --check src/render/palette.js && node --check src/render/runtime-compositor.js && node --check src/render/tile-painter.js && node --check src/render/canvas-renderer.js && node --check src/assets/default-catalog.js\n\n",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_npn4PGafjKtjvFKaun6j1Hpx",
-        "name": "run_command",
-        "input": {
-          "command": "node --input-type=module -e \"import('./src/world/biomes.js').then(({SPEC_BIOME_IDS,classifyBiome})=>{const counts=new Map(); for(let y=-5000;y<=5000;y+=128){for(let x=-5000;x<=5000;x+=128){const id=classifyBiome(x,y).id; counts.set(id,(counts.get(id)||0)+1)}} console.log('missing', SPEC_BIOME_IDS.filter(id=>!counts.has(id)).join(', ')||'none'); console.log([...counts.entries()].sort((a,b)=>b[1]-a[1]).map(([k,v])=>k+':'+v).join(' '));})\""
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_npn4PGafjKtjvFKaun6j1Hpx",
-        "content": "$ node --input-type=module -e \"import('./src/world/biomes.js').then(({SPEC_BIOME_IDS,classifyBiome})=>{const counts=new Map(); for(let y=-5000;y<=5000;y+=128){for(let x=-5000;x<=5000;x+=128){const id=classifyBiome(x,y).id; counts.set(id,(counts.get(id)||0)+1)}} console.log('missing', SPEC_BIOME_IDS.filter(id=>!counts.has(id)).join(', ')||'none'); console.log([...counts.entries()].sort((a,b)=>b[1]-a[1]).map(([k,v])=>k+':'+v).join(' '));})\"\n\nmissing none\ngrassland:1910 taiga:846 tundra:657 ocean:448 hills:424 shallow_water:377 forest:354 beach:279 dense_forest:206 savanna:181 swamp:147 steppe:134 river:53 deep_ocean:47 arctic:46 mystic:35 mountains:33 lake:26 tropical_forest:25 desert:7 volcanic:6\n",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_fNKnpNYyHjYhW4d1Ibotwy0u",
-        "name": "read_file",
-        "input": {
-          "path": "DONE.md",
-          "start_line": 106,
-          "end_line": 140
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_fNKnpNYyHjYhW4d1Ibotwy0u",
-        "content": "File: DONE.md (lines 106-115 of 115)\n\n106| - Extended asset pipeline for full animation/physics/render metadata:\n107|   - Added `assets/schemas/asset-manifest-v1.md` documenting required direction, animation, state, physics, collision, draw-order, blend, shadow, lighting, and occlusion metadata.\n108|   - Added `src/assets/asset-metadata.js` helpers for 8-way directions, animation clips, physics, render metadata, and collision volumes.\n109|   - Rebuilt `src/assets/default-catalog.js` so terrain, water, cliffs, trees, underbrush, rocks, caves, and riverbeds include directions, animations, state clips, physics, collision, render layers, blend/shadow/light metadata.\n110|   - Added `src/physics/collision.js` for local-to-world collision shape conversion and movement/light blocking helpers.\n111|   - Added `src/render/draw-order.js` for layer ordering, y/elevation sorting, and blend mode application.\n112|   - Added `src/render/animation-state.js` for resolving animation frames/directions/events.\n113|   - Runtime compositor signatures now expose animation, physics, collision, and render metadata alongside layers/states.\n114|   - Updated Sorceress style guide to require directional/state animation coverage plus physics/collision/render metadata for every asset family.\n115| ",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_7PO27ZObpEcPihpzm4pFxDuS",
-        "name": "edit_file",
-        "input": {
-          "path": "DONE.md",
-          "old_text": "- Extended asset pipeline for full animation/physics/render metadata:\n  - Added `assets/schemas/asset-manifest-v1.md` documenting required direction, animation, state, physics, collision, draw-order, blend, shadow, lighting, and occlusion metadata.\n  - Added `src/assets/asset-metadata.js` helpers for 8-way directions, animation clips, physics, render metadata, and collision volumes.\n  - Rebuilt `src/assets/default-catalog.js` so terrain, water, cliffs, trees, underbrush, rocks, caves, and riverbeds include directions, animations, state clips, physics, collision, render layers, blend/shadow/light metadata.\n  - Added `src/physics/collision.js` for local-to-world collision shape conversion and movement/light blocking helpers.\n  - Added `src/render/draw-order.js` for layer ordering, y/elevation sorting, and blend mode application.\n  - Added `src/render/animation-state.js` for resolving animation frames/directions/events.\n  - Runtime compositor signatures now expose animation, physics, collision, and render metadata alongside layers/states.\n  - Updated Sorceress style guide to require directional/state animation coverage plus physics/collision/render metadata for every asset family.\n",
-          "new_text": "- Extended asset pipeline for full animation/physics/render metadata:\n  - Added `assets/schemas/asset-manifest-v1.md` documenting required direction, animation, state, physics, collision, draw-order, blend, shadow, lighting, and occlusion metadata.\n  - Added `src/assets/asset-metadata.js` helpers for 8-way directions, animation clips, physics, render metadata, and collision volumes.\n  - Rebuilt `src/assets/default-catalog.js` so terrain, water, cliffs, trees, underbrush, rocks, caves, and riverbeds include directions, animations, state clips, physics, collision, render layers, blend/shadow/light metadata.\n  - Added `src/physics/collision.js` for local-to-world collision shape conversion and movement/light blocking helpers.\n  - Added `src/render/draw-order.js` for layer ordering, y/elevation sorting, and blend mode application.\n  - Added `src/render/animation-state.js` for resolving animation frames/directions/events.\n  - Runtime compositor signatures now expose animation, physics, collision, and render metadata alongside layers/states.\n  - Updated Sorceress style guide to require directional/state animation coverage plus physics/collision/render metadata for every asset family.\n- Added Mystic biome and biome-element reaction model:\n  - Added `mystic` to spec biome tracking, terrain colors, regional overmap sampling, tile biome classification, object placement, and surface details.\n  - Added `src/world/biome-elements.js` defining biome elemental affinities and material reaction states.\n  - Runtime compositor now attaches reaction states to terrain/object signatures, e.g. wood + fire = burning, wood + water = waterlogged, wood + mystic = enchanted, stone + mystic = rune_etched, water + mystic = shimmering.\n  - Added Mystic visual placeholder details and aether crystal object rendering.\n  - Expanded broadleaf tree and grassland catalog metadata with Mystic/enchantment/frozen/waterlogged/burnt state coverage.\n  - Static biome audit confirms all tracked biomes, including Mystic, are represented.\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_7PO27ZObpEcPihpzm4pFxDuS",
-        "content": "Applied edit to DONE.md",
-        "is_error": false
-      }
-    ]
+    "content": "[Context window: 4 older messages moved to long-term memory. Use the recall_memory tool to retrieve past decisions, code changes, or debugging outcomes as needed.]"
   },
   {
     "role": "assistant",
     "content": [
       {
         "type": "text",
-        "text": "Added Mystic and the biome-element reaction model.\n\nImplemented:\n\n- `mystic` biome in:\n  - biome list\n  - biome definitions\n  - tile classification\n  - regional overmap sampler\n  - palette\n  - object placement\n  - tile surface details\n\n- New biome-element system:\n  - `src/world/biome-elements.js`\n\n- Material reaction states:\n  - wood + fire → burning\n  - wood + water → waterlogged\n  - wood + mystic → enchanted\n  - wood + ice/cold → frozen/frosted\n  - stone + mystic → rune_etched\n  - water + mystic → shimmering\n  - grass + mystic → fae_bloom\n  - etc.\n\n- Runtime compositor now attaches biome/material reaction states to terrain and object signatures.\n\n- Added Mystic placeholder visuals:\n  - purple/aether terrain accents\n  - aether crystal object rendering\n\n- Expanded catalog metadata for Mystic/enchantment/frozen/waterlogged/burnt state coverage.\n\nStatic biome audit confirms all tracked biomes, including Mystic, are represented."
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": "I'm noticing a few discrepancies between the overmap and the particular trunk that I'm on. I would say it's mostly defined around biome coherency.\n\nIf I clicked on the tundra biome, I'm actually seeing some golden sand in that biome, and I'm not exactly sure why that is. I think a biome can have relationships and therefore have other non-biome, like, neighboring biomes with sort of transitionary things in them, but there should be some boundaries.\n\nI think we have this in our specs, a sort of hypergraph of how all this fits together and all the relationships. Let's just make sure we are actually respecting the design principles there."
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "text",
-        "text": "<plan>\nI’ll unify overmap and chunk biome classification around the same regional biome field with local transition/detail rules, so clicking tundra lands in a tundra-dominant chunk while still allowing controlled edge/neighbor features.\n</plan>\n"
+        "text": "Understood. I can use recall_memory to access prior context."
       },
-      {
-        "type": "tool_use",
-        "id": "call_xEC1XDhmcnRAxomZMgowNvLi",
-        "name": "create_checkpoint",
-        "input": {
-          "message": "Unify overmap and chunk biome coherency"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_xEC1XDhmcnRAxomZMgowNvLi",
-        "content": "Checkpoint requested: Unify overmap and chunk biome coherency",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_1YA8NnGZhvjtyrM94mu6S4b8",
-        "name": "read_file",
-        "input": {
-          "path": "src/world/biomes.js"
-        }
-      },
-      {
-        "type": "tool_use",
-        "id": "call_HXGvAYo6twuFT0yUOUFandl2",
-        "name": "read_file",
-        "input": {
-          "path": "src/world/regional-map.js"
-        }
-      },
-      {
-        "type": "tool_use",
-        "id": "call_SZPKDzppNE1FiOZGjEFatXLq",
-        "name": "read_file",
-        "input": {
-          "path": "specs/2026-05-27-hypergraph-terrain-theory.md"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_1YA8NnGZhvjtyrM94mu6S4b8",
-        "content": "Output (77 lines) written to .wizardgenie/tool-output/read_file-call_1YA.txt\n\nPreview (first 800 chars):\nFile: src/world/biomes.js (75 lines)\n\n1| import { fbm } from '../core/random.js';\n2| \n3| export const SPEC_BIOME_IDS = Object.freeze([\n4|   'ocean', 'deep_ocean', 'shallow_water', 'beach', 'river', 'lake',\n5|   'grassland', 'forest', 'dense_forest', 'tropical_forest', 'taiga',\n6|   'savanna', 'steppe', 'desert', 'swamp', 'tundra', 'arctic',\n7|   'hills', 'mountains', 'volcanic', 'mystic'\n8| ]);\n9| \n10| export const BIOMES = Object.freeze({\n11|   deep_ocean: { material: 'deep_ocean_water', color: '#123d68', walkable: false, movementCost: Infinity },\n12|   ocean: { material: 'ocean_water', color: '#1c5d8f', walkable: false, movementCost: Infinity },\n13|   shallow_water: { material: 'shallow_water', color: '#2f83a7', walkable: false, movementCost: Infinity },\n14|   river: { material: 'river_w\n\n[Use read_file with start_line/end_line to inspect specific sections]",
-        "is_error": false
-      },
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_HXGvAYo6twuFT0yUOUFandl2",
-        "content": "File: src/world/regional-map.js (53 lines)\n\n1| import { fbm } from '../core/random.js';\n2| import { BIOMES } from './biomes.js';\n3| \n4| const CHUNK_UNITS = 64;\n5| \n6| export function sampleRegionalMapChunk(cx, cy) {\n7|   const x = cx * CHUNK_UNITS;\n8|   const y = cy * CHUNK_UNITS;\n9|   const continent = fbm(x, y, 8000, undefined, 5200, 5);\n10|   const mountains = fbm(x + 19000, y - 31000, 8010, undefined, 2600, 4);\n11|   const moisture = fbm(x - 7000, y + 13000, 8020, undefined, 4200, 4);\n12|   const heatBase = fbm(x + 41000, y + 5000, 8030, undefined, 5000, 4);\n13|   const aether = fbm(x - 52000, y + 33000, 8060, undefined, 3600, 4);\n14|   const latitudeCold = Math.min(0.34, Math.abs(cy) / 260);\n15|   const elevation = clamp01(continent * 1.05 + mountains * 0.34 - 0.19);\n16|   const heat = clamp01(heatBase - latitudeCold - Math.max(0, elevation - 0.58) * 0.35 + 0.10);\n17|   const river = riverSignal(cx, cy, elevation, moisture);\n18|   const id = classifyRegionalBiome(elevation, moisture, heat, mountains, river, aether);\n19|   return { id, definition: BIOMES[id], climate: { elevation, moisture, heat, river, mountains, aether } };\n20| }\n21| \n22| function riverSignal(cx, cy, elevation, moisture) {\n23|   if (elevation < 0.40 || elevation > 0.78 || moisture < 0.48) return 1;\n24|   const channelA = Math.abs(fbm(cx * 64 + 9000, cy * 64 - 3000, 8040, undefined, 1800, 3) - 0.5);\n25|   const channelB = Math.abs(fbm(cx * 64 - 12000, cy * 64 + 15000, 8050, undefined, 2200, 3) - 0.5);\n26|   return Math.min(channelA, channelB);\n27| }\n28| \n29| function classifyRegionalBiome(elevation, moisture, heat, mountains, river, aether) {\n30|   if (aether > 0.76 && elevation > 0.43 && elevation < 0.76) return 'mystic';\n31|   if (elevation < 0.22) return 'deep_ocean';\n32|   if (elevation < 0.34) return 'ocean';\n33|   if (elevation < 0.39) return 'shallow_water';\n34|   if (elevation < 0.42) return 'beach';\n35|   if (river < 0.012) return 'river';\n36|   if (moisture > 0.86 && elevation < 0.58) return 'lake';\n37|   if (elevation > 0.76 && heat > 0.34 && moisture < 0.52 && mountains > 0.62) return 'volcanic';\n38|   if (elevation > 0.72) return heat < 0.24 ? 'arctic' : 'mountains';\n39|   if (elevation > 0.58) return heat < 0.28 ? 'tundra' : 'hills';\n40|   if (heat < 0.22) return moisture > 0.45 ? 'taiga' : 'tundra';\n41|   if (moisture > 0.80 && heat > 0.58) return 'tropical_forest';\n42|   if (moisture > 0.74 && heat > 0.32) return 'swamp';\n43|   if (moisture > 0.65) return heat > 0.48 ? 'dense_forest' : 'forest';\n44|   if (moisture < 0.25 && heat > 0.50) return 'desert';\n45|   if (moisture < 0.34) return 'steppe';\n46|   if (moisture < 0.44 && heat > 0.48) return 'savanna';\n47|   return 'grassland';\n48| }\n49| \n50| function clamp01(value) {\n51|   return Math.max(0, Math.min(1, value));\n52| }\n53| ",
-        "is_error": false
-      },
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_SZPKDzppNE1FiOZGjEFatXLq",
-        "content": "File not found: specs/2026-05-27-hypergraph-terrain-theory.md",
-        "is_error": true
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_WHZsjNHIaOKIGoZ9Eo50mp95",
-        "name": "search_files",
-        "input": {
-          "path": "specs",
-          "pattern": "hypergraph|terrain theory|biome",
-          "file_pattern": "*.md"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_WHZsjNHIaOKIGoZ9Eo50mp95",
-        "content": "Found 30 matches for \"hypergraph|terrain theory|biome\" (capped at 30 — narrow your search with path or file_pattern):\n\nspecs\\2026-05-24-master-architecture-design.md:5: FreedomMMO is a simulation-first 2D MMORPG where **every visual is a projection of simulation state**. The world is not a tilemap with sprites - it's a hypergraph of composable elements where the tile...\nspecs\\2026-05-24-master-architecture-design.md:106: Populates grain stacks using noise-based generation. Multi-octave noise produces elevation, moisture, temperature → biome classification → grain stack templates per position. Each position gets a dept...\nspecs\\2026-05-24-master-architecture-design.md:189: - `TilesetGenerator` - generates complete tilesets for a biome\nspecs\\2026-05-24-visual-vertical-slice-design.md:14: - Per-tile biome selection from grain type\nspecs\\2026-05-24-world-compiler-design.md:39: │              └─→ L6: Biomes (Whittaker lookup)\nspecs\\2026-05-24-world-compiler-design.md:102: ### L6: Biomes\nspecs\\2026-05-24-world-compiler-design.md:105: **Outputs**: Biome ID grid, ecotone mask\nspecs\\2026-05-24-world-compiler-design.md:108: **Debug view**: Biome map with coherent patches and visible transitions\nspecs\\2026-05-24-world-compiler-design.md:109: **Failure mode**: Checkerboard biome flicker from sharp thresholds\nspecs\\2026-05-24-world-compiler-design.md:111: **Supported biomes**: grassland, forest, dense_forest, desert, mountains, tundra, swamp, savanna, taiga, tropical_forest, steppe, volcanic, beach, ocean, river, lake, arctic\nspecs\\2026-05-24-world-compiler-design.md:115: **Inputs**: Elevation, slope, water proximity, floodplain deposition, biome\nspecs\\2026-05-24-world-compiler-design.md:124: **Inputs**: Biome, fertility, slope, water distance, disturbance events\nspecs\\2026-05-24-world-compiler-design.md:156: 1. Select building template by type + biome + settlement tier\nspecs\\2026-05-24-world-compiler-design.md:276: \"biome_id\": { \"encoding\": \"uint16\" },\nspecs\\2026-05-24-world-compiler-design.md:333: - L6 (biomes) → surface grain templates (grass, sand, snow, etc.)\nspecs\\2026-05-24-world-compiler-design.md:362: | F8: Biomes | Biome zones with ecotone transitions |\nspecs\\2026-05-24-world-compiler-design.md:379: | Biomes | No checkerboard flicker between neighbors | Threshold noise |\nspecs\\2026-05-24-world-compiler-design.md:388: 1. **Terrain tiles** (32x32 seamless) via `create_tiles_pro()` — per biome\nspecs\\2026-05-24-world-compiler-design.md:389: 2. **Wall tiles** (32x32) — stone, wood, thatch, brick per biome\nspecs\\2026-05-24-world-compiler-design.md:391: 4. **Roof tiles** (32x32) — thatch, shingle, slate per biome\nspecs\\2026-05-24-world-compiler-design.md:393: 6. **Nature objects** via `create_map_object()` — trees, rocks, bushes per biome\nspecs\\2026-05-24-world-compiler-design.md:396: All assets stored with manifests in `assets/generated/` with prompt, biome, tile size, and import target recorded.\nspecs\\2026-05-24-world-compiler-design.md:417: - Temperature, precipitation, biomes, soil, vegetation, coastal materials\nspecs\\2026-05-24-world-compiler-design.md:418: - Debug views: temperature, rainfall, biome map, fertility, vegetation density\nspecs\\2026-05-24-world-compiler-design.md:456: biomes.gd                # L6\nspecs\\2026-05-24-world-compiler-design.md:474: biome_tables/              # Whittaker lookup, grain stack templates\nspecs\\2026-05-25-agent-swarm-design.md:20: - V1: Terrain (z=-2) — biome tiles, organic shapes, autotile transitions\nspecs\\2026-05-25-agent-swarm-design.md:24: - V5: Objects (z=4-5) — visible, biome-appropriate, wind sway\nspecs\\2026-05-25-agent-swarm-design.md:33: - V12: Biome — each biome looks distinct, feels right\nspecs\\2026-05-25-agent-swarm-design.md:67: - Terrain transitions and biome variety",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_uqdXcADUYA22J9Us5AVb4DHQ",
-        "name": "read_file",
-        "input": {
-          "path": "specs/2026-05-24-world-compiler-design.md",
-          "start_line": 96,
-          "end_line": 112
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_uqdXcADUYA22J9Us5AVb4DHQ",
-        "content": "File: specs/2026-05-24-world-compiler-design.md (lines 96-112 of 477)\n\n96| **Outputs**: Temperature grid, precipitation grid, seasonality scalars\n97| **Algorithm**: Latitude baseline → elevation penalty → moisture from coasts/water → rain-shadow reduction leeward of mountains\n98| **Validation**: No frozen equatorial lowlands unless altitude; no rainforest precipitation in deep rain shadows\n99| **Debug view**: Temperature and rainfall with legible latitude/elevation patterns\n100| **Failure mode**: Hot alpine peaks, wet rain-shadow deserts\n101| \n102| ### L6: Biomes\n103| \n104| **Inputs**: Temperature, precipitation, soil/water modifiers\n105| **Outputs**: Biome ID grid, ecotone mask\n106| **Algorithm**: Whittaker-style lookup table. Merge with ecotones where gradients are shallow. Data-driven, not nested if/else.\n107| **Validation**: Transition zones visible; assignment explainable from local climate\n108| **Debug view**: Biome map with coherent patches and visible transitions\n109| **Failure mode**: Checkerboard biome flicker from sharp thresholds\n110| \n111| **Supported biomes**: grassland, forest, dense_forest, desert, mountains, tundra, swamp, savanna, taiga, tropical_forest, steppe, volcanic, beach, ocean, river, lake, arctic\n112| ",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_MwcprtxDwERW2mUdECnZYL6w",
-        "name": "write_file",
-        "input": {
-          "path": "src/world/biome-graph.js",
-          "content": "export const BIOME_NEIGHBORS = Object.freeze({\n  deep_ocean: ['ocean'],\n  ocean: ['deep_ocean', 'shallow_water'],\n  shallow_water: ['ocean', 'beach', 'river', 'lake', 'swamp'],\n  beach: ['shallow_water', 'grassland', 'desert', 'swamp'],\n  river: ['shallow_water', 'lake', 'swamp', 'grassland', 'forest', 'hills'],\n  lake: ['river', 'shallow_water', 'swamp', 'grassland', 'forest'],\n  grassland: ['beach', 'forest', 'savanna', 'steppe', 'hills', 'river', 'lake', 'mystic'],\n  forest: ['grassland', 'dense_forest', 'taiga', 'swamp', 'hills', 'river', 'mystic'],\n  dense_forest: ['forest', 'tropical_forest', 'swamp', 'mystic'],\n  tropical_forest: ['dense_forest', 'forest', 'swamp', 'mystic'],\n  taiga: ['forest', 'tundra', 'hills', 'mountains'],\n  savanna: ['grassland', 'steppe', 'desert', 'hills'],\n  steppe: ['grassland', 'savanna', 'desert', 'tundra', 'hills'],\n  desert: ['beach', 'savanna', 'steppe', 'hills', 'volcanic'],\n  swamp: ['shallow_water', 'river', 'lake', 'forest', 'dense_forest', 'tropical_forest'],\n  tundra: ['taiga', 'steppe', 'hills', 'mountains', 'arctic'],\n  arctic: ['tundra', 'mountains'],\n  hills: ['grassland', 'forest', 'savanna', 'steppe', 'desert', 'taiga', 'tundra', 'mountains', 'volcanic', 'mystic'],\n  mountains: ['hills', 'taiga', 'tundra', 'arctic', 'volcanic', 'mystic'],\n  volcanic: ['mountains', 'hills', 'desert'],\n  mystic: ['grassland', 'forest', 'dense_forest', 'tropical_forest', 'hills', 'mountains']\n});\n\nexport function areBiomeNeighbors(a, b) {\n  return a === b || Boolean(BIOME_NEIGHBORS[a]?.includes(b));\n}\n\nexport function transitionBiome(primary, candidate) {\n  if (areBiomeNeighbors(primary, candidate)) return candidate;\n  return primary;\n}\n\nexport function biomeDistancePenalty(primary, candidate) {\n  return areBiomeNeighbors(primary, candidate) ? 0 : 1;\n}\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_MwcprtxDwERW2mUdECnZYL6w",
-        "content": "Written 37 lines to src/world/biome-graph.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_qrSzlSb3G20NnqkpugbNKBiA",
-        "name": "edit_file",
-        "input": {
-          "path": "src/world/biomes.js",
-          "old_text": "import { fbm } from '../core/random.js';\n",
-          "new_text": "import { fbm } from '../core/random.js';\nimport { sampleRegionalMapChunk } from './regional-map.js';\nimport { transitionBiome } from './biome-graph.js';\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_qrSzlSb3G20NnqkpugbNKBiA",
-        "content": "Applied edit to src/world/biomes.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
       {
         "type": "tool_use",
         "id": "call_w4faZzEMqXRZm2MCO4F7PDQI",
@@ -6604,6 +6234,262 @@
       {
         "type": "text",
         "text": "Done."
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": "I also expect extremely high variance in objects across biomes and within biomes. So, if we're in Mystic and there are trees, I expect there to be hundreds of different types of trees within Mystic, and they are unique to Mystic.\n\nAnd then within Forest, I expect to see hundreds of different types of varieties of trees, and again, they're unique and special to Forest. In terms of art design, I would say extremely high fantasy and very lush, complicated, intricate, and very high resolution."
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "<plan>\nI’ll encode the high-variance biome art requirement into the Sorceress system prompt and generation manifests, then expand the job generator to produce hundreds of biome-unique variants per object family such as Mystic trees and Forest trees with unique rows/sheets instead of generic shared tree rows.\n</plan>\n"
+      },
+      {
+        "type": "tool_use",
+        "id": "call_llW0EBmG0z6zc9L195Pt7Cdf",
+        "name": "create_checkpoint",
+        "input": {
+          "message": "Add high-variance biome-unique object generation jobs"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_llW0EBmG0z6zc9L195Pt7Cdf",
+        "content": "Checkpoint requested: Add high-variance biome-unique object generation jobs",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_FjAFl7AgmxBH6jTnJbt7KpAr",
+        "name": "write_file",
+        "input": {
+          "path": "scripts/generate-biome-variant-jobs.mjs",
+          "content": "import { mkdirSync, writeFileSync } from 'node:fs';\nimport { dirname } from 'node:path';\n\nconst SYSTEM_PROMPT = 'assets/sorceress/SYSTEM_ART_DIRECTION_PROMPT.md';\nconst biomes = ['grassland', 'forest', 'dense_forest', 'tropical_forest', 'taiga', 'savanna', 'steppe', 'desert', 'swamp', 'tundra', 'arctic', 'hills', 'mountains', 'volcanic', 'mystic', 'beach', 'river', 'lake', 'shallow_water', 'ocean', 'deep_ocean'];\nconst families = ['trees', 'shrubs', 'flowers', 'ground_cover', 'stones', 'vines', 'canopy', 'insects'];\nconst variantsPerFamily = 256;\nconst variantsPerSheet = 64;\nconst jobs = [];\n\nfor (const biome of biomes) {\n  for (const family of families) {\n    for (let start = 0; start < variantsPerFamily; start += variantsPerSheet) {\n      const end = start + variantsPerSheet - 1;\n      addJob(`variants/${biome}/${family}_${pad(start)}_${pad(end)}.json`, {\n        output: `assets/generated/variants/${biome}/${family}_${pad(start)}_${pad(end)}.png`,\n        kind: 'create_map_object_variant_sheet',\n        cellSize: family === 'trees' || family === 'canopy' ? [64, 96] : [32, 32],\n        columns: 8,\n        rows: 8,\n        biome,\n        family,\n        variantRange: [start, end],\n        prompt: variantPrompt(biome, family, start, end)\n      });\n    }\n  }\n}\n\nwriteFileSync('assets/sorceress/biome-variant-job-index.json', JSON.stringify({ schema: 'freedommmo.biome-variant-jobs.v1', variantsPerFamily, variantsPerBiome: variantsPerFamily * families.length, totalVariantTargets: biomes.length * families.length * variantsPerFamily, count: jobs.length, jobs }, null, 2));\nconsole.log(`Wrote ${jobs.length} biome variant jobs for ${biomes.length * families.length * variantsPerFamily} variant targets`);\n\nfunction variantPrompt(biome, family, start, end) {\n  return `Generate ${end - start + 1} biome-unique ${family} variants for ${biome}, variants ${start}-${end}. These must not be generic shared assets. Every silhouette, palette accent, ornament, micro-detail, growth pattern, and magical/ecological identity must be specific to ${biome}. Target extremely high fantasy, lush, complicated, intricate, high-resolution pixel art compressed into the requested cells. Use organic asymmetry, dense detail clusters, natural imperfection, and strong gameplay readability. If ${biome} is mystic, include aether glow, impossible botany, rune-like growth scars, luminous pollen/motes, crystalline bark/leaf accents, and fae ecology. If ${biome} is forest, include rich moss, layered bark, fungi, leaf clusters, root complexity, animal/insect micro-life, seasonal variants, and deep woodland identity. Transparent background. No UI, text, watermark, square debug marks, or generic asset-pack look.`;\n}\n\nfunction addJob(path, job) {\n  const full = `assets/sorceress/jobs/${path}`;\n  mkdirSync(dirname(full), { recursive: true });\n  const content = { tool: 'sorceress', systemPrompt: SYSTEM_PROMPT, style: 'Extreme high-variance biome-unique fantasy pixel art. Hundreds of variants per family per biome. Lush, intricate, high-resolution feel, modern, seamless, gameplay readable.', ...job };\n  writeFileSync(full, JSON.stringify(content, null, 2));\n  jobs.push(full);\n}\n\nfunction pad(value) {\n  return String(value).padStart(3, '0');\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_FjAFl7AgmxBH6jTnJbt7KpAr",
+        "content": "Written 48 lines to scripts/generate-biome-variant-jobs.mjs",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_8OIth6YRH5JmcmAfP3PuhZ76",
+        "name": "run_command",
+        "input": {
+          "command": "node scripts/generate-biome-variant-jobs.mjs && node --check scripts/generate-biome-variant-jobs.mjs"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_8OIth6YRH5JmcmAfP3PuhZ76",
+        "content": "$ node scripts/generate-biome-variant-jobs.mjs && node --check scripts/generate-biome-variant-jobs.mjs\n\nWrote 672 biome variant jobs for 43008 variant targets\n",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_f5iD901hbQ6KsLPkvlNIaoUf",
+        "name": "write_file",
+        "input": {
+          "path": "src/assets/biome-variant-atlas-defs.js",
+          "content": "const BIOMES = ['grassland', 'forest', 'dense_forest', 'tropical_forest', 'taiga', 'savanna', 'steppe', 'desert', 'swamp', 'tundra', 'arctic', 'hills', 'mountains', 'volcanic', 'mystic', 'beach', 'river', 'lake', 'shallow_water', 'ocean', 'deep_ocean'];\nconst FAMILIES = ['trees', 'shrubs', 'flowers', 'ground_cover', 'stones', 'vines', 'canopy', 'insects'];\nconst VARIANTS_PER_FAMILY = 256;\nconst VARIANTS_PER_SHEET = 64;\n\nexport const biomeVariantAtlasDefs = Object.freeze(BIOMES.flatMap(biome =>\n  FAMILIES.flatMap(family =>\n    Array.from({ length: VARIANTS_PER_FAMILY / VARIANTS_PER_SHEET }, (_, sheetIndex) => {\n      const start = sheetIndex * VARIANTS_PER_SHEET;\n      const end = start + VARIANTS_PER_SHEET - 1;\n      const cell = family === 'trees' || family === 'canopy' ? 64 : 32;\n      const height = family === 'trees' || family === 'canopy' ? 96 : 32;\n      return {\n        id: `${biome}_${family}_${pad(start)}_${pad(end)}`,\n        src: `assets/generated/variants/${biome}/${family}_${pad(start)}_${pad(end)}.png`,\n        cell,\n        frames: 8,\n        rows: Array.from({ length: 8 }, (_, row) => ({ id: `${biome}_${family}_variant_${start + row * 8}`, row, frames: 8, cell, height }))\n      };\n    })\n  )\n));\n\nfunction pad(value) {\n  return String(value).padStart(3, '0');\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_f5iD901hbQ6KsLPkvlNIaoUf",
+        "content": "Written 27 lines to src/assets/biome-variant-atlas-defs.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_Q9bAmJmRUVdRWbBf9EsVjMem",
+        "name": "edit_file",
+        "input": {
+          "path": "src/assets/atlas-manager.js",
+          "old_text": "import { libraryAtlasDefs } from './library-atlas-defs.js';\n",
+          "new_text": "import { libraryAtlasDefs } from './library-atlas-defs.js';\nimport { biomeVariantAtlasDefs } from './biome-variant-atlas-defs.js';\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_Q9bAmJmRUVdRWbBf9EsVjMem",
+        "content": "Applied edit to src/assets/atlas-manager.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_jFuUaRpHXyVLDhRZgFjtok5b",
+        "name": "edit_file",
+        "input": {
+          "path": "src/assets/atlas-manager.js",
+          "old_text": "    this.generated = new ImageAtlas([...generatedAtlasDefs, ...libraryAtlasDefs]);\n",
+          "new_text": "    this.generated = new ImageAtlas([...generatedAtlasDefs, ...libraryAtlasDefs, ...biomeVariantAtlasDefs]);\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_jFuUaRpHXyVLDhRZgFjtok5b",
+        "content": "Applied edit to src/assets/atlas-manager.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_fCJlPNjlUrrsIdsWfCETDuWH",
+        "name": "edit_file",
+        "input": {
+          "path": "assets/sorceress/system-prompt.json",
+          "old_text": "    \"maximalist real-landscape influence\"\n",
+          "new_text": "    \"maximalist real-landscape influence\",\n    \"hundreds of unique variants per biome object family\",\n    \"biome-exclusive silhouettes and palettes\",\n    \"extreme high-fantasy lush intricate high-resolution feel\"\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_fCJlPNjlUrrsIdsWfCETDuWH",
+        "content": "Applied edit to assets/sorceress/system-prompt.json",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_5sdC1RWtB1pe77cHlvpCZpJp",
+        "name": "run_command",
+        "input": {
+          "command": "node --check src/assets/biome-variant-atlas-defs.js && node --check src/assets/atlas-manager.js && node -e \"const idx=require('./assets/sorceress/biome-variant-job-index.json'); console.log(idx.count, idx.totalVariantTargets);\""
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_5sdC1RWtB1pe77cHlvpCZpJp",
+        "content": "$ node --check src/assets/biome-variant-atlas-defs.js && node --check src/assets/atlas-manager.js && node -e \"const idx=require('./assets/sorceress/biome-variant-job-index.json'); console.log(idx.count, idx.totalVariantTargets);\"\n\n672 43008\n",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_vq0m6LnmwwxyvwReKgR0DOSv",
+        "name": "edit_file",
+        "input": {
+          "path": "DONE.md",
+          "old_text": "- Fixed chunk seams and overmap biome audit coverage:\n  - Removed per-tile elevation offsets from cached terrain chunks to prevent vertical/horizontal seams at chunk image boundaries.\n  - Cached chunks now render and composite at exact `chunkSize * tileSize` dimensions with no extra vertical padding/scaling mismatch.\n  - Overmap biome audit now samples the guaranteed regional/province corpus area instead of the too-small immediate neighborhood.\n  - Audit validation reports `21/21 missing none`.\n",
+          "new_text": "- Fixed chunk seams and overmap biome audit coverage:\n  - Removed per-tile elevation offsets from cached terrain chunks to prevent vertical/horizontal seams at chunk image boundaries.\n  - Cached chunks now render and composite at exact `chunkSize * tileSize` dimensions with no extra vertical padding/scaling mismatch.\n  - Overmap biome audit now samples the guaranteed regional/province corpus area instead of the too-small immediate neighborhood.\n  - Audit validation reports `21/21 missing none`.\n- Added extreme high-variance biome-unique object generation plan:\n  - Added `scripts/generate-biome-variant-jobs.mjs` to create hundreds of unique variants per biome object family.\n  - Generated `assets/sorceress/biome-variant-job-index.json` with 672 Sorceress jobs targeting 43,008 unique variant assets.\n  - Variant families cover trees, shrubs, flowers, ground cover, stones, vines, canopy, and insects across all 21 biomes.\n  - Added `src/assets/biome-variant-atlas-defs.js` so runtime can discover/load generated variant sheets.\n  - `AtlasManager` now includes biome variant atlas definitions.\n  - Updated Sorceress system prompt metadata to require hundreds of biome-exclusive variants, high-fantasy silhouettes, unique palettes, lush intricate high-resolution feel, and no generic shared assets.\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_vq0m6LnmwwxyvwReKgR0DOSv",
+        "content": "Applied edit to DONE.md",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Done."
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": "Are you able to use all of the Sorceress tools and applications, including things like Image Suite, Video Suite, 3D Studio, Voxel Studio, Audio Suite, Sprite Suite, Material Forge, 3D Procedural Work, Environment Gen, Tile Set Forge, et cetera?"
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "I don’t currently have direct callable tools for those Sorceress applications in this chat/tool environment.\n\nWhat I have access to right now is:\n\n- file read/write/edit\n- shell commands\n- browser/preview tools\n- codebase search/graph tools\n- scene/model add helper\n- local scripting\n\nI do **not** currently see exposed tool APIs for:\n\n- Sorceress Image Suite\n- Video Suite\n- 3D Studio\n- Voxel Studio\n- Audio Suite\n- Sprite Suite\n- Material Forge\n- 3D Procedural Work\n- Environment Gen\n- Tile Set Forge\n\nSo I cannot directly invoke something like:\n\n```js\nsorceress.image.generate(...)\nsorceress.spriteSuite.create(...)\nsorceress.tileSetForge.run(...)\n```\n\nunless those tools are exposed to me through the available tool namespace.\n\nWhat I *can* do, and have started doing, is build the full job/manifests/import pipeline so those tools can consume it:\n\n```text\nassets/sorceress/jobs/\nassets/sorceress/job-index.json\nassets/sorceress/biome-variant-job-index.json\nassets/sorceress/maximal-landscape-job-index.json\nassets/sorceress/SYSTEM_ART_DIRECTION_PROMPT.md\nassets/generated/\nsrc/assets/*atlas*\n```\n\nIf WizardGenie exposes Sorceress as tools later, I can call them directly. If Sorceress consumes job JSON files from disk, then the current pipeline is already set up for that."
       }
     ]
   }
