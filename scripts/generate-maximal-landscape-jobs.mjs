@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 
+const SYSTEM_PROMPT = 'assets/sorceress/SYSTEM_ART_DIRECTION_PROMPT.md';
 const biomes = ['deep_ocean', 'ocean', 'shallow_water', 'beach', 'river', 'lake', 'grassland', 'forest', 'dense_forest', 'tropical_forest', 'taiga', 'savanna', 'steppe', 'desert', 'swamp', 'tundra', 'arctic', 'hills', 'mountains', 'volcanic', 'mystic'];
 const layerFamilies = {
   bedrock: ['bedrock_base', 'strata', 'stone_plate', 'cracks', 'boulder_embedded', 'scree', 'gravel', 'ore_vein'],
@@ -47,7 +48,7 @@ console.log(`Wrote ${jobs.length} maximal landscape jobs`);
 function addJob(path, job) {
   const full = `assets/sorceress/jobs/${path}`;
   mkdirSync(dirname(full), { recursive: true });
-  const content = { tool: 'sorceress', style: 'More beautiful than CrossCode, Zelda, and Octopath Traveler; maximal elaborate organic fantasy pixel art; no square debug marks; no UI/text/watermark.', ...job };
+  const content = { tool: 'sorceress', systemPrompt: SYSTEM_PROMPT, style: 'Follow the canonical Sorceress system art direction prompt exactly: lush, beautiful, complex, unique, variant, dynamic, modern, seamless, maximalist real-landscape-influenced fantasy pixel art.', ...job };
   writeFileSync(full, JSON.stringify(content, null, 2));
   jobs.push(full);
 }

@@ -1,6 +1,7 @@
 {
   "tool": "sorceress",
-  "style": "More beautiful than CrossCode, Zelda, and Octopath Traveler; highly opinionated robust elaborate fantasy pixel art; organic, layered, readable top-down three-quarter RPG; no UI, no text, no watermark.",
+  "systemPrompt": "assets/sorceress/SYSTEM_ART_DIRECTION_PROMPT.md",
+  "style": "Follow the canonical Sorceress system art direction prompt exactly: lush, beautiful, complex, unique, variant, dynamic, modern, seamless, maximalist real-landscape-influenced fantasy pixel art.",
   "output": "assets/generated/states/materials/water_element_reactions.png",
   "kind": "create_state_overlays",
   "cellSize": [

@@ -204,3 +204,8 @@
   - Added `src/world/landscape-taxonomy.js` as runtime/data-facing taxonomy constants for landscape layers, asset families, animations, and states.
   - Added `scripts/generate-maximal-landscape-jobs.mjs` to programmatically create maximal Sorceress landscape generation jobs.
   - Generated `assets/sorceress/maximal-landscape-job-index.json` with 462 landscape jobs covering 21 biomes × 14 layer families plus per-biome state overlay jobs.
+- Added canonical Sorceress system-level art direction prompt:
+  - Added `assets/sorceress/SYSTEM_ART_DIRECTION_PROMPT.md`, defining the lush, beautiful, complex, unique, variant, dynamic, modern, seamless, maximalist, real-landscape-influenced fantasy pixel-art style target.
+  - Added `assets/sorceress/system-prompt.json` with required style tags and negative prompt constraints.
+  - Updated Sorceress generation scripts so every generated job includes `systemPrompt: assets/sorceress/SYSTEM_ART_DIRECTION_PROMPT.md`.
+  - Regenerated the 92 core library jobs and 462 maximal landscape jobs with the canonical prompt reference embedded.

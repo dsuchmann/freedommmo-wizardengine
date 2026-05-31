@@ -1,0 +1,29 @@
+{
+  "schema": "freedommmo.sorceress-system-prompt.v1",
+  "file": "assets/sorceress/SYSTEM_ART_DIRECTION_PROMPT.md",
+  "summary": "Canonical system-level art direction prompt for all Sorceress asset generation: lush, beautiful, complex, unique, variant, dynamic, modern, seamless, maximalist, real-landscape-influenced fantasy pixel art inspired by the quality bar of Octopath Traveler, Legend of Zelda, and CrossCode without copying them.",
+  "requiredStyleTags": [
+    "lush",
+    "beautiful",
+    "complex",
+    "unique",
+    "highly variant",
+    "dynamic",
+    "modern fantasy pixel art",
+    "seamless",
+    "richly layered",
+    "organic",
+    "gameplay readable",
+    "top-down three-quarter RPG",
+    "maximalist real-landscape influence"
+  ],
+  "negativePrompt": [
+    "flat colored debug tiles",
+    "square noise",
+    "generic asset pack",
+    "UI text labels watermark",
+    "inconsistent perspective",
+    "non-seamless tiles when seamless requested",
+    "monolithic sprites when layered assembly requested"
+  ]
+}
