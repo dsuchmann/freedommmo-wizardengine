@@ -1,0 +1,27 @@
+{
+  "tool": "sorceress",
+  "style": "More beautiful than CrossCode, Zelda, and Octopath Traveler; highly opinionated robust elaborate fantasy pixel art; organic, layered, readable top-down three-quarter RPG; no UI, no text, no watermark.",
+  "output": "assets/generated/states/materials/leaf_element_reactions.png",
+  "kind": "create_state_overlays",
+  "cellSize": [
+    32,
+    32
+  ],
+  "columns": 8,
+  "rows": 12,
+  "rowsDescription": [
+    "fire",
+    "water",
+    "ice",
+    "cold",
+    "mystic",
+    "rot",
+    "ash",
+    "poison",
+    "salt",
+    "wind",
+    "sun",
+    "ore"
+  ],
+  "prompt": "Generate transparent state overlays for leaf reacting to elements: fire, water, ice, cold, mystic, rot, ash, poison, salt, wind, sun, ore. Each row has 8 frames/variants. Include burning, waterlogged, frozen, enchanted, rotting, ash-dusted, tainted, salted, windblown, sunbaked, ore-infused as appropriate."
+}

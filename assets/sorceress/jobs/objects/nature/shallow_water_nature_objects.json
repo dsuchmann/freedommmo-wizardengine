@@ -1,0 +1,23 @@
+{
+  "tool": "sorceress",
+  "style": "More beautiful than CrossCode, Zelda, and Octopath Traveler; highly opinionated robust elaborate fantasy pixel art; organic, layered, readable top-down three-quarter RPG; no UI, no text, no watermark.",
+  "output": "assets/generated/objects/nature/shallow_water_nature_objects.png",
+  "kind": "create_map_object",
+  "cellSize": [
+    32,
+    32
+  ],
+  "columns": 8,
+  "rows": 8,
+  "rowsDescription": [
+    "tree_or_large_plant",
+    "shrub",
+    "grass_cluster",
+    "rock",
+    "log_or_debris",
+    "flower_cluster",
+    "rare_resource",
+    "biome_special"
+  ],
+  "prompt": "Generate biome-appropriate nature objects for shallow_water. Each row is 8 animation/variant frames. Transparent background, organic silhouettes, root anchors at bottom center."
+}

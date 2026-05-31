@@ -179,3 +179,12 @@
   - Added Sorceress job manifests in `assets/sorceress/jobs/` for terrain micro-layers, vegetation objects, and geology objects.
   - Renderer HUD now reports loaded generated art sheets.
   - Canvas renderer now uses `AtlasManager`, so Sorceress PNGs at the expected paths automatically replace fallback art with no code changes.
+- Expanded Sorceress recomputation library:
+  - Added `assets/sorceress/library-plan.json` describing the complete generated visual library strategy.
+  - Added `scripts/generate-sorceress-library.mjs` to build a spec-driven batch of Sorceress job manifests.
+  - Generated `assets/sorceress/job-index.json` with 92 Sorceress jobs.
+  - Generated per-biome jobs for all 21 biomes: base terrain tiles, micro-layer overlays, nature objects, and building materials.
+  - Generated material/element reaction overlay jobs for wood, leaf, stone, water, grass, and sand across fire/water/ice/cold/mystic/rot/ash/poison/salt/wind/sun/ore.
+  - Generated character directional animation and elemental effect sheet jobs.
+  - Added `src/assets/library-atlas-defs.js` so the runtime knows the expected output paths/rows for the expanded generated library.
+  - `AtlasManager` now attempts to load both seed generated sheets and the expanded spec-driven library sheets before falling back.

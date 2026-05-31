@@ -1,0 +1,13 @@
+{
+  "tool": "sorceress",
+  "style": "More beautiful than CrossCode, Zelda, and Octopath Traveler; highly opinionated robust elaborate fantasy pixel art; organic, layered, readable top-down three-quarter RPG; no UI, no text, no watermark.",
+  "output": "assets/generated/terrain/base/ocean_base_tiles.png",
+  "kind": "create_tiles_pro",
+  "cellSize": [
+    32,
+    32
+  ],
+  "columns": 8,
+  "rows": 8,
+  "prompt": "Generate 64 seamless 32x32 base terrain tiles for ocean. Rich top-down fantasy pixel art, organic non-square detail, more beautiful than CrossCode/Zelda/Octopath, transparent only where appropriate, no UI/text/watermark."
+}

@@ -1,0 +1,23 @@
+{
+  "tool": "sorceress",
+  "style": "More beautiful than CrossCode, Zelda, and Octopath Traveler; highly opinionated robust elaborate fantasy pixel art; organic, layered, readable top-down three-quarter RPG; no UI, no text, no watermark.",
+  "output": "assets/generated/buildings/materials/arctic_building_materials.png",
+  "kind": "create_tiles_pro",
+  "cellSize": [
+    32,
+    32
+  ],
+  "columns": 8,
+  "rows": 8,
+  "rowsDescription": [
+    "wall_stone",
+    "wall_wood",
+    "wall_thatch_or_local",
+    "floor_wood",
+    "floor_stone",
+    "roof_local",
+    "trim",
+    "damage_overlay"
+  ],
+  "prompt": "Generate biome-local building wall/floor/roof material tiles for arctic. 32x32, coherent fantasy settlement style, seamless where needed."
+}

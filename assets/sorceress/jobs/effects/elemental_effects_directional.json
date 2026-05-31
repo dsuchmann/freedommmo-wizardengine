@@ -1,0 +1,27 @@
+{
+  "tool": "sorceress",
+  "style": "More beautiful than CrossCode, Zelda, and Octopath Traveler; highly opinionated robust elaborate fantasy pixel art; organic, layered, readable top-down three-quarter RPG; no UI, no text, no watermark.",
+  "output": "assets/generated/effects/elemental_effects_directional.png",
+  "kind": "create_effects",
+  "cellSize": [
+    32,
+    32
+  ],
+  "columns": 8,
+  "rows": 12,
+  "rowsDescription": [
+    "fire",
+    "water",
+    "ice",
+    "cold",
+    "mystic",
+    "rot",
+    "ash",
+    "poison",
+    "salt",
+    "wind",
+    "sun",
+    "ore"
+  ],
+  "prompt": "Generate elemental effect animation rows for fire, water, ice, cold, mystic, rot, ash, poison, salt, wind, sun, ore. 8 frames per effect, transparent background, readable top-down RPG effects."
+}

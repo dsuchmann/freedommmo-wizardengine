@@ -1,0 +1,23 @@
+{
+  "tool": "sorceress",
+  "style": "More beautiful than CrossCode, Zelda, and Octopath Traveler; highly opinionated robust elaborate fantasy pixel art; organic, layered, readable top-down three-quarter RPG; no UI, no text, no watermark.",
+  "output": "assets/generated/terrain/micro/river_micro_layers.png",
+  "kind": "create_tiles_pro",
+  "cellSize": [
+    32,
+    32
+  ],
+  "columns": 8,
+  "rows": 8,
+  "rowsDescription": [
+    "soil",
+    "ground_cover",
+    "foliage_blades",
+    "flowers",
+    "debris",
+    "wet_overlay",
+    "snow_or_heat_overlay",
+    "biome_magic_or_special"
+  ],
+  "prompt": "Generate layered transparent micro-detail overlays for river: soil, ground cover, animated foliage, flowers, debris, and biome-special details. 8 rows x 8 frames/variants."
+}

@@ -1,0 +1,31 @@
+{
+  "tool": "sorceress",
+  "style": "More beautiful than CrossCode, Zelda, and Octopath Traveler; highly opinionated robust elaborate fantasy pixel art; organic, layered, readable top-down three-quarter RPG; no UI, no text, no watermark.",
+  "output": "assets/generated/characters/humanoid_base_directional.png",
+  "kind": "create_character",
+  "cellSize": [
+    32,
+    48
+  ],
+  "columns": 8,
+  "rows": 48,
+  "directions": [
+    "S",
+    "SE",
+    "E",
+    "NE",
+    "N",
+    "NW",
+    "W",
+    "SW"
+  ],
+  "animations": [
+    "idle",
+    "walk",
+    "run",
+    "attack",
+    "cast",
+    "hurt"
+  ],
+  "prompt": "Generate layered humanoid base character animation sheet. 8 directions, idle/walk/run/attack/cast/hurt, transparent background, high-fantasy pixel art, equipment overlay compatible."
+}

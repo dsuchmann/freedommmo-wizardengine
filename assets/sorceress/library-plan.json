@@ -1,0 +1,21 @@
+{
+  "schema": "freedommmo.sorceress-library.v1",
+  "principle": "Recompute the complete spec-driven visual library with Sorceress. Runtime loads generated PNG sheets first and falls back only while a sheet is missing.",
+  "biomes": ["deep_ocean", "ocean", "shallow_water", "beach", "river", "lake", "grassland", "forest", "dense_forest", "tropical_forest", "taiga", "savanna", "steppe", "desert", "swamp", "tundra", "arctic", "hills", "mountains", "volcanic", "mystic"],
+  "directions8": ["S", "SE", "E", "NE", "N", "NW", "W", "SW"],
+  "interactionElements": ["fire", "water", "ice", "cold", "mystic", "rot", "ash", "poison", "salt", "wind", "sun", "ore"],
+  "sheetFamilies": [
+    "terrain_base_by_biome",
+    "terrain_transition_edges_by_biome_pair",
+    "terrain_micro_layers",
+    "terrain_state_overlays",
+    "cliff_and_elevation",
+    "water_and_shoreline",
+    "vegetation_objects_by_biome",
+    "geology_objects_by_biome",
+    "settlement_materials_by_biome",
+    "interior_features",
+    "characters_layered_directional",
+    "effects_elemental_interactions"
+  ]
+}

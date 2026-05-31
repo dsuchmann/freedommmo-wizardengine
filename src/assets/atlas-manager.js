@@ -1,10 +1,11 @@
 import { ImageAtlas } from './image-atlas.js';
 import { ProceduralAtlas } from './procedural-atlas.js';
 import { generatedAtlasDefs } from './generated-atlas-defs.js';
+import { libraryAtlasDefs } from './library-atlas-defs.js';
 
 export class AtlasManager {
   constructor() {
-    this.generated = new ImageAtlas(generatedAtlasDefs);
+    this.generated = new ImageAtlas([...generatedAtlasDefs, ...libraryAtlasDefs]);
     this.fallback = new ProceduralAtlas();
   }
 
