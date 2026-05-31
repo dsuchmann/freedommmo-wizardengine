@@ -83,3 +83,10 @@
   - Updated `canvas-renderer` to use the tile painter instead of flat biome rectangles.
   - Kept elevation/slope lighting and depth effects layered over the richer terrain projection.
   - Adjusted overmap sampling/shading to reduce static-noise appearance and improve landform coherence.
+- Added first terrain-form/subterranean horizontal layer:
+  - Read subterranean systems, elevation/cliff rendering, and hypergraph terrain specs.
+  - Added `src/world/terrain-forms.js` to classify plains, valleys, ridges, hillsides, cliffs, mountain slopes, mountain peaks, dry riverbeds, cave entrances, overhangs, and natural bridges.
+  - Extended tile stacks with `terrainForms` and `subterranean` layers.
+  - Chunk compiler now stamps terrain-form state into every tile before render projection.
+  - Added `src/render/feature-painter.js` for visible cliffs, ridges, valleys, dry riverbeds, cave mouths, overhang shadows, natural bridges, and mountain strata.
+  - HUD now reports terrain form, feature list, and slope at the player tile.

@@ -1,7 +1,8 @@
 import { WORLD } from '../core/constants.js';
 import { BIOMES, classifyBiome } from './biomes.js';
-import { createTileStack, addObjectToTile, projectTileForRender } from './tile-stack.js';
+import { createTileStack, addObjectToTile, applyTerrainForm, projectTileForRender } from './tile-stack.js';
 import { placeObjectsForTile } from './object-placement.js';
+import { classifyTerrainForm } from './terrain-forms.js';
 
 export class ChunkCompiler {
   compile(cx, cy) {
@@ -13,7 +14,9 @@ export class ChunkCompiler {
       for (let x = 0; x < WORLD.chunkSize; x++) {
         const wx = cx * WORLD.chunkSize + x;
         const wy = cy * WORLD.chunkSize + y;
-        const tile = createTileStack({ wx, wy, biomeSample: classifyBiome(wx, wy) });
+        const biomeSample = classifyBiome(wx, wy);
+        const tile = createTileStack({ wx, wy, biomeSample });
+        applyTerrainForm(tile, classifyTerrainForm(wx, wy, biomeSample.climate));
         const placed = placeObjectsForTile(tile);
         for (const object of placed) {
           addObjectToTile(tile, object);

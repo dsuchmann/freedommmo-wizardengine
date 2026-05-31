@@ -15,6 +15,8 @@ export const LAYERS = Object.freeze({
   surface: 3,
   objects: 4,
   structures: 5,
-  entities: 6,
-  lighting: 7
+  terrainForms: 6,
+  subterranean: 7,
+  entities: 8,
+  lighting: 9
 });

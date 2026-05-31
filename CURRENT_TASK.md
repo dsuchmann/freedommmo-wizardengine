@@ -2,35 +2,38 @@
 
 ## Task ID
 
-M7-002
+M3-002
 
 ## Goal
 
-Reduce remaining draw/render bottlenecks after worker-backed chunk compilation by adding chunk-level render caches and/or lower-cost terrain projection.
+Turn terrain forms into navigable world systems: climbing/step rules, cave entry/subterranean mode, bridges/overpasses, and explicit cliff traversal constraints.
 
 ## Why this matters
 
-Chunk generation can now run through a worker pool, but the renderer still draws every visible tile every frame and applies per-tile shading/tint math in the hot path. FreedomMMO needs chunk-image projection, atlas-style batching, or cached terrain layers so the main thread mostly composites prebuilt chunk surfaces.
+Terrain forms are now visible and stored in tile stacks, but they are not yet gameplay. FreedomMMO needs elevation and subterranean structure to affect movement, exploration, pathfinding, and interaction.
 
 ## Required reads before coding
 
 - `AGENT_LOOP.md`
 - `IMPLEMENTATION_CONTRACT.md`
-- `SPEC_IMPLEMENTATION_BACKLOG.md`
-- `specs/2026-05-26-runtime-compositor-spec.md`
-- `specs/2026-05-27-terrain-shading-design.md`
-- `src/render/canvas-renderer.js`
-- `src/world/chunk-compiler.js`
+- `specs/2026-05-27-subterranean-systems-design.md`
+- `specs/2026-05-27-elevation-cliff-rendering-design.md`
+- `specs/2026-05-25-tile-object-system-design.md`
+- `src/world/terrain-forms.js`
+- `src/world/tile-stack.js`
+- `src/player.js`
 
 ## Deliverables
 
-- Add cached terrain chunk image projection or equivalent batching.
-- Keep dynamic lighting/elevation readable.
-- Preserve deterministic tile/layer simulation data.
-- Update perf HUD/logs/backlog.
+- Movement cost/walkability changes based on cliff/slope/bridge/cave state.
+- Interaction key for cave entrances.
+- Basic subterranean mode/state and renderer tint.
+- HUD readout for surface/subterranean layer.
+- Preserve deterministic generation.
 
 ## Acceptance criteria
 
-- Renderer does less per-tile work every frame.
-- Chunk cache invalidates safely if projection inputs change.
-- `DONE.md` is updated.
+- Player can identify cave entrances and enter/exit a first subterranean layer.
+- Cliffs and steep slopes influence traversal.
+- Bridges/overpasses are represented distinctly from ground paths.
+- Logs/backlog updated.
