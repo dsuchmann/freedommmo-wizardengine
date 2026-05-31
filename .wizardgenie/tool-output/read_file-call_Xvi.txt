@@ -1,0 +1,111 @@
+File: src/render/canvas-renderer.js (lines 1-109 of 109)
+
+1| import { WORLD } from '../core/constants.js';
+2| import { floorDiv } from '../world/chunk.js';
+3| 
+4| export class CanvasRenderer {
+5|   constructor(canvas, statsElement) {
+6|     this.canvas = canvas;
+7|     this.ctx = canvas.getContext('2d', { alpha: false });
+8|     this.statsElement = statsElement;
+9|     window.addEventListener('resize', () => this.resize());
+10|     this.resize();
+11|   }
+12| 
+13|   resize() {
+14|     this.canvas.width = Math.floor(window.innerWidth * window.devicePixelRatio);
+15|     this.canvas.height = Math.floor(window.innerHeight * window.devicePixelRatio);
+16|     this.ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+17|   }
+18| 
+19|   draw(chunkStore, player) {
+20|     const ctx = this.ctx;
+21|     const w = window.innerWidth;
+22|     const h = window.innerHeight;
+23|     ctx.fillStyle = '#071019';
+24|     ctx.fillRect(0, 0, w, h);
+25| 
+26|     const camX = player.x * WORLD.tileSize - w / 2;
+27|     const camY = player.y * WORLD.tileSize - h / 2;
+28|     const minTX = Math.floor(camX / WORLD.tileSize) - 1;
+29|     const minTY = Math.floor(camY / WORLD.tileSize) - 1;
+30|     const maxTX = Math.ceil((camX + w) / WORLD.tileSize) + 1;
+31|     const maxTY = Math.ceil((camY + h) / WORLD.tileSize) + 1;
+32| 
+33|     for (let ty = minTY; ty <= maxTY; ty++) {
+34|       for (let tx = minTX; tx <= maxTX; tx++) {
+35|         const cx = floorDiv(tx, WORLD.chunkSize);
+36|         const cy = floorDiv(ty, WORLD.chunkSize);
+37|         const lx = tx - cx * WORLD.chunkSize;
+38|         const ly = ty - cy * WORLD.chunkSize;
+39|         const renderTile = chunkStore.get(cx, cy).renderTiles[ly * WORLD.chunkSize + lx];
+40|         ctx.fillStyle = shade(renderTile.color, (renderTile.elevation - 0.5) * 0.28);
+41|         ctx.fillRect(Math.floor(tx * WORLD.tileSize - camX), Math.floor(ty * WORLD.tileSize - camY), WORLD.tileSize, WORLD.tileSize);
+42|       }
+43|     }
+44| 
+45|     this.drawObjects(chunkStore, camX, camY, w, h);
+46|     this.drawPlayer(w, h);
+47|   }
+48| 
+49|   drawObjects(chunkStore, camX, camY, w, h) {
+50|     for (const chunk of chunkStore.chunks.values()) {
+51|       for (const object of chunk.objects) {
+52|         const sx = (chunk.cx * WORLD.chunkSize + object.x) * WORLD.tileSize - camX;
+53|         const sy = (chunk.cy * WORLD.chunkSize + object.y) * WORLD.tileSize - camY;
+54|         if (sx < -20 || sy < -20 || sx > w + 20 || sy > h + 20) continue;
+55|         drawObject(this.ctx, object.kind, sx, sy);
+56|       }
+57|     }
+58|   }
+59| 
+60|   drawPlayer(w, h) {
+61|     const ctx = this.ctx;
+62|     ctx.fillStyle = '#f6f1d0';
+63|     ctx.beginPath();
+64|     ctx.arc(w / 2, h / 2, 7, 0, Math.PI * 2);
+65|     ctx.fill();
+66|     ctx.strokeStyle = '#1b1b1b';
+67|     ctx.stroke();
+68|   }
+69| 
+70|   hud(chunkStore, player) {
+71|     const tile = chunkStore.tileAt(player.x, player.y);
+72|     this.statsElement.innerHTML = `WASD / arrows to move · R reset spawn<br>position autosaves during live edits<br>seed ${WORLD.seed} · chunks ${chunkStore.chunks.size}<br>tile ${Math.floor(player.x)}, ${Math.floor(player.y)} · chunk ${floorDiv(player.x)}, ${floorDiv(player.y)}<br>biome ${tile.biome} · material ${tile.material}<br>surface ${tile.layers[3].detail}<br>elev ${tile.climate.elevation.toFixed(2)} moist ${tile.climate.moisture.toFixed(2)} heat ${tile.climate.heat.toFixed(2)}`;
+73|   }
+74| }
+75| 
+76| function drawObject(ctx, kind, sx, sy) {
+77|   if (kind === 'tree') {
+78|     ctx.fillStyle = '#12391f';
+79|     ctx.beginPath();
+80|     ctx.arc(sx + 8, sy + 8, 7, 0, Math.PI * 2);
+81|     ctx.fill();
+82|     ctx.fillStyle = '#6b4928';
+83|     ctx.fillRect(sx + 6, sy + 8, 4, 7);
+84|   } else if (kind.includes('rock')) {
+85|     ctx.fillStyle = '#555a5f';
+86|     ctx.fillRect(sx + 4, sy + 5, 9, 8);
+87|   } else if (kind === 'flower') {
+88|     ctx.fillStyle = '#ffd6f2';
+89|     ctx.fillRect(sx + 7, sy + 7, 3, 3);
+90|   } else if (kind.includes('shrub') || kind === 'reed' || kind === 'grass_tuft') {
+91|     ctx.fillStyle = '#244f27';
+92|     ctx.fillRect(sx + 5, sy + 6, 7, 7);
+93|   } else {
+94|     ctx.fillStyle = '#7b5b35';
+95|     ctx.fillRect(sx + 5, sy + 6, 8, 5);
+96|   }
+97| }
+98| 
+99| function shade(hex, amount) {
+100|   const n = parseInt(hex.slice(1), 16);
+101|   let r = (n >> 16) & 255;
+102|   let g = (n >> 8) & 255;
+103|   let b = n & 255;
+104|   r = Math.max(0, Math.min(255, r + amount * 255));
+105|   g = Math.max(0, Math.min(255, g + amount * 255));
+106|   b = Math.max(0, Math.min(255, b + amount * 255));
+107|   return `rgb(${r | 0},${g | 0},${b | 0})`;
+108| }
+109| 

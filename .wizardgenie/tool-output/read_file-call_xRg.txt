@@ -1,0 +1,153 @@
+File: src/render/canvas-renderer.js (151 lines)
+
+1| import { WORLD } from '../core/constants.js';
+2| import { floorDiv } from '../world/chunk.js';
+3| 
+4| export class CanvasRenderer {
+5|   constructor(canvas, statsElement) {
+6|     this.canvas = canvas;
+7|     this.ctx = canvas.getContext('2d', { alpha: false });
+8|     this.statsElement = statsElement;
+9|     window.addEventListener('resize', () => this.resize());
+10|     this.resize();
+11|   }
+12| 
+13|   resize() {
+14|     this.canvas.width = Math.floor(window.innerWidth * window.devicePixelRatio);
+15|     this.canvas.height = Math.floor(window.innerHeight * window.devicePixelRatio);
+16|     this.ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+17|   }
+18| 
+19|   draw(chunkStore, player, lighting) {
+20|     const ctx = this.ctx;
+21|     const w = window.innerWidth;
+22|     const h = window.innerHeight;
+23|     const sun = lighting.sun();
+24|     ctx.fillStyle = '#071019';
+25|     ctx.fillRect(0, 0, w, h);
+26| 
+27|     const camX = player.x * WORLD.tileSize - w / 2;
+28|     const camY = player.y * WORLD.tileSize - h / 2;
+29|     const minTX = Math.floor(camX / WORLD.tileSize) - 1;
+30|     const minTY = Math.floor(camY / WORLD.tileSize) - 1;
+31|     const maxTX = Math.ceil((camX + w) / WORLD.tileSize) + 1;
+32|     const maxTY = Math.ceil((camY + h) / WORLD.tileSize) + 1;
+33| 
+34|     for (let ty = minTY; ty <= maxTY; ty++) {
+35|       for (let tx = minTX; tx <= maxTX; tx++) {
+36|         const cx = floorDiv(tx, WORLD.chunkSize);
+37|         const cy = floorDiv(ty, WORLD.chunkSize);
+38|         const lx = tx - cx * WORLD.chunkSize;
+39|         const ly = ty - cy * WORLD.chunkSize;
+40|         const chunk = chunkStore.get(cx, cy);
+41|         const renderTile = chunk.renderTiles[ly * WORLD.chunkSize + lx];
+42|         const east = chunkStore.tileAt(tx + 1, ty).climate.elevation;
+43|         const south = chunkStore.tileAt(tx, ty + 1).climate.elevation;
+44|         const slope = ((renderTile.elevation - east) * sun.shadowX + (renderTile.elevation - south) * sun.shadowY) * 1.8;
+45|         const contour = Math.floor(renderTile.elevation * 18) !== Math.floor((renderTile.elevation - 0.012) * 18) ? 0.10 : 0;
+46|         ctx.fillStyle = tint(shade(renderTile.color, (renderTile.elevation - 0.5) * 0.30 + slope + contour), sun.tint, sun.ambient);
+47|         const sx = Math.floor(tx * WORLD.tileSize - camX);
+48|         const sy = Math.floor(ty * WORLD.tileSize - camY - elevationLift(renderTile.elevation));
+49|         ctx.fillRect(sx, sy, WORLD.tileSize, WORLD.tileSize + Math.ceil(elevationLift(renderTile.elevation) * 0.35));
+50|       }
+51|     }
+52| 
+53|     this.drawObjects(chunkStore, camX, camY, w, h, sun);
+54|     this.drawPlayer(w, h);
+55|     this.drawAtmosphere(sun, w, h);
+56|   }
+57| 
+58|   drawObjects(chunkStore, camX, camY, w, h, sun) {
+59|     const ctx = this.ctx;
+60|     for (const chunk of chunkStore.chunks.values()) {
+61|       for (const object of chunk.objects) {
+62|         const tile = chunk.tiles[object.y * WORLD.chunkSize + object.x];
+63|         const sx = (chunk.cx * WORLD.chunkSize + object.x) * WORLD.tileSize - camX;
+64|         const sy = (chunk.cy * WORLD.chunkSize + object.y) * WORLD.tileSize - camY - elevationLift(tile.climate.elevation);
+65|         if (sx < -20 || sy < -20 || sx > w + 20 || sy > h + 20) continue;
+66|         ctx.fillStyle = `rgba(0,0,0,${0.28 * (1 - sun.height)})`;
+67|         ctx.fillRect(sx + sun.shadowX * 12, sy + sun.shadowY * 12 + 10, 12, 5);
+68|         drawObject(ctx, object.kind, sx, sy);
+69|       }
+70|     }
+71|   }
+72| 
+73|   drawPlayer(w, h) {
+74|     const ctx = this.ctx;
+75|     ctx.fillStyle = '#f6f1d0';
+76|     ctx.beginPath();
+77|     ctx.arc(w / 2, h / 2, 7, 0, Math.PI * 2);
+78|     ctx.fill();
+79|     ctx.strokeStyle = '#1b1b1b';
+80|     ctx.stroke();
+81|   }
+82| 
+83|   drawAtmosphere(sun, w, h) {
+84|     const ctx = this.ctx;
+85|     ctx.fillStyle = `rgba(12,18,42,${Math.max(0, 0.36 - sun.height * 0.34)})`;
+86|     ctx.fillRect(0, 0, w, h);
+87|   }
+88| 
+89|   hud(chunkStore, player, lighting) {
+90|     const tile = chunkStore.tileAt(player.x, player.y);
+91|     const sun = lighting.sun();
+92|     this.statsElement.innerHTML = `WASD/arrows move · R reset · M map · L pause sun<br>click overmap to teleport · position autosaves<br>seed ${WORLD.seed} · chunks ${chunkStore.chunks.size}<br>tile ${Math.floor(player.x)}, ${Math.floor(player.y)} · chunk ${floorDiv(player.x)}, ${floorDiv(player.y)}<br>biome ${tile.biome} · material ${tile.material}<br>surface ${tile.layers[3].detail}<br>elev ${tile.climate.elevation.toFixed(2)} lift ${elevationLift(tile.climate.elevation).toFixed(1)}<br>moist ${tile.climate.moisture.toFixed(2)} heat ${tile.climate.heat.toFixed(2)}<br>${sun.label} · light ${sun.ambient.toFixed(2)} · sun height ${sun.height.toFixed(2)}`;
+93|   }
+94| }
+95| 
+96| function drawObject(ctx, kind, sx, sy) {
+97|   if (kind === 'tree') {
+98|     ctx.fillStyle = '#12391f';
+99|     ctx.beginPath();
+100|     ctx.arc(sx + 8, sy + 8, 7, 0, Math.PI * 2);
+101|     ctx.fill();
+102|     ctx.fillStyle = '#6b4928';
+103|     ctx.fillRect(sx + 6, sy + 8, 4, 7);
+104|   } else if (kind.includes('rock')) {
+105|     ctx.fillStyle = '#555a5f';
+106|     ctx.fillRect(sx + 4, sy + 5, 9, 8);
+107|   } else if (kind === 'flower') {
+108|     ctx.fillStyle = '#ffd6f2';
+109|     ctx.fillRect(sx + 7, sy + 7, 3, 3);
+110|   } else if (kind.includes('shrub') || kind === 'reed' || kind === 'grass_tuft') {
+111|     ctx.fillStyle = '#244f27';
+112|     ctx.fillRect(sx + 5, sy + 6, 7, 7);
+113|   } else {
+114|     ctx.fillStyle = '#7b5b35';
+115|     ctx.fillRect(sx + 5, sy + 6, 8, 5);
+116|   }
+117| }
+118| 
+119| function elevationLift(elevation) {
+120|   return Math.max(0, elevation - 0.35) * 18;
+121| }
+122| 
+123| function tint(color, tintColor, ambient) {
+124|   const rgb = parseRgb(color);
+125|   return `rgb(${clamp(rgb.r * tintColor.r * ambient)},${clamp(rgb.g * tintColor.g * ambient)},${clamp(rgb.b * tintColor.b * ambient)})`;
+126| }
+127| 
+128| function parseRgb(color) {
+129|   if (color.startsWith('rgb')) {
+130|     const parts = color.match(/\d+/g).map(Number);
+131|     return { r: parts[0], g: parts[1], b: parts[2] };
+132|   }
+133|   const n = parseInt(color.slice(1), 16);
+134|   return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+135| }
+136| 
+137| function clamp(value) {
+138|   return Math.max(0, Math.min(255, value | 0));
+139| }
+140| 
+141| function shade(hex, amount) {
+142|   const n = parseInt(hex.slice(1), 16);
+143|   let r = (n >> 16) & 255;
+144|   let g = (n >> 8) & 255;
+145|   let b = n & 255;
+146|   r = Math.max(0, Math.min(255, r + amount * 255));
+147|   g = Math.max(0, Math.min(255, g + amount * 255));
+148|   b = Math.max(0, Math.min(255, b + amount * 255));
+149|   return `rgb(${r | 0},${g | 0},${b | 0})`;
+150| }
+151| 

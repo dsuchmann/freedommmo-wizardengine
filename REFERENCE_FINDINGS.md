@@ -15,6 +15,9 @@ This file records facts extracted from the specs and Godot reference code/assets
 - Layer architecture spec defines an animation-cel mental model: separate transparent/opaque sheets compose into the visible world.
 - Overmap spec establishes seed 42 as default, 6,400 × 6,400 chunk capacity, 64×64 chunks, and deterministic generation without server-side terrain storage.
 - World compiler spec identifies scatter placement and node explosion as anti-patterns; the Wizard Genie architecture uses a compiler and renderer projection to avoid that.
+- Elevation/cliff rendering spec requires terrain height to be visually communicated, not only encoded as biome color. Current implementation adds elevation lift, contour bands, and slope hillshade as a first renderer projection.
+- Dynamic lighting spec calls for a day/night time source, directional sun/moon angle, ambient tint, and terrain hillshading. Current implementation adds a lightweight `DayNightCycle` driving tint, atmosphere, and object shadows.
+- Asset pipeline spec requires cel-animation layering: visible tiles are composed from multiple independently swappable layers/states rather than one opaque image.
 
 ## Godot reference findings
 

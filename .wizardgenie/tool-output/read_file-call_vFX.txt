@@ -1,0 +1,120 @@
+File: specs/2026-05-27-terrain-shading-design.md (118 lines)
+
+1| # Layer -1: Terrain Shading Design
+2| 
+3| **Date:** 2026-05-27
+4| **Status:** Approved
+5| **Scope:** Wire existing C++ normal maps + AO to rendering, add directional lighting, fix day/night transitions
+6| 
+7| ## Context
+8| 
+9| The elevation renderer stacks terrain at different Y-offsets, creating visible height. But there's no dynamic shading — no sense of sun direction, no slope highlighting, no ambient depth. The C++ `NativeChunkCompiler` already generates normal maps and baked AO, but they're not connected to rendering.
+10| 
+11| Day/night transitions have abrupt color snaps at 6:00 AM and golden hour→night due to piecewise linear interpolation with hard breakpoints.
+12| 
+13| ## Architecture
+14| 
+15| ### Approach: Hybrid (Godot Native Normals + AO)
+16| 
+17| 1. **Godot's built-in 2D lighting** handles sun/moon via DirectionalLight2D + normal maps
+18| 2. **C++ baked AO** provides static ambient depth (valleys dark, ridges bright) — always visible regardless of sun position
+19| 3. **DayNightCycle** drives all light parameters (angle, color, energy)
+20| 
+21| ### Components
+22| 
+23| #### 1. DirectionalLight2D (Sun + Moon)
+24| 
+25| Two `DirectionalLight2D` nodes, children of the scene root:
+26| 
+27| - **Sun light**: angle from `DayNightCycle.get_sun_angle()`, color from `get_sun_color()`, energy from `get_sun_energy()`. Active during day. Slopes facing the sun are bright, slopes facing away are dark.
+28| - **Moon light**: opposite angle, blue-white color `(0.4, 0.5, 0.85)`, energy from `get_moonlight_energy()`. Active during night. Subtle — provides directionality to moonlit terrain.
+29| 
+30| Both lights use `height = 0.6` for a moderate incidence angle that creates visible slope shading without extreme shadows.
+31| 
+32| #### 2. Normal Map Wiring
+33| 
+34| The C++ compiler already returns `{"image": terrain, "normal_map": normal_map}` from `build_chunk_image_with_normals()`.
+35| 
+36| For elevation sprites (created by `LayeredChunkRenderer.display_prerendered()`):
+37| - Create a `CanvasTexture` instead of a raw `ImageTexture`
+38| - Assign the terrain image as `diffuse_texture`
+39| - Assign the normal map as `normal_texture`
+40| - Godot's 2D lighting system automatically uses the normals for directional light response
+41| 
+42| For the elevation renderer's per-level sprites:
+43| - Generate a per-level normal map alongside the per-level terrain image in `ElevationRenderer.render_chunk()`
+44| - Use the same elevation data that's already available to compute normals: `nx = elev[left] - elev[right]`, `ny = elev[up] - elev[down]`, `nz = 1.0`, normalized and encoded as RGB
+45| 
+46| #### 3. AO Integration
+47| 
+48| The C++ compiler already bakes AO into the terrain image (valleys -15%, ridges +8%). This is sufficient for the base level. For elevation sprites, the darkened cliff walls (`_get_dark_tile`) serve as basic AO.
+49| 
+50| No additional AO overlay needed — the existing bake provides ambient depth.
+51| 
+52| #### 4. Day/Night Transition Fix
+53| 
+54| **Problem:** Piecewise linear lerps in `get_sun_color()` and `get_ambient_color()` create visible discontinuities ("knees") where two linear segments meet.
+55| 
+56| **Fix:** Replace all `lerp` calls with `smoothstep` interpolation:
+57| 
+58| ```gdscript
+59| func _smoothlerp(a: Color, b: Color, t: float) -> Color:
+60|     var st = t * t * (3.0 - 2.0 * t)  # smoothstep
+61|     return a.lerp(b, st)
+62| ```
+63| 
+64| **Extended time boundaries:**
+65| 
+66| | Period | Current | New |
+67| |--------|---------|-----|
+68| | Dawn start | 4:30 | 4:00 |
+69| | Dawn end | 7:00 | 8:00 |
+70| | Golden start | 15:00 | 14:30 |
+71| | Sunset | 18:30 | 19:00 |
+72| | Dusk end | 20:30 | 21:30 |
+73| 
+74| Apply to both `get_sun_color()` and `get_ambient_color()` with matching boundaries so they transition in sync.
+75| 
+76| #### 5. Moonlight Spotlight Fix
+77| 
+78| Current: `texture_scale = 1.0` (reduced from 14.0). Still visible as a distinct circle.
+79| 
+80| Fix:
+81| - `texture_scale = 1.2` — moderate pool of light around player
+82| - Cubic falloff instead of quadratic: `alpha = pow(clamp(1.0 - dist, 0.0, 1.0), 3.0)` — steep center dropoff with a long, gentle tail that blends into the ambient darkness
+83| - `blend_mode = BLEND_MODE_ADD` (keep) — adds to ambient rather than replacing
+84| - `energy` driven by `get_moonlight_energy()` (keep)
+85| 
+86| #### 6. CanvasModulate Update
+87| 
+88| Current: `Color(ambient.r * b, ambient.g * b, ambient.b * b)` — multiplies ambient tint by brightness.
+89| 
+90| This is correct. The ambient color from the updated `get_ambient_color()` (with smoothstep + extended boundaries) will automatically produce the golden hour warmth, deep blue nights, and warm peach sunrises.
+91| 
+92| ## Files Modified
+93| 
+94| | File | Change |
+95| |------|--------|
+96| | `scripts/core/day_night_cycle.gd` | Smoothstep interpolation, extended boundaries |
+97| | `scripts/CleanWorld.gd` | Add DirectionalLight2D sun + moon, fix spotlight falloff |
+98| | `scripts/core/world_compiler/layered_chunk_renderer.gd` | Use CanvasTexture with normal maps for elevation sprites |
+99| | `scripts/core/world_compiler/elevation_renderer.gd` | Generate per-level normal map alongside terrain image |
+100| | `scripts/core/chunk_streamer.gd` | Pass normal map data through to display_prerendered |
+101| 
+102| ## What NOT to Change
+103| 
+104| - C++ NativeChunkCompiler — normal map generation already works
+105| - ElevationGradientTable — surface selection logic is correct
+106| - LayeredTilesetLoader — tile loading is correct
+107| - Wang mask system — edge shapes working
+108| 
+109| ## Success Criteria
+110| 
+111| - Sun visibly illuminates terrain slopes — morning light from east, evening from west
+112| - Cliff faces are darker on the shadow side, brighter on the sun side
+113| - Dawn/dusk transitions flow smoothly with no visible color snaps
+114| - Golden hour feels warm and opinionated
+115| - Night feels deep blue with subtle moonlight directionality
+116| - Moonlight spotlight has a soft, diffuse edge — no visible circle boundary
+117| - No performance regression — normal map assignment is GPU-side, zero CPU cost
+118| 

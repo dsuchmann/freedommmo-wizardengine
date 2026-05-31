@@ -33,3 +33,9 @@
   - Player now restores position after preview reloads.
   - Pressing `R` intentionally clears saved position and returns to spawn.
   - Updated HUD and blocker notes with preview/error-reporting workflow.
+- Added Godot-parity testing systems for overmap/elevation/lighting:
+  - Added `src/world/overmap.js` with clickable deterministic local overmap teleport and `M` toggle.
+  - Added `src/world/lighting.js` with day/night cycle, sun angle, ambient tint, and pause via `L`.
+  - Updated `index.html` with overmap UI.
+  - Updated renderer with elevation lift, contour bands, slope hillshade, atmospheric night tint, and object shadows.
+  - Updated HUD to expose teleport, lighting, elevation, and biome diagnostics.
