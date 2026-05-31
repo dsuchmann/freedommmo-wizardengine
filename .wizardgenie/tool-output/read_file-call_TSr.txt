@@ -1,0 +1,73 @@
+File: src/render/canvas-renderer.js (lines 20-90 of 204)
+
+20|     window.addEventListener('resize', () => this.resize());
+21|     this.resize();
+22|   }
+23| 
+24|   resize() {
+25|     this.canvas.width = Math.floor(window.innerWidth * window.devicePixelRatio);
+26|     this.canvas.height = Math.floor(window.innerHeight * window.devicePixelRatio);
+27|     this.ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+28|   }
+29| 
+30|   draw(chunkStore, player, lighting, camera) {
+31|     const ctx = this.ctx;
+32|     const w = window.innerWidth;
+33|     const h = window.innerHeight;
+34|     const sun = lighting.sun();
+35|     const tilePx = WORLD.tileSize * camera.zoom;
+36|     const focusTile = chunkStore.tileAt(player.x, player.y);
+37|     ctx.fillStyle = '#071019';
+38|     ctx.fillRect(0, 0, w, h);
+39| 
+40|     const camX = player.x * tilePx - w / 2;
+41|     const camY = player.y * tilePx - h / 2;
+42|     const minTX = Math.floor(camX / tilePx) - 1;
+43|     const minTY = Math.floor(camY / tilePx) - 1;
+44|     const maxTX = Math.ceil((camX + w) / tilePx) + 1;
+45|     const maxTY = Math.ceil((camY + h) / tilePx) + 1;
+46| 
+47|     for (let ty = minTY; ty <= maxTY; ty++) {
+48|       for (let tx = minTX; tx <= maxTX; tx++) {
+49|         const cx = floorDiv(tx, WORLD.chunkSize);
+50|         const cy = floorDiv(ty, WORLD.chunkSize);
+51|         const lx = tx - cx * WORLD.chunkSize;
+52|         const ly = ty - cy * WORLD.chunkSize;
+53|         const chunk = chunkStore.get(cx, cy);
+54|         const renderTile = chunk.renderTiles[ly * WORLD.chunkSize + lx];
+55|         const east = lx < WORLD.chunkSize - 1 ? chunk.renderTiles[ly * WORLD.chunkSize + lx + 1].elevation : renderTile.elevation;
+56|         const south = ly < WORLD.chunkSize - 1 ? chunk.renderTiles[(ly + 1) * WORLD.chunkSize + lx].elevation : renderTile.elevation;
+57|         const slope = ((renderTile.elevation - east) * sun.shadowX + (renderTile.elevation - south) * sun.shadowY) * 1.8;
+58|         const contour = Math.floor(renderTile.elevation * 18) !== Math.floor((renderTile.elevation - 0.012) * 18) ? 0.10 : 0;
+59|         const tile = chunk.tiles[ly * WORLD.chunkSize + lx];
+60|         const sx = Math.floor(tx * tilePx - camX);
+61|         const sy = Math.floor(ty * tilePx - camY - elevationLift(renderTile.elevation) * camera.zoom);
+62|         const tileSize = Math.ceil(tilePx);
+63|         paintTerrainTile(ctx, tile, sx, sy, tileSize, sun, focusTile.climate.elevation, this.compositor, performance.now() / 1000);
+64|         paintTerrainFeatures(ctx, tile, sx, sy, tileSize, sun);
+65|         if (slope + contour > 0.015) {
+66|           ctx.fillStyle = `rgba(255,255,220,${Math.min(0.18, slope + contour)})`;
+67|           ctx.fillRect(sx, sy, tileSize, Math.max(1, tileSize * 0.18));
+68|         }
+69|         ctx.fillStyle = `rgba(0,0,0,${Math.max(0, -slope) * 0.18})`;
+70|         ctx.fillRect(sx, sy + tileSize * 0.75, tileSize, Math.max(1, tileSize * 0.25));
+71|       }
+72|     }
+73| 
+74|     this.drawObjects(chunkStore, camX, camY, w, h, sun, camera, performance.now() / 1000);
+75|     this.drawDepthBokeh(chunkStore, player, focusTile, camera, camX, camY, w, h);
+76|     this.drawPlayer(w, h, camera.zoom);
+77|     this.drawAtmosphere(sun, w, h);
+78|   }
+79| 
+80|   drawObjects(chunkStore, camX, camY, w, h, sun, camera, timeSeconds) {
+81|     const ctx = this.ctx;
+82|     const drawables = [];
+83|     for (const chunk of chunkStore.chunks.values()) {
+84|       for (const object of chunk.objects) {
+85|         const tile = chunk.tiles[object.y * WORLD.chunkSize + object.x];
+86|         const tilePx = WORLD.tileSize * camera.zoom;
+87|         const sx = (chunk.cx * WORLD.chunkSize + object.x) * tilePx - camX;
+88|         const sy = (chunk.cy * WORLD.chunkSize + object.y) * tilePx - camY - elevationLift(tile.climate.elevation) * camera.zoom;
+89|         if (sx < -30 || sy < -40 || sx > w + 30 || sy > h + 30) continue;
+90|         const signature = this.compositor?.objectSignature(object.kind, tile.biome, object.wx, object.wy);

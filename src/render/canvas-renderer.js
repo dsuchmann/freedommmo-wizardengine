@@ -2,10 +2,9 @@ import { WORLD } from '../core/constants.js';
 import { getWorldSeed } from '../core/world-seed.js';
 import { floorDiv } from '../world/chunk.js';
 import { auditBiomesAround } from '../world/biome-audit.js';
-import { paintTerrainTile, shade, tint } from './tile-painter.js';
-import { paintTerrainFeatures } from './feature-painter.js';
 import { drawSortKey, applyBlend } from './draw-order.js';
 import { animationFrame } from './animation-state.js';
+import { ChunkRenderCache } from './chunk-render-cache.js';
 
 export class CanvasRenderer {
   constructor(canvas, statsElement, compositor = null) {
@@ -13,6 +12,7 @@ export class CanvasRenderer {
     this.ctx = canvas.getContext('2d', { alpha: false });
     this.statsElement = statsElement;
     this.compositor = compositor;
+    this.chunkRenderCache = new ChunkRenderCache(compositor);
     this.lastAudit = null;
     this.lastAuditAt = 0;
     window.addEventListener('resize', () => this.resize());
@@ -37,35 +37,20 @@ export class CanvasRenderer {
 
     const camX = player.x * tilePx - w / 2;
     const camY = player.y * tilePx - h / 2;
-    const minTX = Math.floor(camX / tilePx) - 1;
-    const minTY = Math.floor(camY / tilePx) - 1;
-    const maxTX = Math.ceil((camX + w) / tilePx) + 1;
-    const maxTY = Math.ceil((camY + h) / tilePx) + 1;
+    const minCX = floorDiv(Math.floor(camX / tilePx), WORLD.chunkSize) - 1;
+    const minCY = floorDiv(Math.floor(camY / tilePx), WORLD.chunkSize) - 1;
+    const maxCX = floorDiv(Math.ceil((camX + w) / tilePx), WORLD.chunkSize) + 1;
+    const maxCY = floorDiv(Math.ceil((camY + h) / tilePx), WORLD.chunkSize) + 1;
 
-    for (let ty = minTY; ty <= maxTY; ty++) {
-      for (let tx = minTX; tx <= maxTX; tx++) {
-        const cx = floorDiv(tx, WORLD.chunkSize);
-        const cy = floorDiv(ty, WORLD.chunkSize);
-        const lx = tx - cx * WORLD.chunkSize;
-        const ly = ty - cy * WORLD.chunkSize;
+    for (let cy = minCY; cy <= maxCY; cy++) {
+      for (let cx = minCX; cx <= maxCX; cx++) {
         const chunk = chunkStore.get(cx, cy);
-        const renderTile = chunk.renderTiles[ly * WORLD.chunkSize + lx];
-        const east = lx < WORLD.chunkSize - 1 ? chunk.renderTiles[ly * WORLD.chunkSize + lx + 1].elevation : renderTile.elevation;
-        const south = ly < WORLD.chunkSize - 1 ? chunk.renderTiles[(ly + 1) * WORLD.chunkSize + lx].elevation : renderTile.elevation;
-        const slope = ((renderTile.elevation - east) * sun.shadowX + (renderTile.elevation - south) * sun.shadowY) * 1.8;
-        const contour = Math.floor(renderTile.elevation * 18) !== Math.floor((renderTile.elevation - 0.012) * 18) ? 0.10 : 0;
-        const tile = chunk.tiles[ly * WORLD.chunkSize + lx];
-        const sx = Math.floor(tx * tilePx - camX);
-        const sy = Math.floor(ty * tilePx - camY - elevationLift(renderTile.elevation) * camera.zoom);
-        const tileSize = Math.ceil(tilePx);
-        paintTerrainTile(ctx, tile, sx, sy, tileSize, sun, focusTile.climate.elevation, this.compositor, performance.now() / 1000);
-        paintTerrainFeatures(ctx, tile, sx, sy, tileSize, sun);
-        if (slope + contour > 0.015) {
-          ctx.fillStyle = `rgba(255,255,220,${Math.min(0.18, slope + contour)})`;
-          ctx.fillRect(sx, sy, tileSize, Math.max(1, tileSize * 0.18));
-        }
-        ctx.fillStyle = `rgba(0,0,0,${Math.max(0, -slope) * 0.18})`;
-        ctx.fillRect(sx, sy + tileSize * 0.75, tileSize, Math.max(1, tileSize * 0.25));
+        const cached = this.chunkRenderCache.get(chunk, sun);
+        const sx = Math.floor(cx * WORLD.chunkSize * tilePx - camX);
+        const sy = Math.floor(cy * WORLD.chunkSize * tilePx - camY);
+        const dw = WORLD.chunkSize * tilePx;
+        const dh = (WORLD.chunkSize * WORLD.tileSize + 24) * camera.zoom;
+        ctx.drawImage(cached, sx, sy - 24 * camera.zoom, dw, dh);
       }
     }
 
@@ -156,7 +141,8 @@ export class CanvasRenderer {
     const audit = this.lastAudit;
     const topBiomes = audit.seen.slice(0, 6).map(entry => `${entry.id} ${(entry.pct * 100).toFixed(0)}%`).join(', ');
     const chunkStats = chunkStore.stats();
-    const workerLine = `workers ${chunkStats.workers} · pending ${chunkStats.pending} · ready ${chunkStats.ready}`;
+    const cacheStats = this.chunkRenderCache.stats();
+    const workerLine = `workers ${chunkStats.workers} · pending ${chunkStats.pending} · ready ${chunkStats.ready} · terrain cache ${cacheStats.cachedTerrainChunks}/${cacheStats.maxTerrainChunks}`;
     const perfLine = perf ? `<br>fps ${perf.fps.toFixed(0)} · update ${perf.updateMs.toFixed(1)}ms · draw ${perf.drawMs.toFixed(1)}ms · ${workerLine}` : '';
     this.statsElement.innerHTML = `WASD/arrows move · mousewheel zoom · R reset<br>M map · L pause sun · click overmap teleport<br>seed ${getWorldSeed()} · chunks ${chunkStore.chunks.size} · zoom ${camera.zoom.toFixed(2)}${perfLine}<br>tile ${Math.floor(player.x)}, ${Math.floor(player.y)} · chunk ${floorDiv(player.x)}, ${floorDiv(player.y)}<br>biome ${tile.biome} · form ${tile.terrainForm} · features ${tile.features.join(',') || 'none'}<br>material ${tile.material} · surface ${tile.layers[3].detail}<br>elev ${tile.climate.elevation.toFixed(2)} lift ${elevationLift(tile.climate.elevation).toFixed(1)} slope ${(tile.layers[7].slope ?? 0).toFixed(2)}<br>micro ${tile.layers[6].layers.map(layer => layer.kind).join('+')}<br>fertility ${tile.layers[6].fertility.toFixed(2)} vegetation ${tile.layers[6].vegetationDensity.toFixed(2)}<br>moist ${tile.climate.moisture.toFixed(2)} heat ${tile.climate.heat.toFixed(2)}<br>${sun.label} · light ${sun.ambient.toFixed(2)} · sun height ${sun.height.toFixed(2)}<br>overmap biomes ${audit.seen.length}/${audit.spec.length}: ${topBiomes}<br>missing: ${audit.missing.join(', ') || 'none'}`;
   }

@@ -144,3 +144,8 @@
   - Added `src/render/micro-layer-painter.js` to render layered animated overlays separately from the base terrain color.
   - Grass/foliage layers now have deterministic wind-sway animation; flowers/debris/aether/water layers render as separate sparse overlays.
   - HUD now reports micro-layer names, fertility, and vegetation density for the current tile.
+- Added chunk terrain render caching:
+  - Added `src/render/chunk-render-cache.js` to bake base terrain, feature paint, and micro-layer assembly into per-chunk canvases.
+  - Canvas renderer now composites cached chunk images with `drawImage` instead of repainting every visible tile every frame.
+  - Cache keys are chunk coordinate plus coarse light bucket, preserving day/night readability without per-frame full-tile redraw.
+  - HUD now reports terrain cache usage.
