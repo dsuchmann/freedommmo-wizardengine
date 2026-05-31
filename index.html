@@ -10,13 +10,13 @@
     #hud { position: fixed; left: 12px; top: 12px; color: #e8f6ff; background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.18); border-radius: 10px; padding: 10px 12px; line-height: 1.45; font-size: 13px; pointer-events: none; text-shadow: 0 1px 2px #000; }
     #title { color: #9ee7ff; font-weight: 700; font-size: 15px; }
     #overmapWrap { position: fixed; right: 12px; top: 12px; color: #e8f6ff; background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.18); border-radius: 10px; padding: 8px; font-size: 12px; text-align: center; }
-    #overmap { width: 176px; height: 176px; image-rendering: pixelated; cursor: crosshair; border-radius: 6px; }
+    #overmap { width: 304px; height: 304px; image-rendering: pixelated; cursor: crosshair; border-radius: 6px; }
   </style>
 </head>
 <body>
   <canvas id="game"></canvas>
   <div id="hud"><div id="title">FreedomMMO — deterministic world slice</div><div id="stats"></div></div>
-  <div id="overmapWrap"><canvas id="overmap" width="176" height="176"></canvas><div>click map to teleport · M toggle</div></div>
+  <div id="overmapWrap"><canvas id="overmap" width="304" height="304"></canvas><div>click map to teleport · M toggle<br>center box = you · rings = chunk distance</div></div>
   <script type="module" src="src/main.js"></script>
 </body>
 </html>

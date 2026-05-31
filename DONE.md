@@ -39,3 +39,10 @@
   - Updated `index.html` with overmap UI.
   - Updated renderer with elevation lift, contour bands, slope hillshade, atmospheric night tint, and object shadows.
   - Updated HUD to expose teleport, lighting, elevation, and biome diagnostics.
+- Improved exploration/camera parity:
+  - Enlarged overmap from 176px to 304px and expanded its sampled world area.
+  - Added overmap crosshair, distance rings, and current chunk label so player position is clear.
+  - Added `src/camera.js` with mouse-wheel zoom and smooth elevation-sensitive auto-zoom.
+  - Updated renderer to scale the world around the character with zoom.
+  - Added a first high-elevation depth/bokeh projection for lower distant objects.
+  - Updated blocker notes: the agent cannot self-trigger `continue`, but the persistent loop keeps each turn autonomous.

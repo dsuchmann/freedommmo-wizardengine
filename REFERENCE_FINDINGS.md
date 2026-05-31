@@ -18,6 +18,8 @@ This file records facts extracted from the specs and Godot reference code/assets
 - Elevation/cliff rendering spec requires terrain height to be visually communicated, not only encoded as biome color. Current implementation adds elevation lift, contour bands, and slope hillshade as a first renderer projection.
 - Dynamic lighting spec calls for a day/night time source, directional sun/moon angle, ambient tint, and terrain hillshading. Current implementation adds a lightweight `DayNightCycle` driving tint, atmosphere, and object shadows.
 - Asset pipeline spec requires cel-animation layering: visible tiles are composed from multiple independently swappable layers/states rather than one opaque image.
+- Terrain shading spec calls for smooth day/night transitions, directional lighting, normal/AO-style terrain depth, and no abrupt color snaps. Current renderer uses continuous sun values and hillshade as a first browser-native approximation.
+- Elevation rendering spec frames elevation as a visual stack/cliff system. Current renderer has surface lift and depth cues; future pass should add explicit cliff wall layer projection between elevation bands.
 
 ## Godot reference findings
 

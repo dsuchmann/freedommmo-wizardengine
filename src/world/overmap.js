@@ -7,8 +7,8 @@ export class OvermapController {
     this.player = player;
     this.chunkStore = chunkStore;
     this.visible = true;
-    this.size = 176;
-    this.sampleChunks = 48;
+    this.size = 304;
+    this.sampleChunks = 96;
     element.width = this.size;
     element.height = this.size;
     element.addEventListener('click', event => this.teleportFromClick(event));
@@ -57,11 +57,40 @@ export class OvermapController {
     }
 
     ctx.putImageData(image, 0, 0);
-    ctx.strokeStyle = '#ffffff';
+    this.drawPositionOverlay(ctx, pcx, pcy);
+  }
+
+  drawPositionOverlay(ctx, pcx, pcy) {
+    const c = this.size / 2;
+    ctx.strokeStyle = 'rgba(255,255,255,.22)';
+    ctx.lineWidth = 1;
+    for (const chunks of [8, 16, 32, 48]) {
+      const r = chunks / this.sampleChunks * this.size;
+      ctx.beginPath();
+      ctx.arc(c, c, r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,.55)';
+    ctx.beginPath();
+    ctx.moveTo(c, 0);
+    ctx.lineTo(c, this.size);
+    ctx.moveTo(0, c);
+    ctx.lineTo(this.size, c);
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(c - 3, c - 10, 6, 20);
+    ctx.fillRect(c - 10, c - 3, 20, 6);
+    ctx.strokeStyle = '#0b1720';
     ctx.lineWidth = 2;
-    ctx.strokeRect(this.size / 2 - 4, this.size / 2 - 4, 8, 8);
-    ctx.strokeStyle = 'rgba(255,255,255,.35)';
+    ctx.strokeRect(c - 7, c - 7, 14, 14);
+    ctx.strokeStyle = 'rgba(255,255,255,.75)';
     ctx.strokeRect(0, 0, this.size, this.size);
+    ctx.fillStyle = 'rgba(0,0,0,.55)';
+    ctx.fillRect(6, this.size - 20, 122, 14);
+    ctx.fillStyle = '#e8f6ff';
+    ctx.font = '10px ui-monospace, Consolas, monospace';
+    ctx.fillText(`chunk ${pcx}, ${pcy}`, 10, this.size - 10);
   }
 }
 
