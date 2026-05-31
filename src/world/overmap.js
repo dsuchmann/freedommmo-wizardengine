@@ -10,7 +10,7 @@ export class OvermapController {
     this.chunkStore = chunkStore;
     this.visible = true;
     this.size = 304;
-    this.sampleChunks = 96;
+    this.sampleChunks = this.size; // Spec-accurate local view: one overmap canvas pixel = one chunk.
     this.lastCenter = '';
     this.redrawNeeded = true;
     element.width = this.size;
@@ -25,12 +25,11 @@ export class OvermapController {
 
   teleportFromClick(event) {
     const rect = this.element.getBoundingClientRect();
-    const nx = (event.clientX - rect.left) / rect.width - 0.5;
-    const ny = (event.clientY - rect.top) / rect.height - 0.5;
-    const pcx = Math.floor(this.player.x / WORLD.chunkSize);
-    const pcy = Math.floor(this.player.y / WORLD.chunkSize);
-    const targetCx = pcx + Math.round(nx * this.sampleChunks);
-    const targetCy = pcy + Math.round(ny * this.sampleChunks);
+    const px = Math.floor((event.clientX - rect.left) / rect.width * this.size);
+    const py = Math.floor((event.clientY - rect.top) / rect.height * this.size);
+    const { pcx, pcy } = this.playerChunk();
+    const targetCx = pcx + (px - Math.floor(this.size / 2));
+    const targetCy = pcy + (py - Math.floor(this.size / 2));
     this.player.x = targetCx * WORLD.chunkSize + WORLD.chunkSize / 2;
     this.player.y = targetCy * WORLD.chunkSize + WORLD.chunkSize / 2;
     this.redrawNeeded = true;
@@ -40,23 +39,23 @@ export class OvermapController {
   draw(force = false) {
     if (!this.visible) return;
     const ctx = this.element.getContext('2d');
-    const pcx = Math.floor(this.player.x / WORLD.chunkSize);
-    const pcy = Math.floor(this.player.y / WORLD.chunkSize);
-    const centerKey = `${Math.floor(pcx / 4)},${Math.floor(pcy / 4)}`;
+    const { pcx, pcy } = this.playerChunk();
+    const centerKey = `${pcx},${pcy}`;
     if (!force && !this.redrawNeeded && centerKey === this.lastCenter) {
-      this.drawPositionOverlay(ctx, pcx, pcy);
+      this.drawOverlay(ctx, pcx, pcy);
       return;
     }
     this.lastCenter = centerKey;
     this.redrawNeeded = false;
     const image = ctx.createImageData(this.size, this.size);
+    const half = Math.floor(this.size / 2);
 
     for (let py = 0; py < this.size; py++) {
       for (let px = 0; px < this.size; px++) {
-        const ox = (px / this.size - 0.5) * this.sampleChunks;
-        const oy = (py / this.size - 0.5) * this.sampleChunks;
-        const wx = Math.floor((pcx + ox) * WORLD.chunkSize + WORLD.chunkSize / 2);
-        const wy = Math.floor((pcy + oy) * WORLD.chunkSize + WORLD.chunkSize / 2);
+        const cx = pcx + px - half;
+        const cy = pcy + py - half;
+        const wx = Math.floor(cx * WORLD.chunkSize + WORLD.chunkSize / 2);
+        const wy = Math.floor(cy * WORLD.chunkSize + WORLD.chunkSize / 2);
         const sample = classifyBiome(wx, wy);
         const rgb = hexToRgb(sample.definition.color);
         const hill = Math.max(-35, Math.min(45, (sample.climate.elevation - 0.5) * 95));
@@ -70,44 +69,68 @@ export class OvermapController {
 
     ctx.putImageData(image, 0, 0);
     this.baseImage = ctx.getImageData(0, 0, this.size, this.size);
-    this.drawPositionOverlay(ctx, pcx, pcy);
+    this.drawOverlay(ctx, pcx, pcy);
   }
 
-  drawPositionOverlay(ctx, pcx, pcy) {
+  playerChunk() {
+    return {
+      pcx: Math.floor(this.player.x / WORLD.chunkSize),
+      pcy: Math.floor(this.player.y / WORLD.chunkSize)
+    };
+  }
+
+  drawOverlay(ctx, pcx, pcy) {
     if (this.baseImage) ctx.putImageData(this.baseImage, 0, 0);
-    const c = this.size / 2;
-    ctx.strokeStyle = 'rgba(255,255,255,.22)';
+    const c = Math.floor(this.size / 2);
+    const loadedRadius = WORLD.loadRadius;
+    const loadedSize = loadedRadius * 2 + 1;
+
+    // Distance rings are chunk distances because one overmap pixel is one chunk.
+    ctx.strokeStyle = 'rgba(255,255,255,.18)';
     ctx.lineWidth = 1;
-    for (const chunks of [8, 16, 32, 48]) {
-      const r = chunks / this.sampleChunks * this.size;
+    for (const chunks of [16, 32, 64, 128]) {
       ctx.beginPath();
-      ctx.arc(c, c, r, 0, Math.PI * 2);
+      ctx.arc(c, c, chunks, 0, Math.PI * 2);
       ctx.stroke();
     }
-    ctx.strokeStyle = 'rgba(255,255,255,.55)';
-    ctx.beginPath();
-    ctx.moveTo(c, 0);
-    ctx.lineTo(c, this.size);
-    ctx.moveTo(0, c);
-    ctx.lineTo(this.size, c);
-    ctx.stroke();
 
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(c - 3, c - 10, 6, 20);
-    ctx.fillRect(c - 10, c - 3, 20, 6);
+    // Current loaded chunk window: exactly the chunk radius currently streamed around the player.
+    ctx.fillStyle = 'rgba(255,255,255,.12)';
+    ctx.fillRect(c - loadedRadius, c - loadedRadius, loadedSize, loadedSize);
+    ctx.strokeStyle = '#ffffff';
+    ctx.strokeRect(c - loadedRadius - 0.5, c - loadedRadius - 0.5, loadedSize + 1, loadedSize + 1);
+
+    // Current chunk is a single overmap pixel. The player marker is deliberately exaggerated around it.
+    ctx.fillStyle = '#fffb9a';
+    ctx.fillRect(c, c, 1, 1);
     ctx.strokeStyle = '#0b1720';
     ctx.lineWidth = 2;
-    ctx.strokeRect(c - 7, c - 7, 14, 14);
+    ctx.beginPath();
+    ctx.moveTo(c - 10, c);
+    ctx.lineTo(c - 3, c);
+    ctx.moveTo(c + 4, c);
+    ctx.lineTo(c + 11, c);
+    ctx.moveTo(c, c - 10);
+    ctx.lineTo(c, c - 3);
+    ctx.moveTo(c, c + 4);
+    ctx.lineTo(c, c + 11);
+    ctx.stroke();
+    ctx.strokeStyle = '#fffb9a';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(c - 3.5, c - 3.5, 8, 8);
+
     ctx.strokeStyle = 'rgba(255,255,255,.75)';
     ctx.strokeRect(0, 0, this.size, this.size);
-    const audit = auditBiomesAround(this.player, this.sampleChunks, 4);
-    ctx.fillStyle = 'rgba(0,0,0,.62)';
-    ctx.fillRect(6, this.size - 48, 192, 42);
+
+    const audit = auditBiomesAround(this.player, this.sampleChunks, 8);
+    ctx.fillStyle = 'rgba(0,0,0,.66)';
+    ctx.fillRect(6, this.size - 62, 232, 56);
     ctx.fillStyle = '#e8f6ff';
     ctx.font = '10px ui-monospace, Consolas, monospace';
-    ctx.fillText(`seed ${getWorldSeed()} chunk ${pcx}, ${pcy}`, 10, this.size - 34);
-    ctx.fillText(`seen ${audit.seen.length}/${audit.spec.length} biomes`, 10, this.size - 21);
-    ctx.fillText(`missing ${audit.missing.slice(0, 4).join(', ') || 'none'}`, 10, this.size - 9);
+    ctx.fillText(`seed ${getWorldSeed()} · chunk ${pcx}, ${pcy}`, 10, this.size - 48);
+    ctx.fillText(`1 map pixel = 1 chunk = ${WORLD.chunkSize}×${WORLD.chunkSize} tiles`, 10, this.size - 35);
+    ctx.fillText(`loaded window ${loadedSize}×${loadedSize} chunks`, 10, this.size - 22);
+    ctx.fillText(`seen ${audit.seen.length}/${audit.spec.length} · missing ${audit.missing.slice(0, 3).join(', ') || 'none'}`, 10, this.size - 9);
   }
 }
 

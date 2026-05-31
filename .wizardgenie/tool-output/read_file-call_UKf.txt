@@ -1,0 +1,124 @@
+File: src/world/overmap.js (122 lines)
+
+1| import { WORLD } from '../core/constants.js';
+2| import { classifyBiome } from './biomes.js';
+3| import { getWorldSeed } from '../core/world-seed.js';
+4| import { auditBiomesAround } from './biome-audit.js';
+5| 
+6| export class OvermapController {
+7|   constructor(element, player, chunkStore) {
+8|     this.element = element;
+9|     this.player = player;
+10|     this.chunkStore = chunkStore;
+11|     this.visible = true;
+12|     this.size = 304;
+13|     this.sampleChunks = 96;
+14|     this.lastCenter = '';
+15|     this.redrawNeeded = true;
+16|     element.width = this.size;
+17|     element.height = this.size;
+18|     element.addEventListener('click', event => this.teleportFromClick(event));
+19|   }
+20| 
+21|   toggle() {
+22|     this.visible = !this.visible;
+23|     this.element.style.display = this.visible ? 'block' : 'none';
+24|   }
+25| 
+26|   teleportFromClick(event) {
+27|     const rect = this.element.getBoundingClientRect();
+28|     const nx = (event.clientX - rect.left) / rect.width - 0.5;
+29|     const ny = (event.clientY - rect.top) / rect.height - 0.5;
+30|     const pcx = Math.floor(this.player.x / WORLD.chunkSize);
+31|     const pcy = Math.floor(this.player.y / WORLD.chunkSize);
+32|     const targetCx = pcx + Math.round(nx * this.sampleChunks);
+33|     const targetCy = pcy + Math.round(ny * this.sampleChunks);
+34|     this.player.x = targetCx * WORLD.chunkSize + WORLD.chunkSize / 2;
+35|     this.player.y = targetCy * WORLD.chunkSize + WORLD.chunkSize / 2;
+36|     this.redrawNeeded = true;
+37|     this.chunkStore.streamAround(this.player.x, this.player.y);
+38|   }
+39| 
+40|   draw(force = false) {
+41|     if (!this.visible) return;
+42|     const ctx = this.element.getContext('2d');
+43|     const pcx = Math.floor(this.player.x / WORLD.chunkSize);
+44|     const pcy = Math.floor(this.player.y / WORLD.chunkSize);
+45|     const centerKey = `${Math.floor(pcx / 4)},${Math.floor(pcy / 4)}`;
+46|     if (!force && !this.redrawNeeded && centerKey === this.lastCenter) {
+47|       this.drawPositionOverlay(ctx, pcx, pcy);
+48|       return;
+49|     }
+50|     this.lastCenter = centerKey;
+51|     this.redrawNeeded = false;
+52|     const image = ctx.createImageData(this.size, this.size);
+53| 
+54|     for (let py = 0; py < this.size; py++) {
+55|       for (let px = 0; px < this.size; px++) {
+56|         const ox = (px / this.size - 0.5) * this.sampleChunks;
+57|         const oy = (py / this.size - 0.5) * this.sampleChunks;
+58|         const wx = Math.floor((pcx + ox) * WORLD.chunkSize + WORLD.chunkSize / 2);
+59|         const wy = Math.floor((pcy + oy) * WORLD.chunkSize + WORLD.chunkSize / 2);
+60|         const sample = classifyBiome(wx, wy);
+61|         const rgb = hexToRgb(sample.definition.color);
+62|         const hill = Math.max(-35, Math.min(45, (sample.climate.elevation - 0.5) * 95));
+63|         const index = (py * this.size + px) * 4;
+64|         image.data[index] = clamp(rgb.r + hill);
+65|         image.data[index + 1] = clamp(rgb.g + hill);
+66|         image.data[index + 2] = clamp(rgb.b + hill);
+67|         image.data[index + 3] = 255;
+68|       }
+69|     }
+70| 
+71|     ctx.putImageData(image, 0, 0);
+72|     this.baseImage = ctx.getImageData(0, 0, this.size, this.size);
+73|     this.drawPositionOverlay(ctx, pcx, pcy);
+74|   }
+75| 
+76|   drawPositionOverlay(ctx, pcx, pcy) {
+77|     if (this.baseImage) ctx.putImageData(this.baseImage, 0, 0);
+78|     const c = this.size / 2;
+79|     ctx.strokeStyle = 'rgba(255,255,255,.22)';
+80|     ctx.lineWidth = 1;
+81|     for (const chunks of [8, 16, 32, 48]) {
+82|       const r = chunks / this.sampleChunks * this.size;
+83|       ctx.beginPath();
+84|       ctx.arc(c, c, r, 0, Math.PI * 2);
+85|       ctx.stroke();
+86|     }
+87|     ctx.strokeStyle = 'rgba(255,255,255,.55)';
+88|     ctx.beginPath();
+89|     ctx.moveTo(c, 0);
+90|     ctx.lineTo(c, this.size);
+91|     ctx.moveTo(0, c);
+92|     ctx.lineTo(this.size, c);
+93|     ctx.stroke();
+94| 
+95|     ctx.fillStyle = '#ffffff';
+96|     ctx.fillRect(c - 3, c - 10, 6, 20);
+97|     ctx.fillRect(c - 10, c - 3, 20, 6);
+98|     ctx.strokeStyle = '#0b1720';
+99|     ctx.lineWidth = 2;
+100|     ctx.strokeRect(c - 7, c - 7, 14, 14);
+101|     ctx.strokeStyle = 'rgba(255,255,255,.75)';
+102|     ctx.strokeRect(0, 0, this.size, this.size);
+103|     const audit = auditBiomesAround(this.player, this.sampleChunks, 4);
+104|     ctx.fillStyle = 'rgba(0,0,0,.62)';
+105|     ctx.fillRect(6, this.size - 48, 192, 42);
+106|     ctx.fillStyle = '#e8f6ff';
+107|     ctx.font = '10px ui-monospace, Consolas, monospace';
+108|     ctx.fillText(`seed ${getWorldSeed()} chunk ${pcx}, ${pcy}`, 10, this.size - 34);
+109|     ctx.fillText(`seen ${audit.seen.length}/${audit.spec.length} biomes`, 10, this.size - 21);
+110|     ctx.fillText(`missing ${audit.missing.slice(0, 4).join(', ') || 'none'}`, 10, this.size - 9);
+111|   }
+112| }
+113| 
+114| function hexToRgb(hex) {
+115|   const n = parseInt(hex.slice(1), 16);
+116|   return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+117| }
+118| 
+119| function clamp(value) {
+120|   return Math.max(0, Math.min(255, value | 0));
+121| }
+122| 

@@ -60,3 +60,12 @@
   - Reduced HUD/overmap update frequency from every 8 frames to every 16 frames.
   - Removed expensive per-visible-tile cross-chunk lookups from the renderer slope calculation hot path.
   - Added Milestone 7 backlog for worker-based chunk compilation and batching.
+- Made the overmap chunk-pixel accurate:
+  - One overmap canvas pixel now represents exactly one chunk.
+  - The 304×304 overmap panel shows 304×304 chunks around the player.
+  - Clicking an overmap pixel teleports to that exact chunk.
+  - The current chunk is drawn as a single yellow pixel.
+  - The player marker/crosshair is now explicitly an exaggerated visibility marker around that pixel.
+  - The white box shows the actually loaded chunk window based on `WORLD.loadRadius`.
+  - Distance rings are now true chunk distances.
+  - Overmap text now states `1 map pixel = 1 chunk = 64×64 tiles`.
