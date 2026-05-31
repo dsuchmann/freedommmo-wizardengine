@@ -1,7 +1,7 @@
 [
   {
     "role": "user",
-    "content": "[Context window: 14 older messages moved to long-term memory. Use the recall_memory tool to retrieve past decisions, code changes, or debugging outcomes as needed.]"
+    "content": "[Context window: 12 older messages moved to long-term memory. Use the recall_memory tool to retrieve past decisions, code changes, or debugging outcomes as needed.]"
   },
   {
     "role": "assistant",
@@ -10,148 +10,6 @@
         "type": "text",
         "text": "Understood. I can use recall_memory to access prior context."
       },
-      {
-        "type": "tool_use",
-        "id": "call_nn0gHGsFfLer4G0Q11p0tT62",
-        "name": "edit_file",
-        "input": {
-          "path": "src/world/overmap.js",
-          "old_text": "    ctx.putImageData(image, 0, 0);\n    this.baseImage = ctx.getImageData(0, 0, this.size, this.size);\n    this.drawOverlay(ctx, pcx, pcy);\n",
-          "new_text": "    this.baseCtx.putImageData(image, 0, 0);\n    ctx.drawImage(this.baseCanvas, 0, 0);\n    this.drawOverlay(ctx, pcx, pcy);\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_nn0gHGsFfLer4G0Q11p0tT62",
-        "content": "Applied edit to src/world/overmap.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_1EVPvOJTik0MGRTamLYCuoCe",
-        "name": "edit_file",
-        "input": {
-          "path": "src/world/overmap.js",
-          "old_text": "  drawOverlay(ctx, pcx, pcy) {\n    if (this.baseImage) ctx.putImageData(this.baseImage, 0, 0);\n    const c = Math.floor(this.size / 2);\n",
-          "new_text": "  drawOverlay(ctx, pcx, pcy) {\n    if (this.baseCanvas) ctx.drawImage(this.baseCanvas, 0, 0);\n    const c = Math.floor(this.size / 2);\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_1EVPvOJTik0MGRTamLYCuoCe",
-        "content": "Applied edit to src/world/overmap.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_vPH4u3febmHzvo1UgMPDRqYs",
-        "name": "search_files",
-        "input": {
-          "path": "src/world/overmap.js",
-          "pattern": "getImageData|baseImage|getContext\\('2d'"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_vPH4u3febmHzvo1UgMPDRqYs",
-        "content": "No matches found for \"getImageData|baseImage|getContext\\('2d'\"",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_3crJXFvD0uTjEaOEgVEYR7uZ",
-        "name": "run_command",
-        "input": {
-          "command": "node --check src/world/overmap.js"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_3crJXFvD0uTjEaOEgVEYR7uZ",
-        "content": "$ node --check src/world/overmap.js\n\n",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "text",
-        "text": "Fixed.\n\nThe warning came from `overmap.js` doing repeated:\n\n```js\nctx.getImageData(...)\n```\n\nto cache the overmap base image.\n\nI replaced that with a dedicated offscreen/base canvas:\n\n- draw regional map into `baseCanvas`\n- render visible overmap with `drawImage(baseCanvas, 0, 0)`\n- draw overlays on top\n- no more `getImageData` readback\n\nAlso set the Canvas2D context options explicitly for the overmap:\n\n```js\n{ alpha: false, willReadFrequently: false }\n```\n\nThis should remove the warning and avoid that readback performance penalty."
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": "Yeah, right now I'm in a tundra biome, and there's ocean and beach being generated, so something is wrong."
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "text",
-        "text": "<plan>\nI’ll harden biome coherency by making the tile classifier honor the regional chunk biome as authoritative for chunk interiors, with transitions only on border strips adjacent to actual neighboring regional biomes, preventing interior ocean/beach generation inside tundra.\n</plan>\n"
-      },
-      {
-        "type": "tool_use",
-        "id": "call_6GLmtPS8cjWng21mHjm5mFFd",
-        "name": "create_checkpoint",
-        "input": {
-          "message": "Harden biome coherency against non-neighbor interior intrusions"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_6GLmtPS8cjWng21mHjm5mFFd",
-        "content": "Checkpoint requested: Harden biome coherency against non-neighbor interior intrusions",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
       {
         "type": "tool_use",
         "id": "call_RU0JRUnFVOkPdgJUoLqbc6CY",
@@ -6839,6 +6697,330 @@
       {
         "type": "tool_result",
         "tool_use_id": "call_sCbUlyfwP10kYIuAg9w1f8nS",
+        "content": "Applied edit to DONE.md",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Done."
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": "continue"
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "<plan>\nI’ll continue by adding split canopy/trunk draw items so trees can occlude correctly, plus proximity interaction detection and HUD affordances for nearby trees/rocks/resources.\n</plan>\n"
+      },
+      {
+        "type": "tool_use",
+        "id": "call_oDfG6v3RNATL9bJU82zejDxM",
+        "name": "create_checkpoint",
+        "input": {
+          "message": "Add canopy occlusion and nearby interaction affordances"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_oDfG6v3RNATL9bJU82zejDxM",
+        "content": "Checkpoint requested: Add canopy occlusion and nearby interaction affordances",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_XxPpM9iS62qrP4cEjlkwBoDH",
+        "name": "edit_file",
+        "input": {
+          "path": "src/render/canvas-renderer.js",
+          "old_text": "    const ctx = this.ctx;\n    const drawables = [];\n",
+          "new_text": "    const ctx = this.ctx;\n    const drawables = [];\n    const overhead = [];\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_XxPpM9iS62qrP4cEjlkwBoDH",
+        "content": "Applied edit to src/render/canvas-renderer.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_s5GyoED3iRYDwXC6ytn7OOLY",
+        "name": "edit_file",
+        "input": {
+          "path": "src/render/canvas-renderer.js",
+          "old_text": "        drawables.push({ object, tile, sx, sy, signature, render, key: drawSortKey(render, object.wy, tile.climate.elevation) });\n",
+          "new_text": "        drawables.push({ object, tile, sx, sy, signature, render, key: drawSortKey(render, object.wy, tile.climate.elevation) });\n        if (object.kind === 'tree') overhead.push({ object, tile, sx, sy, signature, alpha: canopyAlpha(player, object, tile) });\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_s5GyoED3iRYDwXC6ytn7OOLY",
+        "content": "Applied edit to src/render/canvas-renderer.js\n\n⚠️ LINT: 1 error(s), 0 warning(s) in src/render/canvas-renderer.js:\n  Line 115:93 [ERROR] 'canopyAlpha' is not defined. (no-undef)\nFix these errors.",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_UaaeW3uomnAxliVcHQbveLkL",
+        "name": "edit_file",
+        "input": {
+          "path": "src/render/canvas-renderer.js",
+          "old_text": "    for (const item of drawables) {\n      ctx.save();\n      applyBlend(ctx, item.render);\n      if (item.render.castsShadow) {\n        ctx.fillStyle = `rgba(0,0,0,${0.22 * (1 - sun.height)})`;\n        ctx.fillRect(item.sx + sun.shadowX * 12 * camera.zoom, item.sy + sun.shadowY * 12 * camera.zoom + 10 * camera.zoom, 12 * camera.zoom, 5 * camera.zoom);\n      }\n      if (item.type === 'player') {\n        this.drawPlayerAt(item.sx, item.sy, camera.zoom, item.player);\n      } else {\n        const anim = animationFrame(item.signature?.animations?.idle, timeSeconds, 'S');\n        drawObject(ctx, item.object.kind, item.sx, item.sy, camera.zoom, item.signature, anim, sun, this.atlas, item.tile.biome, item.object.wx, item.object.wy);\n      }\n      ctx.restore();\n    }\n",
+          "new_text": "    for (const item of drawables) {\n      ctx.save();\n      applyBlend(ctx, item.render);\n      if (item.render.castsShadow) {\n        ctx.fillStyle = `rgba(0,0,0,${0.22 * (1 - sun.height)})`;\n        ctx.fillRect(item.sx + sun.shadowX * 12 * camera.zoom, item.sy + sun.shadowY * 12 * camera.zoom + 10 * camera.zoom, 12 * camera.zoom, 5 * camera.zoom);\n      }\n      if (item.type === 'player') {\n        this.drawPlayerAt(item.sx, item.sy, camera.zoom, item.player);\n      } else {\n        const anim = animationFrame(item.signature?.animations?.idle, timeSeconds, 'S');\n        drawObject(ctx, item.object.kind, item.sx, item.sy, camera.zoom, item.signature, anim, sun, this.atlas, item.tile.biome, item.object.wx, item.object.wy);\n      }\n      ctx.restore();\n    }\n    this.drawCanopyLayer(overhead, camera.zoom, timeSeconds);\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_UaaeW3uomnAxliVcHQbveLkL",
+        "content": "Applied edit to src/render/canvas-renderer.js\n\n⚠️ LINT: 1 error(s), 0 warning(s) in src/render/canvas-renderer.js:\n  Line 115:93 [ERROR] 'canopyAlpha' is not defined. (no-undef)\nFix these errors.",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_0lYJ18wl2RN1mckhOCTsS7J0",
+        "name": "edit_file",
+        "input": {
+          "path": "src/render/canvas-renderer.js",
+          "old_text": "  drawDepthBokeh(chunkStore, player, focusTile, camera, camX, camY, w, h) {\n",
+          "new_text": "  drawCanopyLayer(items, zoom, timeSeconds) {\n    const ctx = this.ctx;\n    for (const item of items) {\n      if (item.alpha <= 0.03) continue;\n      ctx.save();\n      ctx.globalAlpha = item.alpha;\n      const variant = biomeVariantFrameId(item.tile.biome, 'tree', item.object.wx + 13, item.object.wy - 17);\n      const frame = this.atlas.frame(variant?.id ?? (item.tile.biome === 'mystic' ? 'mystic_tree' : 'broadleaf_tree'), variant?.frame ?? Math.floor(timeSeconds * 4));\n      ctx.drawImage(frame.image, frame.sx, frame.sy, frame.sw, frame.sh, item.sx - 18 * zoom, item.sy - 50 * zoom, 58 * zoom, 58 * zoom);\n      ctx.restore();\n    }\n  }\n\n  drawDepthBokeh(chunkStore, player, focusTile, camera, camX, camY, w, h) {\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_0lYJ18wl2RN1mckhOCTsS7J0",
+        "content": "Applied edit to src/render/canvas-renderer.js\n\n⚠️ LINT: 1 error(s), 0 warning(s) in src/render/canvas-renderer.js:\n  Line 115:93 [ERROR] 'canopyAlpha' is not defined. (no-undef)\nFix these errors.",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_cXkN0JCS51egHc5NjWNv8Q06",
+        "name": "edit_file",
+        "input": {
+          "path": "src/render/canvas-renderer.js",
+          "old_text": "function drawModularPlayer(ctx, x, y, zoom, frame, animation) {\n",
+          "new_text": "function canopyAlpha(player, object, tile) {\n  const dx = player.x - object.wx;\n  const dy = player.y - object.wy;\n  const distance = Math.hypot(dx, dy);\n  if (distance > 3.2) return 0.62;\n  if (player.y < object.wy + 0.35) return 0.82;\n  return 0.26;\n}\n\nfunction drawModularPlayer(ctx, x, y, zoom, frame, animation) {\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_cXkN0JCS51egHc5NjWNv8Q06",
+        "content": "Applied edit to src/render/canvas-renderer.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_PRKyZj97hIHfQ2Fvv2r5bgN6",
+        "name": "write_file",
+        "input": {
+          "path": "src/world/interactions.js",
+          "content": "export function findNearbyInteraction(player, chunkStore, radius = 2.2) {\n  let best = null;\n  for (const chunk of chunkStore.chunks.values()) {\n    for (const object of chunk.objects) {\n      const dx = object.wx - player.x;\n      const dy = object.wy - player.y;\n      const d = Math.hypot(dx, dy);\n      if (d > radius) continue;\n      const interaction = interactionFor(object.kind);\n      if (!interaction) continue;\n      if (!best || d < best.distance) best = { object, distance: d, ...interaction };\n    }\n  }\n  return best;\n}\n\nfunction interactionFor(kind) {\n  if (kind === 'tree') return { verb: 'inspect/chop/climb', target: 'tree' };\n  if (kind.includes('rock')) return { verb: 'inspect/mine', target: 'stone' };\n  if (kind.includes('crystal')) return { verb: 'inspect/harvest', target: 'crystal' };\n  if (kind.includes('bush') || kind.includes('shrub')) return { verb: 'inspect/forage', target: 'bush' };\n  return { verb: 'inspect', target: kind };\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_PRKyZj97hIHfQ2Fvv2r5bgN6",
+        "content": "Written 24 lines to src/world/interactions.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_czHOWKluMmVAf1IzQcydVWaV",
+        "name": "edit_file",
+        "input": {
+          "path": "src/render/canvas-renderer.js",
+          "old_text": "import { drawElevationOverlay } from './elevation-overlay.js';\n",
+          "new_text": "import { drawElevationOverlay } from './elevation-overlay.js';\nimport { findNearbyInteraction } from '../world/interactions.js';\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_czHOWKluMmVAf1IzQcydVWaV",
+        "content": "Applied edit to src/render/canvas-renderer.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_sMyn3wFuBHRphq530K1qWvFw",
+        "name": "edit_file",
+        "input": {
+          "path": "src/render/canvas-renderer.js",
+          "old_text": "    const chunkStats = chunkStore.stats();\n",
+          "new_text": "    const nearby = findNearbyInteraction(player, chunkStore);\n    const interactionLine = nearby ? `<br>near ${nearby.target} · ${nearby.verb} · ${nearby.distance.toFixed(1)} tiles` : '';\n    const chunkStats = chunkStore.stats();\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_sMyn3wFuBHRphq530K1qWvFw",
+        "content": "Applied edit to src/render/canvas-renderer.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_ILibeCRhuvGuUxHX8IOwByY1",
+        "name": "edit_file",
+        "input": {
+          "path": "src/render/canvas-renderer.js",
+          "old_text": "<br>overmap biomes ${audit.seen.length}/${audit.spec.length}: ${topBiomes}<br>missing: ${audit.missing.join(', ') || 'none'}`;\n",
+          "new_text": "${interactionLine}<br>overmap biomes ${audit.seen.length}/${audit.spec.length}: ${topBiomes}<br>missing: ${audit.missing.join(', ') || 'none'}`;\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_ILibeCRhuvGuUxHX8IOwByY1",
+        "content": "Applied edit to src/render/canvas-renderer.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_BUNT1zxivZ6Flo0ouD4KiArr",
+        "name": "run_command",
+        "input": {
+          "command": "node --check src/render/canvas-renderer.js && node --check src/world/interactions.js"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_BUNT1zxivZ6Flo0ouD4KiArr",
+        "content": "$ node --check src/render/canvas-renderer.js && node --check src/world/interactions.js\n\n",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_XGXomcrrKz1NQe0Seuknhvsv",
+        "name": "edit_file",
+        "input": {
+          "path": "DONE.md",
+          "old_text": "- Added seamless dynamic elevation overlay and climb feedback:\n  - Added `src/render/elevation-overlay.js` to render elevation contours/highlights/shadows dynamically across chunk boundaries without baking per-tile offsets into cached chunk images.\n  - Canvas renderer now draws elevation shading after cached terrain and before contact/world actors.\n  - Player now detects climbable steep slopes and switches modular animation state to climb/climb_idle through the existing body state machine.\n  - HUD now reports player vertical `z` and movement state labels for climbing, gliding, and rolling.\n",
+          "new_text": "- Added seamless dynamic elevation overlay and climb feedback:\n  - Added `src/render/elevation-overlay.js` to render elevation contours/highlights/shadows dynamically across chunk boundaries without baking per-tile offsets into cached chunk images.\n  - Canvas renderer now draws elevation shading after cached terrain and before contact/world actors.\n  - Player now detects climbable steep slopes and switches modular animation state to climb/climb_idle through the existing body state machine.\n  - HUD now reports player vertical `z` and movement state labels for climbing, gliding, and rolling.\n- Added first canopy occlusion and interaction affordance pass:\n  - Trees now emit an overhead canopy draw item after the sorted actor pass, with alpha reduced when the player is under/near the canopy.\n  - Canopy uses biome variant frame selection independently from the trunk/object draw.\n  - Added `src/world/interactions.js` to find nearby interactable objects and surface verbs such as inspect/chop/climb/mine/harvest/forage.\n  - HUD now shows the closest nearby interaction target and available verbs.\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_XGXomcrrKz1NQe0Seuknhvsv",
         "content": "Applied edit to DONE.md",
         "is_error": false
       }

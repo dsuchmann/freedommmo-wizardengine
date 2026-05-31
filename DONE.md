@@ -245,3 +245,8 @@
   - Canvas renderer now draws elevation shading after cached terrain and before contact/world actors.
   - Player now detects climbable steep slopes and switches modular animation state to climb/climb_idle through the existing body state machine.
   - HUD now reports player vertical `z` and movement state labels for climbing, gliding, and rolling.
+- Added first canopy occlusion and interaction affordance pass:
+  - Trees now emit an overhead canopy draw item after the sorted actor pass, with alpha reduced when the player is under/near the canopy.
+  - Canopy uses biome variant frame selection independently from the trunk/object draw.
+  - Added `src/world/interactions.js` to find nearby interactable objects and surface verbs such as inspect/chop/climb/mine/harvest/forage.
+  - HUD now shows the closest nearby interaction target and available verbs.

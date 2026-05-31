@@ -8,6 +8,7 @@ import { ChunkRenderCache } from './chunk-render-cache.js';
 import { AtlasManager } from '../assets/atlas-manager.js';
 import { biomeVariantFrameId } from '../assets/variant-selector.js';
 import { drawElevationOverlay } from './elevation-overlay.js';
+import { findNearbyInteraction } from '../world/interactions.js';
 
 export class CanvasRenderer {
   constructor(canvas, statsElement, compositor = null) {
@@ -90,6 +91,7 @@ export class CanvasRenderer {
   drawWorldActors(chunkStore, player, camX, camY, w, h, sun, camera, timeSeconds) {
     const ctx = this.ctx;
     const drawables = [];
+    const overhead = [];
     const playerTile = chunkStore.tileAt(player.x, player.y);
     drawables.push({
       type: 'player',
@@ -111,6 +113,7 @@ export class CanvasRenderer {
         const signature = this.compositor?.objectSignature(object.kind, tile.biome, object.wx, object.wy);
         const render = signature?.render ?? { drawLayer: 'object', sort: 'elevationThenY', castsShadow: true, receivesLight: true };
         drawables.push({ object, tile, sx, sy, signature, render, key: drawSortKey(render, object.wy, tile.climate.elevation) });
+        if (object.kind === 'tree') overhead.push({ object, tile, sx, sy, signature, alpha: canopyAlpha(player, object, tile) });
       }
     }
     drawables.sort((a, b) => a.key - b.key);
@@ -127,6 +130,20 @@ export class CanvasRenderer {
         const anim = animationFrame(item.signature?.animations?.idle, timeSeconds, 'S');
         drawObject(ctx, item.object.kind, item.sx, item.sy, camera.zoom, item.signature, anim, sun, this.atlas, item.tile.biome, item.object.wx, item.object.wy);
       }
+      ctx.restore();
+    }
+    this.drawCanopyLayer(overhead, camera.zoom, timeSeconds);
+  }
+
+  drawCanopyLayer(items, zoom, timeSeconds) {
+    const ctx = this.ctx;
+    for (const item of items) {
+      if (item.alpha <= 0.03) continue;
+      ctx.save();
+      ctx.globalAlpha = item.alpha;
+      const variant = biomeVariantFrameId(item.tile.biome, 'tree', item.object.wx + 13, item.object.wy - 17);
+      const frame = this.atlas.frame(variant?.id ?? (item.tile.biome === 'mystic' ? 'mystic_tree' : 'broadleaf_tree'), variant?.frame ?? Math.floor(timeSeconds * 4));
+      ctx.drawImage(frame.image, frame.sx, frame.sy, frame.sw, frame.sh, item.sx - 18 * zoom, item.sy - 50 * zoom, 58 * zoom, 58 * zoom);
       ctx.restore();
     }
   }
@@ -183,13 +200,24 @@ export class CanvasRenderer {
     }
     const audit = this.lastAudit;
     const topBiomes = audit.seen.slice(0, 6).map(entry => `${entry.id} ${(entry.pct * 100).toFixed(0)}%`).join(', ');
+    const nearby = findNearbyInteraction(player, chunkStore);
+    const interactionLine = nearby ? `<br>near ${nearby.target} · ${nearby.verb} · ${nearby.distance.toFixed(1)} tiles` : '';
     const chunkStats = chunkStore.stats();
     const cacheStats = this.chunkRenderCache.stats();
     const atlasStats = this.atlas.stats().generated;
     const workerLine = `workers ${chunkStats.workers} · pending ${chunkStats.pending} · ready ${chunkStats.ready} · terrain cache ${cacheStats.cachedTerrainChunks}/${cacheStats.maxTerrainChunks} · art sheets ${atlasStats.loaded}/${atlasStats.sheets}`;
     const perfLine = perf ? `<br>fps ${perf.fps.toFixed(0)} · update ${perf.updateMs.toFixed(1)}ms · draw ${perf.drawMs.toFixed(1)}ms · ${workerLine}` : '';
-    this.statsElement.innerHTML = `WASD/arrows move · mousewheel zoom · R reset<br>M map · L pause sun · click overmap teleport<br>seed ${getWorldSeed()} · chunks ${chunkStore.chunks.size} · zoom ${camera.zoom.toFixed(2)}${perfLine}<br>tile ${Math.floor(player.x)}, ${Math.floor(player.y)} · chunk ${floorDiv(player.x)}, ${floorDiv(player.y)} · z ${player.z.toFixed(2)} ${player.climbing ? 'climbing' : player.glide ? 'gliding' : player.rollTimer > 0 ? 'rolling' : ''}<br>biome ${tile.biome} · form ${tile.terrainForm} · features ${tile.features.join(',') || 'none'}<br>material ${tile.material} · surface ${tile.layers[3].detail}<br>elev ${tile.climate.elevation.toFixed(2)} lift ${elevationLift(tile.climate.elevation).toFixed(1)} slope ${(tile.layers[7].slope ?? 0).toFixed(2)}<br>micro ${tile.layers[6].layers.map(layer => layer.kind).join('+')}<br>fertility ${tile.layers[6].fertility.toFixed(2)} vegetation ${tile.layers[6].vegetationDensity.toFixed(2)}<br>moist ${tile.climate.moisture.toFixed(2)} heat ${tile.climate.heat.toFixed(2)}<br>${sun.label} · light ${sun.ambient.toFixed(2)} · sun height ${sun.height.toFixed(2)}<br>overmap biomes ${audit.seen.length}/${audit.spec.length}: ${topBiomes}<br>missing: ${audit.missing.join(', ') || 'none'}`;
+    this.statsElement.innerHTML = `WASD/arrows move · mousewheel zoom · R reset<br>M map · L pause sun · click overmap teleport<br>seed ${getWorldSeed()} · chunks ${chunkStore.chunks.size} · zoom ${camera.zoom.toFixed(2)}${perfLine}<br>tile ${Math.floor(player.x)}, ${Math.floor(player.y)} · chunk ${floorDiv(player.x)}, ${floorDiv(player.y)} · z ${player.z.toFixed(2)} ${player.climbing ? 'climbing' : player.glide ? 'gliding' : player.rollTimer > 0 ? 'rolling' : ''}<br>biome ${tile.biome} · form ${tile.terrainForm} · features ${tile.features.join(',') || 'none'}<br>material ${tile.material} · surface ${tile.layers[3].detail}<br>elev ${tile.climate.elevation.toFixed(2)} lift ${elevationLift(tile.climate.elevation).toFixed(1)} slope ${(tile.layers[7].slope ?? 0).toFixed(2)}<br>micro ${tile.layers[6].layers.map(layer => layer.kind).join('+')}<br>fertility ${tile.layers[6].fertility.toFixed(2)} vegetation ${tile.layers[6].vegetationDensity.toFixed(2)}<br>moist ${tile.climate.moisture.toFixed(2)} heat ${tile.climate.heat.toFixed(2)}<br>${sun.label} · light ${sun.ambient.toFixed(2)} · sun height ${sun.height.toFixed(2)}${interactionLine}<br>overmap biomes ${audit.seen.length}/${audit.spec.length}: ${topBiomes}<br>missing: ${audit.missing.join(', ') || 'none'}`;
   }
+}
+
+function canopyAlpha(player, object, tile) {
+  const dx = player.x - object.wx;
+  const dy = player.y - object.wy;
+  const distance = Math.hypot(dx, dy);
+  if (distance > 3.2) return 0.62;
+  if (player.y < object.wy + 0.35) return 0.82;
+  return 0.26;
 }
 
 function drawModularPlayer(ctx, x, y, zoom, frame, animation) {
