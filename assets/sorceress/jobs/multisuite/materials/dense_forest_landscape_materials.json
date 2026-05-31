@@ -1,0 +1,8 @@
+{
+  "tool": "sorceress",
+  "suite": "material_forge",
+  "systemPrompt": "assets/sorceress/SYSTEM_ART_DIRECTION_PROMPT.md",
+  "output": "assets/generated/materials/dense_forest_landscape_materials.png",
+  "prompt": "Generate pixel material sheets for dense_forest: soil, mud, stone, foliage, water/snow/sand special surfaces, plus normal/depth/roughness style companion channels if supported.",
+  "style": "Canonical maximalist lush high-fantasy art direction. Outputs must be production-oriented, coherent with manifests, and immediately importable by runtime or pipeline."
+}

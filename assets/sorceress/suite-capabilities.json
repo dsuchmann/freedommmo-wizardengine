@@ -1,0 +1,16 @@
+{
+  "schema": "freedommmo.sorceress-suite-capabilities.v1",
+  "systemPrompt": "assets/sorceress/SYSTEM_ART_DIRECTION_PROMPT.md",
+  "suites": {
+    "image_suite": ["concept_painting", "reference_sheet", "state_overlay", "icon", "portrait"],
+    "sprite_suite": ["layered_character_parts", "object_animation", "effect_animation", "directional_sprites"],
+    "tileset_forge": ["seamless_tiles", "autotiles", "wang_tiles", "biome_transitions", "cliff_tiles"],
+    "material_forge": ["pbr_material", "pixel_material", "state_reaction_material", "normal_depth_maps"],
+    "environment_gen": ["biome_scene_key_art", "landscape_chunk_reference", "prop_scatter_rules", "canopy_occlusion_masks"],
+    "voxel_studio": ["voxel_prop", "voxel_building_blockout", "destructible_resource_node", "terrain_volume_reference"],
+    "three_d_studio": ["lowpoly_reference_model", "rendered_sprite_turnaround", "depth_normal_source", "architectural_kitbash"],
+    "three_d_procedural_work": ["procedural_tree_generator", "rock_generator", "cliff_generator", "building_generator"],
+    "audio_suite": ["biome_ambience", "footsteps", "object_reaction_sfx", "ui_feedback", "creature_insect_loops"],
+    "video_suite": ["animation_reference", "weather_loop_reference", "cinematic_style_reference", "sprite_motion_study"]
+  }
+}

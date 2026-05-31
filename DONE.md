@@ -231,3 +231,8 @@
   - Added `src/assets/biome-variant-atlas-defs.js` so runtime can discover/load generated variant sheets.
   - `AtlasManager` now includes biome variant atlas definitions.
   - Updated Sorceress system prompt metadata to require hundreds of biome-exclusive variants, high-fantasy silhouettes, unique palettes, lush intricate high-resolution feel, and no generic shared assets.
+- Added multi-suite Sorceress production manifests:
+  - Added `assets/sorceress/suite-capabilities.json` covering Image Suite, Sprite Suite, Tile Set Forge, Material Forge, Environment Gen, Voxel Studio, 3D Studio/procedural work, Audio Suite, and Video Suite output roles.
+  - Added `scripts/generate-multisuite-sorceress-jobs.mjs` to emit cross-suite generation jobs.
+  - Generated `assets/sorceress/multisuite-job-index.json` with 129 jobs spanning biome environment references, tilesets, materials, ambience, voxel blockouts, procedural 3D generator specs, modular character sprites, interaction effects, and locomotion reference video.
+  - Added `src/assets/generated-media-catalog.js` with canonical generated media folders for runtime/pipeline lookup.

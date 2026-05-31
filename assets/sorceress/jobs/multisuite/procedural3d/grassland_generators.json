@@ -1,0 +1,8 @@
+{
+  "tool": "sorceress",
+  "suite": "three_d_procedural_work",
+  "systemPrompt": "assets/sorceress/SYSTEM_ART_DIRECTION_PROMPT.md",
+  "output": "assets/generated/procedural3d/grassland_generators.json",
+  "prompt": "Generate procedural grammar parameters for grassland trees, rocks, cliffs, shrubs, hedges, dunes, overhangs, and canopy scatter.",
+  "style": "Canonical maximalist lush high-fantasy art direction. Outputs must be production-oriented, coherent with manifests, and immediately importable by runtime or pipeline."
+}

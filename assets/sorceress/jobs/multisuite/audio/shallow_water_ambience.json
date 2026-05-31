@@ -1,0 +1,8 @@
+{
+  "tool": "sorceress",
+  "suite": "audio_suite",
+  "systemPrompt": "assets/sorceress/SYSTEM_ART_DIRECTION_PROMPT.md",
+  "output": "assets/generated/audio/shallow_water_ambience.ogg",
+  "prompt": "Generate looping biome ambience for shallow_water: insects/air/water/trees/geology/mystic accents as appropriate. Seamless loop.",
+  "style": "Canonical maximalist lush high-fantasy art direction. Outputs must be production-oriented, coherent with manifests, and immediately importable by runtime or pipeline."
+}

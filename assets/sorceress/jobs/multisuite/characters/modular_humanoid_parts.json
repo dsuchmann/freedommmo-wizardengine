@@ -1,0 +1,8 @@
+{
+  "tool": "sorceress",
+  "suite": "sprite_suite",
+  "systemPrompt": "assets/sorceress/SYSTEM_ART_DIRECTION_PROMPT.md",
+  "output": "assets/generated/characters/modular_humanoid_parts.png",
+  "prompt": "Generate modular humanoid body-part sprite sheets: legs, hips, torso, shoulders, arms, hands, neck, head, face, hair, clothing layers, equipment, 8 directions, idle/walk/sprint/jump/glide/roll/climb/attack/cast/hurt.",
+  "style": "Canonical maximalist lush high-fantasy art direction. Outputs must be production-oriented, coherent with manifests, and immediately importable by runtime or pipeline."
+}

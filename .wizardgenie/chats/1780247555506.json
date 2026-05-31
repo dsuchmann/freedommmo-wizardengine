@@ -1,7 +1,7 @@
 [
   {
     "role": "user",
-    "content": "[Context window: 4 older messages moved to long-term memory. Use the recall_memory tool to retrieve past decisions, code changes, or debugging outcomes as needed.]"
+    "content": "[Context window: 2 older messages moved to long-term memory. Use the recall_memory tool to retrieve past decisions, code changes, or debugging outcomes as needed.]"
   },
   {
     "role": "assistant",
@@ -10,32 +10,6 @@
         "type": "text",
         "text": "Understood. I can use recall_memory to access prior context."
       },
-      {
-        "type": "tool_use",
-        "id": "call_w4faZzEMqXRZm2MCO4F7PDQI",
-        "name": "edit_file",
-        "input": {
-          "path": "src/world/biomes.js",
-          "old_text": "export function classifyBiome(wx, wy) {\n  const climate = sampleClimate(wx, wy);\n  const { elevation, moisture, heat, drainage, aether } = climate;\n  let id;\n  if (aether > 0.78 && elevation > 0.43 && elevation < 0.76) id = 'mystic';\n  else if (elevation < 0.26) id = 'deep_ocean';\n  else if (elevation < 0.36) id = 'ocean';\n  else if (elevation < 0.40) id = 'shallow_water';\n  else if (elevation < 0.42) id = moisture > 0.82 ? 'lake' : 'beach';\n  else if (drainage > 0.73 && moisture > 0.58 && elevation < 0.62) id = 'river';\n  else if (moisture > 0.86 && elevation < 0.58) id = 'lake';\n  else if (elevation > 0.74 && heat > 0.36 && moisture < 0.56 && drainage > 0.58) id = 'volcanic';\n  else if (elevation > 0.78) id = heat < 0.24 ? 'arctic' : 'mountains';\n  else if (elevation > 0.66) id = heat < 0.30 ? 'tundra' : 'hills';\n  else if (heat < 0.22) id = moisture > 0.45 ? 'taiga' : 'tundra';\n  else if (moisture > 0.80 && heat > 0.58) id = 'tropical_forest';\n  else if (moisture > 0.76 && heat > 0.32) id = 'swamp';\n  else if (moisture > 0.66) id = heat > 0.48 ? 'dense_forest' : 'forest';\n  else if (moisture < 0.25 && heat > 0.52) id = 'desert';\n  else if (moisture < 0.34 && heat > 0.34) id = 'steppe';\n  else if (moisture < 0.44 && heat > 0.48) id = 'savanna';\n  else id = 'grassland';\n  return { id, definition: BIOMES[id], climate };\n}\n",
-          "new_text": "export function classifyBiome(wx, wy) {\n  const climate = sampleClimate(wx, wy);\n  const cx = Math.floor(wx / 64);\n  const cy = Math.floor(wy / 64);\n  const regional = sampleRegionalMapChunk(cx, cy);\n  const localCandidate = classifyLocalCandidate(climate);\n  const edge = regionalEcotoneStrength(cx, cy, regional.id);\n  const localDetail = fbm(wx + 71000, wy - 91000, 77, undefined, 720, 3);\n  const allowTransition = edge > 0 && localDetail > 0.62;\n  const id = allowTransition ? transitionBiome(regional.id, localCandidate) : regional.id;\n  return { id, definition: BIOMES[id], climate: { ...climate, regionalBiome: regional.id, localCandidate, ecotone: edge } };\n}\n\nfunction classifyLocalCandidate(climate) {\n  const { elevation, moisture, heat, drainage, aether } = climate;\n  if (aether > 0.78 && elevation > 0.43 && elevation < 0.76) return 'mystic';\n  if (elevation < 0.26) return 'deep_ocean';\n  if (elevation < 0.36) return 'ocean';\n  if (elevation < 0.40) return 'shallow_water';\n  if (elevation < 0.42) return moisture > 0.82 ? 'lake' : 'beach';\n  if (drainage > 0.73 && moisture > 0.58 && elevation < 0.62) return 'river';\n  if (moisture > 0.86 && elevation < 0.58) return 'lake';\n  if (elevation > 0.74 && heat > 0.36 && moisture < 0.56 && drainage > 0.58) return 'volcanic';\n  if (elevation > 0.78) return heat < 0.24 ? 'arctic' : 'mountains';\n  if (elevation > 0.66) return heat < 0.30 ? 'tundra' : 'hills';\n  if (heat < 0.22) return moisture > 0.45 ? 'taiga' : 'tundra';\n  if (moisture > 0.80 && heat > 0.58) return 'tropical_forest';\n  if (moisture > 0.76 && heat > 0.32) return 'swamp';\n  if (moisture > 0.66) return heat > 0.48 ? 'dense_forest' : 'forest';\n  if (moisture < 0.25 && heat > 0.52) return 'desert';\n  if (moisture < 0.34 && heat > 0.34) return 'steppe';\n  if (moisture < 0.44 && heat > 0.48) return 'savanna';\n  return 'grassland';\n}\n\nfunction regionalEcotoneStrength(cx, cy, id) {\n  const east = sampleRegionalMapChunk(cx + 1, cy).id;\n  const west = sampleRegionalMapChunk(cx - 1, cy).id;\n  const north = sampleRegionalMapChunk(cx, cy - 1).id;\n  const south = sampleRegionalMapChunk(cx, cy + 1).id;\n  return [east, west, north, south].some(next => next !== id) ? 1 : 0;\n}\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_w4faZzEMqXRZm2MCO4F7PDQI",
-        "content": "Applied edit to src/world/biomes.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
       {
         "type": "tool_use",
         "id": "call_ElFema4NlNDeEA3isP0fvWZz",
@@ -6490,6 +6464,196 @@
       {
         "type": "text",
         "text": "I don’t currently have direct callable tools for those Sorceress applications in this chat/tool environment.\n\nWhat I have access to right now is:\n\n- file read/write/edit\n- shell commands\n- browser/preview tools\n- codebase search/graph tools\n- scene/model add helper\n- local scripting\n\nI do **not** currently see exposed tool APIs for:\n\n- Sorceress Image Suite\n- Video Suite\n- 3D Studio\n- Voxel Studio\n- Audio Suite\n- Sprite Suite\n- Material Forge\n- 3D Procedural Work\n- Environment Gen\n- Tile Set Forge\n\nSo I cannot directly invoke something like:\n\n```js\nsorceress.image.generate(...)\nsorceress.spriteSuite.create(...)\nsorceress.tileSetForge.run(...)\n```\n\nunless those tools are exposed to me through the available tool namespace.\n\nWhat I *can* do, and have started doing, is build the full job/manifests/import pipeline so those tools can consume it:\n\n```text\nassets/sorceress/jobs/\nassets/sorceress/job-index.json\nassets/sorceress/biome-variant-job-index.json\nassets/sorceress/maximal-landscape-job-index.json\nassets/sorceress/SYSTEM_ART_DIRECTION_PROMPT.md\nassets/generated/\nsrc/assets/*atlas*\n```\n\nIf WizardGenie exposes Sorceress as tools later, I can call them directly. If Sorceress consumes job JSON files from disk, then the current pipeline is already set up for that."
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": "continue"
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "<plan>\nI’ll continue by formalizing multi-suite Sorceress job manifests for Image/Sprite/Tile/Material/Environment/Audio/Voxel/3D outputs and add runtime/catalog definitions for consuming the generated results later.\n</plan>\n"
+      },
+      {
+        "type": "tool_use",
+        "id": "call_Eql1mIpo6ZW6zBaeCCTeEfmR",
+        "name": "create_checkpoint",
+        "input": {
+          "message": "Add multi-suite Sorceress production manifests"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_Eql1mIpo6ZW6zBaeCCTeEfmR",
+        "content": "Checkpoint requested: Add multi-suite Sorceress production manifests",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_8Nwmu6sj8Njhq87AZq7YcBx6",
+        "name": "write_file",
+        "input": {
+          "path": "assets/sorceress/suite-capabilities.json",
+          "content": "{\n  \"schema\": \"freedommmo.sorceress-suite-capabilities.v1\",\n  \"systemPrompt\": \"assets/sorceress/SYSTEM_ART_DIRECTION_PROMPT.md\",\n  \"suites\": {\n    \"image_suite\": [\"concept_painting\", \"reference_sheet\", \"state_overlay\", \"icon\", \"portrait\"],\n    \"sprite_suite\": [\"layered_character_parts\", \"object_animation\", \"effect_animation\", \"directional_sprites\"],\n    \"tileset_forge\": [\"seamless_tiles\", \"autotiles\", \"wang_tiles\", \"biome_transitions\", \"cliff_tiles\"],\n    \"material_forge\": [\"pbr_material\", \"pixel_material\", \"state_reaction_material\", \"normal_depth_maps\"],\n    \"environment_gen\": [\"biome_scene_key_art\", \"landscape_chunk_reference\", \"prop_scatter_rules\", \"canopy_occlusion_masks\"],\n    \"voxel_studio\": [\"voxel_prop\", \"voxel_building_blockout\", \"destructible_resource_node\", \"terrain_volume_reference\"],\n    \"three_d_studio\": [\"lowpoly_reference_model\", \"rendered_sprite_turnaround\", \"depth_normal_source\", \"architectural_kitbash\"],\n    \"three_d_procedural_work\": [\"procedural_tree_generator\", \"rock_generator\", \"cliff_generator\", \"building_generator\"],\n    \"audio_suite\": [\"biome_ambience\", \"footsteps\", \"object_reaction_sfx\", \"ui_feedback\", \"creature_insect_loops\"],\n    \"video_suite\": [\"animation_reference\", \"weather_loop_reference\", \"cinematic_style_reference\", \"sprite_motion_study\"]\n  }\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_8Nwmu6sj8Njhq87AZq7YcBx6",
+        "content": "Written 17 lines to assets/sorceress/suite-capabilities.json",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_lrscbQH8fNfQAegLazYSnFOh",
+        "name": "write_file",
+        "input": {
+          "path": "scripts/generate-multisuite-sorceress-jobs.mjs",
+          "content": "import { mkdirSync, writeFileSync } from 'node:fs';\nimport { dirname } from 'node:path';\n\nconst SYSTEM_PROMPT = 'assets/sorceress/SYSTEM_ART_DIRECTION_PROMPT.md';\nconst biomes = ['grassland', 'forest', 'dense_forest', 'tropical_forest', 'taiga', 'savanna', 'steppe', 'desert', 'swamp', 'tundra', 'arctic', 'hills', 'mountains', 'volcanic', 'mystic', 'beach', 'river', 'lake', 'shallow_water', 'ocean', 'deep_ocean'];\nconst jobs = [];\n\nfor (const biome of biomes) {\n  add('environment_gen', `environment/${biome}_scene_reference.json`, `assets/generated/environment/${biome}_scene_reference.png`, `Generate a lush maximal biome scene reference for ${biome}: terrain layers, canopy, elevation, object density, lighting, atmosphere, and interaction affordances.`);\n  add('tileset_forge', `tilesets/${biome}_autotile_wang.json`, `assets/generated/tilesets/${biome}_autotile_wang.png`, `Generate seamless autotile/wang terrain set for ${biome}, including inner tiles, edges, corners, diagonals, transition masks, and high-variance detail variants.`);\n  add('material_forge', `materials/${biome}_landscape_materials.json`, `assets/generated/materials/${biome}_landscape_materials.png`, `Generate pixel material sheets for ${biome}: soil, mud, stone, foliage, water/snow/sand special surfaces, plus normal/depth/roughness style companion channels if supported.`);\n  add('audio_suite', `audio/${biome}_ambience.json`, `assets/generated/audio/${biome}_ambience.ogg`, `Generate looping biome ambience for ${biome}: insects/air/water/trees/geology/mystic accents as appropriate. Seamless loop.`);\n  add('voxel_studio', `voxel/${biome}_prop_blockouts.json`, `assets/generated/voxel/${biome}_prop_blockouts.vox`, `Generate voxel blockout references for ${biome} trees, rocks, shrubs, cliffs, and interactable resource nodes.`);\n  add('three_d_procedural_work', `procedural3d/${biome}_generators.json`, `assets/generated/procedural3d/${biome}_generators.json`, `Generate procedural grammar parameters for ${biome} trees, rocks, cliffs, shrubs, hedges, dunes, overhangs, and canopy scatter.`);\n}\n\nadd('sprite_suite', 'characters/modular_humanoid_parts.json', 'assets/generated/characters/modular_humanoid_parts.png', 'Generate modular humanoid body-part sprite sheets: legs, hips, torso, shoulders, arms, hands, neck, head, face, hair, clothing layers, equipment, 8 directions, idle/walk/sprint/jump/glide/roll/climb/attack/cast/hurt.');\nadd('sprite_suite', 'effects/interaction_reactions.json', 'assets/generated/effects/interaction_reactions.png', 'Generate effect sprites for grass bend, bush rustle, flower shake, water splash, mud squelch, sand puff, snow puff, insect scatter, leaf fall, canopy shake, climb dust, landing impact.');\nadd('video_suite', 'motion_reference/player_locomotion.json', 'assets/generated/video/player_locomotion_reference.mp4', 'Generate motion reference clips for modular player locomotion: sprint, standing jump, running jump, glide, dodge roll, climb, land, interact.');\n\nwriteFileSync('assets/sorceress/multisuite-job-index.json', JSON.stringify({ schema: 'freedommmo.multisuite-sorceress-jobs.v1', count: jobs.length, jobs }, null, 2));\nconsole.log(`Wrote ${jobs.length} multisuite Sorceress jobs`);\n\nfunction add(suite, path, output, prompt) {\n  const full = `assets/sorceress/jobs/multisuite/${path}`;\n  mkdirSync(dirname(full), { recursive: true });\n  const job = { tool: 'sorceress', suite, systemPrompt: SYSTEM_PROMPT, output, prompt, style: 'Canonical maximalist lush high-fantasy art direction. Outputs must be production-oriented, coherent with manifests, and immediately importable by runtime or pipeline.' };\n  writeFileSync(full, JSON.stringify(job, null, 2));\n  jobs.push(full);\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_lrscbQH8fNfQAegLazYSnFOh",
+        "content": "Written 31 lines to scripts/generate-multisuite-sorceress-jobs.mjs",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_HBG4H1Z1y46pNF2LQAJo1n2v",
+        "name": "run_command",
+        "input": {
+          "command": "node scripts/generate-multisuite-sorceress-jobs.mjs && node --check scripts/generate-multisuite-sorceress-jobs.mjs"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_HBG4H1Z1y46pNF2LQAJo1n2v",
+        "content": "$ node scripts/generate-multisuite-sorceress-jobs.mjs && node --check scripts/generate-multisuite-sorceress-jobs.mjs\n\nWrote 129 multisuite Sorceress jobs\n",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_d4cFS0U7BORldlKwKo0Jm5Zx",
+        "name": "write_file",
+        "input": {
+          "path": "src/assets/generated-media-catalog.js",
+          "content": "export const generatedMediaCatalog = Object.freeze({\n  environmentReferences: 'assets/generated/environment/',\n  tilesets: 'assets/generated/tilesets/',\n  materials: 'assets/generated/materials/',\n  audio: 'assets/generated/audio/',\n  voxel: 'assets/generated/voxel/',\n  procedural3d: 'assets/generated/procedural3d/',\n  characters: 'assets/generated/characters/',\n  effects: 'assets/generated/effects/',\n  video: 'assets/generated/video/'\n});\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_d4cFS0U7BORldlKwKo0Jm5Zx",
+        "content": "Written 12 lines to src/assets/generated-media-catalog.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_nN5GjUuINeKUUBqSR7xiDPcD",
+        "name": "run_command",
+        "input": {
+          "command": "node --check src/assets/generated-media-catalog.js && node -e \"const idx=require('./assets/sorceress/multisuite-job-index.json'); console.log(idx.count);\""
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_nN5GjUuINeKUUBqSR7xiDPcD",
+        "content": "$ node --check src/assets/generated-media-catalog.js && node -e \"const idx=require('./assets/sorceress/multisuite-job-index.json'); console.log(idx.count);\"\n\n129\n",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_exwNROqvO323ECHiMNMa3bEm",
+        "name": "edit_file",
+        "input": {
+          "path": "DONE.md",
+          "old_text": "- Added extreme high-variance biome-unique object generation plan:\n  - Added `scripts/generate-biome-variant-jobs.mjs` to create hundreds of unique variants per biome object family.\n  - Generated `assets/sorceress/biome-variant-job-index.json` with 672 Sorceress jobs targeting 43,008 unique variant assets.\n  - Variant families cover trees, shrubs, flowers, ground cover, stones, vines, canopy, and insects across all 21 biomes.\n  - Added `src/assets/biome-variant-atlas-defs.js` so runtime can discover/load generated variant sheets.\n  - `AtlasManager` now includes biome variant atlas definitions.\n  - Updated Sorceress system prompt metadata to require hundreds of biome-exclusive variants, high-fantasy silhouettes, unique palettes, lush intricate high-resolution feel, and no generic shared assets.\n",
+          "new_text": "- Added extreme high-variance biome-unique object generation plan:\n  - Added `scripts/generate-biome-variant-jobs.mjs` to create hundreds of unique variants per biome object family.\n  - Generated `assets/sorceress/biome-variant-job-index.json` with 672 Sorceress jobs targeting 43,008 unique variant assets.\n  - Variant families cover trees, shrubs, flowers, ground cover, stones, vines, canopy, and insects across all 21 biomes.\n  - Added `src/assets/biome-variant-atlas-defs.js` so runtime can discover/load generated variant sheets.\n  - `AtlasManager` now includes biome variant atlas definitions.\n  - Updated Sorceress system prompt metadata to require hundreds of biome-exclusive variants, high-fantasy silhouettes, unique palettes, lush intricate high-resolution feel, and no generic shared assets.\n- Added multi-suite Sorceress production manifests:\n  - Added `assets/sorceress/suite-capabilities.json` covering Image Suite, Sprite Suite, Tile Set Forge, Material Forge, Environment Gen, Voxel Studio, 3D Studio/procedural work, Audio Suite, and Video Suite output roles.\n  - Added `scripts/generate-multisuite-sorceress-jobs.mjs` to emit cross-suite generation jobs.\n  - Generated `assets/sorceress/multisuite-job-index.json` with 129 jobs spanning biome environment references, tilesets, materials, ambience, voxel blockouts, procedural 3D generator specs, modular character sprites, interaction effects, and locomotion reference video.\n  - Added `src/assets/generated-media-catalog.js` with canonical generated media folders for runtime/pipeline lookup.\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_exwNROqvO323ECHiMNMa3bEm",
+        "content": "Applied edit to DONE.md",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Done."
       }
     ]
   }

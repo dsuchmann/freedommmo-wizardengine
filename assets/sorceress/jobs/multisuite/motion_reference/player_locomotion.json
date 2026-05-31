@@ -1,0 +1,8 @@
+{
+  "tool": "sorceress",
+  "suite": "video_suite",
+  "systemPrompt": "assets/sorceress/SYSTEM_ART_DIRECTION_PROMPT.md",
+  "output": "assets/generated/video/player_locomotion_reference.mp4",
+  "prompt": "Generate motion reference clips for modular player locomotion: sprint, standing jump, running jump, glide, dodge roll, climb, land, interact.",
+  "style": "Canonical maximalist lush high-fantasy art direction. Outputs must be production-oriented, coherent with manifests, and immediately importable by runtime or pipeline."
+}
