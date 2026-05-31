@@ -10,6 +10,10 @@ export class InputState {
     target.addEventListener('keyup', event => this.keys.delete(event.key.toLowerCase()));
   }
 
+  down(key) {
+    return this.keys.has(key.toLowerCase());
+  }
+
   wasPressed(key) {
     return this.pressedThisFrame.has(key.toLowerCase());
   }

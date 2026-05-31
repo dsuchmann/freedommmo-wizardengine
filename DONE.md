@@ -193,3 +193,9 @@
   - Created seed generated sheets for terrain micro-layers, vegetation objects, and geology objects.
   - Created per-biome generated PNGs for all 21 biome base terrain sheets, micro-layer sheets, and nature object sheets.
   - Runtime now has real PNG files at the expected generated-art paths, so `AtlasManager` can load generated sheets immediately instead of relying only on procedural fallback.
+- Added massive asset generation master plan and first movement/body systems:
+  - Added `docs/ASSET_GENERATION_MASTER_PLAN.md`, enumerating landscape layers, terrain categories, transitions, vegetation/geology/building/interior/character/item/effect assets, animations, states, and material-element interactions.
+  - Added modular humanoid body schema in `src/character/body-schema.js` with body parts, 8 directions, and animation clips.
+  - Added `src/character/modular-character.js` for programmatic animation-state selection.
+  - Player now supports sprinting, jump physics, glide input, and dodge roll timing.
+  - Renderer now draws a simple modular assembled player from legs, torso, arms, head, hair, and optional glide arc, replacing the old static circle player marker.

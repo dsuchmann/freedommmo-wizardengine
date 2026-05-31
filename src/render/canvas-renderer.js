@@ -59,7 +59,7 @@ export class CanvasRenderer {
 
     this.drawObjects(chunkStore, camX, camY, w, h, sun, camera, performance.now() / 1000);
     this.drawDepthBokeh(chunkStore, player, focusTile, camera, camX, camY, w, h);
-    this.drawPlayer(w, h, camera.zoom);
+    this.drawPlayer(w, h, camera.zoom, player);
     this.drawAtmosphere(sun, w, h);
   }
 
@@ -117,14 +117,16 @@ export class CanvasRenderer {
     ctx.restore();
   }
 
-  drawPlayer(w, h, zoom) {
+  drawPlayer(w, h, zoom, player) {
     const ctx = this.ctx;
-    ctx.fillStyle = '#f6f1d0';
+    const px = w / 2;
+    const py = h / 2 - (player?.z ?? 0) * 10 * zoom;
+    const frame = Math.floor(player?.character?.frame ?? 0);
+    ctx.fillStyle = `rgba(0,0,0,${player?.z > 0 ? 0.16 : 0.28})`;
     ctx.beginPath();
-    ctx.arc(w / 2, h / 2, 7 * zoom, 0, Math.PI * 2);
+    ctx.ellipse(px, h / 2 + 8 * zoom, 8 * zoom + (player?.z ?? 0) * zoom, 3 * zoom, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = '#1b1b1b';
-    ctx.stroke();
+    drawModularPlayer(ctx, px, py, zoom, frame, player?.character?.animation ?? 'idle');
   }
 
   drawAtmosphere(sun, w, h) {
@@ -150,6 +152,56 @@ export class CanvasRenderer {
     const perfLine = perf ? `<br>fps ${perf.fps.toFixed(0)} · update ${perf.updateMs.toFixed(1)}ms · draw ${perf.drawMs.toFixed(1)}ms · ${workerLine}` : '';
     this.statsElement.innerHTML = `WASD/arrows move · mousewheel zoom · R reset<br>M map · L pause sun · click overmap teleport<br>seed ${getWorldSeed()} · chunks ${chunkStore.chunks.size} · zoom ${camera.zoom.toFixed(2)}${perfLine}<br>tile ${Math.floor(player.x)}, ${Math.floor(player.y)} · chunk ${floorDiv(player.x)}, ${floorDiv(player.y)}<br>biome ${tile.biome} · form ${tile.terrainForm} · features ${tile.features.join(',') || 'none'}<br>material ${tile.material} · surface ${tile.layers[3].detail}<br>elev ${tile.climate.elevation.toFixed(2)} lift ${elevationLift(tile.climate.elevation).toFixed(1)} slope ${(tile.layers[7].slope ?? 0).toFixed(2)}<br>micro ${tile.layers[6].layers.map(layer => layer.kind).join('+')}<br>fertility ${tile.layers[6].fertility.toFixed(2)} vegetation ${tile.layers[6].vegetationDensity.toFixed(2)}<br>moist ${tile.climate.moisture.toFixed(2)} heat ${tile.climate.heat.toFixed(2)}<br>${sun.label} · light ${sun.ambient.toFixed(2)} · sun height ${sun.height.toFixed(2)}<br>overmap biomes ${audit.seen.length}/${audit.spec.length}: ${topBiomes}<br>missing: ${audit.missing.join(', ') || 'none'}`;
   }
+}
+
+function drawModularPlayer(ctx, x, y, zoom, frame, animation) {
+  const bob = animation === 'walk' || animation === 'sprint' ? Math.sin(frame * Math.PI / 4) * 1.5 * zoom : 0;
+  const roll = animation === 'dodge_roll';
+  ctx.save();
+  if (roll) {
+    ctx.translate(x, y + 4 * zoom);
+    ctx.rotate((frame / 8) * Math.PI * 2);
+    x = 0;
+    y = 0;
+  }
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = '#2b2030';
+  ctx.lineWidth = 3 * zoom;
+  ctx.beginPath();
+  ctx.moveTo(x - 3 * zoom, y + 8 * zoom + bob);
+  ctx.lineTo(x - 5 * zoom, y + 15 * zoom);
+  ctx.moveTo(x + 3 * zoom, y + 8 * zoom - bob);
+  ctx.lineTo(x + 5 * zoom, y + 15 * zoom);
+  ctx.stroke();
+  ctx.fillStyle = '#4d6fb8';
+  ctx.beginPath();
+  ctx.ellipse(x, y + 5 * zoom, 5 * zoom, 7 * zoom, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#755037';
+  ctx.beginPath();
+  ctx.moveTo(x - 5 * zoom, y + 2 * zoom);
+  ctx.lineTo(x - 9 * zoom, y + 9 * zoom + bob);
+  ctx.moveTo(x + 5 * zoom, y + 2 * zoom);
+  ctx.lineTo(x + 9 * zoom, y + 9 * zoom - bob);
+  ctx.stroke();
+  ctx.fillStyle = '#f1c08f';
+  ctx.beginPath();
+  ctx.arc(x, y - 5 * zoom, 5 * zoom, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#3b2419';
+  ctx.beginPath();
+  ctx.arc(x, y - 8 * zoom, 5 * zoom, Math.PI, Math.PI * 2);
+  ctx.fill();
+  if (animation === 'glide_loop') {
+    ctx.strokeStyle = 'rgba(180,230,255,.7)';
+    ctx.lineWidth = 2 * zoom;
+    ctx.beginPath();
+    ctx.moveTo(x - 12 * zoom, y + 2 * zoom);
+    ctx.quadraticCurveTo(x, y - 8 * zoom, x + 12 * zoom, y + 2 * zoom);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 function drawObject(ctx, kind, sx, sy, zoom = 1, signature = null, anim = { frame: 0 }, sun = null, atlas = null) {

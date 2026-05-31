@@ -1,0 +1,92 @@
+File: src/render/canvas-renderer.js (lines 1-90 of 203)
+
+1| import { WORLD } from '../core/constants.js';
+2| import { getWorldSeed } from '../core/world-seed.js';
+3| import { floorDiv } from '../world/chunk.js';
+4| import { auditBiomesAround } from '../world/biome-audit.js';
+5| import { drawSortKey, applyBlend } from './draw-order.js';
+6| import { animationFrame } from './animation-state.js';
+7| import { ChunkRenderCache } from './chunk-render-cache.js';
+8| import { AtlasManager } from '../assets/atlas-manager.js';
+9| 
+10| export class CanvasRenderer {
+11|   constructor(canvas, statsElement, compositor = null) {
+12|     this.canvas = canvas;
+13|     this.ctx = canvas.getContext('2d', { alpha: false });
+14|     this.statsElement = statsElement;
+15|     this.compositor = compositor;
+16|     this.atlas = new AtlasManager();
+17|     this.chunkRenderCache = new ChunkRenderCache(compositor, this.atlas);
+18|     this.lastAudit = null;
+19|     this.lastAuditAt = 0;
+20|     window.addEventListener('resize', () => this.resize());
+21|     this.resize();
+22|   }
+23| 
+24|   resize() {
+25|     this.canvas.width = Math.floor(window.innerWidth * window.devicePixelRatio);
+26|     this.canvas.height = Math.floor(window.innerHeight * window.devicePixelRatio);
+27|     this.ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+28|   }
+29| 
+30|   draw(chunkStore, player, lighting, camera) {
+31|     const ctx = this.ctx;
+32|     const w = window.innerWidth;
+33|     const h = window.innerHeight;
+34|     const sun = lighting.sun();
+35|     const tilePx = WORLD.tileSize * camera.zoom;
+36|     const focusTile = chunkStore.tileAt(player.x, player.y);
+37|     ctx.fillStyle = '#071019';
+38|     ctx.fillRect(0, 0, w, h);
+39| 
+40|     const camX = player.x * tilePx - w / 2;
+41|     const camY = player.y * tilePx - h / 2;
+42|     const minCX = floorDiv(Math.floor(camX / tilePx), WORLD.chunkSize) - 1;
+43|     const minCY = floorDiv(Math.floor(camY / tilePx), WORLD.chunkSize) - 1;
+44|     const maxCX = floorDiv(Math.ceil((camX + w) / tilePx), WORLD.chunkSize) + 1;
+45|     const maxCY = floorDiv(Math.ceil((camY + h) / tilePx), WORLD.chunkSize) + 1;
+46| 
+47|     for (let cy = minCY; cy <= maxCY; cy++) {
+48|       for (let cx = minCX; cx <= maxCX; cx++) {
+49|         const chunk = chunkStore.getIfReady(cx, cy);
+50|         if (!chunk) continue;
+51|         const cached = this.chunkRenderCache.get(chunk, sun);
+52|         const sx = Math.floor(cx * WORLD.chunkSize * tilePx - camX);
+53|         const sy = Math.floor(cy * WORLD.chunkSize * tilePx - camY);
+54|         const dw = WORLD.chunkSize * tilePx;
+55|         const dh = (WORLD.chunkSize * WORLD.tileSize + 24) * camera.zoom;
+56|         ctx.drawImage(cached, sx, sy - 24 * camera.zoom, dw, dh);
+57|       }
+58|     }
+59| 
+60|     this.drawObjects(chunkStore, camX, camY, w, h, sun, camera, performance.now() / 1000);
+61|     this.drawDepthBokeh(chunkStore, player, focusTile, camera, camX, camY, w, h);
+62|     this.drawPlayer(w, h, camera.zoom, player);
+63|     this.drawAtmosphere(sun, w, h);
+64|   }
+65| 
+66|   drawObjects(chunkStore, camX, camY, w, h, sun, camera, timeSeconds) {
+67|     const ctx = this.ctx;
+68|     const drawables = [];
+69|     for (const chunk of chunkStore.chunks.values()) {
+70|       for (const object of chunk.objects) {
+71|         const tile = chunk.tiles[object.y * WORLD.chunkSize + object.x];
+72|         const tilePx = WORLD.tileSize * camera.zoom;
+73|         const sx = (chunk.cx * WORLD.chunkSize + object.x) * tilePx - camX;
+74|         const sy = (chunk.cy * WORLD.chunkSize + object.y) * tilePx - camY - elevationLift(tile.climate.elevation) * camera.zoom;
+75|         if (sx < -30 || sy < -40 || sx > w + 30 || sy > h + 30) continue;
+76|         const signature = this.compositor?.objectSignature(object.kind, tile.biome, object.wx, object.wy);
+77|         const render = signature?.render ?? { drawLayer: 'object', sort: 'elevationThenY', castsShadow: true, receivesLight: true };
+78|         drawables.push({ object, tile, sx, sy, signature, render, key: drawSortKey(render, object.wy, tile.climate.elevation) });
+79|       }
+80|     }
+81|     drawables.sort((a, b) => a.key - b.key);
+82|     for (const item of drawables) {
+83|       ctx.save();
+84|       applyBlend(ctx, item.render);
+85|       if (item.render.castsShadow) {
+86|         ctx.fillStyle = `rgba(0,0,0,${0.22 * (1 - sun.height)})`;
+87|         ctx.fillRect(item.sx + sun.shadowX * 12 * camera.zoom, item.sy + sun.shadowY * 12 * camera.zoom + 10 * camera.zoom, 12 * camera.zoom, 5 * camera.zoom);
+88|       }
+89|       const anim = animationFrame(item.signature?.animations?.idle, timeSeconds, 'S');
+90|       drawObject(ctx, item.object.kind, item.sx, item.sy, camera.zoom, item.signature, anim, sun, this.atlas);
