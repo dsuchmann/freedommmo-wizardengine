@@ -1,0 +1,802 @@
+File: specs_combined.tmp.txt (lines 4601-5400 of 6032)
+
+4601|   "biome_a": "grassland",
+4602|   "biome_b": "forest",
+4603|   "blend_width": 4,
+4604|   
+4605|   "edge_objects": [
+4606|     { "object_id": "sparse_sapling", "density": 0.2 },
+4607|     { "object_id": "forest_edge_shrub", "density": 0.3 }
+4608|   ],
+4609|   
+4610|   "gradient": {
+4611|     "biome_a_objects": "linear_fadeout",
+4612|     "biome_b_objects": "linear_fadein"
+4613|   }
+4614| }
+4615| ```
+4616| 
+4617| ```json
+4618| {
+4619|   "biome_a": "beach",
+4620|   "biome_b": "ocean",
+4621|   "blend_width": 3,
+4622|   
+4623|   "edge_objects": [
+4624|     { "object_id": "foam_line", "density": 0.8 },
+4625|     { "object_id": "wet_sand_patch", "density": 0.5 },
+4626|     { "object_id": "tidal_pool", "density": 0.1 }
+4627|   ],
+4628|   
+4629|   "gradient": {
+4630|     "biome_a_objects": "linear_fadeout",
+4631|     "biome_b_objects": "hard_cutoff"
+4632|   }
+4633| }
+4634| ```
+4635| 
+4636| With 18 biomes, there are 153 possible pairs. Not all are geographically valid neighbors. Estimated ~40-50 transition definitions needed.
+4637| 
+4638| ### 3.4 Biome × Biome Interaction Effects
+4639| 
+4640| Beyond transitions, biome context modifies how objects behave:
+4641| 
+4642| | Object Context | Effect |
+4643| |---------------|--------|
+4644| | Grass in tundra | Frozen texture, brittle break animation, no sway |
+4645| | Grass in river zone | Aquatic variant, flows with current, algae overlay |
+4646| | Grass in volcanic area | Charred edges, smoldering, sparse |
+4647| | Rock in swamp | Moss-covered variant, slippery, algae growth |
+4648| | Tree in arctic | Snow-laden branches, ice crystal overlay, slower growth |
+4649| | Flower in mystic | Glowing petals, particle aura, otherworldly color |
+4650| 
+4651| These cross-biome modifications are expressed as variant selectors in the affinity matrix — a "grass" object in the tundra affinity file references "frozen_grass" (a separate object) rather than runtime-modifying "tall_grass."
+4652| 
+4653| ---
+4654| 
+4655| ## 4. Placement Engine
+4656| 
+4657| ### 4.1 Two-Layer State Model
+4658| 
+4659| **Layer 1: Deterministic Baseline** — Given `world_seed + chunk_position`, the placement engine always produces the exact same arrangement of objects. Same seed = same forest, same rocks, same flowers. This is pure math (Perlin noise with fixed seeds). Never stored — regenerated on load.
+4660| 
+4661| **Layer 2: Delta Log** — Every mutation (player chops tree, NPC digs hole, lightning strikes) is recorded as a sparse delta against the baseline. Deltas decay over time — the world heals itself.
+4662| 
+4663| ### 4.2 Placement Pipeline
+4664| 
+4665| ```
+4666| For each chunk (32×32 cells):
+4667| 
+4668| 1. BIOME PASS
+4669|    Read biome_id per cell from world compiler ChunkData.
+4670| 
+4671| 2. AFFINITY LOOKUP
+4672|    Load BiomeAffinity for each biome present in chunk.
+4673| 
+4674| 3. ELIGIBILITY FILTER
+4675|    For each cell × each object_pool in its biome affinity:
+4676|    - elevation in range?
+4677|    - moisture in range?
+4678|    - slope below max?
+4679|    - distance rules satisfied? (water_distance, road proximity from ChunkData)
+4680|    → produces eligible_pools[cell] = list of candidates with weights
+4681| 
+4682| 4. DENSITY SAMPLING
+4683|    For each eligible pool:
+4684|    - sample noise field (cluster_mode determines noise type)
+4685|    - noise seeded by world_seed + object_id hash (consistent per object type)
+4686|    - multiply by pool.density × cell.vegetation_density / 255
+4687|    - threshold check → place or skip
+4688| 
+4689| 5. TRANSITION BLENDING
+4690|    For cells near biome boundaries:
+4691|    - detect boundary via neighbor biome mismatch
+4692|    - compute blend_t = distance_into_transition / blend_width
+4693|    - fade biome_a pool densities by (1 - blend_t)
+4694|    - fade biome_b pool densities by blend_t
+4695|    - inject edge_objects from BiomeTransition definition
+4696| 
+4697| 6. INSTANCE GENERATION
+4698|    For each placed object:
+4699|    - select lifecycle phase from lifecycle_distribution (weighted random, seeded)
+4700|    - select visual variant (1..variant_count, seeded)
+4701|    - apply individuality variance (scale, lean, color shift from instance_seed)
+4702|    - instance_seed = hash(world_seed, chunk_x, chunk_y, cell_x, cell_y, object_id)
+4703|    → produces ObjectInstance record
+4704| 
+4705| 7. COLLISION REGISTRATION
+4706|    Blocking objects register in pathfinding grid.
+4707| ```
+4708| 
+4709| ### 4.3 ObjectInstance Record
+4710| 
+4711| ```json
+4712| {
+4713|   "object_id": "oak_tree",
+4714|   "instance_seed": 48271933,
+4715|   "position": [1423, 872],
+4716|   "variant": 2,
+4717|   "lifecycle_phase": "mature",
+4718|   "phase_progress": 0.6,
+4719|   
+4720|   "scale": 1.07,
+4721|   "lean_angle": -2.3,
+4722|   "color_shift": 4,
+4723|   
+4724|   "current_hp": 100,
+4725|   "current_state": "alive",
+4726|   "active_effects": []
+4727| }
+4728| ```
+4729| 
+4730| ### 4.4 Delta Log with Entropy Decay
+4731| 
+4732| ```json
+4733| {
+4734|   "position": [1423, 872],
+4735|   "object_id": "oak_tree",
+4736|   "mutation": "chopped",
+4737|   "new_state": "stump",
+4738|   "timestamp": 10045,
+4739|   
+4740|   "decay": {
+4741|     "type": "regrow",
+4742|     "recovery_time": 720,
+4743|     "stages": [
+4744|       { "at": 0.0,  "state": "stump" },
+4745|       { "at": 0.3,  "state": "sprouting_stump" },
+4746|       { "at": 0.6,  "state": "sapling" },
+4747|       { "at": 1.0,  "state": null }
+4748|     ]
+4749|   }
+4750| }
+4751| ```
+4752| 
+4753| **Decay types:**
+4754| - `regrow` — living things grow back (trees, grass, flowers). Full lifecycle restarts.
+4755| - `fill` — holes/pits fill in over time. Rain accelerates.
+4756| - `erode` — exposed structures weather away. Abandoned walls crumble.
+4757| - `permanent` — suppressed while a structure occupies the tile. Settlements prevent regrowth. If structure is removed, decay type reverts to `regrow`.
+4758| 
+4759| **On chunk load:**
+4760| 1. Regenerate deterministic baseline (same objects, always)
+4761| 2. Load delta log for this chunk from persistent storage
+4762| 3. For each delta: elapsed = current_game_time - timestamp
+4763| 4. If elapsed >= recovery_time → discard delta, baseline reasserts
+4764| 5. If elapsed < recovery_time → compute progress, apply appropriate stage state
+4765| 
+4766| **Storage cost:** Proportional to how much the player has changed the world. A virgin world = zero delta data. A heavily explored world accumulates deltas, but entropy continuously prunes them.
+4767| 
+4768| ### 4.5 Interaction-Specific Delta Examples
+4769| 
+4770| | Action | Delta | Decay |
+4771| |--------|-------|-------|
+4772| | Walk through grass | trample, recovery_time: 0.1 days | Springs back in game-hours |
+4773| | Chop mature oak | stump, recovery: 720 days, stages through regrowth | Full tree returns in ~2 game-years |
+4774| | Dig pit | hole, recovery: 180 days, fill type, rain accelerates | Pit slowly fills |
+4775| | Burn forest | charred_trunk + ash, recovery: 360 days | Scorched earth → pioneer species → forest |
+4776| | Build settlement | permanent delta suppresses regrowth | Lifts when structure removed |
+4777| | Lightning strike | charred tree, recovery: 120 days | Scar heals, new growth |
+4778| | Mine boulder | shattered → break_products, no recovery | Rock chunks persist as new objects |
+4779| 
+4780| ---
+4781| 
+4782| ## 5. Animation Framework
+4783| 
+4784| ### 5.1 Animation Resolution Priority
+4785| 
+4786| When the renderer displays an object, it resolves animation through a priority stack:
+4787| 
+4788| ```
+4789| 1. ACTIVE EFFECT     — object is burning/frozen/being chopped right now
+4790|                        → play one-shot or looping effect animation
+4791|                        
+4792| 2. STATE REACTIVE    — object recently changed state (cracked, wilted, bloomed)
+4793|                        → play transition animation, then fall through to ambient
+4794|                        
+4795| 3. ENVIRONMENTAL     — wind/rain/weather active
+4796|                        → blend environmental animation with ambient
+4797|                        → intensity scales with weather system values
+4798|                        
+4799| 4. AMBIENT           — default idle loop
+4800|                        → select variant based on time_of_day + season
+4801| ```
+4802| 
+4803| ### 5.2 Animation Compositing
+4804| 
+4805| Multiple animation layers can stack simultaneously:
+4806| 
+4807| - **replace** — takes over the object's visual entirely (burning, collapse)
+4808| - **overlay** — transparent layer on top of current animation (rain drip on swaying tree, moss on rock)
+4809| - **additive** — color/light effect blended additively (glow, frost shimmer, firefly)
+4810| 
+4811| Max stack: base animation + up to 2 overlays + particle effects.
+4812| 
+4813| Example composite: mature oak in wind during rain at night =
+4814| - Base: `idle` loop (trunk)
+4815| - Blend: `wind_sway` at intensity 0.6 (branches)
+4816| - Overlay: `rain_drip` (water particles on canopy)
+4817| - Ambient: `night_shift` (darker palette)
+4818| 
+4819| ### 5.3 Animation Asset Structure
+4820| 
+4821| ```
+4822| assets/catalog/terrain_objects/vegetation/tree/deciduous/oak_tree/
+4823|   manifest.json
+4824| 
+4825|   variants/
+4826|     v1/base.png
+4827|     v2/base.png
+4828|     v3/base.png
+4829| 
+4830|   lifecycle/
+4831|     seedling/base.png
+4832|     sapling/base.png
+4833|     mature/base.png
+4834|     dying/base.png
+4835|     dead/base.png
+4836|     decomposing/base.png
+4837| 
+4838|   animations/
+4839|     mature/
+4840|       idle.json + idle.png
+4841|       wind_sway.json + wind_sway.png
+4842|       chop_hit.json + chop_hit.png
+4843|       burn.json + burn.png
+4844|       rain_drip.json + rain_drip.png
+4845|       seasonal_spring.png
+4846|       seasonal_autumn.png
+4847|       seasonal_winter.png
+4848|     seedling/
+4849|       idle.json + idle.png
+4850|       trample.json + trample.png
+4851|     dead/
+4852|       idle.json + idle.png
+4853|       collapse.json + collapse.png
+4854|       fungal_growth.json + fungal_growth.png
+4855| ```
+4856| 
+4857| ### 5.4 Animation Metadata (.json sidecar)
+4858| 
+4859| ```json
+4860| {
+4861|   "id": "wind_sway",
+4862|   "interaction_id": "wind",
+4863|   "frames": 8,
+4864|   "duration_ms": 800,
+4865|   "loop": true,
+4866|   "directional": false,
+4867|   "intensity_variable": true,
+4868|   "intensity_range": [0.0, 1.0],
+4869|   "blend_mode": "replace",
+4870|   "can_composite_with": ["rain_drip", "idle"],
+4871|   "pixel_size": 32,
+4872|   "anchor": "bottom_center"
+4873| }
+4874| ```
+4875| 
+4876| ### 5.5 PixelLab vs Godot Responsibilities
+4877| 
+4878| - **PixelLab generates:** Individual sprite sheets per animation per lifecycle phase per object. Raw frame sequences as static assets.
+4879| - **Godot handles at runtime:** Compositing multiple animation layers, scaling intensity with weather, blending lifecycle transitions, applying individuality variance (color shift, scale, lean), particle effects, z-ordering.
+4880| 
+4881| ---
+4882| 
+4883| ## 6. Generation Pipeline
+4884| 
+4885| ### 6.1 Pipeline Architecture
+4886| 
+4887| The generation orchestrator systematically walks the object × interaction × lifecycle matrix and queues PixelLab jobs:
+4888| 
+4889| ```
+4890| 1. OBJECT DEFINITION PASS
+4891|    For each biome affinity file:
+4892|      For each object_pool entry:
+4893|        → Object exists in catalog? If not: queue base sprite generation.
+4894|        → For each lifecycle phase (animate) or durability stage (inanimate):
+4895|          → Phase sprite exists? If not: queue.
+4896| 
+4897| 2. VARIANT PASS
+4898|    For each object with variant_count > 1:
+4899|      → All variants exist? If not: queue (same prompt, different seed).
+4900| 
+4901| 3. ANIMATION PASS
+4902|    For each object:
+4903|      For each lifecycle phase:
+4904|        For each interaction in phase_interactions:
+4905|          → Animation spritesheet exists? If not: queue.
+4906|          → Build PixelLab prompt from object category + interaction spec + phase context.
+4907| 
+4908| 4. TRANSITION OBJECT PASS
+4909|    For each BiomeTransition:
+4910|      For each edge_object: same generation logic.
+4911| 
+4912| 5. MANIFEST UPDATE
+4913|    After each batch: update manifest.json, write .json sidecars, commit.
+4914| ```
+4915| 
+4916| ### 6.2 Generation State Tracker
+4917| 
+4918| ```json
+4919| {
+4920|   "total_queued": 0,
+4921|   "total_completed": 0,
+4922|   
+4923|   "queue": [
+4924|     {
+4925|       "object_id": "oak_tree",
+4926|       "phase": "mature",
+4927|       "asset_type": "animation",
+4928|       "interaction": "idle",
+4929|       "status": "pending",
+4930|       "pixellab_job_id": null,
+4931|       "output_path": null
+4932|     }
+4933|   ]
+4934| }
+4935| ```
+4936| 
+4937| Stored at `data/terrain_objects/generation/queue.json`. The pipeline resumes across sessions — check status of pending/generating items, pick up where it left off.
+4938| 
+4939| ### 6.3 PixelLab Prompt Templates
+4940| 
+4941| Stored at `data/terrain_objects/generation/prompts/` per category:
+4942| 
+4943| ```
+4944| vegetation_tree.txt:
+4945|   "Top-down pixel art {phase} {species} tree, {variant_desc},
+4946|    32x32px, transparent background, suitable for 2D RPG,
+4947|    consistent art style with existing tileset"
+4948| 
+4949| animation template:
+4950|   "Animate: {object_description} performing {interaction_description},
+4951|    {frame_count} frames, top-down view, transparent background,
+4952|    consistent with base sprite style"
+4953| ```
+4954| 
+4955| ### 6.4 Generation Scale
+4956| 
+4957| Generate the full matrix — no phasing. All ~200+ base objects × all lifecycle phases × all applicable interactions. Queue ordering optimizes for PixelLab batch efficiency (all variants of one object before moving to next).
+4958| 
+4959| ### 6.5 Test Character Sprite
+4960| 
+4961| Replace the current red cube player sprite with an actual character. Either wire up an existing asset from `assets/characters/` (hero_knight, villager_female) or generate a fresh layered base body via PixelLab. This enables visual testing of all terrain object interactions from a player perspective.
+4962| 
+4963| ---
+4964| 
+4965| ## 7. File Organization
+4966| 
+4967| ### 7.1 Data Directory Structure
+4968| 
+4969| ```
+4970| data/terrain_objects/
+4971|   schema/
+4972|     README.md                    # "START HERE" for future agents
+4973|     object_schema.json           # JSON schema for object definitions
+4974|     interaction_schema.json      # JSON schema for interactions
+4975|     affinity_schema.json         # JSON schema for biome affinities
+4976|     transition_schema.json       # JSON schema for biome transitions
+4977|     EXTENSION_POINTS.md          # hooks for identity, weather, seasons, buildings
+4978| 
+4979|   objects/                       # Object Catalog
+4980|     vegetation/tree/deciduous/oak_tree.json
+4981|     vegetation/tree/conifer/pine_tree.json
+4982|     vegetation/grass/tall_grass.json
+4983|     mineral/rock/boulder/granite_boulder.json
+4984|     water_feature/wave/ocean_wave.json
+4985|     ground_cover/leaf_litter/autumn_leaves.json
+4986|     structure_natural/log/fallen_log.json
+4987|     ... (~200+ files)
+4988| 
+4989|   interactions/                  # Interaction Schema
+4990|     traversal/walk_through.json
+4991|     player_action/chop.json
+4992|     environmental/wind.json
+4993|     ambient/idle.json
+4994|     state_reactive/bloom.json
+4995|     biome_blending/edge_fade.json
+4996|     ... (~30 files)
+4997| 
+4998|   affinities/                    # Biome Affinity Matrix
+4999|     ocean.json
+5000|     beach.json
+5001|     grassland.json
+5002|     forest.json
+5003|     ... (18 files)
+5004| 
+5005|   transitions/                   # Biome Transition Table
+5006|     grassland_forest.json
+5007|     beach_ocean.json
+5008|     ... (~40-50 files)
+5009| 
+5010|   generation/
+5011|     queue.json                   # generation state tracker
+5012|     log.json                     # completed generation history
+5013|     prompts/                     # PixelLab prompt templates
+5014|       vegetation_tree.txt
+5015|       vegetation_grass.txt
+5016|       mineral_rock.txt
+5017|       water_feature.txt
+5018| ```
+5019| 
+5020| ### 7.2 Asset Directory Structure
+5021| 
+5022| ```
+5023| assets/catalog/terrain_objects/
+5024|   vegetation/
+5025|     tree/deciduous/oak_tree/
+5026|       manifest.json
+5027|       variants/v1/base.png, v2/base.png, v3/base.png
+5028|       lifecycle/seedling/base.png, mature/base.png, dead/base.png
+5029|       animations/mature/idle.png+json, wind_sway.png+json, chop_hit.png+json
+5030|     tree/conifer/pine_tree/
+5031|       ...
+5032|     grass/tall_grass/
+5033|       ...
+5034|   mineral/
+5035|     rock/boulder/granite_boulder/
+5036|       ...
+5037|   water_feature/
+5038|     wave/ocean_wave/
+5039|       ...
+5040|   ground_cover/
+5041|     ...
+5042| ```
+5043| 
+5044| ### 7.3 Extension Points Documentation
+5045| 
+5046| `data/terrain_objects/schema/EXTENSION_POINTS.md` documents hooks for future systems:
+5047| 
+5048| **Identity System:** Add `identity_id` to ObjectInstance, extend variance with growth_history/damage_scars. Hook: object_schema.json → variance block.
+5049| 
+5050| **Weather Integration:** Environmental interactions read weather.wind_speed, weather.precipitation, etc. Hook: interactions/environmental/*.json → trigger.weather_field. Delta recovery_time modified by weather.
+5051| 
+5052| **Seasonal System:** Lifecycle phases can be season-locked (bloom only in spring). Hook: object lifecycle.phases can have season_locked flag. Animation sets include seasonal overlays.
+5053| 
+5054| **Building Integration:** Inanimate durability + break_products extends to walls/floors/doors. Settlement footprint = permanent delta suppressing regrowth. Hook: same object schema, category "structure/".
+5055| 
+5056| **NPC Interaction:** Same interaction triggers apply to NPC entity_actions. NPC goal graph references object_ids as targets. Hook: interactions/player_action/ applicable to all entities.
+5057| 
+5058| ### 7.4 README.md (Start Here)
+5059| 
+5060| `data/terrain_objects/schema/README.md` — single-file overview for future agents:
+5061| - What the system is (three-axis relational model)
+5062| - The three axes and where their data lives
+5063| - Key concepts (animate/inanimate, lifecycle/durability, deterministic baseline + deltas)
+5064| - File flow: schema → data → PixelLab → assets → placement engine → renderer
+5065| - Extension points reference
+5066| 
+5067| ---
+5068| 
+5069| ## 8. Integration with Existing Systems
+5070| 
+5071| ### 8.1 World Compiler
+5072| 
+5073| The existing WorldCompiler (14-layer pipeline) already produces per-cell data that the placement engine consumes:
+5074| - `biome_id`, `elevation`, `vegetation_density`, `vegetation_species`
+5075| - `slope`, `fertility`, `precipitation`
+5076| - `water_distance`, `ocean_distance` (BFS computed)
+5077| - `road_cells`, `pois`, `structures`
+5078| 
+5079| No changes needed to the world compiler. The placement engine reads its output.
+5080| 
+5081| ### 8.2 DeferredRenderer
+5082| 
+5083| Currently renders objects via hardcoded biome→sprite mapping in `_render_object_sprites()` and `_render_detail_decorations()`. This will be replaced by the affinity-driven placement engine. The z-layer structure (L6 objects, L7 details) remains.
+5084| 
+5085| ### 8.3 MapObjectRenderer
+5086| 
+5087| Currently scans `assets/catalog/objects/` directories and applies biome-tag matching via filename parsing. Will be superseded by the structured manifest system. Existing assets in `assets/catalog/objects/` can be migrated into the new `assets/catalog/terrain_objects/` structure.
+5088| 
+5089| ### 8.4 Delta Persistence
+5090| 
+5091| Chunk deltas stored as JSON files per chunk region:
+5092| ```
+5093| data/world_state/deltas/chunk_{x}_{y}.json
+5094| ```
+5095| Loaded on chunk stream-in, pruned of expired entries, saved on chunk stream-out or periodic autosave.
+5096| 
+5097| ---FILE: 2026-05-29-biome-layer-stack-design.md
+5098| # Biome Layer Stack Design
+5099| 
+5100| **Date:** 2026-05-29
+5101| **Status:** Draft
+5102| **Scope:** Extends terrain-object-system-design (2026-05-28) with ordered layer placement, 100% tile coverage, and massive variant generation
+5103| **Prerequisite:** 2026-05-28-terrain-object-system-design.md (approved)
+5104| 
+5105| ## Problem Statement
+5106| 
+5107| The current placement engine treats all objects as a flat probability pool. Each tile has a random chance of getting any object from the biome's affinity list. This produces sporadic, incoherent placement — scattered sprites on a visible green grid. The base terrain tile (layer 0) is the dominant visual on most tiles.
+5108| 
+5109| The target is CrossCode-quality environments where every tile is densely layered with multiple overlapping objects that compose into a believable landscape.
+5110| 
+5111| ## Core Concept: Ordered Layer Stacks
+5112| 
+5113| Each biome defines an **ordered stack of layers**. The placement engine iterates layers bottom-to-top. Lower layers guarantee 100% tile coverage. Upper layers are progressively sparser.
+5114| 
+5115| Every layer except layer 0 is composed of **objects with alpha channels** (not tiles). They stack visually — you see through each layer to the layers beneath. This creates depth that flat tiles cannot achieve.
+5116| 
+5117| ### Universal Rule
+5118| 
+5119| **Layer 0 must NEVER be the only visible thing on any tile.** If a player can see the raw base terrain tile without at least one object layer on top, the placement has failed.
+5120| 
+5121| ## Layer Stack Schema
+5122| 
+5123| Each biome gets a layer definition file at `data/terrain_objects/biome_layers/{biome_id}.json`:
+5124| 
+5125| ```json
+5126| {
+5127|   "biome_id": "grassland",
+5128|   "layers": [
+5129|     {
+5130|       "layer": 1,
+5131|       "name": "ground_texture",
+5132|       "coverage": 1.0,
+5133|       "description": "Dirt and soil showing through grass",
+5134|       "objects": [
+5135|         { "object_id": "dirt_patch", "weight": 0.6, "variant_count": 64 },
+5136|         { "object_id": "dry_soil", "weight": 0.3, "variant_count": 32 },
+5137|         { "object_id": "dark_earth", "weight": 0.1, "variant_count": 16 }
+5138|       ],
+5139|       "z_offset": 0,
+5140|       "scale_range": [0.8, 1.0]
+5141|     },
+5142|     {
+5143|       "layer": 2,
+5144|       "name": "small_debris",
+5145|       "coverage": 1.0,
+5146|       "description": "Pebbles, stones, dry leaves, twigs on the dirt",
+5147|       "objects": [
+5148|         { "object_id": "pebble", "weight": 0.3, "variant_count": 64 },
+5149|         { "object_id": "dry_leaf", "weight": 0.25, "variant_count": 32 },
+5150|         { "object_id": "twig", "weight": 0.2, "variant_count": 16 },
+5151|         { "object_id": "small_stone", "weight": 0.15, "variant_count": 32 },
+5152|         { "object_id": "seed_pod", "weight": 0.1, "variant_count": 16 }
+5153|       ],
+5154|       "z_offset": 1,
+5155|       "scale_range": [0.1, 0.25]
+5156|     },
+5157|     {
+5158|       "layer": 3,
+5159|       "name": "ground_flora",
+5160|       "coverage": 1.0,
+5161|       "description": "Grass covering the ground — many variants intermixed",
+5162|       "objects": [
+5163|         { "object_id": "short_grass", "weight": 0.35, "variant_count": 64 },
+5164|         { "object_id": "tall_grass", "weight": 0.25, "variant_count": 64 },
+5165|         { "object_id": "meadow_grass", "weight": 0.2, "variant_count": 32 },
+5166|         { "object_id": "clover_patch", "weight": 0.1, "variant_count": 16 },
+5167|         { "object_id": "grass_tuft", "weight": 0.1, "variant_count": 32 }
+5168|       ],
+5169|       "z_offset": 2,
+5170|       "scale_range": [0.4, 0.9]
+5171|     },
+5172|     {
+5173|       "layer": 4,
+5174|       "name": "accent_flora",
+5175|       "coverage": 0.15,
+5176|       "description": "Sporadic flowers and small plants",
+5177|       "objects": [
+5178|         { "object_id": "wildflower", "weight": 0.3, "variant_count": 32 },
+5179|         { "object_id": "daisy", "weight": 0.2, "variant_count": 16 },
+5180|         { "object_id": "dandelion", "weight": 0.2, "variant_count": 16 },
+5181|         { "object_id": "poppy", "weight": 0.15, "variant_count": 16 },
+5182|         { "object_id": "butterfly_bush", "weight": 0.15, "variant_count": 8 }
+5183|       ],
+5184|       "z_offset": 3,
+5185|       "scale_range": [0.25, 0.45]
+5186|     },
+5187|     {
+5188|       "layer": 5,
+5189|       "name": "large_objects",
+5190|       "coverage": 0.02,
+5191|       "cluster_mode": "grouped",
+5192|       "cluster_size": [3, 8],
+5193|       "cluster_spacing": [15, 40],
+5194|       "description": "Trees and boulders — standalone and clustered",
+5195|       "objects": [
+5196|         { "object_id": "oak_tree", "weight": 0.35, "variant_count": 16 },
+5197|         { "object_id": "birch_tree", "weight": 0.25, "variant_count": 16 },
+5198|         { "object_id": "flowering_bush", "weight": 0.2, "variant_count": 8 },
+5199|         { "object_id": "mossy_boulder", "weight": 0.1, "variant_count": 8 },
+5200|         { "object_id": "fallen_log", "weight": 0.1, "variant_count": 8 }
+5201|       ],
+5202|       "z_offset": 4,
+5203|       "scale_range": [0.9, 1.1]
+5204|     }
+5205|   ]
+5206| }
+5207| ```
+5208| 
+5209| ### Schema Fields
+5210| 
+5211| - **coverage**: 0.0-1.0. Fraction of tiles that get an object from this layer. 1.0 = every tile.
+5212| - **objects**: Weighted list of object types. Weight determines selection probability within the layer.
+5213| - **variant_count**: Target number of visual variants for this object. Drives PixelLab generation.
+5214| - **z_offset**: Relative z-ordering between layers. Higher = renders on top.
+5215| - **scale_range**: Display scale range for objects in this layer.
+5216| - **cluster_mode**: For sparse layers. "scattered" = random, "grouped" = natural clusters.
+5217| - **cluster_size**: Number of objects per cluster [min, max].
+5218| - **cluster_spacing**: Tiles between cluster centers [min, max].
+5219| 
+5220| ## Biome Layer Definitions
+5221| 
+5222| ### Grassland (5 layers)
+5223| | Layer | Coverage | Content |
+5224| |-------|----------|---------|
+5225| | 1 | 100% | Dirt patches, dry soil, dark earth |
+5226| | 2 | 100% | Pebbles, dry leaves, twigs, stones, seed pods |
+5227| | 3 | 100% | Short grass, tall grass, meadow grass, clover, grass tufts (64 variants each) |
+5228| | 4 | 15% | Wildflowers, daisies, dandelions, poppies |
+5229| | 5 | 2% | Oak trees, birch trees, bushes, boulders (clustered) |
+5230| 
+5231| ### Forest (5 layers)
+5232| | Layer | Coverage | Content |
+5233| |-------|----------|---------|
+5234| | 1 | 100% | Forest floor dirt, leaf litter, root-covered soil |
+5235| | 2 | 100% | Fallen leaves, bark chips, acorns, twigs, pine cones |
+5236| | 3 | 100% | Ferns, ground moss, forest grass, ivy ground cover |
+5237| | 4 | 20% | Mushrooms, toadstools, wildflowers, spider webs |
+5238| | 5 | 4% | Deciduous trees (clustered dense), fallen logs, mossy boulders |
+5239| 
+5240| ### Taiga (5 layers)
+5241| | Layer | Coverage | Content |
+5242| |-------|----------|---------|
+5243| | 1 | 100% | Pine needle bed, frozen soil, bark debris |
+5244| | 2 | 100% | Pine cones, small twigs, frozen leaves, ice crystals |
+5245| | 3 | 100% | Hardy moss, lichen, frozen grass |
+5246| | 4 | 10% | Snow patches (at elevation), mushrooms, bear scat |
+5247| | 5 | 3% | Conifer trees (dense clustered), mossy boulders, fallen logs |
+5248| 
+5249| ### Desert (4 layers)
+5250| | Layer | Coverage | Content |
+5251| |-------|----------|---------|
+5252| | 1 | 100% | Cracked earth, sand ripples, sun-bleached soil |
+5253| | 2 | 100% | Small rocks, bone fragments, dried seed husks |
+5254| | 3 | 30% | Dry grass tufts, desert scrub, dead twigs |
+5255| | 4 | 1% | Cacti, desert shrubs, bleached logs (very sparse) |
+5256| 
+5257| ### Tundra (4 layers)
+5258| | Layer | Coverage | Content |
+5259| |-------|----------|---------|
+5260| | 1 | 100% | Permafrost, frozen gravel, packed earth |
+5261| | 2 | 100% | Ice shards, frozen pebbles, frost crystals |
+5262| | 3 | 40% | Frozen grass, hardy moss, lichen |
+5263| | 4 | 1% | Dead shrubs, ice formations (very sparse) |
+5264| 
+5265| ### Volcanic (4 layers)
+5266| | Layer | Coverage | Content |
+5267| |-------|----------|---------|
+5268| | 1 | 100% | Ash layer, charred earth, cooled lava |
+5269| | 2 | 100% | Obsidian shards, pumice stones, sulfur crystals |
+5270| | 3 | 15% | Charred grass, sulfur vents, ember patches |
+5271| | 4 | 1% | Charred trees, lava rock formations (sparse) |
+5272| 
+5273| ### Swamp (5 layers)
+5274| | Layer | Coverage | Content |
+5275| |-------|----------|---------|
+5276| | 1 | 100% | Wet mud, peat, saturated soil |
+5277| | 2 | 100% | Wet leaves, algae patches, debris |
+5278| | 3 | 100% | Reeds, cattails, moss, water grass |
+5279| | 4 | 20% | Mushrooms, lily pads, frog perches |
+5280| | 5 | 3% | Mangrove trees, cypress, dead trees (clustered) |
+5281| 
+5282| ### Tropical Forest (5 layers)
+5283| | Layer | Coverage | Content |
+5284| |-------|----------|---------|
+5285| | 1 | 100% | Jungle floor, rich dark soil, decomposing leaves |
+5286| | 2 | 100% | Fallen fruit, large leaves, vine debris |
+5287| | 3 | 100% | Giant ferns, tropical grass, ground orchids |
+5288| | 4 | 25% | Tropical flowers, mushrooms, hanging vines |
+5289| | 5 | 5% | Palm trees, kapok trees, jungle trees (very dense clustered) |
+5290| 
+5291| ### Mountains (4 layers)
+5292| | Layer | Coverage | Content |
+5293| |-------|----------|---------|
+5294| | 1 | 100% | Rocky gravel, mountain soil, scree |
+5295| | 2 | 100% | Loose stones, slate chips, gravel patches |
+5296| | 3 | 25% | Mountain flowers, hardy moss, lichen |
+5297| | 4 | 2% | Boulders, cliff faces, cave entrances (sparse) |
+5298| 
+5299| ### Arctic (4 layers)
+5300| | Layer | Coverage | Content |
+5301| |-------|----------|---------|
+5302| | 1 | 100% | Packed snow, ice sheet, frozen ground |
+5303| | 2 | 100% | Ice crystals, frost patterns, frozen pebbles |
+5304| | 3 | 15% | Frozen grass, lichen, snow drifts |
+5305| | 4 | 0.5% | Ice formations, frozen boulders (very sparse) |
+5306| 
+5307| ### Beach (4 layers)
+5308| | Layer | Coverage | Content |
+5309| |-------|----------|---------|
+5310| | 1 | 100% | Beach sand, wet sand, shell fragments |
+5311| | 2 | 100% | Scattered shells, seaweed bits, tiny stones |
+5312| | 3 | 20% | Sea grass, dune grass, driftwood bits |
+5313| | 4 | 1% | Large driftwood, rock formations (sparse) |
+5314| 
+5315| ### Savanna (4 layers)
+5316| | Layer | Coverage | Content |
+5317| |-------|----------|---------|
+5318| | 1 | 100% | Dry earth, sun-cracked soil |
+5319| | 2 | 100% | Dry leaves, small stones, seed pods |
+5320| | 3 | 60% | Dry grass, savanna grass (golden/brown) |
+5321| | 4 | 1% | Acacia-style trees (standalone, widely spaced) |
+5322| 
+5323| ### Steppe (4 layers)
+5324| | Layer | Coverage | Content |
+5325| |-------|----------|---------|
+5326| | 1 | 100% | Cracked earth, dry gravel |
+5327| | 2 | 100% | Flat stones, dried plant matter |
+5328| | 3 | 50% | Short dry grass, hardy shrubs |
+5329| | 4 | 1% | Wind-sculpted rocks, tumbleweeds (sparse) |
+5330| 
+5331| ### Mystic (5 layers)
+5332| | Layer | Coverage | Content |
+5333| |-------|----------|---------|
+5334| | 1 | 100% | Glowing soil, ethereal ground texture |
+5335| | 2 | 100% | Crystal fragments, glowing particles, magical debris |
+5336| | 3 | 100% | Ethereal moss, glowing grass, arcane ground cover |
+5337| | 4 | 20% | Arcane flowers, spirit wisps, runic stones |
+5338| | 5 | 2% | Crystal formations, enchanted trees (sparse) |
+5339| 
+5340| ### Dense Forest (5 layers)
+5341| | Layer | Coverage | Content |
+5342| |-------|----------|---------|
+5343| | 1 | 100% | Thick leaf litter, root-covered ground, dark soil |
+5344| | 2 | 100% | Decomposing leaves, bark, fungi |
+5345| | 3 | 100% | Giant ferns, thick moss, ground ivy |
+5346| | 4 | 30% | Mushroom clusters, spider webs, bracket fungi |
+5347| | 5 | 6% | Old-growth trees (very dense clustered), hollow logs |
+5348| 
+5349| ### Lake (3 layers — water biome)
+5350| | Layer | Coverage | Content |
+5351| |-------|----------|---------|
+5352| | 1 | 100% | Underwater texture (algae, sediment) |
+5353| | 2 | 40% | Lily pads, floating debris, reeds |
+5354| | 3 | 5% | Submerged logs, fishing spots |
+5355| 
+5356| ### River (3 layers — water biome)
+5357| | Layer | Coverage | Content |
+5358| |-------|----------|---------|
+5359| | 1 | 100% | Riverbed stones, underwater sand |
+5360| | 2 | 30% | Reeds, river weed, bank debris |
+5361| | 3 | 3% | Driftwood, boulders in current |
+5362| 
+5363| ### Ocean (2 layers — water biome)
+5364| | Layer | Coverage | Content |
+5365| |-------|----------|---------|
+5366| | 1 | 100% | Underwater texture (deep blue, coral hints) |
+5367| | 2 | 10% | Coral, kelp, sea objects |
+5368| 
+5369| ## Placement Engine Changes
+5370| 
+5371| ### Current Architecture (replace)
+5372| 
+5373| The current placement engine (`scripts/core/terrain_objects/placement_engine.gd`) iterates all object pools for the biome and probabilistically places each one. This produces flat, sporadic placement.
+5374| 
+5375| ### New Architecture
+5376| 
+5377| ```
+5378| For each chunk (64×64 tiles):
+5379|   1. Determine biome_id for each tile
+5380|   2. Load biome_layers/{biome_id}.json
+5381|   3. For each layer (bottom to top):
+5382|      a. For each tile in the chunk:
+5383|         - Roll against layer.coverage
+5384|         - If coverage hit (or coverage == 1.0):
+5385|           - Select object from layer.objects using weighted random
+5386|           - Select variant (1..variant_count, seeded deterministically)
+5387|           - Apply sub-tile jitter for natural placement
+5388|           - Create ObjectInstance at this layer's z_offset
+5389|         - For cluster_mode layers:
+5390|           - First pass: place cluster centers using Poisson disk
+5391|           - Second pass: fill each cluster with objects
+5392|   4. Return all instances across all layers
+5393| ```
+5394| 
+5395| ### Performance Considerations
+5396| 
+5397| With 100% coverage on 3+ layers across 64×64 = 4096 tiles:
+5398| - Layer 1: 4,096 objects
+5399| - Layer 2: 4,096 objects
+5400| - Layer 3: 4,096 objects

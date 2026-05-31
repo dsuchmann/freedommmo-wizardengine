@@ -1,0 +1,802 @@
+File: specs_combined.tmp.txt (lines 3001-3800 of 6032)
+
+3001| 
+3002| **Scope:**
+3003| - Set up GDExtension project structure (SCons/CMake, godot-cpp bindings)
+3004| - Port `ElevationLayer.compile()` to C++ (noise evaluation loop — biggest bottleneck)
+3005| - Port `build_chunk_image()` to C++ (4096 tile blits)
+3006| - Port `BiomeLayer.compile()` and `ClimateLayer.compile()` to C++
+3007| - GDScript calls the C++ class the same way it calls the GDScript class (drop-in replacement)
+3008| - Verify: chunk compilation < 1ms, image building < 1ms
+3009| 
+3010| **Deliverable:** Chunks compile and render with zero perceptible cost. Walking and teleporting are butter smooth.
+3011| 
+3012| **Validation:** Walk across 20+ chunk boundaries with FPS counter visible. No drops below 55fps.
+3013| 
+3014| ---
+3015| 
+3016| ### Stage 2: Python GPU Batch Pipeline
+3017| 
+3018| **Goal:** Adapt the existing `python_generator_gpu.py` (CuPy/CUDA on RTX 3090) for batch terrain pre-generation.
+3019| 
+3020| **Scope:**
+3021| - Adapt the Python GPU generator to output our ChunkCache binary format (not the old 512x512 region format)
+3022| - Accept overmap noise parameters so generated chunks match the overmap
+3023| - Generate overmap itself on GPU (41M pixels in seconds, not 30 seconds)
+3024| - Batch mode: pre-generate a spiral of chunks around a position (e.g., 100x100 = 10K chunks)
+3025| - Godot calls Python as a background process, polls for completion, loads results from ChunkCache
+3026| 
+3027| **Deliverable:** `python tools/generate_world.py --seed 42 --center 0,0 --radius 50` pre-generates 10K chunks in under 60 seconds. Godot loads them instantly from cache.
+3028| 
+3029| **Validation:** Teleport anywhere in pre-generated area. Instant terrain, no compilation needed.
+3030| 
+3031| ---
+3032| 
+3033| ### Stage 3: Compute Shader Framework
+3034| 
+3035| **Goal:** Set up Godot RenderingDevice compute shaders for real-time GPU work. Start with terrain, extend to lighting/particles later.
+3036| 
+3037| **Scope:**
+3038| - Create compute shader framework (load GLSL, create pipeline, dispatch, read results)
+3039| - Port terrain noise evaluation to GLSL compute shader (64x64 tiles = 4096 GPU threads)
+3040| - Port chunk image building to compute shader (read tile atlas, write chunk image)
+3041| - Framework for future shaders: lighting accumulation, water simulation, particle fields, fog density
+3042| 
+3043| **Deliverable:** Real-time chunk generation on GPU. Compile + render a chunk in < 0.5ms.
+3044| 
+3045| **Validation:** Disable ChunkCache, walk continuously. Chunks generate and render in real-time with no frame drops.
+3046| 
+3047| ---
+3048| 
+3049| ## Execution Order
+3050| 
+3051| ```
+3052| Stage 1 (GDExtension C++)
+3053|   ↓ validates: smooth streaming, build pipeline works
+3054| Stage 2 (Python GPU batch)
+3055|   ↓ validates: pre-generation, overmap consistency
+3056| Stage 3 (Compute shaders)
+3057|   ↓ validates: real-time GPU generation, framework for lighting/particles
+3058| ```
+3059| 
+3060| Each stage is a separate session. Each produces a working, testable improvement. No stage depends on the others being complete — they're complementary, not sequential.
+3061| 
+3062| ## What NOT to Build
+3063| 
+3064| - Don't port game logic (NPC AI, dialogue, quests) to C++ yet — GDScript is fine for logic that runs once per frame
+3065| - Don't build the lighting/particle shaders yet — just the framework
+3066| - Don't optimize the overmap generator yet — it runs once and caches
+3067| - Don't pre-generate the entire 41M chunk world — just the tools to do it incrementally
+3068| 
+3069| ---FILE: 2026-05-26-runtime-compositor-spec.md
+3070| # Runtime Compositor Spec — Cel-Animation Tile Rendering
+3071| 
+3072| **Date:** 2026-05-26
+3073| **Status:** Draft
+3074| **Scope:** How Godot stacks, animates, and state-transitions the layered tile system at runtime.
+3075| 
+3076| ## Architecture Overview
+3077| 
+3078| Each visible tile on screen is a stack of up to 5 transparent layers composited via z-ordered rendering. A TileStateManager tracks the current state of every tile and tells the compositor which frame set to use.
+3079| 
+3080| ```
+3081| Player walks through grass:
+3082|   L5: [atmospheric - pollen drifting]        z=4
+3083|   L4: [scatter - pebbles]                    z=3
+3084|   L3: [vegetation - grass DISTURBED frame]   z=2  ← state-driven swap
+3085|   L2: [detail - root pattern]                z=1
+3086|   L1: [base - dirt ground]                   z=0
+3087| ```
+3088| 
+3089| ## Tile State Machine
+3090| 
+3091| Each tile position (world x, y) has a state. States are driven by game events.
+3092| 
+3093| ### State Categories
+3094| 
+3095| States map to biome visual languages — the biomes themselves are the vocabulary for states:
+3096| 
+3097| | State | Visual Source | Trigger Examples |
+3098| |-------|-------------|-----------------|
+3099| | **pristine** | Native biome | Default |
+3100| | **disturbed** | Native biome (variant frames) | Player/NPC walks through |
+3101| | **trampled** | Native biome (worn variant) | Heavy foot traffic, paths form |
+3102| | **dug** | Exposed earth/subterrain | Dig action, mining |
+3103| | **burning** | Volcanic visual language | Fire spell, torch, wildfire spread |
+3104| | **burned/scorched** | Volcanic + desert (ash, char) | After fire extinguishes |
+3105| | **frozen** | Tundra/arctic visual language | Ice spell, winter event, altitude |
+3106| | **wet** | Ocean/swamp visual language | Rain, flooding, water spell |
+3107| | **cursed/corrupted** | Mystic visual language (dark variant) | Dark magic, undead presence |
+3108| | **enchanted** | Mystic visual language (light variant) | Blessing, magical ward |
+3109| | **decaying/undead** | Swamp visual language (rot, ooze) | Necromancy, blight |
+3110| | **growing/fertile** | Forest/grassland lush variant | Growth spell, spring, fertilize |
+3111| | **dry/drought** | Desert visual language | Heat, no rain, curse |
+3112| 
+3113| **Key insight:** Biome L2-L5 assets double as state overlays for other biomes. A "frozen" grassland tile uses tundra's L2 (frost patterns) overlaid on grassland's L1 (base ground). A "burning" forest tile uses volcanic's L3 (embers/cracks) overlaid on forest's L1.
+3114| 
+3115| This means generating biome assets also generates state assets. Efficiency multiplier.
+3116| 
+3117| ### State Transitions
+3118| 
+3119| ```gdscript
+3120| # State machine per tile
+3121| enum TileState {
+3122|     PRISTINE, DISTURBED, TRAMPLED, DUG,
+3123|     BURNING, BURNED, FROZEN, WET,
+3124|     CURSED, ENCHANTED, DECAYING, GROWING, DRY
+3125| }
+3126| 
+3127| # Each state has: entry_frames, loop_frames, exit_frames, duration (-1 = persistent)
+3128| # Transitions: PRISTINE → DISTURBED (3s) → RECOVERING → PRISTINE
+3129| #              PRISTINE → BURNING (5s) → BURNED (persistent)
+3130| #              PRISTINE → FROZEN (persistent until thaw event)
+3131| ```
+3132| 
+3133| ### State Layer Mapping
+3134| 
+3135| When a tile enters a non-pristine state, the compositor replaces specific sub-layers:
+3136| 
+3137| | State | L1 (Base) | L2 (Detail) | L3 (Vegetation) | L4 (Scatter) | L5 (Atmospheric) |
+3138| |-------|-----------|-------------|-----------------|--------------|-------------------|
+3139| | pristine | Native | Native | Native | Native | Native |
+3140| | disturbed | Native | Native | Native (sway frame) | Native (shifted) | Native |
+3141| | burning | Native (darken) | Volcanic L2 | Volcanic L3 (flames) | Remove | Volcanic L5 (smoke) |
+3142| | frozen | Native | Tundra L2 (frost) | Tundra L3 (ice coat) | Arctic L4 (ice shards) | Arctic L5 (snow) |
+3143| | cursed | Native (desaturate) | Mystic L2 (dark) | Mystic L3 (dark crystal) | Mystic L4 | Mystic L5 (dark particles) |
+3144| | wet | Native | Ocean L2 (puddles) | Native (droop frame) | Native | Swamp L5 (mist) |
+3145| | decaying | Native (darken+green) | Swamp L2 (rot) | Swamp L3 (dead vines) | Swamp L4 (bones) | Swamp L5 (miasma) |
+3146| | growing | Native | Forest L2 (moss) | Forest L3 (sprouts) | Native | Grassland L5 (pollen) |
+3147| | dry | Desert L1 (cracked) | Desert L2 (cracks) | Remove | Desert L4 (dust) | Desert L5 (heat haze) |
+3148| 
+3149| ## Compositor Node Architecture
+3150| 
+3151| ```
+3152| ChunkRenderer (Node2D, per chunk)
+3153|   ├─ L1_Base (Sprite2D, z=0)
+3154|   ├─ L2_Detail (Sprite2D, z=1)
+3155|   ├─ L3_Vegetation (Sprite2D, z=2)
+3156|   ├─ L4_Scatter (Sprite2D, z=3)
+3157|   └─ L5_Atmospheric (Sprite2D, z=4)
+3158| ```
+3159| 
+3160| For Phase 1, each layer is a single Image composited from 64x64 Wang tiles (same as current chunk image approach). The chunk streamer builds 5 images per chunk instead of 1.
+3161| 
+3162| For state changes, only the affected layer images need to be rebuilt for the affected tiles — not the entire chunk.
+3163| 
+3164| ## Animation System
+3165| 
+3166| ### Frame-Swap Animation (Event-Driven)
+3167| 
+3168| Each layer can have multiple frames. Frames are swapped based on events, not timers:
+3169| 
+3170| ```gdscript
+3171| # Player proximity triggers vegetation sway
+3172| func _on_player_moved(player_pos: Vector2):
+3173|     var tile_pos = world_to_tile(player_pos)
+3174|     for nearby_tile in get_tiles_in_radius(tile_pos, 2):
+3175|         var dist = tile_pos.distance_to(nearby_tile)
+3176|         var sway_frame = compute_sway_frame(dist, player_velocity)
+3177|         set_tile_state(nearby_tile, TileState.DISTURBED, {"frame": sway_frame})
+3178| ```
+3179| 
+3180| ### Ambient Animation (Timer-Based, Low Priority)
+3181| 
+3182| Some layers have slow ambient cycles — water ripples, lava glow pulse, mystic shimmer. These use timers but at low frequency (2-4 FPS) to keep the pixel art feel:
+3183| 
+3184| ```gdscript
+3185| # Ambient water ripple — cycles through 4 frames every 2 seconds
+3186| func _tick_ambient():
+3187|     if biome in [OCEAN, LAKE, RIVER, SWAMP]:
+3188|         L1_frame = (L1_frame + 1) % 4  # Slow cycle
+3189| ```
+3190| 
+3191| ## Performance Budget
+3192| 
+3193| - **Max 5 Sprite2D per chunk** (one per layer)
+3194| - **Image rebuilds**: Only when tile states change, not every frame
+3195| - **Ambient animation**: Batched — all water tiles in a chunk swap frame simultaneously
+3196| - **State tracking**: PackedByteArray per chunk (64x64 = 4096 bytes, one byte per tile)
+3197| - **Memory**: 5 Images per chunk × 49 loaded chunks = 245 Images. At 2048x2048 RGBA8 = ~4MB each = ~1GB. May need to skip L5 atmospheric for distant chunks.
+3198| 
+3199| ## Integration with Existing Systems
+3200| 
+3201| ### ChunkStreamer Changes
+3202| - After compile_chunk + modifier override, build 5 layer images instead of 1
+3203| - L1 uses the existing Wang tile rendering logic (same code, same tilesets)
+3204| - L2-L5 are new overlays composited on top
+3205| - Pass all 5 images to a new `display_chunk_layers()` method
+3206| 
+3207| ### TileStateManager (New System)
+3208| - Registered in WorldManager as a system
+3209| - Tracks state per tile via Dictionary[Vector2i, TileState]
+3210| - Receives events: player_moved, dig_action, fire_event, weather_change
+3211| - Emits tile_state_changed(tile_pos, old_state, new_state)
+3212| - Compositor listens and rebuilds affected layer images
+3213| 
+3214| ### Day/Night Integration
+3215| - L5 atmospheric layer tint responds to day/night cycle
+3216| - Existing shader handles L1 normal map + directional shading
+3217| - L2-L5 get simpler tinting via CanvasModulate (same as current non-terrain elements)
+3218| 
+3219| ---FILE: 2026-05-26-subterranean-design.md
+3220| # Subterranean Systems — Design Overview
+3221| 
+3222| > Established 2026-05-26. Living document — will be expanded as each phase is implemented.
+3223| 
+3224| ## Core Concept
+3225| 
+3226| The world has multiple Z-levels sharing the same XY coordinate space. The surface is Z=0. Below it are cave networks, basements, dungeons, and underground settlements at Z=-1 and deeper. Movement between levels is seamless — walk into a cave entrance, descend stairs, fall into a pit. No loading screens.
+3227| 
+3228| ## Z-Level Architecture
+3229| 
+3230| ```
+3231| Z-Level  0: Surface (current — terrain, buildings, objects, NPCs)
+3232| Z-Level -1: Shallow underground (caves, basements, shallow dungeons)
+3233| Z-Level -2: Deep underground (deep caves, large dungeons)
+3234| Z-Level -3: Abyssal (deep networks, rare, dangerous)
+3235| ```
+3236| 
+3237| Each Z-level uses the same ChunkData structure, same chunk streaming, same coordinate system. The player has a `current_z_level` property. The renderer displays whichever level the player is on.
+3238| 
+3239| ## Implementation Phases
+3240| 
+3241| ### Phase 1: Z-Level Infrastructure (DO FIRST — even before cave generation)
+3242| - Add `z_level: int = 0` field to ChunkData
+3243| - Add `current_z_level: int = 0` to player state
+3244| - ChunkStreamer keys chunks by `(chunk_x, chunk_y, z_level)` instead of `(chunk_x, chunk_y)`
+3245| - Renderer swaps displayed chunks when z_level changes
+3246| - Transition tiles: entrance/exit markers that trigger z_level change on player contact
+3247| - **This is a small architectural change that future-proofs everything**
+3248| 
+3249| ### Phase 2: Cave Network Generation (Z=-1)
+3250| - New `CaveLayer` in the world compiler
+3251| - Uses inverted noise to carve tunnels and chambers from solid rock
+3252| - Terrain rules determine WHERE caves exist on the surface:
+3253|   - Steep cliff faces and mountain bases
+3254|   - Karst-like terrain (high moisture + certain elevation bands)
+3255|   - Volcanic regions (lava tubes)
+3256| - Cave properties: width (narrow tunnels to wide chambers), branching factor, depth
+3257| - Surface tiles at entrance locations get cave opening sprites
+3258| - Cave interior rendered with rock wall tiles, stalactites, floor variations
+3259| - Lighting: caves are dark by default, lit only by:
+3260|   - Ambient bioluminescence (faint, blue-green)
+3261|   - Player-carried light source
+3262|   - Natural light near entrances (fades with distance)
+3263|   - Artificial lights placed by underground settlements
+3264| 
+3265| ### Phase 3: Underground Caverns and Settlements
+3266| - A meaningful number (~6-12) of very large open cavern spaces
+3267| - These serve as underground cities/settlements with their own culture
+3268| - Generated at locations where cave networks converge
+3269| - Features unique to underground:
+3270|   - Underground rivers and lakes (water flows down from surface)
+3271|   - Crystal formations, mineral veins, unique stone types
+3272|   - Bioluminescent flora (mushrooms, moss, cave flowers)
+3273|   - Geothermal vents (warmth, steam, hot springs)
+3274| - Settlements built within these caverns — same building system as surface but with cave aesthetics
+3275| - NPCs with underground-adapted schedules (no day/night, use artificial cycles)
+3276| 
+3277| ### Phase 4: Multi-Level Cave Networks
+3278| - Extend caves to Z=-2 and Z=-3
+3279| - Vertical shafts connecting levels
+3280| - Cave systems that branch and reconnect across levels
+3281| - Deeper = more dangerous, rarer minerals, unique biomes
+3282| - Underground rivers that flow between levels (waterfalls into lower caves)
+3283| 
+3284| ### Phase 5: Integrated Subterranean Features (LATER — needs other systems first)
+3285| - **Basements**: Requires building system (Layer 3). Houses/structures generate basement at Z=-1 beneath their footprint. Stairs tile transitions player down.
+3286| - **Dungeons**: Requires structure layout system. Larger than basements, specific layouts (prison, catacombs, treasure vault). Can connect to natural cave networks.
+3287| - **Pits**: Surface tile marked as fall-through. Player drops to Z=-1. Some pits are just holes (short fall), others are cave roof openings.
+3288| - **Mine shafts**: Player-created or NPC-created tunnels extending from surface into underground. Economic system integration (mining resources).
+3289| - **Underground highways**: Major tunnels connecting distant underground cities. Trade routes.
+3290| 
+3291| ## Geology System (needed for Phase 2+)
+3292| 
+3293| Caves don't form randomly — they form in specific geological conditions. We need:
+3294| 
+3295| ### Rock Types
+3296| | Type | Where | Cave Formation | Properties |
+3297| |------|-------|---------------|------------|
+3298| | Limestone | Mid-elevation, wet | Karst caves (many, branching) | Stalactites, flowstone |
+3299| | Granite | Mountains, highlands | Few caves, hard rock | Crystal veins, stable |
+3300| | Sandstone | Desert, dry lowlands | Wind-carved caves, arches | Fragile, collapse risk |
+3301| | Basalt | Volcanic regions | Lava tubes (long, straight) | Obsidian, geothermal |
+3302| | Marble | Deep underground | Large chambers | Smooth walls, echoing |
+3303| | Slate | Hillsides | Layered caves, flat ceilings | Thin passages |
+3304| 
+3305| Rock type is derived from biome + elevation + moisture — same pattern as surface terrain classification.
+3306| 
+3307| ### Minerals and Formations
+3308| - Crystals (quartz, amethyst, emerald) — decoration + resources
+3309| - Metal veins (iron, copper, gold, mithril) — economy/crafting
+3310| - Fossils — lore/discovery system
+3311| - Underground water features — pools, streams, waterfalls
+3312| - Geothermal features — hot springs, steam vents, lava pools
+3313| 
+3314| ## Visual Design
+3315| 
+3316| ### Cave Rendering
+3317| - **Walls**: Rock tile variants per geology type (same Wang tileset system as surface terrain)
+3318| - **Floor**: Rough stone, gravel, sand, water puddles
+3319| - **Ceiling**: Implied by darkness — player sees walls and floor, darkness above
+3320| - **Lighting**: Critical — caves should feel DARK. Only light sources illuminate:
+3321|   - Player torch/lantern (PointLight2D, warm, flickering)
+3322|   - Bioluminescence (PointLight2D, blue-green, steady)
+3323|   - Entrance light (fades with distance from opening)
+3324|   - Settlement lights (torches, hearths, crystal lamps)
+3325| - **Fog of war**: Areas beyond light radius are black. Explored areas stay visible but dimmed.
+3326| 
+3327| ### Transition Visuals
+3328| - Cave entrance on surface: dark opening in cliff face, framed by rock
+3329| - Walking in: screen gradually darkens, surface terrain fades, cave interior appears
+3330| - Walking out: reverse — cave fades, surface brightens
+3331| - No hard cut, no loading screen — smooth alpha crossfade over ~1 second
+3332| 
+3333| ## What This Spec Does NOT Cover (Yet)
+3334| - Specific cave generation algorithms (Phase 2 spec will detail this)
+3335| - Underground NPC behavior and schedules
+3336| - Mining/resource extraction gameplay
+3337| - Underground-specific combat mechanics
+3338| - Cave-specific weather (flooding, gas pockets, cave-ins)
+3339| - Mapping/cartography system for explored caves
+3340| 
+3341| ---FILE: 2026-05-26-world-biome-system-design.md
+3342| # World Biome System Design
+3343| 
+3344| **Date:** 2026-05-26  
+3345| **Status:** Approved  
+3346| **Scope:** Overmap macro feature placement + chunk-level biome-contextual terrain + 18-biome enum alignment
+3347| 
+3348| ## Problem
+3349| 
+3350| The current world generation produces biomes from 4 independent noise fields (elevation, ridge, temperature, moisture) with weak coupling. This causes:
+3351| 
+3352| 1. **Arctic never appears** — temperature penalty from elevation is only `h * 0.15`, so t < 0.15 is practically impossible
+3353| 2. **Volcanic never appears** — defined in enum but zero code assigns it
+3354| 3. **Mystic doesn't exist** — not in codebase at all
+3355| 4. **Lake/River never appear** — in enum but no assignment logic
+3356| 5. **No geographic structure** — the world has no intentional relationships between biomes. No mountain range, no volcanic region, no mystic domains. Just random noise soup.
+3357| 6. **Movement breaks** on certain terrain after teleport (ocean, extreme slopes)
+3358| 
+3359| ## Approach: Procedural Macro Features + Noise Micro Detail
+3360| 
+3361| **Macro layer (overmap):** Procedural feature placement that guarantees geographic structure. Features are derived from noise (not hardcoded), so every seed produces a different but always-coherent world.
+3362| 
+3363| **Micro layer (chunk):** Noise-driven detail with biome-contextual variance — cliffs in mountains, dunes in desert, caldera in volcanic, crystalline ridges in mystic, etc.
+3364| 
+3365| ## The 18 Biomes
+3366| 
+3367| ```
+3368| OCEAN=0, BEACH=1, GRASSLAND=2, FOREST=3, DENSE_FOREST=4, DESERT=5,
+3369| SAVANNA=6, STEPPE=7, TUNDRA=8, TAIGA=9, MOUNTAINS=10, SWAMP=11,
+3370| TROPICAL_FOREST=12, VOLCANIC=13, ARCTIC=14, LAKE=15, RIVER=16, MYSTIC=17
+3371| ```
+3372| 
+3373| All 18 must be assignable by both the C++ chunk compiler and the GDScript overmap generator. One classification function, two callers.
+3374| 
+3375| ## Macro Feature Placement
+3376| 
+3377| At world generation time, scan the base noise fields to derive macro features. These are stored as modifier fields (640x640 float arrays) alongside the overmap image.
+3378| 
+3379| ### Feature Anchors
+3380| 
+3381| | Feature | Derivation Method | Approximate Size |
+3382| |---------|-------------------|------------------|
+3383| | **Mountain Spine** | Connected ridge of highest `ridge_noise` values cutting across the map | Large — bisects the world |
+3384| | **Arctic Zones** | Peaks of the mountain spine where elevation > 0.85 | Moderate — several clusters along spine |
+3385| | **Volcanic Hotspot** | Single point where `ridge_noise` is highest AND base temperature is warmest | Small-moderate, radiating outward (radius ~15-20 overmap pixels) |
+3386| | **Mystic Domains** | 3-4 locations where new `magic_noise` exceeds threshold (> 0.8) | Moderate, self-contained (radius ~8-12 overmap pixels each) |
+3387| | **Tropical Forest** | Largest contiguous region where temperature > 0.65 AND moisture > 0.55 | One massive zone |
+3388| | **Savanna** | Adjacent to tropical forest, drier side (moisture 0.2-0.5) | One major zone |
+3389| | **Swamp** | Low elevation + high moisture, moisture boost applied near volcanic region | Wraps around volcanic border |
+3390| | **Lakes** | 5-8 local elevation minima in land areas | Radius 3-5 overmap pixels each |
+3391| | **Rivers** | Downhill gradient trace from each lake toward ocean or another lake | Width 1 overmap pixel, expands to 3-5 tiles at chunk level |
+3392| 
+3393| ### Biome Adjacency Graph
+3394| 
+3395| ```
+3396| Ocean → Beach → Grassland ──→ Forest → Dense Forest → Swamp ──→ Volcanic
+3397|                     │                                              ↑
+3398|                     ├──→ Desert → Savanna → Steppe ────→ Mountains ┤
+3399|                     │                  │                     │
+3400|                     │                  └→ Tropical Forest    └→ Arctic (peaks)
+3401|                     │
+3402|                     └──→ Tundra → Taiga
+3403| 
+3404| Lakes: scattered throughout all land biomes
+3405| Rivers: flow downhill from lakes
+3406| Mystic: 3-4 independent pockets, any land context
+3407| ```
+3408| 
+3409| ### Modifier Field Computation
+3410| 
+3411| ```
+3412| 1. Generate base noise fields (elevation, ridge, temp, moisture, magic)
+3413| 2. Strengthen couplings:
+3414|    - Temperature penalty from elevation: t -= h * 0.45 (was 0.15)
+3415|    - This naturally makes mountain peaks arctic
+3416| 3. Scan ridge noise to find mountain spine (connected high-ridge path)
+3417| 4. Find volcanic hotspot (max ridge × max temp intersection)
+3418| 5. Find 3-4 mystic domains (magic noise peaks > 0.8)
+3419| 6. Find 5-8 lake basins (local elevation minima in land areas)
+3420| 7. Trace rivers downhill from lakes
+3421| 8. Compute modifier fields (all 640×640):
+3422|    - volcanic_influence: radial falloff from hotspot
+3423|    - mystic_influence: radial falloff from each domain center
+3424|    - swamp_pull: moisture boost near volcanic region
+3425|    - lake_mask: boolean lake coverage
+3426|    - river_mask: boolean river paths
+3427| 9. Store modifiers as binary data alongside overmap PNG
+3428| 10. Biome classification applies modifiers:
+3429|     - VOLCANIC where volcanic_influence > 0.5
+3430|     - MYSTIC where mystic_influence > 0.5
+3431|     - LAKE where lake_mask is true
+3432|     - RIVER where river_mask is true
+3433|     - swamp_pull boosts local moisture to create SWAMP adjacency near volcanic
+3434|     - Standard temp/moisture/elevation rules handle everything else
+3435| ```
+3436| 
+3437| ## Chunk-Level Micro Detail
+3438| 
+3439| Each 64x64 chunk gets biome-contextual terrain features. The detail noise is modulated per biome to create appropriate character.
+3440| 
+3441| ### Elevation Variance by Biome
+3442| 
+3443| | Biome | Elevation Character | Detail Noise Behavior |
+3444| |-------|--------------------|-----------------------|
+3445| | **Ocean** | Flat, slight undulation | Minimal — deep water is calm |
+3446| | **Beach** | Gentle slope from water | Very smooth, occasional dune ridges |
+3447| | **Grassland** | Rolling hills, gentle valleys | Moderate FBM, soft features |
+3448| | **Forest** | Undulating, moderate hills | Medium variance, some clearings |
+3449| | **Dense Forest** | Rougher, ravines between hills | Higher variance, steep gullies |
+3450| | **Desert** | Dunes + flat pans + mesa edges | Ridged noise for dune formations, flat basins |
+3451| | **Savanna** | Wide open with scattered kopjes | Low variance with occasional sharp outcrops |
+3452| | **Steppe** | Windswept plateaus, eroded gullies | Medium-low, directional ridges |
+3453| | **Tundra** | Frozen flat expanses, frost heave bumps | Very low variance, subtle texture |
+3454| | **Taiga** | Dense valleys between ridges | Medium, elongated ridge patterns |
+3455| | **Mountains** | Dramatic peaks, cliffs, narrow passes | Maximum variance, very steep slopes, cliff faces |
+3456| | **Swamp** | Near-flat, waterlogged depressions | Very low with many sub-sea-level pockets (pools) |
+3457| | **Tropical Forest** | Dense canopy hills, river valleys | High variance but smooth — rounded hills |
+3458| | **Volcanic** | Caldera rim, lava channels, jagged rock | Extreme variance — sharp ridges, flat crater floor, flow channels |
+3459| | **Arctic** | Ice fields, crevasses, frozen peaks | High variance — glacial carving, sharp vs. smooth |
+3460| | **Lake** | Basin depression below surrounding terrain | Concave — lowest point of local area |
+3461| | **River** | Carved channel following downhill gradient | Linear depression cutting through terrain |
+3462| | **Mystic** | Otherworldly — floating islands feel | Warped noise — extreme warp amplitude, crystalline ridges, quantized elevation steps |
+3463| 
+3464| ### Biome-Specific Noise Modulation
+3465| 
+3466| At chunk compile time, the dominant biome modulates detail noise parameters:
+3467| 
+3468| - **Mountains**: Ridge noise amplitude ×3. Cliff faces where slope > threshold. Saddle points create narrow passes.
+3469| - **Volcanic**: Radial elevation falloff from macro center (caldera shape). Channel noise cuts lava flow paths outward. Interior is flat crater floor.
+3470| - **Mystic**: Domain warp amplitude cranked to extreme. Elevation has sharp plateaus (quantized steps) creating alien staircase feel.
+3471| - **Swamp**: Elevation oscillates just above/below water level — maze of land and water patches.
+3472| - **Desert**: Directional ridged noise for dune fields. Flat hardpan between dunes.
+3473| - **Arctic**: Glacial carving — smooth U-shaped valleys with sharp arêtes between them.
+3474| 
+3475| ### Pathways & Transitions
+3476| 
+3477| - Chunk-level paths follow noise-carved valleys (local elevation minima)
+3478| - Biome transitions within a chunk use existing Wang tileset blending
+3479| - Cave entrances appear in mountains/volcanic where slope exceeds threshold AND elevation dips locally
+3480| - Cliffs render where adjacent tiles have elevation delta > 0.15
+3481| 
+3482| ## Overmap/Chunk Alignment Contract
+3483| 
+3484| 1. **One classification function, two callers.** The overmap and C++ chunk compiler apply identical biome logic with identical thresholds.
+3485| 2. **Macro features computed once at world init.** Stored as binary modifier fields. Both overmap renderer and chunk compiler read from the same data.
+3486| 3. **The overmap pixel IS the chunk.** Pixel (px, py) on the overmap = chunk (px - 320, py - 320). The biome color must match the chunk's dominant biome.
+3487| 4. **Modifier fields are the source of truth** for volcanic, mystic, lake, and river placement. Both systems sample the same fields.
+3488| 
+3489| ## Noise Configuration
+3490| 
+3491| ### Existing Noise Fields (parameters preserved)
+3492| 
+3493| | Noise | Seed Offset | Type | Fractal | Octaves | Frequency |
+3494| |-------|-------------|------|---------|---------|-----------|
+3495| | Continent | +0 | Perlin | FBM | 8 | 0.008 |
+3496| | Ridge | +1000 | Perlin | Ridged | 5 | 0.012 |
+3497| | Warp | +777 | Perlin | FBM | 4 | 0.005 |
+3498| | Temperature | +333 | Perlin | FBM | 6 | 0.007 |
+3499| | Moisture | +500 | Perlin | FBM | 6 | 0.009 |
+3500| 
+3501| ### New Noise Field
+3502| 
+3503| | Noise | Seed Offset | Type | Fractal | Octaves | Frequency | Purpose |
+3504| |-------|-------------|------|---------|---------|-----------|---------|
+3505| | Magic | +888 | Perlin | FBM | 4 | 0.004 | Mystic domain detection — low frequency for large coherent pockets |
+3506| 
+3507| ### Changed Couplings
+3508| 
+3509| - **Temperature elevation penalty**: `t -= h * 0.45` (was `h * 0.15`). At h=0.85 (mountain peak), penalty is 0.38, pushing base temp ~0.5 down to ~0.12 — arctic.
+3510| - **Chunk-level temperature**: `temp -= (h - base_h) * 0.5` (was `0.3`). Stronger local cooling on peaks within a chunk.
+3511| 
+3512| ## Overmap Colors
+3513| 
+3514| | Biome | RGB | Visual |
+3515| |-------|-----|--------|
+3516| | Deep Ocean | (0.05, 0.12, 0.35) | Dark navy |
+3517| | Shallow Ocean | (0.1, 0.3, 0.6) | Medium blue |
+3518| | Coastal Water | (0.2, 0.5, 0.8) | Light blue |
+3519| | Beach | (0.9, 0.85, 0.6) | Sandy tan |
+3520| | Grassland | (0.4, 0.75, 0.3) | Green |
+3521| | Forest | (0.15, 0.5, 0.15) | Dark green |
+3522| | Dense Forest | (0.05, 0.35, 0.1) | Very dark green |
+3523| | Desert | (0.85, 0.75, 0.45) | Tan-gold |
+3524| | Savanna | (0.7, 0.65, 0.3) | Yellow-brown |
+3525| | Steppe | (0.6, 0.55, 0.35) | Dry brown |
+3526| | Tundra | (0.7, 0.75, 0.8) | Light gray |
+3527| | Taiga | (0.2, 0.4, 0.3) | Blue-green |
+3528| | Mountains | (0.55, 0.55, 0.55) | Gray |
+3529| | Swamp | (0.3, 0.4, 0.25) | Olive |
+3530| | Tropical Forest | (0.1, 0.6, 0.2) | Bright green |
+3531| | Volcanic | (0.6, 0.15, 0.05) | Deep red-orange |
+3532| | Arctic | (0.9, 0.93, 0.97) | White |
+3533| | Lake | (0.25, 0.55, 0.85) | Clear blue |
+3534| | River | (0.3, 0.6, 0.9) | Light river blue |
+3535| | Mystic | (0.45, 0.15, 0.6) | Deep purple |
+3536| 
+3537| ## Movement Fix
+3538| 
+3539| **Problem:** After teleporting, player sometimes can't walk — stuck in ocean or extreme slopes.
+3540| 
+3541| **Fix:**
+3542| 1. Teleport refuses to land in ocean — snaps to nearest land chunk
+3543| 2. Minimum speed clamped to 60% (was 50%) on steep terrain
+3544| 3. After teleport, use elevation 0.5 fallback gracefully during chunk loading — don't apply slope speed until center chunk is fully loaded
+3545| 
+3546| ## Files Changed
+3547| 
+3548| ### C++ (requires rebuild)
+3549| - `gdextension/src/native_chunk_compiler.h` — Add MYSTIC=17 to enum, expand array to 18
+3550| - `gdextension/src/native_chunk_compiler.cpp` — Add volcanic/mystic/lake/river rules to `_compile_biome`, add biome-contextual detail noise modulation, update biome name array to 18 entries
+3551| - `gdextension/src/noise_sampler.h` — Add magic noise field, increase temp elevation penalty to 0.45
+3552| 
+3553| ### GDScript (overmap + movement)
+3554| - `scripts/core/overmap_generator.gd` — Add magic noise, modifier field computation (volcanic/mystic/lake/river placement), match temp penalty, add all new biome colors
+3555| - `scripts/CleanWorld.gd` — Teleport land-snap, movement speed floor fix, chunk-loading grace period
+3556| 
+3557| ### New Files
+3558| - `user://world_modifiers_{seed}.bin` — Binary modifier fields (volcanic_influence, mystic_influence, swamp_pull, lake_mask, river_mask) generated at world init, loaded by both overmap and chunk compiler
+3559| 
+3560| ---FILE: 2026-05-27-elevation-cliff-rendering-design.md
+3561| # Elevation Cliff Rendering System
+3562| 
+3563| **Date:** 2026-05-27
+3564| **Status:** Approved
+3565| **Scope:** Replace flat tile rendering with continuous elevation-driven cliff layers, where terrain height is expressed as stacked cliff walls and elevated surface tiles.
+3566| 
+3567| ## Problem
+3568| 
+3569| The current hypergraph terrain system selects the correct surface (grass, rock, snow) based on elevation, but renders everything on a single flat plane. A mountain peak and a valley floor sit at the same visual Y position — only the tile color differs. There is no visual topography: no cliffs, no height, no sense of the landscape rising and falling. The world looks like a painted carpet, not terrain.
+3570| 
+3571| ## Core Model
+3572| 
+3573| Elevation is continuous (0.0–1.0). Every tile's elevation maps to a visual Y-offset in pixels:
+3574| 
+3575| ```
+3576| visual_y_offset = (elevation - SEA_LEVEL) * PIXELS_PER_UNIT
+3577| ```
+3578| 
+3579| Where `SEA_LEVEL = 0.38` and `PIXELS_PER_UNIT = 512` (tunable). This means:
+3580| - A tile at elevation 0.50 renders 61px above sea level
+3581| - A tile at elevation 0.80 renders 215px above sea level
+3582| - A tile at elevation 1.00 renders 317px above sea level
+3583| - A tile at elevation 0.38 (sea level) renders at Y-offset 0
+3584| 
+3585| There are no fixed "levels" or "buckets." Every tile sits at its exact elevation. The number of visual layers in any given area is determined entirely by the terrain — a flat plain has zero cliff faces, a mountain might have cliff walls hundreds of pixels tall.
+3586| 
+3587| ## Cliff Walls
+3588| 
+3589| When adjacent tiles differ in elevation, the gap between them is filled with a **cliff wall** — a vertical textured face visible from the top-down camera.
+3590| 
+3591| ### Which edges get cliff walls
+3592| 
+3593| Cliff walls render on the **south and east** edges of elevated tiles. These are the sides visible to a top-down camera with a slight southward perspective (standard for 2D RPGs). North and west edges are occluded by the tile's own surface.
+3594| 
+3595| For a tile at (x, y) with elevation E:
+3596| - **South wall:** if tile at (x, y+1) has elevation E_south < E, draw a cliff wall of height `(E - E_south) * PIXELS_PER_UNIT` pixels on the south edge
+3597| - **East wall:** if tile at (x+1, y) has elevation E_east < E, draw a cliff wall of height `(E - E_east) * PIXELS_PER_UNIT` pixels on the east edge
+3598| 
+3599| ### Cliff wall composition
+3600| 
+3601| Each cliff wall is assembled from three tile pieces:
+3602| 
+3603| | Piece | Size | Purpose |
+3604| |-------|------|---------|
+3605| | `cliff_top` | 32×8px | Overhang where surface meets wall — grass roots, dirt edge, snow lip |
+3606| | `cliff_mid` | 32×32px | Repeating wall face — stone layers, dirt strata, ice. Tiles vertically. |
+3607| | `cliff_bot` | 32×8px | Base where wall meets lower ground — shadow, rubble, moss |
+3608| 
+3609| For a cliff wall of height H pixels:
+3610| 1. Draw `cliff_top` (8px)
+3611| 2. Draw `cliff_mid` repeated `floor((H - 16) / 32)` times (middle fill)
+3612| 3. Draw remaining fractional `cliff_mid` height (partial tile)
+3613| 4. Draw `cliff_bot` (8px)
+3614| 
+3615| Minimum cliff height to render: 4px (below this, the elevation difference is too small to see).
+3616| 
+3617| ### Cliff face variants per surface
+3618| 
+3619| Each of the 13 surface types needs its own cliff face set, because the wall should match the terrain it's part of:
+3620| 
+3621| | Surface | Cliff face appearance |
+3622| |---------|----------------------|
+3623| | lush_grass | Dirt/soil with grass roots hanging over the top edge |
+3624| | golden_sand | Sandy crumbling cliff face with exposed rock |
+3625| | forest_floor | Dark earth with tree roots and moss |
+3626| | grey_rock | Layered stone with mineral veins |
+3627| | snow | Packed snow over ice with frozen dirt |
+3628| | frozen_earth | Permafrost layers with ice crystals |
+3629| | glacial_ice | Blue-white ice face with pressure cracks |
+3630| | volcanic_rock | Dark basalt with glowing lava veins |
+3631| | swamp_mud | Wet mud layers with standing water seeping out |
+3632| | dry_grass | Rocky soil with sparse root systems |
+3633| | dark_humus | Very dark decomposing layers with fungal growth |
+3634| | ocean_water | (no cliff face — water fills from below) |
+3635| | mystic_crystal | Glowing purple crystal cross-section |
+3636| 
+3637| That's 12 cliff face sets × 3 pieces = 36 cliff tiles, plus corner and diagonal variants are required for V1:
+3638| 
+3639| **Corner variants** (where two cliff walls meet at 90°):
+3640| - Inner corner (concave) — south wall meets east wall from adjacent tiles
+3641| - Outer corner (convex) — cliff wraps around a protruding ledge
+3642| 
+3643| **Diagonal variants** (where elevation changes diagonally):
+3644| - SW-NE diagonal cliff face
+3645| - SE-NW diagonal cliff face
+3646| 
+3647| Each surface needs: 3 straight pieces + 2 corner pieces + 2 diagonal pieces = **7 cliff tiles per surface**.
+3648| 
+3649| Total: 12 surfaces × 7 pieces = **84 cliff tiles** to generate via PixelLab.
+3650| 
+3651| ## Render Order
+3652| 
+3653| Tiles render back-to-front using a **painter's algorithm** sorted by (world_y ascending, elevation ascending):
+3654| 
+3655| 1. **Water plane** at sea-level Y-offset (if any water visible in the viewport)
+3656| 2. For each row (north to south):
+3657|    a. For each tile in the row (sorted by elevation ascending):
+3658|       - Draw cliff walls (south and east) descending from this tile to lower neighbors
+3659|       - Draw surface tile at this tile's visual Y-offset
+3660| 3. Higher tiles naturally occlude lower tiles' cliff walls
+3661| 
+3662| This ensures:
+3663| - Cliffs face the camera (south-facing walls visible)
+3664| - Higher terrain covers lower terrain's walls
+3665| - Water sits at the bottom of basins
+3666| 
+3667| ## Water
+3668| 
+3669| Water is the floor at elevation 0.38 (sea level):
+3670| 
+3671| - Any tile with elevation < SEA_LEVEL is submerged — the water surface renders at the sea-level Y plane
+3672| - The ocean_water surface tile renders ON the water plane for submerged tiles
+3673| - Coastlines are natural cliff faces: land tiles at elevation > SEA_LEVEL have cliff walls descending to the water plane
+3674| - Lakes are terrain depressions below sea level
+3675| - Rivers are narrow channels cut below surrounding terrain elevation
+3676| 
+3677| This naturally fixes the overmap/render mismatch — areas the overmap shows as blue (low elevation) will visually be water basins with terrain rising out of them.
+3678| 
+3679| ## Camera
+3680| 
+3681| - **Follows player** at their visual position (grid position + elevation Y-offset)
+3682| - **Zoom-out at height**: camera zoom decreases slightly as player elevation increases, giving a wider view from mountaintops. Scale factor: `zoom = base_zoom - (elevation - SEA_LEVEL) * ZOOM_ELEVATION_FACTOR`
+3683| - **Bokeh/depth-of-field**: terrain below the player's current elevation gets progressively blurred. Already partially implemented — extend to use the new elevation offset system.
+3684| 
+3685| ## Player Movement (Deferred)
+3686| 
+3687| Not in scope for this spec, but the elevation system enables:
+3688| 
+3689| - **Walking**: traverse gentle slopes where adjacent tile elevation difference < MAX_WALK_SLOPE
+3690| - **Climbing**: BotW/Genshin-style wall climbing on cliff faces (stamina-based)
+3691| - **Gliding**: jump off cliff edges, trade height for horizontal distance
+3692| - **Swimming**: enter water at sea level
+3693| 
+3694| These will be designed in a separate spec.
+3695| 
+3696| ## PIXELS_PER_UNIT Tuning
+3697| 
+3698| The single most important constant. Starting value: **512**.
+3699| 
+3700| | Scenario | Elevation diff | Visual height |
+3701| |----------|---------------|---------------|
+3702| | Gentle slope | 0.02 | 10px (subtle step) |
+3703| | Small hill | 0.05 | 26px (visible rise) |
+3704| | Significant hill | 0.15 | 77px (~2.4 tile heights) |
+3705| | Mountain from plains | 0.40 | 205px (~6.4 tile heights) |
+3706| | Full sea-to-peak | 0.62 | 317px (~10 tile heights) |
+3707| 
+3708| This is data, not code. Tunable at runtime for visual QA.
+3709| 
+3710| ## Architecture
+3711| 
+3712| ### Modified Components
+3713| 
+3714| **`LayeredChunkRenderer`** — Major rewrite. Instead of painting one flat image per chunk, it now:
+3715| 1. Calculates visual Y-offset per tile from elevation
+3716| 2. Creates cliff wall sprites between tiles with different elevations
+3717| 3. Renders surface tiles at their elevated Y positions
+3718| 4. Sorts everything back-to-front for correct occlusion
+3719| 
+3720| **`CleanWorld.gd`** — Camera system updates:
+3721| - Track player elevation for Y-offset
+3722| - Zoom-out factor based on elevation
+3723| - Bokeh intensity based on elevation delta between player and terrain
+3724| 
+3725| ### New Components
+3726| 
+3727| **`CliffTileLoader`** — Loads cliff face tile assets (cliff_top, cliff_mid, cliff_bot per surface type). Similar to LayeredTilesetLoader but for vertical cliff tiles.
+3728| 
+3729| **`ElevationRenderer`** — Core rendering logic extracted from LayeredChunkRenderer. Given a chunk's elevation data, produces the sorted draw list of (surface tiles + cliff walls + water) with correct Y-offsets and z-ordering.
+3730| 
+3731| ### New Assets
+3732| 
+3733| - `assets/catalog/terrain_v3/cliffs/{surface_id}/cliff_top.png` (32×8)
+3734| - `assets/catalog/terrain_v3/cliffs/{surface_id}/cliff_mid.png` (32×32)
+3735| - `assets/catalog/terrain_v3/cliffs/{surface_id}/cliff_bot.png` (32×8)
+3736| - ~48 total cliff tile images via PixelLab
+3737| 
+3738| ### Unchanged Components
+3739| 
+3740| - `ElevationGradientTable` — still provides surface_at(biome, elevation)
+3741| - `HypergraphTileResolver` — still resolves surface + Wang index per tile
+3742| - `LayeredTilesetLoader` — still loads surface and transition Wang tiles
+3743| - `ChunkStreamer` — still streams chunks, emits chunk_loaded
+3744| - `NativeChunkCompiler` (C++) — still produces elevation + biome data
+3745| 
+3746| ## Performance Considerations
+3747| 
+3748| Each chunk is 64×64 = 4,096 tiles. In the worst case (mountainous terrain), each tile could have south and east cliff walls. That's up to 8,192 cliff wall sprites per chunk plus 4,096 surface sprites = 12,288 draw calls per chunk. With a 7×7 chunk grid visible, that's up to 600K draw calls.
+3749| 
+3750| This will require optimization:
+3751| - **Batch cliff walls** into chunk-level images (like the current surface image approach)
+3752| - **Skip tiny cliffs** below the 4px minimum threshold
+3753| - **LOD**: at far zoom, render cliff walls as simple dark lines instead of textured tiles
+3754| - **Frustum culling**: only render cliff walls visible in the viewport
+3755| 
+3756| The GDScript prototype will be slow. This is a strong candidate for C++ migration after the visual design is validated.
+3757| 
+3758| ---FILE: 2026-05-27-elevation-hypergraph-terrain-design.md
+3759| # Elevation Hypergraph Terrain System
+3760| 
+3761| **Date:** 2026-05-27
+3762| **Status:** Approved
+3763| **Scope:** Replace flat biome-based tile selection with elevation-driven surface gradients and hypergraph transitions.
+3764| 
+3765| ## Problem
+3766| 
+3767| The current terrain renderer picks one tileset per biome and tiles it flat. A grassland biome looks the same at elevation 0.35 as it does at 0.70. Mountains are a distinct biome rather than the natural result of high elevation within any biome. Biome transitions happen abruptly at classification boundaries rather than flowing naturally with the landscape.
+3768| 
+3769| ## Core Concept: Elevation Gradients + Surface Hypergraph
+3770| 
+3771| Each biome defines an **elevation gradient** — an ordered list of surfaces that appear as elevation increases. A **surface** is a distinct terrain appearance (e.g., "lush green grass," "grey mountain stone," "snow"). Surfaces are shared across biomes, forming a many-to-many **hypergraph**: the same "grey rock" surface appears in grassland's gradient at high elevation and in tundra's gradient at mid elevation.
+3772| 
+3773| At each tile, elevation at the 4 corners determines which surface(s) appear. When adjacent corners cross an elevation threshold, a Wang transition tileset blends between the two surfaces. This uses the exact same 16-tile Wang autotiling infrastructure that already exists.
+3774| 
+3775| ## Surfaces (Hypergraph Nodes)
+3776| 
+3777| 13 unique terrain surfaces, each backed by a 16-tile Wang self-tileset:
+3778| 
+3779| | Surface ID | Description | Source |
+3780| |---|---|---|
+3781| | `ocean_water` | Blue water with gentle waves | Existing L1: ocean |
+3782| | `golden_sand` | Sandy beach/desert surface | Existing L1: beach, desert |
+3783| | `lush_grass` | Green grass with individual blades | Existing L1: grassland |
+3784| | `dry_grass` | Windswept sparse grass on rocky soil | Existing L1: steppe |
+3785| | `forest_floor` | Dark earth with leaves, moss, twigs | Existing L1: forest |
+3786| | `dark_humus` | Very dark decomposing leaf carpet | Existing L1: dense_forest |
+3787| | `swamp_mud` | Murky mud with standing water | Existing L1: swamp |
+3788| | `grey_rock` | Mountain stone with moss, mineral veins | Existing L1: mountains |
+3789| | `volcanic_rock` | Dark rock with glowing lava cracks | Existing L1: volcanic |
+3790| | `frozen_earth` | Permafrost tundra soil | Existing L1: tundra |
+3791| | `glacial_ice` | Blue-white ice with pressure cracks | Existing L1: arctic |
+3792| | `snow` | White snow cover | Existing L1: mountains (upper variant) |
+3793| | `mystic_crystal` | Purple glowing crystal floor | Existing L1: mystic |
+3794| 
+3795| All 13 surfaces already exist as L1 base tilesets in `assets/catalog/terrain_v2/`. They need to be reorganized into a `surfaces/` directory but no regeneration is required.
+3796| 
+3797| ## Transitions (Hypergraph Edges)
+3798| 
+3799| Transition tilesets are needed between any two surfaces that are adjacent in at least one biome's elevation gradient, or across biome boundaries. Each is a standard 16-tile Wang tileset generated via PixelLab with `base_tile_id` chaining.
+3800| 

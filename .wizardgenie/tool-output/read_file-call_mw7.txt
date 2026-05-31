@@ -1,0 +1,634 @@
+File: specs_combined.tmp.txt (lines 5401-6032 of 6032)
+
+5401| - Layer 4: ~600 objects (15%)
+5402| - Layer 5: ~80 objects (2%)
+5403| - **Total: ~13,000 objects per chunk**
+5404| 
+5405| With 7×7 = 49 chunks loaded, that's ~637,000 objects. Obviously can't render all as Sprite2D.
+5406| 
+5407| **Solution: LOD tiers**
+5408| - **Near chunks (radius 0-1)**: Render all layers as Sprite2D
+5409| - **Mid chunks (radius 2)**: Render layers 3-5 only (skip ground texture and debris)
+5410| - **Far chunks (radius 3+)**: Render layer 5 only (trees/large objects)
+5411| 
+5412| Additionally, layers 1-2 (ground texture, debris) could use a pre-rendered approach: bake them into a single image per chunk at startup, render as one ImageTexture. This reduces thousands of sprites to one image for the base layers.
+5413| 
+5414| ### Variant Scale Requirements
+5415| 
+5416| Each object type needs deep variant pools to prevent visible repetition:
+5417| 
+5418| | Layer Type | Minimum Variants | Animation Sets |
+5419| |-----------|-----------------|----------------|
+5420| | Ground texture (L1) | 64 | idle (subtle texture shift) |
+5421| | Small debris (L2) | 64 | none (static) |
+5422| | Ground flora (L3) | 64 per type | idle_sway, wind, trample, seasonal |
+5423| | Accent flora (L4) | 32 per type | idle_sway, wind, bloom, wilt, pick |
+5424| | Large objects (L5) | 16 per type | idle_sway, wind, chop, burn, seasonal |
+5425| 
+5426| **Generation target:** ~3,000 base variants + ~15,000 animation frames = ~18,000 individual sprite assets for full coverage.
+5427| 
+5428| ## Generation Pipeline
+5429| 
+5430| ### Priority Order
+5431| 
+5432| 1. **Layer 3 (ground flora)** — most visually impactful, covers every tile
+5433| 2. **Layer 1 (ground texture)** — foundation layer
+5434| 3. **Layer 5 (large objects)** — trees and landmarks
+5435| 4. **Layer 2 (small debris)** — fills visual gaps
+5436| 5. **Layer 4 (accent flora)** — color and interest
+5437| 
+5438| ### PixelLab Batch Strategy
+5439| 
+5440| For each object type needing 64 variants at 32px:
+5441| - `create_1_direction_object(size=32)` produces 64 candidates per batch
+5442| - Select all → 64 completed objects
+5443| - Download all → 64 variant PNGs
+5444| - 1 PixelLab batch = 1 object type fully covered
+5445| 
+5446| For 64px objects (trees):
+5447| - `create_1_direction_object(size=64)` produces 16 candidates
+5448| - Need 4 batches per tree type for 64 variants (or accept 16)
+5449| 
+5450| ### Animation Generation
+5451| 
+5452| After base variants, generate animations:
+5453| - `animate_object()` for each completed object
+5454| - Priority: idle_sway first (ambient), then wind, then interactions
+5455| - Each animation = 4-8 frames at 32px
+5456| 
+5457| ## Migration Path
+5458| 
+5459| 1. Create biome_layers JSON files for all 18 biomes
+5460| 2. Refactor PlacementEngine to read layer stacks instead of flat affinity pools
+5461| 3. Generate missing variants (most types have 3-10, need 64)
+5462| 4. Implement LOD tiers for performance
+5463| 5. Add pre-rendered chunk baking for layers 1-2
+5464| 6. Begin animation generation pipeline
+5465| 
+5466| The existing affinity files (`data/terrain_objects/affinities/*.json`) remain as reference but are superseded by the layer stack definitions for placement purposes. The object catalog (`data/terrain_objects/objects/`) and existing sprites remain unchanged.
+5467| 
+5468| ## Success Criteria
+5469| 
+5470| 1. No tile shows bare layer 0
+5471| 2. Each biome is visually distinct and internally consistent
+5472| 3. Ground flora has 64+ variants with no visible repetition pattern
+5473| 4. Trees appear in natural clusters, not uniform distribution
+5474| 5. Screenshot at 4.5x zoom looks like a CrossCode environment, not a tech demo
+5475| 6. 60 FPS maintained with LOD culling
+5476| 
+5477| ---FILE: 2026-05-29-unity-migration-handoff.md
+5478| # FreedomMMO — Unity Migration Handoff
+5479| 
+5480| ## Decision
+5481| 
+5482| Migrating from Godot 4.4 (GDScript) to Unity 6 (C#). Reason: agentic AI workflow requires reliable MCP control over the engine. Unity's MCP ecosystem is more mature, C# has better LLM support, and the rendering pipeline (2D Tilemap + Rule Tiles) natively solves problems we fought manually in Godot (Wang autotiling, sorting layers, sprite composition).
+5483| 
+5484| All game design specs transfer unchanged. They describe systems, not engine code.
+5485| 
+5486| ---
+5487| 
+5488| ## Part 1: What Dave Needs To Do (Setup)
+5489| 
+5490| ### Step 1: Create New Unity Project
+5491| 
+5492| 1. Open **Unity Hub**
+5493| 2. Click **New Project**
+5494| 3. Select **Unity 6** (latest LTS — 6000.x)
+5495| 4. Template: **2D (URP)** — Universal Render Pipeline for 2D
+5496| 5. Project name: `FreedomMMO`
+5497| 6. Location: `C:\Users\daves\OneDrive\Documents\FreedomMMO-Unity\`
+5498| 7. Click **Create Project**
+5499| 8. Wait for it to open (first launch takes a few minutes)
+5500| 
+5501| ### Step 2: Install CoplayDev/unity-mcp
+5502| 
+5503| In Unity, open **Window > Package Manager**, then:
+5504| 
+5505| 1. Click **+** (top left) > **Add package from git URL**
+5506| 2. Enter: `https://github.com/CoplayDev/unity-mcp.git`
+5507| 3. Click **Add**
+5508| 4. Wait for installation
+5509| 5. The MCP bridge starts automatically when Unity runs
+5510| 
+5511| ### Step 3: Configure Claude Code MCP Connection
+5512| 
+5513| Add to your `.mcp.json` in the new project directory:
+5514| 
+5515| ```json
+5516| {
+5517|   "mcpServers": {
+5518|     "unity": {
+5519|       "command": "npx",
+5520|       "args": ["-y", "@anthropic-ai/mcp-relay", "--endpoint", "npipe:////./pipe/UnityMCP"]
+5521|     }
+5522|   }
+5523| }
+5524| ```
+5525| 
+5526| Or follow the latest guide at: https://docs.coplay.dev/coplay-mcp/claude-code-guide
+5527| 
+5528| ### Step 4: Install Required Unity Packages
+5529| 
+5530| In Package Manager, also install:
+5531| - **2D Tilemap** (built-in, should be there already)
+5532| - **2D Tilemap Extras** (Rule Tiles, Animated Tiles) — from git: `com.unity.2d.tilemap.extras`
+5533| - **2D Pixel Perfect** — for crisp pixel art rendering
+5534| - **2D Light** (URP 2D Lighting) — for dynamic day/night
+5535| - **TextMeshPro** — for UI text (usually auto-installed)
+5536| - **Cinemachine** — for camera follow
+5537| 
+5538| ### Step 5: Configure Pixel Art Settings
+5539| 
+5540| In **Edit > Project Settings > Quality**:
+5541| - Default Filter Mode: **Point (no filter)**
+5542| - Compression: **None** for sprites
+5543| 
+5544| In **Edit > Project Settings > Graphics** (URP):
+5545| - Anti-aliasing: **None**
+5546| 
+5547| ### Step 6: Import PixelLab Sprites
+5548| 
+5549| Copy the entire sprite catalog from Godot:
+5550| ```
+5551| FROM: C:\Users\daves\OneDrive\Documents\freedommmo\assets\catalog\terrain_objects\
+5552| TO:   C:\Users\daves\OneDrive\Documents\FreedomMMO-Unity\Assets\Sprites\TerrainObjects\
+5553| ```
+5554| 
+5555| These are 6,000+ PNGs that transfer directly. Unity will auto-import them.
+5556| 
+5557| ### Step 7: Git Init + Push
+5558| 
+5559| ```bash
+5560| cd C:\Users\daves\OneDrive\Documents\FreedomMMO-Unity
+5561| git init
+5562| git remote add origin https://github.com/dsuchmann/freedommmo-unity.git
+5563| ```
+5564| 
+5565| (Create the repo on GitHub first)
+5566| 
+5567| ### Step 8: Verify MCP Connection
+5568| 
+5569| Once Unity is open and the project is loaded, restart Claude Code. I should be able to call Unity MCP tools to verify the connection. We'll test with a simple scene creation.
+5570| 
+5571| ---
+5572| 
+5573| ## Part 2: What Transfers From Godot
+5574| 
+5575| ### Specs & Design Docs (ALL transfer — engine-agnostic)
+5576| 
+5577| These live in `freedommmo/docs/superpowers/specs/` and describe game SYSTEMS:
+5578| 
+5579| | Spec | What It Covers | Priority |
+5580| |------|---------------|----------|
+5581| | `2026-05-24-master-architecture-design.md` | 7-layer system architecture | CRITICAL |
+5582| | `2026-05-28-terrain-object-system-design.md` | Object placement, categories, elevation | CRITICAL |
+5583| | `2026-05-29-biome-layer-stack-design.md` | Visual layering rule — Layer 0 never alone | CRITICAL |
+5584| | `2026-05-24-vertical-slice-design.md` | Village vertical slice target | CRITICAL |
+5585| | `2026-05-26-world-biome-system-design.md` | 18-biome system | HIGH |
+5586| | `2026-05-24-world-compiler-design.md` | 13-layer deterministic worldgen | HIGH |
+5587| | `2026-05-27-elevation-hypergraph-terrain-design.md` | Elevation system | HIGH |
+5588| | `2026-05-25-tileset-framework-design.md` | 7-layer rendering | HIGH |
+5589| | `2026-05-26-dynamic-lighting-spec.md` | Day/night cycle | MEDIUM |
+5590| | `2026-05-26-subterranean-design.md` | Cave/underground | LATER |
+5591| 
+5592| ### Freedom/ Prototype Docs (CRITICAL game design)
+5593| 
+5594| | Doc | What It Covers |
+5595| |-----|---------------|
+5596| | `Freedom/docs/TIME_SYSTEM_ARCHITECTURE.md` | **THE core game loop** — time as primary resource |
+5597| | `Freedom/docs/CAUSAL_TRACKING.md` | Event recording, NPC knowledge, gossip |
+5598| | `Freedom/docs/SCI_FI_FANTASY_SYSTEMS.md` | Grain-based crafting & magic |
+5599| | `Freedom/DATA_SCHEMAS.md` | Complete data models for all systems |
+5600| 
+5601| ### Art Assets (6,000+ PNGs — direct transfer)
+5602| 
+5603| ```
+5604| assets/catalog/terrain_objects/
+5605| ├── ground_cover/     — dirt, leaves, snow, sand, gravel (2,000+)
+5606| ├── vegetation/       — grass, trees, flowers, ferns, moss (1,500+)
+5607| ├── mineral/          — rocks, boulders, crystals, ore (500+)
+5608| ├── structure_natural/ — logs, nests, caves, bones (200+)
+5609| ├── water_feature/    — coral, kelp, algae (200+)
+5610| └── _uncategorized/   — needs sorting (1,500+)
+5611| ```
+5612| 
+5613| All 32x32 or 64x64 pixel art PNGs with transparency. Import into Unity as Sprites with:
+5614| - Pixels Per Unit: 32
+5615| - Filter Mode: Point
+5616| - Compression: None
+5617| 
+5618| ### Biome Layer Definitions (JSON — direct transfer)
+5619| 
+5620| ```
+5621| data/terrain_objects/biome_layers/*.json  — 18 biome definitions
+5622| data/terrain_objects/catalog.json         — 268 object definitions
+5623| data/terrain_objects/affinities/*.json    — biome-object relationships
+5624| ```
+5625| 
+5626| These JSON files define what objects go where. The Unity placement system reads them the same way.
+5627| 
+5628| ### Memory Files (Design decisions — transfer to new CLAUDE.md)
+5629| 
+5630| Key decisions that must carry forward:
+5631| - Layered character rendering (nude base + equipment overlays)
+5632| - NPC goal hypergraphs (predictive, never hardcode)
+5633| - Everything composable (no monolithic sprites)
+5634| - Everything animated (no static assets)
+5635| - Time as primary resource
+5636| - NL command architecture for player instructions
+5637| 
+5638| ---
+5639| 
+5640| ## Part 3: Unity Architecture
+5641| 
+5642| ### Rendering (2D Tilemap)
+5643| 
+5644| ```
+5645| Sorting Layer 0: Terrain Base      — Tilemap with Rule Tiles (biome transitions)
+5646| Sorting Layer 1: Ground Detail     — Tilemap or sprites (dirt, leaves, pine needles)
+5647| Sorting Layer 2: Ground Objects    — Sprites (pebbles, twigs, small debris)
+5648| Sorting Layer 3: Flora             — Sprites (grass, moss, ferns)
+5649| Sorting Layer 4: Accent            — Sprites (flowers, mushrooms)
+5650| Sorting Layer 5: Large Objects     — Sprites (trees, boulders, structures)
+5651| Sorting Layer 6: Characters        — Sprites (player, NPCs)
+5652| Sorting Layer 7: Overhead          — Tilemap (roofs, canopy — alpha fade when player enters)
+5653| Sorting Layer 8: UI/Effects        — Particles, lighting overlays
+5654| ```
+5655| 
+5656| Unity Sorting Layers handle z-ordering NATIVELY. No manual z_index math.
+5657| 
+5658| ### Layer 1 Solution (What We Fought In Godot)
+5659| 
+5660| Unity's **Rule Tiles** solve this directly:
+5661| - Define a Rule Tile for "forest_floor" with 64 variants
+5662| - Set neighbor rules for auto-tiling (Wang-style transitions)
+5663| - Paint it on a Tilemap layer — it seamlessly tiles itself
+5664| - Different Rule Tiles per biome/elevation
+5665| - NO individual sprite-per-tile placement needed
+5666| 
+5667| This is the exact thing we couldn't achieve in Godot with individual sprites.
+5668| 
+5669| ### World Streaming
+5670| 
+5671| ```csharp
+5672| // Chunk-based streaming — same concept as Godot but using Unity native
+5673| public class ChunkStreamer : MonoBehaviour {
+5674|     // Load/unload chunks around player
+5675|     // Each chunk = Tilemap section + object instances
+5676|     // Background thread generates terrain data
+5677|     // Main thread instantiates GameObjects
+5678| }
+5679| ```
+5680| 
+5681| ### Simulation Layer (Separate from Rendering)
+5682| 
+5683| ```csharp
+5684| // Runs NPC AI, economy, time system — no rendering overhead
+5685| public class SimulationEngine : MonoBehaviour {
+5686|     // 10K+ NPCs tracked as pure data (no GameObjects)
+5687|     // Only visible NPCs get instantiated as GameObjects
+5688|     // Ticks on background thread at configurable rate
+5689|     // Systems: TimeSystem, PopulationSim, EconomySystem,
+5690|     //          FactionSystem, MoralitySystem, QuestGenerator
+5691| }
+5692| ```
+5693| 
+5694| ### Project Structure
+5695| 
+5696| ```
+5697| Assets/
+5698| ├── Scripts/
+5699| │   ├── Core/           — Data models, systems, simulation
+5700| │   ├── World/          — Terrain gen, biomes, streaming
+5701| │   ├── Rendering/      — Tilemap setup, object placement, lighting
+5702| │   ├── Entities/       — Player, NPCs, entity lifecycle
+5703| │   ├── Combat/         — Combat system, status effects
+5704| │   ├── Social/         — Dialogue (LLM), relationships, factions
+5705| │   ├── Economy/        — Items, crafting, trade
+5706| │   ├── Narrative/      — Quests, events, causal tracking
+5707| │   └── UI/             — All UI panels
+5708| ├── Sprites/
+5709| │   ├── TerrainObjects/ — 6,000+ from PixelLab
+5710| │   ├── Tilesets/       — Rule Tiles for biome transitions
+5711| │   └── Characters/     — Layered character sprites
+5712| ├── Tilemaps/           — Tilemap palettes and brushes
+5713| ├── Data/               — JSON configs (biomes, catalog, affinities)
+5714| ├── Prefabs/            — Reusable object prefabs
+5715| └── Scenes/
+5716|     ├── MainMenu.unity
+5717|     ├── GameWorld.unity  — The main playable scene
+5718|     └── Test/            — Test scenes for individual systems
+5719| ```
+5720| 
+5721| ---
+5722| 
+5723| ## Part 4: Build Order (First Session)
+5724| 
+5725| ### Phase 0: Setup & Verify (Dave does this)
+5726| 1. Create Unity project (2D URP template)
+5727| 2. Install CoplayDev/unity-mcp package
+5728| 3. Configure MCP in Claude Code
+5729| 4. Copy sprites from Godot project
+5730| 5. Git init + push
+5731| 6. Verify MCP connection works
+5732| 
+5733| ### Phase 1: Terrain Foundation (Claude builds this)
+5734| 1. Create base Tilemap with biome Rule Tiles
+5735| 2. Implement chunk-based terrain generation (Perlin noise)
+5736| 3. Wire up biome classification (temperature/moisture/elevation)
+5737| 4. Wang-style auto-tiling transitions between biomes
+5738| 5. Elevation rendering with proper z-ordering
+5739| 
+5740| ### Phase 2: Object Layer Stack (Claude builds this)
+5741| 1. Port PlacementEngine logic to C#
+5742| 2. Layer 1: Rule Tiles for ground textures (per biome, per elevation)
+5743| 3. Layers 2-3: Sprite placement with noise clustering
+5744| 4. Layers 4-5: Accent and large object placement
+5745| 5. Visual verification at each layer
+5746| 
+5747| ### Phase 3: Player & Camera
+5748| 1. Player controller (top-down movement)
+5749| 2. Pixel-perfect camera with Cinemachine
+5750| 3. Collision with terrain/objects
+5751| 4. Basic input system
+5752| 
+5753| ### Phase 4: Core Systems
+5754| 1. Time System (the game loop foundation)
+5755| 2. Entity data model
+5756| 3. NPC spawning and basic AI
+5757| 4. Day/night cycle with 2D lighting
+5758| 
+5759| ### Phase 5: Vertical Slice
+5760| 1. One village with structures, NPCs, paths
+5761| 2. Dialogue (LLM integration)
+5762| 3. Combat
+5763| 4. Crafting
+5764| 5. The full gameplay loop in one area
+5765| 
+5766| ---
+5767| 
+5768| ## Part 5: What NOT To Bring Forward
+5769| 
+5770| - GDScript code (rewrite in C#, don't port line-by-line)
+5771| - Custom pixel rendering (Godot's Image-based painting — use Tilemaps instead)
+5772| - Manual z-index math (Unity Sorting Layers handle this)
+5773| - DevBox workflow (start fresh, use GitHub Actions for CI)
+5774| - The GDExtension C++ code (Unity has its own native plugin system if needed)
+5775| 
+5776| ---
+5777| 
+5778| ## Part 6: PixelLab Integration
+5779| 
+5780| PixelLab works with any engine — it generates PNGs. The MCP connection stays the same:
+5781| 
+5782| ```json
+5783| {
+5784|   "mcpServers": {
+5785|     "pixellab": {
+5786|       "command": "npx",
+5787|       "args": ["-y", "@pixellab-ai/mcp"],
+5788|       "env": { "PIXELLAB_API_KEY": "..." }
+5789|     }
+5790|   }
+5791| }
+5792| ```
+5793| 
+5794| The 5,400+ completed objects on PixelLab are still there. We download them into the Unity project's `Assets/Sprites/` folder instead of Godot's `assets/catalog/`.
+5795| 
+5796| For Rule Tiles (Layer 1 ground textures), we may need to generate **tileset strips** via PixelLab's `create_topdown_tileset` rather than individual objects. This gives us seamless auto-tiling that Unity Rule Tiles can use directly.
+5797| 
+5798| ---
+5799| 
+5800| ## Summary
+5801| 
+5802| | What | Status |
+5803| |------|--------|
+5804| | Game design specs | Transfer as-is (111 docs) |
+5805| | Art assets | Transfer as-is (6,000+ PNGs) |
+5806| | Biome data (JSON) | Transfer as-is |
+5807| | GDScript code | Rewrite in C# (better anyway) |
+5808| | MCP control | CoplayDev/unity-mcp (86 tools) |
+5809| | Rendering | Unity 2D Tilemap + Rule Tiles |
+5810| | Layer 1 problem | Solved natively by Rule Tiles |
+5811| | Simulation scale | Separate C# layer, no ECS needed |
+5812| | First milestone | Playable village with all systems |
+5813| 
+5814| ---FILE: 2026-05-31-terrain-rendering-cleanup-design.md
+5815| # Terrain Rendering Cleanup — Design Spec
+5816| 
+5817| **Date:** 2026-05-31
+5818| **Status:** Draft
+5819| **Goal:** Strip the rendering pipeline down to what works, rebuild terrain rendering using Godot-native TileMapLayer patterns that match standard 2D RPG tutorials.
+5820| 
+5821| ## Problem Statement
+5822| 
+5823| The current codebase has ~1500 lines of competing rendering systems:
+5824| - **TileMapTerrainRenderer** renders base terrain via TileMapLayer `set_cell()`
+5825| - **ElevationRenderer** renders elevation as Image-based Sprite2D overlays using terrain_v3 tiles
+5826| - These use **different art assets** (v3 vs v4), **different rendering methods**, and **fight for the same screen space**
+5827| - Elevation is invisible despite code running — the Y-offset stacking approach doesn't produce visible results
+5828| - Transition tiles between surfaces are broken (manual wang computation is error-prone)
+5829| - All layers are created dynamically in code — invisible in the Godot editor Scene panel
+5830| 
+5831| ## Design Principles
+5832| 
+5833| 1. **Use Godot the way it was designed.** TileMapLayer nodes in the scene tree. `set_cells_terrain_connect()` for auto-tiling. Terrain sets with peering bits.
+5834| 2. **One rendering system, not two.** No Image-based overlays competing with TileMapLayers.
+5835| 3. **Visible in the editor.** All layers exist as nodes in the `.tscn` file. Clickable, inspectable, toggleable.
+5836| 4. **Standard 2D RPG elevation.** Cliff wall tiles at elevation drops. Shading overlays. Surface changes via gradient table. No Y-offset stacking.
+5837| 5. **Preserve what works.** Overmap → ChunkCompiler → ChunkStreamer pipeline untouched. terrain_v4 tilesets reused. Day/night cycle kept.
+5838| 
+5839| ## Architecture
+5840| 
+5841| ### Chunk Size: 16×16
+5842| 
+5843| Changed from 64×64. This makes `set_cells_terrain_connect()` fast (~1ms per call vs multi-second hangs at 64×64). Grid radius increases from 3 to 8 (17×17 grid = 289 chunks) to maintain the same visible area.
+5844| 
+5845| ### Scene Tree Structure
+5846| 
+5847| ```
+5848| CleanWorld (Node2D)
+5849|   ├── TileMap (Node2D, y_sort_enabled=false)
+5850|   │   ├── TerrainLayer    (TileMapLayer, z_index=-2)
+5851|   │   ├── CliffLayer      (TileMapLayer, z_index=-1)
+5852|   │   ├── ShadingLayer    (TileMapLayer, z_index=-1)
+5853|   │   ├── WaterLayer      (TileMapLayer, z_index=0)
+5854|   │   ├── RoadLayer       (TileMapLayer, z_index=2)
+5855|   │   ├── BuildingLayer   (TileMapLayer, z_index=3)
+5856|   │   └── RoofLayer       (TileMapLayer, z_index=8)
+5857|   ├── Player (CharacterBody2D)
+5858|   │   └── Camera2D
+5859|   ├── DayNightCycle
+5860|   └── UI (CanvasLayer)
+5861| ```
+5862| 
+5863| All TileMapLayer nodes share a single TileSet resource built by TerrainTilesetBuilder at startup. The TileMap parent node exists for organizational grouping — it is NOT a TileMap node, just a Node2D.
+5864| 
+5865| These nodes are defined in the `.tscn` file (visible in editor). The TileSet is assigned programmatically at startup since it's built from terrain_v4 assets.
+5866| 
+5867| ### Layer Definitions
+5868| 
+5869| | Layer | z_index | Content | Populated By |
+5870| |-------|---------|---------|-------------|
+5871| | TerrainLayer | -2 | Base biome tiles (lush_grass, golden_sand, etc.) with auto-tiled transitions | `set_cells_terrain_connect()` per terrain_id |
+5872| | CliffLayer | -1 | Cliff face tiles at elevation tier boundaries | Manual `set_cell()` at tier drops ≥ 2 |
+5873| | ShadingLayer | -1 | Semi-transparent dark/light overlays for hillshade | Manual `set_cell()` based on slope/elevation |
+5874| | WaterLayer | 0 | Ocean, river, lake tiles | `set_cells_terrain_connect()` for water terrain |
+5875| | RoadLayer | 2 | Dirt/cobblestone road tiles | Manual `set_cell()` from road_cells |
+5876| | BuildingLayer | 3 | Wall, floor, door tiles | Manual `set_cell()` from building_tiles |
+5877| | RoofLayer | 8 | Roof canopy (alpha-fades when player enters) | Manual `set_cell()` from structure bounds |
+5878| 
+5879| ### Terrain Rendering Flow
+5880| 
+5881| ```
+5882| ChunkData compiled (elevation, biome, ocean)
+5883|     │
+5884|     ▼
+5885| ElevationGradientTable.surface_at(biome, elevation) → surface_id per tile
+5886|     │
+5887|     ▼
+5888| Group tiles by terrain_id (from TerrainTilesetBuilder)
+5889|     │
+5890|     ▼
+5891| For each terrain_id:
+5892|     set_cells_terrain_connect(cells, 0, terrain_id)
+5893|     │
+5894|     ▼
+5895| Godot auto-selects correct tile from:
+5896|   - Self-tilesets (13 surfaces: lush_grass, snow, etc.)
+5897|   - Transition tilesets (19 pairs: golden_sand↔lush_grass, etc.)
+5898|   - Void-edge tilesets (12 surfaces: for cliff edges)
+5899|   using peering bits configured in TerrainTilesetBuilder
+5900| ```
+5901| 
+5902| ### Elevation Visualization
+5903| 
+5904| Elevation is shown through THREE visual cues (standard 2D RPG approach):
+5905| 
+5906| 1. **Surface changes** — The gradient table maps higher elevation to different surfaces (grassland: lush_grass → dry_grass → grey_rock → snow). This already works.
+5907| 
+5908| 2. **Cliff wall tiles** — On the CliffLayer, cliff face tiles are placed where elevation drops ≥ 2 tiers. Uses solid brown/dark cliff tiles from `_add_shading_and_cliff_sources()`. Only at sustained boundaries (≥3 of 5 horizontal neighbors must also have a cliff drop — filters noise).
+5909| 
+5910| 3. **Shading overlay** — On the ShadingLayer, semi-transparent tiles darken valleys and NW-facing slopes. Subtle but adds depth perception.
+5911| 
+5912| No Y-offset stacking. No overlapping Sprite2D images. No separate elevation renderer.
+5913| 
+5914| ### Elevation Tier System
+5915| 
+5916| ```
+5917| TIER_THRESHOLDS = [0.38, 0.50, 0.62, 0.75]  (4 tiers)
+5918| ```
+5919| 
+5920| Cliff walls render where a tile's tier is ≥2 lower than its north neighbor's tier. This produces cliffs at major elevation changes while ignoring gentle slopes.
+5921| 
+5922| ## Systems Removed
+5923| 
+5924| | System | File(s) | Reason |
+5925| |--------|---------|--------|
+5926| | ElevationRenderer | `elevation_renderer.gd` | Image-based Y-offset stacking. Incompatible with TileMapLayer. |
+5927| | LayeredChunkRenderer | `layered_chunk_renderer.gd` | Wrapper for ElevationRenderer. |
+5928| | LayeredTilesetLoader | `layered_tileset_loader.gd` | Loads terrain_v3 only used by ElevationRenderer. |
+5929| | SurfaceLayerCompositor | `surface_layer_compositor.gd` | Disabled ground cover. Premature. |
+5930| | CliffTileLoader | `cliff_tile_loader.gd` | Loads cliff tiles for ElevationRenderer. |
+5931| | DeferredRenderer | `deferred_renderer.gd` | Legacy Image renderer. Dead. |
+5932| | TilesetRenderer | `tileset_renderer.gd` | Legacy wang renderer. Dead. |
+5933| | Mode7Ground | `scripts/visual/Mode7Ground.gd` | Experimental. Dead. |
+5934| | SpriteStack | `scripts/visual/SpriteStack.gd` | Experimental. Dead. |
+5935| | OccluderLoader | `scripts/visual/OccluderLoader.gd` | Experimental. Dead. |
+5936| 
+5937| Legacy code paths in TileMapTerrainRenderer (~500 lines: `build_chunk_image`, `display_chunk_image`, wang tile cache, biome pairs, normal map shader) are also removed.
+5938| 
+5939| Legacy wiring in ChunkStreamer (~100 lines: `_layered_renderer`, shadow thread, `build_chunk_image_with_normals` C++ path) is removed.
+5940| 
+5941| Legacy wiring in CleanWorld.gd (~20 lines: `_layered_renderer` setup, shadow position updates) is removed.
+5942| 
+5943| ## Systems Kept (Unchanged)
+5944| 
+5945| | System | File |
+5946| |--------|------|
+5947| | OvermapGenerator | `overmap_generator.gd` |
+5948| | WorldCompiler + all layers | `world_compiler.gd` + layer scripts |
+5949| | NativeChunkCompiler | C++ GDExtension |
+5950| | ChunkData | `chunk_data.gd` (SIZE changes to 16) |
+5951| | ElevationGradientTable | `elevation_gradient_table.gd` |
+5952| | TerrainTilesetBuilder | `terrain_tileset_builder.gd` |
+5953| | Day/Night cycle | `day_night_cycle.gd` |
+5954| | terrain_v4 assets | `assets/catalog/terrain_v4/` |
+5955| | PlacementEngine + ObjectRenderer | Kept but disabled until terrain is solid |
+5956| 
+5957| ## TileMapTerrainRenderer (Rebuilt)
+5958| 
+5959| The new renderer is ~150 lines total:
+5960| 
+5961| ```gdscript
+5962| class_name TileMapTerrainRenderer
+5963| 
+5964| var _tileset: TileSet
+5965| var _terrain_builder: TerrainTilesetBuilder
+5966| var _layers: Dictionary  # "terrain" -> TileMapLayer node reference
+5967| 
+5968| func setup(tilemap_parent: Node2D) -> void:
+5969|     # Build TileSet from terrain_v4 assets
+5970|     ElevationGradientTable.load()
+5971|     _terrain_builder = TerrainTilesetBuilder.new()
+5972|     _tileset = _terrain_builder.build(32)
+5973|     _add_shading_and_cliff_sources()
+5974|     # Assign TileSet to all layers (found by name in scene tree)
+5975|     _layers = {
+5976|         "terrain": tilemap_parent.get_node("TerrainLayer"),
+5977|         "cliff": tilemap_parent.get_node("CliffLayer"),
+5978|         "shading": tilemap_parent.get_node("ShadingLayer"),
+5979|         "water": tilemap_parent.get_node("WaterLayer"),
+5980|         "road": tilemap_parent.get_node("RoadLayer"),
+5981|         "building": tilemap_parent.get_node("BuildingLayer"),
+5982|         "roof": tilemap_parent.get_node("RoofLayer"),
+5983|     }
+5984|     for layer in _layers.values():
+5985|         layer.tile_set = _tileset
+5986| 
+5987| func render_chunk(chunk: ChunkData) -> void:
+5988|     var ox = chunk.chunk_x * ChunkData.SIZE
+5989|     var oy = chunk.chunk_y * ChunkData.SIZE
+5990|     _render_terrain(chunk, ox, oy)
+5991|     _render_cliffs(chunk, ox, oy)
+5992|     _render_shading(chunk, ox, oy)
+5993| 
+5994| func clear_chunk(chunk_x: int, chunk_y: int) -> void:
+5995|     # Erase all cells in chunk bounds from all layers
+5996|     ...
+5997| ```
+5998| 
+5999| No legacy paths. No toggles. No Image blitting. No wang cache.
+6000| 
+6001| ## ChunkStreamer (Simplified)
+6002| 
+6003| ```gdscript
+6004| const GRID_RADIUS: int = 8  # 17x17 grid of 16x16 chunks
+6005| 
+6006| func _process_load_queue():
+6007|     # Compile chunk → render_chunk() → done
+6008|     # No layered_renderer, no shadow thread, no legacy image path
+6009| ```
+6010| 
+6011| ## Future Work (NOT in this spec)
+6012| 
+6013| These are deferred to future specs and will build ON TOP of the clean foundation:
+6014| 
+6015| - **Object rendering** (trees, bushes, rocks) — PlacementEngine + TerrainObjectRenderer, re-enabled once terrain is solid
+6016| - **Ground cover stacks** (100% coverage grass/debris/flora per the biome layer stack spec) — requires texture overlay shader or dense object placement
+6017| - **Building spatial rendering** — walls/floors/doors as tile structures
+6018| - **Collision/walkability** — physics layers on tiles
+6019| - **Water animation** — animated tile frames
+6020| - **Transition tileset generation** — filling gaps in the 19 existing transition pairs
+6021| 
+6022| ## Success Criteria
+6023| 
+6024| 1. Game loads in < 3 seconds
+6025| 2. Terrain shows correct surface per biome+elevation with smooth auto-tiled transitions
+6026| 3. Cliff wall tiles visible at major elevation drops
+6027| 4. Shading overlay visible (darker valleys, lighter ridges)
+6028| 5. All layers visible in Godot editor Scene panel
+6029| 6. No competing rendering systems — one clean pipeline
+6030| 7. ~1500 lines of code removed
+6031| 
+6032| 

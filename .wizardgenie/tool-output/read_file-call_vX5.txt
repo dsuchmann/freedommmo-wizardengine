@@ -1,0 +1,522 @@
+File: specs_combined.tmp.txt (lines 261-780 of 6032)
+
+261| 
+262| Each phase ends with a Godot F5 test:
+263| - Phase 1: Data model tests pass, grain stacks can be created/queried
+264| - Phase 2: Simulation ticks process, time system works
+265| - Phase 3: Click world map → see grain-stack-based terrain (still colored tiles)
+266| - Phase 4: Same terrain now renders with PixelLab sprites
+267| - Phase 5: Entity walks on terrain with layered equipment
+268| - Phase 6: Full game loop - login, explore, interact, persist
+269| 
+270| ---FILE: 2026-05-24-vertical-slice-design.md
+271| # Vertical Slice Design — Make the World Real
+272| 
+273| **Date**: 2026-05-24
+274| **Status**: Active
+275| **Priority**: #1 — blocks everything else
+276| 
+277| ## Problem Statement
+278| 
+279| FreedomMMO has 108 scripts and 42 systems but the game is "one atom deep." Terrain, structures, NPCs, and the player exist in disconnected layers:
+280| - Terrain is a colored pixel grid with no spatial meaning
+281| - Structures are brown ColorRect squares with no visual form
+282| - NPCs wander randomly with no relationship to the world
+283| - Player walks through everything — no collision
+284| 
+285| ## Goal
+286| 
+287| One village that works deeply across all systems. A player should be able to:
+288| 1. See a coherent village (buildings, roads, landmarks)
+289| 2. Walk around with collision (can't walk through walls/water)
+290| 3. See NPCs going about purposeful lives (walking to work, going home at night)
+291| 4. Interact with NPCs at meaningful locations (talk to blacksmith at forge)
+292| 5. Complete one full interaction loop (arrive → explore → talk → task → do it → consequences)
+293| 
+294| ## Phase 1: Walkability & Collision
+295| 
+296| ### WalkabilityGrid (new class)
+297| - Flat dictionary mapping `Vector2i(world_x, world_y) → float` movement cost
+298| - `-1.0` = impassable, `1.0` = normal, `0.5` = path (fast), `5.0` = difficult
+299| - Populated by terrain generation: water=-1, lava=-1, deep ocean=-1, mountain=3.0, sand=1.3, path=0.5, grass=1.0
+300| - Structures stamp their footprint: walls=-1, floors=1.0, doors=0.8
+301| - Queried by player movement AND NPC pathfinding
+302| 
+303| ### Player Collision
+304| - Before moving, check `WalkabilityGrid.can_move_to(target_pos)` 
+305| - Slide along walls (try X-only, then Y-only if diagonal blocked)
+306| - Movement speed multiplied by walkability cost
+307| 
+308| ### Integration
+309| - TerrainGenerator populates walkability during cell generation
+310| - StructureSystem stamps walkability when structures placed
+311| - Pathfinding._get_movement_cost() reads WalkabilityGrid instead of raw grain stacks
+312| 
+313| ## Phase 2: Structure Visual Rendering
+314| 
+315| ### StructureRenderer (new class)
+316| Each structure type gets a visual definition:
+317| ```
+318| house: 3x3 footprint
+319|   ████  (wall tiles — brown/stone)
+320|   █  █  (wall + door opening on south side)
+321|   ████
+322|   
+323| forge: 2x2 footprint
+324|   ██  (dark stone walls)
+325|   █░  (wall + orange glow door)
+326|   
+327| market_stall: 2x1
+328|   ██  (wooden frame)
+329|   
+330| well: 1x1
+331|   ○   (stone circle)
+332|   
+333| watchtower: 2x2
+334|   ██  (tall stone)
+335|   ██
+336| ```
+337| 
+338| ### Rendering Approach
+339| - Draw structure tiles directly onto the cell Image during/after terrain rendering
+340| - Structures at z_index above terrain, below NPCs
+341| - Structure tiles are pixel colors drawn into the image (matching the 1px-per-tile approach)
+342| - Later: replace with actual tileset sprites when PixelLab tilesets are integrated
+343| 
+344| ### Building Interiors
+345| - Door tile is walkable — NPCs/player can enter
+346| - Interior floor tiles replace terrain underneath structure footprint
+347| - Later: interior rooms with furniture as sub-structures
+348| 
+349| ## Phase 3: Road/Path Network
+350| 
+351| ### PathNetworkGenerator (new class or extension of VillageGenerator)
+352| - After structures placed, connect them with paths
+353| - Algorithm: from each structure, create path tiles toward village center (well)
+354| - Path tiles: lower movement cost (0.5), visually distinct (lighter brown/cobblestone color)
+355| - Inter-village roads: connect village centers with wider path
+356| 
+357| ### Rendering
+358| - Path tiles drawn into terrain image during generation
+359| - Terrain generator already has `_has_path()` — extend this to include village-generated paths
+360| 
+361| ## Phase 4: NPC Spatial Coherence
+362| 
+363| ### Structure Assignment
+364| - VillageGenerator assigns each NPC a `home_structure_id` and `work_structure_id`
+365| - EntitySpawner data dict gets `home_structure_id`, `work_structure_id` fields
+366| - Blacksmith → forge, merchant → market_stall, guard → watchtower, farmer → farm_plot, villager → house
+367| 
+368| ### Schedule-Driven Movement
+369| - NPCBehavior._execute_activity() changes:
+370|   - "sleep" → pathfind to home_structure position
+371|   - "work"/"farm"/"trade" → pathfind to work_structure position
+372|   - "eat"/"rest" → pathfind to home_structure position
+373|   - "socialize" → pathfind to village center (well) or nearest NPC's location
+374|   - "patrol" → cycle through village perimeter points
+375| 
+376| ### Path Preference
+377| - Pathfinding cost for path tiles = 0.5 (NPCs prefer paths)
+378| - NPCs walk on roads between structures instead of cutting through terrain
+379| 
+380| ## Phase 5: Layered Character Rendering
+381| 
+382| ### PixelLab Generation Pipeline
+383| 1. Generate **nude base bodies** per species × gender (8 base sprites minimum):
+384|    - Human male, Human female, Elf male, Elf female, Dwarf male, Dwarf female, Orc male, Orc female
+385|    - Full anatomical detail, diverse skin tones, species-specific traits
+386|    - 48x48, 8 directions, low top-down view
+387| 
+388| 2. Generate **equipment overlays** as separate transparent sprites:
+389|    - Clothing layer: tunic, dress, robe, pants
+390|    - Armor layer: leather, chainmail, plate
+391|    - Weapon layer: sword, axe, bow, staff, pick
+392|    - Head layer: helmet, hat, hood, crown
+393| 
+394| 3. **ComposableRenderer** composites at runtime:
+395|    - base_body + clothing + armor + weapon + head + effects → final texture
+396|    - Equipment changes → re-composite
+397|    - Stripping equipment → shows base body
+398| 
+399| ### Technical Requirements
+400| - All sprites: 48x48px, 8 directions, consistent palette
+401| - Overlays: transparent background, aligned to base body skeleton
+402| - Equipment state in EntityBody drives which overlays are composited
+403| 
+404| ## Non-Negotiables
+405| 
+406| - **Never hardcode**: All village positions, NPC names, structure layouts, item stats generated from systems
+407| - **GDScript safety**: Use `=` not `:=` for Dictionary.get() returns
+408| - **Depth first**: Each phase must WORK before moving to the next — no more skeleton code
+409| - **DevBox workflow**: Each phase = 1 DevBox run with PR
+410| 
+411| ---FILE: 2026-05-24-visual-vertical-slice-design.md
+412| # Visual Vertical Slice — Reference-Quality Village Clearing
+413| 
+414| ## Goal
+415| Make ONE small area (the spawn village) look like the reference pixel art games. All visual layers working together: ground terrain, paths, structures, objects, decorations, lighting, characters.
+416| 
+417| ## Target Quality
+418| - Forest path reference: lush trees with visible trunks/canopy as large sprites, mushrooms, rocks, grass variation, dirt path with texture
+419| - Town square reference: stone/wood buildings with roofs/walls/doors as composed sprites, cobblestone streets, fountains, market stalls, trees, decorative objects
+420| 
+421| ## Architecture: 5 Rendering Layers
+422| 
+423| ### L1: Ground (TileMapLayer, z_index=-1)
+424| - Single TileMapLayer with pro tiles (grass, water, forest floor, etc.)
+425| - Per-tile biome selection from grain type
+426| - Scale 0.25 (32px tiles rendered at 8px to match coordinate system)
+427| 
+428| ### L2: Paths (TileMapLayer, z_index=0) 
+429| - Separate TileMapLayer for paths using dirt_path and stone_path pro tiles
+430| - Placed from village path data (WorldManager.village_gen.all_path_tiles)
+431| 
+432| ### L3: Structures (Sprite2D compositions, z_index=1-3)
+433| - Each building = grid of tile sprites (wall, roof, floor, door)
+434| - SpriteStructureRenderer already built — needs pro tile textures wired in
+435| - Roof tiles at z_index=3, walls at z_index=2
+436| 
+437| ### L4: Objects & Decorations (Sprite2D, z_index=2-4)  
+438| - PixelLab nature sprites (9 trees/rocks/bushes) as world objects
+439| - PixelLab furniture sprites (15) placed inside/near structures
+440| - Decoration tiles (fence, well, campfire, fountain) near structures
+441| - SpriteObjectRenderer already built — loads from assets/objects/nature/
+442| 
+443| ### L5: Lighting & Atmosphere (PointLight2D + CanvasModulate + particles)
+444| - Player warm glow (already built)
+445| - Structure lights — campfire/forge orange, house window warm (already built)
+446| - Ambient particles — pollen day, fireflies night (already built)
+447| - Day/night CanvasModulate (already built)
+448| 
+449| ## Asset Pipeline
+450| 1. PixelLab create_tiles_pro for terrain tiles (DONE — 12 tiles)
+451| 2. PixelLab create_tiles_pro for building tiles (IN PROGRESS — 8 tiles)
+452| 3. PixelLab objects for nature/furniture/architecture (DONE — 89 sprites)
+453| 4. PixelLab characters for NPCs (DONE — 21 characters, 10 pro bodies)
+454| 
+455| ## Implementation Order
+456| 1. Wire pro tiles into TileMapRenderer (replace old clean tilesets)
+457| 2. Add path TileMapLayer using dirt_path tile
+458| 3. Wire PixelLab nature sprites into SpriteObjectRenderer 
+459| 4. Wire building pro tiles into SpriteStructureRenderer
+460| 5. Add decoration placement around structures
+461| 6. Verify all 5 layers compose correctly in the village area
+462| 
+463| ---FILE: 2026-05-24-world-compiler-design.md
+464| # World Compiler Architecture — Layered Emergent World Generation
+465| 
+466| **Date**: 2026-05-24
+467| **Status**: Active
+468| **Priority**: #1 — replaces current scatter-placement worldgen
+469| **Based on**: Deep research report + Freedom design docs + freedommmo specs
+470| 
+471| ## Problem Statement
+472| 
+473| The current world generation produces visual chaos and freezes Godot:
+474| 
+475| 1. **Scatter placement**: Objects placed randomly on flat terrain with no spatial logic
+476| 2. **Buildings as sprites**: Single PNGs dropped on terrain — no interiors, no walls, no doors
+477| 3. **Node explosion**: ~250-350 Sprite2D nodes created synchronously on one frame → freeze
+478| 4. **No spatial coherence**: NPCs float randomly, roads don't exist, nothing connects to anything
+479| 5. **No determinism**: Different runs produce different chaos — no seed-based regression
+480| 
+481| ## Solution: Layered World Compiler
+482| 
+483| Replace scatter-placement with a **deterministic compilation pipeline** where each layer consumes the output of previous layers. Every world feature has a reason to be where it is. Same seed = same world. Every layer has debug views and validation.
+484| 
+485| ## Core Rules
+486| 
+487| 1. **Claude may author generators, schemas, importers, validators, tests, and debug scenes. Claude may NOT directly place final world content from prose.** All content emerges from deterministic maps, feature lists, and entity graphs.
+488| 2. **Buildings are spatial structures, not sprites.** Walls are impassable tiles. Doors are passable gaps. Interiors exist on the world grid. Roofs fade when entered. No loading screens.
+489| 3. **Every placed feature stores reason codes.** A settlement exists because of water access + fertile land + road junction, not because of `randi_range()`.
+490| 4. **Same seed + same compiler version = identical world.** Hash-verified determinism.
+491| 5. **Each layer has typed inputs, typed outputs, debug views, and validation tests.**
+492| 
+493| ## Pipeline Dependency Order
+494| 
+495| ```
+496| Seed
+497|  ├─→ L1: Elevation (continental noise + ridges)
+498|  │    └─→ L2: Ocean Mask (sea threshold + coastlines)
+499|  │         ├─→ L3: Drainage Preprocessing (Priority-Flood pit handling)
+500|  │         │    └─→ L4: Rivers & Lakes (D8 flow + accumulation)
+501|  │         └─→ L5: Climate (temperature + precipitation)
+502|  │              └─→ L6: Biomes (Whittaker lookup)
+503|  │                   ├─→ L7: Soil & Fertility
+504|  │                   │    └─→ L8: Vegetation (density + species)
+505|  │                   └─→ L9: Coastal Materials (beaches, dunes, cliffs)
+506|  │
+507|  ├─→ L10: Roads & Paths (A* least-cost on terrain cost map)
+508|  ├─→ L11: Settlements & Ports (scored suitability + reason codes)
+509|  │    └─→ L12: Farms & Industry (resource + transport logic)
+510|  │
+511|  ├─→ L13: POIs (explainable triggers: waterfalls, crossroads, ruins)
+512|  └─→ L14: Event Log & Narrative Interpreter
+513| ```
+514| 
+515| ## Layer Specifications
+516| 
+517| ### L1: Elevation
+518| 
+519| **Inputs**: World seed, chunk coordinates
+520| **Outputs**: Float32 elevation grid, mountain mask, slope grid
+521| **Algorithm**: Hash-derived sub-seeds → multiple FastNoiseLite channels:
+522| - Low-frequency simplex + domain warp for continents
+523| - Ridged fractal for mountain spines
+524| - Cellular breakup for regions
+525| **Validation**: Border seams stable across chunk reload; no one-cell spikes; mountain mask coherent at multi-chunk scale
+526| **Debug view**: Elevation heatmap (smooth continental massing, ridges, valleys)
+527| **Failure mode**: "Noise confetti" — when octave weights are wrong, mountains become pepper noise
+528| 
+529| ### L2: Ocean Mask
+530| 
+531| **Inputs**: Elevation grid, sea-level parameter
+532| **Outputs**: Binary ocean/land mask, coastline class map
+533| **Algorithm**: Apply sea threshold. Coastline classes (cliff, beach, marsh) derived from slope at coast edge.
+534| **Validation**: Coastline continuous; all ocean connected to world edge unless explicit inland sea
+535| **Debug view**: Clean coastlines, valid inland seas only by rule
+536| **Failure mode**: Pepper-noise lakes when threshold is at noise floor
+537| 
+538| ### L3: Drainage Preprocessing
+539| 
+540| **Inputs**: Elevation grid, ocean mask
+541| **Outputs**: Hydrologically corrected elevation, basin IDs
+542| **Algorithm**: Priority-Flood (Barnes et al.) — guarantees drainage after preprocessing. Every land cell drains to outlet or explicit terminal basin.
+543| **Validation**: No unflagged inland pits; every cell has drainage path
+544| **Debug view**: Basin ID coloring (large coherent drainage basins)
+545| **Failure mode**: Fragmented micro-basins everywhere
+546| 
+547| ### L4: Rivers & Lakes
+548| 
+549| **Inputs**: Corrected elevation, basin IDs, ocean mask
+550| **Outputs**: River polylines with order (Strahler), lake polygons, outlets
+551| **Algorithm**: D8 flow direction (steepest downslope neighbor). Rivers start above configurable accumulation threshold. Lakes form in closed depressions or terminal basins.
+552| **Validation**: River elevation decreases monotonically to outlet; lakes have explicit outlet or terminal status; every river mouth classified
+553| **Debug view**: River order visualization (thickening channels downstream)
+554| **Failure mode**: Rivers originating from tiny flat cells; rivers flowing uphill
+555| 
+556| ### L5: Climate
+557| 
+558| **Inputs**: Latitude, elevation, ocean distance, mountain barriers, water bodies
+559| **Outputs**: Temperature grid, precipitation grid, seasonality scalars
+560| **Algorithm**: Latitude baseline → elevation penalty → moisture from coasts/water → rain-shadow reduction leeward of mountains
+561| **Validation**: No frozen equatorial lowlands unless altitude; no rainforest precipitation in deep rain shadows
+562| **Debug view**: Temperature and rainfall with legible latitude/elevation patterns
+563| **Failure mode**: Hot alpine peaks, wet rain-shadow deserts
+564| 
+565| ### L6: Biomes
+566| 
+567| **Inputs**: Temperature, precipitation, soil/water modifiers
+568| **Outputs**: Biome ID grid, ecotone mask
+569| **Algorithm**: Whittaker-style lookup table. Merge with ecotones where gradients are shallow. Data-driven, not nested if/else.
+570| **Validation**: Transition zones visible; assignment explainable from local climate
+571| **Debug view**: Biome map with coherent patches and visible transitions
+572| **Failure mode**: Checkerboard biome flicker from sharp thresholds
+573| 
+574| **Supported biomes**: grassland, forest, dense_forest, desert, mountains, tundra, swamp, savanna, taiga, tropical_forest, steppe, volcanic, beach, ocean, river, lake, arctic
+575| 
+576| ### L7: Soil & Fertility
+577| 
+578| **Inputs**: Elevation, slope, water proximity, floodplain deposition, biome
+579| **Outputs**: Soil class grid, fertility grid (0-255)
+580| **Algorithm**: Parent material from terrain class. Boost floodplains and river terraces. Suppress on steep rock, dunes, alpine.
+581| **Validation**: Fertility peaks in valleys/floodplains near stable water, not on steep mountain faces
+582| **Debug view**: Fertility heatmap
+583| **Failure mode**: Fertile cliff walls, barren floodplains
+584| 
+585| ### L8: Vegetation
+586| 
+587| **Inputs**: Biome, fertility, slope, water distance, disturbance events
+588| **Outputs**: Vegetation density grid, species class map, foliage feature list
+589| **Algorithm**: Separate potential vegetation (what could grow) from actual vegetation (what does grow after disturbance). Settlements and events reduce/reshape later.
+590| **Validation**: Forest density tracks fertile wet bands; scrub dominates dry coasts
+591| **Debug view**: Vegetation density with forest/scrub/barren bands
+592| **Failure mode**: Dense jungle on dunes, alpine scree with forests
+593| 
+594| ### L9: Coastal Materials
+595| 
+596| **Inputs**: Elevation, ocean mask, slope, wind/dryness heuristics, vegetation
+597| **Outputs**: Coast material grid (beach, cliff, marsh, dune), dune mask
+598| **Algorithm**: Beaches require coast adjacency + low slope. Dunes require coast + dryness + sparse vegetation.
+599| **Validation**: No sand on cliff coasts; dune fields never overwrite dense forest
+600| **Debug view**: Coast material classification
+601| **Failure mode**: Beaches on cliffs, dunes in forests
+602| 
+603| ### L10: Roads & Paths
+604| 
+605| **Inputs**: Terrain cost map, rivers, slope, vegetation, settlement locations
+606| **Outputs**: Trail graph, road graph, bridges/fords list
+607| **Algorithm**: AStarGrid2D for chunk-local least-cost routes. Penalize steep slopes, marsh, dense forest, river crossings without bridges.
+608| **Validation**: All graph edges have cost provenance; no road crosses impassable cells without crossing feature
+609| **Debug view**: Road cost map + road graph overlay
+610| **Failure mode**: Straight roads through swamps and cliffs
+611| 
+612| ### L11: Settlements & Ports
+613| 
+614| **Inputs**: Suitability maps (water, fertility, defensibility, trade centrality, climate), road network, coastline
+615| **Outputs**: Settlement entities with reason codes, port entities, building footprints
+616| **Algorithm**: Score cells by multiple criteria. Place settlements at local maxima. Ports require coast + navigable water + trade rationale. Size determined by resource capacity.
+617| 
+618| **Building compilation** (critical — buildings are spatial structures, not sprites):
+619| 1. Select building template by type + biome + settlement tier
+620| 2. Stamp wall tiles on world grid (impassable, walkability = -1)
+621| 3. Stamp floor tiles inside footprint (wood/stone, walkability = 1.0)
+622| 4. Place door gap in wall (walkability = 0.8)
+623| 5. Place interior features by building type rules (forge, bed, table, chest)
+624| 6. Add roof canopy at high z-index (alpha-fades when player enters)
+625| 7. Assign NPC slots (blacksmith → forge tile, sleeps → bed tile)
+626| 
+627| **Validation**: Every settlement has reason codes + reachable transport to exchange node
+628| **Debug view**: Settlement suitability heatmap + placed settlements with reason codes
+629| **Failure mode**: Settlements on bad terrain without rationale
+630| 
+631| ### L12: Farms & Industry
+632| 
+633| **Inputs**: Settlements, fertility, resource deposits, transport graph
+634| **Outputs**: Field polygons, extraction sites, workshops, throughput edges
+635| **Algorithm**: Farms expand outward from settlements into fertile accessible land. Industry anchors to resources and transport. All outputs are entities with production inputs/outputs.
+636| **Validation**: Each farm/industry node has owner, input requirements, transport rationale
+637| **Debug view**: Farm polygons + industry nodes + throughput connections
+638| **Failure mode**: Farms on mountains, mines with no transport path
+639| 
+640| ### L13: POIs
+641| 
+642| **Inputs**: Terrain anomalies, transport intersections, ruins logic, faction state
+643| **Outputs**: POI entities with trigger records, local compound bounds
+644| **Algorithm**: Spawn from explainable triggers: waterfalls, river crossings, mineral cues, trade junctions, isolated plateaus, abandoned settlements.
+645| **Validation**: No POI appears without a trigger record
+646| **Debug view**: POI markers with trigger type labels
+647| **Failure mode**: Random POIs with no spatial logic
+648| 
+649| ### L14: Event Log & Narrative Interpreter
+650| 
+651| **Inputs**: World ticks, entity state diffs, settlement/POI/economy events
+652| **Outputs**: Append-only event log, narrative artifacts (rumors, quests, chronicles)
+653| **Algorithm**: Log state changes as first-class data objects with causes, actors, location, effects. Interpreter reads events → generates narrative artifacts with provenance back to event IDs. Interpreter NEVER places facts directly.
+654| **Validation**: Every rumor/quest references event IDs and entity IDs; no free-floating narrative
+655| **Debug view**: Event density heatmap + provenance links
+656| **Failure mode**: Narrative artifacts with no source events
+657| 
+658| ## Building Architecture (Seamless Entry, No Loading Screens)
+659| 
+660| ### Building Template Schema
+661| ```json
+662| {
+663|   "template_id": "forge",
+664|   "category": "workshop",
+665|   "footprint": { "width": 4, "height": 5 },
+666|   "walls": {
+667|     "material": "stone",
+668|     "pattern": "perimeter",
+669|     "doors": [{ "side": "south", "offset": 1, "width": 1 }],
+670|     "windows": [{ "side": "east", "offset": 2 }]
+671|   },
+672|   "floor": { "material": "stone_slab" },
+673|   "roof": { "material": "thatch", "style": "peaked" },
+674|   "interior_features": [
+675|     { "type": "forge_station", "pos": [1, 1], "provides": ["smelting", "smithing"] },
+676|     { "type": "anvil", "pos": [2, 1], "provides": ["metalworking"] },
+677|     { "type": "workbench", "pos": [1, 2], "provides": ["crafting"] },
+678|     { "type": "storage_chest", "pos": [3, 3], "provides": ["storage"] },
+679|     { "type": "bed", "pos": [1, 4], "provides": ["rest"] }
+680|   ],
+681|   "requires": {
+682|     "settlement_tier_min": "village",
+683|     "population_min": 10,
+684|     "nearby": ["ore_deposit", "trade_route"]
+685|   },
+686|   "npc_slots": [
+687|     { "role": "blacksmith", "workplace": "forge_station", "sleep": "bed" }
+688|   ]
+689| }
+690| ```
+691| 
+692| ### Rendering Layers (Z-Order)
+693| | Z | Layer | Content | Visibility |
+694| |---|-------|---------|------------|
+695| | -1 | Terrain | Grass, dirt, stone tiles | Always |
+696| | 0 | Floor | Interior wood/stone planks | Always |
+697| | 1 | Ground objects | Barrels, flowers, rugs | Always |
+698| | 2 | Walls | Rendered as tile sprites, block movement | Always |
+699| | 3 | Entities | Player, NPCs, doors — y-sorted | Always |
+700| | 4 | Tall objects | Tree canopy, tall furniture | Always |
+701| | 5 | Roof canopy | Fades when player enters building | Alpha-fades |
+702| | 6 | Weather/particles | Rain, snow, lighting overlays | Always |
+703| 
+704| ### Roof Fade Logic
+705| When player's world position is inside a building footprint:
+706| - Lerp roof alpha from 1.0 → 0.0 over 0.3 seconds
+707| - Interior becomes visible
+708| - Interior lighting activates (warmer PointLight2D)
+709| - NPCs inside become visible and interactable
+710| 
+711| When player exits:
+712| - Lerp roof alpha from 0.0 → 1.0 over 0.3 seconds
+713| 
+714| ## Chunk System
+715| 
+716| ### Chunk Size
+717| 256x256 cells per chunk. Each cell = one world tile at 32px.
+718| 
+719| ### Chunk Schema
+720| ```json
+721| {
+722|   "chunk_id": "cx_004_cy_-003",
+723|   "world_seed": "world-2026-alpha",
+724|   "compiler_version": "0.1.0",
+725|   "origin_cell": [1024, -768],
+726|   "size_cells": [256, 256],
+727|   "layer_seeds": {
+728|     "elevation": "h_elev_a91d",
+729|     "hydrology": "h_hydro_0b74",
+730|     "climate": "h_clim_4ea1",
+731|     "civil": "h_civil_078c"
+732|   },
+733|   "grids": {
+734|     "elevation": { "encoding": "float32", "range": [-1.0, 1.0] },
+735|     "ocean_mask": { "encoding": "bitset" },
+736|     "flow_dir_d8": { "encoding": "uint8" },
+737|     "temperature": { "encoding": "float32" },
+738|     "precipitation": { "encoding": "float32" },
+739|     "biome_id": { "encoding": "uint16" },
+740|     "fertility": { "encoding": "uint8" },
+741|     "vegetation_density": { "encoding": "uint8" },
+742|     "walkability": { "encoding": "float32" },
+743|     "settlement_suitability": { "encoding": "uint16" }
+744|   },
+745|   "features": {
+746|     "rivers": [],
+747|     "lakes": [],
+748|     "roads": [],
+749|     "coast_segments": []
+750|   },
+751|   "entities": [],
+752|   "metrics": {
+753|     "hydrology_ok": true,
+754|     "connectivity_ok": true,
+755|     "deterministic_hash": "sha256:..."
+756|   }
+757| }
+758| ```
+759| 
+760| ### Deferred Rendering
+761| Chunks render across multiple frames to prevent freezes:
+762| 1. Frame 1: Generate grid data (pure computation, no nodes)
+763| 2. Frame 2: Render terrain TileMapLayer
+764| 3. Frame 3: Render floor tiles and walls
+765| 4. Frame 4: Render nature objects (trees, rocks)
+766| 5. Frame 5: Render decorations and ground details
+767| 6. Frame 6: Spawn NPC markers
+768| 7. Frame 7+: Spawn interior features as player approaches
+769| 
+770| Use `await get_tree().process_frame` between each phase. Never create >50 nodes per frame.
+771| 
+772| ## Integration with Existing Systems
+773| 
+774| ### What Gets Replaced
+775| | Current | Replaced By | Reason |
+776| |---------|-------------|--------|
+777| | terrain_generator.gd scatter | L1-L6 pipeline | Random noise → layered compilation |
+778| | village_generator.gd hardcoded offsets | L11 scored placement | Fixed offsets → suitability scoring |
+779| | feature_placement.gd random scatter | L8 vegetation + L13 POIs | Random → rule-based |
+780| | map_object_renderer.gd building sprites | L11 spatial structures | Sprite images → tile-based buildings with interiors |

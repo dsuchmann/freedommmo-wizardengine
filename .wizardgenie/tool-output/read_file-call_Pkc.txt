@@ -1,0 +1,802 @@
+File: specs_combined.tmp.txt (lines 3801-4600 of 6032)
+
+3801| ### Required transitions (~20 pairs):
+3802| 
+3803| **Elevation transitions (within biomes):**
+3804| - `ocean_water` ↔ `golden_sand` (shoreline) — EXISTS
+3805| - `golden_sand` ↔ `lush_grass` (beach→inland) — EXISTS
+3806| - `lush_grass` ↔ `dry_grass` (lowland→hills)
+3807| - `lush_grass` ↔ `forest_floor` (grassland→forest edge) — EXISTS
+3808| - `dry_grass` ↔ `grey_rock` (foothills→mountains)
+3809| - `grey_rock` ↔ `snow` (high altitude)
+3810| - `forest_floor` ↔ `grey_rock` (treeline)
+3811| - `forest_floor` ↔ `dark_humus` (forest→deep forest) — EXISTS
+3812| - `frozen_earth` ↔ `snow` (tundra→peaks)
+3813| - `glacial_ice` ↔ `snow` (arctic variation)
+3814| - `golden_sand` ↔ `dry_grass` (desert→scrubland) — EXISTS (desert_to_savanna)
+3815| - `volcanic_rock` ↔ `grey_rock` (volcanic→normal rock)
+3816| - `swamp_mud` ↔ `lush_grass` (swamp edge)
+3817| - `swamp_mud` ↔ `forest_floor` (swamp→forest)
+3818| 
+3819| **Cross-biome transitions (at biome boundaries):**
+3820| - `lush_grass` ↔ `golden_sand` (grassland↔desert boundary) — EXISTS
+3821| - `lush_grass` ↔ `frozen_earth` (temperate↔tundra)
+3822| - `dry_grass` ↔ `golden_sand` (steppe↔desert)
+3823| - `forest_floor` ↔ `frozen_earth` (taiga transition)
+3824| - `mystic_crystal` ↔ `grey_rock` (mystic boundary)
+3825| 
+3826| Of these ~20 pairs, 6 already exist from the transition tileset generation this session. ~14 need to be generated.
+3827| 
+3828| ## Biome Elevation Gradients
+3829| 
+3830| Each biome defines its gradient as an array of `{max_elevation, surface_id}` entries. All biomes converge to `snow` at peak elevations and `ocean_water` at sea level.
+3831| 
+3832| ```
+3833| grassland:
+3834|   0.38: ocean_water
+3835|   0.42: golden_sand
+3836|   0.55: lush_grass
+3837|   0.70: dry_grass
+3838|   0.82: grey_rock
+3839|   1.00: snow
+3840| 
+3841| desert:
+3842|   0.38: ocean_water
+3843|   0.42: golden_sand
+3844|   0.60: golden_sand
+3845|   0.75: dry_grass
+3846|   0.85: grey_rock
+3847|   1.00: snow
+3848| 
+3849| forest:
+3850|   0.38: ocean_water
+3851|   0.42: golden_sand
+3852|   0.48: lush_grass
+3853|   0.65: forest_floor
+3854|   0.80: grey_rock
+3855|   1.00: snow
+3856| 
+3857| dense_forest:
+3858|   0.38: ocean_water
+3859|   0.42: golden_sand
+3860|   0.46: lush_grass
+3861|   0.55: forest_floor
+3862|   0.70: dark_humus
+3863|   0.82: grey_rock
+3864|   1.00: snow
+3865| 
+3866| tundra:
+3867|   0.38: ocean_water
+3868|   0.42: frozen_earth
+3869|   0.65: frozen_earth
+3870|   0.80: snow
+3871|   1.00: glacial_ice
+3872| 
+3873| arctic:
+3874|   0.38: ocean_water
+3875|   0.42: frozen_earth
+3876|   0.55: snow
+3877|   0.75: glacial_ice
+3878|   1.00: glacial_ice
+3879| 
+3880| taiga:
+3881|   0.38: ocean_water
+3882|   0.42: frozen_earth
+3883|   0.50: forest_floor
+3884|   0.70: frozen_earth
+3885|   0.85: snow
+3886|   1.00: glacial_ice
+3887| 
+3888| mountains:
+3889|   0.38: ocean_water
+3890|   0.42: golden_sand
+3891|   0.50: dry_grass
+3892|   0.65: grey_rock
+3893|   0.85: snow
+3894|   1.00: glacial_ice
+3895| 
+3896| steppe:
+3897|   0.38: ocean_water
+3898|   0.42: golden_sand
+3899|   0.55: dry_grass
+3900|   0.72: grey_rock
+3901|   0.88: snow
+3902|   1.00: snow
+3903| 
+3904| savanna:
+3905|   0.38: ocean_water
+3906|   0.42: golden_sand
+3907|   0.55: dry_grass
+3908|   0.70: golden_sand
+3909|   0.82: grey_rock
+3910|   1.00: snow
+3911| 
+3912| tropical_forest:
+3913|   0.38: ocean_water
+3914|   0.42: golden_sand
+3915|   0.48: lush_grass
+3916|   0.60: forest_floor
+3917|   0.72: dark_humus
+3918|   0.85: grey_rock
+3919|   1.00: snow
+3920| 
+3921| swamp:
+3922|   0.38: ocean_water
+3923|   0.42: swamp_mud
+3924|   0.55: swamp_mud
+3925|   0.65: forest_floor
+3926|   0.80: grey_rock
+3927|   1.00: snow
+3928| 
+3929| volcanic:
+3930|   0.38: ocean_water
+3931|   0.42: golden_sand
+3932|   0.55: volcanic_rock
+3933|   0.75: grey_rock
+3934|   0.88: snow
+3935|   1.00: snow
+3936| 
+3937| mystic:
+3938|   0.38: ocean_water
+3939|   0.42: mystic_crystal
+3940|   0.60: mystic_crystal
+3941|   0.75: grey_rock
+3942|   0.90: snow
+3943|   1.00: glacial_ice
+3944| 
+3945| ocean:
+3946|   1.00: ocean_water
+3947| 
+3948| beach:
+3949|   0.38: ocean_water
+3950|   0.44: golden_sand
+3951|   1.00: golden_sand
+3952| 
+3953| lake:
+3954|   1.00: ocean_water
+3955| 
+3956| river:
+3957|   1.00: ocean_water
+3958| ```
+3959| 
+3960| ## Wang Index Computation
+3961| 
+3962| For each tile at (x, y):
+3963| 
+3964| 1. Sample elevation at 4 corners: TL(x,y), TR(x+1,y), BL(x,y+1), BR(x+1,y+1)
+3965| 2. Look up biome at tile center from `chunk.biome_id`
+3966| 3. Map each corner's elevation through the biome's gradient to get a surface
+3967| 4. If all 4 corners → same surface: use self-tileset, wang_index from spatial hash
+3968| 5. If corners span 2 surfaces: use transition tileset, wang_index from corner classification (4-bit: TL=bit0, TR=bit1, BL=bit2, BR=bit3, where 0=lower surface, 1=upper surface)
+3969| 6. If corners span 3+ surfaces: clamp to the 2 most common surfaces
+3970| 
+3971| Cross-chunk corner sampling: when a corner falls outside the current chunk, look up elevation from the adjacent chunk via the chunk dictionary (already supported by ChunkStreamer).
+3972| 
+3973| ## Architecture
+3974| 
+3975| ### New Components
+3976| 
+3977| **`ElevationGradientTable`** — Static data class (GDScript). Holds all biome gradient definitions and the surface→tileset directory mappings. Loaded once at startup. Pure data, no logic.
+3978| 
+3979| **`HypergraphTileResolver`** — Given tile position, biome, and 4 corner elevations, returns `{surface_or_pair, wang_index, tileset_path}`. Handles self-tile vs transition vs cross-biome cases. Stateless — all inputs passed in, no side effects.
+3980| 
+3981| ### Modified Components
+3982| 
+3983| **`LayeredChunkRenderer`** — Replace `_compute_wang_index` stub and `_build_layer_image` with calls to `HypergraphTileResolver`. Tile lookup changes from `biome_name + layer_name` to `surface_id` or `surface_pair`.
+3984| 
+3985| **`LayeredTilesetLoader`** — Change from biome/layer directory structure to surface-based: `surfaces/{surface_id}/wang_*.png` for self-tilesets, `transitions/{lower}_{upper}/wang_*.png` for transitions.
+3986| 
+3987| ### Unchanged Components
+3988| 
+3989| - `NativeChunkCompiler` (C++) — still produces elevation, biome_id, normals
+3990| - `ChunkStreamer` — still streams 7×7 grid, still emits `chunk_loaded`
+3991| - `TileMapTerrainRenderer` — old renderer stays at z_index=-2 as fallback
+3992| - `DayNightCycle`, lighting, overmap — all unchanged
+3993| 
+3994| ## Asset Directory Structure
+3995| 
+3996| ```
+3997| assets/catalog/terrain_v3/
+3998|   surfaces/
+3999|     ocean_water/
+4000|       wang_0.png ... wang_15.png
+4001|       manifest.json
+4002|     lush_grass/
+4003|       wang_0.png ... wang_15.png
+4004|       manifest.json
+4005|     ...
+4006|   transitions/
+4007|     ocean_water__golden_sand/
+4008|       wang_0.png ... wang_15.png
+4009|       manifest.json
+4010|     lush_grass__dry_grass/
+4011|       wang_0.png ... wang_15.png
+4012|       manifest.json
+4013|     ...
+4014|   gradients.json    # All biome gradient definitions
+4015| ```
+4016| 
+4017| The terrain_v2 L1 base tilesets are copied/renamed into `surfaces/`. Existing transition tilesets are copied into `transitions/`. New transitions are generated via PixelLab.
+4018| 
+4019| ## Future: C++ Migration
+4020| 
+4021| Once all biome gradients are finalized and visually approved, port `HypergraphTileResolver` logic into `native_chunk_compiler.cpp`. The C++ compiler would output surface_id per tile (instead of biome_id) and compute Wang indices from elevation corners during `build_chunk_image`. This eliminates the GDScript overlay renderer entirely.
+4022| 
+4023| **Trigger condition:** All 18 biome gradients look correct in-game AND all transition tilesets are generated and quality-approved.
+4024| 
+4025| ## Asset Generation Summary
+4026| 
+4027| | Category | Count | Status |
+4028| |---|---|---|
+4029| | Surface self-tilesets | 13 | All exist (rename from L1 bases) |
+4030| | Transition tilesets | ~20 | 6 exist, ~14 to generate |
+4031| | Biome gradients | 18 | Define in gradients.json |
+4032| | Total tiles | ~528 | ~208 self + ~320 transition |
+4033| 
+4034| ---FILE: 2026-05-27-terrain-shading-design.md
+4035| # Layer -1: Terrain Shading Design
+4036| 
+4037| **Date:** 2026-05-27
+4038| **Status:** Approved
+4039| **Scope:** Wire existing C++ normal maps + AO to rendering, add directional lighting, fix day/night transitions
+4040| 
+4041| ## Context
+4042| 
+4043| The elevation renderer stacks terrain at different Y-offsets, creating visible height. But there's no dynamic shading — no sense of sun direction, no slope highlighting, no ambient depth. The C++ `NativeChunkCompiler` already generates normal maps and baked AO, but they're not connected to rendering.
+4044| 
+4045| Day/night transitions have abrupt color snaps at 6:00 AM and golden hour→night due to piecewise linear interpolation with hard breakpoints.
+4046| 
+4047| ## Architecture
+4048| 
+4049| ### Approach: Hybrid (Godot Native Normals + AO)
+4050| 
+4051| 1. **Godot's built-in 2D lighting** handles sun/moon via DirectionalLight2D + normal maps
+4052| 2. **C++ baked AO** provides static ambient depth (valleys dark, ridges bright) — always visible regardless of sun position
+4053| 3. **DayNightCycle** drives all light parameters (angle, color, energy)
+4054| 
+4055| ### Components
+4056| 
+4057| #### 1. DirectionalLight2D (Sun + Moon)
+4058| 
+4059| Two `DirectionalLight2D` nodes, children of the scene root:
+4060| 
+4061| - **Sun light**: angle from `DayNightCycle.get_sun_angle()`, color from `get_sun_color()`, energy from `get_sun_energy()`. Active during day. Slopes facing the sun are bright, slopes facing away are dark.
+4062| - **Moon light**: opposite angle, blue-white color `(0.4, 0.5, 0.85)`, energy from `get_moonlight_energy()`. Active during night. Subtle — provides directionality to moonlit terrain.
+4063| 
+4064| Both lights use `height = 0.6` for a moderate incidence angle that creates visible slope shading without extreme shadows.
+4065| 
+4066| #### 2. Normal Map Wiring
+4067| 
+4068| The C++ compiler already returns `{"image": terrain, "normal_map": normal_map}` from `build_chunk_image_with_normals()`.
+4069| 
+4070| For elevation sprites (created by `LayeredChunkRenderer.display_prerendered()`):
+4071| - Create a `CanvasTexture` instead of a raw `ImageTexture`
+4072| - Assign the terrain image as `diffuse_texture`
+4073| - Assign the normal map as `normal_texture`
+4074| - Godot's 2D lighting system automatically uses the normals for directional light response
+4075| 
+4076| For the elevation renderer's per-level sprites:
+4077| - Generate a per-level normal map alongside the per-level terrain image in `ElevationRenderer.render_chunk()`
+4078| - Use the same elevation data that's already available to compute normals: `nx = elev[left] - elev[right]`, `ny = elev[up] - elev[down]`, `nz = 1.0`, normalized and encoded as RGB
+4079| 
+4080| #### 3. AO Integration
+4081| 
+4082| The C++ compiler already bakes AO into the terrain image (valleys -15%, ridges +8%). This is sufficient for the base level. For elevation sprites, the darkened cliff walls (`_get_dark_tile`) serve as basic AO.
+4083| 
+4084| No additional AO overlay needed — the existing bake provides ambient depth.
+4085| 
+4086| #### 4. Day/Night Transition Fix
+4087| 
+4088| **Problem:** Piecewise linear lerps in `get_sun_color()` and `get_ambient_color()` create visible discontinuities ("knees") where two linear segments meet.
+4089| 
+4090| **Fix:** Replace all `lerp` calls with `smoothstep` interpolation:
+4091| 
+4092| ```gdscript
+4093| func _smoothlerp(a: Color, b: Color, t: float) -> Color:
+4094|     var st = t * t * (3.0 - 2.0 * t)  # smoothstep
+4095|     return a.lerp(b, st)
+4096| ```
+4097| 
+4098| **Extended time boundaries:**
+4099| 
+4100| | Period | Current | New |
+4101| |--------|---------|-----|
+4102| | Dawn start | 4:30 | 4:00 |
+4103| | Dawn end | 7:00 | 8:00 |
+4104| | Golden start | 15:00 | 14:30 |
+4105| | Sunset | 18:30 | 19:00 |
+4106| | Dusk end | 20:30 | 21:30 |
+4107| 
+4108| Apply to both `get_sun_color()` and `get_ambient_color()` with matching boundaries so they transition in sync.
+4109| 
+4110| #### 5. Moonlight Spotlight Fix
+4111| 
+4112| Current: `texture_scale = 1.0` (reduced from 14.0). Still visible as a distinct circle.
+4113| 
+4114| Fix:
+4115| - `texture_scale = 1.2` — moderate pool of light around player
+4116| - Cubic falloff instead of quadratic: `alpha = pow(clamp(1.0 - dist, 0.0, 1.0), 3.0)` — steep center dropoff with a long, gentle tail that blends into the ambient darkness
+4117| - `blend_mode = BLEND_MODE_ADD` (keep) — adds to ambient rather than replacing
+4118| - `energy` driven by `get_moonlight_energy()` (keep)
+4119| 
+4120| #### 6. CanvasModulate Update
+4121| 
+4122| Current: `Color(ambient.r * b, ambient.g * b, ambient.b * b)` — multiplies ambient tint by brightness.
+4123| 
+4124| This is correct. The ambient color from the updated `get_ambient_color()` (with smoothstep + extended boundaries) will automatically produce the golden hour warmth, deep blue nights, and warm peach sunrises.
+4125| 
+4126| ## Files Modified
+4127| 
+4128| | File | Change |
+4129| |------|--------|
+4130| | `scripts/core/day_night_cycle.gd` | Smoothstep interpolation, extended boundaries |
+4131| | `scripts/CleanWorld.gd` | Add DirectionalLight2D sun + moon, fix spotlight falloff |
+4132| | `scripts/core/world_compiler/layered_chunk_renderer.gd` | Use CanvasTexture with normal maps for elevation sprites |
+4133| | `scripts/core/world_compiler/elevation_renderer.gd` | Generate per-level normal map alongside terrain image |
+4134| | `scripts/core/chunk_streamer.gd` | Pass normal map data through to display_prerendered |
+4135| 
+4136| ## What NOT to Change
+4137| 
+4138| - C++ NativeChunkCompiler — normal map generation already works
+4139| - ElevationGradientTable — surface selection logic is correct
+4140| - LayeredTilesetLoader — tile loading is correct
+4141| - Wang mask system — edge shapes working
+4142| 
+4143| ## Success Criteria
+4144| 
+4145| - Sun visibly illuminates terrain slopes — morning light from east, evening from west
+4146| - Cliff faces are darker on the shadow side, brighter on the sun side
+4147| - Dawn/dusk transitions flow smoothly with no visible color snaps
+4148| - Golden hour feels warm and opinionated
+4149| - Night feels deep blue with subtle moonlight directionality
+4150| - Moonlight spotlight has a soft, diffuse edge — no visible circle boundary
+4151| - No performance regression — normal map assignment is GPU-side, zero CPU cost
+4152| 
+4153| ---FILE: 2026-05-28-pixellab-audit-plan.md
+4154| # PixelLab Object Audit Plan
+4155| 
+4156| ## Status: IN PROGRESS
+4157| 
+4158| ## Task
+4159| Audit all ~3,023 objects in PixelLab account. Download, review, organize, or delete every one.
+4160| 
+4161| ## Rules (from user, non-negotiable)
+4162| 1. Use `create_1_direction_object` for batches (64 at 32px, 16 at 64px)
+4163| 2. Every object must be: correct perspective (top-down), no embedded shadows, proportional size, consistent art style
+4164| 3. Trees ≠ same size as flowers. Trees=64-96px, bushes=32-48px, flowers/grass/pebbles=32px
+4165| 4. Track everything: generated, pending, left in queue, what's next
+4166| 5. Objects need correct IDs for animation and variant creation
+4167| 6. Store at `assets/catalog/terrain_objects/{category}/{object_id}/variants/v{N}/base.png`
+4168| 
+4169| ## Object Categories from Biome Affinities (146 objects, 439 variants needed)
+4170| Source: `data/terrain_objects/affinities/*.json`
+4171| 
+4172| ### High Priority (4 variants each)
+4173| - sheet_ice, fresh_snow, wind_sand_drift, oak_tree, tall_grass, short_grass
+4174| - lake_ripple, granite_boulder, ocean_wave, river_current
+4175| - pine_tree, spruce_tree, jungle_tree, volcanic_rock
+4176| 
+4177| ### Medium Priority (3 variants each)
+4178| - packed_snow, melting_snow, frost_pattern, icicle, ice_patch
+4179| - crystal_cluster, pebble, mossy_boulder, dead_tree
+4180| 
+4181| ### Standard (1-2 variants)
+4182| - All remaining biome-referenced objects (~115 types)
+4183| 
+4184| ## Script-Generated Objects (~2,500+)
+4185| These were created by the broken `pixellab_runner.py` using the `/v2/` API without style params.
+4186| - Likely inconsistent art styles, wrong perspectives, embedded shadows
+4187| - Most should be DELETED or IGNORED
+4188| - Some may be usable — need visual review
+4189| 
+4190| ## MCP-Generated Objects (~150)
+4191| Created via `create_map_object` with correct style params.
+4192| - Already downloaded to disk (~145 sprites)
+4193| - Need organization into correct paths
+4194| 
+4195| ## Batch Review Objects (10 pending)
+4196| Created via `create_1_direction_object` — 64 or 16 candidates each.
+4197| - grass, wildflower, pebble, fern, bush, snow, mushroom (64 candidates each)
+4198| - pine, oak, boulder (16 candidates each)
+4199| - User selects best variants in PixelLab UI
+4200| - Then download selected frames via `select_object_frames`
+4201| 
+4202| ## Next Steps
+4203| 1. List all objects, categorize by source (script vs MCP vs batch)
+4204| 2. Delete script-generated garbage
+4205| 3. Review batch candidates, select best
+4206| 4. Download and organize selected
+4207| 5. Generate remaining objects from biome affinity list
+4208| 6. Continue until 439 variants complete
+4209| 
+4210| ---FILE: 2026-05-28-terrain-object-system-design.md
+4211| # Terrain Object System Design
+4212| 
+4213| **Date:** 2026-05-28
+4214| **Status:** Approved
+4215| **Scope:** Object taxonomy, interaction framework, biome placement, animation system, generation pipeline
+4216| 
+4217| ## Overview
+4218| 
+4219| Every biome in FreedomMMO is composed of atomic, layered, animated objects — not flat textures. This spec defines the three-axis relational model that governs what objects exist, what can happen to them, where they appear, and how they're generated at scale.
+4220| 
+4221| The three axes:
+4222| 1. **Object Catalog** — what exists (animate/inanimate, lifecycle phases, durability stages)
+4223| 2. **Interaction Schema** — what can happen to it (trigger conditions, effects, animation specs)
+4224| 3. **Biome Affinity Matrix** — where it appears (density, clustering, elevation/moisture rules, transitions)
+4225| 
+4226| These are supported by:
+4227| - **Placement Engine** — deterministic seeded placement + sparse time-decaying deltas
+4228| - **Animation Framework** — priority-based resolution, compositing, blend modes
+4229| - **Generation Pipeline** — systematic PixelLab orchestration across the full matrix
+4230| - **File Organization** — directory structure with extension point documentation for future agents
+4231| 
+4232| Target scale: ~200+ base object types, ~30 interaction types, ~6 lifecycle phases average = **4,000-6,000 unique animation sets**. Thousands of individual assets, each with dozens to hundreds of animations.
+4233| 
+4234| ---
+4235| 
+4236| ## 1. Object Catalog
+4237| 
+4238| ### 1.1 Ontological Classification
+4239| 
+4240| Every object belongs to one of two fundamental categories:
+4241| 
+4242| - **Animate** — living things with lifecycle phases (seedling → mature → dead → decomposing). Each phase is a visually distinct sprite set with its own applicable interactions.
+4243| - **Inanimate** — non-living things with durability models (intact → cracked → shattered). Destruction produces child objects that themselves exist in the catalog.
+4244| 
+4245| ### 1.2 Animate Object Schema
+4246| 
+4247| ```json
+4248| {
+4249|   "id": "oak_tree",
+4250|   "category": "vegetation/tree/deciduous",
+4251|   "ontology": "animate",
+4252|   
+4253|   "lifecycle": {
+4254|     "phases": [
+4255|       { "id": "seedling",    "duration_days": [30, 60],    "size": [1,1], "sprite_set": "seedling/" },
+4256|       { "id": "sapling",     "duration_days": [60, 120],   "size": [1,2], "sprite_set": "sapling/" },
+4257|       { "id": "juvenile",    "duration_days": [120, 360],  "size": [1,2], "sprite_set": "juvenile/" },
+4258|       { "id": "mature",      "duration_days": [360, null],  "size": [2,3], "sprite_set": "mature/" },
+4259|       { "id": "old_growth",  "duration_days": [720, null],  "size": [2,4], "sprite_set": "old_growth/" },
+4260|       { "id": "dying",       "duration_days": [30, 90],    "size": [2,4], "sprite_set": "dying/" },
+4261|       { "id": "dead",        "duration_days": [60, 180],   "size": [2,3], "sprite_set": "dead/" },
+4262|       { "id": "decomposing", "duration_days": [90, null],   "size": [1,2], "sprite_set": "decomposing/" }
+4263|     ],
+4264|     "phase_interactions": {
+4265|       "seedling":  ["idle_sway", "trample", "pick", "burn", "freeze"],
+4266|       "sapling":   ["idle_sway", "wind_sway", "burn", "freeze", "chop"],
+4267|       "juvenile":  ["idle_sway", "wind_sway", "chop", "burn", "freeze", "rain_drip"],
+4268|       "mature":    ["idle_sway", "wind_sway", "chop", "burn", "freeze", "lightning",
+4269|                     "climb", "rain_drip", "bird_nest", "seasonal_change", "fruit"],
+4270|       "old_growth":["idle_sway", "wind_sway", "chop", "burn", "freeze", "lightning",
+4271|                     "climb", "rain_drip", "bird_nest", "seasonal_change", "fungal_growth"],
+4272|       "dying":     ["idle", "wilt", "collapse", "burn", "fungal_growth"],
+4273|       "dead":      ["idle", "collapse", "burn", "chop", "fungal_growth"],
+4274|       "decomposing":["idle", "fungal_growth", "insect_swarm"]
+4275|     }
+4276|   },
+4277|   
+4278|   "variance": {
+4279|     "branching_seed": true,
+4280|     "leaf_density": [0.6, 1.0],
+4281|     "lean_angle": [-5, 5],
+4282|     "color_shift": [-10, 10],
+4283|     "scale_variance": [0.85, 1.15]
+4284|   },
+4285| 
+4286|   "break_products": {
+4287|     "on_chop": [
+4288|       { "object_id": "oak_stump", "count": 1 },
+4289|       { "object_id": "oak_log", "count": [1, 2] },
+4290|       { "object_id": "branch", "count": [2, 4] },
+4291|       { "object_id": "leaf_pile", "count": [1, 2] }
+4292|     ],
+4293|     "on_burn": [
+4294|       { "object_id": "charred_trunk", "count": 1 },
+4295|       { "object_id": "ash_pile", "count": [1, 3] }
+4296|     ]
+4297|   }
+4298| }
+4299| ```
+4300| 
+4301| ### 1.3 Inanimate Object Schema
+4302| 
+4303| ```json
+4304| {
+4305|   "id": "granite_boulder",
+4306|   "category": "mineral/rock/boulder",
+4307|   "ontology": "inanimate",
+4308|   
+4309|   "durability": {
+4310|     "hp": 100,
+4311|     "resistances": { "blunt": 0.5, "sharp": 0.8, "fire": 0.95, "frost": 0.7 },
+4312|     "stages": [
+4313|       { "id": "intact",    "hp_range": [75, 100], "sprite_set": "intact/" },
+4314|       { "id": "cracked",   "hp_range": [40, 75],  "sprite_set": "cracked/" },
+4315|       { "id": "fractured", "hp_range": [10, 40],  "sprite_set": "fractured/" },
+4316|       { "id": "shattered", "hp_range": [0, 10],   "sprite_set": "shattered/" }
+4317|     ],
+4318|     "break_products": [
+4319|       { "object_id": "rock_chunk", "count": [2, 4], "on_stage": "shattered" },
+4320|       { "object_id": "pebble", "count": [5, 12], "on_stage": "shattered" },
+4321|       { "object_id": "stone_dust", "count": 1, "on_stage": "shattered" }
+4322|     ]
+4323|   },
+4324|   
+4325|   "interactions": ["idle", "strike", "explode", "freeze_crack", "moss_growth", "weather_erosion"]
+4326| }
+4327| ```
+4328| 
+4329| ### 1.4 Object Production Graph
+4330| 
+4331| Every transformation produces objects that themselves exist in the catalog:
+4332| 
+4333| ```
+4334| oak_tree (mature) --[chop]--> oak_stump + oak_log + branch ×3 + leaf_pile
+4335| oak_log --[chop]--> plank ×4 + wood_chip
+4336| oak_tree (mature) --[burn]--> charred_trunk + ash_pile
+4337| oak_tree (mature) --[lifecycle]--> dying --> dead --> fallen_log + mushroom_cluster
+4338| 
+4339| granite_boulder --[strike ×4]--> cracked --> fractured --> shattered
+4340| shattered --[break_products]--> rock_chunk ×3 + pebble ×8 + stone_dust
+4341| rock_chunk --[strike]--> pebble ×4 + stone_dust
+4342| ```
+4343| 
+4344| Nothing disappears — it becomes something else. The catalog is a closed graph of transformations.
+4345| 
+4346| ### 1.5 Category Taxonomy
+4347| 
+4348| ```
+4349| vegetation/
+4350|   tree/       deciduous, conifer, tropical, dead, palm, willow
+4351|   bush/       flowering, thorny, berry
+4352|   shrub/      low, medium
+4353|   hedge/
+4354|   grass/      tall, short, reed, aquatic, ornamental
+4355|   flower/     wildflower, tropical, mushroom, succulent
+4356|   vine/       climbing, hanging, ground_cover
+4357|   moss/       rock_moss, tree_moss, ground_moss
+4358|   lichen/
+4359|   algae/      freshwater, saltwater
+4360|   crop/       wheat, vegetable, fruit_tree
+4361|   fern/       forest_fern, tropical_fern
+4362| 
+4363| mineral/
+4364|   rock/       boulder, pebble, crystal, volcanic, sandstone, slate
+4365|   cliff_face/
+4366|   stalactite/
+4367|   ore/        iron, gold, gem, coal
+4368| 
+4369| water_feature/
+4370|   wave/       ocean_wave, lake_ripple, river_current
+4371|   foam/       shore_foam, rapid_foam
+4372|   whirlpool/
+4373|   waterfall/  cascade, trickle
+4374|   splash/     footstep_splash, impact_splash
+4375|   puddle/     rain_puddle, standing_water
+4376|   ice/        sheet_ice, icicle, frost_pattern
+4377| 
+4378| ground_cover/
+4379|   leaf_litter/  autumn, dry, wet
+4380|   pine_needles/
+4381|   sand_drift/   wind_drift, dune_ripple
+4382|   snow_drift/   fresh, packed, melting
+4383|   mud_patch/    wet, drying, cracked
+4384|   ice_sheet/
+4385|   ash_layer/    fresh, old
+4386|   gravel/
+4387|   peat/
+4388| 
+4389| structure_natural/
+4390|   log/        fallen, hollow, mossy
+4391|   nest/       bird, insect, burrow
+4392|   den/        cave_entrance, hollow_tree
+4393|   coral/      branching, brain, fan
+4394|   shell/      conch, clam, scattered
+4395|   bone/       skull, rib, scattered
+4396|   web/        spider_web, cocoon
+4397|   hive/       bee, wasp
+4398| ```
+4399| 
+4400| ### 1.6 Individuality & Future Identity System
+4401| 
+4402| **Current scope:** Visual variance only. Each ObjectInstance gets an `instance_seed` that drives:
+4403| - Scale variance (0.85–1.15×)
+4404| - Lean angle (-5° to +5°)
+4405| - Color/hue shift (-10° to +10°)
+4406| - Branching seed (for trees — fractal variation)
+4407| - Leaf/foliage density variation
+4408| 
+4409| **Extension point for future agents:** The `variance` block on animate objects is the hook for identity. When the identity system is built:
+4410| - Add `identity_id` to ObjectInstance linking to EntitySystem
+4411| - Extend variance with `growth_history` (this tree grew near water = taller), `damage_scars` (struck by lightning = scar texture), `relationship_to_neighbors` (crowded forest = thinner canopy)
+4412| - ObjectInstance becomes a persistent entity tracked across sessions
+4413| - See `data/terrain_objects/schema/EXTENSION_POINTS.md`
+4414| 
+4415| ---
+4416| 
+4417| ## 2. Interaction Schema
+4418| 
+4419| ### 2.1 Interaction Categories
+4420| 
+4421| ```
+4422| traversal/          — entity movement through/past the object
+4423|   walk_through        entity enters tile, requires: non_blocking
+4424|   run_through         entity sprinting, requires: non_blocking
+4425|   swim_past           entity in water, adjacent to object
+4426|   fly_over            flying entity above
+4427|   land_on             entity descends onto tile
+4428|   push_aside          entity walk + object is pushable
+4429| 
+4430| player_action/      — deliberate actions by entities (players and NPCs)
+4431|   chop                tool=axe, target: vegetation
+4432|   mine                tool=pickaxe, target: mineral
+4433|   dig                 tool=shovel, target: ground_cover
+4434|   pick                hand, target: size=[1,1] + pickable
+4435|   burn_ignite         tool=torch OR spell=fire, target: flammable
+4436|   freeze_cast         spell=frost
+4437|   plant               hand+seed, target: empty_soil
+4438|   water               tool=bucket, target: vegetation
+4439|   climb               hand, target: climbable + size >= [1,2]
+4440| 
+4441| environmental/      — world forces acting on objects
+4442|   wind                weather.wind_speed > threshold, intensity scales with speed
+4443|   rain                weather.precipitation > 0
+4444|   lightning           weather.lightning_strike at tile
+4445|   flood               water_level rises into tile
+4446|   drought             soil_moisture < threshold over time
+4447|   fire_spread         adjacent tile burning + flammable
+4448|   erosion             continuous water/wind exposure over time
+4449| 
+4450| biome_blending/     — transitions between biome boundaries
+4451|   edge_fade           tile is biome boundary, contextual sprites
+4452|   submersion          water encroaching on land tile
+4453|   overgrowth          vegetation biome advancing into barren
+4454| 
+4455| ambient/            — always-on default animations
+4456|   idle                always, default loop
+4457|   idle_variant        random interval, occasional variation
+4458|   day_shift           time_of_day crosses dawn threshold
+4459|   night_shift         time_of_day crosses dusk threshold
+4460|   seasonal_change     season transition (spring/summer/autumn/winter)
+4461| 
+4462| state_reactive/     — animations triggered by state changes
+4463|   crack               durability drops below stage threshold
+4464|   wilt                lifecycle enters dying phase
+4465|   bloom               lifecycle enters mature + spring season
+4466|   fruit               lifecycle=mature + season=summer/fall
+4467|   regrow              post-chop timer expires, new growth appears
+4468|   collapse            durability=0 OR lifecycle=dead + time elapsed
+4469|   decompose           dead state + time elapsed
+4470|   fungal_growth       dead/decomposing + moisture > threshold
+4471|   insect_swarm        decomposing + temperature > threshold
+4472| ```
+4473| 
+4474| ### 2.2 Interaction Definition Schema
+4475| 
+4476| ```json
+4477| {
+4478|   "id": "chop",
+4479|   "category": "player_action",
+4480|   
+4481|   "trigger": {
+4482|     "type": "entity_action",
+4483|     "requires_tool": "axe",
+4484|     "requires_target": {
+4485|       "ontology": "animate",
+4486|       "category_prefix": "vegetation",
+4487|       "min_phase": "sapling"
+4488|     }
+4489|   },
+4490|   
+4491|   "effects": {
+4492|     "damage": { "amount": 25, "type": "sharp" },
+4493|     "state_transition": null,
+4494|     "spawn_products": { "on_destroy": true },
+4495|     "particle": "wood_chips",
+4496|     "sound": "chop_wood"
+4497|   },
+4498|   
+4499|   "animation": {
+4500|     "frames": [4, 8],
+4501|     "duration_ms": [300, 600],
+4502|     "loop": false,
+4503|     "directional": false,
+4504|     "intensity_variable": false
+4505|   }
+4506| }
+4507| ```
+4508| 
+4509| ### 2.3 The Multiplication Constraint
+4510| 
+4511| The interaction schema constrains the combinatorial space. Not every object supports every interaction — a rock doesn't need `seasonal_change`, grass doesn't need `mine`. Each object's lifecycle phases explicitly list applicable interactions, making the generation matrix tractable.
+4512| 
+4513| Estimated valid combinations: ~4,000-6,000 unique animation sets across all objects × phases × interactions.
+4514| 
+4515| ---
+4516| 
+4517| ## 3. Biome Affinity Matrix
+4518| 
+4519| ### 3.1 Biome Affinity Schema
+4520| 
+4521| Each of the 18 biomes gets an affinity file defining which objects compose it:
+4522| 
+4523| ```json
+4524| {
+4525|   "biome_id": "grassland",
+4526|   
+4527|   "object_pools": [
+4528|     {
+4529|       "object_id": "tall_grass",
+4530|       "density": 0.45,
+4531|       "cluster_mode": "perlin",
+4532|       "cluster_scale": 0.3,
+4533|       "elevation_range": [0.0, 0.5],
+4534|       "moisture_range": [0.3, 0.8],
+4535|       "slope_max": 0.3,
+4536|       "distance_rules": {
+4537|         "min_water": 3,
+4538|         "max_water": null,
+4539|         "min_road": 2
+4540|       },
+4541|       "lifecycle_distribution": {
+4542|         "seedling": 0.05, "sapling": 0.10, "juvenile": 0.15,
+4543|         "mature": 0.50, "old_growth": 0.15, "dying": 0.05
+4544|       },
+4545|       "variant_count": 5
+4546|     },
+4547|     {
+4548|       "object_id": "wildflower",
+4549|       "density": 0.25,
+4550|       "cluster_mode": "scatter",
+4551|       "elevation_range": [0.0, 0.4],
+4552|       "moisture_range": [0.4, 0.9],
+4553|       "slope_max": 0.2,
+4554|       "distance_rules": { "min_water": 0 },
+4555|       "lifecycle_distribution": {
+4556|         "bud": 0.15, "blooming": 0.50, "wilting": 0.20, "seed_head": 0.15
+4557|       },
+4558|       "variant_count": 8
+4559|     }
+4560|   ],
+4561|   
+4562|   "ambient": {
+4563|     "wind_baseline": 0.3,
+4564|     "moisture_baseline": 0.5,
+4565|     "light_filter": null
+4566|   }
+4567| }
+4568| ```
+4569| 
+4570| Each biome will have 15-40 object pool entries covering its full composition.
+4571| 
+4572| ### 3.2 The 18 Biomes and Their Primary Object Compositions
+4573| 
+4574| | Biome | Primary Objects |
+4575| |-------|----------------|
+4576| | Ocean | ocean_wave, foam, seaweed, coral, fish_shadow, jellyfish, floating_debris |
+4577| | Beach | sand_drift, shell, driftwood, sea_grass, tidal_pool, crab_burrow, foam_line |
+4578| | Grassland | tall_grass, short_grass, wildflower, scattered_rock, butterfly_bush, ant_mound |
+4579| | Forest | deciduous_tree, bush, fern, fallen_log, mushroom, moss_patch, bird_nest |
+4580| | Dense Forest | old_growth_tree, thick_vine, giant_fern, hollow_log, mushroom_cluster, spider_web, moss_carpet |
+4581| | Desert | cactus, sand_drift, dune_ripple, dry_bush, bleached_bone, scorpion_burrow, heat_shimmer |
+4582| | Savanna | acacia_tree, tall_dry_grass, termite_mound, scattered_boulder, dry_bush, watering_hole_edge |
+4583| | Steppe | short_dry_grass, cracked_earth, flat_rock, tumbleweed, hardy_shrub, wind_erosion_pattern |
+4584| | Tundra | frozen_grass, ice_patch, snow_drift, lichen_rock, frozen_puddle, hardy_moss, permafrost_crack |
+4585| | Taiga | conifer_tree, pine_needles, snow_laden_branch, frozen_stream_edge, bear_den, pine_cone_scatter |
+4586| | Mountains | cliff_rock, boulder, mountain_flower, scree, cave_entrance, eagle_nest, snow_cap |
+4587| | Swamp | cypress_tree, lily_pad, cattail, bubbling_mud, hanging_moss, frog_log, algae_film |
+4588| | Tropical Forest | palm_tree, tropical_flower, hanging_vine, parrot_perch, coconut, giant_leaf, orchid |
+4589| | Volcanic | volcanic_rock, lava_crack, obsidian_shard, sulfur_vent, charred_tree, ash_layer, ember_glow |
+4590| | Arctic | ice_sheet, snow_drift, frozen_crystal, ice_stalactite, penguin_tracks, aurora_glow, frost_pattern |
+4591| | Lake | lake_ripple, lily_pad, reed, fishing_spot, submerged_log, dragonfly_perch, pebble_shore |
+4592| | River | river_current, riverbed_stone, reed, bank_erosion, fish_jump, driftwood, rapids_foam |
+4593| | Mystic | crystal_formation, glowing_mushroom, spirit_wisp, runic_stone, ethereal_vine, mist_pool, arcane_flower |
+4594| 
+4595| ### 3.3 Biome Transition Table
+4596| 
+4597| Transitions define what happens at biome boundaries:
+4598| 
+4599| ```json
+4600| {

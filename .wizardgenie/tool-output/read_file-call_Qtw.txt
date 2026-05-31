@@ -1,0 +1,622 @@
+File: specs_combined.tmp.txt (lines 781-1400 of 6032)
+
+781| | tile_renderer.gd pixel rendering | tilemap_renderer.gd (kept) | Pixel grid → 32px PixelLab tiles |
+782| 
+783| ### What Gets Kept
+784| | Current | Status | Changes |
+785| |---------|--------|---------|
+786| | structure_system.gd | Keep | Add interior features, walkability stamping |
+787| | pathfinding.gd | Keep | Add structure costs, improve heuristic |
+788| | tilemap_renderer.gd | Keep | Read from compiler grid output instead of raw grain stacks |
+789| | composable_renderer.gd | Refactor | Move anatomy to asset gen, keep layer composition |
+790| | All 42 WorldManager systems | Keep | Wire to compiler output instead of scatter data |
+791| 
+792| ### Grain Stack Integration
+793| The L0-L2 grain model (already designed in `docs/superpowers/plans/2026-05-24-L0-grain-data-model.md`) provides the atomic data model. The world compiler layers populate grain stacks:
+794| - L1 (elevation) → bedrock, stone, gravel grain stacks
+795| - L4 (rivers) → water grain on top of riverbed
+796| - L6 (biomes) → surface grain templates (grass, sand, snow, etc.)
+797| - L7 (soil) → soil grain layers between bedrock and surface
+798| - L8 (vegetation) → organic grain markers for trees, moss, etc.
+799| - L11 (buildings) → structure grain types for walls, floors, doors
+800| 
+801| ### Time System Integration
+802| From the Freedom design docs:
+803| - Entities spawned by L11 (settlements) get time pools calculated from age/life stage
+804| - Time consumption rates: Fetus 0.1x → Elderly 2.0x with death scaling at 70+
+805| - Time transfer efficiencies: Consumption 30%, Sharing 95%, Trading 85%, Inheritance 90%
+806| - Group time generation multipliers: Family 2.0x, Village 1.5x, Guild 1.2x
+807| 
+808| ### Causal Tracking Integration
+809| - L14 event log feeds into existing CausalTracker system
+810| - Every settlement placement, road creation, NPC assignment recorded as causal event
+811| - NPC decisions at compiled locations feed back into narrative interpreter
+812| - Player actions modify compiled world state (dig, build, destroy)
+813| 
+814| ## Debug Toggles (All Required Before Implementation)
+815| 
+816| | Toggle | What It Shows |
+817| |--------|---------------|
+818| | F1: Elevation | Heatmap of elevation values |
+819| | F2: Ocean/Land | Binary mask with coastline classes |
+820| | F3: Drainage | Basin IDs as distinct colors |
+821| | F4: Flow | D8 arrows showing water flow direction |
+822| | F5: Rivers/Lakes | River polylines with Strahler order, lake polygons |
+823| | F6: Temperature | Latitude/altitude temperature gradient |
+824| | F7: Precipitation | Rainfall with rain-shadow effects |
+825| | F8: Biomes | Biome zones with ecotone transitions |
+826| | F9: Fertility | Soil quality heatmap |
+827| | F10: Vegetation | Density map with species classes |
+828| | F11: Roads | Cost map + road graph overlay |
+829| | F12: Settlements | Suitability heatmap + placed settlements with reason codes |
+830| | F13: Walkability | Passable/impassable overlay with costs |
+831| | F14: Events | Event density + provenance links |
+832| 
+833| ## Validation Rules
+834| 
+835| | Check | Condition | Failure = |
+836| |-------|-----------|-----------|
+837| | Determinism | Same seed + version = identical hash | Regression |
+838| | Chunk seams | Border cells match neighbor within epsilon | Visual tearing |
+839| | Hydrology | Every land cell drains to ocean or terminal basin | Orphan water |
+840| | Rivers | Elevation decreases monotonically to outlet | Uphill rivers |
+841| | Climate | No frozen equatorial lowlands without altitude cause | Incoherent climate |
+842| | Biomes | No checkerboard flicker between neighbors | Threshold noise |
+843| | Settlement | Every settlement has reason codes + transport path | Random placement |
+844| | Buildings | Every building has walls, door, interior, roof | Sprite decorations |
+845| | NPCs | Every NPC has home, workplace, daily schedule | Floating entities |
+846| | Narrative | Every quest/rumor references event IDs | Hardcoded lore |
+847| 
+848| ## PixelLab Asset Pipeline
+849| 
+850| PixelLab generates **primitives only**, not compositions:
+851| 1. **Terrain tiles** (32x32 seamless) via `create_tiles_pro()` — per biome
+852| 2. **Wall tiles** (32x32) — stone, wood, thatch, brick per biome
+853| 3. **Floor tiles** (32x32) — wood plank, stone slab, carpet, dirt per building type
+854| 4. **Roof tiles** (32x32) — thatch, shingle, slate per biome
+855| 5. **Interior features** via `create_map_object()` — forge, anvil, bed, table, chest
+856| 6. **Nature objects** via `create_map_object()` — trees, rocks, bushes per biome
+857| 7. **Characters** via `create_character()` — layered body + equipment overlays
+858| 
+859| All assets stored with manifests in `assets/generated/` with prompt, biome, tile size, and import target recorded.
+860| 
+861| ## Milestones
+862| 
+863| ### M0: Spec Pack (this document + schemas)
+864| - Compiler charter, layer contracts, debug toggle list, validation rules
+865| - No code — just specs and schemas
+866| - **Acceptance**: All layers have typed I/O and at least one validation rule
+867| 
+868| ### M1: Engine Scaffolding
+869| - WorldCompiler class, ChunkData resource, seed hashing utility
+870| - Empty debug scene with toggle hotkeys
+871| - Test harness for deterministic regression
+872| - **Acceptance**: Same seed produces identical stub outputs; resources save/reload
+873| 
+874| ### M2: Terrain + Hydrology (L1-L4)
+875| - Elevation, ocean mask, drainage, rivers, lakes
+876| - Debug views: elevation heatmap, ocean mask, flow arrows, river visualization
+877| - **Acceptance**: Rivers flow downhill; no unflagged pits; chunk seams stable
+878| 
+879| ### M3: Climate + Ecology (L5-L9)
+880| - Temperature, precipitation, biomes, soil, vegetation, coastal materials
+881| - Debug views: temperature, rainfall, biome map, fertility, vegetation density
+882| - **Acceptance**: No frozen equatorial lowlands; forests track wet fertile bands
+883| 
+884| ### M4: Transport + Settlement (L10-L12)
+885| - Roads, settlements with scored placement, building compilation (spatial structures with interiors)
+886| - Debug views: road cost map, settlement suitability, walkability grid
+887| - **Acceptance**: Every settlement has reason codes; buildings have walls/doors/interiors; roads follow valleys
+888| 
+889| ### M5: POIs + Narrative (L13-L14)
+890| - POI spawning from triggers, event log, narrative interpreter
+891| - Debug views: POI triggers, event density, provenance links
+892| - **Acceptance**: No POI without trigger; no narrative without event source
+893| 
+894| ### M6: Art + CI Hardening
+895| - PixelLab manifests for all tile types, screenshot regression, GdUnit4 tests
+896| - **Acceptance**: PR can regenerate seed corpus, publish screenshots, fail on regression
+897| 
+898| ## Non-Goals
+899| 
+900| - Multiplayer networking (handled separately by existing NetworkManager)
+901| - Player authentication (existing AuthManager)
+902| - Combat mechanics (existing CombatSystem — just needs to read compiled world)
+903| - Dialogue/LLM integration (existing DialogueEngine — just needs NPC locations)
+904| - UI panels (existing 16 UI scripts — just need compiled data sources)
+905| 
+906| ## File Structure
+907| 
+908| ```
+909| scripts/core/world_compiler/
+910|   world_compiler.gd          # Main pipeline orchestrator
+911|   chunk_data.gd              # ChunkData Resource class
+912|   layer_base.gd              # Base class for all layers
+913|   layers/
+914|     elevation.gd             # L1
+915|     ocean_mask.gd            # L2
+916|     drainage.gd              # L3
+917|     rivers_lakes.gd          # L4
+918|     climate.gd               # L5
+919|     biomes.gd                # L6
+920|     soil_fertility.gd        # L7
+921|     vegetation.gd            # L8
+922|     coastal_materials.gd     # L9
+923|     roads.gd                 # L10
+924|     settlements.gd           # L11
+925|     farms_industry.gd        # L12
+926|     pois.gd                  # L13
+927|     event_log.gd             # L14
+928|   building_compiler.gd       # Compiles building templates → world tiles
+929|   debug/
+930|     debug_overlay.gd         # F1-F14 toggle system
+931|     layer_visualizer.gd      # Renders grid data as colored overlays
+932|   validation/
+933|     chunk_validator.gd       # Runs all validation checks
+934|     determinism_checker.gd   # Hash comparison for regression
+935| data/
+936|   building_templates/        # JSON building definitions
+937|   biome_tables/              # Whittaker lookup, grain stack templates
+938|   schemas/                   # JSON Schema definitions for all data
+939| ```
+940| 
+941| ---FILE: 2026-05-25-agent-swarm-design.md
+942| # Agent Swarm Architecture — Parallel Build + Verify Loop
+943| 
+944| ## Overview
+945| 27 agents operating continuously in a build→verify→fix cycle. Never stopping. The benchmark is CrossCode/Octopath Traveler/Legend of Zelda quality. If the game doesn't match or exceed those, work continues.
+946| 
+947| ## Agent Roster
+948| 
+949| ### Tier 1: Research (5 agents, dissolve after findings delivered)
+950| - R1: Codebase Explorer — map renderer, world compiler, 14 layers, ChunkData
+951| - R2: Specs Researcher — read all 8 spec docs, extract decisions
+952| - R3: PixelLab MCP Scout — catalog tools, rate limits, batch patterns
+953| - R4: Godot MCP Scout — TileMapLayer, BetterTerrain, screenshots, play_scene
+954| - R5: Agentic Patterns — web search multi-agent orchestration best practices
+955| 
+956| ### Tier 2: Builders (2 persistent workstreams)
+957| - P1: PixelLab Pipeline — download 764 objects, animate all, write manifests
+958| - M1: TileMapLayer Migration — execute 6-task plan, replace custom renderer
+959| 
+960| ### Tier 3: Technical Verifiers (10 agents, persistent loop)
+961| - V1: Terrain (z=-2) — biome tiles, organic shapes, autotile transitions
+962| - V2: Water (z=0) — rivers/lakes render correctly, animated
+963| - V3: Paths (z=2) — roads/trails visible, transitions work
+964| - V4: Buildings (z=3) — spatial wall/floor/door tiles, enterable
+965| - V5: Objects (z=4-5) — visible, biome-appropriate, wind sway
+966| - V6: Roofs (z=6) — alpha-fade on player entry
+967| - V7: Layer Composition — all 7 stack, no z-fighting
+968| - V8: Collision/Physics — water blocks, walls block, doors passable
+969| - V9: Asset Pipeline — downloads complete, animations exist, manifests valid
+970| - V10: NPC Spatial — spawn at buildings, pathfind, don't float in water
+971| 
+972| ### Tier 4: Experiential Verifiers (10 agents, persistent loop)
+973| - V11: Assembly — coherent scene, no seams, no floating elements
+974| - V12: Biome — each biome looks distinct, feels right
+975| - V13: Aesthetics — CrossCode quality, 4-8px/tile, harmonious palettes
+976| - V14: Coherency — logical placement (no trees in ocean, paths to doors)
+977| - V15: Utility — player can DO things, systems produce visible results
+978| - V16: Convenience — UI readable, controls responsive, clear feedback
+979| - V17: Community — NPCs form believable villages with purpose
+980| - V18: Exploration — world worth exploring, variety, landmarks, journeys
+981| - V19: Discovery — hidden areas, rare resources, environmental storytelling
+982| - V20: Surprise — emergent moments, weather mood, NPC reactions
+983| 
+984| ## Orchestration Model: Continuous Parallel Mesh
+985| 
+986| All tiers launch simultaneously. Research feeds builders. Builders commit. Verifiers screenshot after each commit, produce work items, feed them back to builders. Loop never stops.
+987| 
+988| ## Verification Protocol
+989| 
+990| 1. Screenshot via Godot MCP (get_game_screenshot or get_editor_screenshot)
+991| 2. Analyze against benchmark (CrossCode/Octopath/Zelda)
+992| 3. Gap found? → Create work item:
+993|    - LAYER, STATUS (BLOCKED/IMPORTANT/MINOR), GAP description
+994|    - EVIDENCE (screenshot), FIX (specific action), FILES (exact paths)
+995|    - SEVERITY determines block behavior
+996| 4. No gap? → Mark verified with evidence
+997| 5. Re-verify after every builder commit
+998| 6. Periodic re-verify every 5 minutes regardless
+999| 
+1000| ## Block Rules
+1001| - CRITICAL: Layer blocked, builder cannot mark done
+1002| - IMPORTANT: Queued as follow-up work item for builder
+1003| - MINOR: Logged, doesn't block
+1004| 
+1005| ## Success Criteria
+1006| The game must visually match or exceed CrossCode, Octopath Traveler, and Legend of Zelda: A Link to the Past in:
+1007| - Pixel art density and quality
+1008| - Terrain transitions and biome variety
+1009| - Object placement and environmental storytelling
+1010| - Animation and life in the world
+1011| - Layer composition and visual depth
+1012| 
+1013| If it doesn't, agents keep iterating. There is no "done."
+1014| 
+1015| ---FILE: 2026-05-25-color-algebra-tiles-design.md
+1016| # Color-Algebra Tile System — Layered Composable Terrain
+1017| 
+1018| **Date**: 2026-05-25
+1019| **Status**: Active
+1020| **Depends on**: World Compiler, TileObjectStack, GrainStack (L0)
+1021| 
+1022| ## Problem
+1023| 
+1024| Current terrain renders as flat colored squares or non-seamless tile art. No smooth biome transitions, no elevation shading, no ground texture, no visual richness. The world looks like a spreadsheet.
+1025| 
+1026| ## Solution
+1027| 
+1028| A composable tile system built from color algebra: 8 base colors × luminance variants × directional gradients × biome transitions × texture patterns × detail objects × interactable items. Each layer is a transparent overlay painted onto the layer below. The layers map to the grain stack — digging removes layers and exposes what's underneath.
+1029| 
+1030| ## The 8-Color Palette
+1031| 
+1032| | ID | Color | Hex Range (dark → light) | Biomes |
+1033| |----|-------|--------------------------|--------|
+1034| | 0 | grass_green | #1a5c1a → #6ed06e | grassland, forest, dense_forest, tropical_forest |
+1035| | 1 | water_blue | #0d3b6e → #4da6f0 | ocean, lake, river, swamp |
+1036| | 2 | sand_tan | #8a6b3d → #ecc88a | beach, desert, savanna |
+1037| | 3 | stone_grey | #3a3a3a → #a8a8a8 | mountains, steppe |
+1038| | 4 | snow_white | #c0c8d0 → #f5f7fa | tundra, arctic, taiga |
+1039| | 5 | earth_brown | #5a3a1a → #b8906a | paths, roads, dirt, farmland |
+1040| | 6 | lava_orange | #8a2a00 → #f0a040 | volcanic |
+1041| | 7 | mystic_purple | #3a1a5a → #a060d0 | mushroom_forest, magical zones |
+1042| 
+1043| Each color has 4 luminance stops: dark (0), mid-dark (1), mid-light (2), light (3).
+1044| 
+1045| ## 7-Layer Stack (Bottom to Top)
+1046| 
+1047| ### Layer 0 — Base Color (opaque)
+1048| Flat biome tile. One tile per biome, determined by top grain in the GrainStack at that position.
+1049| 
+1050| - 8 colors × 4 luminance = **32 tiles**
+1051| - Default luminance is mid (1 or 2); specific luminance chosen by elevation height band
+1052| - PixelLab generation: seamless flat tiles with subtle pixel noise, explicitly "uniform color covering entire tile, no borders, tileable"
+1053| 
+1054| ### Layer 1 — Luminance Gradient (α 0.3-0.5)
+1055| Directional light/dark overlay driven by **elevation slope data**.
+1056| 
+1057| - Light source assumed top-left
+1058| - Slope facing top-left → light gradient overlay
+1059| - Slope facing bottom-right → dark gradient overlay
+1060| - Steeper slope → higher alpha (more pronounced shading)
+1061| - 8 colors × 4 directions (N→S, S→N, W→E, E→W) = **32 tiles**
+1062| - Each tile: transparent base with gradient from one luminance stop to another
+1063| 
+1064| ### Layer 2 — Color Transition (α 0.5-0.8)
+1065| Biome boundary blending. Only rendered at tiles where a neighbor has a different biome.
+1066| 
+1067| - For each tile, check 4 cardinal neighbors
+1068| - If neighbor biome differs, overlay a transition tile that blends this biome's color into the neighbor's
+1069| - C(8,2) = 28 unique pairs × 4 edge directions = **112 tiles**
+1070| - Each tile: one color fading into another across the tile, transparent elsewhere
+1071| - Edge matching: transition tile's edge colors must match both biomes' base colors
+1072| 
+1073| ### Layer 3 — Texture Pattern (α 0.2-0.4)
+1074| Seamless tileable noise overlays that add ground texture. Coverage density driven by **vegetation_density** from the compiler.
+1075| 
+1076| - Each pattern is palette-locked to its compatible base color family
+1077| - Placed when vegetation_density > threshold (varies by pattern type)
+1078| - High translucency — adds visual variance without obscuring base
+1079| 
+1080| | Pattern | Compatible Colors | Biomes |
+1081| |---------|-------------------|--------|
+1082| | grass_blades | grass_green | grassland, forest |
+1083| | leaf_litter | grass_green, earth_brown | forest, dense_forest |
+1084| | pebble_scatter | stone_grey, earth_brown | mountains, steppe, paths |
+1085| | mud_cracks | earth_brown, sand_tan | swamp, farmland |
+1086| | sand_ripples | sand_tan | desert, beach |
+1087| | moss_patches | grass_green, stone_grey | forest, mountains (wet areas) |
+1088| | snow_crystals | snow_white | tundra, arctic |
+1089| | water_ripples | water_blue | ocean, lake, river |
+1090| 
+1091| 8 patterns × 4 variants = **32 tiles**
+1092| 
+1093| ### Layer 4 — Detail Objects (transparent background, non-interactive)
+1094| Individual nature sprites placed by density rules per biome. Decorative only.
+1095| 
+1096| - Flower clusters, grass tufts, fallen leaves, small stones, roots, puddles, mushroom patches
+1097| - Placed where vegetation_density is high enough for the object type
+1098| - Palette-coherent with base biome color
+1099| - **~50 unique objects**, generated as map_objects in PixelLab (32×32, transparent bg)
+1100| 
+1101| ### Layer 5 — Interactable Objects (transparent background, pickable)
+1102| Items the player can collect. Sparse placement.
+1103| 
+1104| - Branches, loose stones, herbs, berries, feathers, bones, shells
+1105| - Each has: value, use category (crafting material, food, tool component)
+1106| - Removed from TileStack when player collects them
+1107| - **~30 unique objects**
+1108| 
+1109| ### Layer 6 — Large Structures (blocking, multi-tile)
+1110| Trees, boulders, walls, buildings, furniture. The Lego block system from the tile-object-system spec. Not covered in this spec — already designed separately.
+1111| 
+1112| ## Grain Stack Binding (Dig Interaction)
+1113| 
+1114| The visual layer stack mirrors the GrainStack at each tile position:
+1115| 
+1116| | Grain (top → bottom) | Visual Layer |
+1117| |----------------------|--------------|
+1118| | grass grain | L0 = grass_green |
+1119| | soil grain | L0 = earth_brown (revealed after digging grass) |
+1120| | stone grain | L0 = stone_grey (revealed after digging soil) |
+1121| | bedrock grain | L0 = stone_grey dark (can't dig further) |
+1122| 
+1123| **When player digs:**
+1124| 1. Pop top grain from GrainStack
+1125| 2. Add popped material to player inventory (as TileObject with pickable=true)
+1126| 3. Recalculate L0 base color from new top grain
+1127| 4. Remove any L3-L5 overlays that depended on the removed grain type
+1128| 5. Re-render affected tile layers
+1129| 
+1130| **When player places material:**
+1131| 1. Push grain onto GrainStack
+1132| 2. Update L0 base color
+1133| 3. Re-render
+1134| 
+1135| ## Rendering Pipeline (Per Chunk)
+1136| 
+1137| For each tile (x, y) in the chunk:
+1138| 
+1139| ```
+1140| 1. Read top grain → determine base_color_id and luminance from height band
+1141| 2. Paint L0: base flat tile (opaque) onto terrain image
+1142| 3. Read slope direction + magnitude → if slope > threshold:
+1143|    Paint L1: gradient tile (alpha = slope_magnitude * 0.5) onto gradient image
+1144| 4. Check 4 cardinal neighbors for different biome:
+1145|    For each differing neighbor, paint L2: transition tile onto transition image
+1146| 5. Read vegetation_density → if density > 0.2:
+1147|    Select texture pattern by biome, paint L3 onto pattern image (alpha = density * 0.4)
+1148| 6. If density > 0.4: place L4 detail object (selected by biome + RNG)
+1149| 7. If RNG < 0.05: place L5 interactable object (selected by biome + rarity)
+1150| ```
+1151| 
+1152| Each layer is a separate Image (chunk_size × 32 pixels per side). Total: 6 Image sprites per chunk. With 9 chunks: **54 Sprite2D nodes** (same as current).
+1153| 
+1154| ## Adjacency Rules
+1155| 
+1156| Each tile stores 4 edge colors (N, S, E, W) derived from its content:
+1157| - Flat tiles: all 4 edges = same luminance stop
+1158| - Gradient tiles: edges match the luminance at that edge of the gradient
+1159| - Transition tiles: one pair of edges = color A, opposite pair = color B
+1160| 
+1161| The renderer enforces: **adjacent tiles' touching edges must have the same color value.** This guarantees no visible seams.
+1162| 
+1163| ## PixelLab Generation Strategy
+1164| 
+1165| ### Batch 1: Base Flats (2 calls)
+1166| ```
+1167| Call 1: "1). dark green flat grass 2). medium green flat grass 3). light green flat grass 4). very light green flat grass 5). dark blue flat water 6). medium blue flat water 7). light blue flat water 8). very light blue flat water 9). dark tan flat sand 10). medium tan flat sand 11). light tan flat sand 12). very light tan flat sand 13). dark grey flat stone 14). medium grey flat stone 15). light grey flat stone 16). very light grey flat stone"
+1168| Call 2: "1). dark white flat snow 2). medium white flat snow 3). light white flat snow 4). bright white flat snow 5). dark brown flat earth 6). medium brown flat earth 7). light brown flat earth 8). very light brown flat earth 9). dark orange flat lava 10). medium orange flat lava 11). light orange flat lava 12). bright orange flat lava 13). dark purple flat mystic 14). medium purple flat mystic 15). light purple flat mystic 16). bright purple flat mystic"
+1169| ```
+1170| 
+1171| ### Batch 2: Gradients (2 calls)
+1172| Generate directional gradient tiles for each color. Use segmentation mode.
+1173| 
+1174| ### Batch 3: Transitions (4-7 calls)
+1175| Generate color-to-color edge blending tiles for the most common biome pairs first:
+1176| - grass↔water, grass↔sand, grass↔stone, sand↔water, sand↔stone, snow↔grass, snow↔stone
+1177| 
+1178| ### Batch 4: Texture Patterns (2 calls)
+1179| Seamless tileable overlays with transparency.
+1180| 
+1181| ### Batch 5: Detail Objects (4 calls)
+1182| Small nature sprites on transparent backgrounds via create_map_object.
+1183| 
+1184| ### Batch 6: Interactable Objects (2 calls)
+1185| Collectible item sprites via create_map_object.
+1186| 
+1187| **Total: ~16-20 PixelLab calls, ~220 tiles**
+1188| 
+1189| ## File Structure
+1190| 
+1191| ```
+1192| assets/catalog/
+1193|   base_flats/manifest.json     # 32 flat tiles
+1194|   gradients/manifest.json      # 32 gradient tiles
+1195|   transitions/manifest.json    # 112 transition tiles
+1196|   patterns/manifest.json       # 32 texture pattern tiles
+1197|   details/manifest.json        # ~50 detail object sprites
+1198|   interactables/manifest.json  # ~30 pickable item sprites
+1199| data/
+1200|   color_palette.json           # 8 colors × 4 luminance hex values
+1201|   biome_color_map.json         # biome → color_id mapping
+1202|   pattern_rules.json           # which patterns pair with which colors
+1203|   adjacency_rules.json         # edge matching constraints
+1204| ```
+1205| 
+1206| ## Non-Goals (This Spec)
+1207| 
+1208| - Building Lego system (separate spec, already designed)
+1209| - Character sprites and animations
+1210| - Tree/boulder multi-tile objects
+1211| - Sound effects for digging/collecting
+1212| 
+1213| ## Success Criteria
+1214| 
+1215| 1. Terrain renders with real pixel art tiles, not flat colored squares
+1216| 2. Smooth gradients create visible elevation on hills/valleys
+1217| 3. Biome boundaries blend smoothly, no hard seams
+1218| 4. Ground has visible texture (grass blades, pebbles, etc.)
+1219| 5. Player can pick up scattered items (branches, herbs, stones)
+1220| 6. Digging removes visual layers and exposes what's underneath
+1221| 7. Same rendering performance (Image-based, ~54 Sprite2D nodes for 9 chunks)
+1222| 
+1223| ---FILE: 2026-05-25-layer-architecture-spec.md
+1224| # Layer Architecture Specification
+1225| 
+1226| > Established 2026-05-25. This is the authoritative reference for the rendering layer system.
+1227| > All implementation must conform to this spec. Do not re-derive — reference this document.
+1228| 
+1229| ## Core Principle: Animation Cel Model
+1230| 
+1231| The world is composed like traditional animation cels — transparent sheets stacked on top of each other. Each layer is a separate sheet. Some sheets are fully painted (opaque), most have sparse content with transparency showing layers beneath.
+1232| 
+1233| The player sees one composite image. We know it's 8 separate layers.
+1234| 
+1235| ## Layer Stack
+1236| 
+1237| | Z | Layer | Blend Mode | Coverage | Purpose |
+1238| |---|-------|-----------|----------|---------|
+1239| | -2 | **Terrain** | Opaque fill | 100% of tiles | Base color — solid green/brown/blue/gray. Every pixel covered. |
+1240| | -1 | **Shading** | Multiply | 100% of tiles | Elevation shadows, hillshade, ambient occlusion. Darkens/lightens terrain beneath. Never fully opaque. |
+1241| | 0 | **Water** | Opaque where present | Sparse (~15-25%) | Rivers, lakes, ocean. Replaces terrain visually. Transparent elsewhere. Animated (ripple frames). |
+1242| | 1 | **Ground Detail** | Transparent overlay | Dense (~60-80%) | Grass blades, pebbles, fallen leaves, sand ripples, moss patches. You see terrain between them. |
+1243| | 2 | **Paths/Roads** | Opaque where present | Sparse (~5-10%) | Dirt trails, cobblestone roads, bridges. Covers terrain + ground detail where path exists. |
+1244| | 3 | **Buildings** | Opaque where present | Sparse (~3-8%) | Floors, walls, doors, windows, interior furniture. Covers everything beneath. |
+1245| | 4-5 | **Objects** | Transparent sprites | Moderate (~20-40%) | Trees, bushes, rocks, signs, wells, carts, flowers, branches. Sprites have transparent backgrounds. Y-sorted (front overlaps back). |
+1246| | 6 | **Roofs** | Conditional alpha | Sparse (building footprints only) | Building canopies. Opaque normally, alpha-fades when player enters building. |
+1247| | 7 | **Lighting** | Multiply/Additive | 100% of tiles | Day/night tint, torchlight radii, point light glow. Tints everything beneath. Never fully opaque. |
+1248| 
+1249| ## Blend Mode Definitions
+1250| 
+1251| - **Opaque fill**: Every pixel in this layer is drawn. Nothing beneath is visible.
+1252| - **Opaque where present**: Where a tile exists on this layer, it fully covers what's beneath. Where no tile exists, the layer is invisible (pass-through).
+1253| - **Transparent overlay**: Sprites/tiles are placed on this layer but have transparent backgrounds. You see through to all layers beneath between the drawn pixels.
+1254| - **Multiply**: Darkens the composite beneath. White = no effect, black = full shadow. Used for lighting/shading.
+1255| - **Additive**: Brightens the composite beneath. Black = no effect. Used for light sources.
+1256| - **Conditional alpha**: Normally opaque, but fades to transparent based on game state (e.g., player enters building).
+1257| 
+1258| ## Layer -2: Terrain (Detail)
+1259| 
+1260| ### What it IS
+1261| 
+1262| A smooth continuous field of three values per tile, rendered as opaque colored tiles:
+1263| 
+1264| | Per-tile value | Range | Source |
+1265| |---|---|---|
+1266| | Elevation | 0.0 – 1.0 | Perlin noise |
+1267| | Temperature | 0.0 – 1.0 | Perlin noise + latitude gradient |
+1268| | Precipitation | 0.0 – 1.0 | Perlin noise + elevation influence |
+1269| 
+1270| Derived values (computed from the above):
+1271| - **Slope**: magnitude of elevation gradient between neighbors
+1272| - **Fertility**: derived from precipitation + temperature + slope
+1273| - **Ocean distance**: BFS from ocean cells
+1274| - **Water distance**: BFS from river/lake cells
+1275| 
+1276| ### Biome Labels
+1277| 
+1278| The continuous values get classified into 15 biome labels for convenience. These are NOT hard visual boundaries — they're indexes that higher layers use to select content.
+1279| 
+1280| | Biome | Elevation | Temperature | Precipitation | Visual Base |
+1281| |---|---|---|---|---|
+1282| | Deep Ocean | < 0.15 | — | — | Dark blue |
+1283| | Ocean | 0.15–0.25 | — | — | Blue |
+1284| | Shallow Water | 0.25–0.32 | — | — | Light blue |
+1285| | Beach | 0.32–0.37 | — | — | Tan/yellow |
+1286| | Grassland | mid | 0.3–0.6 | 0.3–0.55 | Green |
+1287| | Forest | mid | > 0.4 | > 0.55 | Dark green |
+1288| | Dense Forest | mid | 0.3–0.6 | > 0.75 | Very dark green |
+1289| | Desert | mid-low | > 0.6 | < 0.3 | Sandy yellow |
+1290| | Savanna | mid | > 0.6 | 0.2–0.5 | Yellow-green |
+1291| | Steppe | mid | 0.3–0.6 | < 0.3 | Brown-green |
+1292| | Hills | 0.65–0.82 | — | — | Olive/rocky |
+1293| | Mountains | > 0.82 | > 0.3 | — | Gray |
+1294| | Tundra | high or cold | < 0.25–0.3 | — | White-blue |
+1295| | Taiga | — | 0.15–0.3 | > 0.4 | Dark blue-green |
+1296| | Swamp | < 0.5 | > 0.3 | > 0.8 | Murky green |
+1297| | Tropical Forest | mid | > 0.6 | > 0.5 | Bright green |
+1298| | Volcanic | > 0.6 | > 0.85 | — | Dark red-gray |
+1299| | Arctic | — | < 0.15 | — | White |
+1300| | Frozen Lake | high | < 0.35 | > 0.4 | Ice blue |
+1301| | Mushroom Forest | < 0.5 | > 0.55 | > 0.75 | Purple-green |
+1302| 
+1303| ### Biome Labels Are Convenience Indexes, Not Boundaries
+1304| 
+1305| The underlying data is continuous. Two adjacent tiles may have nearly identical temperature/moisture but fall on different sides of a classification threshold. Visually, they should look nearly identical — the transition is smooth via Wang tilesets, not a hard edge.
+1306| 
+1307| Higher layers query the biome label when they need a quick "what kind of place is this?" answer (e.g., "should I place oak trees or cacti here?"). They can also query the raw floats for finer-grained decisions.
+1308| 
+1309| ### Elevation as Visual Information
+1310| 
+1311| Elevation is communicated visually through multiple mechanisms:
+1312| - **This layer (Layer -2)**: Tile selection shifts — higher elevation gets rockier, exposed stone at peaks
+1313| - **Layer -1 (Shading)**: Hillshade — darker on north-facing slopes, lighter on south-facing
+1314| - **Layer 1 (Ground Detail)**: Fewer grass blades on steep slopes, more exposed rock
+1315| - **Layer 4-5 (Objects)**: Tree density decreases with elevation, different species at altitude
+1316| 
+1317| This is TERRAIN elevation (continuous, natural landscape). STRUCTURAL elevation (stairs, second floors, raised platforms) is a separate system on Layer 3.
+1318| 
+1319| ### What This Layer Does NOT Do
+1320| 
+1321| - Does not know about buildings, paths, or any man-made content
+1322| - Does not carve holes for settlements
+1323| - Does not render visual detail (that's Layer 1)
+1324| - Does not determine walkability by itself (walkability comes from combining multiple layers)
+1325| 
+1326| ## How Layers Interact
+1327| 
+1328| ### Information flows DOWN → UP
+1329| 
+1330| Lower layers don't know about higher layers. Higher layers READ from lower layers.
+1331| 
+1332| ```
+1333| Layer -2 (Terrain: elevation, temp, precip)
+1334|   → Layer -1 reads elevation for shading
+1335|   → Layer 0 reads elevation for water placement (below sea level = water)
+1336|   → Layer 1 reads biome + fertility for ground detail selection
+1337|   → Layer 2 reads terrain for road routing (prefer flat, avoid water)
+1338|   → Layer 3 reads terrain for building placement (flat areas, near water, avoid flood zones)
+1339|   → Layer 4-5 reads biome for object selection (oaks in forest, cacti in desert)
+1340|   → Layer 7 reads elevation for fog density (valleys = foggy)
+1341| ```
+1342| 
+1343| ### Visual compositing flows UP → DOWN (painter's algorithm)
+1344| 
+1345| Render from bottom to top. Each layer paints over what's beneath based on its blend mode.
+1346| 
+1347| ### Occlusion rules
+1348| 
+1349| - Opaque layers HIDE everything beneath them where they have content
+1350| - Transparent layers ADD to what's beneath without hiding it
+1351| - Building floors (Layer 3) hide terrain (Layer -2) and ground detail (Layer 1)
+1352| - But objects (Layer 4-5) near buildings are removed by the SETTLEMENT SYSTEM, not by visual occlusion — you don't place flowers inside a tavern because the system knows not to, not because the floor hides them
+1353| 
+1354| ## The Grassland Example (All Layers)
+1355| 
+1356| What the player sees when looking at a grassy hillside with a nearby building:
+1357| 
+1358| 1. **Layer -2**: Solid green fill (base terrain — every pixel)
+1359| 2. **Layer -1**: Subtle darkening on the north slope, slight brightening on south (multiply)
+1360| 3. **Layer 0**: Nothing here (no water)
+1361| 4. **Layer 1**: Dense grass blade sprites scattered across the green. A few pebbles near the hill crest. (transparent overlay — green shows between blades)
+1362| 5. **Layer 2**: A dirt path cutting through (opaque — covers green + grass where it exists)
+1363| 6. **Layer 3**: Tavern floor/walls (opaque — covers everything beneath within footprint)
+1364| 7. **Layer 4-5**: Wildflowers in the grass. A fallen branch. Three oak trees. A sign by the path. (transparent sprites — y-sorted, you see through to grass between them)
+1365| 8. **Layer 6**: Red thatch roof over the tavern (opaque, would alpha-fade if player enters)
+1366| 9. **Layer 7**: Warm afternoon tint, torch glow from tavern windows (multiply/additive)
+1367| 
+1368| Each layer animates independently:
+1369| - Grass blades sway (Layer 1)
+1370| - Flowers bob slightly (Layer 4)
+1371| - Torch light flickers (Layer 7)
+1372| - Water ripples if present (Layer 0)
+1373| 
+1374| ## Design Philosophy
+1375| 
+1376| ### Layer -2 is primarily INFORMATION, secondarily visual
+1377| 
+1378| Its main job is providing the continuous terrain data that all other layers query. The visual rendering (solid colored tiles) is a baseline that's mostly hidden by the richer layers above it. But it must cover every pixel — it's the "canvas" that guarantees no gaps.
+1379| 
+1380| ### Higher layers ENRICH, lower layers INFORM
+1381| 
+1382| Layer -2 tells Layer 1 "this is grassland with 0.8 fertility" → Layer 1 places dense grass blades.
+1383| Layer -2 tells Layer 4 "this is forest with 0.6 moisture" → Layer 4 places oak trees with ferns at their base.
+1384| 
+1385| ### Additive vs Replacement is per-layer, not per-tile
+1386| 
+1387| A layer's blend mode is fixed. Ground Detail (Layer 1) is ALWAYS transparent overlay. Buildings (Layer 3) are ALWAYS opaque where present. You don't decide per-tile whether to add or replace — the layer's role determines it.
+1388| 
+1389| ### The settlement system clears higher layers, not the terrain
+1390| 
+1391| When a building is placed, the settlement system removes grass blades (Layer 1) and objects (Layer 4-5) from within the footprint. It does NOT modify Layer -2. The terrain data persists beneath the building for:
+1392| - Biome context ("the tavern is in a grassland")
+1393| - Destruction recovery (if building burns, terrain is revealed)
+1394| - Gameplay systems that query terrain regardless of structures
+1395| 
+1396| ---FILE: 2026-05-25-overmap-streaming-design.md
+1397| # Overmap + Streaming Terrain Design
+1398| 
+1399| > Established 2026-05-25. Integrates the overmap navigation system with the deterministic WorldCompiler terrain pipeline.
+1400| 

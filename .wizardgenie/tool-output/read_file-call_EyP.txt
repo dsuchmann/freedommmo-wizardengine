@@ -1,0 +1,262 @@
+File: specs_combined.tmp.txt (lines 1-260 of 6032)
+
+1| ---FILE: 2026-05-24-master-architecture-design.md
+2| # FreedomMMO Master Architecture Design
+3| 
+4| ## Vision
+5| 
+6| FreedomMMO is a simulation-first 2D MMORPG where **every visual is a projection of simulation state**. The world is not a tilemap with sprites - it's a hypergraph of composable elements where the tilemap is one rendering projection. Time is the primary resource. All entities are NPCs with complete lifecycles. There are no traditional "enemies" - only living beings competing for finite time.
+7| 
+8| ## Core Design Principle
+9| 
+10| **Everything is a stack of composable layers with properties. Visuals are always derivatives of simulation state, never the reverse.**
+11| 
+12| A tile is not "a grass sprite" - it's a material stack `[bedrock, ore_vein, rock, sand, soil, grass]` where each layer has properties (hardness, flammability, depth). The visual is generated from that stack. When lightning hits it, grass burns, the stack changes, the visual updates.
+13| 
+14| An entity is not "a sprite" - it's a body with 25+ slots where items layer. The visual composites body + equipped items. PixelLab generates each layer independently.
+15| 
+16| ## Architecture Layers
+17| 
+18| ### Layer 0: Grain Data Model (Foundation)
+19| **Spec:** `2026-05-24-L0-grain-data-model.md`
+20| 
+21| The atomic unit of all matter in the world. Grains have types (physical, magical, spiritual, technical), properties (purity, resonance, stability, energy_level), and environmental state (temperature, pressure, magical_charge).
+22| 
+23| **Key types:**
+24| - `Grain` - single material instance with properties
+25| - `GrainStack` - ordered list of grains at a position (depth-sorted)
+26| - `GrainRegistry` - catalog of all grain templates (sand, iron, mithril, arcane_dust...)
+27| 
+28| **Ported from:** `freedom/core/types.py`, `SCI_FI_FANTASY_SYSTEMS.md` grain system
+29| 
+30| ### Layer 1: World State Graph
+31| **Spec:** `2026-05-24-L1-world-state-graph.md`
+32| 
+33| The spatial container for grain stacks. Each world cell contains a grid of grain stacks. Cells relate to adjacent cells. The world is a graph of cells, each cell a grid of positions, each position a grain stack.
+34| 
+35| **Key types:**
+36| - `WorldCell` - 128x128 tile cell with grain stacks per position
+37| - `WorldGraph` - graph of cells with adjacency relationships
+38| - `Position` - (cell_id, x, y) uniquely identifies any grain stack
+39| 
+40| **Ported from:** `WORLD_STREAMING.md` cell architecture, `DATA_SCHEMAS.md` world cells
+41| 
+42| ### Layer 2: Material Registry
+43| **Spec:** `2026-05-24-L2-material-registry.md`
+44| 
+45| Database of grain templates, material recipes, and composition rules. Defines what grains exist, how they combine, what emergent properties arise.
+46| 
+47| **Key types:**
+48| - `GrainTemplate` - defines a grain type with default properties
+49| - `MaterialRecipe` - defines grain combinations that produce materials
+50| - `EmergentProperty` - rules for properties that emerge from grain interactions
+51| 
+52| **Ported from:** `SCI_FI_FANTASY_SYSTEMS.md` object system, grain compositions
+53| 
+54| ### Layer 3: Simulation Engine
+55| **Spec:** `2026-05-24-L3-simulation-engine.md`
+56| 
+57| The tick-based processor that advances world state. Each tick processes pending interactions, applies rules, propagates effects, updates grain stacks.
+58| 
+59| **Key types:**
+60| - `SimTick` - single simulation step
+61| - `InteractionQueue` - pending state changes to process
+62| - `PropagationRule` - how effects spread (fire spreads to adjacent flammable grains)
+63| 
+64| **Ported from:** Server architecture concepts, `ARCHITECTURE_PLAN.md` tick rate design
+65| 
+66| ### Layer 4: Interaction Rules
+67| **Spec:** `2026-05-24-L4-interaction-rules.md`
+68| 
+69| The rule engine defining how things affect each other. Dig removes top grain layers. Fire burns flammable grains. Water erodes soft grains. Lightning cracks brittle grains.
+70| 
+71| **Key types:**
+72| - `InteractionType` - enumeration of action types (dig, burn, freeze, cast, strike...)
+73| - `InteractionRule` - maps (action_type, target_grain_type) → state_change
+74| - `MutationResult` - describes what happens to a grain stack after interaction
+75| 
+76| **Ported from:** `SCI_FI_FANTASY_SYSTEMS.md` crafting interactions, morality consequences
+77| 
+78| ### Layer 5: Time System
+79| **Spec:** `2026-05-24-L5-time-system.md`
+80| 
+81| The core game mechanic. All entities have finite time. Time is consumed by existing, transferred through sharing/trading/combat. 10 life stages from Fetus to Elderly with different consumption rates. Death scaling after age 70.
+82| 
+83| **Key types:**
+84| - `TimePool` - an entity's remaining time
+85| - `TimeTransfer` - a transfer event (consumption 30%, sharing 95%, trading 85%...)
+86| - `LifeStage` - current stage with consumption multiplier
+87| - `GroupTimeGen` - group membership generating time (family 2.0x, village 1.5x...)
+88| 
+89| **Ported from:** `TIME_SYSTEM_ARCHITECTURE.md` (complete design exists)
+90| 
+91| ### Layer 6: Causal Tracker
+92| **Spec:** `2026-05-24-L6-causal-tracker.md`
+93| 
+94| Every action recorded with direct effects, ripple effects, temporal chains, spatial chains. Decision records track options considered, chosen option, reasoning, outcomes, learning.
+95| 
+96| **Key types:**
+97| - `CausalEvent` - single recorded event with cause/effect chain
+98| - `DecisionRecord` - entity decision with context, options, outcome
+99| - `ImpactMatrix` - source→target mapping with magnitude and persistence
+100| - `EntityHistory` - complete chronological record per entity
+101| 
+102| **Ported from:** `CAUSAL_TRACKING.md` (complete design exists)
+103| 
+104| ### Layer 7: Terrain Generator
+105| **Spec:** `2026-05-24-L7-terrain-generator.md`
+106| 
+107| Populates grain stacks using noise-based generation. Multi-octave noise produces elevation, moisture, temperature → biome classification → grain stack templates per position. Each position gets a depth-sorted stack of materials appropriate to its biome and local conditions.
+108| 
+109| **Key changes from current system:**
+110| - Output is grain stacks, not flat tile IDs
+111| - Much higher frequency noise for fine detail
+112| - Unique seeds per region (no repetition)
+113| - Feature placement (individual rocks, trees, water bodies)
+114| 
+115| **Builds on:** L0 (grain model), L2 (material registry)
+116| **Replaces:** Current `python_generator_gpu.py` tile-ID-based generation
+117| 
+118| ### Layer 8: Feature Placement
+119| **Spec:** `2026-05-24-L8-feature-placement.md`
+120| 
+121| Places complex features on top of base terrain: trees (multi-tile), rock formations, water bodies, caves, paths, structures. Features are compositions of grain stacks that override base terrain.
+122| 
+123| **Key types:**
+124| - `Feature` - multi-position grain stack override (a tree occupies multiple positions)
+125| - `FeatureTemplate` - blueprint for a feature type
+126| - `PlacementRule` - conditions for where a feature can spawn
+127| 
+128| **New system** (not in Python prototype)
+129| 
+130| ### Layer 9: Entity Composition
+131| **Spec:** `2026-05-24-L9-entity-composition.md`
+132| 
+133| Entities are bodies with 25+ equipment slots. Each slot can hold layered items. Items have grain compositions affecting properties. The entity's visual, stats, and capabilities are all derived from its composition.
+134| 
+135| **Equipment slots:** head, face, ears, neck, shoulders, upper_arms, lower_arms, hands, fingers, chest, back, waist, upper_legs, lower_legs, feet, ankles, tattoos, implants, accessories...
+136| 
+137| **Key types:**
+138| - `EntityBody` - base body with species-specific attributes
+139| - `EquipmentSlot` - named slot with item capacity and layer priority
+140| - `EquippedItem` - item in a slot with layer position
+141| - `EntityStats` - computed stats derived from body + equipment
+142| 
+143| **Ported from:** `SCI_FI_FANTASY_SYSTEMS.md` item system (25+ slots, layering, set bonuses, synergies)
+144| 
+145| ### Layer 10: NPC AI
+146| **Spec:** `2026-05-24-L10-npc-ai.md`
+147| 
+148| Goal-oriented AI with personality traits. NPCs have survival instincts, form relationships, make decisions based on personality (empathy, aggression, greed, courage...). All decisions recorded via causal tracker.
+149| 
+150| **Key types:**
+151| - `NPCBrain` - decision-making engine per entity
+152| - `Goal` - something an NPC is trying to achieve
+153| - `PersonalityProfile` - trait values affecting decisions
+154| - `Relationship` - connection between entities with history
+155| 
+156| **Ported from:** `freedom/npc/ai_engine.py`, `TIME_SYSTEM_ARCHITECTURE.md` personality traits
+157| 
+158| ### Layer 11: Tile Renderer
+159| **Spec:** `2026-05-24-L11-tile-renderer.md`
+160| 
+161| Reads grain stacks and composites the visual. The top-visible grain determines the primary visual. Grain properties affect rendering (wet sand vs dry sand, burnt grass vs fresh grass). Multiple grains at the surface blend.
+162| 
+163| **Key types:**
+164| - `TileVisual` - computed visual for a position from its grain stack
+165| - `VisualAtom` - single sprite/texture for a grain type (from PixelLab)
+166| - `CompositeRule` - how to blend multiple visible grains
+167| 
+168| **New system** (replaces current flat-color tileset)
+169| 
+170| ### Layer 12: Entity Renderer
+171| **Spec:** `2026-05-24-L12-entity-renderer.md`
+172| 
+173| Composites entity visuals from body + equipment layers. Each equipment item has a visual layer. Layers composite in order (body → undergarments → clothing → armor → accessories → held items).
+174| 
+175| **Key types:**
+176| - `EntityVisual` - computed composite sprite for an entity
+177| - `EquipmentVisual` - sprite for an item in a specific slot
+178| - `LayerCompositor` - composites multiple sprite layers into final visual
+179| 
+180| **Builds on:** L9 (entity composition), L13 (asset pipeline)
+181| 
+182| ### Layer 13: Asset Pipeline
+183| **Spec:** `2026-05-24-L13-asset-pipeline.md`
+184| 
+185| Generates visual atoms via PixelLab MCP. Each grain type gets sprite variants. Each equipment item gets directional sprites. Tilesets generated as Wang tiles for seamless blending. Assets cached locally, regenerated on demand.
+186| 
+187| **Key types:**
+188| - `AssetRequest` - request to PixelLab for a specific visual
+189| - `AssetCache` - local cache of generated sprites
+190| - `TilesetGenerator` - generates complete tilesets for a biome
+191| - `CharacterGenerator` - generates character sprites with equipment layers
+192| 
+193| **Uses:** PixelLab MCP (connected), ComfyUI (local RTX 3090), godot-ai MCP
+194| 
+195| ### Layer 14: Interaction Animation System
+196| **Spec:** `2026-05-24-L14-interaction-animation.md`
+197| 
+198| Choreographed interactions between entities. Every physical interaction (combat, pickup, embrace, surgery, etc.) has a template defining which body parts contact which, in what sequence, at what relative positions. Templates are parameterized by entity state (missing limbs, armor, size differences). PixelLab generates sprite frames per pose. Frames are cached by interaction-type + entity-composition hash.
+199| 
+200| **Key types:**
+201| - `InteractionTemplate` - choreography definition (sequence of poses, body part contacts)
+202| - `PoseFrame` - single frame in a choreography (entity positions, body part states)
+203| - `InteractionInstance` - runtime instance binding template to specific entities
+204| - `AnimationCache` - caches generated frames by template + composition hash
+205| 
+206| **Builds on:** L9 (entity composition), L12 (entity renderer), L13 (asset pipeline)
+207| 
+208| ### Cross-Cutting: CI & Testing Infrastructure
+209| **Spec:** `2026-05-24-CI-testing-infrastructure.md`
+210| 
+211| Multi-layer testing runs on every PR:
+212| - **Layer 1:** Python structural tests (file existence, method signatures, JSON validity) - EXISTS
+213| - **Layer 2:** GDScript runtime tests (instantiate classes, call methods, verify behavior in Godot headless)
+214| - **Layer 3:** Integration tests (systems working together - serialization roundtrips, registry loading, persistence cycles)
+215| - **Layer 4:** Security baseline (password hashing, session entropy, input sanitization, RPC authority)
+216| 
+217| Every new layer (L0-L14) must add runtime tests that run on every PR.
+218| 
+219| ## Dependency Graph
+220| 
+221| ```
+222| L0 Grain Model ──────┬──── L2 Material Registry
+223|                       │
+224| L1 World State ───────┤
+225|                       │
+226|                       ├──── L3 Simulation Engine ──── L4 Interaction Rules
+227|                       │
+228|                       ├──── L5 Time System ──── L6 Causal Tracker
+229|                       │
+230|                       ├──── L7 Terrain Gen ──── L8 Feature Placement
+231|                       │
+232|                       ├──── L9 Entity Composition ──── L10 NPC AI
+233|                       │
+234|                       └──── L11 Tile Renderer ──── L13 Asset Pipeline
+235|                                                          │
+236|                              L12 Entity Renderer ─────────┘
+237| ```
+238| 
+239| ## Already Built (from yesterday's session)
+240| 
+241| These systems exist on main and will be integrated:
+242| - `NetworkManager.gd` - ENet multiplayer (L14: Networking)
+243| - `PlayerSyncManager.gd` - position sync (L14)
+244| - `ChatManager.gd` + `ChatUI.gd` - chat system
+245| - `PersistenceManager.gd` - JSON save/load (will need to save grain state)
+246| - `AuthManager.gd` - player auth
+247| - `ServerConfig.gd` + `GameTime.gd` - config and time tracking
+248| - `Player.gd` + `Player.tscn` - player character (will be rebuilt on L9/L12)
+249| - CI pipeline with 100+ test assertions
+250| 
+251| ## Implementation Order
+252| 
+253| **Phase 1: Foundation (L0-L2)** - Data models, no rendering changes
+254| **Phase 2: Simulation (L3-L6)** - Processing engine, time system port
+255| **Phase 3: World Gen (L7-L8)** - New terrain generator outputting grain stacks
+256| **Phase 4: Rendering (L11-L13)** - Visual pipeline with PixelLab integration
+257| **Phase 5: Entities (L9-L10, L12)** - Entity composition, AI, entity rendering
+258| **Phase 6: Integration** - Wire everything together, QA in Godot (F5)
+259| 
+260| ## QA Process
