@@ -2,36 +2,35 @@
 
 ## Task ID
 
-M7-001
+M7-002
 
 ## Goal
 
-Add worker-ready chunk compilation infrastructure so terrain generation can scale across modern multi-core computers.
+Reduce remaining draw/render bottlenecks after worker-backed chunk compilation by adding chunk-level render caches and/or lower-cost terrain projection.
 
 ## Why this matters
 
-The current performance pass reduced avoidable main-thread work, but FreedomMMO needs to support large deterministic worlds with rich layered chunks, object placement, lighting projection, and eventually asset composition. Chunk compilation should move behind an asynchronous job queue and then into Web Workers.
+Chunk generation can now run through a worker pool, but the renderer still draws every visible tile every frame and applies per-tile shading/tint math in the hot path. FreedomMMO needs chunk-image projection, atlas-style batching, or cached terrain layers so the main thread mostly composites prebuilt chunk surfaces.
 
 ## Required reads before coding
 
 - `AGENT_LOOP.md`
 - `IMPLEMENTATION_CONTRACT.md`
 - `SPEC_IMPLEMENTATION_BACKLOG.md`
-- `specs/2026-05-26-performance-infrastructure-spec.md`
-- `specs/2026-05-24-world-compiler-design.md`
-- `src/world/chunk.js`
+- `specs/2026-05-26-runtime-compositor-spec.md`
+- `specs/2026-05-27-terrain-shading-design.md`
+- `src/render/canvas-renderer.js`
 - `src/world/chunk-compiler.js`
 
 ## Deliverables
 
-- Add a chunk compile job queue abstraction.
-- Preserve deterministic synchronous fallback.
-- Prepare worker message format for `{ seed, cx, cy } -> compiled chunk`.
-- Keep game playable even before full worker migration.
-- Update backlog and logs.
+- Add cached terrain chunk image projection or equivalent batching.
+- Keep dynamic lighting/elevation readable.
+- Preserve deterministic tile/layer simulation data.
+- Update perf HUD/logs/backlog.
 
 ## Acceptance criteria
 
-- Chunk generation still produces the same deterministic chunks.
-- Main code depends on a chunk provider abstraction instead of directly instantiating compiler everywhere.
-- `DONE.md` and `SPEC_IMPLEMENTATION_BACKLOG.md` are updated.
+- Renderer does less per-tile work every frame.
+- Chunk cache invalidates safely if projection inputs change.
+- `DONE.md` is updated.

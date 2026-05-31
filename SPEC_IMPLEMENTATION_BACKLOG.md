@@ -63,8 +63,8 @@ The first playable slice exists, but it is a scaffold. The next work must turn i
 - [x] Cache biome audit work.
 - [x] Cache overmap base image and redraw only when needed.
 - [x] Remove per-tile cross-chunk lookups from main draw hot path.
-- [ ] Add chunk compile job queue.
-- [ ] Move chunk compilation into Web Workers.
+- [x] Add chunk compile job queue.
+- [x] Move chunk compilation into Web Workers.
 - [ ] Add render batching/atlas projection for terrain and objects.
 
 ## Current implementation caveat

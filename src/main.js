@@ -1,5 +1,5 @@
 import { ChunkStore } from './world/chunk.js';
-import { ChunkCompiler } from './world/chunk-compiler.js';
+import { ChunkProvider } from './world/chunk-provider.js';
 import { CanvasRenderer } from './render/canvas-renderer.js';
 import { InputState } from './input.js';
 import { Player } from './player.js';
@@ -14,7 +14,7 @@ const stats = document.getElementById('stats');
 const overmapCanvas = document.getElementById('overmap');
 const input = new InputState();
 const player = new Player(loadPlayerPosition() ?? { x: 0, y: 0 });
-const chunks = new ChunkStore(new ChunkCompiler());
+const chunks = new ChunkStore(new ChunkProvider());
 const renderer = new CanvasRenderer(canvas, stats);
 const lighting = new DayNightCycle();
 const overmap = new OvermapController(overmapCanvas, player, chunks);

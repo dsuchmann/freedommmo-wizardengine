@@ -1,0 +1,82 @@
+File: src/render/canvas-renderer.js (lines 1-80 of 197)
+
+1| import { WORLD } from '../core/constants.js';
+2| import { getWorldSeed } from '../core/world-seed.js';
+3| import { floorDiv } from '../world/chunk.js';
+4| import { auditBiomesAround } from '../world/biome-audit.js';
+5| 
+6| export class CanvasRenderer {
+7|   constructor(canvas, statsElement) {
+8|     this.canvas = canvas;
+9|     this.ctx = canvas.getContext('2d', { alpha: false });
+10|     this.statsElement = statsElement;
+11|     this.lastAudit = null;
+12|     this.lastAuditAt = 0;
+13|     window.addEventListener('resize', () => this.resize());
+14|     this.resize();
+15|   }
+16| 
+17|   resize() {
+18|     this.canvas.width = Math.floor(window.innerWidth * window.devicePixelRatio);
+19|     this.canvas.height = Math.floor(window.innerHeight * window.devicePixelRatio);
+20|     this.ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+21|   }
+22| 
+23|   draw(chunkStore, player, lighting, camera) {
+24|     const ctx = this.ctx;
+25|     const w = window.innerWidth;
+26|     const h = window.innerHeight;
+27|     const sun = lighting.sun();
+28|     const tilePx = WORLD.tileSize * camera.zoom;
+29|     const focusTile = chunkStore.tileAt(player.x, player.y);
+30|     ctx.fillStyle = '#071019';
+31|     ctx.fillRect(0, 0, w, h);
+32| 
+33|     const camX = player.x * tilePx - w / 2;
+34|     const camY = player.y * tilePx - h / 2;
+35|     const minTX = Math.floor(camX / tilePx) - 1;
+36|     const minTY = Math.floor(camY / tilePx) - 1;
+37|     const maxTX = Math.ceil((camX + w) / tilePx) + 1;
+38|     const maxTY = Math.ceil((camY + h) / tilePx) + 1;
+39| 
+40|     for (let ty = minTY; ty <= maxTY; ty++) {
+41|       for (let tx = minTX; tx <= maxTX; tx++) {
+42|         const cx = floorDiv(tx, WORLD.chunkSize);
+43|         const cy = floorDiv(ty, WORLD.chunkSize);
+44|         const lx = tx - cx * WORLD.chunkSize;
+45|         const ly = ty - cy * WORLD.chunkSize;
+46|         const chunk = chunkStore.get(cx, cy);
+47|         const renderTile = chunk.renderTiles[ly * WORLD.chunkSize + lx];
+48|         const east = lx < WORLD.chunkSize - 1 ? chunk.renderTiles[ly * WORLD.chunkSize + lx + 1].elevation : renderTile.elevation;
+49|         const south = ly < WORLD.chunkSize - 1 ? chunk.renderTiles[(ly + 1) * WORLD.chunkSize + lx].elevation : renderTile.elevation;
+50|         const slope = ((renderTile.elevation - east) * sun.shadowX + (renderTile.elevation - south) * sun.shadowY) * 1.8;
+51|         const contour = Math.floor(renderTile.elevation * 18) !== Math.floor((renderTile.elevation - 0.012) * 18) ? 0.10 : 0;
+52|         const depthDelta = focusTile.climate.elevation - renderTile.elevation;
+53|         const depthFade = Math.max(0, depthDelta - 0.08) * 0.55;
+54|         ctx.fillStyle = tint(shade(renderTile.color, (renderTile.elevation - 0.5) * 0.30 + slope + contour + depthFade), sun.tint, sun.ambient);
+55|         const sx = Math.floor(tx * tilePx - camX);
+56|         const sy = Math.floor(ty * tilePx - camY - elevationLift(renderTile.elevation) * camera.zoom);
+57|         const tileSize = Math.ceil(tilePx);
+58|         ctx.fillRect(sx, sy, tileSize, tileSize + Math.ceil(elevationLift(renderTile.elevation) * 0.35 * camera.zoom));
+59|       }
+60|     }
+61| 
+62|     this.drawObjects(chunkStore, camX, camY, w, h, sun, camera);
+63|     this.drawDepthBokeh(chunkStore, player, focusTile, camera, camX, camY, w, h);
+64|     this.drawPlayer(w, h, camera.zoom);
+65|     this.drawAtmosphere(sun, w, h);
+66|   }
+67| 
+68|   drawObjects(chunkStore, camX, camY, w, h, sun, camera) {
+69|     const ctx = this.ctx;
+70|     for (const chunk of chunkStore.chunks.values()) {
+71|       for (const object of chunk.objects) {
+72|         const tile = chunk.tiles[object.y * WORLD.chunkSize + object.x];
+73|         const tilePx = WORLD.tileSize * camera.zoom;
+74|         const sx = (chunk.cx * WORLD.chunkSize + object.x) * tilePx - camX;
+75|         const sy = (chunk.cy * WORLD.chunkSize + object.y) * tilePx - camY - elevationLift(tile.climate.elevation) * camera.zoom;
+76|         if (sx < -20 || sy < -20 || sx > w + 20 || sy > h + 20) continue;
+77|         ctx.fillStyle = `rgba(0,0,0,${0.28 * (1 - sun.height)})`;
+78|         ctx.fillRect(sx + sun.shadowX * 12 * camera.zoom, sy + sun.shadowY * 12 * camera.zoom + 10 * camera.zoom, 12 * camera.zoom, 5 * camera.zoom);
+79|         drawObject(ctx, object.kind, sx, sy, camera.zoom);
+80|       }

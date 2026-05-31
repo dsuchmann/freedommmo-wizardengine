@@ -6,6 +6,10 @@ let cachedSeed = null;
 export function getWorldSeed() {
   if (cachedSeed !== null) return cachedSeed;
   try {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      cachedSeed = DEFAULT_SEED;
+      return cachedSeed;
+    }
     const raw = window.localStorage.getItem(WORLD_SEED_KEY);
     const parsed = Number.parseInt(raw, 10);
     cachedSeed = Number.isFinite(parsed) ? parsed : DEFAULT_SEED;
@@ -19,7 +23,7 @@ export function getWorldSeed() {
 export function setWorldSeed(seed) {
   cachedSeed = Number.isFinite(seed) ? Math.trunc(seed) : DEFAULT_SEED;
   try {
-    window.localStorage.setItem(WORLD_SEED_KEY, String(cachedSeed));
+    if (typeof window !== 'undefined' && window.localStorage) window.localStorage.setItem(WORLD_SEED_KEY, String(cachedSeed));
   } catch {
     // Ignore persistence failures; deterministic fallback remains available.
   }

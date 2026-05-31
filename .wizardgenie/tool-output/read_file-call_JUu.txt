@@ -1,0 +1,151 @@
+File: specs/2026-05-26-runtime-compositor-spec.md (149 lines)
+
+1| # Runtime Compositor Spec — Cel-Animation Tile Rendering
+2| 
+3| **Date:** 2026-05-26
+4| **Status:** Draft
+5| **Scope:** How Godot stacks, animates, and state-transitions the layered tile system at runtime.
+6| 
+7| ## Architecture Overview
+8| 
+9| Each visible tile on screen is a stack of up to 5 transparent layers composited via z-ordered rendering. A TileStateManager tracks the current state of every tile and tells the compositor which frame set to use.
+10| 
+11| ```
+12| Player walks through grass:
+13|   L5: [atmospheric - pollen drifting]        z=4
+14|   L4: [scatter - pebbles]                    z=3
+15|   L3: [vegetation - grass DISTURBED frame]   z=2  ← state-driven swap
+16|   L2: [detail - root pattern]                z=1
+17|   L1: [base - dirt ground]                   z=0
+18| ```
+19| 
+20| ## Tile State Machine
+21| 
+22| Each tile position (world x, y) has a state. States are driven by game events.
+23| 
+24| ### State Categories
+25| 
+26| States map to biome visual languages — the biomes themselves are the vocabulary for states:
+27| 
+28| | State | Visual Source | Trigger Examples |
+29| |-------|-------------|-----------------|
+30| | **pristine** | Native biome | Default |
+31| | **disturbed** | Native biome (variant frames) | Player/NPC walks through |
+32| | **trampled** | Native biome (worn variant) | Heavy foot traffic, paths form |
+33| | **dug** | Exposed earth/subterrain | Dig action, mining |
+34| | **burning** | Volcanic visual language | Fire spell, torch, wildfire spread |
+35| | **burned/scorched** | Volcanic + desert (ash, char) | After fire extinguishes |
+36| | **frozen** | Tundra/arctic visual language | Ice spell, winter event, altitude |
+37| | **wet** | Ocean/swamp visual language | Rain, flooding, water spell |
+38| | **cursed/corrupted** | Mystic visual language (dark variant) | Dark magic, undead presence |
+39| | **enchanted** | Mystic visual language (light variant) | Blessing, magical ward |
+40| | **decaying/undead** | Swamp visual language (rot, ooze) | Necromancy, blight |
+41| | **growing/fertile** | Forest/grassland lush variant | Growth spell, spring, fertilize |
+42| | **dry/drought** | Desert visual language | Heat, no rain, curse |
+43| 
+44| **Key insight:** Biome L2-L5 assets double as state overlays for other biomes. A "frozen" grassland tile uses tundra's L2 (frost patterns) overlaid on grassland's L1 (base ground). A "burning" forest tile uses volcanic's L3 (embers/cracks) overlaid on forest's L1.
+45| 
+46| This means generating biome assets also generates state assets. Efficiency multiplier.
+47| 
+48| ### State Transitions
+49| 
+50| ```gdscript
+51| # State machine per tile
+52| enum TileState {
+53|     PRISTINE, DISTURBED, TRAMPLED, DUG,
+54|     BURNING, BURNED, FROZEN, WET,
+55|     CURSED, ENCHANTED, DECAYING, GROWING, DRY
+56| }
+57| 
+58| # Each state has: entry_frames, loop_frames, exit_frames, duration (-1 = persistent)
+59| # Transitions: PRISTINE → DISTURBED (3s) → RECOVERING → PRISTINE
+60| #              PRISTINE → BURNING (5s) → BURNED (persistent)
+61| #              PRISTINE → FROZEN (persistent until thaw event)
+62| ```
+63| 
+64| ### State Layer Mapping
+65| 
+66| When a tile enters a non-pristine state, the compositor replaces specific sub-layers:
+67| 
+68| | State | L1 (Base) | L2 (Detail) | L3 (Vegetation) | L4 (Scatter) | L5 (Atmospheric) |
+69| |-------|-----------|-------------|-----------------|--------------|-------------------|
+70| | pristine | Native | Native | Native | Native | Native |
+71| | disturbed | Native | Native | Native (sway frame) | Native (shifted) | Native |
+72| | burning | Native (darken) | Volcanic L2 | Volcanic L3 (flames) | Remove | Volcanic L5 (smoke) |
+73| | frozen | Native | Tundra L2 (frost) | Tundra L3 (ice coat) | Arctic L4 (ice shards) | Arctic L5 (snow) |
+74| | cursed | Native (desaturate) | Mystic L2 (dark) | Mystic L3 (dark crystal) | Mystic L4 | Mystic L5 (dark particles) |
+75| | wet | Native | Ocean L2 (puddles) | Native (droop frame) | Native | Swamp L5 (mist) |
+76| | decaying | Native (darken+green) | Swamp L2 (rot) | Swamp L3 (dead vines) | Swamp L4 (bones) | Swamp L5 (miasma) |
+77| | growing | Native | Forest L2 (moss) | Forest L3 (sprouts) | Native | Grassland L5 (pollen) |
+78| | dry | Desert L1 (cracked) | Desert L2 (cracks) | Remove | Desert L4 (dust) | Desert L5 (heat haze) |
+79| 
+80| ## Compositor Node Architecture
+81| 
+82| ```
+83| ChunkRenderer (Node2D, per chunk)
+84|   ├─ L1_Base (Sprite2D, z=0)
+85|   ├─ L2_Detail (Sprite2D, z=1)
+86|   ├─ L3_Vegetation (Sprite2D, z=2)
+87|   ├─ L4_Scatter (Sprite2D, z=3)
+88|   └─ L5_Atmospheric (Sprite2D, z=4)
+89| ```
+90| 
+91| For Phase 1, each layer is a single Image composited from 64x64 Wang tiles (same as current chunk image approach). The chunk streamer builds 5 images per chunk instead of 1.
+92| 
+93| For state changes, only the affected layer images need to be rebuilt for the affected tiles — not the entire chunk.
+94| 
+95| ## Animation System
+96| 
+97| ### Frame-Swap Animation (Event-Driven)
+98| 
+99| Each layer can have multiple frames. Frames are swapped based on events, not timers:
+100| 
+101| ```gdscript
+102| # Player proximity triggers vegetation sway
+103| func _on_player_moved(player_pos: Vector2):
+104|     var tile_pos = world_to_tile(player_pos)
+105|     for nearby_tile in get_tiles_in_radius(tile_pos, 2):
+106|         var dist = tile_pos.distance_to(nearby_tile)
+107|         var sway_frame = compute_sway_frame(dist, player_velocity)
+108|         set_tile_state(nearby_tile, TileState.DISTURBED, {"frame": sway_frame})
+109| ```
+110| 
+111| ### Ambient Animation (Timer-Based, Low Priority)
+112| 
+113| Some layers have slow ambient cycles — water ripples, lava glow pulse, mystic shimmer. These use timers but at low frequency (2-4 FPS) to keep the pixel art feel:
+114| 
+115| ```gdscript
+116| # Ambient water ripple — cycles through 4 frames every 2 seconds
+117| func _tick_ambient():
+118|     if biome in [OCEAN, LAKE, RIVER, SWAMP]:
+119|         L1_frame = (L1_frame + 1) % 4  # Slow cycle
+120| ```
+121| 
+122| ## Performance Budget
+123| 
+124| - **Max 5 Sprite2D per chunk** (one per layer)
+125| - **Image rebuilds**: Only when tile states change, not every frame
+126| - **Ambient animation**: Batched — all water tiles in a chunk swap frame simultaneously
+127| - **State tracking**: PackedByteArray per chunk (64x64 = 4096 bytes, one byte per tile)
+128| - **Memory**: 5 Images per chunk × 49 loaded chunks = 245 Images. At 2048x2048 RGBA8 = ~4MB each = ~1GB. May need to skip L5 atmospheric for distant chunks.
+129| 
+130| ## Integration with Existing Systems
+131| 
+132| ### ChunkStreamer Changes
+133| - After compile_chunk + modifier override, build 5 layer images instead of 1
+134| - L1 uses the existing Wang tile rendering logic (same code, same tilesets)
+135| - L2-L5 are new overlays composited on top
+136| - Pass all 5 images to a new `display_chunk_layers()` method
+137| 
+138| ### TileStateManager (New System)
+139| - Registered in WorldManager as a system
+140| - Tracks state per tile via Dictionary[Vector2i, TileState]
+141| - Receives events: player_moved, dig_action, fire_event, weather_change
+142| - Emits tile_state_changed(tile_pos, old_state, new_state)
+143| - Compositor listens and rebuilds affected layer images
+144| 
+145| ### Day/Night Integration
+146| - L5 atmospheric layer tint responds to day/night cycle
+147| - Existing shader handles L1 normal map + directional shading
+148| - L2-L5 get simpler tinting via CanvasModulate (same as current non-terrain elements)
+149| 

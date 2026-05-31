@@ -69,3 +69,10 @@
   - The white box shows the actually loaded chunk window based on `WORLD.loadRadius`.
   - Distance rings are now true chunk distances.
   - Overmap text now states `1 map pixel = 1 chunk = 64×64 tiles`.
+- Added worker-backed chunk compilation infrastructure:
+  - Added `src/world/chunk-provider.js` with worker pool, pending/ready queues, and sync fallback.
+  - Added `src/world/chunk-worker.js` to compile chunks off the main thread using `{ seed, cx, cy }` messages.
+  - Updated `ChunkStore` to request chunks asynchronously, keep deterministic sync fallback for immediate tile reads, and expose worker stats.
+  - Updated `world-seed` to work safely inside workers without `window.localStorage`.
+  - Updated HUD to show worker count, pending jobs, and ready chunk cache.
+  - Marked worker/job-queue performance backlog items complete.
