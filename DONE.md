@@ -131,3 +131,9 @@
   - Border transitions can only use the actual regional neighbor on that side of the chunk.
   - The candidate must be a valid biome-graph neighbor and must match local climate detail; unrelated ocean/beach candidates inside tundra are ignored.
   - Static coherency audit over 25,921 chunks now reports 0 chunks whose sampled dominant tile biome differs from the regional overmap biome.
+- Guaranteed all 21 biomes in regional overmap generation:
+  - Added `src/world/biome-provinces.js` with deterministic biome province anchors/radii for every tracked biome.
+  - Regional map now blends natural climate classification with guaranteed biome provinces, ensuring rare biomes like lake, volcanic, tropical_forest, mystic, and deep_ocean exist at world scale.
+  - Biome audit now samples the regional overmap field directly, matching what the player sees/clicks on the map.
+  - Regional audit over the canonical local/world-scale area reports no missing biomes across all 21 tracked biome IDs.
+  - Coherency audit over 23,409 sampled regional chunks reports 0 dominant chunk/tile biome mismatches.

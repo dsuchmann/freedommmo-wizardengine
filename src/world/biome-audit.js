@@ -1,5 +1,6 @@
 import { WORLD } from '../core/constants.js';
-import { classifyBiome, SPEC_BIOME_IDS } from './biomes.js';
+import { SPEC_BIOME_IDS } from './biomes.js';
+import { sampleRegionalMapChunk } from './regional-map.js';
 
 const cache = new Map();
 
@@ -14,9 +15,7 @@ export function auditBiomesAround(player, sampleChunks = 96, strideChunks = 4) {
   const counts = new Map();
   for (let cy = bucketY - sampleChunks / 2; cy <= bucketY + sampleChunks / 2; cy += strideChunks) {
     for (let cx = bucketX - sampleChunks / 2; cx <= bucketX + sampleChunks / 2; cx += strideChunks) {
-      const wx = Math.floor(cx * WORLD.chunkSize + WORLD.chunkSize / 2);
-      const wy = Math.floor(cy * WORLD.chunkSize + WORLD.chunkSize / 2);
-      const id = classifyBiome(wx, wy).id;
+      const id = sampleRegionalMapChunk(cx, cy).id;
       counts.set(id, (counts.get(id) ?? 0) + 1);
     }
   }

@@ -1,5 +1,6 @@
 import { fbm } from '../core/random.js';
 import { BIOMES } from './biome-definitions.js';
+import { provinceBiomeAt } from './biome-provinces.js';
 
 const CHUNK_UNITS = 64;
 
@@ -15,8 +16,10 @@ export function sampleRegionalMapChunk(cx, cy) {
   const elevation = clamp01(continent * 1.05 + mountains * 0.34 - 0.19);
   const heat = clamp01(heatBase - latitudeCold - Math.max(0, elevation - 0.58) * 0.35 + 0.10);
   const river = riverSignal(cx, cy, elevation, moisture);
-  const id = classifyRegionalBiome(elevation, moisture, heat, mountains, river, aether);
-  return { id, definition: BIOMES[id], climate: { elevation, moisture, heat, river, mountains, aether } };
+  const naturalId = classifyRegionalBiome(elevation, moisture, heat, mountains, river, aether);
+  const province = provinceBiomeAt(cx, cy);
+  const id = province?.score < 0.82 ? province.id : naturalId;
+  return { id, definition: BIOMES[id], climate: { elevation, moisture, heat, river, mountains, aether, naturalBiome: naturalId, province } };
 }
 
 function riverSignal(cx, cy, elevation, moisture) {
