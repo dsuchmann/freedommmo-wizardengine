@@ -30,6 +30,7 @@ export class Player {
     this.glide = input.down?.('e') && this.z > 0.6 && this.vz < 0;
 
     const tile = chunkStore?.tileAt(this.x, this.y);
+    this.climbing = Boolean(tile?.layers?.[7]?.slope > 0.09 && tile?.layers?.[7]?.slope <= 0.16 && moving && this.z <= 0.05);
     const cost = movement?.movementCost ? movement.movementCost(tile) : 1;
     const rollBoost = this.rollTimer > 0 ? 2.4 : 1;
     const speed = this.speed * (sprinting ? this.sprintMultiplier : 1) * rollBoost;
@@ -49,7 +50,7 @@ export class Player {
       this.vz = 0;
     }
     this.rollTimer = Math.max(0, this.rollTimer - dt);
-    this.character.setMotion({ moving, sprinting, jumping: this.z > 0.05, gliding: this.glide, rolling: this.rollTimer > 0, direction: directionFromAxis(axis) });
+    this.character.setMotion({ moving, sprinting, jumping: this.z > 0.05, climbing: this.climbing, gliding: this.glide, rolling: this.rollTimer > 0, direction: directionFromAxis(axis) });
     this.character.update(dt);
   }
 }

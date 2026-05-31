@@ -240,3 +240,8 @@
   - Added `src/assets/variant-selector.js` for deterministic biome/object/coordinate variant frame IDs.
   - Object rendering now attempts biome-specific variant sheets for trees and rocks before falling back to seed generated atlas rows.
   - Added a dynamic player contact overlay that draws grass/foliage disturbance strokes around the player while walking, sprinting, or dodge rolling.
+- Added seamless dynamic elevation overlay and climb feedback:
+  - Added `src/render/elevation-overlay.js` to render elevation contours/highlights/shadows dynamically across chunk boundaries without baking per-tile offsets into cached chunk images.
+  - Canvas renderer now draws elevation shading after cached terrain and before contact/world actors.
+  - Player now detects climbable steep slopes and switches modular animation state to climb/climb_idle through the existing body state machine.
+  - HUD now reports player vertical `z` and movement state labels for climbing, gliding, and rolling.

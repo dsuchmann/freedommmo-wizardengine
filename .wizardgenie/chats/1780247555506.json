@@ -12,179 +12,6 @@
       },
       {
         "type": "tool_use",
-        "id": "call_gmv0yidiPhLvqShy0TrVrVDf",
-        "name": "read_file",
-        "input": {
-          "path": "DONE.md",
-          "start_line": 115,
-          "end_line": 145
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_gmv0yidiPhLvqShy0TrVrVDf",
-        "content": "File: DONE.md (lines 115-122 of 122)\n\n115| - Added Mystic biome and biome-element reaction model:\n116|   - Added `mystic` to spec biome tracking, terrain colors, regional overmap sampling, tile biome classification, object placement, and surface details.\n117|   - Added `src/world/biome-elements.js` defining biome elemental affinities and material reaction states.\n118|   - Runtime compositor now attaches reaction states to terrain/object signatures, e.g. wood + fire = burning, wood + water = waterlogged, wood + mystic = enchanted, stone + mystic = rune_etched, water + mystic = shimmering.\n119|   - Added Mystic visual placeholder details and aether crystal object rendering.\n120|   - Expanded broadleaf tree and grassland catalog metadata with Mystic/enchantment/frozen/waterlogged/burnt state coverage.\n121|   - Static biome audit confirms all tracked biomes, including Mystic, are represented.\n122| ",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_dJHfDEOQ5K3Oeea995ftr5Dl",
-        "name": "edit_file",
-        "input": {
-          "path": "DONE.md",
-          "old_text": "- Added Mystic biome and biome-element reaction model:\n  - Added `mystic` to spec biome tracking, terrain colors, regional overmap sampling, tile biome classification, object placement, and surface details.\n  - Added `src/world/biome-elements.js` defining biome elemental affinities and material reaction states.\n  - Runtime compositor now attaches reaction states to terrain/object signatures, e.g. wood + fire = burning, wood + water = waterlogged, wood + mystic = enchanted, stone + mystic = rune_etched, water + mystic = shimmering.\n  - Added Mystic visual placeholder details and aether crystal object rendering.\n  - Expanded broadleaf tree and grassland catalog metadata with Mystic/enchantment/frozen/waterlogged/burnt state coverage.\n  - Static biome audit confirms all tracked biomes, including Mystic, are represented.\n",
-          "new_text": "- Added Mystic biome and biome-element reaction model:\n  - Added `mystic` to spec biome tracking, terrain colors, regional overmap sampling, tile biome classification, object placement, and surface details.\n  - Added `src/world/biome-elements.js` defining biome elemental affinities and material reaction states.\n  - Runtime compositor now attaches reaction states to terrain/object signatures, e.g. wood + fire = burning, wood + water = waterlogged, wood + mystic = enchanted, stone + mystic = rune_etched, water + mystic = shimmering.\n  - Added Mystic visual placeholder details and aether crystal object rendering.\n  - Expanded broadleaf tree and grassland catalog metadata with Mystic/enchantment/frozen/waterlogged/burnt state coverage.\n  - Static biome audit confirms all tracked biomes, including Mystic, are represented.\n- Improved overmap/chunk biome coherency:\n  - Added `src/world/biome-definitions.js` to break circular imports and keep biome definitions shared between regional map and tile classifier.\n  - Added `src/world/biome-graph.js` for explicit biome adjacency/ecotone rules based on the hypergraph/ecotone design principle.\n  - Tile biome classification now uses the regional chunk biome as the primary biome, matching the overmap pixel the user clicked.\n  - Local tile-level candidates are only allowed in ecotone chunks and only if the candidate is an allowed neighboring biome.\n  - Reduced transition intrusion so a clicked tundra chunk remains tundra-dominant instead of randomly showing beach/sand interiors.\n  - Static coherency audit over 1,681 chunks now reports only 1 chunk whose sampled dominant tile biome differs from the regional overmap biome.\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_dJHfDEOQ5K3Oeea995ftr5Dl",
-        "content": "Applied edit to DONE.md",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "text",
-        "text": "Fixed the biome coherency issue between overmap and loaded chunks.\n\nChanges:\n\n- Added shared biome definitions:\n  - `src/world/biome-definitions.js`\n\n- Added biome adjacency / ecotone graph:\n  - `src/world/biome-graph.js`\n\n- Updated tile biome classification:\n  - The overmap/regional biome is now the primary biome for the chunk.\n  - Tile-level biome variation can only appear in edge/ecotone chunks.\n  - Local transitions must be valid neighbors in the biome graph.\n  - Non-neighbor intrusions like tundra → beach/sand are blocked.\n\n- Fixed circular import risk between regional map and tile biome classification.\n\n- Ran a coherency audit:\n  - 1,681 chunks sampled\n  - only 1 chunk had sampled dominant tile biome differ from the overmap biome\n\nSo clicking tundra should now produce tundra-dominant chunks, while still allowing controlled transition areas only along valid biome boundaries."
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": "Canvas2D: Multiple readback operations using getImageData are faster with the willReadFrequently attribute set to true. See: https://html.spec.whatwg.org/multipage/canvas.html#concept-canvas-will-read-frequently\n  at src/world/overmap.js:71"
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "text",
-        "text": "<plan>\nI’ll remove the Canvas2D readback warning by switching the overmap base cache away from `getImageData` and into a dedicated offscreen/base canvas copy, while setting the context attribute safely.\n</plan>\n"
-      },
-      {
-        "type": "tool_use",
-        "id": "call_948UnEbqimqnJRqHG0hpiKxS",
-        "name": "read_file",
-        "input": {
-          "path": "src/world/overmap.js",
-          "start_line": 1,
-          "end_line": 110
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_948UnEbqimqnJRqHG0hpiKxS",
-        "content": "Output (112 lines) written to .wizardgenie/tool-output/read_file-call_948.txt\n\nPreview (first 800 chars):\nFile: src/world/overmap.js (lines 1-110 of 145)\n\n1| import { WORLD } from '../core/constants.js';\n2| import { getWorldSeed } from '../core/world-seed.js';\n3| import { auditBiomesAround } from './biome-audit.js';\n4| import { sampleRegionalMapChunk } from './regional-map.js';\n5| \n6| export class OvermapController {\n7|   constructor(element, player, chunkStore) {\n8|     this.element = element;\n9|     this.player = player;\n10|     this.chunkStore = chunkStore;\n11|     this.visible = true;\n12|     this.size = 304;\n13|     this.sampleChunks = this.size; // Spec-accurate local view: one overmap canvas pixel = one chunk.\n14|     this.lastCenter = '';\n15|     this.redrawNeeded = true;\n16|     element.width = this.size;\n17|     element.height = this.size;\n18|     element.addEventListener('click', ev\n\n[Use read_file with start_line/end_line to inspect specific sections]",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_vXeCOgcYx3WOPsNI8Mt0OkrB",
-        "name": "read_file",
-        "input": {
-          "path": "src/world/overmap.js",
-          "start_line": 60,
-          "end_line": 95
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_vXeCOgcYx3WOPsNI8Mt0OkrB",
-        "content": "File: src/world/overmap.js (lines 60-95 of 145)\n\n60|         const south = sampleRegionalMapChunk(cx, cy + 1).climate.elevation;\n61|         const hill = Math.max(-35, Math.min(45, (sample.climate.elevation - 0.5) * 80 + (sample.climate.elevation - east) * 180 + (sample.climate.elevation - south) * 140));\n62|         const index = (py * this.size + px) * 4;\n63|         image.data[index] = clamp(rgb.r + hill);\n64|         image.data[index + 1] = clamp(rgb.g + hill);\n65|         image.data[index + 2] = clamp(rgb.b + hill);\n66|         image.data[index + 3] = 255;\n67|       }\n68|     }\n69| \n70|     ctx.putImageData(image, 0, 0);\n71|     this.baseImage = ctx.getImageData(0, 0, this.size, this.size);\n72|     this.drawOverlay(ctx, pcx, pcy);\n73|   }\n74| \n75|   playerChunk() {\n76|     return {\n77|       pcx: Math.floor(this.player.x / WORLD.chunkSize),\n78|       pcy: Math.floor(this.player.y / WORLD.chunkSize)\n79|     };\n80|   }\n81| \n82|   drawOverlay(ctx, pcx, pcy) {\n83|     if (this.baseImage) ctx.putImageData(this.baseImage, 0, 0);\n84|     const c = Math.floor(this.size / 2);\n85|     const loadedRadius = WORLD.loadRadius;\n86|     const loadedSize = loadedRadius * 2 + 1;\n87| \n88|     // Distance rings are chunk distances because one overmap pixel is one chunk.\n89|     ctx.strokeStyle = 'rgba(255,255,255,.18)';\n90|     ctx.lineWidth = 1;\n91|     for (const chunks of [16, 32, 64, 128]) {\n92|       ctx.beginPath();\n93|       ctx.arc(c, c, chunks, 0, Math.PI * 2);\n94|       ctx.stroke();\n95|     }",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_QWkzDaBa4ZdqLkbX6KN56F00",
-        "name": "edit_file",
-        "input": {
-          "path": "src/world/overmap.js",
-          "old_text": "    this.lastCenter = '';\n    this.redrawNeeded = true;\n    element.width = this.size;\n    element.height = this.size;\n    element.addEventListener('click', event => this.teleportFromClick(event));\n  }\n",
-          "new_text": "    this.lastCenter = '';\n    this.redrawNeeded = true;\n    this.baseCanvas = document.createElement('canvas');\n    this.baseCanvas.width = this.size;\n    this.baseCanvas.height = this.size;\n    this.baseCtx = this.baseCanvas.getContext('2d', { alpha: false, willReadFrequently: false });\n    element.width = this.size;\n    element.height = this.size;\n    element.addEventListener('click', event => this.teleportFromClick(event));\n  }\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_QWkzDaBa4ZdqLkbX6KN56F00",
-        "content": "Applied edit to src/world/overmap.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_bFQHBJcG3QPHyNbkCERdWvON",
-        "name": "edit_file",
-        "input": {
-          "path": "src/world/overmap.js",
-          "old_text": "    const ctx = this.element.getContext('2d');\n",
-          "new_text": "    const ctx = this.element.getContext('2d', { alpha: false, willReadFrequently: false });\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_bFQHBJcG3QPHyNbkCERdWvON",
-        "content": "Applied edit to src/world/overmap.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
         "id": "call_nn0gHGsFfLer4G0Q11p0tT62",
         "name": "edit_file",
         "input": {
@@ -6766,6 +6593,252 @@
       {
         "type": "tool_result",
         "tool_use_id": "call_Ep8gUK7k30B2w9hlnQ1lRTJm",
+        "content": "Applied edit to DONE.md",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Done."
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": "continue"
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "<plan>\nI’ll continue by adding terrain elevation visualization back without chunk seams: split cached flat terrain from dynamic elevation shadows/contours, add climbable slope detection and player climb/glide/jump feedback in movement/HUD.\n</plan>\n"
+      },
+      {
+        "type": "tool_use",
+        "id": "call_qolSUla7NZaLtYLoqHdogcUy",
+        "name": "create_checkpoint",
+        "input": {
+          "message": "Add seamless dynamic elevation shading and climb feedback"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_qolSUla7NZaLtYLoqHdogcUy",
+        "content": "Checkpoint requested: Add seamless dynamic elevation shading and climb feedback",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_dT4zyX5J5FcReSg9ko6o5iJ1",
+        "name": "write_file",
+        "input": {
+          "path": "src/render/elevation-overlay.js",
+          "content": "import { WORLD } from '../core/constants.js';\nimport { floorDiv } from '../world/chunk.js';\n\nexport function drawElevationOverlay(ctx, chunkStore, camX, camY, w, h, sun, camera) {\n  const tilePx = WORLD.tileSize * camera.zoom;\n  const minTX = Math.floor(camX / tilePx) - 1;\n  const minTY = Math.floor(camY / tilePx) - 1;\n  const maxTX = Math.ceil((camX + w) / tilePx) + 1;\n  const maxTY = Math.ceil((camY + h) / tilePx) + 1;\n  ctx.save();\n  for (let ty = minTY; ty <= maxTY; ty++) {\n    for (let tx = minTX; tx <= maxTX; tx++) {\n      const cx = floorDiv(tx, WORLD.chunkSize);\n      const cy = floorDiv(ty, WORLD.chunkSize);\n      const chunk = chunkStore.getIfReady(cx, cy);\n      if (!chunk) continue;\n      const lx = tx - cx * WORLD.chunkSize;\n      const ly = ty - cy * WORLD.chunkSize;\n      const tile = chunk.renderTiles[ly * WORLD.chunkSize + lx];\n      const east = sampleElevation(chunkStore, tx + 1, ty, tile.elevation);\n      const south = sampleElevation(chunkStore, tx, ty + 1, tile.elevation);\n      const slope = ((tile.elevation - east) * sun.shadowX + (tile.elevation - south) * sun.shadowY) * 1.8;\n      const contour = Math.floor(tile.elevation * 18) !== Math.floor((tile.elevation - 0.012) * 18) ? 0.08 : 0;\n      const sx = Math.floor(tx * tilePx - camX);\n      const sy = Math.floor(ty * tilePx - camY);\n      const size = Math.ceil(tilePx);\n      if (slope + contour > 0.018) {\n        ctx.fillStyle = `rgba(255,245,205,${Math.min(0.16, slope + contour)})`;\n        ctx.fillRect(sx, sy, size, Math.max(1, size * 0.16));\n      }\n      const shade = Math.max(0, -slope) * 0.16;\n      if (shade > 0.01) {\n        ctx.fillStyle = `rgba(0,0,0,${shade})`;\n        ctx.fillRect(sx, sy + size * 0.70, size, Math.max(1, size * 0.30));\n      }\n    }\n  }\n  ctx.restore();\n}\n\nfunction sampleElevation(chunkStore, tx, ty, fallback) {\n  const cx = floorDiv(tx, WORLD.chunkSize);\n  const cy = floorDiv(ty, WORLD.chunkSize);\n  const chunk = chunkStore.getIfReady(cx, cy);\n  if (!chunk) return fallback;\n  const lx = tx - cx * WORLD.chunkSize;\n  const ly = ty - cy * WORLD.chunkSize;\n  return chunk.renderTiles[ly * WORLD.chunkSize + lx]?.elevation ?? fallback;\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_dT4zyX5J5FcReSg9ko6o5iJ1",
+        "content": "Written 50 lines to src/render/elevation-overlay.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_TA0ZdhXk8MNRmfIYrlozj20F",
+        "name": "edit_file",
+        "input": {
+          "path": "src/render/canvas-renderer.js",
+          "old_text": "import { biomeVariantFrameId } from '../assets/variant-selector.js';\n",
+          "new_text": "import { biomeVariantFrameId } from '../assets/variant-selector.js';\nimport { drawElevationOverlay } from './elevation-overlay.js';\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_TA0ZdhXk8MNRmfIYrlozj20F",
+        "content": "Applied edit to src/render/canvas-renderer.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_zMlbHsfPwyDA0m0FPh0FZQVI",
+        "name": "edit_file",
+        "input": {
+          "path": "src/render/canvas-renderer.js",
+          "old_text": "    this.drawContactOverlay(player, w, h, camera.zoom, performance.now() / 1000);\n",
+          "new_text": "    drawElevationOverlay(ctx, chunkStore, camX, camY, w, h, sun, camera);\n    this.drawContactOverlay(player, w, h, camera.zoom, performance.now() / 1000);\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_zMlbHsfPwyDA0m0FPh0FZQVI",
+        "content": "Applied edit to src/render/canvas-renderer.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_sBAPqyIByhEo7uX5ED7cWeey",
+        "name": "edit_file",
+        "input": {
+          "path": "src/player.js",
+          "old_text": "    this.glide = input.down?.('e') && this.z > 0.6 && this.vz < 0;\n\n    const tile = chunkStore?.tileAt(this.x, this.y);\n",
+          "new_text": "    this.glide = input.down?.('e') && this.z > 0.6 && this.vz < 0;\n\n    const tile = chunkStore?.tileAt(this.x, this.y);\n    this.climbing = Boolean(tile?.layers?.[7]?.slope > 0.09 && tile?.layers?.[7]?.slope <= 0.16 && moving && this.z <= 0.05);\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_sBAPqyIByhEo7uX5ED7cWeey",
+        "content": "Applied edit to src/player.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_rfAaBhSuxP3DSIYQ8qWM2mAe",
+        "name": "edit_file",
+        "input": {
+          "path": "src/player.js",
+          "old_text": "    this.character.setMotion({ moving, sprinting, jumping: this.z > 0.05, gliding: this.glide, rolling: this.rollTimer > 0, direction: directionFromAxis(axis) });\n",
+          "new_text": "    this.character.setMotion({ moving, sprinting, jumping: this.z > 0.05, climbing: this.climbing, gliding: this.glide, rolling: this.rollTimer > 0, direction: directionFromAxis(axis) });\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_rfAaBhSuxP3DSIYQ8qWM2mAe",
+        "content": "Applied edit to src/player.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_yrwl5Fxm303GbVcSkBUIt51A",
+        "name": "edit_file",
+        "input": {
+          "path": "src/render/canvas-renderer.js",
+          "old_text": "tile ${Math.floor(player.x)}, ${Math.floor(player.y)} · chunk ${floorDiv(player.x)}, ${floorDiv(player.y)}<br>biome ${tile.biome}",
+          "new_text": "tile ${Math.floor(player.x)}, ${Math.floor(player.y)} · chunk ${floorDiv(player.x)}, ${floorDiv(player.y)} · z ${player.z.toFixed(2)} ${player.climbing ? 'climbing' : player.glide ? 'gliding' : player.rollTimer > 0 ? 'rolling' : ''}<br>biome ${tile.biome}"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_yrwl5Fxm303GbVcSkBUIt51A",
+        "content": "Applied edit to src/render/canvas-renderer.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_XuYOS6MrjAG7TWNY4QeQHqni",
+        "name": "run_command",
+        "input": {
+          "command": "node --check src/render/elevation-overlay.js && node --check src/render/canvas-renderer.js && node --check src/player.js"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_XuYOS6MrjAG7TWNY4QeQHqni",
+        "content": "$ node --check src/render/elevation-overlay.js && node --check src/render/canvas-renderer.js && node --check src/player.js\n\n",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_sCbUlyfwP10kYIuAg9w1f8nS",
+        "name": "edit_file",
+        "input": {
+          "path": "DONE.md",
+          "old_text": "- Wired biome-variant object selection and first contact overlays:\n  - Added `src/assets/variant-selector.js` for deterministic biome/object/coordinate variant frame IDs.\n  - Object rendering now attempts biome-specific variant sheets for trees and rocks before falling back to seed generated atlas rows.\n  - Added a dynamic player contact overlay that draws grass/foliage disturbance strokes around the player while walking, sprinting, or dodge rolling.\n",
+          "new_text": "- Wired biome-variant object selection and first contact overlays:\n  - Added `src/assets/variant-selector.js` for deterministic biome/object/coordinate variant frame IDs.\n  - Object rendering now attempts biome-specific variant sheets for trees and rocks before falling back to seed generated atlas rows.\n  - Added a dynamic player contact overlay that draws grass/foliage disturbance strokes around the player while walking, sprinting, or dodge rolling.\n- Added seamless dynamic elevation overlay and climb feedback:\n  - Added `src/render/elevation-overlay.js` to render elevation contours/highlights/shadows dynamically across chunk boundaries without baking per-tile offsets into cached chunk images.\n  - Canvas renderer now draws elevation shading after cached terrain and before contact/world actors.\n  - Player now detects climbable steep slopes and switches modular animation state to climb/climb_idle through the existing body state machine.\n  - HUD now reports player vertical `z` and movement state labels for climbing, gliding, and rolling.\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_sCbUlyfwP10kYIuAg9w1f8nS",
         "content": "Applied edit to DONE.md",
         "is_error": false
       }
