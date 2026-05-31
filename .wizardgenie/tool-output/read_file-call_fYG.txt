@@ -1,0 +1,182 @@
+File: specs/2026-05-24-world-compiler-design.md (lines 1-180 of 477)
+
+1| # World Compiler Architecture — Layered Emergent World Generation
+2| 
+3| **Date**: 2026-05-24
+4| **Status**: Active
+5| **Priority**: #1 — replaces current scatter-placement worldgen
+6| **Based on**: Deep research report + Freedom design docs + freedommmo specs
+7| 
+8| ## Problem Statement
+9| 
+10| The current world generation produces visual chaos and freezes Godot:
+11| 
+12| 1. **Scatter placement**: Objects placed randomly on flat terrain with no spatial logic
+13| 2. **Buildings as sprites**: Single PNGs dropped on terrain — no interiors, no walls, no doors
+14| 3. **Node explosion**: ~250-350 Sprite2D nodes created synchronously on one frame → freeze
+15| 4. **No spatial coherence**: NPCs float randomly, roads don't exist, nothing connects to anything
+16| 5. **No determinism**: Different runs produce different chaos — no seed-based regression
+17| 
+18| ## Solution: Layered World Compiler
+19| 
+20| Replace scatter-placement with a **deterministic compilation pipeline** where each layer consumes the output of previous layers. Every world feature has a reason to be where it is. Same seed = same world. Every layer has debug views and validation.
+21| 
+22| ## Core Rules
+23| 
+24| 1. **Claude may author generators, schemas, importers, validators, tests, and debug scenes. Claude may NOT directly place final world content from prose.** All content emerges from deterministic maps, feature lists, and entity graphs.
+25| 2. **Buildings are spatial structures, not sprites.** Walls are impassable tiles. Doors are passable gaps. Interiors exist on the world grid. Roofs fade when entered. No loading screens.
+26| 3. **Every placed feature stores reason codes.** A settlement exists because of water access + fertile land + road junction, not because of `randi_range()`.
+27| 4. **Same seed + same compiler version = identical world.** Hash-verified determinism.
+28| 5. **Each layer has typed inputs, typed outputs, debug views, and validation tests.**
+29| 
+30| ## Pipeline Dependency Order
+31| 
+32| ```
+33| Seed
+34|  ├─→ L1: Elevation (continental noise + ridges)
+35|  │    └─→ L2: Ocean Mask (sea threshold + coastlines)
+36|  │         ├─→ L3: Drainage Preprocessing (Priority-Flood pit handling)
+37|  │         │    └─→ L4: Rivers & Lakes (D8 flow + accumulation)
+38|  │         └─→ L5: Climate (temperature + precipitation)
+39|  │              └─→ L6: Biomes (Whittaker lookup)
+40|  │                   ├─→ L7: Soil & Fertility
+41|  │                   │    └─→ L8: Vegetation (density + species)
+42|  │                   └─→ L9: Coastal Materials (beaches, dunes, cliffs)
+43|  │
+44|  ├─→ L10: Roads & Paths (A* least-cost on terrain cost map)
+45|  ├─→ L11: Settlements & Ports (scored suitability + reason codes)
+46|  │    └─→ L12: Farms & Industry (resource + transport logic)
+47|  │
+48|  ├─→ L13: POIs (explainable triggers: waterfalls, crossroads, ruins)
+49|  └─→ L14: Event Log & Narrative Interpreter
+50| ```
+51| 
+52| ## Layer Specifications
+53| 
+54| ### L1: Elevation
+55| 
+56| **Inputs**: World seed, chunk coordinates
+57| **Outputs**: Float32 elevation grid, mountain mask, slope grid
+58| **Algorithm**: Hash-derived sub-seeds → multiple FastNoiseLite channels:
+59| - Low-frequency simplex + domain warp for continents
+60| - Ridged fractal for mountain spines
+61| - Cellular breakup for regions
+62| **Validation**: Border seams stable across chunk reload; no one-cell spikes; mountain mask coherent at multi-chunk scale
+63| **Debug view**: Elevation heatmap (smooth continental massing, ridges, valleys)
+64| **Failure mode**: "Noise confetti" — when octave weights are wrong, mountains become pepper noise
+65| 
+66| ### L2: Ocean Mask
+67| 
+68| **Inputs**: Elevation grid, sea-level parameter
+69| **Outputs**: Binary ocean/land mask, coastline class map
+70| **Algorithm**: Apply sea threshold. Coastline classes (cliff, beach, marsh) derived from slope at coast edge.
+71| **Validation**: Coastline continuous; all ocean connected to world edge unless explicit inland sea
+72| **Debug view**: Clean coastlines, valid inland seas only by rule
+73| **Failure mode**: Pepper-noise lakes when threshold is at noise floor
+74| 
+75| ### L3: Drainage Preprocessing
+76| 
+77| **Inputs**: Elevation grid, ocean mask
+78| **Outputs**: Hydrologically corrected elevation, basin IDs
+79| **Algorithm**: Priority-Flood (Barnes et al.) — guarantees drainage after preprocessing. Every land cell drains to outlet or explicit terminal basin.
+80| **Validation**: No unflagged inland pits; every cell has drainage path
+81| **Debug view**: Basin ID coloring (large coherent drainage basins)
+82| **Failure mode**: Fragmented micro-basins everywhere
+83| 
+84| ### L4: Rivers & Lakes
+85| 
+86| **Inputs**: Corrected elevation, basin IDs, ocean mask
+87| **Outputs**: River polylines with order (Strahler), lake polygons, outlets
+88| **Algorithm**: D8 flow direction (steepest downslope neighbor). Rivers start above configurable accumulation threshold. Lakes form in closed depressions or terminal basins.
+89| **Validation**: River elevation decreases monotonically to outlet; lakes have explicit outlet or terminal status; every river mouth classified
+90| **Debug view**: River order visualization (thickening channels downstream)
+91| **Failure mode**: Rivers originating from tiny flat cells; rivers flowing uphill
+92| 
+93| ### L5: Climate
+94| 
+95| **Inputs**: Latitude, elevation, ocean distance, mountain barriers, water bodies
+96| **Outputs**: Temperature grid, precipitation grid, seasonality scalars
+97| **Algorithm**: Latitude baseline → elevation penalty → moisture from coasts/water → rain-shadow reduction leeward of mountains
+98| **Validation**: No frozen equatorial lowlands unless altitude; no rainforest precipitation in deep rain shadows
+99| **Debug view**: Temperature and rainfall with legible latitude/elevation patterns
+100| **Failure mode**: Hot alpine peaks, wet rain-shadow deserts
+101| 
+102| ### L6: Biomes
+103| 
+104| **Inputs**: Temperature, precipitation, soil/water modifiers
+105| **Outputs**: Biome ID grid, ecotone mask
+106| **Algorithm**: Whittaker-style lookup table. Merge with ecotones where gradients are shallow. Data-driven, not nested if/else.
+107| **Validation**: Transition zones visible; assignment explainable from local climate
+108| **Debug view**: Biome map with coherent patches and visible transitions
+109| **Failure mode**: Checkerboard biome flicker from sharp thresholds
+110| 
+111| **Supported biomes**: grassland, forest, dense_forest, desert, mountains, tundra, swamp, savanna, taiga, tropical_forest, steppe, volcanic, beach, ocean, river, lake, arctic
+112| 
+113| ### L7: Soil & Fertility
+114| 
+115| **Inputs**: Elevation, slope, water proximity, floodplain deposition, biome
+116| **Outputs**: Soil class grid, fertility grid (0-255)
+117| **Algorithm**: Parent material from terrain class. Boost floodplains and river terraces. Suppress on steep rock, dunes, alpine.
+118| **Validation**: Fertility peaks in valleys/floodplains near stable water, not on steep mountain faces
+119| **Debug view**: Fertility heatmap
+120| **Failure mode**: Fertile cliff walls, barren floodplains
+121| 
+122| ### L8: Vegetation
+123| 
+124| **Inputs**: Biome, fertility, slope, water distance, disturbance events
+125| **Outputs**: Vegetation density grid, species class map, foliage feature list
+126| **Algorithm**: Separate potential vegetation (what could grow) from actual vegetation (what does grow after disturbance). Settlements and events reduce/reshape later.
+127| **Validation**: Forest density tracks fertile wet bands; scrub dominates dry coasts
+128| **Debug view**: Vegetation density with forest/scrub/barren bands
+129| **Failure mode**: Dense jungle on dunes, alpine scree with forests
+130| 
+131| ### L9: Coastal Materials
+132| 
+133| **Inputs**: Elevation, ocean mask, slope, wind/dryness heuristics, vegetation
+134| **Outputs**: Coast material grid (beach, cliff, marsh, dune), dune mask
+135| **Algorithm**: Beaches require coast adjacency + low slope. Dunes require coast + dryness + sparse vegetation.
+136| **Validation**: No sand on cliff coasts; dune fields never overwrite dense forest
+137| **Debug view**: Coast material classification
+138| **Failure mode**: Beaches on cliffs, dunes in forests
+139| 
+140| ### L10: Roads & Paths
+141| 
+142| **Inputs**: Terrain cost map, rivers, slope, vegetation, settlement locations
+143| **Outputs**: Trail graph, road graph, bridges/fords list
+144| **Algorithm**: AStarGrid2D for chunk-local least-cost routes. Penalize steep slopes, marsh, dense forest, river crossings without bridges.
+145| **Validation**: All graph edges have cost provenance; no road crosses impassable cells without crossing feature
+146| **Debug view**: Road cost map + road graph overlay
+147| **Failure mode**: Straight roads through swamps and cliffs
+148| 
+149| ### L11: Settlements & Ports
+150| 
+151| **Inputs**: Suitability maps (water, fertility, defensibility, trade centrality, climate), road network, coastline
+152| **Outputs**: Settlement entities with reason codes, port entities, building footprints
+153| **Algorithm**: Score cells by multiple criteria. Place settlements at local maxima. Ports require coast + navigable water + trade rationale. Size determined by resource capacity.
+154| 
+155| **Building compilation** (critical — buildings are spatial structures, not sprites):
+156| 1. Select building template by type + biome + settlement tier
+157| 2. Stamp wall tiles on world grid (impassable, walkability = -1)
+158| 3. Stamp floor tiles inside footprint (wood/stone, walkability = 1.0)
+159| 4. Place door gap in wall (walkability = 0.8)
+160| 5. Place interior features by building type rules (forge, bed, table, chest)
+161| 6. Add roof canopy at high z-index (alpha-fades when player enters)
+162| 7. Assign NPC slots (blacksmith → forge tile, sleeps → bed tile)
+163| 
+164| **Validation**: Every settlement has reason codes + reachable transport to exchange node
+165| **Debug view**: Settlement suitability heatmap + placed settlements with reason codes
+166| **Failure mode**: Settlements on bad terrain without rationale
+167| 
+168| ### L12: Farms & Industry
+169| 
+170| **Inputs**: Settlements, fertility, resource deposits, transport graph
+171| **Outputs**: Field polygons, extraction sites, workshops, throughput edges
+172| **Algorithm**: Farms expand outward from settlements into fertile accessible land. Industry anchors to resources and transport. All outputs are entities with production inputs/outputs.
+173| **Validation**: Each farm/industry node has owner, input requirements, transport rationale
+174| **Debug view**: Farm polygons + industry nodes + throughput connections
+175| **Failure mode**: Farms on mountains, mines with no transport path
+176| 
+177| ### L13: POIs
+178| 
+179| **Inputs**: Terrain anomalies, transport intersections, ruins logic, faction state
+180| **Outputs**: POI entities with trigger records, local compound bounds

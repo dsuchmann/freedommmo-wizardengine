@@ -1,0 +1,122 @@
+File: specs/2026-05-24-master-architecture-design.md (lines 1-120 of 268)
+
+1| # FreedomMMO Master Architecture Design
+2| 
+3| ## Vision
+4| 
+5| FreedomMMO is a simulation-first 2D MMORPG where **every visual is a projection of simulation state**. The world is not a tilemap with sprites - it's a hypergraph of composable elements where the tilemap is one rendering projection. Time is the primary resource. All entities are NPCs with complete lifecycles. There are no traditional "enemies" - only living beings competing for finite time.
+6| 
+7| ## Core Design Principle
+8| 
+9| **Everything is a stack of composable layers with properties. Visuals are always derivatives of simulation state, never the reverse.**
+10| 
+11| A tile is not "a grass sprite" - it's a material stack `[bedrock, ore_vein, rock, sand, soil, grass]` where each layer has properties (hardness, flammability, depth). The visual is generated from that stack. When lightning hits it, grass burns, the stack changes, the visual updates.
+12| 
+13| An entity is not "a sprite" - it's a body with 25+ slots where items layer. The visual composites body + equipped items. PixelLab generates each layer independently.
+14| 
+15| ## Architecture Layers
+16| 
+17| ### Layer 0: Grain Data Model (Foundation)
+18| **Spec:** `2026-05-24-L0-grain-data-model.md`
+19| 
+20| The atomic unit of all matter in the world. Grains have types (physical, magical, spiritual, technical), properties (purity, resonance, stability, energy_level), and environmental state (temperature, pressure, magical_charge).
+21| 
+22| **Key types:**
+23| - `Grain` - single material instance with properties
+24| - `GrainStack` - ordered list of grains at a position (depth-sorted)
+25| - `GrainRegistry` - catalog of all grain templates (sand, iron, mithril, arcane_dust...)
+26| 
+27| **Ported from:** `freedom/core/types.py`, `SCI_FI_FANTASY_SYSTEMS.md` grain system
+28| 
+29| ### Layer 1: World State Graph
+30| **Spec:** `2026-05-24-L1-world-state-graph.md`
+31| 
+32| The spatial container for grain stacks. Each world cell contains a grid of grain stacks. Cells relate to adjacent cells. The world is a graph of cells, each cell a grid of positions, each position a grain stack.
+33| 
+34| **Key types:**
+35| - `WorldCell` - 128x128 tile cell with grain stacks per position
+36| - `WorldGraph` - graph of cells with adjacency relationships
+37| - `Position` - (cell_id, x, y) uniquely identifies any grain stack
+38| 
+39| **Ported from:** `WORLD_STREAMING.md` cell architecture, `DATA_SCHEMAS.md` world cells
+40| 
+41| ### Layer 2: Material Registry
+42| **Spec:** `2026-05-24-L2-material-registry.md`
+43| 
+44| Database of grain templates, material recipes, and composition rules. Defines what grains exist, how they combine, what emergent properties arise.
+45| 
+46| **Key types:**
+47| - `GrainTemplate` - defines a grain type with default properties
+48| - `MaterialRecipe` - defines grain combinations that produce materials
+49| - `EmergentProperty` - rules for properties that emerge from grain interactions
+50| 
+51| **Ported from:** `SCI_FI_FANTASY_SYSTEMS.md` object system, grain compositions
+52| 
+53| ### Layer 3: Simulation Engine
+54| **Spec:** `2026-05-24-L3-simulation-engine.md`
+55| 
+56| The tick-based processor that advances world state. Each tick processes pending interactions, applies rules, propagates effects, updates grain stacks.
+57| 
+58| **Key types:**
+59| - `SimTick` - single simulation step
+60| - `InteractionQueue` - pending state changes to process
+61| - `PropagationRule` - how effects spread (fire spreads to adjacent flammable grains)
+62| 
+63| **Ported from:** Server architecture concepts, `ARCHITECTURE_PLAN.md` tick rate design
+64| 
+65| ### Layer 4: Interaction Rules
+66| **Spec:** `2026-05-24-L4-interaction-rules.md`
+67| 
+68| The rule engine defining how things affect each other. Dig removes top grain layers. Fire burns flammable grains. Water erodes soft grains. Lightning cracks brittle grains.
+69| 
+70| **Key types:**
+71| - `InteractionType` - enumeration of action types (dig, burn, freeze, cast, strike...)
+72| - `InteractionRule` - maps (action_type, target_grain_type) → state_change
+73| - `MutationResult` - describes what happens to a grain stack after interaction
+74| 
+75| **Ported from:** `SCI_FI_FANTASY_SYSTEMS.md` crafting interactions, morality consequences
+76| 
+77| ### Layer 5: Time System
+78| **Spec:** `2026-05-24-L5-time-system.md`
+79| 
+80| The core game mechanic. All entities have finite time. Time is consumed by existing, transferred through sharing/trading/combat. 10 life stages from Fetus to Elderly with different consumption rates. Death scaling after age 70.
+81| 
+82| **Key types:**
+83| - `TimePool` - an entity's remaining time
+84| - `TimeTransfer` - a transfer event (consumption 30%, sharing 95%, trading 85%...)
+85| - `LifeStage` - current stage with consumption multiplier
+86| - `GroupTimeGen` - group membership generating time (family 2.0x, village 1.5x...)
+87| 
+88| **Ported from:** `TIME_SYSTEM_ARCHITECTURE.md` (complete design exists)
+89| 
+90| ### Layer 6: Causal Tracker
+91| **Spec:** `2026-05-24-L6-causal-tracker.md`
+92| 
+93| Every action recorded with direct effects, ripple effects, temporal chains, spatial chains. Decision records track options considered, chosen option, reasoning, outcomes, learning.
+94| 
+95| **Key types:**
+96| - `CausalEvent` - single recorded event with cause/effect chain
+97| - `DecisionRecord` - entity decision with context, options, outcome
+98| - `ImpactMatrix` - source→target mapping with magnitude and persistence
+99| - `EntityHistory` - complete chronological record per entity
+100| 
+101| **Ported from:** `CAUSAL_TRACKING.md` (complete design exists)
+102| 
+103| ### Layer 7: Terrain Generator
+104| **Spec:** `2026-05-24-L7-terrain-generator.md`
+105| 
+106| Populates grain stacks using noise-based generation. Multi-octave noise produces elevation, moisture, temperature → biome classification → grain stack templates per position. Each position gets a depth-sorted stack of materials appropriate to its biome and local conditions.
+107| 
+108| **Key changes from current system:**
+109| - Output is grain stacks, not flat tile IDs
+110| - Much higher frequency noise for fine detail
+111| - Unique seeds per region (no repetition)
+112| - Feature placement (individual rocks, trees, water bodies)
+113| 
+114| **Builds on:** L0 (grain model), L2 (material registry)
+115| **Replaces:** Current `python_generator_gpu.py` tile-ID-based generation
+116| 
+117| ### Layer 8: Feature Placement
+118| **Spec:** `2026-05-24-L8-feature-placement.md`
+119| 
+120| Places complex features on top of base terrain: trees (multi-tile), rock formations, water bodies, caves, paths, structures. Features are compositions of grain stacks that override base terrain.
