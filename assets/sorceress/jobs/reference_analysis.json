@@ -1,0 +1,9 @@
+{
+  "tool": "sorceress",
+  "suite": "image_suite",
+  "systemPrompt": "assets/sorceress/SYSTEM_ART_DIRECTION_PROMPT.md",
+  "referenceManifest": "reference/reference-manifest.json",
+  "output": "assets/generated/reference/reference_art_direction_analysis.json",
+  "prompt": "Analyze the provided reference images as art direction targets for landscape quality. Extract non-copyrighted style attributes only: density, layering, palette structure, terrain detail language, object scatter principles, canopy/occlusion treatment, tile transition strategies, lighting, polish standards, and how to exceed the references in a unique original style. Do not copy exact compositions, characters, buildings, or proprietary designs. Return actionable production notes for Sorceress generation and runtime assembly.",
+  "style": "Reference-informed but original maximalist fantasy pixel art direction."
+}

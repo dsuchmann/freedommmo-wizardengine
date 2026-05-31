@@ -1,0 +1,23 @@
+{
+  "schema": "freedommmo.reference-manifest.v1",
+  "purpose": "Landscape art direction references. Use as quality, density, polish, compositional richness, and detail targets; do not copy exact protected compositions or characters.",
+  "files": [
+    { "path": "reference/2fae6db4ec5ee1919d54329a7c33b14c.jpg", "role": "landscape_quality_reference" },
+    { "path": "reference/a5b55390-cf7e-47eb-9327-2fbe4a46cbda.webp", "role": "landscape_quality_reference" },
+    { "path": "reference/bc3f9juiRaGNXnbBoLnxOQ.webp", "role": "landscape_quality_reference" },
+    { "path": "reference/d4bbd2e7-detailed-game-pixel-art-of-a-top-down-rpg-town-with-thumbnail.jpg", "role": "town_density_reference" },
+    { "path": "reference/screenshot-3032.jpg", "role": "landscape_quality_reference" },
+    { "path": "reference/whats-your-most-anticipated-indie-pixel-art-jrpg-v0-vsju4d9loy3g1.webp", "role": "jrpg_pixel_quality_reference" }
+  ],
+  "targets": [
+    "lush layered terrain readability",
+    "non-repeating organic scatter",
+    "high-detail painterly pixel clusters",
+    "strong foreground/midground/background separation",
+    "beautiful canopy and object occlusion",
+    "biome-specific palette identity",
+    "high variance within every biome",
+    "seamless tile transitions",
+    "modern premium indie pixel-art polish"
+  ]
+}

@@ -260,3 +260,8 @@
   - Grass and flower micro-layer atlas stamps now use patch-based organic presence plus jittered offsets/scales instead of direct coordinate-sum frame/placement patterns.
   - Biome variant selection now quantizes larger spatial cells to reduce per-tile diagonal alternation.
   - Added `src/world/object-scatter-rules.js` defining biome-specific clustering/solitary scatter rules for future object placement, starting with mystic/forest/default rules.
+- Ingested new reference images into art-direction pipeline:
+  - Added `reference/reference-manifest.json` listing 6 reference images and their intended roles.
+  - Added `assets/sorceress/jobs/reference_analysis.json` for Sorceress/Image Suite reference analysis into actionable art-direction notes.
+  - Added `docs/REFERENCE_ART_DIRECTION_TARGET.md` describing how references guide density, polish, richness, transitions, biome identity, and runtime assembly without copying exact compositions.
+  - Linked `assets/sorceress/system-prompt.json` to the reference manifest.
