@@ -6,6 +6,7 @@ import { drawSortKey, applyBlend } from './draw-order.js';
 import { animationFrame } from './animation-state.js';
 import { ChunkRenderCache } from './chunk-render-cache.js';
 import { AtlasManager } from '../assets/atlas-manager.js';
+import { biomeVariantFrameId } from '../assets/variant-selector.js';
 
 export class CanvasRenderer {
   constructor(canvas, statsElement, compositor = null) {
@@ -57,9 +58,31 @@ export class CanvasRenderer {
       }
     }
 
+    this.drawContactOverlay(player, w, h, camera.zoom, performance.now() / 1000);
     this.drawWorldActors(chunkStore, player, camX, camY, w, h, sun, camera, performance.now() / 1000);
     this.drawDepthBokeh(chunkStore, player, focusTile, camera, camX, camY, w, h);
     this.drawAtmosphere(sun, w, h);
+  }
+
+  drawContactOverlay(player, w, h, zoom, timeSeconds) {
+    const moving = player?.character?.animation === 'walk' || player?.character?.animation === 'sprint' || player?.character?.animation === 'dodge_roll';
+    if (!moving) return;
+    const ctx = this.ctx;
+    const strength = player.character.animation === 'dodge_roll' ? 1 : player.character.animation === 'sprint' ? 0.7 : 0.45;
+    ctx.save();
+    ctx.strokeStyle = `rgba(180,255,150,${0.28 * strength})`;
+    ctx.lineWidth = Math.max(1, 1.2 * zoom);
+    for (let i = 0; i < 10; i++) {
+      const angle = i * 0.628 + timeSeconds * 2;
+      const r = (6 + (i % 4) * 3) * zoom;
+      const x = w / 2 + Math.cos(angle) * r;
+      const y = h / 2 + 7 * zoom + Math.sin(angle) * r * 0.35;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.quadraticCurveTo(x + Math.cos(angle) * 4 * zoom, y - 5 * zoom, x + Math.sin(angle) * 3 * zoom, y - 9 * zoom);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   drawWorldActors(chunkStore, player, camX, camY, w, h, sun, camera, timeSeconds) {
@@ -100,7 +123,7 @@ export class CanvasRenderer {
         this.drawPlayerAt(item.sx, item.sy, camera.zoom, item.player);
       } else {
         const anim = animationFrame(item.signature?.animations?.idle, timeSeconds, 'S');
-        drawObject(ctx, item.object.kind, item.sx, item.sy, camera.zoom, item.signature, anim, sun, this.atlas);
+        drawObject(ctx, item.object.kind, item.sx, item.sy, camera.zoom, item.signature, anim, sun, this.atlas, item.tile.biome, item.object.wx, item.object.wy);
       }
       ctx.restore();
     }
@@ -217,13 +240,14 @@ function drawModularPlayer(ctx, x, y, zoom, frame, animation) {
   ctx.restore();
 }
 
-function drawObject(ctx, kind, sx, sy, zoom = 1, signature = null, anim = { frame: 0 }, sun = null, atlas = null) {
+function drawObject(ctx, kind, sx, sy, zoom = 1, signature = null, anim = { frame: 0 }, sun = null, atlas = null, biome = null, wx = 0, wy = 0) {
   const bob = Math.sin((anim.frame ?? 0) * 0.9) * 0.6 * zoom;
   const light = sun?.ambient ?? 1;
   if (kind === 'tree') {
     if (atlas) {
-      const id = signature?.states?.includes('enchanted') ? 'mystic_tree' : 'broadleaf_tree';
-      const frame = atlas.frame(id, anim.frame);
+      const variant = biome ? biomeVariantFrameId(biome, kind, wx, wy) : null;
+      const id = variant?.id ?? (signature?.states?.includes('enchanted') ? 'mystic_tree' : 'broadleaf_tree');
+      const frame = atlas.frame(id, variant?.frame ?? anim.frame);
       ctx.drawImage(frame.image, frame.sx, frame.sy, frame.sw, frame.sh, sx - 14 * zoom, sy - 34 * zoom + bob, 48 * zoom, 48 * zoom);
     } else {
       ctx.fillStyle = light < 0.85 ? '#0f2d19' : '#12391f';
@@ -243,7 +267,8 @@ function drawObject(ctx, kind, sx, sy, zoom = 1, signature = null, anim = { fram
     ctx.fill();
   } else if (kind.includes('rock')) {
     if (atlas) {
-      const frame = atlas.frame('boulder_cluster', anim.frame);
+      const variant = biome ? biomeVariantFrameId(biome, kind, wx, wy) : null;
+      const frame = atlas.frame(variant?.id ?? 'boulder_cluster', variant?.frame ?? anim.frame);
       ctx.drawImage(frame.image, frame.sx, frame.sy, frame.sw, frame.sh, sx - 8 * zoom, sy - 12 * zoom, 32 * zoom, 32 * zoom);
     } else {
       ctx.fillStyle = signature?.assetId === 'boulder_cluster' ? '#60666b' : '#555a5f';

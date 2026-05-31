@@ -236,3 +236,7 @@
   - Added `scripts/generate-multisuite-sorceress-jobs.mjs` to emit cross-suite generation jobs.
   - Generated `assets/sorceress/multisuite-job-index.json` with 129 jobs spanning biome environment references, tilesets, materials, ambience, voxel blockouts, procedural 3D generator specs, modular character sprites, interaction effects, and locomotion reference video.
   - Added `src/assets/generated-media-catalog.js` with canonical generated media folders for runtime/pipeline lookup.
+- Wired biome-variant object selection and first contact overlays:
+  - Added `src/assets/variant-selector.js` for deterministic biome/object/coordinate variant frame IDs.
+  - Object rendering now attempts biome-specific variant sheets for trees and rocks before falling back to seed generated atlas rows.
+  - Added a dynamic player contact overlay that draws grass/foliage disturbance strokes around the player while walking, sprinting, or dodge rolling.
