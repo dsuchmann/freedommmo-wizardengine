@@ -27,6 +27,7 @@ export class Player {
     const sprinting = input.down?.('shift') && moving && this.rollTimer <= 0;
     if (input.wasPressed?.(' ') && this.z <= 0.01) this.vz = 7.5;
     if (input.wasPressed?.('q') && moving && this.rollTimer <= 0) this.rollTimer = 0.38;
+    this.interactPressed = Boolean(input.wasPressed?.('f'));
     this.glide = input.down?.('e') && this.z > 0.6 && this.vz < 0;
 
     const tile = chunkStore?.tileAt(this.x, this.y);

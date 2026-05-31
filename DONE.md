@@ -250,3 +250,8 @@
   - Canopy uses biome variant frame selection independently from the trunk/object draw.
   - Added `src/world/interactions.js` to find nearby interactable objects and surface verbs such as inspect/chop/climb/mine/harvest/forage.
   - HUD now shows the closest nearby interaction target and available verbs.
+- Added interaction input and object reaction feedback:
+  - Player now records `F` interaction presses.
+  - `performInteraction()` finds the nearest interactable object and stores transient reaction state.
+  - Object rendering now reads reaction state and applies shake/pulse feedback for recently interacted objects.
+  - The interaction path is staged for persistent reactions such as chopped trees, mined rocks, harvested bushes, and disturbed vegetation.

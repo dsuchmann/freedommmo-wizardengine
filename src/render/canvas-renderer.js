@@ -8,7 +8,7 @@ import { ChunkRenderCache } from './chunk-render-cache.js';
 import { AtlasManager } from '../assets/atlas-manager.js';
 import { biomeVariantFrameId } from '../assets/variant-selector.js';
 import { drawElevationOverlay } from './elevation-overlay.js';
-import { findNearbyInteraction } from '../world/interactions.js';
+import { findNearbyInteraction, objectReaction, performInteraction } from '../world/interactions.js';
 
 export class CanvasRenderer {
   constructor(canvas, statsElement, compositor = null) {
@@ -60,6 +60,7 @@ export class CanvasRenderer {
       }
     }
 
+    if (player.interactPressed) performInteraction(player, chunkStore);
     drawElevationOverlay(ctx, chunkStore, camX, camY, w, h, sun, camera);
     this.drawContactOverlay(player, w, h, camera.zoom, performance.now() / 1000);
     this.drawWorldActors(chunkStore, player, camX, camY, w, h, sun, camera, performance.now() / 1000);
@@ -112,7 +113,7 @@ export class CanvasRenderer {
         if (sx < -30 || sy < -40 || sx > w + 30 || sy > h + 30) continue;
         const signature = this.compositor?.objectSignature(object.kind, tile.biome, object.wx, object.wy);
         const render = signature?.render ?? { drawLayer: 'object', sort: 'elevationThenY', castsShadow: true, receivesLight: true };
-        drawables.push({ object, tile, sx, sy, signature, render, key: drawSortKey(render, object.wy, tile.climate.elevation) });
+        drawables.push({ object, tile, sx, sy, signature, render, reaction: objectReaction(object), key: drawSortKey(render, object.wy, tile.climate.elevation) });
         if (object.kind === 'tree') overhead.push({ object, tile, sx, sy, signature, alpha: canopyAlpha(player, object, tile) });
       }
     }
@@ -128,7 +129,7 @@ export class CanvasRenderer {
         this.drawPlayerAt(item.sx, item.sy, camera.zoom, item.player);
       } else {
         const anim = animationFrame(item.signature?.animations?.idle, timeSeconds, 'S');
-        drawObject(ctx, item.object.kind, item.sx, item.sy, camera.zoom, item.signature, anim, sun, this.atlas, item.tile.biome, item.object.wx, item.object.wy);
+        drawObject(ctx, item.object.kind, item.sx, item.sy, camera.zoom, item.signature, anim, sun, this.atlas, item.tile.biome, item.object.wx, item.object.wy, item.reaction);
       }
       ctx.restore();
     }
@@ -270,7 +271,9 @@ function drawModularPlayer(ctx, x, y, zoom, frame, animation) {
   ctx.restore();
 }
 
-function drawObject(ctx, kind, sx, sy, zoom = 1, signature = null, anim = { frame: 0 }, sun = null, atlas = null, biome = null, wx = 0, wy = 0) {
+function drawObject(ctx, kind, sx, sy, zoom = 1, signature = null, anim = { frame: 0 }, sun = null, atlas = null, biome = null, wx = 0, wy = 0, reaction = null) {
+  const shake = reaction?.pulse ? Math.sin(reaction.age * 60) * reaction.pulse * 2 * zoom : 0;
+  sx += shake;
   const bob = Math.sin((anim.frame ?? 0) * 0.9) * 0.6 * zoom;
   const light = sun?.ambient ?? 1;
   if (kind === 'tree') {
@@ -313,6 +316,13 @@ function drawObject(ctx, kind, sx, sy, zoom = 1, signature = null, anim = { fram
   } else {
     ctx.fillStyle = '#7b5b35';
     ctx.fillRect(sx + 5 * zoom, sy + 6 * zoom, 8 * zoom, 5 * zoom);
+  }
+  if (reaction?.pulse) {
+    ctx.strokeStyle = `rgba(255,245,160,${0.45 * reaction.pulse})`;
+    ctx.lineWidth = Math.max(1, 1.5 * zoom);
+    ctx.beginPath();
+    ctx.arc(sx + 8 * zoom, sy + 5 * zoom, (10 + reaction.pulse * 6) * zoom, 0, Math.PI * 2);
+    ctx.stroke();
   }
 }
 
