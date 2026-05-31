@@ -171,3 +171,11 @@
   - Reworked flower atlas row into curved stems and circular blossoms.
   - Reworked soil/debris/ground-cover micro-layer fallback drawing into ellipses/organic shapes instead of rectangles.
   - Tree objects now draw larger on screen so they read as landscape objects rather than small dark square marks.
+- Added Sorceress generated asset import pipeline:
+  - Added `src/assets/image-atlas.js` for loading real PNG sprite sheets.
+  - Added `src/assets/generated-atlas-defs.js` defining generated terrain, vegetation, and geology sheet paths/rows/frames.
+  - Added `src/assets/atlas-manager.js` to prefer real generated art sheets and fall back to procedural atlas frames only when PNGs are missing.
+  - Added generated asset drop folders under `assets/generated/` plus README.
+  - Added Sorceress job manifests in `assets/sorceress/jobs/` for terrain micro-layers, vegetation objects, and geology objects.
+  - Renderer HUD now reports loaded generated art sheets.
+  - Canvas renderer now uses `AtlasManager`, so Sorceress PNGs at the expected paths automatically replace fallback art with no code changes.

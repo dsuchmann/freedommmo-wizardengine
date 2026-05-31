@@ -1,0 +1,17 @@
+{
+  "tool": "sorceress",
+  "output": "assets/generated/geology/geology_objects_v1.png",
+  "cellSize": [32, 32],
+  "columns": 8,
+  "rows": [
+    { "id": "boulder_cluster", "row": 0, "frames": 8, "prompt": "Irregular boulder cluster, stone facets, moss/lichen hints, transparent background, 32x32 cells, 8 variants/idle frames." },
+    { "id": "mystic_crystal", "row": 1, "frames": 8, "prompt": "Mystic aether crystal cluster, cyan violet glow, transparent background, 32x32 cells, 8 pulsing frames." },
+    { "id": "ice_rock", "row": 2, "frames": 8, "prompt": "Frozen ice-covered rock cluster, tundra/arctic, transparent background, 32x32 cells, 8 shimmer variants." },
+    { "id": "ore_rock", "row": 3, "frames": 8, "prompt": "Ore-bearing rock cluster with exposed mineral vein, transparent background, 32x32 cells, 8 variants." },
+    { "id": "cave_mouth", "row": 4, "frames": 8, "prompt": "Small cave mouth entrance object, dark opening, rocky rim, moss, transparent background, 32x32 cells, 8 state frames." },
+    { "id": "volcanic_rock", "row": 5, "frames": 8, "prompt": "Volcanic basalt rock with ember cracks and ash, transparent background, 32x32 cells, 8 heat shimmer frames." },
+    { "id": "wet_stone", "row": 6, "frames": 8, "prompt": "Wet slick stone with highlights, transparent background, 32x32 cells, 8 glistening frames." },
+    { "id": "rune_etched_stone", "row": 7, "frames": 8, "prompt": "Rune etched mystic stone, cyan/violet glowing carvings, transparent background, 32x32 cells, 8 pulsing frames." }
+  ],
+  "style": "More beautiful than CrossCode, Zelda, and Octopath Traveler; highly opinionated rich fantasy pixel art; organic silhouettes; top-down three-quarter RPG; no UI, no text, no watermark."
+}

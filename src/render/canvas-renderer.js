@@ -5,7 +5,7 @@ import { auditBiomesAround } from '../world/biome-audit.js';
 import { drawSortKey, applyBlend } from './draw-order.js';
 import { animationFrame } from './animation-state.js';
 import { ChunkRenderCache } from './chunk-render-cache.js';
-import { ProceduralAtlas } from '../assets/procedural-atlas.js';
+import { AtlasManager } from '../assets/atlas-manager.js';
 
 export class CanvasRenderer {
   constructor(canvas, statsElement, compositor = null) {
@@ -13,7 +13,7 @@ export class CanvasRenderer {
     this.ctx = canvas.getContext('2d', { alpha: false });
     this.statsElement = statsElement;
     this.compositor = compositor;
-    this.atlas = new ProceduralAtlas();
+    this.atlas = new AtlasManager();
     this.chunkRenderCache = new ChunkRenderCache(compositor, this.atlas);
     this.lastAudit = null;
     this.lastAuditAt = 0;
@@ -145,7 +145,8 @@ export class CanvasRenderer {
     const topBiomes = audit.seen.slice(0, 6).map(entry => `${entry.id} ${(entry.pct * 100).toFixed(0)}%`).join(', ');
     const chunkStats = chunkStore.stats();
     const cacheStats = this.chunkRenderCache.stats();
-    const workerLine = `workers ${chunkStats.workers} · pending ${chunkStats.pending} · ready ${chunkStats.ready} · terrain cache ${cacheStats.cachedTerrainChunks}/${cacheStats.maxTerrainChunks}`;
+    const atlasStats = this.atlas.stats().generated;
+    const workerLine = `workers ${chunkStats.workers} · pending ${chunkStats.pending} · ready ${chunkStats.ready} · terrain cache ${cacheStats.cachedTerrainChunks}/${cacheStats.maxTerrainChunks} · art sheets ${atlasStats.loaded}/${atlasStats.sheets}`;
     const perfLine = perf ? `<br>fps ${perf.fps.toFixed(0)} · update ${perf.updateMs.toFixed(1)}ms · draw ${perf.drawMs.toFixed(1)}ms · ${workerLine}` : '';
     this.statsElement.innerHTML = `WASD/arrows move · mousewheel zoom · R reset<br>M map · L pause sun · click overmap teleport<br>seed ${getWorldSeed()} · chunks ${chunkStore.chunks.size} · zoom ${camera.zoom.toFixed(2)}${perfLine}<br>tile ${Math.floor(player.x)}, ${Math.floor(player.y)} · chunk ${floorDiv(player.x)}, ${floorDiv(player.y)}<br>biome ${tile.biome} · form ${tile.terrainForm} · features ${tile.features.join(',') || 'none'}<br>material ${tile.material} · surface ${tile.layers[3].detail}<br>elev ${tile.climate.elevation.toFixed(2)} lift ${elevationLift(tile.climate.elevation).toFixed(1)} slope ${(tile.layers[7].slope ?? 0).toFixed(2)}<br>micro ${tile.layers[6].layers.map(layer => layer.kind).join('+')}<br>fertility ${tile.layers[6].fertility.toFixed(2)} vegetation ${tile.layers[6].vegetationDensity.toFixed(2)}<br>moist ${tile.climate.moisture.toFixed(2)} heat ${tile.climate.heat.toFixed(2)}<br>${sun.label} · light ${sun.ambient.toFixed(2)} · sun height ${sun.height.toFixed(2)}<br>overmap biomes ${audit.seen.length}/${audit.spec.length}: ${topBiomes}<br>missing: ${audit.missing.join(', ') || 'none'}`;
   }

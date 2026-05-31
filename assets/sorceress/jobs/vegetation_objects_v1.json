@@ -1,0 +1,17 @@
+{
+  "tool": "sorceress",
+  "output": "assets/generated/vegetation/vegetation_objects_v1.png",
+  "cellSize": [32, 32],
+  "columns": 8,
+  "rows": [
+    { "id": "broadleaf_tree", "row": 0, "frames": 8, "prompt": "Broadleaf tree object, curved trunk, lush layered canopy, transparent background, 32x32 cells, 8 wind sway frames, anchor root near bottom center." },
+    { "id": "mystic_tree", "row": 1, "frames": 8, "prompt": "Mystic enchanted tree, violet leaves, cyan aether glow, floating motes, transparent background, 32x32 cells, 8 magical sway frames." },
+    { "id": "conifer_tree", "row": 2, "frames": 8, "prompt": "Conifer tree, taiga/tundra fantasy pixel art, transparent background, 32x32 cells, 8 wind sway frames." },
+    { "id": "burnt_tree", "row": 3, "frames": 8, "prompt": "Burnt charred tree state, ember hints, damaged canopy, transparent background, 32x32 cells, 8 smoke/ember frames." },
+    { "id": "frozen_tree", "row": 4, "frames": 8, "prompt": "Frozen frosted tree state, snow and ice overlays, transparent background, 32x32 cells, 8 subtle shimmer frames." },
+    { "id": "waterlogged_tree", "row": 5, "frames": 8, "prompt": "Waterlogged wet tree state, dripping moss, dark saturated bark, transparent background, 32x32 cells, 8 dripping frames." },
+    { "id": "underbrush_cluster", "row": 6, "frames": 8, "prompt": "Underbrush cluster, shrubs, grasses, curled leaves, transparent background, 32x32 cells, 8 rustle frames." },
+    { "id": "glow_shrub", "row": 7, "frames": 8, "prompt": "Mystic glowing shrub, fae bloom, cyan/violet light, transparent background, 32x32 cells, 8 pulsing frames." }
+  ],
+  "style": "More beautiful than CrossCode, Zelda, and Octopath Traveler; highly opinionated rich fantasy pixel art; organic silhouettes; top-down three-quarter RPG; no UI, no text, no watermark."
+}

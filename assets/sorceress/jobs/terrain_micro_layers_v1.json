@@ -1,0 +1,17 @@
+{
+  "tool": "sorceress",
+  "output": "assets/generated/terrain/terrain_micro_layers_v1.png",
+  "cellSize": [32, 32],
+  "columns": 8,
+  "rows": [
+    { "id": "grass_sway", "row": 0, "frames": 8, "prompt": "Animated lush grass blade clusters, rich fantasy pixel art, transparent background, 32x32 cells, 8 wind-sway frames, no square debug marks." },
+    { "id": "mystic_grass_sway", "row": 1, "frames": 8, "prompt": "Animated mystic aether grass, cyan violet glow, fantasy pixel art, transparent background, 32x32 cells, 8 wind-sway frames." },
+    { "id": "wildflowers", "row": 2, "frames": 8, "prompt": "Wildflower clusters with curved stems and varied blossoms, beautiful painterly pixel art, transparent background, 32x32 cells, 8 subtle motion variants." },
+    { "id": "aether_flowers", "row": 3, "frames": 8, "prompt": "Mystic glowing flowers, fae bloom, violet/cyan particles, transparent background, 32x32 cells, 8 pulsing frames." },
+    { "id": "water_glints", "row": 4, "frames": 8, "prompt": "Water surface glints, foam and ripple overlays, transparent background, 32x32 cells, 8 flowing frames." },
+    { "id": "snow_lichen", "row": 5, "frames": 8, "prompt": "Snowy lichen and tundra ground cover overlays, transparent background, 32x32 cells, 8 natural variants." },
+    { "id": "leaf_litter", "row": 6, "frames": 8, "prompt": "Forest leaf litter, moss, roots, fungi details, transparent background, 32x32 cells, 8 natural variants." },
+    { "id": "pebbles_debris", "row": 7, "frames": 8, "prompt": "Pebbles, shells, twigs, dry debris overlays, transparent background, 32x32 cells, 8 natural variants." }
+  ],
+  "style": "More beautiful than CrossCode, Zelda, and Octopath Traveler; highly opinionated rich fantasy pixel art; organic, layered, readable top-down three-quarter RPG; no UI, no text, no watermark."
+}
