@@ -1,5 +1,7 @@
 import { WORLD } from '../core/constants.js';
 import { classifyBiome } from './biomes.js';
+import { getWorldSeed } from '../core/world-seed.js';
+import { auditBiomesAround } from './biome-audit.js';
 
 export class OvermapController {
   constructor(element, player, chunkStore) {
@@ -86,11 +88,14 @@ export class OvermapController {
     ctx.strokeRect(c - 7, c - 7, 14, 14);
     ctx.strokeStyle = 'rgba(255,255,255,.75)';
     ctx.strokeRect(0, 0, this.size, this.size);
-    ctx.fillStyle = 'rgba(0,0,0,.55)';
-    ctx.fillRect(6, this.size - 20, 122, 14);
+    const audit = auditBiomesAround(this.player, this.sampleChunks, 4);
+    ctx.fillStyle = 'rgba(0,0,0,.62)';
+    ctx.fillRect(6, this.size - 48, 192, 42);
     ctx.fillStyle = '#e8f6ff';
     ctx.font = '10px ui-monospace, Consolas, monospace';
-    ctx.fillText(`chunk ${pcx}, ${pcy}`, 10, this.size - 10);
+    ctx.fillText(`seed ${getWorldSeed()} chunk ${pcx}, ${pcy}`, 10, this.size - 34);
+    ctx.fillText(`seen ${audit.seen.length}/${audit.spec.length} biomes`, 10, this.size - 21);
+    ctx.fillText(`missing ${audit.missing.slice(0, 4).join(', ') || 'none'}`, 10, this.size - 9);
   }
 }
 

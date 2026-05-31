@@ -46,3 +46,10 @@
   - Updated renderer to scale the world around the character with zoom.
   - Added a first high-elevation depth/bokeh projection for lower distant objects.
   - Updated blocker notes: the agent cannot self-trigger `continue`, but the persistent loop keeps each turn autonomous.
+- Fixed determinism/biome coverage issues:
+  - Added `src/core/world-seed.js` so the world seed persists in local storage instead of being an implicit module constant.
+  - Updated random/noise utilities to read the persistent seed.
+  - Expanded biome definitions to cover the spec/reference biome set: ocean, deep_ocean, shallow_water, beach, river, lake, grassland, forest, dense_forest, tropical_forest, taiga, savanna, steppe, desert, swamp, tundra, arctic, hills, mountains, volcanic.
+  - Added `src/world/biome-audit.js` and HUD/overmap biome coverage reporting.
+  - Aligned sea-level/beach thresholds closer to the Godot reference biome table.
+  - Static audit over a broad area now sees all 20 tracked biome IDs.

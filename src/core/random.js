@@ -1,4 +1,4 @@
-import { WORLD } from './constants.js';
+import { getWorldSeed } from './world-seed.js';
 
 export function hash(n) {
   n = (n ^ 61) ^ (n >>> 16);
@@ -9,7 +9,7 @@ export function hash(n) {
   return (n >>> 0) / 4294967295;
 }
 
-export function rand2(x, y, salt = 0, seed = WORLD.seed) {
+export function rand2(x, y, salt = 0, seed = getWorldSeed()) {
   return hash(Math.imul(x, 374761393) ^ Math.imul(y, 668265263) ^ Math.imul(seed + salt, 1442695041));
 }
 
@@ -17,7 +17,7 @@ export function lerp(a, b, t) {
   return a + (b - a) * t;
 }
 
-export function smoothNoise(x, y, scale, salt, seed = WORLD.seed) {
+export function smoothNoise(x, y, scale, salt, seed = getWorldSeed()) {
   const fx = x / scale;
   const fy = y / scale;
   const x0 = Math.floor(fx);
@@ -33,7 +33,7 @@ export function smoothNoise(x, y, scale, salt, seed = WORLD.seed) {
   return lerp(lerp(a, b, sx), lerp(c, d, sx), sy);
 }
 
-export function fbm(x, y, salt, seed = WORLD.seed) {
+export function fbm(x, y, salt, seed = getWorldSeed()) {
   let value = 0;
   let amplitude = 0.5;
   let scale = 180;

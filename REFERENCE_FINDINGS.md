@@ -23,7 +23,10 @@ This file records facts extracted from the specs and Godot reference code/assets
 
 ## Godot reference findings
 
-Pending staged review.
+- `reference/godot/data/biomes/table.json` defines `sea_level: 0.38`, `beach_band: 0.02`, and `lapse_rate: 0.35`.
+- Godot biome table entries include: `ocean`, `deep_ocean`, `shallow_water`, `beach`, `desert`, `grassland`, `forest`, `hills`, `mountains`, `tundra`.
+- Imported world compiler spec expands supported biomes beyond the Godot table to: grassland, forest, dense_forest, desert, mountains, tundra, swamp, savanna, taiga, tropical_forest, steppe, volcanic, beach, ocean, river, lake, arctic.
+- Current Wizard Genie biome audit tracks the union/normalized set: ocean, deep_ocean, shallow_water, beach, river, lake, grassland, forest, dense_forest, tropical_forest, taiga, savanna, steppe, desert, swamp, tundra, arctic, hills, mountains, volcanic.
 
 ## Asset findings
 

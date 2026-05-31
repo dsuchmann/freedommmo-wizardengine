@@ -26,10 +26,10 @@ export function createTileStack({ wx, wy, biomeSample }) {
 function chooseSurfaceDetail(biome, climate) {
   if (biome === 'ocean') return climate.elevation < 0.24 ? 'deep_water' : 'shallow_water';
   if (biome === 'beach') return climate.moisture > 0.5 ? 'wet_sand' : 'dry_sand';
-  if (biome === 'forest' || biome === 'dense_forest') return 'leaf_litter';
-  if (biome === 'mountain' || biome === 'hills') return 'stone_scatter';
+  if (biome === 'forest' || biome === 'dense_forest' || biome === 'taiga' || biome === 'tropical_forest') return 'leaf_litter';
+  if (biome === 'mountains' || biome === 'hills' || biome === 'volcanic') return 'stone_scatter';
   if (biome === 'swamp') return 'mud_pools';
-  if (biome === 'snow') return 'snow_drift';
+  if (biome === 'tundra' || biome === 'arctic') return 'snow_drift';
   return 'ground_cover';
 }
 
