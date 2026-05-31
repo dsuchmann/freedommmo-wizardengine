@@ -90,3 +90,8 @@
   - Chunk compiler now stamps terrain-form state into every tile before render projection.
   - Added `src/render/feature-painter.js` for visible cliffs, ridges, valleys, dry riverbeds, cave mouths, overhang shadows, natural bridges, and mountain strata.
   - HUD now reports terrain form, feature list, and slope at the player tile.
+- Fixed overmap static-noise problem:
+  - Added `src/world/regional-map.js`, a separate coherent chunk-scale regional sampler for the overmap.
+  - Overmap now samples low-frequency continent, mountain, moisture, heat, river, and biome fields directly in chunk space instead of using noisy tile-level classifier results per map pixel.
+  - Tuned overmap biome distribution so broad regions read as landforms rather than random per-pixel assignment.
+  - Updated `fbm` to normalize by amplitude and accept larger base scales/octave counts for regional generation.

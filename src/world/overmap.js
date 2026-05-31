@@ -1,7 +1,7 @@
 import { WORLD } from '../core/constants.js';
-import { classifyBiome } from './biomes.js';
 import { getWorldSeed } from '../core/world-seed.js';
 import { auditBiomesAround } from './biome-audit.js';
+import { sampleRegionalMapChunk } from './regional-map.js';
 
 export class OvermapController {
   constructor(element, player, chunkStore) {
@@ -54,13 +54,11 @@ export class OvermapController {
       for (let px = 0; px < this.size; px++) {
         const cx = pcx + px - half;
         const cy = pcy + py - half;
-        const wx = Math.floor((cx * WORLD.chunkSize + WORLD.chunkSize / 2) / 8) * 8;
-        const wy = Math.floor((cy * WORLD.chunkSize + WORLD.chunkSize / 2) / 8) * 8;
-        const sample = classifyBiome(wx, wy);
+        const sample = sampleRegionalMapChunk(cx, cy);
         const rgb = hexToRgb(sample.definition.color);
-        const east = classifyBiome(wx + WORLD.chunkSize, wy).climate.elevation;
-        const south = classifyBiome(wx, wy + WORLD.chunkSize).climate.elevation;
-        const hill = Math.max(-35, Math.min(45, (sample.climate.elevation - 0.5) * 80 + (sample.climate.elevation - east) * 120 + (sample.climate.elevation - south) * 90));
+        const east = sampleRegionalMapChunk(cx + 1, cy).climate.elevation;
+        const south = sampleRegionalMapChunk(cx, cy + 1).climate.elevation;
+        const hill = Math.max(-35, Math.min(45, (sample.climate.elevation - 0.5) * 80 + (sample.climate.elevation - east) * 180 + (sample.climate.elevation - south) * 140));
         const index = (py * this.size + px) * 4;
         image.data[index] = clamp(rgb.r + hill);
         image.data[index + 1] = clamp(rgb.g + hill);

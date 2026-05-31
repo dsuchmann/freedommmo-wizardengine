@@ -33,14 +33,16 @@ export function smoothNoise(x, y, scale, salt, seed = getWorldSeed()) {
   return lerp(lerp(a, b, sx), lerp(c, d, sx), sy);
 }
 
-export function fbm(x, y, salt, seed = getWorldSeed()) {
+export function fbm(x, y, salt, seed = getWorldSeed(), baseScale = 180, octaves = 5) {
   let value = 0;
   let amplitude = 0.5;
-  let scale = 180;
-  for (let octave = 0; octave < 5; octave++) {
+  let scale = baseScale;
+  let norm = 0;
+  for (let octave = 0; octave < octaves; octave++) {
     value += smoothNoise(x, y, scale, salt + octave * 31, seed) * amplitude;
-    scale *= 0.48;
+    norm += amplitude;
+    scale *= 0.5;
     amplitude *= 0.5;
   }
-  return value;
+  return norm > 0 ? value / norm : value;
 }
