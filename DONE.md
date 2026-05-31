@@ -209,3 +209,8 @@
   - Added `assets/sorceress/system-prompt.json` with required style tags and negative prompt constraints.
   - Updated Sorceress generation scripts so every generated job includes `systemPrompt: assets/sorceress/SYSTEM_ART_DIRECTION_PROMPT.md`.
   - Regenerated the 92 core library jobs and 462 maximal landscape jobs with the canonical prompt reference embedded.
+- Staged and started draw-order/interaction pipeline:
+  - Added `docs/DRAW_ORDER_AND_INTERACTION_PIPELINE.md` defining world draw items, y/elevation sorting, canopy occlusion, and player/object reaction events.
+  - Player is now inserted into the same y/elevation-sorted world actor pass as trees/objects instead of always drawing above the landscape.
+  - Player shadow/body now render at the sorted world position with vertical jump/glide offset.
+  - Added `src/world/contact-events.js` as the initial event bus/model for footsteps, dodge-roll sweeps, airborne/glide states, and future vegetation/object reactions.

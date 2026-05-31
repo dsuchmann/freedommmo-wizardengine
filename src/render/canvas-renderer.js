@@ -57,15 +57,25 @@ export class CanvasRenderer {
       }
     }
 
-    this.drawObjects(chunkStore, camX, camY, w, h, sun, camera, performance.now() / 1000);
+    this.drawWorldActors(chunkStore, player, camX, camY, w, h, sun, camera, performance.now() / 1000);
     this.drawDepthBokeh(chunkStore, player, focusTile, camera, camX, camY, w, h);
-    this.drawPlayer(w, h, camera.zoom, player);
     this.drawAtmosphere(sun, w, h);
   }
 
-  drawObjects(chunkStore, camX, camY, w, h, sun, camera, timeSeconds) {
+  drawWorldActors(chunkStore, player, camX, camY, w, h, sun, camera, timeSeconds) {
     const ctx = this.ctx;
     const drawables = [];
+    const playerTile = chunkStore.tileAt(player.x, player.y);
+    drawables.push({
+      type: 'player',
+      player,
+      tile: playerTile,
+      sx: w / 2,
+      sy: h / 2 - elevationLift(playerTile.climate.elevation) * camera.zoom,
+      render: { drawLayer: 'object', sort: 'elevationThenY', castsShadow: true, receivesLight: true },
+      key: drawSortKey({ drawLayer: 'object', sort: 'elevationThenY' }, player.y, playerTile.climate.elevation)
+    });
+
     for (const chunk of chunkStore.chunks.values()) {
       for (const object of chunk.objects) {
         const tile = chunk.tiles[object.y * WORLD.chunkSize + object.x];
@@ -86,8 +96,12 @@ export class CanvasRenderer {
         ctx.fillStyle = `rgba(0,0,0,${0.22 * (1 - sun.height)})`;
         ctx.fillRect(item.sx + sun.shadowX * 12 * camera.zoom, item.sy + sun.shadowY * 12 * camera.zoom + 10 * camera.zoom, 12 * camera.zoom, 5 * camera.zoom);
       }
-      const anim = animationFrame(item.signature?.animations?.idle, timeSeconds, 'S');
-      drawObject(ctx, item.object.kind, item.sx, item.sy, camera.zoom, item.signature, anim, sun, this.atlas);
+      if (item.type === 'player') {
+        this.drawPlayerAt(item.sx, item.sy, camera.zoom, item.player);
+      } else {
+        const anim = animationFrame(item.signature?.animations?.idle, timeSeconds, 'S');
+        drawObject(ctx, item.object.kind, item.sx, item.sy, camera.zoom, item.signature, anim, sun, this.atlas);
+      }
       ctx.restore();
     }
   }
@@ -117,14 +131,13 @@ export class CanvasRenderer {
     ctx.restore();
   }
 
-  drawPlayer(w, h, zoom, player) {
+  drawPlayerAt(px, sy, zoom, player) {
     const ctx = this.ctx;
-    const px = w / 2;
-    const py = h / 2 - (player?.z ?? 0) * 10 * zoom;
+    const py = sy - (player?.z ?? 0) * 10 * zoom;
     const frame = Math.floor(player?.character?.frame ?? 0);
     ctx.fillStyle = `rgba(0,0,0,${player?.z > 0 ? 0.16 : 0.28})`;
     ctx.beginPath();
-    ctx.ellipse(px, h / 2 + 8 * zoom, 8 * zoom + (player?.z ?? 0) * zoom, 3 * zoom, 0, 0, Math.PI * 2);
+    ctx.ellipse(px, sy + 8 * zoom, 8 * zoom + (player?.z ?? 0) * zoom, 3 * zoom, 0, 0, Math.PI * 2);
     ctx.fill();
     drawModularPlayer(ctx, px, py, zoom, frame, player?.character?.animation ?? 'idle');
   }
