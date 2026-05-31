@@ -11,13 +11,21 @@ I do **not** have direct access to arbitrary files on your local machine outside
 
 ## Recommended next step
 
-Add the Godot specs to a folder such as:
+Add the Godot specs to this folder:
+
+```text
+C:\Users\daves\AppData\Roaming\wizardgenie\projects\default\specs
+```
+
+Project-relative path:
 
 ```text
 specs/
 ```
 
-Once they are present in the workspace, I can:
+A placeholder file has been added at `specs/.gitkeep` so the folder exists in the workspace.
+
+Once the spec files are present in the workspace, I can:
 
 1. Read every spec.
 2. Extract the game design, mechanics, systems, data models, levels, UI, art/audio requirements, and implementation priorities.
