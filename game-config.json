@@ -1,0 +1,5 @@
+{
+  "name": "My Game",
+  "engine": "three.js",
+  "version": "0.1.0"
+}

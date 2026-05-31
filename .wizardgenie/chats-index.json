@@ -1,0 +1,17 @@
+[
+  {
+    "id": "1780247555506",
+    "name": "General",
+    "createdAt": "2026-05-31T17:12:35.506Z",
+    "model": "claude-sonnet-4-6",
+    "executorModel": null,
+    "thinking": false,
+    "enhanced": false,
+    "tokenSaver": false,
+    "workingKnowledge": false,
+    "debugMode": false,
+    "visualDebug": false,
+    "iterativeMode": false,
+    "unbound": false
+  }
+]
