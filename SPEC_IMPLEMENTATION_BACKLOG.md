@@ -52,10 +52,20 @@ The first playable slice exists, but it is a scaffold. The next work must turn i
 ## Milestone 6 — Visual projection improvements
 
 - [ ] Neighbor-aware terrain transitions.
-- [ ] Elevation shading.
+- [x] Elevation shading.
 - [ ] Object layering/depth sort.
-- [ ] Day/night ambient tint.
+- [x] Day/night ambient tint.
 - [ ] Optional atlas/procedural sprite pipeline.
+
+## Milestone 7 — Performance and worker infrastructure
+
+- [x] Add frame/update/draw performance instrumentation.
+- [x] Cache biome audit work.
+- [x] Cache overmap base image and redraw only when needed.
+- [x] Remove per-tile cross-chunk lookups from main draw hot path.
+- [ ] Add chunk compile job queue.
+- [ ] Move chunk compilation into Web Workers.
+- [ ] Add render batching/atlas projection for terrain and objects.
 
 ## Current implementation caveat
 

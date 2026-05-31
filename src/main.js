@@ -7,6 +7,7 @@ import { clearPlayerPosition, loadPlayerPosition, savePlayerPosition } from './c
 import { OvermapController } from './world/overmap.js';
 import { DayNightCycle } from './world/lighting.js';
 import { Camera } from './camera.js';
+import { PerformanceMonitor } from './core/performance.js';
 
 const canvas = document.getElementById('game');
 const stats = document.getElementById('stats');
@@ -18,6 +19,7 @@ const renderer = new CanvasRenderer(canvas, stats);
 const lighting = new DayNightCycle();
 const overmap = new OvermapController(overmapCanvas, player, chunks);
 const camera = new Camera();
+const perf = new PerformanceMonitor();
 
 let last = performance.now();
 let frame = 0;
@@ -39,10 +41,15 @@ function update(dt) {
 function loop(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
+  perf.sampleFrame(dt);
+  const updateStart = performance.now();
   update(dt);
+  perf.sampleUpdate(performance.now() - updateStart);
+  const drawStart = performance.now();
   renderer.draw(chunks, player, lighting, camera);
-  if ((frame++ & 7) === 0) {
-    renderer.hud(chunks, player, lighting, camera);
+  perf.sampleDraw(performance.now() - drawStart);
+  if ((frame++ & 15) === 0) {
+    renderer.hud(chunks, player, lighting, camera, perf);
     overmap.draw();
   }
   input.endFrame();

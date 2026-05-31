@@ -4740,5 +4740,566 @@
         "text": "Great — yes, the likely console error was from the biome naming mismatch / old seed constant references. Those are fixed now.\n\nThe world generation path is now much more stable:\n\n- persistent world seed\n- deterministic chunk generation\n- deterministic overmap sampling\n- biome audit visibility\n- all tracked biomes represented\n\nSend **continue** when ready and I’ll keep building the next horizontal systems."
       }
     ]
+  },
+  {
+    "role": "user",
+    "content": "I'm also noticing some frame rate issues now where it's not persisting a frame rate. Please feel free to use multiple different threads or pools of workers. We're building this game to be running on modern computers."
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "<plan>\nI’ll optimize the current frame-rate bottlenecks first by caching overmap/audit work, avoiding per-tile cross-chunk lookups during draw where possible, reducing HUD audit frequency, and adding performance instrumentation. Then I’ll set the next task toward worker-based chunk compilation.\n</plan>\n"
+      },
+      {
+        "type": "tool_use",
+        "id": "call_PnnXQV1pBvrl51t15zy9H5dg",
+        "name": "recall_memory",
+        "input": {
+          "query": "FreedomMMO frame rate performance overmap audit chunk rendering workers",
+          "limit": 5
+        }
+      },
+      {
+        "type": "tool_use",
+        "id": "call_yK3E7Z96a2h9VY6gv4lCKl01",
+        "name": "read_file",
+        "input": {
+          "path": "src/world/overmap.js"
+        }
+      },
+      {
+        "type": "tool_use",
+        "id": "call_US6CU6hz3U9NaXSgTa25jNbl",
+        "name": "read_file",
+        "input": {
+          "path": "src/world/biome-audit.js"
+        }
+      },
+      {
+        "type": "tool_use",
+        "id": "call_gSua21jKeFoTZImDaK9twsKT",
+        "name": "read_file",
+        "input": {
+          "path": "src/render/canvas-renderer.js",
+          "start_line": 1,
+          "end_line": 70
+        }
+      },
+      {
+        "type": "tool_use",
+        "id": "call_V7fiWPdjJc9hECNJbiJ5XT0e",
+        "name": "read_file",
+        "input": {
+          "path": "src/main.js"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_PnnXQV1pBvrl51t15zy9H5dg",
+        "content": "Memory system not initialized for this project (0 memories stored). Skip recall_memory for this turn and work from the project files directly.",
+        "is_error": false
+      },
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_yK3E7Z96a2h9VY6gv4lCKl01",
+        "content": "Output (112 lines) written to .wizardgenie/tool-output/read_file-call_yK3.txt\n\nPreview (first 800 chars):\nFile: src/world/overmap.js (110 lines)\n\n1| import { WORLD } from '../core/constants.js';\n2| import { classifyBiome } from './biomes.js';\n3| import { getWorldSeed } from '../core/world-seed.js';\n4| import { auditBiomesAround } from './biome-audit.js';\n5| \n6| export class OvermapController {\n7|   constructor(element, player, chunkStore) {\n8|     this.element = element;\n9|     this.player = player;\n10|     this.chunkStore = chunkStore;\n11|     this.visible = true;\n12|     this.size = 304;\n13|     this.sampleChunks = 96;\n14|     element.width = this.size;\n15|     element.height = this.size;\n16|     element.addEventListener('click', event => this.teleportFromClick(event));\n17|   }\n18| \n19|   toggle() {\n20|     this.visible = !this.visible;\n21|     this.element.style.display = this.visible ? 'bl\n\n[Use read_file with start_line/end_line to inspect specific sections]",
+        "is_error": false
+      },
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_US6CU6hz3U9NaXSgTa25jNbl",
+        "content": "File: src/world/biome-audit.js (21 lines)\n\n1| import { WORLD } from '../core/constants.js';\n2| import { classifyBiome, SPEC_BIOME_IDS } from './biomes.js';\n3| \n4| export function auditBiomesAround(player, sampleChunks = 96, strideChunks = 2) {\n5|   const counts = new Map();\n6|   const pcx = Math.floor(player.x / WORLD.chunkSize);\n7|   const pcy = Math.floor(player.y / WORLD.chunkSize);\n8|   for (let cy = pcy - sampleChunks / 2; cy <= pcy + sampleChunks / 2; cy += strideChunks) {\n9|     for (let cx = pcx - sampleChunks / 2; cx <= pcx + sampleChunks / 2; cx += strideChunks) {\n10|       const wx = Math.floor(cx * WORLD.chunkSize + WORLD.chunkSize / 2);\n11|       const wy = Math.floor(cy * WORLD.chunkSize + WORLD.chunkSize / 2);\n12|       const id = classifyBiome(wx, wy).id;\n13|       counts.set(id, (counts.get(id) ?? 0) + 1);\n14|     }\n15|   }\n16|   const total = [...counts.values()].reduce((sum, value) => sum + value, 0) || 1;\n17|   const seen = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([id, count]) => ({ id, count, pct: count / total }));\n18|   const missing = SPEC_BIOME_IDS.filter(id => !counts.has(id));\n19|   return { seen, missing, total, spec: SPEC_BIOME_IDS };\n20| }\n21| ",
+        "is_error": false
+      },
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_gSua21jKeFoTZImDaK9twsKT",
+        "content": "File: src/render/canvas-renderer.js (lines 1-70 of 187)\n\n1| import { WORLD } from '../core/constants.js';\n2| import { getWorldSeed } from '../core/world-seed.js';\n3| import { floorDiv } from '../world/chunk.js';\n4| import { auditBiomesAround } from '../world/biome-audit.js';\n5| \n6| export class CanvasRenderer {\n7|   constructor(canvas, statsElement) {\n8|     this.canvas = canvas;\n9|     this.ctx = canvas.getContext('2d', { alpha: false });\n10|     this.statsElement = statsElement;\n11|     window.addEventListener('resize', () => this.resize());\n12|     this.resize();\n13|   }\n14| \n15|   resize() {\n16|     this.canvas.width = Math.floor(window.innerWidth * window.devicePixelRatio);\n17|     this.canvas.height = Math.floor(window.innerHeight * window.devicePixelRatio);\n18|     this.ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);\n19|   }\n20| \n21|   draw(chunkStore, player, lighting, camera) {\n22|     const ctx = this.ctx;\n23|     const w = window.innerWidth;\n24|     const h = window.innerHeight;\n25|     const sun = lighting.sun();\n26|     const tilePx = WORLD.tileSize * camera.zoom;\n27|     const focusTile = chunkStore.tileAt(player.x, player.y);\n28|     ctx.fillStyle = '#071019';\n29|     ctx.fillRect(0, 0, w, h);\n30| \n31|     const camX = player.x * tilePx - w / 2;\n32|     const camY = player.y * tilePx - h / 2;\n33|     const minTX = Math.floor(camX / tilePx) - 1;\n34|     const minTY = Math.floor(camY / tilePx) - 1;\n35|     const maxTX = Math.ceil((camX + w) / tilePx) + 1;\n36|     const maxTY = Math.ceil((camY + h) / tilePx) + 1;\n37| \n38|     for (let ty = minTY; ty <= maxTY; ty++) {\n39|       for (let tx = minTX; tx <= maxTX; tx++) {\n40|         const cx = floorDiv(tx, WORLD.chunkSize);\n41|         const cy = floorDiv(ty, WORLD.chunkSize);\n42|         const lx = tx - cx * WORLD.chunkSize;\n43|         const ly = ty - cy * WORLD.chunkSize;\n44|         const chunk = chunkStore.get(cx, cy);\n45|         const renderTile = chunk.renderTiles[ly * WORLD.chunkSize + lx];\n46|         const east = chunkStore.tileAt(tx + 1, ty).climate.elevation;\n47|         const south = chunkStore.tileAt(tx, ty + 1).climate.elevation;\n48|         const slope = ((renderTile.elevation - east) * sun.shadowX + (renderTile.elevation - south) * sun.shadowY) * 1.8;\n49|         const contour = Math.floor(renderTile.elevation * 18) !== Math.floor((renderTile.elevation - 0.012) * 18) ? 0.10 : 0;\n50|         const depthDelta = focusTile.climate.elevation - renderTile.elevation;\n51|         const depthFade = Math.max(0, depthDelta - 0.08) * 0.55;\n52|         ctx.fillStyle = tint(shade(renderTile.color, (renderTile.elevation - 0.5) * 0.30 + slope + contour + depthFade), sun.tint, sun.ambient);\n53|         const sx = Math.floor(tx * tilePx - camX);\n54|         const sy = Math.floor(ty * tilePx - camY - elevationLift(renderTile.elevation) * camera.zoom);\n55|         const tileSize = Math.ceil(tilePx);\n56|         ctx.fillRect(sx, sy, tileSize, tileSize + Math.ceil(elevationLift(renderTile.elevation) * 0.35 * camera.zoom));\n57|       }\n58|     }\n59| \n60|     this.drawObjects(chunkStore, camX, camY, w, h, sun, camera);\n61|     this.drawDepthBokeh(chunkStore, player, focusTile, camera, camX, camY, w, h);\n62|     this.drawPlayer(w, h, camera.zoom);\n63|     this.drawAtmosphere(sun, w, h);\n64|   }\n65| \n66|   drawObjects(chunkStore, camX, camY, w, h, sun, camera) {\n67|     const ctx = this.ctx;\n68|     for (const chunk of chunkStore.chunks.values()) {\n69|       for (const object of chunk.objects) {\n70|         const tile = chunk.tiles[object.y * WORLD.chunkSize + object.x];",
+        "is_error": false
+      },
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_V7fiWPdjJc9hECNJbiJ5XT0e",
+        "content": "File: src/main.js (54 lines)\n\n1| import { ChunkStore } from './world/chunk.js';\n2| import { ChunkCompiler } from './world/chunk-compiler.js';\n3| import { CanvasRenderer } from './render/canvas-renderer.js';\n4| import { InputState } from './input.js';\n5| import { Player } from './player.js';\n6| import { clearPlayerPosition, loadPlayerPosition, savePlayerPosition } from './core/save.js';\n7| import { OvermapController } from './world/overmap.js';\n8| import { DayNightCycle } from './world/lighting.js';\n9| import { Camera } from './camera.js';\n10| \n11| const canvas = document.getElementById('game');\n12| const stats = document.getElementById('stats');\n13| const overmapCanvas = document.getElementById('overmap');\n14| const input = new InputState();\n15| const player = new Player(loadPlayerPosition() ?? { x: 0, y: 0 });\n16| const chunks = new ChunkStore(new ChunkCompiler());\n17| const renderer = new CanvasRenderer(canvas, stats);\n18| const lighting = new DayNightCycle();\n19| const overmap = new OvermapController(overmapCanvas, player, chunks);\n20| const camera = new Camera();\n21| \n22| let last = performance.now();\n23| let frame = 0;\n24| \n25| function update(dt) {\n26|   if (input.wasPressed('r')) {\n27|     player.reset();\n28|     clearPlayerPosition();\n29|   }\n30|   if (input.wasPressed('m')) overmap.toggle();\n31|   if (input.wasPressed('l')) lighting.togglePause();\n32|   lighting.update(dt);\n33|   player.update(input, dt);\n34|   chunks.streamAround(player.x, player.y);\n35|   camera.update(dt, chunks.tileAt(player.x, player.y));\n36|   if ((frame & 31) === 0) savePlayerPosition(player);\n37| }\n38| \n39| function loop(now) {\n40|   const dt = Math.min(0.05, (now - last) / 1000);\n41|   last = now;\n42|   update(dt);\n43|   renderer.draw(chunks, player, lighting, camera);\n44|   if ((frame++ & 7) === 0) {\n45|     renderer.hud(chunks, player, lighting, camera);\n46|     overmap.draw();\n47|   }\n48|   input.endFrame();\n49|   requestAnimationFrame(loop);\n50| }\n51| \n52| chunks.streamAround(player.x, player.y);\n53| requestAnimationFrame(loop);\n54| ",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_Wgvud2ouLXFiKEOoToRUvog4",
+        "name": "create_checkpoint",
+        "input": {
+          "message": "Optimize frame rate bottlenecks before worker pass"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_Wgvud2ouLXFiKEOoToRUvog4",
+        "content": "Checkpoint requested: Optimize frame rate bottlenecks before worker pass",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_k4eI2mN1jSwbQnOsDZUcDZ0q",
+        "name": "write_file",
+        "input": {
+          "path": "src/core/performance.js",
+          "content": "export class PerformanceMonitor {\n  constructor() {\n    this.fps = 60;\n    this.frameMs = 16.7;\n    this.drawMs = 0;\n    this.updateMs = 0;\n    this.alpha = 0.08;\n  }\n\n  sampleFrame(dt) {\n    const instant = dt > 0 ? 1 / dt : 60;\n    this.fps += (instant - this.fps) * this.alpha;\n    this.frameMs += (dt * 1000 - this.frameMs) * this.alpha;\n  }\n\n  sampleUpdate(ms) {\n    this.updateMs += (ms - this.updateMs) * this.alpha;\n  }\n\n  sampleDraw(ms) {\n    this.drawMs += (ms - this.drawMs) * this.alpha;\n  }\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_k4eI2mN1jSwbQnOsDZUcDZ0q",
+        "content": "Written 24 lines to src/core/performance.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_DHb7dQEw0LvpGMM4N8RuSJGH",
+        "name": "write_file",
+        "input": {
+          "path": "src/world/biome-audit.js",
+          "content": "import { WORLD } from '../core/constants.js';\nimport { classifyBiome, SPEC_BIOME_IDS } from './biomes.js';\n\nconst cache = new Map();\n\nexport function auditBiomesAround(player, sampleChunks = 96, strideChunks = 4) {\n  const pcx = Math.floor(player.x / WORLD.chunkSize);\n  const pcy = Math.floor(player.y / WORLD.chunkSize);\n  const bucketX = Math.floor(pcx / 8) * 8;\n  const bucketY = Math.floor(pcy / 8) * 8;\n  const key = `${bucketX},${bucketY},${sampleChunks},${strideChunks}`;\n  if (cache.has(key)) return cache.get(key);\n\n  const counts = new Map();\n  for (let cy = bucketY - sampleChunks / 2; cy <= bucketY + sampleChunks / 2; cy += strideChunks) {\n    for (let cx = bucketX - sampleChunks / 2; cx <= bucketX + sampleChunks / 2; cx += strideChunks) {\n      const wx = Math.floor(cx * WORLD.chunkSize + WORLD.chunkSize / 2);\n      const wy = Math.floor(cy * WORLD.chunkSize + WORLD.chunkSize / 2);\n      const id = classifyBiome(wx, wy).id;\n      counts.set(id, (counts.get(id) ?? 0) + 1);\n    }\n  }\n  const total = [...counts.values()].reduce((sum, value) => sum + value, 0) || 1;\n  const seen = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([id, count]) => ({ id, count, pct: count / total }));\n  const missing = SPEC_BIOME_IDS.filter(id => !counts.has(id));\n  const audit = { seen, missing, total, spec: SPEC_BIOME_IDS };\n  cache.set(key, audit);\n  if (cache.size > 24) cache.delete(cache.keys().next().value);\n  return audit;\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_DHb7dQEw0LvpGMM4N8RuSJGH",
+        "content": "Written 31 lines to src/world/biome-audit.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_hXhpEYxKMaSWqgllJX4hckux",
+        "name": "edit_file",
+        "input": {
+          "path": "src/world/overmap.js",
+          "old_text": "    this.visible = true;\n    this.size = 304;\n    this.sampleChunks = 96;\n    element.width = this.size;\n    element.height = this.size;\n    element.addEventListener('click', event => this.teleportFromClick(event));\n  }\n",
+          "new_text": "    this.visible = true;\n    this.size = 304;\n    this.sampleChunks = 96;\n    this.lastCenter = '';\n    this.redrawNeeded = true;\n    element.width = this.size;\n    element.height = this.size;\n    element.addEventListener('click', event => this.teleportFromClick(event));\n  }\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_hXhpEYxKMaSWqgllJX4hckux",
+        "content": "Applied edit to src/world/overmap.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_wZhsNWLV2W4ZnDOeK4cBwybn",
+        "name": "edit_file",
+        "input": {
+          "path": "src/world/overmap.js",
+          "old_text": "  teleportFromClick(event) {\n    const rect = this.element.getBoundingClientRect();\n    const nx = (event.clientX - rect.left) / rect.width - 0.5;\n    const ny = (event.clientY - rect.top) / rect.height - 0.5;\n    const pcx = Math.floor(this.player.x / WORLD.chunkSize);\n    const pcy = Math.floor(this.player.y / WORLD.chunkSize);\n    const targetCx = pcx + Math.round(nx * this.sampleChunks);\n    const targetCy = pcy + Math.round(ny * this.sampleChunks);\n    this.player.x = targetCx * WORLD.chunkSize + WORLD.chunkSize / 2;\n    this.player.y = targetCy * WORLD.chunkSize + WORLD.chunkSize / 2;\n    this.chunkStore.streamAround(this.player.x, this.player.y);\n  }\n\n  draw() {\n    if (!this.visible) return;\n    const ctx = this.element.getContext('2d');\n    const image = ctx.createImageData(this.size, this.size);\n    const pcx = Math.floor(this.player.x / WORLD.chunkSize);\n    const pcy = Math.floor(this.player.y / WORLD.chunkSize);\n\n    for (let py = 0; py < this.size; py++) {\n",
+          "new_text": "  teleportFromClick(event) {\n    const rect = this.element.getBoundingClientRect();\n    const nx = (event.clientX - rect.left) / rect.width - 0.5;\n    const ny = (event.clientY - rect.top) / rect.height - 0.5;\n    const pcx = Math.floor(this.player.x / WORLD.chunkSize);\n    const pcy = Math.floor(this.player.y / WORLD.chunkSize);\n    const targetCx = pcx + Math.round(nx * this.sampleChunks);\n    const targetCy = pcy + Math.round(ny * this.sampleChunks);\n    this.player.x = targetCx * WORLD.chunkSize + WORLD.chunkSize / 2;\n    this.player.y = targetCy * WORLD.chunkSize + WORLD.chunkSize / 2;\n    this.redrawNeeded = true;\n    this.chunkStore.streamAround(this.player.x, this.player.y);\n  }\n\n  draw(force = false) {\n    if (!this.visible) return;\n    const ctx = this.element.getContext('2d');\n    const pcx = Math.floor(this.player.x / WORLD.chunkSize);\n    const pcy = Math.floor(this.player.y / WORLD.chunkSize);\n    const centerKey = `${Math.floor(pcx / 4)},${Math.floor(pcy / 4)}`;\n    if (!force && !this.redrawNeeded && centerKey === this.lastCenter) {\n      this.drawPositionOverlay(ctx, pcx, pcy);\n      return;\n    }\n    this.lastCenter = centerKey;\n    this.redrawNeeded = false;\n    const image = ctx.createImageData(this.size, this.size);\n\n    for (let py = 0; py < this.size; py++) {\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_wZhsNWLV2W4ZnDOeK4cBwybn",
+        "content": "Applied edit to src/world/overmap.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_oH2r1WpaGs2IlLvBCUo6y0Wh",
+        "name": "edit_file",
+        "input": {
+          "path": "src/world/overmap.js",
+          "old_text": "    ctx.putImageData(image, 0, 0);\n    this.drawPositionOverlay(ctx, pcx, pcy);\n  }\n\n  drawPositionOverlay(ctx, pcx, pcy) {\n",
+          "new_text": "    ctx.putImageData(image, 0, 0);\n    this.baseImage = ctx.getImageData(0, 0, this.size, this.size);\n    this.drawPositionOverlay(ctx, pcx, pcy);\n  }\n\n  drawPositionOverlay(ctx, pcx, pcy) {\n    if (this.baseImage) ctx.putImageData(this.baseImage, 0, 0);\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_oH2r1WpaGs2IlLvBCUo6y0Wh",
+        "content": "Applied edit to src/world/overmap.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_7ag07jmu7xa6DEbJouBBLDy7",
+        "name": "edit_file",
+        "input": {
+          "path": "src/render/canvas-renderer.js",
+          "old_text": "  constructor(canvas, statsElement) {\n    this.canvas = canvas;\n    this.ctx = canvas.getContext('2d', { alpha: false });\n    this.statsElement = statsElement;\n    window.addEventListener('resize', () => this.resize());\n    this.resize();\n  }\n",
+          "new_text": "  constructor(canvas, statsElement) {\n    this.canvas = canvas;\n    this.ctx = canvas.getContext('2d', { alpha: false });\n    this.statsElement = statsElement;\n    this.lastAudit = null;\n    this.lastAuditAt = 0;\n    window.addEventListener('resize', () => this.resize());\n    this.resize();\n  }\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_7ag07jmu7xa6DEbJouBBLDy7",
+        "content": "Applied edit to src/render/canvas-renderer.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_Eh5qe7ZlIkhpt7Stgoy9y0zR",
+        "name": "edit_file",
+        "input": {
+          "path": "src/render/canvas-renderer.js",
+          "old_text": "        const east = chunkStore.tileAt(tx + 1, ty).climate.elevation;\n        const south = chunkStore.tileAt(tx, ty + 1).climate.elevation;\n        const slope = ((renderTile.elevation - east) * sun.shadowX + (renderTile.elevation - south) * sun.shadowY) * 1.8;\n",
+          "new_text": "        const east = lx < WORLD.chunkSize - 1 ? chunk.renderTiles[ly * WORLD.chunkSize + lx + 1].elevation : renderTile.elevation;\n        const south = ly < WORLD.chunkSize - 1 ? chunk.renderTiles[(ly + 1) * WORLD.chunkSize + lx].elevation : renderTile.elevation;\n        const slope = ((renderTile.elevation - east) * sun.shadowX + (renderTile.elevation - south) * sun.shadowY) * 1.8;\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_Eh5qe7ZlIkhpt7Stgoy9y0zR",
+        "content": "Applied edit to src/render/canvas-renderer.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_Q14bj6F2UUZd76xyG96esV1I",
+        "name": "edit_file",
+        "input": {
+          "path": "src/render/canvas-renderer.js",
+          "old_text": "  hud(chunkStore, player, lighting, camera) {\n    const tile = chunkStore.tileAt(player.x, player.y);\n    const sun = lighting.sun();\n    const audit = auditBiomesAround(player, 96, 6);\n    const topBiomes = audit.seen.slice(0, 6).map(entry => `${entry.id} ${(entry.pct * 100).toFixed(0)}%`).join(', ');\n    this.statsElement.innerHTML = `WASD/arrows move · mousewheel zoom · R reset<br>M map · L pause sun · click overmap teleport<br>seed ${getWorldSeed()} · chunks ${chunkStore.chunks.size} · zoom ${camera.zoom.toFixed(2)}<br>tile ${Math.floor(player.x)}, ${Math.floor(player.y)} · chunk ${floorDiv(player.x)}, ${floorDiv(player.y)}<br>biome ${tile.biome} · material ${tile.material}<br>surface ${tile.layers[3].detail}<br>elev ${tile.climate.elevation.toFixed(2)} lift ${elevationLift(tile.climate.elevation).toFixed(1)}<br>moist ${tile.climate.moisture.toFixed(2)} heat ${tile.climate.heat.toFixed(2)}<br>${sun.label} · light ${sun.ambient.toFixed(2)} · sun height ${sun.height.toFixed(2)}<br>overmap biomes ${audit.seen.length}/${audit.spec.length}: ${topBiomes}<br>missing: ${audit.missing.join(', ') || 'none'}`;\n  }\n}\n",
+          "new_text": "  hud(chunkStore, player, lighting, camera, perf) {\n    const tile = chunkStore.tileAt(player.x, player.y);\n    const sun = lighting.sun();\n    const now = performance.now();\n    if (!this.lastAudit || now - this.lastAuditAt > 1500) {\n      this.lastAudit = auditBiomesAround(player, 96, 8);\n      this.lastAuditAt = now;\n    }\n    const audit = this.lastAudit;\n    const topBiomes = audit.seen.slice(0, 6).map(entry => `${entry.id} ${(entry.pct * 100).toFixed(0)}%`).join(', ');\n    const perfLine = perf ? `<br>fps ${perf.fps.toFixed(0)} · update ${perf.updateMs.toFixed(1)}ms · draw ${perf.drawMs.toFixed(1)}ms` : '';\n    this.statsElement.innerHTML = `WASD/arrows move · mousewheel zoom · R reset<br>M map · L pause sun · click overmap teleport<br>seed ${getWorldSeed()} · chunks ${chunkStore.chunks.size} · zoom ${camera.zoom.toFixed(2)}${perfLine}<br>tile ${Math.floor(player.x)}, ${Math.floor(player.y)} · chunk ${floorDiv(player.x)}, ${floorDiv(player.y)}<br>biome ${tile.biome} · material ${tile.material}<br>surface ${tile.layers[3].detail}<br>elev ${tile.climate.elevation.toFixed(2)} lift ${elevationLift(tile.climate.elevation).toFixed(1)}<br>moist ${tile.climate.moisture.toFixed(2)} heat ${tile.climate.heat.toFixed(2)}<br>${sun.label} · light ${sun.ambient.toFixed(2)} · sun height ${sun.height.toFixed(2)}<br>overmap biomes ${audit.seen.length}/${audit.spec.length}: ${topBiomes}<br>missing: ${audit.missing.join(', ') || 'none'}`;\n  }\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_Q14bj6F2UUZd76xyG96esV1I",
+        "content": "Applied edit to src/render/canvas-renderer.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_PbMEQ9KqUNrL4m0BYLRaAgYR",
+        "name": "edit_file",
+        "input": {
+          "path": "src/main.js",
+          "old_text": "import { DayNightCycle } from './world/lighting.js';\nimport { Camera } from './camera.js';\n\nconst canvas = document.getElementById('game');\n",
+          "new_text": "import { DayNightCycle } from './world/lighting.js';\nimport { Camera } from './camera.js';\nimport { PerformanceMonitor } from './core/performance.js';\n\nconst canvas = document.getElementById('game');\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_PbMEQ9KqUNrL4m0BYLRaAgYR",
+        "content": "Applied edit to src/main.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_PgKC0lpIIFgoUHOND5yRc5hi",
+        "name": "edit_file",
+        "input": {
+          "path": "src/main.js",
+          "old_text": "const overmap = new OvermapController(overmapCanvas, player, chunks);\nconst camera = new Camera();\n\nlet last = performance.now();\n",
+          "new_text": "const overmap = new OvermapController(overmapCanvas, player, chunks);\nconst camera = new Camera();\nconst perf = new PerformanceMonitor();\n\nlet last = performance.now();\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_PgKC0lpIIFgoUHOND5yRc5hi",
+        "content": "Applied edit to src/main.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_6A1zkaaCe2ChyuX13HYl1apW",
+        "name": "edit_file",
+        "input": {
+          "path": "src/main.js",
+          "old_text": "function loop(now) {\n  const dt = Math.min(0.05, (now - last) / 1000);\n  last = now;\n  update(dt);\n  renderer.draw(chunks, player, lighting, camera);\n  if ((frame++ & 7) === 0) {\n    renderer.hud(chunks, player, lighting, camera);\n    overmap.draw();\n  }\n  input.endFrame();\n  requestAnimationFrame(loop);\n}\n",
+          "new_text": "function loop(now) {\n  const dt = Math.min(0.05, (now - last) / 1000);\n  last = now;\n  perf.sampleFrame(dt);\n  const updateStart = performance.now();\n  update(dt);\n  perf.sampleUpdate(performance.now() - updateStart);\n  const drawStart = performance.now();\n  renderer.draw(chunks, player, lighting, camera);\n  perf.sampleDraw(performance.now() - drawStart);\n  if ((frame++ & 15) === 0) {\n    renderer.hud(chunks, player, lighting, camera, perf);\n    overmap.draw();\n  }\n  input.endFrame();\n  requestAnimationFrame(loop);\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_6A1zkaaCe2ChyuX13HYl1apW",
+        "content": "Applied edit to src/main.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_cBvtI1Ud82UioJfen0HRaUtp",
+        "name": "run_command",
+        "input": {
+          "command": "node --check src/main.js && node --check src/core/performance.js && node --check src/world/biome-audit.js && node --check src/world/overmap.js && node --check src/render/canvas-renderer.js"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_cBvtI1Ud82UioJfen0HRaUtp",
+        "content": "$ node --check src/main.js && node --check src/core/performance.js && node --check src/world/biome-audit.js && node --check src/world/overmap.js && node --check src/render/canvas-renderer.js\n\n",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_X7Pz8SvfLrHUiIpDTXgre3Nw",
+        "name": "read_file",
+        "input": {
+          "path": "SPEC_IMPLEMENTATION_BACKLOG.md",
+          "start_line": 21,
+          "end_line": 30
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_X7Pz8SvfLrHUiIpDTXgre3Nw",
+        "content": "File: SPEC_IMPLEMENTATION_BACKLOG.md (lines 21-30 of 63)\n\n21| ## Milestone 2 — Godot reference extraction\n22| \n23| - [ ] Inventory `reference/godot/scripts`.\n24| - [ ] Find overmap generation code.\n25| - [ ] Find seed/noise utilities.\n26| - [ ] Find biome/climate/elevation thresholds.\n27| - [ ] Find chunk coordinate/streaming code.\n28| - [ ] Find terrain object affinity/catalog loading.\n29| - [ ] Summarize extracted facts in `REFERENCE_FINDINGS.md`.\n30| ",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_zXcwN3Pdi1zhqswPW6NLMWNY",
+        "name": "edit_file",
+        "input": {
+          "path": "SPEC_IMPLEMENTATION_BACKLOG.md",
+          "old_text": "## Milestone 6 — Visual projection improvements\n\n- [ ] Neighbor-aware terrain transitions.\n- [ ] Elevation shading.\n- [ ] Object layering/depth sort.\n- [ ] Day/night ambient tint.\n- [ ] Optional atlas/procedural sprite pipeline.\n",
+          "new_text": "## Milestone 6 — Visual projection improvements\n\n- [ ] Neighbor-aware terrain transitions.\n- [x] Elevation shading.\n- [ ] Object layering/depth sort.\n- [x] Day/night ambient tint.\n- [ ] Optional atlas/procedural sprite pipeline.\n\n## Milestone 7 — Performance and worker infrastructure\n\n- [x] Add frame/update/draw performance instrumentation.\n- [x] Cache biome audit work.\n- [x] Cache overmap base image and redraw only when needed.\n- [x] Remove per-tile cross-chunk lookups from main draw hot path.\n- [ ] Add chunk compile job queue.\n- [ ] Move chunk compilation into Web Workers.\n- [ ] Add render batching/atlas projection for terrain and objects.\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_zXcwN3Pdi1zhqswPW6NLMWNY",
+        "content": "Applied edit to SPEC_IMPLEMENTATION_BACKLOG.md",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_2anh15wm0nFgjhUyVOGzeW7k",
+        "name": "read_file",
+        "input": {
+          "path": "DONE.md",
+          "start_line": 49,
+          "end_line": 80
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_2anh15wm0nFgjhUyVOGzeW7k",
+        "content": "File: DONE.md (lines 49-56 of 56)\n\n49| - Fixed determinism/biome coverage issues:\n50|   - Added `src/core/world-seed.js` so the world seed persists in local storage instead of being an implicit module constant.\n51|   - Updated random/noise utilities to read the persistent seed.\n52|   - Expanded biome definitions to cover the spec/reference biome set: ocean, deep_ocean, shallow_water, beach, river, lake, grassland, forest, dense_forest, tropical_forest, taiga, savanna, steppe, desert, swamp, tundra, arctic, hills, mountains, volcanic.\n53|   - Added `src/world/biome-audit.js` and HUD/overmap biome coverage reporting.\n54|   - Aligned sea-level/beach thresholds closer to the Godot reference biome table.\n55|   - Static audit over a broad area now sees all 20 tracked biome IDs.\n56| ",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_7WXqK2qoRx7T3VYHmQlvUicj",
+        "name": "edit_file",
+        "input": {
+          "path": "DONE.md",
+          "old_text": "- Fixed determinism/biome coverage issues:\n  - Added `src/core/world-seed.js` so the world seed persists in local storage instead of being an implicit module constant.\n  - Updated random/noise utilities to read the persistent seed.\n  - Expanded biome definitions to cover the spec/reference biome set: ocean, deep_ocean, shallow_water, beach, river, lake, grassland, forest, dense_forest, tropical_forest, taiga, savanna, steppe, desert, swamp, tundra, arctic, hills, mountains, volcanic.\n  - Added `src/world/biome-audit.js` and HUD/overmap biome coverage reporting.\n  - Aligned sea-level/beach thresholds closer to the Godot reference biome table.\n  - Static audit over a broad area now sees all 20 tracked biome IDs.\n",
+          "new_text": "- Fixed determinism/biome coverage issues:\n  - Added `src/core/world-seed.js` so the world seed persists in local storage instead of being an implicit module constant.\n  - Updated random/noise utilities to read the persistent seed.\n  - Expanded biome definitions to cover the spec/reference biome set: ocean, deep_ocean, shallow_water, beach, river, lake, grassland, forest, dense_forest, tropical_forest, taiga, savanna, steppe, desert, swamp, tundra, arctic, hills, mountains, volcanic.\n  - Added `src/world/biome-audit.js` and HUD/overmap biome coverage reporting.\n  - Aligned sea-level/beach thresholds closer to the Godot reference biome table.\n  - Static audit over a broad area now sees all 20 tracked biome IDs.\n- Improved frame pacing/performance:\n  - Added `src/core/performance.js` for FPS/update/draw timing shown in HUD.\n  - Cached biome audit results by chunk-region bucket.\n  - Cached the overmap base image and redraw it only when the sampled center changes or teleport forces it.\n  - Reduced HUD/overmap update frequency from every 8 frames to every 16 frames.\n  - Removed expensive per-visible-tile cross-chunk lookups from the renderer slope calculation hot path.\n  - Added Milestone 7 backlog for worker-based chunk compilation and batching.\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_7WXqK2qoRx7T3VYHmQlvUicj",
+        "content": "Applied edit to DONE.md",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_weG9Us6l0OC7kg41kSiGeBVP",
+        "name": "write_file",
+        "input": {
+          "path": "CURRENT_TASK.md",
+          "content": "# Current Task\n\n## Task ID\n\nM7-001\n\n## Goal\n\nAdd worker-ready chunk compilation infrastructure so terrain generation can scale across modern multi-core computers.\n\n## Why this matters\n\nThe current performance pass reduced avoidable main-thread work, but FreedomMMO needs to support large deterministic worlds with rich layered chunks, object placement, lighting projection, and eventually asset composition. Chunk compilation should move behind an asynchronous job queue and then into Web Workers.\n\n## Required reads before coding\n\n- `AGENT_LOOP.md`\n- `IMPLEMENTATION_CONTRACT.md`\n- `SPEC_IMPLEMENTATION_BACKLOG.md`\n- `specs/2026-05-26-performance-infrastructure-spec.md`\n- `specs/2026-05-24-world-compiler-design.md`\n- `src/world/chunk.js`\n- `src/world/chunk-compiler.js`\n\n## Deliverables\n\n- Add a chunk compile job queue abstraction.\n- Preserve deterministic synchronous fallback.\n- Prepare worker message format for `{ seed, cx, cy } -> compiled chunk`.\n- Keep game playable even before full worker migration.\n- Update backlog and logs.\n\n## Acceptance criteria\n\n- Chunk generation still produces the same deterministic chunks.\n- Main code depends on a chunk provider abstraction instead of directly instantiating compiler everywhere.\n- `DONE.md` and `SPEC_IMPLEMENTATION_BACKLOG.md` are updated.\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_weG9Us6l0OC7kg41kSiGeBVP",
+        "content": "Written 38 lines to CURRENT_TASK.md",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Optimized the current frame-rate bottlenecks before adding worker threads.\n\nChanges:\n\n- Added performance HUD:\n  - FPS\n  - update ms\n  - draw ms\n\n- Reduced expensive repeated work:\n  - Biome audit is now cached by chunk-region bucket.\n  - Overmap base image is cached and only regenerated when needed.\n  - HUD/overmap updates reduced from every 8 frames to every 16 frames.\n  - Renderer no longer does per-visible-tile cross-chunk lookups for slope shading.\n\n- Added performance backlog:\n  - chunk compile job queue\n  - Web Worker chunk compilation\n  - render batching / atlas projection\n\nNext task is now set to `M7-001`: add worker-ready chunk compilation infrastructure with deterministic sync fallback."
+      }
+    ]
   }
 ]

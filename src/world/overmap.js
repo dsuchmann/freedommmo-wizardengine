@@ -11,6 +11,8 @@ export class OvermapController {
     this.visible = true;
     this.size = 304;
     this.sampleChunks = 96;
+    this.lastCenter = '';
+    this.redrawNeeded = true;
     element.width = this.size;
     element.height = this.size;
     element.addEventListener('click', event => this.teleportFromClick(event));
@@ -31,15 +33,23 @@ export class OvermapController {
     const targetCy = pcy + Math.round(ny * this.sampleChunks);
     this.player.x = targetCx * WORLD.chunkSize + WORLD.chunkSize / 2;
     this.player.y = targetCy * WORLD.chunkSize + WORLD.chunkSize / 2;
+    this.redrawNeeded = true;
     this.chunkStore.streamAround(this.player.x, this.player.y);
   }
 
-  draw() {
+  draw(force = false) {
     if (!this.visible) return;
     const ctx = this.element.getContext('2d');
-    const image = ctx.createImageData(this.size, this.size);
     const pcx = Math.floor(this.player.x / WORLD.chunkSize);
     const pcy = Math.floor(this.player.y / WORLD.chunkSize);
+    const centerKey = `${Math.floor(pcx / 4)},${Math.floor(pcy / 4)}`;
+    if (!force && !this.redrawNeeded && centerKey === this.lastCenter) {
+      this.drawPositionOverlay(ctx, pcx, pcy);
+      return;
+    }
+    this.lastCenter = centerKey;
+    this.redrawNeeded = false;
+    const image = ctx.createImageData(this.size, this.size);
 
     for (let py = 0; py < this.size; py++) {
       for (let px = 0; px < this.size; px++) {
@@ -59,10 +69,12 @@ export class OvermapController {
     }
 
     ctx.putImageData(image, 0, 0);
+    this.baseImage = ctx.getImageData(0, 0, this.size, this.size);
     this.drawPositionOverlay(ctx, pcx, pcy);
   }
 
   drawPositionOverlay(ctx, pcx, pcy) {
+    if (this.baseImage) ctx.putImageData(this.baseImage, 0, 0);
     const c = this.size / 2;
     ctx.strokeStyle = 'rgba(255,255,255,.22)';
     ctx.lineWidth = 1;

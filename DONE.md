@@ -53,3 +53,10 @@
   - Added `src/world/biome-audit.js` and HUD/overmap biome coverage reporting.
   - Aligned sea-level/beach thresholds closer to the Godot reference biome table.
   - Static audit over a broad area now sees all 20 tracked biome IDs.
+- Improved frame pacing/performance:
+  - Added `src/core/performance.js` for FPS/update/draw timing shown in HUD.
+  - Cached biome audit results by chunk-region bucket.
+  - Cached the overmap base image and redraw it only when the sampled center changes or teleport forces it.
+  - Reduced HUD/overmap update frequency from every 8 frames to every 16 frames.
+  - Removed expensive per-visible-tile cross-chunk lookups from the renderer slope calculation hot path.
+  - Added Milestone 7 backlog for worker-based chunk compilation and batching.

@@ -2,44 +2,36 @@
 
 ## Task ID
 
-M2-001
+M7-001
 
 ## Goal
 
-Inventory and extract the relevant Godot reference implementation facts for world generation, overmap streaming, biome/climate thresholds, chunk math, terrain object catalogs, and the asset/state variation pipeline.
+Add worker-ready chunk compilation infrastructure so terrain generation can scale across modern multi-core computers.
 
 ## Why this matters
 
-The Wizard Genie implementation now has playable testing hooks for overmap teleport, elevation communication, and day/night lighting. The next step is to align formulas, thresholds, and asset data structures with the Godot reference and imported specs so we converge on the actual FreedomMMO design rather than scaffold approximations.
+The current performance pass reduced avoidable main-thread work, but FreedomMMO needs to support large deterministic worlds with rich layered chunks, object placement, lighting projection, and eventually asset composition. Chunk compilation should move behind an asynchronous job queue and then into Web Workers.
 
 ## Required reads before coding
 
 - `AGENT_LOOP.md`
 - `IMPLEMENTATION_CONTRACT.md`
-- `REFERENCE_INTAKE_PLAN.md`
 - `SPEC_IMPLEMENTATION_BACKLOG.md`
-- `specs/2026-05-26-asset-pipeline-spec.md`
-- `specs/2026-05-26-biome-asset-manifest-spec.md`
-- `specs/2026-05-25-tile-object-system-design.md`
-- `reference/godot/config/server_config.json`
-- Relevant files discovered under `reference/godot/scripts`, `reference/godot/data`, and `reference/godot/resources`
+- `specs/2026-05-26-performance-infrastructure-spec.md`
+- `specs/2026-05-24-world-compiler-design.md`
+- `src/world/chunk.js`
+- `src/world/chunk-compiler.js`
 
 ## Deliverables
 
-- Build a concise source/config inventory for the Godot reference.
-- Identify files related to:
-  - overmap generation
-  - world compiler / chunk generation
-  - biome, climate, elevation, moisture, temperature
-  - seed/noise utilities
-  - terrain object affinities/catalogs
-  - asset manifests, variation states, and catalog conventions
-- Update `REFERENCE_FINDINGS.md` with extracted facts.
-- If clear improvements are found, align the Wizard Genie constants/biome/object/asset data with reference values.
+- Add a chunk compile job queue abstraction.
+- Preserve deterministic synchronous fallback.
+- Prepare worker message format for `{ seed, cx, cy } -> compiled chunk`.
+- Keep game playable even before full worker migration.
+- Update backlog and logs.
 
 ## Acceptance criteria
 
-- `REFERENCE_FINDINGS.md` contains concrete Godot reference findings, not just pending placeholders.
-- `SPEC_IMPLEMENTATION_BACKLOG.md` Milestone 2 items are updated where completed.
-- `DONE.md` is updated.
-- `CURRENT_TASK.md` is advanced to the next task.
+- Chunk generation still produces the same deterministic chunks.
+- Main code depends on a chunk provider abstraction instead of directly instantiating compiler everywhere.
+- `DONE.md` and `SPEC_IMPLEMENTATION_BACKLOG.md` are updated.
