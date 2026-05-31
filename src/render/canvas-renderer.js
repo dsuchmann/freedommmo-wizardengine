@@ -13,8 +13,8 @@ export class CanvasRenderer {
     this.ctx = canvas.getContext('2d', { alpha: false });
     this.statsElement = statsElement;
     this.compositor = compositor;
-    this.chunkRenderCache = new ChunkRenderCache(compositor);
     this.atlas = new ProceduralAtlas();
+    this.chunkRenderCache = new ChunkRenderCache(compositor, this.atlas);
     this.lastAudit = null;
     this.lastAuditAt = 0;
     window.addEventListener('resize', () => this.resize());
@@ -155,12 +155,18 @@ function drawObject(ctx, kind, sx, sy, zoom = 1, signature = null, anim = { fram
   const bob = Math.sin((anim.frame ?? 0) * 0.9) * 0.6 * zoom;
   const light = sun?.ambient ?? 1;
   if (kind === 'tree') {
-    ctx.fillStyle = light < 0.85 ? '#0f2d19' : '#12391f';
-    ctx.beginPath();
-    ctx.arc(sx + 8 * zoom, sy + (8 + bob) * zoom, 7 * zoom, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#6b4928';
-    ctx.fillRect(sx + 6 * zoom, sy + 8 * zoom, 4 * zoom, 7 * zoom);
+    if (atlas) {
+      const id = signature?.states?.includes('enchanted') ? 'mystic_tree' : 'broadleaf_tree';
+      const frame = atlas.frame(id, anim.frame);
+      ctx.drawImage(frame.image, frame.sx, frame.sy, frame.sw, frame.sh, sx - 8 * zoom, sy - 18 * zoom + bob, 32 * zoom, 32 * zoom);
+    } else {
+      ctx.fillStyle = light < 0.85 ? '#0f2d19' : '#12391f';
+      ctx.beginPath();
+      ctx.arc(sx + 8 * zoom, sy + (8 + bob) * zoom, 7 * zoom, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#6b4928';
+      ctx.fillRect(sx + 6 * zoom, sy + 8 * zoom, 4 * zoom, 7 * zoom);
+    }
   } else if (kind.includes('crystal')) {
     ctx.fillStyle = '#7fffea';
     ctx.beginPath();

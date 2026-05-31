@@ -3,8 +3,9 @@ import { paintTerrainTile } from './tile-painter.js';
 import { paintTerrainFeatures } from './feature-painter.js';
 
 export class ChunkRenderCache {
-  constructor(compositor = null) {
+  constructor(compositor = null, atlas = null) {
     this.compositor = compositor;
+    this.atlas = atlas;
     this.cache = new Map();
     this.maxEntries = 36;
   }
@@ -42,7 +43,7 @@ export class ChunkRenderCache {
         const tile = chunk.tiles[index];
         const sx = x * WORLD.tileSize;
         const sy = y * WORLD.tileSize - elevationLift(tile.climate.elevation);
-        paintTerrainTile(ctx, tile, sx, sy, WORLD.tileSize, sun, tile.climate.elevation, this.compositor, 0);
+        paintTerrainTile(ctx, tile, sx, sy, WORLD.tileSize, sun, tile.climate.elevation, this.compositor, 0, this.atlas);
         paintTerrainFeatures(ctx, tile, sx, sy, WORLD.tileSize, sun);
       }
     }

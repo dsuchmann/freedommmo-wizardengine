@@ -1,14 +1,14 @@
 import { tint } from './tile-painter.js';
 
-export function paintMicroLayers(ctx, tile, sx, sy, size, sun, timeSeconds = 0) {
+export function paintMicroLayers(ctx, tile, sx, sy, size, sun, timeSeconds = 0, atlas = null) {
   const micro = tile.layers?.[6];
   if (!micro?.layers?.length) return;
   for (const layer of micro.layers) {
     if (layer.kind === 'water_body') paintWaterBody(ctx, layer, sx, sy, size, timeSeconds);
     else if (layer.kind === 'soil') paintSoil(ctx, layer, sx, sy, size, sun);
-    else if (layer.kind === 'ground_cover') paintGroundCover(ctx, layer, tile, sx, sy, size, sun, timeSeconds);
-    else if (layer.kind === 'foliage_blades') paintBlades(ctx, layer, tile, sx, sy, size, sun, timeSeconds);
-    else if (layer.kind === 'flowers') paintFlowers(ctx, layer, tile, sx, sy, size, sun, timeSeconds);
+    else if (layer.kind === 'ground_cover') paintGroundCover(ctx, layer, tile, sx, sy, size, sun, timeSeconds, atlas);
+    else if (layer.kind === 'foliage_blades') paintBlades(ctx, layer, tile, sx, sy, size, sun, timeSeconds, atlas);
+    else if (layer.kind === 'flowers') paintFlowers(ctx, layer, tile, sx, sy, size, sun, timeSeconds, atlas);
     else if (layer.kind === 'debris') paintDebris(ctx, layer, tile, sx, sy, size, sun);
     else if (layer.kind === 'aether_motes') paintAether(ctx, layer, sx, sy, size, timeSeconds);
   }
@@ -28,7 +28,7 @@ function paintSoil(ctx, layer, sx, sy, size, sun) {
   ctx.fillRect(sx, sy + size * 0.68, size, size * 0.32);
 }
 
-function paintGroundCover(ctx, layer, tile, sx, sy, size, sun, t) {
+function paintGroundCover(ctx, layer, tile, sx, sy, size, sun, t, atlas) {
   const sway = wind(layer, t, size);
   const color = layer.material.includes('aether') ? '#64ffe8' : layer.material.includes('lichen') ? '#cfe4c8' : layer.material.includes('leaf') ? '#6b4f2e' : '#6bb34a';
   ctx.fillStyle = tint(color, sun.tint, sun.ambient);
@@ -40,7 +40,13 @@ function paintGroundCover(ctx, layer, tile, sx, sy, size, sun, t) {
   }
 }
 
-function paintBlades(ctx, layer, tile, sx, sy, size, sun, t) {
+function paintBlades(ctx, layer, tile, sx, sy, size, sun, t, atlas) {
+  if (atlas) {
+    const id = layer.material === 'glow_grass' ? 'mystic_grass_sway' : 'grass_sway';
+    const frame = atlas.frame(id, Math.floor(t * (layer.animation?.fps ?? 4)) + tile.wx + tile.wy);
+    ctx.drawImage(frame.image, frame.sx, frame.sy, frame.sw, frame.sh, sx, sy, size, size);
+    return;
+  }
   const sway = wind(layer, t, size);
   const color = layer.material === 'glow_grass' ? '#79ffe4' : layer.material === 'reeds' ? '#6f8b42' : '#3f8a34';
   ctx.strokeStyle = tint(color, sun.tint, sun.ambient);
@@ -56,7 +62,12 @@ function paintBlades(ctx, layer, tile, sx, sy, size, sun, t) {
   ctx.stroke();
 }
 
-function paintFlowers(ctx, layer, tile, sx, sy, size, sun, t) {
+function paintFlowers(ctx, layer, tile, sx, sy, size, sun, t, atlas) {
+  if (atlas && layer.material !== 'aether_flower') {
+    const frame = atlas.frame('wildflowers', tile.wx + tile.wy);
+    ctx.drawImage(frame.image, frame.sx, frame.sy, frame.sw, frame.sh, sx, sy, size, size);
+    return;
+  }
   const x = sx + ((tile.wx * 5 + tile.wy * 3) % Math.max(1, Math.floor(size * 0.8))) + size * 0.1;
   const y = sy + ((tile.wx * 11 + tile.wy * 17) % Math.max(1, Math.floor(size * 0.6))) + size * 0.25;
   ctx.fillStyle = layer.material === 'aether_flower' ? `rgba(150,100,255,${0.55 + Math.sin(t * 4) * 0.2})` : tint('#ffd6f2', sun.tint, sun.ambient);

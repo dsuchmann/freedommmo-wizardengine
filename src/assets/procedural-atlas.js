@@ -3,7 +3,7 @@ export class ProceduralAtlas {
     this.canvas = document.createElement('canvas');
     this.cell = 32;
     this.canvas.width = this.cell * 8;
-    this.canvas.height = this.cell * 4;
+    this.canvas.height = this.cell * 6;
     this.ctx = this.canvas.getContext('2d', { alpha: true, willReadFrequently: false });
     this.frames = new Map();
     this.build();
@@ -14,6 +14,8 @@ export class ProceduralAtlas {
     this.drawGrassBladeSet('mystic_grass_sway', 1, '#49d6c5', '#8a5bd6');
     this.drawFlowerSet('wildflowers', 2);
     this.drawRockSet('boulder_cluster', 3);
+    this.drawTreeSet('broadleaf_tree', 4, '#12391f', '#6b4928');
+    this.drawTreeSet('mystic_tree', 5, '#2c1b57', '#49d6c5');
   }
 
   frame(id, frame = 0) {
@@ -69,6 +71,25 @@ export class ProceduralAtlas {
       this.ctx.fillRect(x + 9, row * this.cell + 13, 12, 5);
       this.ctx.fillStyle = '#2b2d30';
       this.ctx.fillRect(x + 12 + (f % 3), row * this.cell + 19, 10, 1);
+    }
+  }
+
+  drawTreeSet(id, row, leaf, trunk) {
+    this.frames.set(id, row);
+    for (let f = 0; f < 8; f++) {
+      const x = f * this.cell;
+      const sway = Math.sin((f / 8) * Math.PI * 2) * 2;
+      this.ctx.fillStyle = 'rgba(0,0,0,.22)';
+      this.ctx.fillRect(x + 8, row * this.cell + 25, 18, 4);
+      this.ctx.fillStyle = trunk;
+      this.ctx.fillRect(x + 14, row * this.cell + 16, 5, 12);
+      this.ctx.fillStyle = leaf;
+      this.ctx.beginPath();
+      this.ctx.arc(x + 16 + sway, row * this.cell + 12, 11, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.fillStyle = id === 'mystic_tree' ? 'rgba(120,255,235,.65)' : 'rgba(125,185,90,.45)';
+      this.ctx.fillRect(x + 12 + sway, row * this.cell + 6, 3, 3);
+      this.ctx.fillRect(x + 20 + sway, row * this.cell + 13, 2, 2);
     }
   }
 }

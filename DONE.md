@@ -159,3 +159,8 @@
 - Started actual atlas/sprite pipeline:
   - Added `src/assets/procedural-atlas.js`, a generated in-engine sprite atlas with animated grass, mystic grass, wildflowers, and boulder frames.
   - Object renderer now uses atlas frames for boulder clusters as the first real sheet-based object path instead of only primitive rectangles.
+- Expanded atlas usage across terrain micro-layers and vegetation:
+  - Procedural atlas now includes broadleaf and mystic tree frame rows.
+  - Chunk terrain cache passes the atlas into terrain painting.
+  - Grass blade and wildflower micro-layers now use atlas blits instead of expensive per-tile stroke/rect loops when the atlas is available.
+  - Tree objects now render from atlas frames, with enchanted/mystic state selecting the mystic tree row.
