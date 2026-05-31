@@ -188,3 +188,8 @@
   - Generated character directional animation and elemental effect sheet jobs.
   - Added `src/assets/library-atlas-defs.js` so the runtime knows the expected output paths/rows for the expanded generated library.
   - `AtlasManager` now attempts to load both seed generated sheets and the expanded spec-driven library sheets before falling back.
+- Materialized generated PNG art sheets into `assets/generated/`:
+  - Added `scripts/materialize-generated-art.mjs`, a deterministic PNG materializer for generated atlas sheets.
+  - Created seed generated sheets for terrain micro-layers, vegetation objects, and geology objects.
+  - Created per-biome generated PNGs for all 21 biome base terrain sheets, micro-layer sheets, and nature object sheets.
+  - Runtime now has real PNG files at the expected generated-art paths, so `AtlasManager` can load generated sheets immediately instead of relying only on procedural fallback.
