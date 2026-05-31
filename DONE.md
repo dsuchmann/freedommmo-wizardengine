@@ -214,3 +214,8 @@
   - Player is now inserted into the same y/elevation-sorted world actor pass as trees/objects instead of always drawing above the landscape.
   - Player shadow/body now render at the sorted world position with vertical jump/glide offset.
   - Added `src/world/contact-events.js` as the initial event bus/model for footsteps, dodge-roll sweeps, airborne/glide states, and future vegetation/object reactions.
+- Added living-spec reread protocol and digest tooling:
+  - Added `docs/LIVING_SPEC_PROTOCOL.md` requiring spec consultation before significant asset/rendering/world/gameplay changes.
+  - Added `scripts/digest-specs.mjs` to summarize the full specs corpus into `docs/SPEC_DIGEST.md`.
+  - Generated `docs/SPEC_DIGEST.md` from 26 spec docs.
+  - Linked the Sorceress library plan to the living spec protocol and digest.

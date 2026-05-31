@@ -1,0 +1,1612 @@
+# Spec Digest
+
+Generated from 26 spec docs. Use this as a quick living-spec reread aid; source specs remain canonical.
+
+## 2026-05-24-master-architecture-design.md
+
+### Headings
+- FreedomMMO Master Architecture Design
+- Vision
+- Core Design Principle
+- Architecture Layers
+- Layer 0: Grain Data Model (Foundation)
+- Layer 1: World State Graph
+- Layer 2: Material Registry
+- Layer 3: Simulation Engine
+- Layer 4: Interaction Rules
+- Layer 5: Time System
+- Layer 6: Causal Tracker
+- Layer 7: Terrain Generator
+- Layer 8: Feature Placement
+- Layer 9: Entity Composition
+- Layer 10: NPC AI
+- Layer 11: Tile Renderer
+- Layer 12: Entity Renderer
+- Layer 13: Asset Pipeline
+- Layer 14: Interaction Animation System
+- Cross-Cutting: CI & Testing Infrastructure
+- Dependency Graph
+- Already Built (from yesterday's session)
+- Implementation Order
+- QA Process
+
+### Key Lines
+- **Everything is a stack of composable layers with properties. Visuals are always derivatives of simulation state, never the reverse.**
+- A tile is not "a grass sprite" - it's a material stack `[bedrock, ore_vein, rock, sand, soil, grass]` where each layer has properties (hardness, flammability, depth). The visual is generated from that stack. When lightning hits it, grass burns, the stack changes, the visual updates.
+- An entity is not "a sprite" - it's a body with 25+ slots where items layer. The visual composites body + equipped items. PixelLab generates each layer independently.
+- ## Architecture Layers
+- ### Layer 0: Grain Data Model (Foundation)
+- ### Layer 1: World State Graph
+- ### Layer 2: Material Registry
+- ### Layer 3: Simulation Engine
+- ### Layer 4: Interaction Rules
+- The rule engine defining how things affect each other. Dig removes top grain layers. Fire burns flammable grains. Water erodes soft grains. Lightning cracks brittle grains.
+- ### Layer 5: Time System
+- ### Layer 6: Causal Tracker
+- ### Layer 7: Terrain Generator
+- Populates grain stacks using noise-based generation. Multi-octave noise produces elevation, moisture, temperature → biome classification → grain stack templates per position. Each position gets a depth-sorted stack of materials appropriate to its biome and local conditions.
+- ### Layer 8: Feature Placement
+- ### Layer 9: Entity Composition
+- Entities are bodies with 25+ equipment slots. Each slot can hold layered items. Items have grain compositions affecting properties. The entity's visual, stats, and capabilities are all derived from its composition.
+- **Equipment slots:** head, face, ears, neck, shoulders, upper_arms, lower_arms, hands, fingers, chest, back, waist, upper_legs, lower_legs, feet, ankles, tattoos, implants, accessories...
+- - `EquipmentSlot` - named slot with item capacity and layer priority
+- - `EquippedItem` - item in a slot with layer position
+- **Ported from:** `SCI_FI_FANTASY_SYSTEMS.md` item system (25+ slots, layering, set bonuses, synergies)
+- ### Layer 10: NPC AI
+- ### Layer 11: Tile Renderer
+- ### Layer 12: Entity Renderer
+- Composites entity visuals from body + equipment layers. Each equipment item has a visual layer. Layers composite in order (body → undergarments → clothing → armor → accessories → held items).
+- - `LayerCompositor` - composites multiple sprite layers into final visual
+- **Builds on:** L9 (entity composition), L13 (asset pipeline)
+- ### Layer 13: Asset Pipeline
+- **Spec:** `2026-05-24-L13-asset-pipeline.md`
+- Generates visual atoms via PixelLab MCP. Each grain type gets sprite variants. Each equipment item gets directional sprites. Tilesets generated as Wang tiles for seamless blending. Assets cached locally, regenerated on demand.
+- - `AssetRequest` - request to PixelLab for a specific visual
+- - `AssetCache` - local cache of generated sprites
+- - `TilesetGenerator` - generates complete tilesets for a biome
+- - `CharacterGenerator` - generates character sprites with equipment layers
+- ### Layer 14: Interaction Animation System
+- **Builds on:** L9 (entity composition), L12 (entity renderer), L13 (asset pipeline)
+- Multi-layer testing runs on every PR:
+- - **Layer 1:** Python structural tests (file existence, method signatures, JSON validity) - EXISTS
+- - **Layer 2:** GDScript runtime tests (instantiate classes, call methods, verify behavior in Godot headless)
+- - **Layer 3:** Integration tests (systems working together - serialization roundtrips, registry loading, persistence cycles)
+- - **Layer 4:** Security baseline (password hashing, session entropy, input sanitization, RPC authority)
+- Every new layer (L0-L14) must add runtime tests that run on every PR.
+- └──── L11 Tile Renderer ──── L13 Asset Pipeline
+- - `NetworkManager.gd` - ENet multiplayer (L14: Networking)
+- - `PlayerSyncManager.gd` - position sync (L14)
+- - `AuthManager.gd` - player auth
+- - `Player.gd` + `Player.tscn` - player character (will be rebuilt on L9/L12)
+- - Phase 5: Entity walks on terrain with layered equipment
+
+## 2026-05-24-vertical-slice-design.md
+
+### Headings
+- Vertical Slice Design — Make the World Real
+- Problem Statement
+- Goal
+- Phase 1: Walkability & Collision
+- WalkabilityGrid (new class)
+- Player Collision
+- Integration
+- Phase 2: Structure Visual Rendering
+- StructureRenderer (new class)
+- Rendering Approach
+- Building Interiors
+- Phase 3: Road/Path Network
+- PathNetworkGenerator (new class or extension of VillageGenerator)
+- Rendering
+- Phase 4: NPC Spatial Coherence
+- Structure Assignment
+- Schedule-Driven Movement
+- Path Preference
+- Phase 5: Layered Character Rendering
+- PixelLab Generation Pipeline
+- Technical Requirements
+- Non-Negotiables
+
+### Key Lines
+- FreedomMMO has 108 scripts and 42 systems but the game is "one atom deep." Terrain, structures, NPCs, and the player exist in disconnected layers:
+- - Player walks through everything — no collision
+- One village that works deeply across all systems. A player should be able to:
+- - Queried by player movement AND NPC pathfinding
+- ### Player Collision
+- - Draw structure tiles directly onto the cell Image during/after terrain rendering
+- - Structure tiles are pixel colors drawn into the image (matching the 1px-per-tile approach)
+- - Door tile is walkable — NPCs/player can enter
+- - Algorithm: from each structure, create path tiles toward village center (well)
+- - Path tiles drawn into terrain image during generation
+- ## Phase 5: Layered Character Rendering
+- - Clothing layer: tunic, dress, robe, pants
+- - Armor layer: leather, chainmail, plate
+- - Weapon layer: sword, axe, bow, staff, pick
+- - Head layer: helmet, hat, hood, crown
+- - **Depth first**: Each phase must WORK before moving to the next — no more skeleton code
+
+## 2026-05-24-visual-vertical-slice-design.md
+
+### Headings
+- Visual Vertical Slice — Reference-Quality Village Clearing
+- Goal
+- Target Quality
+- Architecture: 5 Rendering Layers
+- L1: Ground (TileMapLayer, z_index=-1)
+- L2: Paths (TileMapLayer, z_index=0) 
+- L3: Structures (Sprite2D compositions, z_index=1-3)
+- L4: Objects & Decorations (Sprite2D, z_index=2-4)  
+- L5: Lighting & Atmosphere (PointLight2D + CanvasModulate + particles)
+- Asset Pipeline
+- Implementation Order
+
+### Key Lines
+- Make ONE small area (the spawn village) look like the reference pixel art games. All visual layers working together: ground terrain, paths, structures, objects, decorations, lighting, characters.
+- ## Architecture: 5 Rendering Layers
+- ### L1: Ground (TileMapLayer, z_index=-1)
+- - Single TileMapLayer with pro tiles (grass, water, forest floor, etc.)
+- - Per-tile biome selection from grain type
+- ### L2: Paths (TileMapLayer, z_index=0)
+- - Separate TileMapLayer for paths using dirt_path and stone_path pro tiles
+- - SpriteObjectRenderer already built — loads from assets/objects/nature/
+- - Player warm glow (already built)
+- ## Asset Pipeline
+- 2. Add path TileMapLayer using dirt_path tile
+- 6. Verify all 5 layers compose correctly in the village area
+
+## 2026-05-24-world-compiler-design.md
+
+### Headings
+- World Compiler Architecture — Layered Emergent World Generation
+- Problem Statement
+- Solution: Layered World Compiler
+- Core Rules
+- Pipeline Dependency Order
+- Layer Specifications
+- L1: Elevation
+- L2: Ocean Mask
+- L3: Drainage Preprocessing
+- L4: Rivers & Lakes
+- L5: Climate
+- L6: Biomes
+- L7: Soil & Fertility
+- L8: Vegetation
+- L9: Coastal Materials
+- L10: Roads & Paths
+- L11: Settlements & Ports
+- L12: Farms & Industry
+- L13: POIs
+- L14: Event Log & Narrative Interpreter
+- Building Architecture (Seamless Entry, No Loading Screens)
+- Building Template Schema
+- Rendering Layers (Z-Order)
+- Roof Fade Logic
+- Chunk System
+- Chunk Size
+- Chunk Schema
+- Deferred Rendering
+- Integration with Existing Systems
+- What Gets Replaced
+
+### Key Lines
+- # World Compiler Architecture — Layered Emergent World Generation
+- ## Solution: Layered World Compiler
+- Replace scatter-placement with a **deterministic compilation pipeline** where each layer consumes the output of previous layers. Every world feature has a reason to be where it is. Same seed = same world. Every layer has debug views and validation.
+- 5. **Each layer has typed inputs, typed outputs, debug views, and validation tests.**
+- │ └─→ L6: Biomes (Whittaker lookup)
+- ## Layer Specifications
+- **Inputs**: World seed, chunk coordinates
+- **Outputs**: Float32 elevation grid, mountain mask, slope grid
+- **Algorithm**: Hash-derived sub-seeds → multiple FastNoiseLite channels:
+- **Validation**: Border seams stable across chunk reload; no one-cell spikes; mountain mask coherent at multi-chunk scale
+- **Failure mode**: "Noise confetti" — when octave weights are wrong, mountains become pepper noise
+- **Inputs**: Elevation grid, sea-level parameter
+- **Outputs**: Binary ocean/land mask, coastline class map
+- **Algorithm**: Apply sea threshold. Coastline classes (cliff, beach, marsh) derived from slope at coast edge.
+- **Validation**: Coastline continuous; all ocean connected to world edge unless explicit inland sea
+- **Failure mode**: Pepper-noise lakes when threshold is at noise floor
+- **Inputs**: Elevation grid, ocean mask
+- **Outputs**: Hydrologically corrected elevation, basin IDs
+- **Algorithm**: Priority-Flood (Barnes et al.) — guarantees drainage after preprocessing. Every land cell drains to outlet or explicit terminal basin.
+- **Validation**: No unflagged inland pits; every cell has drainage path
+- **Failure mode**: Fragmented micro-basins everywhere
+- **Inputs**: Corrected elevation, basin IDs, ocean mask
+- **Outputs**: River polylines with order (Strahler), lake polygons, outlets
+- **Algorithm**: D8 flow direction (steepest downslope neighbor). Rivers start above configurable accumulation threshold. Lakes form in closed depressions or terminal basins.
+- **Validation**: River elevation decreases monotonically to outlet; lakes have explicit outlet or terminal status; every river mouth classified
+- **Failure mode**: Rivers originating from tiny flat cells; rivers flowing uphill
+- **Inputs**: Latitude, elevation, ocean distance, mountain barriers, water bodies
+- **Outputs**: Temperature grid, precipitation grid, seasonality scalars
+- **Algorithm**: Latitude baseline → elevation penalty → moisture from coasts/water → rain-shadow reduction leeward of mountains
+- **Validation**: No frozen equatorial lowlands unless altitude; no rainforest precipitation in deep rain shadows
+- **Failure mode**: Hot alpine peaks, wet rain-shadow deserts
+- ### L6: Biomes
+- **Inputs**: Temperature, precipitation, soil/water modifiers
+- **Outputs**: Biome ID grid, ecotone mask
+- **Algorithm**: Whittaker-style lookup table. Merge with ecotones where gradients are shallow. Data-driven, not nested if/else.
+- **Validation**: Transition zones visible; assignment explainable from local climate
+- **Debug view**: Biome map with coherent patches and visible transitions
+- **Failure mode**: Checkerboard biome flicker from sharp thresholds
+- **Supported biomes**: grassland, forest, dense_forest, desert, mountains, tundra, swamp, savanna, taiga, tropical_forest, steppe, volcanic, beach, ocean, river, lake, arctic
+- **Inputs**: Elevation, slope, water proximity, floodplain deposition, biome
+- **Outputs**: Soil class grid, fertility grid (0-255)
+- **Algorithm**: Parent material from terrain class. Boost floodplains and river terraces. Suppress on steep rock, dunes, alpine.
+- **Validation**: Fertility peaks in valleys/floodplains near stable water, not on steep mountain faces
+- **Failure mode**: Fertile cliff walls, barren floodplains
+- **Inputs**: Biome, fertility, slope, water distance, disturbance events
+- **Outputs**: Vegetation density grid, species class map, foliage feature list
+- **Algorithm**: Separate potential vegetation (what could grow) from actual vegetation (what does grow after disturbance). Settlements and events reduce/reshape later.
+- **Validation**: Forest density tracks fertile wet bands; scrub dominates dry coasts
+- **Failure mode**: Dense jungle on dunes, alpine scree with forests
+- **Inputs**: Elevation, ocean mask, slope, wind/dryness heuristics, vegetation
+- **Outputs**: Coast material grid (beach, cliff, marsh, dune), dune mask
+- **Algorithm**: Beaches require coast adjacency + low slope. Dunes require coast + dryness + sparse vegetation.
+- **Validation**: No sand on cliff coasts; dune fields never overwrite dense forest
+- **Failure mode**: Beaches on cliffs, dunes in forests
+- **Inputs**: Terrain cost map, rivers, slope, vegetation, settlement locations
+- **Outputs**: Trail graph, road graph, bridges/fords list
+- **Algorithm**: AStarGrid2D for chunk-local least-cost routes. Penalize steep slopes, marsh, dense forest, river crossings without bridges.
+- **Validation**: All graph edges have cost provenance; no road crosses impassable cells without crossing feature
+- **Failure mode**: Straight roads through swamps and cliffs
+- **Inputs**: Suitability maps (water, fertility, defensibility, trade centrality, climate), road network, coastline
+- **Outputs**: Settlement entities with reason codes, port entities, building footprints
+- **Algorithm**: Score cells by multiple criteria. Place settlements at local maxima. Ports require coast + navigable water + trade rationale. Size determined by resource capacity.
+- 1. Select building template by type + biome + settlement tier
+- 6. Add roof canopy at high z-index (alpha-fades when player enters)
+- **Validation**: Every settlement has reason codes + reachable transport to exchange node
+- **Failure mode**: Settlements on bad terrain without rationale
+- **Inputs**: Settlements, fertility, resource deposits, transport graph
+- **Outputs**: Field polygons, extraction sites, workshops, throughput edges
+- **Algorithm**: Farms expand outward from settlements into fertile accessible land. Industry anchors to resources and transport. All outputs are entities with production inputs/outputs.
+- **Validation**: Each farm/industry node has owner, input requirements, transport rationale
+- **Failure mode**: Farms on mountains, mines with no transport path
+- **Inputs**: Terrain anomalies, transport intersections, ruins logic, faction state
+- **Outputs**: POI entities with trigger records, local compound bounds
+- **Algorithm**: Spawn from explainable triggers: waterfalls, river crossings, mineral cues, trade junctions, isolated plateaus, abandoned settlements.
+- **Validation**: No POI appears without a trigger record
+- **Failure mode**: Random POIs with no spatial logic
+- **Inputs**: World ticks, entity state diffs, settlement/POI/economy events
+- **Outputs**: Append-only event log, narrative artifacts (rumors, quests, chronicles)
+- **Algorithm**: Log state changes as first-class data objects with causes, actors, location, effects. Interpreter reads events → generates narrative artifacts with provenance back to event IDs. Interpreter NEVER places facts directly.
+- **Validation**: Every rumor/quest references event IDs and entity IDs; no free-floating narrative
+
+## 2026-05-25-agent-swarm-design.md
+
+### Headings
+- Agent Swarm Architecture — Parallel Build + Verify Loop
+- Overview
+- Agent Roster
+- Tier 1: Research (5 agents, dissolve after findings delivered)
+- Tier 2: Builders (2 persistent workstreams)
+- Tier 3: Technical Verifiers (10 agents, persistent loop)
+- Tier 4: Experiential Verifiers (10 agents, persistent loop)
+- Orchestration Model: Continuous Parallel Mesh
+- Verification Protocol
+- Block Rules
+- Success Criteria
+
+### Key Lines
+- - R1: Codebase Explorer — map renderer, world compiler, 14 layers, ChunkData
+- - R4: Godot MCP Scout — TileMapLayer, BetterTerrain, screenshots, play_scene
+- - P1: PixelLab Pipeline — download 764 objects, animate all, write manifests
+- - M1: TileMapLayer Migration — execute 6-task plan, replace custom renderer
+- - V1: Terrain (z=-2) — biome tiles, organic shapes, autotile transitions
+- - V5: Objects (z=4-5) — visible, biome-appropriate, wind sway
+- - V6: Roofs (z=6) — alpha-fade on player entry
+- - V7: Layer Composition — all 7 stack, no z-fighting
+- - V9: Asset Pipeline — downloads complete, animations exist, manifests valid
+- - V12: Biome — each biome looks distinct, feels right
+- - V15: Utility — player can DO things, systems produce visible results
+- - LAYER, STATUS (BLOCKED/IMPORTANT/MINOR), GAP description
+- - CRITICAL: Layer blocked, builder cannot mark done
+- The game must visually match or exceed CrossCode, Octopath Traveler, and Legend of Zelda: A Link to the Past in:
+- - Terrain transitions and biome variety
+- - Layer composition and visual depth
+
+## 2026-05-25-color-algebra-tiles-design.md
+
+### Headings
+- Color-Algebra Tile System — Layered Composable Terrain
+- Problem
+- Solution
+- The 8-Color Palette
+- 7-Layer Stack (Bottom to Top)
+- Layer 0 — Base Color (opaque)
+- Layer 1 — Luminance Gradient (α 0.3-0.5)
+- Layer 2 — Color Transition (α 0.5-0.8)
+- Layer 3 — Texture Pattern (α 0.2-0.4)
+- Layer 4 — Detail Objects (transparent background, non-interactive)
+- Layer 5 — Interactable Objects (transparent background, pickable)
+- Layer 6 — Large Structures (blocking, multi-tile)
+- Grain Stack Binding (Dig Interaction)
+- Rendering Pipeline (Per Chunk)
+- Adjacency Rules
+- PixelLab Generation Strategy
+- Batch 1: Base Flats (2 calls)
+- Batch 2: Gradients (2 calls)
+- Batch 3: Transitions (4-7 calls)
+- Batch 4: Texture Patterns (2 calls)
+- Batch 5: Detail Objects (4 calls)
+- Batch 6: Interactable Objects (2 calls)
+- File Structure
+- Non-Goals (This Spec)
+- Success Criteria
+
+### Key Lines
+- # Color-Algebra Tile System — Layered Composable Terrain
+- Current terrain renders as flat colored squares or non-seamless tile art. No smooth biome transitions, no elevation shading, no ground texture, no visual richness. The world looks like a spreadsheet.
+- A composable tile system built from color algebra: 8 base colors × luminance variants × directional gradients × biome transitions × texture patterns × detail objects × interactable items. Each layer is a transparent overlay painted onto the layer below. The layers map to the grain stack — digging removes layers and exposes what's underneath.
+- | ID | Color | Hex Range (dark → light) | Biomes |
+- ## 7-Layer Stack (Bottom to Top)
+- ### Layer 0 — Base Color (opaque)
+- Flat biome tile. One tile per biome, determined by top grain in the GrainStack at that position.
+- ### Layer 1 — Luminance Gradient (α 0.3-0.5)
+- ### Layer 2 — Color Transition (α 0.5-0.8)
+- Biome boundary blending. Only rendered at tiles where a neighbor has a different biome.
+- - If neighbor biome differs, overlay a transition tile that blends this biome's color into the neighbor's
+- - Edge matching: transition tile's edge colors must match both biomes' base colors
+- ### Layer 3 — Texture Pattern (α 0.2-0.4)
+- | Pattern | Compatible Colors | Biomes |
+- ### Layer 4 — Detail Objects (transparent background, non-interactive)
+- Individual nature sprites placed by density rules per biome. Decorative only.
+- - Palette-coherent with base biome color
+- ### Layer 5 — Interactable Objects (transparent background, pickable)
+- Items the player can collect. Sparse placement.
+- - Removed from TileStack when player collects them
+- ### Layer 6 — Large Structures (blocking, multi-tile)
+- The visual layer stack mirrors the GrainStack at each tile position:
+- | Grain (top → bottom) | Visual Layer |
+- **When player digs:**
+- 2. Add popped material to player inventory (as TileObject with pickable=true)
+- 5. Re-render affected tile layers
+- **When player places material:**
+- 4. Check 4 cardinal neighbors for different biome:
+- Select texture pattern by biome, paint L3 onto pattern image (alpha = density * 0.4)
+- 6. If density > 0.4: place L4 detail object (selected by biome + RNG)
+- 7. If RNG < 0.05: place L5 interactable object (selected by biome + rarity)
+- Each layer is a separate Image (chunk_size × 32 pixels per side). Total: 6 Image sprites per chunk. With 9 chunks: **54 Sprite2D nodes** (same as current).
+- The renderer enforces: **adjacent tiles' touching edges must have the same color value.** This guarantees no visible seams.
+- Generate color-to-color edge blending tiles for the most common biome pairs first:
+- assets/catalog/
+- base_flats/manifest.json # 32 flat tiles
+- gradients/manifest.json # 32 gradient tiles
+- transitions/manifest.json # 112 transition tiles
+- patterns/manifest.json # 32 texture pattern tiles
+- details/manifest.json # ~50 detail object sprites
+- interactables/manifest.json # ~30 pickable item sprites
+- biome_color_map.json # biome → color_id mapping
+- 3. Biome boundaries blend smoothly, no hard seams
+- 5. Player can pick up scattered items (branches, herbs, stones)
+- 6. Digging removes visual layers and exposes what's underneath
+- 7. Same rendering performance (Image-based, ~54 Sprite2D nodes for 9 chunks)
+
+## 2026-05-25-layer-architecture-spec.md
+
+### Headings
+- Layer Architecture Specification
+- Core Principle: Animation Cel Model
+- Layer Stack
+- Blend Mode Definitions
+- Layer -2: Terrain (Detail)
+- What it IS
+- Biome Labels
+- Biome Labels Are Convenience Indexes, Not Boundaries
+- Elevation as Visual Information
+- What This Layer Does NOT Do
+- How Layers Interact
+- Information flows DOWN → UP
+- Visual compositing flows UP → DOWN (painter's algorithm)
+- Occlusion rules
+- The Grassland Example (All Layers)
+- Design Philosophy
+- Layer -2 is primarily INFORMATION, secondarily visual
+- Higher layers ENRICH, lower layers INFORM
+- Additive vs Replacement is per-layer, not per-tile
+- The settlement system clears higher layers, not the terrain
+
+### Key Lines
+- # Layer Architecture Specification
+- > Established 2026-05-25. This is the authoritative reference for the rendering layer system.
+- > All implementation must conform to this spec. Do not re-derive — reference this document.
+- The world is composed like traditional animation cels — transparent sheets stacked on top of each other. Each layer is a separate sheet. Some sheets are fully painted (opaque), most have sparse content with transparency showing layers beneath.
+- The player sees one composite image. We know it's 8 separate layers.
+- ## Layer Stack
+- | Z | Layer | Blend Mode | Coverage | Purpose |
+- | 6 | **Roofs** | Conditional alpha | Sparse (building footprints only) | Building canopies. Opaque normally, alpha-fades when player enters building. |
+- - **Opaque fill**: Every pixel in this layer is drawn. Nothing beneath is visible.
+- - **Opaque where present**: Where a tile exists on this layer, it fully covers what's beneath. Where no tile exists, the layer is invisible (pass-through).
+- - **Transparent overlay**: Sprites/tiles are placed on this layer but have transparent backgrounds. You see through to all layers beneath between the drawn pixels.
+- - **Conditional alpha**: Normally opaque, but fades to transparent based on game state (e.g., player enters building).
+- ## Layer -2: Terrain (Detail)
+- ### Biome Labels
+- The continuous values get classified into 15 biome labels for convenience. These are NOT hard visual boundaries — they're indexes that higher layers use to select content.
+- | Biome | Elevation | Temperature | Precipitation | Visual Base |
+- ### Biome Labels Are Convenience Indexes, Not Boundaries
+- The underlying data is continuous. Two adjacent tiles may have nearly identical temperature/moisture but fall on different sides of a classification threshold. Visually, they should look nearly identical — the transition is smooth via Wang tilesets, not a hard edge.
+- Higher layers query the biome label when they need a quick "what kind of place is this?" answer (e.g., "should I place oak trees or cacti here?"). They can also query the raw floats for finer-grained decisions.
+- - **This layer (Layer -2)**: Tile selection shifts — higher elevation gets rockier, exposed stone at peaks
+- - **Layer -1 (Shading)**: Hillshade — darker on north-facing slopes, lighter on south-facing
+- - **Layer 1 (Ground Detail)**: Fewer grass blades on steep slopes, more exposed rock
+- - **Layer 4-5 (Objects)**: Tree density decreases with elevation, different species at altitude
+- This is TERRAIN elevation (continuous, natural landscape). STRUCTURAL elevation (stairs, second floors, raised platforms) is a separate system on Layer 3.
+- ### What This Layer Does NOT Do
+- - Does not render visual detail (that's Layer 1)
+- - Does not determine walkability by itself (walkability comes from combining multiple layers)
+- ## How Layers Interact
+- Lower layers don't know about higher layers. Higher layers READ from lower layers.
+- Layer -2 (Terrain: elevation, temp, precip)
+- → Layer -1 reads elevation for shading
+- → Layer 0 reads elevation for water placement (below sea level = water)
+- → Layer 1 reads biome + fertility for ground detail selection
+- → Layer 2 reads terrain for road routing (prefer flat, avoid water)
+- → Layer 3 reads terrain for building placement (flat areas, near water, avoid flood zones)
+- → Layer 4-5 reads biome for object selection (oaks in forest, cacti in desert)
+- → Layer 7 reads elevation for fog density (valleys = foggy)
+- ### Visual compositing flows UP → DOWN (painter's algorithm)
+- Render from bottom to top. Each layer paints over what's beneath based on its blend mode.
+- - Opaque layers HIDE everything beneath them where they have content
+- - Transparent layers ADD to what's beneath without hiding it
+- - Building floors (Layer 3) hide terrain (Layer -2) and ground detail (Layer 1)
+- - But objects (Layer 4-5) near buildings are removed by the SETTLEMENT SYSTEM, not by visual occlusion — you don't place flowers inside a tavern because the system knows not to, not because the floor hides them
+- ## The Grassland Example (All Layers)
+- What the player sees when looking at a grassy hillside with a nearby building:
+- 1. **Layer -2**: Solid green fill (base terrain — every pixel)
+- 2. **Layer -1**: Subtle darkening on the north slope, slight brightening on south (multiply)
+- 3. **Layer 0**: Nothing here (no water)
+- 4. **Layer 1**: Dense grass blade sprites scattered across the green. A few pebbles near the hill crest. (transparent overlay — green shows between blades)
+- 5. **Layer 2**: A dirt path cutting through (opaque — covers green + grass where it exists)
+- 6. **Layer 3**: Tavern floor/walls (opaque — covers everything beneath within footprint)
+- 7. **Layer 4-5**: Wildflowers in the grass. A fallen branch. Three oak trees. A sign by the path. (transparent sprites — y-sorted, you see through to grass between them)
+- 8. **Layer 6**: Red thatch roof over the tavern (opaque, would alpha-fade if player enters)
+- 9. **Layer 7**: Warm afternoon tint, torch glow from tavern windows (multiply/additive)
+- Each layer animates independently:
+- - Grass blades sway (Layer 1)
+- - Flowers bob slightly (Layer 4)
+- - Torch light flickers (Layer 7)
+- - Water ripples if present (Layer 0)
+- ### Layer -2 is primarily INFORMATION, secondarily visual
+- Its main job is providing the continuous terrain data that all other layers query. The visual rendering (solid colored tiles) is a baseline that's mostly hidden by the richer layers above it. But it must cover every pixel — it's the "canvas" that guarantees no gaps.
+- ### Higher layers ENRICH, lower layers INFORM
+- Layer -2 tells Layer 1 "this is grassland with 0.8 fertility" → Layer 1 places dense grass blades.
+- Layer -2 tells Layer 4 "this is forest with 0.6 moisture" → Layer 4 places oak trees with ferns at their base.
+- ### Additive vs Replacement is per-layer, not per-tile
+- A layer's blend mode is fixed. Ground Detail (Layer 1) is ALWAYS transparent overlay. Buildings (Layer 3) are ALWAYS opaque where present. You don't decide per-tile whether to add or replace — the layer's role determines it.
+- ### The settlement system clears higher layers, not the terrain
+- When a building is placed, the settlement system removes grass blades (Layer 1) and objects (Layer 4-5) from within the footprint. It does NOT modify Layer -2. The terrain data persists beneath the building for:
+- - Biome context ("the tavern is in a grassland")
+
+## 2026-05-25-overmap-streaming-design.md
+
+### Headings
+- Overmap + Streaming Terrain Design
+- Core Principle: Deterministic World From Seed
+- 1. Overmap
+- Generation
+- Display
+- Biome Colors (same as BiomeLayer)
+- 2. Chunk Streaming
+- Loaded Grid
+- Movement Detection
+- Chunk Lifecycle
+- Incremental Two-Phase Compilation
+- Performance Budget
+- 3. Click-to-Teleport
+- 4. Binary Chunk Cache
+- Format
+- Storage
+- Cache Policy
+- 5. File Architecture
+- 6. What This Does NOT Include
+
+### Key Lines
+- A 6,400×6,400 pixel Image where each pixel represents one chunk. Generated by evaluating the elevation + climate noise functions at each chunk's center world coordinate. Pixel color encodes biome type.
+- - Classify biome from elevation + climate (same thresholds as BiomeLayer)
+- - Set pixel color from BiomeLayer.biome_color()
+- - TextureRect on a CanvasLayer overlay
+- - Red marker shows current player position (updated from player world pos / chunk pixel size)
+- ### Biome Colors (same as BiomeLayer)
+- | Biome | Color |
+- - 5×5 grid of chunks around the player (25 chunks loaded)
+- - Each chunk rendered via TileMapTerrainRenderer onto shared TileMapLayer nodes
+- - Every frame, compute which chunk the player is in
+- - When player crosses 60% toward a grid edge, trigger loading of the next row/column in that direction
+- Player approaches edge
+- → Unload chunks > 3 rows behind player:
+- 1. **Phase 1**: ElevationLayer + OceanMaskLayer compile on the new chunk (uses world_seed noise — inherently seamless)
+- 3. **Phase 2**: ClimateLayer + BiomeLayer + VegetationLayer + CoastalLayer compile using the corrected ocean_distance data
+- ### Performance Budget
+- - Chunk rendering: ~20ms (TileMapLayer.set_cell)
+- - Player walking speed: 3.4 tiles/sec = crosses a 64-tile chunk every ~19 seconds
+- When overmap is open and player clicks:
+- 2. Clear all loaded TileMapLayer cells
+- 5. Teleport player to center of target chunk
+- Player position marker on overmap: `marker_pos = player_world_pos / (ChunkData.SIZE * TILE_SIZE)`
+- [PackedByteArray biome_id — 4096 bytes]
+- - Seed validation: if cached chunk's world_seed doesn't match current seed, discard and recompile
+- - No size limit — disk is cheap, player exploration is valuable
+- | CleanWorld.gd | Existing (~180 lines) | ~250 | Scene controller: player, camera, bokeh, overmap toggle, teleport |
+- | WorldCompiler | Existing | Unchanged | Compile chunks from layers |
+- | TileMapTerrainRenderer | Existing | Unchanged | Render chunks to TileMapLayers |
+- Player moves → ChunkStreamer detects edge approach
+- Player presses M → OvermapGenerator.get_or_create() → display overlay
+- Player clicks overmap → CleanWorld._teleport_to(chunk_x, chunk_y)
+- - Settlements, buildings, NPCs (Layers 2-7 — future work)
+- - Multiplayer synchronization (same seed = same world, but player positions need networking)
+- - Sound or music (future layer)
+- This spec covers ONLY: overmap generation, chunk streaming, click-to-teleport, and binary caching — all operating on the existing Layer -2 terrain pipeline.
+
+## 2026-05-25-tile-object-system-design.md
+
+### Headings
+- Tile Object Stack + Atomic Asset System
+- Problem
+- Architecture Overview
+- 1. TileObjectStack
+- Data Model
+- One object on a tile
+- Stack of objects at one tile position
+- Integration with ChunkData
+- Interaction Model
+- Rendering
+- 2. AssetCatalog
+- Directory Structure
+- Manifest Format
+- AssetCatalog Class
+- PixelLab Generation Strategy
+- 3. RoomAssembler
+- Room Template Format
+- Placement Rules
+- Building Template (Composed of Rooms)
+- RoomAssembler Class
+- Integration with World Compiler
+- Rendering Changes
+- File Structure
+- Non-Goals
+- Success Criteria
+
+### Key Lines
+- # Tile Object Stack + Atomic Asset System
+- 2. **AssetCatalog** — JSON manifests describing every PixelLab-generated atomic tile
+- 3. **RoomAssembler** — templates that compose rooms from catalog assets with placement rules
+- var asset_id: String # e.g. "wood_plank_03"
+- var z_layer: int # render order (0=ground, 1=floor, 2=furniture, 3=items)
+- var walkable: bool # can the player walk on/through this?
+- var pickable: bool # can the player pick this up?
+- var interactable: bool # can the player use this (open, craft, sit)?
+- When player presses E at a tile:
+- 1. Get TileStack at player's facing tile
+- DeferredRenderer paints tile stacks bottom-to-top onto layered images:
+- Each z-layer is one Image sprite per chunk (6 sprites instead of current 6). Performance identical to current system.
+- ## 2. AssetCatalog
+- JSON manifests for every PixelLab-generated asset, organized by category.
+- assets/catalog/
+- ### Manifest Format
+- Each category has a `manifest.json`:
+- "assets": [
+- "z_layer": 2,
+- "z_layer": 2,
+- ### AssetCatalog Class
+- class AssetCatalog:
+- var _assets: Dictionary = {} # asset_id → manifest entry
+- var _by_category: Dictionary = {} # category → [asset_ids]
+- var _by_tag: Dictionary = {} # tag → [asset_ids]
+- var _textures: Dictionary = {} # asset_id → Texture2D (lazy-loaded)
+- func load_manifests(base_path: String) -> void
+- func get_asset(id: String) -> Dictionary
+- func get_by_tags(tags: Array) -> Array # assets matching ALL tags
+- Generate assets in batches by category. Each batch:
+- 3. Download PNGs to `assets/catalog/<category>/`
+- 4. Write manifest.json with properties
+- 8. Roof tiles — building canopy layer
+- Templates that compose rooms from catalog assets using placement rules.
+- var _catalog: AssetCatalog
+- func place_object(asset_id: String, tile_pos: Vector2i, chunk: ChunkData) -> void
+- SettlementsLayer currently calls `BuildingCompiler.compile_building()`. The new flow:
+- 1. SettlementsLayer scores site, picks building type based on settlement tier
+- 6. DeferredRenderer reads tile_stacks and paints z-layered images
+- **Phase 2 (PixelLab tiles):** Load actual textures from AssetCatalog. Paint 32x32 tiles from catalog onto per-z-layer images. Each tile position gets its stack rendered bottom-to-top across z-layer images.
+- asset_catalog.gd # Loads manifests, serves textures
+- assets/
+- terrain/manifest.json
+- walls/manifest.json
+- floors/manifest.json
+- 2. Player can pick up items from tile stacks
+- 4. Buildings assembled from room templates using catalog assets
+- 5. Same or better rendering performance (Image-based, no extra nodes)
+- 6. PixelLab assets organized by category with JSON manifests
+
+## 2026-05-25-tileset-framework-design.md
+
+### Headings
+- Universal Tileset Framework — Wang Autotile Pipeline for All Visual Domains
+- Problem
+- Solution
+- The Framework
+- Step 1: Define Domain Palette Chain
+- Step 2: Generate Chained Wang Tilesets
+- Wait for completion, get base_tile_id
+- Chain continues...
+- Step 3: Store with Manifests
+- Step 4: Render by Adjacency (Wang Tile Selection)
+- Pseudocode for Wang tile selection
+- Step 5: Layer Domains (Z-Order)
+- Visual Domains — Detailed
+- Domain 1: Terrain (First Implementation)
+- Domain 2: Pathways
+- Domain 3: Building Floors
+- Domain 4: Walls
+- Domain 5: Roofs
+- Domain 6: Lighting
+- Grain Stack Binding (Digging)
+- Animation
+- PixelLab Generation Workflow
+- Phase 1: Terrain (first)
+- Phase 2: Pathways
+- Phase 3: Building Materials
+- Phase 4: Texture Patterns + Details
+- Phase 5: Animations
+- TilesetRenderer Class
+- File Structure
+- Non-Goals (This Spec)
+
+### Key Lines
+- The game needs seamless, layered, interactable visuals across multiple domains: natural terrain, man-made pathways, building interiors (floors, walls, roofs), lighting, and decorative objects. Each domain has its own palette of materials that transition into each other. Generating and managing these transitions manually is unsustainable.
+- 3. **Store with manifests** — JSON metadata per tileset in `assets/catalog/<domain>/`
+- 5. **Layer domains** — terrain under pathways under floors under walls under roofs under lighting
+- ### Step 3: Store with Manifests
+- assets/catalog/
+- manifest.json # {lower: "ocean", upper: "beach", tiles: [...], base_tile_ids: {...}}
+- manifest.json
+- manifest.json
+- manifest.json
+- manifest.json
+- manifest.json
+- wood_wall_N/manifest.json # Each wall direction is its own tileset
+- wood_wall_S/manifest.json
+- stone_wall_N/manifest.json
+- thatch/manifest.json
+- 4. Paint onto the appropriate z-layer image
+- This is the standard Wang/corner autotile algorithm. Each index maps to one of the 16 tiles in the tileset.
+- ### Step 5: Layer Domains (Z-Order)
+- | -2 | Terrain | ocean, beach, grass, stone, snow | BiomeLayer (L6) |
+- | -1 | Pathways | dirt paths, cobblestone roads | RoadsLayer (L10) + road_type |
+- | 1 | Texture patterns | grass blades, pebbles, moss (transparent overlays) | VegetationLayer (L8) density |
+- | 2 | Detail objects | flowers, leaves, small stones (non-interactive) | Biome + density rules |
+- **Tileset count:** 7 chained tilesets (ocean→beach, beach→grass, grass→forest, forest→stone, stone→snow, snow→lava... skip improbable pairs, only generate biome pairs that actually occur in the world)
+- **Practical optimization:** Not every pair needs a tileset. Only generate transitions for biome pairs that are actually adjacent in the compiled world:
+- Applied as a top-layer image that modulates based on time of day, light sources (torches, windows, campfires), and interior/exterior status.
+- The terrain tileset layer is bound to the GrainStack:
+- Animations stored as frame sequences in the manifest. Renderer cycles frames based on a global animation timer.
+- 8. Download all, write manifests
+- 1. Loads all domain manifests from `assets/catalog/`
+- 2. For each chunk, determines which tilesets are needed (based on biome adjacencies)
+- 3. Paints Wang tiles onto per-z-layer images using the 4-corner index algorithm
+- 4. Layers all domain images bottom-to-top
+- var _catalog: AssetCatalog
+- func render_terrain_layer(chunk: ChunkData, size: int) -> Image
+- func render_pathway_layer(chunk: ChunkData, size: int) -> Image
+- func render_floor_layer(chunk: ChunkData, size: int) -> Image
+- func render_wall_layer(chunk: ChunkData, size: int) -> Image
+- func render_roof_layer(chunk: ChunkData, size: int) -> Image
+- assets/catalog/
+- 1. Terrain transitions are seamless — no visible hard edges between biomes
+- 5. Wang autotile algorithm correctly selects tiles by corner adjacency
+- 6. Digging updates visual layers by modifying grain stack
+- 8. Performance: Image-based rendering, ~70 Sprite2D nodes for 9 chunks (7 layers × ~10)
+
+## 2026-05-25-visual-quality-spec.md
+
+### Headings
+- Visual Quality Spec — Reference-Grade Pixel Art Rendering
+- Goal
+- Reference Analysis
+- Current Architecture (post WORLD_SCALE=32 migration)
+- What's Working
+- What Needs Improvement
+- 1. Scale & Zoom (CRITICAL)
+- 2. Object Density (HIGH)
+- 3. Terrain Seamlessness (HIGH)
+- 4. Object Variety (MEDIUM)
+- 5. Shadow Layer (MEDIUM)
+- 6. Ground Detail Layer (MEDIUM)
+- Asset Pipeline
+- Implementation Priority
+- Non-Negotiable Constraints
+
+### Key Lines
+- Match the visual quality of Sea of Stars, CrossCode, and modern indie pixel art RPGs. Every screen should look like a painting — no empty spaces, no visible tile grids, dense detailed environments.
+- 3. **Multi-layer rendering** — ground, shadows, objects, canopy overlay, lighting
+- - TileMapLayer at native 32px — tiles show full detail
+- - Per-tile biome override from grain type
+- - **Fix**: Set zoom to 1.0. Generate smaller world (fewer cells loaded) for performance.
+- - **Fix**: Generate SEAMLESS tiles via PixelLab (tiles that tile without visible edges). Use multiple variants per biome (already 5 for grass). Add transition tiles between biomes.
+- #### 5. Shadow Layer (MEDIUM)
+- #### 6. Ground Detail Layer (MEDIUM)
+- ## Asset Pipeline
+- All assets generated via PixelLab (no manual art):
+- 1. Zoom to 1.0, reduce cell radius to 1 for performance
+- 5. Add ground detail scatter layer
+- - All assets from PixelLab — no manual pixel art
+- - Must maintain 30+ FPS on RTX 3090
+
+## 2026-05-26-asset-pipeline-spec.md
+
+### Headings
+- Asset Pipeline Spec — Layered Cel-Animation Terrain System
+- Core Principle: Cel-Animation Layering
+- The 5 Sub-Layers (per biome)
+- Tile States
+- Wang Tileset Format
+- PixelLab Generation Rules
+- Self-Tilesets (base terrain)
+- Transition Tilesets
+- Quality Gates
+- Catalog Structure
+- Master Manifest (_manifest.json)
+- Per-Layer Manifest
+- Reuse Policy
+- Download Pipeline
+
+### Key Lines
+- # Asset Pipeline Spec — Layered Cel-Animation Terrain System
+- **Scope:** How terrain assets are generated, organized, quality-gated, and cataloged.
+- ## Core Principle: Cel-Animation Layering
+- Every visible tile is composed of 5 semi-transparent layers stacked together, like animation cels. Each layer is independently swappable based on tile state (pristine, disturbed, burning, etc.). Layers composite at runtime via z-ordered Sprite2D nodes or shader blending.
+- Nothing is a single opaque image. Everything decomposes into atomic layers.
+- ## The 5 Sub-Layers (per biome)
+- | Sub-Layer | Z | Content | Opacity | Examples |
+- Not every biome uses all 5 layers. Ocean might only use L1 + L5 (water + foam). Desert might use L1 + L2 + L4 (sand + ripples + rocks). But the architecture supports all 5 everywhere.
+- Each tile position tracks a state. Each state maps to different frames per layer:
+- | **disturbed** | Player walks through | 3-5 seconds | L3 vegetation sways/parts, L4 scatters shift |
+- Each layer is a standard 16-tile Wang tileset (corner-based autotiling). This means:
+- - 16 tiles per layer per state per biome
+- 1. **Visual coherence**: Does it look like the biome it represents?
+- 5. **Distinctiveness**: Does this biome look different from every other biome?
+- assets/catalog/terrain/
+- _manifest.json # Master index of all biomes and their layers
+- manifest.json # PixelLab tileset ID, generation params, quality status
+- manifest.json
+- manifest.json
+- ### Master Manifest (_manifest.json)
+- "layer_model": "cel_animation",
+- "biomes": {
+- "layers": ["L1_base", "L5_atmospheric"],
+- "layers": ["L1_base", "L2_detail", "L3_vegetation", "L4_scatter", "L5_atmospheric"],
+- ### Per-Layer Manifest
+- "biome": "grassland",
+- "layer": "L1_base",
+- Existing PixelLab generations that meet quality gates are reused as L1 base layers:
+- Everything else (L2-L5, missing biomes, transitions) is generated fresh with this spec's naming and organization rules.
+- Existing non-terrain assets (fences, windows, doors, characters, objects) are preserved in their current catalog locations. They're separate from terrain layers and will be used by the object/building systems.
+- 2. Download all 16 wang tile PNGs into the correct `assets/catalog/terrain/{biome}/{layer}/` directory
+- 3. Write the per-layer manifest.json
+- 4. Update the master _manifest.json
+
+## 2026-05-26-biome-asset-manifest-spec.md
+
+### Headings
+- Biome Asset Manifest Spec — What to Generate
+- Phase 1 Scope: Pristine State Only
+- Reuse Decisions
+- PixelLab Assets to Keep (Quality Approved)
+- PixelLab Assets to Evaluate (Pick Best Variant)
+- Generate Fresh
+- Per-Biome Layer Definitions
+- 1. Ocean
+- 2. Beach
+- 3. Grassland
+- 4. Forest
+- 5. Dense Forest
+- 6. Desert
+- 7. Savanna
+- 8. Steppe
+- 9. Tundra
+- 10. Taiga
+- 11. Mountains
+- 12. Swamp
+- 13. Tropical Forest
+- 14. Volcanic
+- 15. Arctic
+- 16. Lake
+- 17. River
+- 18. Mystic
+- Generation Order
+- Batch 1: Core Biomes (most land coverage)
+- Batch 2: Climate Biomes
+- Batch 3: Special Biomes
+- Batch 4: Water Biomes
+
+### Key Lines
+- # Biome Asset Manifest Spec — What to Generate
+- **Scope:** Exact content definition for each biome's 5 layers, PixelLab prompts, reuse decisions, and generation order.
+- Generate L1-L5 for all 18 biomes in pristine state. State overlays (burning, frozen, cursed, etc.) come in Phase 2+ and reuse biome visual language as defined in the runtime compositor spec.
+- ### PixelLab Assets to Keep (Quality Approved)
+- | Biome | PixelLab ID | Use As | Notes |
+- ### PixelLab Assets to Evaluate (Pick Best Variant)
+- | Biome | Candidates | Action |
+- | Biome | Why |
+- ## Per-Biome Layer Definitions
+- | Layer | Content | PixelLab Prompt |
+- | Layer | Content | PixelLab Prompt |
+- | Layer | Content | PixelLab Prompt |
+- | Layer | Content | PixelLab Prompt |
+- | Layer | Content | PixelLab Prompt |
+- | L1 | Very dark soil, thick leaf carpet | "very dark forest floor with thick layer of decomposing leaves and rich dark soil, pixel art, top-down view" |
+- | Layer | Content | PixelLab Prompt |
+- | Layer | Content | PixelLab Prompt |
+- | Layer | Content | PixelLab Prompt |
+- | Layer | Content | PixelLab Prompt |
+- | Layer | Content | PixelLab Prompt |
+- | Layer | Content | PixelLab Prompt |
+- | Layer | Content | PixelLab Prompt |
+- | Layer | Content | PixelLab Prompt |
+- | Layer | Content | PixelLab Prompt |
+- | Layer | Content | PixelLab Prompt |
+- | Layer | Content | PixelLab Prompt |
+- | Layer | Content | PixelLab Prompt |
+- | Layer | Content | PixelLab Prompt |
+- Priority order based on visual impact and biome frequency:
+- ### Batch 1: Core Biomes (most land coverage)
+- ### Batch 2: Climate Biomes
+- ### Batch 3: Special Biomes
+- ### Batch 4: Water Biomes
+- Key adjacency pairs from the biome adjacency graph:
+- | L2-L5 overlays (~65 layers) | 65 | 16 | 1,040 |
+- ## Non-Terrain Assets (Preserved)
+
+## 2026-05-26-dynamic-lighting-spec.md
+
+### Headings
+- Dynamic Lighting & Shading System
+- Problem
+- Solution
+- Architecture
+- Component 1: Sun/Moon Directional Light
+- Sun Arc (Dawn to Dusk)
+- Moon Arc (Night)
+- Height Property
+- Component 2: Terrain Normal Maps
+- Normal Map Generation (in NativeChunkCompiler)
+- Sprite2D Material Setup
+- Static Ambient Occlusion
+- Component 3: Global Ambient Tint
+- Component 4: Building Light Occlusion (Future-Ready)
+- Component 5: Point Light API (Future-Ready)
+- Component 6: Dev Testing Mode
+- Test Mode Active
+- Normal Mode
+- Component 7: Integration Points
+- CleanWorld.tscn Changes
+- NativeChunkCompiler Changes
+- ChunkStreamer Changes
+- TileMapTerrainRenderer Changes
+- Performance
+- What This Spec Does NOT Cover
+
+### Key Lines
+- > Established 2026-05-26. Authoritative spec for Layers -1 and 7: terrain shading and dynamic world lighting.
+- - The building layer (Layer 3) will add occluders when it's built
+- ## Performance
+- - Light occluder placement (future — when building layer exists)
+
+## 2026-05-26-performance-infrastructure-spec.md
+
+### Headings
+- Performance Infrastructure Spec
+- Problem
+- Three Stages (each independently valuable)
+- Stage 1: GDExtension C++ Foundation
+- Stage 2: Python GPU Batch Pipeline
+- Stage 3: Compute Shader Framework
+- Execution Order
+- What NOT to Build
+
+### Key Lines
+- # Performance Infrastructure Spec
+- > Established 2026-05-26. Three-layer performance foundation for FreedomMMO.
+- GDScript is interpreted (~100x slower than native). A simple 4096-tile loop takes 30-50ms. The RTX 3090 sits idle. This blocks every future system — terrain, NPCs, combat, lighting, particles. Must fix now before building more.
+- - Port `ElevationLayer.compile()` to C++ (noise evaluation loop — biggest bottleneck)
+- - Port `BiomeLayer.compile()` and `ClimateLayer.compile()` to C++
+- **Validation:** Walk across 20+ chunk boundaries with FPS counter visible. No drops below 55fps.
+- **Validation:** Teleport anywhere in pre-generated area. Instant terrain, no compilation needed.
+- **Validation:** Disable ChunkCache, walk continuously. Chunks generate and render in real-time with no frame drops.
+
+## 2026-05-26-runtime-compositor-spec.md
+
+### Headings
+- Runtime Compositor Spec — Cel-Animation Tile Rendering
+- Architecture Overview
+- Tile State Machine
+- State Categories
+- State Transitions
+- State machine per tile
+- Each state has: entry_frames, loop_frames, exit_frames, duration (-1 = persistent)
+- Transitions: PRISTINE → DISTURBED (3s) → RECOVERING → PRISTINE
+- PRISTINE → BURNING (5s) → BURNED (persistent)
+- PRISTINE → FROZEN (persistent until thaw event)
+- State Layer Mapping
+- Compositor Node Architecture
+- Animation System
+- Frame-Swap Animation (Event-Driven)
+- Player proximity triggers vegetation sway
+- Ambient Animation (Timer-Based, Low Priority)
+- Ambient water ripple — cycles through 4 frames every 2 seconds
+- Performance Budget
+- Integration with Existing Systems
+- ChunkStreamer Changes
+- TileStateManager (New System)
+- Day/Night Integration
+
+### Key Lines
+- **Scope:** How Godot stacks, animates, and state-transitions the layered tile system at runtime.
+- Each visible tile on screen is a stack of up to 5 transparent layers composited via z-ordered rendering. A TileStateManager tracks the current state of every tile and tells the compositor which frame set to use.
+- Player walks through grass:
+- States map to biome visual languages — the biomes themselves are the vocabulary for states:
+- | **pristine** | Native biome | Default |
+- | **disturbed** | Native biome (variant frames) | Player/NPC walks through |
+- | **trampled** | Native biome (worn variant) | Heavy foot traffic, paths form |
+- **Key insight:** Biome L2-L5 assets double as state overlays for other biomes. A "frozen" grassland tile uses tundra's L2 (frost patterns) overlaid on grassland's L1 (base ground). A "burning" forest tile uses volcanic's L3 (embers/cracks) overlaid on forest's L1.
+- This means generating biome assets also generates state assets. Efficiency multiplier.
+- ### State Layer Mapping
+- When a tile enters a non-pristine state, the compositor replaces specific sub-layers:
+- For Phase 1, each layer is a single Image composited from 64x64 Wang tiles (same as current chunk image approach). The chunk streamer builds 5 images per chunk instead of 1.
+- For state changes, only the affected layer images need to be rebuilt for the affected tiles — not the entire chunk.
+- Each layer can have multiple frames. Frames are swapped based on events, not timers:
+- # Player proximity triggers vegetation sway
+- func _on_player_moved(player_pos: Vector2):
+- var tile_pos = world_to_tile(player_pos)
+- var sway_frame = compute_sway_frame(dist, player_velocity)
+- Some layers have slow ambient cycles — water ripples, lava glow pulse, mystic shimmer. These use timers but at low frequency (2-4 FPS) to keep the pixel art feel:
+- if biome in [OCEAN, LAKE, RIVER, SWAMP]:
+- ## Performance Budget
+- - **Max 5 Sprite2D per chunk** (one per layer)
+- - After compile_chunk + modifier override, build 5 layer images instead of 1
+- - Pass all 5 images to a new `display_chunk_layers()` method
+- - Receives events: player_moved, dig_action, fire_event, weather_change
+- - Compositor listens and rebuilds affected layer images
+- - L5 atmospheric layer tint responds to day/night cycle
+
+## 2026-05-26-subterranean-design.md
+
+### Headings
+- Subterranean Systems — Design Overview
+- Core Concept
+- Z-Level Architecture
+- Implementation Phases
+- Phase 1: Z-Level Infrastructure (DO FIRST — even before cave generation)
+- Phase 2: Cave Network Generation (Z=-1)
+- Phase 3: Underground Caverns and Settlements
+- Phase 4: Multi-Level Cave Networks
+- Phase 5: Integrated Subterranean Features (LATER — needs other systems first)
+- Geology System (needed for Phase 2+)
+- Rock Types
+- Minerals and Formations
+- Visual Design
+- Cave Rendering
+- Transition Visuals
+- What This Spec Does NOT Cover (Yet)
+
+### Key Lines
+- Each Z-level uses the same ChunkData structure, same chunk streaming, same coordinate system. The player has a `current_z_level` property. The renderer displays whichever level the player is on.
+- - Add `current_z_level: int = 0` to player state
+- - Transition tiles: entrance/exit markers that trigger z_level change on player contact
+- - New `CaveLayer` in the world compiler
+- - Player-carried light source
+- - Deeper = more dangerous, rarer minerals, unique biomes
+- - **Basements**: Requires building system (Layer 3). Houses/structures generate basement at Z=-1 beneath their footprint. Stairs tile transitions player down.
+- - **Pits**: Surface tile marked as fall-through. Player drops to Z=-1. Some pits are just holes (short fall), others are cave roof openings.
+- - **Mine shafts**: Player-created or NPC-created tunnels extending from surface into underground. Economic system integration (mining resources).
+- | Slate | Hillsides | Layered caves, flat ceilings | Thin passages |
+- Rock type is derived from biome + elevation + moisture — same pattern as surface terrain classification.
+- - **Ceiling**: Implied by darkness — player sees walls and floor, darkness above
+- - **Lighting**: Critical — caves should feel DARK. Only light sources illuminate:
+- - Player torch/lantern (PointLight2D, warm, flickering)
+- - Specific cave generation algorithms (Phase 2 spec will detail this)
+
+## 2026-05-26-world-biome-system-design.md
+
+### Headings
+- World Biome System Design
+- Problem
+- Approach: Procedural Macro Features + Noise Micro Detail
+- The 18 Biomes
+- Macro Feature Placement
+- Feature Anchors
+- Biome Adjacency Graph
+- Modifier Field Computation
+- Chunk-Level Micro Detail
+- Elevation Variance by Biome
+- Biome-Specific Noise Modulation
+- Pathways & Transitions
+- Overmap/Chunk Alignment Contract
+- Noise Configuration
+- Existing Noise Fields (parameters preserved)
+- New Noise Field
+- Changed Couplings
+- Overmap Colors
+- Movement Fix
+- Files Changed
+- C++ (requires rebuild)
+- GDScript (overmap + movement)
+- New Files
+
+### Key Lines
+- # World Biome System Design
+- **Scope:** Overmap macro feature placement + chunk-level biome-contextual terrain + 18-biome enum alignment
+- The current world generation produces biomes from 4 independent noise fields (elevation, ridge, temperature, moisture) with weak coupling. This causes:
+- 5. **No geographic structure** — the world has no intentional relationships between biomes. No mountain range, no volcanic region, no mystic domains. Just random noise soup.
+- **Macro layer (overmap):** Procedural feature placement that guarantees geographic structure. Features are derived from noise (not hardcoded), so every seed produces a different but always-coherent world.
+- **Micro layer (chunk):** Noise-driven detail with biome-contextual variance — cliffs in mountains, dunes in desert, caldera in volcanic, crystalline ridges in mystic, etc.
+- ## The 18 Biomes
+- All 18 must be assignable by both the C++ chunk compiler and the GDScript overmap generator. One classification function, two callers.
+- ### Biome Adjacency Graph
+- Lakes: scattered throughout all land biomes
+- 10. Biome classification applies modifiers:
+- Each 64x64 chunk gets biome-contextual terrain features. The detail noise is modulated per biome to create appropriate character.
+- ### Elevation Variance by Biome
+- | Biome | Elevation Character | Detail Noise Behavior |
+- ### Biome-Specific Noise Modulation
+- At chunk compile time, the dominant biome modulates detail noise parameters:
+- - Biome transitions within a chunk use existing Wang tileset blending
+- 1. **One classification function, two callers.** The overmap and C++ chunk compiler apply identical biome logic with identical thresholds.
+- 3. **The overmap pixel IS the chunk.** Pixel (px, py) on the overmap = chunk (px - 320, py - 320). The biome color must match the chunk's dominant biome.
+- | Biome | RGB | Visual |
+- **Problem:** After teleporting, player sometimes can't walk — stuck in ocean or extreme slopes.
+- - `gdextension/src/native_chunk_compiler.cpp` — Add volcanic/mystic/lake/river rules to `_compile_biome`, add biome-contextual detail noise modulation, update biome name array to 18 entries
+- - `scripts/core/overmap_generator.gd` — Add magic noise, modifier field computation (volcanic/mystic/lake/river placement), match temp penalty, add all new biome colors
+
+## 2026-05-27-elevation-cliff-rendering-design.md
+
+### Headings
+- Elevation Cliff Rendering System
+- Problem
+- Core Model
+- Cliff Walls
+- Which edges get cliff walls
+- Cliff wall composition
+- Cliff face variants per surface
+- Render Order
+- Water
+- Camera
+- Player Movement (Deferred)
+- PIXELS_PER_UNIT Tuning
+- Architecture
+- Modified Components
+- New Components
+- New Assets
+- Unchanged Components
+- Performance Considerations
+
+### Key Lines
+- **Scope:** Replace flat tile rendering with continuous elevation-driven cliff layers, where terrain height is expressed as stacked cliff walls and elevated surface tiles.
+- There are no fixed "levels" or "buckets." Every tile sits at its exact elevation. The number of visual layers in any given area is determined entirely by the terrain — a flat plain has zero cliff faces, a mountain might have cliff walls hundreds of pixels tall.
+- - **South wall:** if tile at (x, y+1) has elevation E_south < E, draw a cliff wall of height `(E - E_south) * PIXELS_PER_UNIT` pixels on the south edge
+- - **East wall:** if tile at (x+1, y) has elevation E_east < E, draw a cliff wall of height `(E - E_east) * PIXELS_PER_UNIT` pixels on the east edge
+- | `cliff_mid` | 32×32px | Repeating wall face — stone layers, dirt strata, ice. Tiles vertically. |
+- 1. Draw `cliff_top` (8px)
+- 2. Draw `cliff_mid` repeated `floor((H - 16) / 32)` times (middle fill)
+- 3. Draw remaining fractional `cliff_mid` height (partial tile)
+- 4. Draw `cliff_bot` (8px)
+- Each of the 13 surface types needs its own cliff face set, because the wall should match the terrain it's part of:
+- | grey_rock | Layered stone with mineral veins |
+- | frozen_earth | Permafrost layers with ice crystals |
+- | swamp_mud | Wet mud layers with standing water seeping out |
+- | dark_humus | Very dark decomposing layers with fungal growth |
+- Tiles render back-to-front using a **painter's algorithm** sorted by (world_y ascending, elevation ascending):
+- - Draw cliff walls (south and east) descending from this tile to lower neighbors
+- - Draw surface tile at this tile's visual Y-offset
+- - **Follows player** at their visual position (grid position + elevation Y-offset)
+- - **Zoom-out at height**: camera zoom decreases slightly as player elevation increases, giving a wider view from mountaintops. Scale factor: `zoom = base_zoom - (elevation - SEA_LEVEL) * ZOOM_ELEVATION_FACTOR`
+- - **Bokeh/depth-of-field**: terrain below the player's current elevation gets progressively blurred. Already partially implemented — extend to use the new elevation offset system.
+- ## Player Movement (Deferred)
+- **`LayeredChunkRenderer`** — Major rewrite. Instead of painting one flat image per chunk, it now:
+- - Track player elevation for Y-offset
+- - Bokeh intensity based on elevation delta between player and terrain
+- **`CliffTileLoader`** — Loads cliff face tile assets (cliff_top, cliff_mid, cliff_bot per surface type). Similar to LayeredTilesetLoader but for vertical cliff tiles.
+- **`ElevationRenderer`** — Core rendering logic extracted from LayeredChunkRenderer. Given a chunk's elevation data, produces the sorted draw list of (surface tiles + cliff walls + water) with correct Y-offsets and z-ordering.
+- ### New Assets
+- - `assets/catalog/terrain_v3/cliffs/{surface_id}/cliff_top.png` (32×8)
+- - `assets/catalog/terrain_v3/cliffs/{surface_id}/cliff_mid.png` (32×32)
+- - `assets/catalog/terrain_v3/cliffs/{surface_id}/cliff_bot.png` (32×8)
+- - `ElevationGradientTable` — still provides surface_at(biome, elevation)
+- - `LayeredTilesetLoader` — still loads surface and transition Wang tiles
+- - `NativeChunkCompiler` (C++) — still produces elevation + biome data
+- ## Performance Considerations
+- Each chunk is 64×64 = 4,096 tiles. In the worst case (mountainous terrain), each tile could have south and east cliff walls. That's up to 8,192 cliff wall sprites per chunk plus 4,096 surface sprites = 12,288 draw calls per chunk. With a 7×7 chunk grid visible, that's up to 600K draw calls.
+
+## 2026-05-27-elevation-hypergraph-terrain-design.md
+
+### Headings
+- Elevation Hypergraph Terrain System
+- Problem
+- Core Concept: Elevation Gradients + Surface Hypergraph
+- Surfaces (Hypergraph Nodes)
+- Transitions (Hypergraph Edges)
+- Required transitions (~20 pairs):
+- Biome Elevation Gradients
+- Wang Index Computation
+- Architecture
+- New Components
+- Modified Components
+- Unchanged Components
+- Asset Directory Structure
+- Future: C++ Migration
+- Asset Generation Summary
+
+### Key Lines
+- **Scope:** Replace flat biome-based tile selection with elevation-driven surface gradients and hypergraph transitions.
+- The current terrain renderer picks one tileset per biome and tiles it flat. A grassland biome looks the same at elevation 0.35 as it does at 0.70. Mountains are a distinct biome rather than the natural result of high elevation within any biome. Biome transitions happen abruptly at classification boundaries rather than flowing naturally with the landscape.
+- Each biome defines an **elevation gradient** — an ordered list of surfaces that appear as elevation increases. A **surface** is a distinct terrain appearance (e.g., "lush green grass," "grey mountain stone," "snow"). Surfaces are shared across biomes, forming a many-to-many **hypergraph**: the same "grey rock" surface appears in grassland's gradient at high elevation and in tundra's gradient at mid elevation.
+- All 13 surfaces already exist as L1 base tilesets in `assets/catalog/terrain_v2/`. They need to be reorganized into a `surfaces/` directory but no regeneration is required.
+- Transition tilesets are needed between any two surfaces that are adjacent in at least one biome's elevation gradient, or across biome boundaries. Each is a standard 16-tile Wang tileset generated via PixelLab with `base_tile_id` chaining.
+- **Elevation transitions (within biomes):**
+- **Cross-biome transitions (at biome boundaries):**
+- ## Biome Elevation Gradients
+- Each biome defines its gradient as an array of `{max_elevation, surface_id}` entries. All biomes converge to `snow` at peak elevations and `ocean_water` at sea level.
+- 2. Look up biome at tile center from `chunk.biome_id`
+- 3. Map each corner's elevation through the biome's gradient to get a surface
+- **`ElevationGradientTable`** — Static data class (GDScript). Holds all biome gradient definitions and the surface→tileset directory mappings. Loaded once at startup. Pure data, no logic.
+- **`HypergraphTileResolver`** — Given tile position, biome, and 4 corner elevations, returns `{surface_or_pair, wang_index, tileset_path}`. Handles self-tile vs transition vs cross-biome cases. Stateless — all inputs passed in, no side effects.
+- **`LayeredChunkRenderer`** — Replace `_compute_wang_index` stub and `_build_layer_image` with calls to `HypergraphTileResolver`. Tile lookup changes from `biome_name + layer_name` to `surface_id` or `surface_pair`.
+- **`LayeredTilesetLoader`** — Change from biome/layer directory structure to surface-based: `surfaces/{surface_id}/wang_*.png` for self-tilesets, `transitions/{lower}_{upper}/wang_*.png` for transitions.
+- - `NativeChunkCompiler` (C++) — still produces elevation, biome_id, normals
+- ## Asset Directory Structure
+- assets/catalog/terrain_v3/
+- manifest.json
+- manifest.json
+- manifest.json
+- manifest.json
+- gradients.json # All biome gradient definitions
+- Once all biome gradients are finalized and visually approved, port `HypergraphTileResolver` logic into `native_chunk_compiler.cpp`. The C++ compiler would output surface_id per tile (instead of biome_id) and compute Wang indices from elevation corners during `build_chunk_image`. This eliminates the GDScript overlay renderer entirely.
+- **Trigger condition:** All 18 biome gradients look correct in-game AND all transition tilesets are generated and quality-approved.
+- ## Asset Generation Summary
+- | Biome gradients | 18 | Define in gradients.json |
+
+## 2026-05-27-terrain-shading-design.md
+
+### Headings
+- Layer -1: Terrain Shading Design
+- Context
+- Architecture
+- Approach: Hybrid (Godot Native Normals + AO)
+- Components
+- 1. DirectionalLight2D (Sun + Moon)
+- 2. Normal Map Wiring
+- 3. AO Integration
+- 4. Day/Night Transition Fix
+- 5. Moonlight Spotlight Fix
+- 6. CanvasModulate Update
+- Files Modified
+- What NOT to Change
+- Success Criteria
+
+### Key Lines
+- # Layer -1: Terrain Shading Design
+- For elevation sprites (created by `LayeredChunkRenderer.display_prerendered()`):
+- - `texture_scale = 1.2` — moderate pool of light around player
+- | `scripts/core/world_compiler/layered_chunk_renderer.gd` | Use CanvasTexture with normal maps for elevation sprites |
+- - LayeredTilesetLoader — tile loading is correct
+- - No performance regression — normal map assignment is GPU-side, zero CPU cost
+
+## 2026-05-28-pixellab-audit-plan.md
+
+### Headings
+- PixelLab Object Audit Plan
+- Status: IN PROGRESS
+- Task
+- Rules (from user, non-negotiable)
+- Object Categories from Biome Affinities (146 objects, 439 variants needed)
+- High Priority (4 variants each)
+- Medium Priority (3 variants each)
+- Standard (1-2 variants)
+- Script-Generated Objects (~2,500+)
+- MCP-Generated Objects (~150)
+- Batch Review Objects (10 pending)
+- Next Steps
+
+### Key Lines
+- 2. Every object must be: correct perspective (top-down), no embedded shadows, proportional size, consistent art style
+- 6. Store at `assets/catalog/terrain_objects/{category}/{object_id}/variants/v{N}/base.png`
+- ## Object Categories from Biome Affinities (146 objects, 439 variants needed)
+- - All remaining biome-referenced objects (~115 types)
+- - Most should be DELETED or IGNORED
+- 5. Generate remaining objects from biome affinity list
+
+## 2026-05-28-terrain-object-system-design.md
+
+### Headings
+- Terrain Object System Design
+- Overview
+- 1. Object Catalog
+- 1.1 Ontological Classification
+- 1.2 Animate Object Schema
+- 1.3 Inanimate Object Schema
+- 1.4 Object Production Graph
+- 1.5 Category Taxonomy
+- 1.6 Individuality & Future Identity System
+- 2. Interaction Schema
+- 2.1 Interaction Categories
+- 2.2 Interaction Definition Schema
+- 2.3 The Multiplication Constraint
+- 3. Biome Affinity Matrix
+- 3.1 Biome Affinity Schema
+- 3.2 The 18 Biomes and Their Primary Object Compositions
+- 3.3 Biome Transition Table
+- 3.4 Biome × Biome Interaction Effects
+- 4. Placement Engine
+- 4.1 Two-Layer State Model
+- 4.2 Placement Pipeline
+- 4.3 ObjectInstance Record
+- 4.4 Delta Log with Entropy Decay
+- 4.5 Interaction-Specific Delta Examples
+- 5. Animation Framework
+- 5.1 Animation Resolution Priority
+- 5.2 Animation Compositing
+- 5.3 Animation Asset Structure
+- 5.4 Animation Metadata (.json sidecar)
+- 5.5 PixelLab vs Godot Responsibilities
+
+### Key Lines
+- **Scope:** Object taxonomy, interaction framework, biome placement, animation system, generation pipeline
+- Every biome in FreedomMMO is composed of atomic, layered, animated objects — not flat textures. This spec defines the three-axis relational model that governs what objects exist, what can happen to them, where they appear, and how they're generated at scale.
+- 3. **Biome Affinity Matrix** — where it appears (density, clustering, elevation/moisture rules, transitions)
+- Target scale: ~200+ base object types, ~30 interaction types, ~6 lifecycle phases average = **4,000-6,000 unique animation sets**. Thousands of individual assets, each with dozens to hundreds of animations.
+- ash_layer/ fresh, old
+- player_action/ — deliberate actions by entities (players and NPCs)
+- biome_blending/ — transitions between biome boundaries
+- edge_fade tile is biome boundary, contextual sprites
+- overgrowth vegetation biome advancing into barren
+- "category": "player_action",
+- ## 3. Biome Affinity Matrix
+- ### 3.1 Biome Affinity Schema
+- Each of the 18 biomes gets an affinity file defining which objects compose it:
+- "biome_id": "grassland",
+- Each biome will have 15-40 object pool entries covering its full composition.
+- ### 3.2 The 18 Biomes and Their Primary Object Compositions
+- | Biome | Primary Objects |
+- | Volcanic | volcanic_rock, lava_crack, obsidian_shard, sulfur_vent, charred_tree, ash_layer, ember_glow |
+- ### 3.3 Biome Transition Table
+- Transitions define what happens at biome boundaries:
+- "biome_a": "grassland",
+- "biome_b": "forest",
+- "biome_a_objects": "linear_fadeout",
+- "biome_b_objects": "linear_fadein"
+- "biome_a": "beach",
+- "biome_b": "ocean",
+- "biome_a_objects": "linear_fadeout",
+- "biome_b_objects": "hard_cutoff"
+- With 18 biomes, there are 153 possible pairs. Not all are geographically valid neighbors. Estimated ~40-50 transition definitions needed.
+- ### 3.4 Biome × Biome Interaction Effects
+- Beyond transitions, biome context modifies how objects behave:
+- These cross-biome modifications are expressed as variant selectors in the affinity matrix — a "grass" object in the tundra affinity file references "frozen_grass" (a separate object) rather than runtime-modifying "tall_grass."
+- ### 4.1 Two-Layer State Model
+- **Layer 1: Deterministic Baseline** — Given `world_seed + chunk_position`, the placement engine always produces the exact same arrangement of objects. Same seed = same forest, same rocks, same flowers. This is pure math (Perlin noise with fixed seeds). Never stored — regenerated on load.
+- **Layer 2: Delta Log** — Every mutation (player chops tree, NPC digs hole, lightning strikes) is recorded as a sparse delta against the baseline. Deltas decay over time — the world heals itself.
+- 1. BIOME PASS
+- Read biome_id per cell from world compiler ChunkData.
+- Load BiomeAffinity for each biome present in chunk.
+- For each cell × each object_pool in its biome affinity:
+- For cells near biome boundaries:
+- - detect boundary via neighbor biome mismatch
+- - fade biome_a pool densities by (1 - blend_t)
+- - fade biome_b pool densities by blend_t
+- - inject edge_objects from BiomeTransition definition
+- **Storage cost:** Proportional to how much the player has changed the world. A virgin world = zero delta data. A heavily explored world accumulates deltas, but entropy continuously prunes them.
+- Multiple animation layers can stack simultaneously:
+- - **overlay** — transparent layer on top of current animation (rain drip on swaying tree, moss on rock)
+- ### 5.3 Animation Asset Structure
+- assets/catalog/terrain_objects/vegetation/tree/deciduous/oak_tree/
+- manifest.json
+- - **PixelLab generates:** Individual sprite sheets per animation per lifecycle phase per object. Raw frame sequences as static assets.
+- - **Godot handles at runtime:** Compositing multiple animation layers, scaling intensity with weather, blending lifecycle transitions, applying individuality variance (color shift, scale, lean), particle effects, z-ordering.
+- For each biome affinity file:
+- For each BiomeTransition:
+- 5. MANIFEST UPDATE
+- After each batch: update manifest.json, write .json sidecars, commit.
+- "asset_type": "animation",
+- Replace the current red cube player sprite with an actual character. Either wire up an existing asset from `assets/characters/` (hero_knight, villager_female) or generate a fresh layered base body via PixelLab. This enables visual testing of all terrain object interactions from a player perspective.
+- affinity_schema.json # JSON schema for biome affinities
+- transition_schema.json # JSON schema for biome transitions
+- player_action/chop.json
+- biome_blending/edge_fade.json
+- affinities/ # Biome Affinity Matrix
+- transitions/ # Biome Transition Table
+- ### 7.2 Asset Directory Structure
+- assets/catalog/terrain_objects/
+- manifest.json
+- **NPC Interaction:** Same interaction triggers apply to NPC entity_actions. NPC goal graph references object_ids as targets. Hook: interactions/player_action/ applicable to all entities.
+- - File flow: schema → data → PixelLab → assets → placement engine → renderer
+- The existing WorldCompiler (14-layer pipeline) already produces per-cell data that the placement engine consumes:
+- - `biome_id`, `elevation`, `vegetation_density`, `vegetation_species`
+- Currently renders objects via hardcoded biome→sprite mapping in `_render_object_sprites()` and `_render_detail_decorations()`. This will be replaced by the affinity-driven placement engine. The z-layer structure (L6 objects, L7 details) remains.
+- Currently scans `assets/catalog/objects/` directories and applies biome-tag matching via filename parsing. Will be superseded by the structured manifest system. Existing assets in `assets/catalog/objects/` can be migrated into the new `assets/catalog/terrain_objects/` structure.
+
+## 2026-05-29-biome-layer-stack-design.md
+
+### Headings
+- Biome Layer Stack Design
+- Problem Statement
+- Core Concept: Ordered Layer Stacks
+- Universal Rule
+- Layer Stack Schema
+- Schema Fields
+- Biome Layer Definitions
+- Grassland (5 layers)
+- Forest (5 layers)
+- Taiga (5 layers)
+- Desert (4 layers)
+- Tundra (4 layers)
+- Volcanic (4 layers)
+- Swamp (5 layers)
+- Tropical Forest (5 layers)
+- Mountains (4 layers)
+- Arctic (4 layers)
+- Beach (4 layers)
+- Savanna (4 layers)
+- Steppe (4 layers)
+- Mystic (5 layers)
+- Dense Forest (5 layers)
+- Lake (3 layers — water biome)
+- River (3 layers — water biome)
+- Ocean (2 layers — water biome)
+- Placement Engine Changes
+- Current Architecture (replace)
+- New Architecture
+- Performance Considerations
+- Variant Scale Requirements
+
+### Key Lines
+- # Biome Layer Stack Design
+- **Scope:** Extends terrain-object-system-design (2026-05-28) with ordered layer placement, 100% tile coverage, and massive variant generation
+- The current placement engine treats all objects as a flat probability pool. Each tile has a random chance of getting any object from the biome's affinity list. This produces sporadic, incoherent placement — scattered sprites on a visible green grid. The base terrain tile (layer 0) is the dominant visual on most tiles.
+- The target is CrossCode-quality environments where every tile is densely layered with multiple overlapping objects that compose into a believable landscape.
+- ## Core Concept: Ordered Layer Stacks
+- Each biome defines an **ordered stack of layers**. The placement engine iterates layers bottom-to-top. Lower layers guarantee 100% tile coverage. Upper layers are progressively sparser.
+- Every layer except layer 0 is composed of **objects with alpha channels** (not tiles). They stack visually — you see through each layer to the layers beneath. This creates depth that flat tiles cannot achieve.
+- **Layer 0 must NEVER be the only visible thing on any tile.** If a player can see the raw base terrain tile without at least one object layer on top, the placement has failed.
+- ## Layer Stack Schema
+- Each biome gets a layer definition file at `data/terrain_objects/biome_layers/{biome_id}.json`:
+- "biome_id": "grassland",
+- "layers": [
+- "layer": 1,
+- "layer": 2,
+- "layer": 3,
+- "layer": 4,
+- "layer": 5,
+- - **coverage**: 0.0-1.0. Fraction of tiles that get an object from this layer. 1.0 = every tile.
+- - **objects**: Weighted list of object types. Weight determines selection probability within the layer.
+- - **z_offset**: Relative z-ordering between layers. Higher = renders on top.
+- - **scale_range**: Display scale range for objects in this layer.
+- - **cluster_mode**: For sparse layers. "scattered" = random, "grouped" = natural clusters.
+- ## Biome Layer Definitions
+- ### Grassland (5 layers)
+- | Layer | Coverage | Content |
+- ### Forest (5 layers)
+- | Layer | Coverage | Content |
+- ### Taiga (5 layers)
+- | Layer | Coverage | Content |
+- ### Desert (4 layers)
+- | Layer | Coverage | Content |
+- ### Tundra (4 layers)
+- | Layer | Coverage | Content |
+- ### Volcanic (4 layers)
+- | Layer | Coverage | Content |
+- | 1 | 100% | Ash layer, charred earth, cooled lava |
+- ### Swamp (5 layers)
+- | Layer | Coverage | Content |
+- ### Tropical Forest (5 layers)
+- | Layer | Coverage | Content |
+- ### Mountains (4 layers)
+- | Layer | Coverage | Content |
+- ### Arctic (4 layers)
+- | Layer | Coverage | Content |
+- ### Beach (4 layers)
+- | Layer | Coverage | Content |
+- ### Savanna (4 layers)
+- | Layer | Coverage | Content |
+- ### Steppe (4 layers)
+- | Layer | Coverage | Content |
+- ### Mystic (5 layers)
+- | Layer | Coverage | Content |
+- ### Dense Forest (5 layers)
+- | Layer | Coverage | Content |
+- ### Lake (3 layers — water biome)
+- | Layer | Coverage | Content |
+- ### River (3 layers — water biome)
+- | Layer | Coverage | Content |
+- ### Ocean (2 layers — water biome)
+- | Layer | Coverage | Content |
+- The current placement engine (`scripts/core/terrain_objects/placement_engine.gd`) iterates all object pools for the biome and probabilistically places each one. This produces flat, sporadic placement.
+- 1. Determine biome_id for each tile
+- 2. Load biome_layers/{biome_id}.json
+- 3. For each layer (bottom to top):
+- - Roll against layer.coverage
+- - Select object from layer.objects using weighted random
+- - Create ObjectInstance at this layer's z_offset
+- - For cluster_mode layers:
+- 4. Return all instances across all layers
+- ### Performance Considerations
+- With 100% coverage on 3+ layers across 64×64 = 4096 tiles:
+- - Layer 1: 4,096 objects
+- - Layer 2: 4,096 objects
+- - Layer 3: 4,096 objects
+- - Layer 4: ~600 objects (15%)
+- - Layer 5: ~80 objects (2%)
+- - **Near chunks (radius 0-1)**: Render all layers as Sprite2D
+- - **Mid chunks (radius 2)**: Render layers 3-5 only (skip ground texture and debris)
+- - **Far chunks (radius 3+)**: Render layer 5 only (trees/large objects)
+- Additionally, layers 1-2 (ground texture, debris) could use a pre-rendered approach: bake them into a single image per chunk at startup, render as one ImageTexture. This reduces thousands of sprites to one image for the base layers.
+
+## 2026-05-29-unity-migration-handoff.md
+
+### Headings
+- FreedomMMO — Unity Migration Handoff
+- Decision
+- Part 1: What Dave Needs To Do (Setup)
+- Step 1: Create New Unity Project
+- Step 2: Install CoplayDev/unity-mcp
+- Step 3: Configure Claude Code MCP Connection
+- Step 4: Install Required Unity Packages
+- Step 5: Configure Pixel Art Settings
+- Step 6: Import PixelLab Sprites
+- Step 7: Git Init + Push
+- Step 8: Verify MCP Connection
+- Part 2: What Transfers From Godot
+- Specs & Design Docs (ALL transfer — engine-agnostic)
+- Freedom/ Prototype Docs (CRITICAL game design)
+- Art Assets (6,000+ PNGs — direct transfer)
+- Biome Layer Definitions (JSON — direct transfer)
+- Memory Files (Design decisions — transfer to new CLAUDE.md)
+- Part 3: Unity Architecture
+- Rendering (2D Tilemap)
+- Layer 1 Solution (What We Fought In Godot)
+- World Streaming
+- Simulation Layer (Separate from Rendering)
+- Project Structure
+- Part 4: Build Order (First Session)
+- Phase 0: Setup & Verify (Dave does this)
+- Phase 1: Terrain Foundation (Claude builds this)
+- Phase 2: Object Layer Stack (Claude builds this)
+- Phase 3: Player & Camera
+- Phase 4: Core Systems
+- Phase 5: Vertical Slice
+
+### Key Lines
+- Migrating from Godot 4.4 (GDScript) to Unity 6 (C#). Reason: agentic AI workflow requires reliable MCP control over the engine. Unity's MCP ecosystem is more mature, C# has better LLM support, and the rendering pipeline (2D Tilemap + Rule Tiles) natively solves problems we fought manually in Godot (Wang autotiling, sorting layers, sprite composition).
+- - **2D Tilemap** (built-in, should be there already)
+- FROM: C:\Users\daves\OneDrive\Documents\freedommmo\assets\catalog\terrain_objects\
+- TO: C:\Users\daves\OneDrive\Documents\FreedomMMO-Unity\Assets\Sprites\TerrainObjects\
+- Once Unity is open and the project is loaded, restart Claude Code. I should be able to call Unity MCP tools to verify the connection. We'll test with a simple scene creation.
+- | `2026-05-24-master-architecture-design.md` | 7-layer system architecture | CRITICAL |
+- | `2026-05-29-biome-layer-stack-design.md` | Visual layering rule — Layer 0 never alone | CRITICAL |
+- | `2026-05-26-world-biome-system-design.md` | 18-biome system | HIGH |
+- | `2026-05-24-world-compiler-design.md` | 13-layer deterministic worldgen | HIGH |
+- | `2026-05-25-tileset-framework-design.md` | 7-layer rendering | HIGH |
+- ### Art Assets (6,000+ PNGs — direct transfer)
+- assets/catalog/terrain_objects/
+- ### Biome Layer Definitions (JSON — direct transfer)
+- data/terrain_objects/biome_layers/*.json — 18 biome definitions
+- data/terrain_objects/affinities/*.json — biome-object relationships
+- Key decisions that must carry forward:
+- - Layered character rendering (nude base + equipment overlays)
+- - Everything animated (no static assets)
+- - NL command architecture for player instructions
+- Sorting Layer 0: Terrain Base — Tilemap with Rule Tiles (biome transitions)
+- Sorting Layer 1: Ground Detail — Tilemap or sprites (dirt, leaves, pine needles)
+- Sorting Layer 2: Ground Objects — Sprites (pebbles, twigs, small debris)
+- Sorting Layer 3: Flora — Sprites (grass, moss, ferns)
+- Sorting Layer 4: Accent — Sprites (flowers, mushrooms)
+- Sorting Layer 5: Large Objects — Sprites (trees, boulders, structures)
+- Sorting Layer 6: Characters — Sprites (player, NPCs)
+- Sorting Layer 7: Overhead — Tilemap (roofs, canopy — alpha fade when player enters)
+- Sorting Layer 8: UI/Effects — Particles, lighting overlays
+- Unity Sorting Layers handle z-ordering NATIVELY. No manual z_index math.
+- ### Layer 1 Solution (What We Fought In Godot)
+- - Paint it on a Tilemap layer — it seamlessly tiles itself
+- - Different Rule Tiles per biome/elevation
+- // Load/unload chunks around player
+- ### Simulation Layer (Separate from Rendering)
+- Assets/
+- │ ├── World/ — Terrain gen, biomes, streaming
+- │ ├── Entities/ — Player, NPCs, entity lifecycle
+- │ ├── Tilesets/ — Rule Tiles for biome transitions
+- │ └── Characters/ — Layered character sprites
+- ├── Data/ — JSON configs (biomes, catalog, affinities)
+- 1. Create base Tilemap with biome Rule Tiles
+- 3. Wire up biome classification (temperature/moisture/elevation)
+- 4. Wang-style auto-tiling transitions between biomes
+- ### Phase 2: Object Layer Stack (Claude builds this)
+- 2. Layer 1: Rule Tiles for ground textures (per biome, per elevation)
+- 3. Layers 2-3: Sprite placement with noise clustering
+- 4. Layers 4-5: Accent and large object placement
+- 5. Visual verification at each layer
+- ### Phase 3: Player & Camera
+- 1. Player controller (top-down movement)
+- - Manual z-index math (Unity Sorting Layers handle this)
+- The 5,400+ completed objects on PixelLab are still there. We download them into the Unity project's `Assets/Sprites/` folder instead of Godot's `assets/catalog/`.
+- For Rule Tiles (Layer 1 ground textures), we may need to generate **tileset strips** via PixelLab's `create_topdown_tileset` rather than individual objects. This gives us seamless auto-tiling that Unity Rule Tiles can use directly.
+- | Art assets | Transfer as-is (6,000+ PNGs) |
+- | Biome data (JSON) | Transfer as-is |
+- | Layer 1 problem | Solved natively by Rule Tiles |
+- | Simulation scale | Separate C# layer, no ECS needed |
+
+## 2026-05-31-terrain-rendering-cleanup-design.md
+
+### Headings
+- Terrain Rendering Cleanup — Design Spec
+- Problem Statement
+- Design Principles
+- Architecture
+- Chunk Size: 16×16
+- Scene Tree Structure
+- Layer Definitions
+- Terrain Rendering Flow
+- Elevation Visualization
+- Elevation Tier System
+- Systems Removed
+- Systems Kept (Unchanged)
+- TileMapTerrainRenderer (Rebuilt)
+- ChunkStreamer (Simplified)
+- Future Work (NOT in this spec)
+- Success Criteria
+
+### Key Lines
+- **Goal:** Strip the rendering pipeline down to what works, rebuild terrain rendering using Godot-native TileMapLayer patterns that match standard 2D RPG tutorials.
+- - **TileMapTerrainRenderer** renders base terrain via TileMapLayer `set_cell()`
+- - These use **different art assets** (v3 vs v4), **different rendering methods**, and **fight for the same screen space**
+- - All layers are created dynamically in code — invisible in the Godot editor Scene panel
+- 1. **Use Godot the way it was designed.** TileMapLayer nodes in the scene tree. `set_cells_terrain_connect()` for auto-tiling. Terrain sets with peering bits.
+- 2. **One rendering system, not two.** No Image-based overlays competing with TileMapLayers.
+- 3. **Visible in the editor.** All layers exist as nodes in the `.tscn` file. Clickable, inspectable, toggleable.
+- │ ├── TerrainLayer (TileMapLayer, z_index=-2)
+- │ ├── CliffLayer (TileMapLayer, z_index=-1)
+- │ ├── ShadingLayer (TileMapLayer, z_index=-1)
+- │ ├── WaterLayer (TileMapLayer, z_index=0)
+- │ ├── RoadLayer (TileMapLayer, z_index=2)
+- │ ├── BuildingLayer (TileMapLayer, z_index=3)
+- │ └── RoofLayer (TileMapLayer, z_index=8)
+- ├── Player (CharacterBody2D)
+- └── UI (CanvasLayer)
+- All TileMapLayer nodes share a single TileSet resource built by TerrainTilesetBuilder at startup. The TileMap parent node exists for organizational grouping — it is NOT a TileMap node, just a Node2D.
+- These nodes are defined in the `.tscn` file (visible in editor). The TileSet is assigned programmatically at startup since it's built from terrain_v4 assets.
+- ### Layer Definitions
+- | Layer | z_index | Content | Populated By |
+- | TerrainLayer | -2 | Base biome tiles (lush_grass, golden_sand, etc.) with auto-tiled transitions | `set_cells_terrain_connect()` per terrain_id |
+- | CliffLayer | -1 | Cliff face tiles at elevation tier boundaries | Manual `set_cell()` at tier drops ≥ 2 |
+- | ShadingLayer | -1 | Semi-transparent dark/light overlays for hillshade | Manual `set_cell()` based on slope/elevation |
+- | WaterLayer | 0 | Ocean, river, lake tiles | `set_cells_terrain_connect()` for water terrain |
+- | RoadLayer | 2 | Dirt/cobblestone road tiles | Manual `set_cell()` from road_cells |
+- | BuildingLayer | 3 | Wall, floor, door tiles | Manual `set_cell()` from building_tiles |
+- | RoofLayer | 8 | Roof canopy (alpha-fades when player enters) | Manual `set_cell()` from structure bounds |
+- ChunkData compiled (elevation, biome, ocean)
+- ElevationGradientTable.surface_at(biome, elevation) → surface_id per tile
+- 2. **Cliff wall tiles** — On the CliffLayer, cliff face tiles are placed where elevation drops ≥ 2 tiers. Uses solid brown/dark cliff tiles from `_add_shading_and_cliff_sources()`. Only at sustained boundaries (≥3 of 5 horizontal neighbors must also have a cliff drop — filters noise).
+- 3. **Shading overlay** — On the ShadingLayer, semi-transparent tiles darken valleys and NW-facing slopes. Subtle but adds depth perception.
+- | ElevationRenderer | `elevation_renderer.gd` | Image-based Y-offset stacking. Incompatible with TileMapLayer. |
+- | LayeredChunkRenderer | `layered_chunk_renderer.gd` | Wrapper for ElevationRenderer. |
+- | LayeredTilesetLoader | `layered_tileset_loader.gd` | Loads terrain_v3 only used by ElevationRenderer. |
+- | SurfaceLayerCompositor | `surface_layer_compositor.gd` | Disabled ground cover. Premature. |
+- Legacy code paths in TileMapTerrainRenderer (~500 lines: `build_chunk_image`, `display_chunk_image`, wang tile cache, biome pairs, normal map shader) are also removed.
+- Legacy wiring in ChunkStreamer (~100 lines: `_layered_renderer`, shadow thread, `build_chunk_image_with_normals` C++ path) is removed.
+- Legacy wiring in CleanWorld.gd (~20 lines: `_layered_renderer` setup, shadow position updates) is removed.
+- | WorldCompiler + all layers | `world_compiler.gd` + layer scripts |
+- | terrain_v4 assets | `assets/catalog/terrain_v4/` |
+- var _layers: Dictionary # "terrain" -> TileMapLayer node reference
+- # Build TileSet from terrain_v4 assets
+- # Assign TileSet to all layers (found by name in scene tree)
+- _layers = {
+- "terrain": tilemap_parent.get_node("TerrainLayer"),
+- "cliff": tilemap_parent.get_node("CliffLayer"),
+- "shading": tilemap_parent.get_node("ShadingLayer"),
+- "water": tilemap_parent.get_node("WaterLayer"),
+- "road": tilemap_parent.get_node("RoadLayer"),
+- "building": tilemap_parent.get_node("BuildingLayer"),
+- "roof": tilemap_parent.get_node("RoofLayer"),
+- for layer in _layers.values():
+- layer.tile_set = _tileset
+- # Erase all cells in chunk bounds from all layers
+- # No layered_renderer, no shadow thread, no legacy image path
+- - **Ground cover stacks** (100% coverage grass/debris/flora per the biome layer stack spec) — requires texture overlay shader or dense object placement
+- - **Collision/walkability** — physics layers on tiles
+- 2. Terrain shows correct surface per biome+elevation with smooth auto-tiled transitions
+- 5. All layers visible in Godot editor Scene panel
+

@@ -1,167 +1,15 @@
 [
   {
     "role": "user",
-    "content": "[Context window: 15 older messages moved to long-term memory. Use the recall_memory tool to retrieve past decisions, code changes, or debugging outcomes as needed.]"
+    "content": "[Context window: 12 older messages moved to long-term memory. Use the recall_memory tool to retrieve past decisions, code changes, or debugging outcomes as needed.]"
   },
   {
     "role": "assistant",
     "content": [
       {
-        "type": "tool_use",
-        "id": "call_lZcXrNfgXVgXZQ8fEjcDBQd3",
-        "name": "edit_file",
-        "input": {
-          "path": "src/world/regional-map.js",
-          "old_text": "function classifyRegionalBiome(elevation, moisture, heat, mountains, river) {\n  if (elevation < 0.22) return 'deep_ocean';\n",
-          "new_text": "function classifyRegionalBiome(elevation, moisture, heat, mountains, river, aether) {\n  if (aether > 0.76 && elevation > 0.43 && elevation < 0.76) return 'mystic';\n  if (elevation < 0.22) return 'deep_ocean';\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_lZcXrNfgXVgXZQ8fEjcDBQd3",
-        "content": "Applied edit to src/world/regional-map.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_Xn7jvBD81ii75R8ZZFKXWfPC",
-        "name": "edit_file",
-        "input": {
-          "path": "src/render/palette.js",
-          "old_text": "  volcanic: ['#332d2f', '#4a3f3c', '#7a4a32']\n",
-          "new_text": "  volcanic: ['#332d2f', '#4a3f3c', '#7a4a32'],\n  mystic: ['#47306f', '#8a5bd6', '#49d6c5']\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_Xn7jvBD81ii75R8ZZFKXWfPC",
-        "content": "Applied edit to src/render/palette.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_CrqcqvLXOA7lDTDaKRqTfiOM",
-        "name": "edit_file",
-        "input": {
-          "path": "src/world/object-placement.js",
-          "old_text": "  tropical_forest: [{ kind: 'tree', threshold: 0.92 }, { kind: 'shrub', threshold: 0.975 }],\n  tundra: [{ kind: 'ice_rock', threshold: 0.985 }],\n",
-          "new_text": "  tropical_forest: [{ kind: 'tree', threshold: 0.92 }, { kind: 'shrub', threshold: 0.975 }],\n  mystic: [{ kind: 'tree', threshold: 0.94 }, { kind: 'aether_crystal', threshold: 0.985 }, { kind: 'glow_shrub', threshold: 0.972 }],\n  tundra: [{ kind: 'ice_rock', threshold: 0.985 }],\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_CrqcqvLXOA7lDTDaKRqTfiOM",
-        "content": "Applied edit to src/world/object-placement.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_r8HcN1q9QOGdm56Rs5KKcAC3",
-        "name": "edit_file",
-        "input": {
-          "path": "src/world/tile-stack.js",
-          "old_text": "  if (biome === 'forest' || biome === 'dense_forest' || biome === 'taiga' || biome === 'tropical_forest') return 'leaf_litter';\n",
-          "new_text": "  if (biome === 'mystic') return 'aether_bloom';\n  if (biome === 'forest' || biome === 'dense_forest' || biome === 'taiga' || biome === 'tropical_forest') return 'leaf_litter';\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_r8HcN1q9QOGdm56Rs5KKcAC3",
-        "content": "Applied edit to src/world/tile-stack.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_TA8c5vuA9FwdDKlVVf9rDiTO",
-        "name": "edit_file",
-        "input": {
-          "path": "src/assets/default-catalog.js",
-          "old_text": "    { id: 'grassland_ground', category: 'terrain.ground', biomes: ['grassland', 'savanna', 'steppe'], directions: DIRECTION_OMNI, layers: ['base', 'micro_grass', 'flowers', 'dirt_scars', 'wet_overlay', 'shadow_mask'], states: ['spring', 'summer', 'autumn', 'winter', 'wet', 'dry'], animations: { ambient: idleAnimation({ frames: 6, fps: 2, directions: DIRECTION_OMNI }) }, physics: defaultPhysics({ body: 'static', material: 'grass' }), collision: [], render: defaultRender({ drawLayer: 'terrain', castsShadow: false, heightClass: 'flat' }) },\n",
-          "new_text": "    { id: 'grassland_ground', category: 'terrain.ground', biomes: ['grassland', 'savanna', 'steppe', 'mystic'], directions: DIRECTION_OMNI, layers: ['base', 'micro_grass', 'flowers', 'dirt_scars', 'wet_overlay', 'mystic_overlay', 'shadow_mask'], states: ['spring', 'summer', 'autumn', 'winter', 'wet', 'dry', 'fae_bloom', 'enchanted'], animations: { ambient: idleAnimation({ frames: 6, fps: 2, directions: DIRECTION_OMNI }) }, physics: defaultPhysics({ body: 'static', material: 'grass' }), collision: [], render: defaultRender({ drawLayer: 'terrain', castsShadow: false, heightClass: 'flat' }) },\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_TA8c5vuA9FwdDKlVVf9rDiTO",
-        "content": "Could not find the specified text in src/assets/default-catalog.js. Make sure old_text matches the file exactly.\n\nThe file has 139 lines.\n\nClosest matches found:\nLines 7-11 (contains \"grassland_ground\"):\n  assets: [\n    terrainAsset('grassland_ground', ['grassland', 'savanna', 'steppe'], ['base', 'micro_grass', 'flowers', 'dirt_scars', 'wet_overlay', 'shadow_mask']),\n    terrainAsset('forest_floor', ['forest', 'dense_forest', 'taiga', 'tropical_forest'], ['base', 'leaf_litter', 'roots', 'moss', 'fungi', 'shadow_mask']),\n    terrainAsset('sand_ground', ['beach', 'desert'], ['base', 'grain', 'ripple', 'pebbles', 'shells', 'shadow_mask']),\n    terrainAsset('stone_ground', ['hills', 'mountains', 'volcanic', 'tundra', 'arctic'], ['base', 'strata', 'cracks', 'pebbles', 'snow_overlay', 'shadow_mask']),\n\nLines 92-96 (contains \"category\"):\n    id,\n    category: id === 'water_surface' ? 'terrain.water' : id === 'cliff_wall' ? 'terrain.elevation' : 'terrain.ground',\n    biomes,\n    sizeTiles: [1, 1],\n    layers,\n\nUse read_file to see the current content, then retry with the exact text.",
-        "is_error": true
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_xhmZ47FQihQ829uW8B1VQQbf",
-        "name": "read_file",
-        "input": {
-          "path": "src/assets/default-catalog.js",
-          "start_line": 1,
-          "end_line": 40
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_xhmZ47FQihQ829uW8B1VQQbf",
-        "content": "File: src/assets/default-catalog.js (lines 1-40 of 139)\n\n1| import { AssetCatalog } from './asset-catalog.js';\n2| import { DIRECTIONS_8, DIRECTION_OMNI, defaultPhysics, defaultRender, idleAnimation, rectCollision, circleCollision, stateAnimation, staticAnimation } from './asset-metadata.js';\n3| \n4| const terrain = {\n5|   domain: 'terrain',\n6|   tileSize: [32, 32],\n7|   assets: [\n8|     terrainAsset('grassland_ground', ['grassland', 'savanna', 'steppe'], ['base', 'micro_grass', 'flowers', 'dirt_scars', 'wet_overlay', 'shadow_mask']),\n9|     terrainAsset('forest_floor', ['forest', 'dense_forest', 'taiga', 'tropical_forest'], ['base', 'leaf_litter', 'roots', 'moss', 'fungi', 'shadow_mask']),\n10|     terrainAsset('sand_ground', ['beach', 'desert'], ['base', 'grain', 'ripple', 'pebbles', 'shells', 'shadow_mask']),\n11|     terrainAsset('stone_ground', ['hills', 'mountains', 'volcanic', 'tundra', 'arctic'], ['base', 'strata', 'cracks', 'pebbles', 'snow_overlay', 'shadow_mask']),\n12|     terrainAsset('water_surface', ['deep_ocean', 'ocean', 'shallow_water', 'river', 'lake', 'swamp'], ['base', 'flow', 'sparkle', 'foam', 'depth_shadow', 'moon_reflection'], {\n13|       animations: {\n14|         calm: stateAnimation(8, 6, true, DIRECTION_OMNI, ['flow', 'sparkle']),\n15|         wind: stateAnimation(12, 10, true, DIRECTIONS_8, ['flow', 'foam', 'sparkle']),\n16|         frozen: staticAnimation({ frames: 4, fps: 1, layers: ['base', 'depth_shadow'] })\n17|       },\n18|       physics: defaultPhysics({ body: 'fluid', material: 'water', blocksMovement: true }),\n19|       collision: [rectCollision(0, 0, 32, 32, 'water')],\n20|       render: defaultRender({ drawLayer: 'terrain', sort: 'fixed', castsShadow: false, receivesLight: true, heightClass: 'flat' })\n21|     }),\n22|     terrainAsset('cliff_wall', ['hills', 'mountains', 'volcanic', 'tundra', 'arctic', 'forest'], ['wall_base', 'strata', 'ledge', 'cracks', 'moss', 'shadow_mask', 'overhang_shadow'], {\n23|       physics: defaultPhysics({ body: 'static', material: 'stone', mass: 999, blocksMovement: true, climbable: true }),\n24|       collision: [rectCollision(0, 10, 32, 22, 'cliff')],\n25|       render: defaultRender({ drawLayer: 'object', sort: 'elevationThenY', castsShadow: true, receivesLight: true, occluder: true, heightClass: 'cliff' })\n26|     })\n27|   ]\n28| };\n29| \n30| const vegetation = {\n31|   domain: 'vegetation',\n32|   assets: [\n33|     objectAsset('broadleaf_tree', 'vegetation.tree', ['forest', 'dense_forest', 'grassland', 'hills'], [1, 2], ['shadow', 'trunk', 'branches', 'canopy', 'fruit', 'vine', 'season_overlay', 'damage_overlay', 'snow_overlay', 'lighting_mask'], {\n34|       states: ['sapling', 'mature', 'ancient', 'spring', 'summer', 'autumn', 'winter', 'cut', 'burnt', 'dead', 'wet', 'wind'],\n35|       animations: treeAnimations(['trunk', 'branches', 'canopy', 'fruit', 'vine', 'season_overlay', 'damage_overlay']),\n36|       physics: defaultPhysics({ body: 'static', material: 'wood', mass: 80, blocksMovement: true, blocksProjectiles: true, climbable: true }),\n37|       collision: [circleCollision(16, 27, 8, 'trunk'), rectCollision(4, 4, 24, 22, 'canopy_soft')],\n38|       render: defaultRender({ drawLayer: 'canopy', sort: 'elevationThenY', castsShadow: true, receivesLight: true, occluder: true, heightClass: 'canopy' })\n39|     }),\n40|     objectAsset('conifer_tree', 'vegetation.tree', ['taiga', 'tundra', 'mountains', 'forest'], [1, 2], ['shadow', 'trunk', 'needle_body', 'snow_overlay', 'damage_overlay', 'lighting_mask'], {",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
+        "type": "text",
+        "text": "Understood. I can use recall_memory to access prior context."
+      },
       {
         "type": "tool_use",
         "id": "call_NsheuNwcsdeSHrX7J4LhogIL",
@@ -6417,6 +6265,197 @@
       {
         "type": "tool_result",
         "tool_use_id": "call_jeOUqnVPZrG54E3DWTtCQEXH",
+        "content": "Applied edit to DONE.md",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Done."
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": "You can read the specs as well and see how we've handled the blueprint and the living spec. Again, at every turn, you should go back and reread all 25 of those docs."
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "<plan>\nI’ll add a living-spec protocol and index so future generation/gameplay work explicitly references the specs corpus, then create an automated spec digest script that summarizes all docs for ongoing use.\n</plan>\n"
+      },
+      {
+        "type": "tool_use",
+        "id": "call_vAmPeykjVd32eWpNvzCaigZ9",
+        "name": "create_checkpoint",
+        "input": {
+          "message": "Add living spec reread protocol and spec digest tooling"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_vAmPeykjVd32eWpNvzCaigZ9",
+        "content": "Checkpoint requested: Add living spec reread protocol and spec digest tooling",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_ppxyaoS0Aa6bkGNUnfDugzoz",
+        "name": "list_directory",
+        "input": {
+          "path": "specs"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_ppxyaoS0Aa6bkGNUnfDugzoz",
+        "content": "specs (27 items):\n\n[file] .gitkeep\n[file] 2026-05-24-master-architecture-design.md\n[file] 2026-05-24-vertical-slice-design.md\n[file] 2026-05-24-visual-vertical-slice-design.md\n[file] 2026-05-24-world-compiler-design.md\n[file] 2026-05-25-agent-swarm-design.md\n[file] 2026-05-25-color-algebra-tiles-design.md\n[file] 2026-05-25-layer-architecture-spec.md\n[file] 2026-05-25-overmap-streaming-design.md\n[file] 2026-05-25-tile-object-system-design.md\n[file] 2026-05-25-tileset-framework-design.md\n[file] 2026-05-25-visual-quality-spec.md\n[file] 2026-05-26-asset-pipeline-spec.md\n[file] 2026-05-26-biome-asset-manifest-spec.md\n[file] 2026-05-26-dynamic-lighting-spec.md\n[file] 2026-05-26-performance-infrastructure-spec.md\n[file] 2026-05-26-runtime-compositor-spec.md\n[file] 2026-05-26-subterranean-design.md\n[file] 2026-05-26-world-biome-system-design.md\n[file] 2026-05-27-elevation-cliff-rendering-design.md\n[file] 2026-05-27-elevation-hypergraph-terrain-design.md\n[file] 2026-05-27-terrain-shading-design.md\n[file] 2026-05-28-pixellab-audit-plan.md\n[file] 2026-05-28-terrain-object-system-design.md\n[file] 2026-05-29-biome-layer-stack-design.md\n[file] 2026-05-29-unity-migration-handoff.md\n[file] 2026-05-31-terrain-rendering-cleanup-design.md",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_sKcvDA2OBDuh1lHycHC7DQZv",
+        "name": "write_file",
+        "input": {
+          "path": "docs/LIVING_SPEC_PROTOCOL.md",
+          "content": "# Living Spec Protocol\n\nThe project is governed by the specs corpus in `specs/`. Before significant asset generation, rendering, world simulation, movement, interaction, performance, or architecture changes, the implementation process must consult the living spec set.\n\n## Required Loop\n\n1. Re-read or digest all files in `specs/`.\n2. Identify which specs govern the current task.\n3. Preserve blueprint principles:\n   - simulation-first world\n   - visuals are projections of simulation state\n   - hypergraph/layered tile assembly\n   - generated assets with manifests\n   - biome coherency and ecotones\n   - draw-order/occlusion correctness\n   - performance budgets\n   - runtime compositor metadata\n4. Implement changes.\n5. Update DONE.md and any relevant generated/digest docs.\n6. If the code deviates from the spec, either correct the code or write an explicit follow-up migration note.\n\n## Current Spec Corpus\n\n- 2026-05-24-master-architecture-design.md\n- 2026-05-24-vertical-slice-design.md\n- 2026-05-24-visual-vertical-slice-design.md\n- 2026-05-24-world-compiler-design.md\n- 2026-05-25-agent-swarm-design.md\n- 2026-05-25-color-algebra-tiles-design.md\n- 2026-05-25-layer-architecture-spec.md\n- 2026-05-25-overmap-streaming-design.md\n- 2026-05-25-tile-object-system-design.md\n- 2026-05-25-tileset-framework-design.md\n- 2026-05-25-visual-quality-spec.md\n- 2026-05-26-asset-pipeline-spec.md\n- 2026-05-26-biome-asset-manifest-spec.md\n- 2026-05-26-dynamic-lighting-spec.md\n- 2026-05-26-performance-infrastructure-spec.md\n- 2026-05-26-runtime-compositor-spec.md\n- 2026-05-26-subterranean-design.md\n- 2026-05-26-world-biome-system-design.md\n- 2026-05-27-elevation-cliff-rendering-design.md\n- 2026-05-27-elevation-hypergraph-terrain-design.md\n- 2026-05-27-terrain-shading-design.md\n- 2026-05-28-pixellab-audit-plan.md\n- 2026-05-28-terrain-object-system-design.md\n- 2026-05-29-biome-layer-stack-design.md\n- 2026-05-29-unity-migration-handoff.md\n- 2026-05-31-terrain-rendering-cleanup-design.md\n\n## Automation\n\nRun `node scripts/digest-specs.mjs` after spec changes or before large implementation batches. This writes `docs/SPEC_DIGEST.md`.\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_sKcvDA2OBDuh1lHycHC7DQZv",
+        "content": "Written 54 lines to docs/LIVING_SPEC_PROTOCOL.md",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_vyGaalZc8kHdcheHBJG17H2G",
+        "name": "write_file",
+        "input": {
+          "path": "scripts/digest-specs.mjs",
+          "content": "import { readdirSync, readFileSync, writeFileSync } from 'node:fs';\nimport { join } from 'node:path';\n\nconst specDir = 'specs';\nconst files = readdirSync(specDir).filter(file => file.endsWith('.md')).sort();\nconst sections = [];\nfor (const file of files) {\n  const path = join(specDir, file);\n  const text = readFileSync(path, 'utf8');\n  const headings = [...text.matchAll(/^#{1,4}\\s+(.+)$/gm)].map(match => match[1]).slice(0, 30);\n  const principles = extractLines(text, ['must', 'should', 'validation', 'failure mode', 'algorithm', 'outputs', 'inputs', 'performance', 'asset', 'biome', 'layer', 'draw', 'manifest']);\n  sections.push(`## ${file}\\n\\n### Headings\\n${headings.map(h => `- ${h}`).join('\\n') || '- none'}\\n\\n### Key Lines\\n${principles.slice(0, 80).map(line => `- ${line}`).join('\\n') || '- none'}\\n`);\n}\nconst output = `# Spec Digest\\n\\nGenerated from ${files.length} spec docs. Use this as a quick living-spec reread aid; source specs remain canonical.\\n\\n${sections.join('\\n')}\\n`;\nwriteFileSync('docs/SPEC_DIGEST.md', output);\nconsole.log(`Digested ${files.length} spec docs`);\n\nfunction extractLines(text, needles) {\n  return text.split(/\\r?\\n/)\n    .map(line => line.trim())\n    .filter(line => line && needles.some(needle => line.toLowerCase().includes(needle)))\n    .map(line => line.replace(/\\s+/g, ' '));\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_vyGaalZc8kHdcheHBJG17H2G",
+        "content": "Written 24 lines to scripts/digest-specs.mjs",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_UFdXkiT2uE2mEr84d1E1zggZ",
+        "name": "run_command",
+        "input": {
+          "command": "node scripts/digest-specs.mjs && node --check scripts/digest-specs.mjs"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_UFdXkiT2uE2mEr84d1E1zggZ",
+        "content": "$ node scripts/digest-specs.mjs && node --check scripts/digest-specs.mjs\n\nDigested 26 spec docs\n",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_99h84h9zkzd7SzUH1NgOkETA",
+        "name": "edit_file",
+        "input": {
+          "path": "assets/sorceress/library-plan.json",
+          "old_text": "  \"systemPrompt\": \"assets/sorceress/SYSTEM_ART_DIRECTION_PROMPT.md\",\n",
+          "new_text": "  \"systemPrompt\": \"assets/sorceress/SYSTEM_ART_DIRECTION_PROMPT.md\",\n  \"livingSpecProtocol\": \"docs/LIVING_SPEC_PROTOCOL.md\",\n  \"specDigest\": \"docs/SPEC_DIGEST.md\",\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_99h84h9zkzd7SzUH1NgOkETA",
+        "content": "Applied edit to assets/sorceress/library-plan.json",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_zjSuhqqMXAkP19lZ1g5KBxII",
+        "name": "edit_file",
+        "input": {
+          "path": "DONE.md",
+          "old_text": "- Staged and started draw-order/interaction pipeline:\n  - Added `docs/DRAW_ORDER_AND_INTERACTION_PIPELINE.md` defining world draw items, y/elevation sorting, canopy occlusion, and player/object reaction events.\n  - Player is now inserted into the same y/elevation-sorted world actor pass as trees/objects instead of always drawing above the landscape.\n  - Player shadow/body now render at the sorted world position with vertical jump/glide offset.\n  - Added `src/world/contact-events.js` as the initial event bus/model for footsteps, dodge-roll sweeps, airborne/glide states, and future vegetation/object reactions.\n",
+          "new_text": "- Staged and started draw-order/interaction pipeline:\n  - Added `docs/DRAW_ORDER_AND_INTERACTION_PIPELINE.md` defining world draw items, y/elevation sorting, canopy occlusion, and player/object reaction events.\n  - Player is now inserted into the same y/elevation-sorted world actor pass as trees/objects instead of always drawing above the landscape.\n  - Player shadow/body now render at the sorted world position with vertical jump/glide offset.\n  - Added `src/world/contact-events.js` as the initial event bus/model for footsteps, dodge-roll sweeps, airborne/glide states, and future vegetation/object reactions.\n- Added living-spec reread protocol and digest tooling:\n  - Added `docs/LIVING_SPEC_PROTOCOL.md` requiring spec consultation before significant asset/rendering/world/gameplay changes.\n  - Added `scripts/digest-specs.mjs` to summarize the full specs corpus into `docs/SPEC_DIGEST.md`.\n  - Generated `docs/SPEC_DIGEST.md` from 26 spec docs.\n  - Linked the Sorceress library plan to the living spec protocol and digest.\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_zjSuhqqMXAkP19lZ1g5KBxII",
         "content": "Applied edit to DONE.md",
         "is_error": false
       }
