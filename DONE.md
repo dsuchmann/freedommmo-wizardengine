@@ -164,3 +164,10 @@
   - Chunk terrain cache passes the atlas into terrain painting.
   - Grass blade and wildflower micro-layers now use atlas blits instead of expensive per-tile stroke/rect loops when the atlas is available.
   - Tree objects now render from atlas frames, with enchanted/mystic state selecting the mystic tree row.
+- Replaced square debug visuals with more organic placeholder art:
+  - Removed compositor debug tint blocks from terrain tiles.
+  - Reworked generated tree atlas rows into larger organic canopies made of overlapping circular leaf masses and curved trunks.
+  - Reworked boulder atlas row into irregular silhouettes with highlights/shadow ellipses instead of square blocks.
+  - Reworked flower atlas row into curved stems and circular blossoms.
+  - Reworked soil/debris/ground-cover micro-layer fallback drawing into ellipses/organic shapes instead of rectangles.
+  - Tree objects now draw larger on screen so they read as landscape objects rather than small dark square marks.

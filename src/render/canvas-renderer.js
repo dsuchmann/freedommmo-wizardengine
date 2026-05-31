@@ -158,7 +158,7 @@ function drawObject(ctx, kind, sx, sy, zoom = 1, signature = null, anim = { fram
     if (atlas) {
       const id = signature?.states?.includes('enchanted') ? 'mystic_tree' : 'broadleaf_tree';
       const frame = atlas.frame(id, anim.frame);
-      ctx.drawImage(frame.image, frame.sx, frame.sy, frame.sw, frame.sh, sx - 8 * zoom, sy - 18 * zoom + bob, 32 * zoom, 32 * zoom);
+      ctx.drawImage(frame.image, frame.sx, frame.sy, frame.sw, frame.sh, sx - 14 * zoom, sy - 34 * zoom + bob, 48 * zoom, 48 * zoom);
     } else {
       ctx.fillStyle = light < 0.85 ? '#0f2d19' : '#12391f';
       ctx.beginPath();
@@ -178,7 +178,7 @@ function drawObject(ctx, kind, sx, sy, zoom = 1, signature = null, anim = { fram
   } else if (kind.includes('rock')) {
     if (atlas) {
       const frame = atlas.frame('boulder_cluster', anim.frame);
-      ctx.drawImage(frame.image, frame.sx, frame.sy, frame.sw, frame.sh, sx - 6 * zoom, sy - 8 * zoom, 32 * zoom, 32 * zoom);
+      ctx.drawImage(frame.image, frame.sx, frame.sy, frame.sw, frame.sh, sx - 8 * zoom, sy - 12 * zoom, 32 * zoom, 32 * zoom);
     } else {
       ctx.fillStyle = signature?.assetId === 'boulder_cluster' ? '#60666b' : '#555a5f';
       ctx.fillRect(sx + 4 * zoom, sy + 5 * zoom, 9 * zoom, 8 * zoom);

@@ -11,7 +11,6 @@ export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation = 
   const depthFade = Math.max(0, focusElevation - tile.climate.elevation - 0.08) * 0.50;
   ctx.fillStyle = tint(shade(base, elevationShade + depthFade), sun.tint, sun.ambient);
   ctx.fillRect(sx, sy, size, size);
-  if (signature) paintCompositorDebugLayer(ctx, signature, sx, sy, size, sun);
   paintBiomeTexture(ctx, tile, sx, sy, size, sun);
   paintMicroLayers(ctx, tile, sx, sy, size, sun, timeSeconds, atlas);
 }

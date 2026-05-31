@@ -24,8 +24,10 @@ function paintWaterBody(ctx, layer, sx, sy, size, t) {
 
 function paintSoil(ctx, layer, sx, sy, size, sun) {
   if (layer.coverage < 0.1) return;
-  ctx.fillStyle = `rgba(60,42,25,${0.06 * layer.coverage})`;
-  ctx.fillRect(sx, sy + size * 0.68, size, size * 0.32);
+  ctx.fillStyle = `rgba(60,42,25,${0.05 * layer.coverage})`;
+  ctx.beginPath();
+  ctx.ellipse(sx + size * 0.5, sy + size * 0.78, size * 0.55, size * 0.20, 0, 0, Math.PI * 2);
+  ctx.fill();
 }
 
 function paintGroundCover(ctx, layer, tile, sx, sy, size, sun, t, atlas) {
@@ -36,7 +38,9 @@ function paintGroundCover(ctx, layer, tile, sx, sy, size, sun, t, atlas) {
   for (let i = 0; i < count; i++) {
     const x = sx + ((tile.wx * 13 + tile.wy * 7 + i * 11) % Math.max(1, Math.floor(size)));
     const y = sy + size * (0.50 + ((i * 17) % 40) / 100);
-    ctx.fillRect(x + sway, y, Math.max(1, size * 0.08), Math.max(1, size * 0.20));
+    ctx.beginPath();
+    ctx.ellipse(x + sway, y, Math.max(1, size * 0.08), Math.max(1, size * 0.14), -0.4, 0, Math.PI * 2);
+    ctx.fill();
   }
 }
 
@@ -77,7 +81,9 @@ function paintFlowers(ctx, layer, tile, sx, sy, size, sun, t, atlas) {
 function paintDebris(ctx, layer, tile, sx, sy, size, sun) {
   const color = layer.material === 'pebbles' ? '#a9a39a' : layer.material === 'shells' ? '#f2dfbd' : '#7b5b35';
   ctx.fillStyle = tint(color, sun.tint, sun.ambient * 0.95);
-  ctx.fillRect(sx + size * 0.65, sy + size * 0.68, Math.max(1, size * 0.14), Math.max(1, size * 0.08));
+  ctx.beginPath();
+  ctx.ellipse(sx + size * 0.68, sy + size * 0.70, Math.max(1, size * 0.10), Math.max(1, size * 0.055), 0.4, 0, Math.PI * 2);
+  ctx.fill();
 }
 
 function paintAether(ctx, layer, sx, sy, size, t) {

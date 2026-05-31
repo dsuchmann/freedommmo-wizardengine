@@ -53,10 +53,18 @@ export class ProceduralAtlas {
     for (let f = 0; f < 8; f++) {
       const x = f * this.cell;
       for (let i = 0; i < 5; i++) {
-        this.ctx.fillStyle = '#3f8a34';
-        this.ctx.fillRect(x + 7 + i * 4, row * this.cell + 18, 1, 8);
+        const bx = x + 7 + i * 4;
+        const by = row * this.cell + 26;
+        this.ctx.strokeStyle = '#3f8a34';
+        this.ctx.lineWidth = 1;
+        this.ctx.beginPath();
+        this.ctx.moveTo(bx, by);
+        this.ctx.quadraticCurveTo(bx + Math.sin(f + i) * 2, by - 5, bx + 1, by - 9);
+        this.ctx.stroke();
         this.ctx.fillStyle = colors[(f + i) % colors.length];
-        this.ctx.fillRect(x + 6 + i * 4, row * this.cell + 16, 3, 3);
+        this.ctx.beginPath();
+        this.ctx.arc(bx + 1, by - 10, 2, 0, Math.PI * 2);
+        this.ctx.fill();
       }
     }
   }
@@ -65,12 +73,33 @@ export class ProceduralAtlas {
     this.frames.set(id, row);
     for (let f = 0; f < 8; f++) {
       const x = f * this.cell;
+      const baseY = row * this.cell;
+      this.ctx.fillStyle = 'rgba(0,0,0,.22)';
+      this.ctx.beginPath();
+      this.ctx.ellipse(x + 16, baseY + 26, 10, 3, 0, 0, Math.PI * 2);
+      this.ctx.fill();
       this.ctx.fillStyle = '#42464b';
-      this.ctx.fillRect(x + 7, row * this.cell + 15, 18, 11);
+      this.ctx.beginPath();
+      this.ctx.moveTo(x + 6, baseY + 24);
+      this.ctx.lineTo(x + 9, baseY + 16);
+      this.ctx.lineTo(x + 15, baseY + 12);
+      this.ctx.lineTo(x + 24, baseY + 15);
+      this.ctx.lineTo(x + 27, baseY + 23);
+      this.ctx.quadraticCurveTo(x + 17, baseY + 28, x + 6, baseY + 24);
+      this.ctx.fill();
       this.ctx.fillStyle = '#777d83';
-      this.ctx.fillRect(x + 9, row * this.cell + 13, 12, 5);
-      this.ctx.fillStyle = '#2b2d30';
-      this.ctx.fillRect(x + 12 + (f % 3), row * this.cell + 19, 10, 1);
+      this.ctx.beginPath();
+      this.ctx.moveTo(x + 11, baseY + 16);
+      this.ctx.lineTo(x + 16, baseY + 13);
+      this.ctx.lineTo(x + 22, baseY + 16);
+      this.ctx.lineTo(x + 15, baseY + 18);
+      this.ctx.fill();
+      this.ctx.strokeStyle = '#2b2d30';
+      this.ctx.lineWidth = 1;
+      this.ctx.beginPath();
+      this.ctx.moveTo(x + 12 + (f % 3), baseY + 20);
+      this.ctx.lineTo(x + 22, baseY + 21);
+      this.ctx.stroke();
     }
   }
 
@@ -79,17 +108,30 @@ export class ProceduralAtlas {
     for (let f = 0; f < 8; f++) {
       const x = f * this.cell;
       const sway = Math.sin((f / 8) * Math.PI * 2) * 2;
-      this.ctx.fillStyle = 'rgba(0,0,0,.22)';
-      this.ctx.fillRect(x + 8, row * this.cell + 25, 18, 4);
-      this.ctx.fillStyle = trunk;
-      this.ctx.fillRect(x + 14, row * this.cell + 16, 5, 12);
-      this.ctx.fillStyle = leaf;
+      const baseY = row * this.cell;
+      this.ctx.fillStyle = 'rgba(0,0,0,.24)';
       this.ctx.beginPath();
-      this.ctx.arc(x + 16 + sway, row * this.cell + 12, 11, 0, Math.PI * 2);
+      this.ctx.ellipse(x + 17, baseY + 27, 10, 3, 0, 0, Math.PI * 2);
       this.ctx.fill();
-      this.ctx.fillStyle = id === 'mystic_tree' ? 'rgba(120,255,235,.65)' : 'rgba(125,185,90,.45)';
-      this.ctx.fillRect(x + 12 + sway, row * this.cell + 6, 3, 3);
-      this.ctx.fillRect(x + 20 + sway, row * this.cell + 13, 2, 2);
+      this.ctx.fillStyle = trunk;
+      this.ctx.beginPath();
+      this.ctx.moveTo(x + 14, baseY + 29);
+      this.ctx.quadraticCurveTo(x + 17 + sway * 0.2, baseY + 21, x + 16, baseY + 13);
+      this.ctx.lineTo(x + 20, baseY + 13);
+      this.ctx.quadraticCurveTo(x + 19 + sway * 0.2, baseY + 22, x + 20, baseY + 29);
+      this.ctx.closePath();
+      this.ctx.fill();
+      this.ctx.fillStyle = leaf;
+      for (const blob of [[16,10,10],[10,14,7],[22,14,8],[16,18,9],[13,7,6],[21,8,6]]) {
+        this.ctx.beginPath();
+        this.ctx.arc(x + blob[0] + sway, baseY + blob[1], blob[2], 0, Math.PI * 2);
+        this.ctx.fill();
+      }
+      this.ctx.fillStyle = id === 'mystic_tree' ? 'rgba(120,255,235,.75)' : 'rgba(150,215,105,.42)';
+      this.ctx.beginPath();
+      this.ctx.arc(x + 12 + sway, baseY + 7, 2, 0, Math.PI * 2);
+      this.ctx.arc(x + 22 + sway, baseY + 14, 1.5, 0, Math.PI * 2);
+      this.ctx.fill();
     }
   }
 }
