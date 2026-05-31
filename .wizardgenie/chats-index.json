@@ -1,9 +1,9 @@
 [
   {
     "id": "1780247555506",
-    "name": "General",
+    "name": "Im Migrating Into Sorceress Wizard Genie From",
     "createdAt": "2026-05-31T17:12:35.506Z",
-    "model": "claude-sonnet-4-6",
+    "model": "gpt-5.5",
     "executorModel": null,
     "thinking": false,
     "enhanced": false,
