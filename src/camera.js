@@ -1,8 +1,8 @@
 export class Camera {
   constructor() {
-    this.zoom = 1;
-    this.manualZoom = 1;
-    this.targetZoom = 1;
+    this.zoom = 1.85;
+    this.manualZoom = 1.85;
+    this.targetZoom = 1.85;
     window.addEventListener('wheel', event => {
       event.preventDefault();
       const delta = Math.sign(event.deltaY) * -0.08;

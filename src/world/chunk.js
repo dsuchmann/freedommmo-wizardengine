@@ -39,6 +39,10 @@ export class ChunkStore {
     return ready ?? this.chunks.get(key) ?? null;
   }
 
+  getVisible(cx, cy) {
+    return this.getIfReady(cx, cy) ?? this.get(cx, cy);
+  }
+
   streamAround(wx, wy) {
     const pcx = floorDiv(wx, WORLD.chunkSize);
     const pcy = floorDiv(wy, WORLD.chunkSize);

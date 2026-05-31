@@ -4,7 +4,7 @@ export const WORLD = Object.freeze({
   tileSize: 16,
   sourceTileSize: 32,
   overmapChunks: 6400,
-  loadRadius: 2,
+  loadRadius: 1,
   unloadPadding: 1
 });
 

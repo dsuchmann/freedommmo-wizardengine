@@ -6,7 +6,7 @@ export class ChunkRenderCache {
   constructor(compositor = null) {
     this.compositor = compositor;
     this.cache = new Map();
-    this.maxEntries = 96;
+    this.maxEntries = 36;
   }
 
   key(chunk, lightBucket) {
@@ -14,7 +14,7 @@ export class ChunkRenderCache {
   }
 
   lightBucket(sun) {
-    return `${Math.round(sun.ambient * 8)},${Math.round(sun.height * 8)},${Math.round(sun.tint.r * 10)},${Math.round(sun.tint.g * 10)},${Math.round(sun.tint.b * 10)}`;
+    return `${Math.round(sun.ambient * 3)},${Math.round(sun.height * 3)}`;
   }
 
   get(chunk, sun) {

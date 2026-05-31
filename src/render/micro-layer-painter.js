@@ -32,7 +32,7 @@ function paintGroundCover(ctx, layer, tile, sx, sy, size, sun, t) {
   const sway = wind(layer, t, size);
   const color = layer.material.includes('aether') ? '#64ffe8' : layer.material.includes('lichen') ? '#cfe4c8' : layer.material.includes('leaf') ? '#6b4f2e' : '#6bb34a';
   ctx.fillStyle = tint(color, sun.tint, sun.ambient);
-  const count = Math.max(1, Math.floor(layer.coverage * 5));
+  const count = Math.max(1, Math.floor(layer.coverage * 3));
   for (let i = 0; i < count; i++) {
     const x = sx + ((tile.wx * 13 + tile.wy * 7 + i * 11) % Math.max(1, Math.floor(size)));
     const y = sy + size * (0.50 + ((i * 17) % 40) / 100);
@@ -45,7 +45,7 @@ function paintBlades(ctx, layer, tile, sx, sy, size, sun, t) {
   const color = layer.material === 'glow_grass' ? '#79ffe4' : layer.material === 'reeds' ? '#6f8b42' : '#3f8a34';
   ctx.strokeStyle = tint(color, sun.tint, sun.ambient);
   ctx.lineWidth = Math.max(1, size * 0.05);
-  const count = Math.max(2, Math.floor(layer.coverage * 8));
+  const count = Math.max(2, Math.floor(layer.coverage * 5));
   ctx.beginPath();
   for (let i = 0; i < count; i++) {
     const x = sx + ((tile.wx * 19 + i * 9) % Math.max(1, Math.floor(size)));

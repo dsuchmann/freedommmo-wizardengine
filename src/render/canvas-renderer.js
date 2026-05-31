@@ -5,6 +5,7 @@ import { auditBiomesAround } from '../world/biome-audit.js';
 import { drawSortKey, applyBlend } from './draw-order.js';
 import { animationFrame } from './animation-state.js';
 import { ChunkRenderCache } from './chunk-render-cache.js';
+import { ProceduralAtlas } from '../assets/procedural-atlas.js';
 
 export class CanvasRenderer {
   constructor(canvas, statsElement, compositor = null) {
@@ -13,6 +14,7 @@ export class CanvasRenderer {
     this.statsElement = statsElement;
     this.compositor = compositor;
     this.chunkRenderCache = new ChunkRenderCache(compositor);
+    this.atlas = new ProceduralAtlas();
     this.lastAudit = null;
     this.lastAuditAt = 0;
     window.addEventListener('resize', () => this.resize());
@@ -44,7 +46,8 @@ export class CanvasRenderer {
 
     for (let cy = minCY; cy <= maxCY; cy++) {
       for (let cx = minCX; cx <= maxCX; cx++) {
-        const chunk = chunkStore.get(cx, cy);
+        const chunk = chunkStore.getIfReady(cx, cy);
+        if (!chunk) continue;
         const cached = this.chunkRenderCache.get(chunk, sun);
         const sx = Math.floor(cx * WORLD.chunkSize * tilePx - camX);
         const sy = Math.floor(cy * WORLD.chunkSize * tilePx - camY);
@@ -84,7 +87,7 @@ export class CanvasRenderer {
         ctx.fillRect(item.sx + sun.shadowX * 12 * camera.zoom, item.sy + sun.shadowY * 12 * camera.zoom + 10 * camera.zoom, 12 * camera.zoom, 5 * camera.zoom);
       }
       const anim = animationFrame(item.signature?.animations?.idle, timeSeconds, 'S');
-      drawObject(ctx, item.object.kind, item.sx, item.sy, camera.zoom, item.signature, anim, sun);
+      drawObject(ctx, item.object.kind, item.sx, item.sy, camera.zoom, item.signature, anim, sun, this.atlas);
       ctx.restore();
     }
   }
@@ -148,7 +151,7 @@ export class CanvasRenderer {
   }
 }
 
-function drawObject(ctx, kind, sx, sy, zoom = 1, signature = null, anim = { frame: 0 }, sun = null) {
+function drawObject(ctx, kind, sx, sy, zoom = 1, signature = null, anim = { frame: 0 }, sun = null, atlas = null) {
   const bob = Math.sin((anim.frame ?? 0) * 0.9) * 0.6 * zoom;
   const light = sun?.ambient ?? 1;
   if (kind === 'tree') {
@@ -167,8 +170,13 @@ function drawObject(ctx, kind, sx, sy, zoom = 1, signature = null, anim = { fram
     ctx.closePath();
     ctx.fill();
   } else if (kind.includes('rock')) {
-    ctx.fillStyle = signature?.assetId === 'boulder_cluster' ? '#60666b' : '#555a5f';
-    ctx.fillRect(sx + 4 * zoom, sy + 5 * zoom, 9 * zoom, 8 * zoom);
+    if (atlas) {
+      const frame = atlas.frame('boulder_cluster', anim.frame);
+      ctx.drawImage(frame.image, frame.sx, frame.sy, frame.sw, frame.sh, sx - 6 * zoom, sy - 8 * zoom, 32 * zoom, 32 * zoom);
+    } else {
+      ctx.fillStyle = signature?.assetId === 'boulder_cluster' ? '#60666b' : '#555a5f';
+      ctx.fillRect(sx + 4 * zoom, sy + 5 * zoom, 9 * zoom, 8 * zoom);
+    }
   } else if (kind === 'flower') {
     ctx.fillStyle = '#ffd6f2';
     ctx.fillRect(sx + 7 * zoom, sy + 7 * zoom, 3 * zoom, 3 * zoom);

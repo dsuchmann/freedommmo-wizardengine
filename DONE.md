@@ -149,3 +149,13 @@
   - Canvas renderer now composites cached chunk images with `drawImage` instead of repainting every visible tile every frame.
   - Cache keys are chunk coordinate plus coarse light bucket, preserving day/night readability without per-frame full-tile redraw.
   - HUD now reports terrain cache usage.
+- Added immediate performance improvements after 10 FPS report:
+  - Default camera zoom now starts closer to the player (`1.85`) so fewer chunks/tiles are visible initially; player can manually zoom out.
+  - Active chunk load radius reduced from 2 to 1 to avoid compiling/streaming too much upfront.
+  - Renderer now skips non-ready visible chunks instead of forcing synchronous compilation in the draw loop.
+  - Terrain cache light buckets simplified to reduce cache churn across day/night changes.
+  - Terrain cache size reduced to match the smaller active radius.
+  - Micro-layer draw density reduced for the current Canvas2D placeholder renderer.
+- Started actual atlas/sprite pipeline:
+  - Added `src/assets/procedural-atlas.js`, a generated in-engine sprite atlas with animated grass, mystic grass, wildflowers, and boulder frames.
+  - Object renderer now uses atlas frames for boulder clusters as the first real sheet-based object path instead of only primitive rectangles.
