@@ -1,4 +1,5 @@
 import { rand2 } from '../core/random.js';
+import { reactionStatesForMaterial } from '../world/biome-elements.js';
 
 export class RuntimeCompositor {
   constructor(catalog) {
@@ -12,7 +13,7 @@ export class RuntimeCompositor {
       assetId: asset?.id ?? 'unknown_ground',
       variant: Math.floor(rand2(tile.wx, tile.wy, 6100) * 100000),
       layers: terrainLayersFor(tile),
-      states: terrainStatesFor(tile),
+      states: [...terrainStatesFor(tile), ...reactionStatesForMaterial(materialForTile(tile), tile.biome)],
       directions: asset?.directions ?? ['OMNI'],
       animations: asset?.animations ?? {},
       physics: asset?.physics ?? null,
@@ -27,7 +28,7 @@ export class RuntimeCompositor {
       assetId: asset?.id ?? kind,
       variant: Math.floor(rand2(wx, wy, 6200) * 100000),
       layers: asset?.layers ?? ['shadow', 'base', 'detail', 'lighting_mask'],
-      states: ['default'],
+      states: ['default', ...reactionStatesForMaterial(materialForObject(kind), biome)],
       directions: asset?.directions ?? ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'],
       animations: asset?.animations ?? {},
       physics: asset?.physics ?? null,
@@ -35,6 +36,20 @@ export class RuntimeCompositor {
       render: asset?.render ?? null
     };
   }
+}
+
+function materialForTile(tile) {
+  if (tile.biome.includes('ocean') || tile.biome === 'river' || tile.biome === 'lake') return 'water';
+  if (tile.biome === 'beach' || tile.biome === 'desert') return 'sand';
+  if (tile.biome === 'hills' || tile.biome === 'mountains' || tile.biome === 'volcanic') return 'stone';
+  return 'grass';
+}
+
+function materialForObject(kind) {
+  if (kind === 'tree' || kind.includes('shrub') || kind === 'fallen_log') return 'wood';
+  if (kind.includes('rock') || kind.includes('crystal')) return 'stone';
+  if (kind === 'reed' || kind === 'grass_tuft' || kind === 'flower') return 'grass';
+  return 'wood';
 }
 
 function terrainLayersFor(tile) {

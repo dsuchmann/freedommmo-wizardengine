@@ -10,12 +10,13 @@ export function sampleRegionalMapChunk(cx, cy) {
   const mountains = fbm(x + 19000, y - 31000, 8010, undefined, 2600, 4);
   const moisture = fbm(x - 7000, y + 13000, 8020, undefined, 4200, 4);
   const heatBase = fbm(x + 41000, y + 5000, 8030, undefined, 5000, 4);
+  const aether = fbm(x - 52000, y + 33000, 8060, undefined, 3600, 4);
   const latitudeCold = Math.min(0.34, Math.abs(cy) / 260);
   const elevation = clamp01(continent * 1.05 + mountains * 0.34 - 0.19);
   const heat = clamp01(heatBase - latitudeCold - Math.max(0, elevation - 0.58) * 0.35 + 0.10);
   const river = riverSignal(cx, cy, elevation, moisture);
-  const id = classifyRegionalBiome(elevation, moisture, heat, mountains, river);
-  return { id, definition: BIOMES[id], climate: { elevation, moisture, heat, river, mountains } };
+  const id = classifyRegionalBiome(elevation, moisture, heat, mountains, river, aether);
+  return { id, definition: BIOMES[id], climate: { elevation, moisture, heat, river, mountains, aether } };
 }
 
 function riverSignal(cx, cy, elevation, moisture) {
@@ -25,7 +26,8 @@ function riverSignal(cx, cy, elevation, moisture) {
   return Math.min(channelA, channelB);
 }
 
-function classifyRegionalBiome(elevation, moisture, heat, mountains, river) {
+function classifyRegionalBiome(elevation, moisture, heat, mountains, river, aether) {
+  if (aether > 0.76 && elevation > 0.43 && elevation < 0.76) return 'mystic';
   if (elevation < 0.22) return 'deep_ocean';
   if (elevation < 0.34) return 'ocean';
   if (elevation < 0.39) return 'shallow_water';

@@ -172,6 +172,14 @@ function drawObject(ctx, kind, sx, sy, zoom = 1, signature = null, anim = { fram
     ctx.fill();
     ctx.fillStyle = '#6b4928';
     ctx.fillRect(sx + 6 * zoom, sy + 8 * zoom, 4 * zoom, 7 * zoom);
+  } else if (kind.includes('crystal')) {
+    ctx.fillStyle = '#7fffea';
+    ctx.beginPath();
+    ctx.moveTo(sx + 8 * zoom, sy + 2 * zoom);
+    ctx.lineTo(sx + 13 * zoom, sy + 13 * zoom);
+    ctx.lineTo(sx + 4 * zoom, sy + 13 * zoom);
+    ctx.closePath();
+    ctx.fill();
   } else if (kind.includes('rock')) {
     ctx.fillStyle = signature?.assetId === 'boulder_cluster' ? '#60666b' : '#555a5f';
     ctx.fillRect(sx + 4 * zoom, sy + 5 * zoom, 9 * zoom, 8 * zoom);

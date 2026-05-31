@@ -112,3 +112,10 @@
   - Added `src/render/animation-state.js` for resolving animation frames/directions/events.
   - Runtime compositor signatures now expose animation, physics, collision, and render metadata alongside layers/states.
   - Updated Sorceress style guide to require directional/state animation coverage plus physics/collision/render metadata for every asset family.
+- Added Mystic biome and biome-element reaction model:
+  - Added `mystic` to spec biome tracking, terrain colors, regional overmap sampling, tile biome classification, object placement, and surface details.
+  - Added `src/world/biome-elements.js` defining biome elemental affinities and material reaction states.
+  - Runtime compositor now attaches reaction states to terrain/object signatures, e.g. wood + fire = burning, wood + water = waterlogged, wood + mystic = enchanted, stone + mystic = rune_etched, water + mystic = shimmering.
+  - Added Mystic visual placeholder details and aether crystal object rendering.
+  - Expanded broadleaf tree and grassland catalog metadata with Mystic/enchantment/frozen/waterlogged/burnt state coverage.
+  - Static biome audit confirms all tracked biomes, including Mystic, are represented.

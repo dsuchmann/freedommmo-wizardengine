@@ -5,7 +5,10 @@ const terrain = {
   domain: 'terrain',
   tileSize: [32, 32],
   assets: [
-    terrainAsset('grassland_ground', ['grassland', 'savanna', 'steppe'], ['base', 'micro_grass', 'flowers', 'dirt_scars', 'wet_overlay', 'shadow_mask']),
+    terrainAsset('grassland_ground', ['grassland', 'savanna', 'steppe', 'mystic'], ['base', 'micro_grass', 'flowers', 'dirt_scars', 'wet_overlay', 'mystic_overlay', 'shadow_mask'], {
+      states: ['default', 'wet', 'dry', 'frozen', 'fae_bloom', 'enchanted'],
+      animations: { ambient: idleAnimation({ frames: 8, fps: 3, directions: DIRECTION_OMNI, layers: ['micro_grass', 'flowers', 'mystic_overlay'] }) }
+    }),
     terrainAsset('forest_floor', ['forest', 'dense_forest', 'taiga', 'tropical_forest'], ['base', 'leaf_litter', 'roots', 'moss', 'fungi', 'shadow_mask']),
     terrainAsset('sand_ground', ['beach', 'desert'], ['base', 'grain', 'ripple', 'pebbles', 'shells', 'shadow_mask']),
     terrainAsset('stone_ground', ['hills', 'mountains', 'volcanic', 'tundra', 'arctic'], ['base', 'strata', 'cracks', 'pebbles', 'snow_overlay', 'shadow_mask']),
@@ -30,8 +33,8 @@ const terrain = {
 const vegetation = {
   domain: 'vegetation',
   assets: [
-    objectAsset('broadleaf_tree', 'vegetation.tree', ['forest', 'dense_forest', 'grassland', 'hills'], [1, 2], ['shadow', 'trunk', 'branches', 'canopy', 'fruit', 'vine', 'season_overlay', 'damage_overlay', 'snow_overlay', 'lighting_mask'], {
-      states: ['sapling', 'mature', 'ancient', 'spring', 'summer', 'autumn', 'winter', 'cut', 'burnt', 'dead', 'wet', 'wind'],
+    objectAsset('broadleaf_tree', 'vegetation.tree', ['forest', 'dense_forest', 'grassland', 'hills', 'mystic'], [1, 2], ['shadow', 'trunk', 'branches', 'canopy', 'fruit', 'vine', 'season_overlay', 'damage_overlay', 'snow_overlay', 'mystic_overlay', 'lighting_mask'], {
+      states: ['sapling', 'mature', 'ancient', 'spring', 'summer', 'autumn', 'winter', 'cut', 'burnt', 'charred', 'dead', 'wet', 'waterlogged', 'frozen', 'frosted', 'enchanted', 'glowing', 'wind'],
       animations: treeAnimations(['trunk', 'branches', 'canopy', 'fruit', 'vine', 'season_overlay', 'damage_overlay']),
       physics: defaultPhysics({ body: 'static', material: 'wood', mass: 80, blocksMovement: true, blocksProjectiles: true, climbable: true }),
       collision: [circleCollision(16, 27, 8, 'trunk'), rectCollision(4, 4, 24, 22, 'canopy_soft')],

@@ -37,7 +37,12 @@ function paintBiomeTexture(ctx, tile, sx, sy, size, sun) {
     } else if (tile.biome === 'forest' || tile.biome === 'dense_forest' || tile.biome === 'taiga' || tile.biome === 'tropical_forest') {
       ctx.fillStyle = tint(r > 0.5 ? '#16351f' : '#6f8c3c', sun.tint, sun.ambient * 0.95);
       ctx.fillRect(x, y, Math.max(1, size * 0.12), Math.max(1, size * 0.20));
-    } else if (tile.biome === 'beach' || tile.biome === 'desert') {
+    } else if (tile.biome === 'mystic') {
+    ctx.fillStyle = `rgba(130,90,255,${0.10 + r * 0.18})`;
+    ctx.fillRect(x, y, Math.max(1, size * 0.16), Math.max(1, size * 0.16));
+    ctx.fillStyle = `rgba(80,255,220,${0.08 + r * 0.12})`;
+    ctx.fillRect(x + 1, y, 1, Math.max(1, size * 0.30));
+  } else if (tile.biome === 'beach' || tile.biome === 'desert') {
       ctx.fillStyle = `rgba(255,235,170,${0.10 + r * 0.16})`;
       ctx.fillRect(x, y, Math.max(1, size * 0.12), 1);
     } else if (tile.biome === 'mountains' || tile.biome === 'hills' || tile.biome === 'volcanic') {

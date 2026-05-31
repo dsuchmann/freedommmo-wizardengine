@@ -14,6 +14,7 @@ const RULES = Object.freeze({
   desert: [{ kind: 'cactus', threshold: 0.992 }],
   taiga: [{ kind: 'tree', threshold: 0.945 }],
   tropical_forest: [{ kind: 'tree', threshold: 0.92 }, { kind: 'shrub', threshold: 0.975 }],
+  mystic: [{ kind: 'tree', threshold: 0.94 }, { kind: 'aether_crystal', threshold: 0.985 }, { kind: 'glow_shrub', threshold: 0.972 }],
   tundra: [{ kind: 'ice_rock', threshold: 0.985 }],
   arctic: [{ kind: 'ice_rock', threshold: 0.965 }]
 });

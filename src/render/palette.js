@@ -18,7 +18,8 @@ export const PALETTES = Object.freeze({
   arctic: ['#b1d8e5', '#c9e5ee', '#eefcff'],
   hills: ['#706c4d', '#827d55', '#99905f'],
   mountains: ['#666b72', '#777b82', '#989ca1'],
-  volcanic: ['#332d2f', '#4a3f3c', '#7a4a32']
+  volcanic: ['#332d2f', '#4a3f3c', '#7a4a32'],
+  mystic: ['#47306f', '#8a5bd6', '#49d6c5']
 });
 
 export function paletteFor(biome) {

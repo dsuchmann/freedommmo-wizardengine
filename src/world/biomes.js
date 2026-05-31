@@ -4,7 +4,7 @@ export const SPEC_BIOME_IDS = Object.freeze([
   'ocean', 'deep_ocean', 'shallow_water', 'beach', 'river', 'lake',
   'grassland', 'forest', 'dense_forest', 'tropical_forest', 'taiga',
   'savanna', 'steppe', 'desert', 'swamp', 'tundra', 'arctic',
-  'hills', 'mountains', 'volcanic'
+  'hills', 'mountains', 'volcanic', 'mystic'
 ]);
 
 export const BIOMES = Object.freeze({
@@ -25,6 +25,7 @@ export const BIOMES = Object.freeze({
   hills: { material: 'stony_grass', color: '#827d55', walkable: true, movementCost: 1.6 },
   mountains: { material: 'grey_rock', color: '#777b82', walkable: true, movementCost: 2.2 },
   volcanic: { material: 'basalt', color: '#4a3f3c', walkable: true, movementCost: 2.4 },
+  mystic: { material: 'aether_moss', color: '#8a5bd6', walkable: true, movementCost: 1.25 },
   tundra: { material: 'frozen_earth', color: '#9fb0aa', walkable: true, movementCost: 1.7 },
   arctic: { material: 'glacial_ice', color: '#c9e5ee', walkable: true, movementCost: 2.1 },
   swamp: { material: 'wet_mud', color: '#42694a', walkable: true, movementCost: 2 }
@@ -39,14 +40,16 @@ export function sampleClimate(wx, wy) {
   const altitudeCold = Math.max(0, elevation - 0.58) * 0.55;
   const heat = clamp01(fbm(wx - 3000, wy + 7000, 30) * 1.12 - latitudeCold - altitudeCold + 0.08);
   const drainage = fbm(wx + 17000, wy - 11000, 40);
-  return { elevation, moisture, heat, drainage };
+  const aether = fbm(wx - 52000, wy + 33000, 66, undefined, 1400, 4);
+  return { elevation, moisture, heat, drainage, aether };
 }
 
 export function classifyBiome(wx, wy) {
   const climate = sampleClimate(wx, wy);
-  const { elevation, moisture, heat, drainage } = climate;
+  const { elevation, moisture, heat, drainage, aether } = climate;
   let id;
-  if (elevation < 0.26) id = 'deep_ocean';
+  if (aether > 0.78 && elevation > 0.43 && elevation < 0.76) id = 'mystic';
+  else if (elevation < 0.26) id = 'deep_ocean';
   else if (elevation < 0.36) id = 'ocean';
   else if (elevation < 0.40) id = 'shallow_water';
   else if (elevation < 0.42) id = moisture > 0.82 ? 'lake' : 'beach';
