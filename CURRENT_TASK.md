@@ -2,47 +2,40 @@
 
 ## Task ID
 
-M1-001
+M2-001
 
 ## Goal
 
-Refactor the first playable slice from a monolithic prototype into the initial spec-aligned FreedomMMO module architecture.
+Inventory and extract the relevant Godot reference implementation facts for world generation, overmap streaming, biome/climate thresholds, chunk math, and terrain object catalogs.
 
 ## Why this matters
 
-The current `src/main.js` proves that deterministic chunked terrain can render and scroll, but FreedomMMO requires explicit systems: seeded random/noise, chunk coordinates, tile layer stacks, chunk compiler, biome classification, object placement, renderer projection, input, and player/camera orchestration.
+The Wizard Genie implementation is now modular, but its formulas are still scaffold values. The next step is to compare against the existing Godot reference so the rebuild reflects the already-enumerated FreedomMMO design and proven implementation details.
 
 ## Required reads before coding
 
+- `AGENT_LOOP.md`
 - `IMPLEMENTATION_CONTRACT.md`
+- `REFERENCE_INTAKE_PLAN.md`
 - `SPEC_IMPLEMENTATION_BACKLOG.md`
-- `MIGRATION_BRIEF.md`
-- `specs/2026-05-24-master-architecture-design.md`
-- `specs/2026-05-25-layer-architecture-spec.md`
-- `specs/2026-05-25-overmap-streaming-design.md`
-- `specs/2026-05-24-world-compiler-design.md`
+- `reference/godot/config/server_config.json`
+- Relevant files discovered under `reference/godot/scripts`, `reference/godot/data`, and `reference/godot/resources`
 
 ## Deliverables
 
-Create/refactor toward:
-
-- `src/core/constants.js`
-- `src/core/random.js`
-- `src/world/biomes.js`
-- `src/world/tile-stack.js`
-- `src/world/chunk.js`
-- `src/world/chunk-compiler.js`
-- `src/world/object-placement.js`
-- `src/render/canvas-renderer.js`
-- `src/input.js`
-- `src/player.js`
-- Slim `src/main.js`
+- Build a concise source/config inventory for the Godot reference.
+- Identify files related to:
+  - overmap generation
+  - world compiler / chunk generation
+  - biome, climate, elevation, moisture, temperature
+  - seed/noise utilities
+  - terrain object affinities/catalogs
+- Update `REFERENCE_FINDINGS.md` with extracted facts.
+- If clear improvements are found, align the Wizard Genie constants/biome/object data with reference values.
 
 ## Acceptance criteria
 
-- Game still runs from `index.html`.
-- Player can move through a deterministic streamed world.
-- Tile state includes explicit simulation layers/properties.
-- Renderer derives visuals from compiled tile state.
+- `REFERENCE_FINDINGS.md` contains concrete Godot reference findings, not just pending placeholders.
+- `SPEC_IMPLEMENTATION_BACKLOG.md` Milestone 2 items are updated where completed.
 - `DONE.md` is updated.
 - `CURRENT_TASK.md` is advanced to the next task.

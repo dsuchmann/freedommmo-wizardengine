@@ -17,3 +17,14 @@
   - `DONE.md`
   - `BLOCKERS.md`
   - `REFERENCE_FINDINGS.md`
+- Completed M1-001 architecture split:
+  - Added `src/core/constants.js` for world/chunk/layer constants.
+  - Added `src/core/random.js` for deterministic hash/noise/fbm.
+  - Added `src/world/biomes.js` for climate sampling and biome classification.
+  - Added `src/world/tile-stack.js` for simulation-owned layer-stack tile records.
+  - Added `src/world/chunk.js` for coordinate helpers and streaming chunk store.
+  - Added `src/world/chunk-compiler.js` for simulation-to-render projection compilation.
+  - Added `src/world/object-placement.js` for deterministic biome-aware object placement.
+  - Added `src/render/canvas-renderer.js` for renderer projection and HUD.
+  - Added `src/input.js` and `src/player.js`.
+  - Slimmed `src/main.js` to orchestration only.

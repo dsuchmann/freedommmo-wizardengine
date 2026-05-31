@@ -6,17 +6,17 @@ The first playable slice exists, but it is a scaffold. The next work must turn i
 
 ## Milestone 1 — Architecture split
 
-- [ ] `src/core/constants.js` — world constants from specs: seed, chunk size, tile size, load radius.
-- [ ] `src/core/random.js` — deterministic hash/random/noise utilities.
-- [ ] `src/world/biomes.js` — biome definitions and thresholds.
-- [ ] `src/world/tile-stack.js` — layer-stack tile records.
-- [ ] `src/world/chunk.js` — chunk structure and coordinate helpers.
-- [ ] `src/world/chunk-compiler.js` — simulation-to-render compile pass.
-- [ ] `src/world/object-placement.js` — deterministic terrain object placement.
-- [ ] `src/render/canvas-renderer.js` — renderer projection only.
-- [ ] `src/player.js` — player state and movement.
-- [ ] `src/input.js` — input state.
-- [ ] `src/main.js` — orchestration only.
+- [x] `src/core/constants.js` — world constants from specs: seed, chunk size, tile size, load radius.
+- [x] `src/core/random.js` — deterministic hash/random/noise utilities.
+- [x] `src/world/biomes.js` — biome definitions and thresholds.
+- [x] `src/world/tile-stack.js` — layer-stack tile records.
+- [x] `src/world/chunk.js` — chunk structure and coordinate helpers.
+- [x] `src/world/chunk-compiler.js` — simulation-to-render compile pass.
+- [x] `src/world/object-placement.js` — deterministic terrain object placement.
+- [x] `src/render/canvas-renderer.js` — renderer projection only.
+- [x] `src/player.js` — player state and movement.
+- [x] `src/input.js` — input state.
+- [x] `src/main.js` — orchestration only.
 
 ## Milestone 2 — Godot reference extraction
 
