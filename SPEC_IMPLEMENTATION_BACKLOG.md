@@ -66,6 +66,7 @@ The first playable slice exists, but it is a scaffold. The next work must turn i
 - [x] Add chunk compile job queue.
 - [x] Move chunk compilation into Web Workers.
 - [ ] Add render batching/atlas projection for terrain and objects.
+- [x] Add first procedural layered terrain painter for richer ground projection.
 
 ## Current implementation caveat
 

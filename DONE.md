@@ -76,3 +76,10 @@
   - Updated `world-seed` to work safely inside workers without `window.localStorage`.
   - Updated HUD to show worker count, pending jobs, and ready chunk cache.
   - Marked worker/job-queue performance backlog items complete.
+- Began visual upgrade from colored pixels to layered procedural terrain:
+  - Read visual quality, terrain shading, and runtime compositor specs.
+  - Added `src/render/palette.js` with biome-specific multi-color palettes.
+  - Added `src/render/tile-painter.js` for procedural layered terrain: base material, micro-variation, biome-specific detail marks, water glints, grass/leaf litter, sand flecks, and stone marks.
+  - Updated `canvas-renderer` to use the tile painter instead of flat biome rectangles.
+  - Kept elevation/slope lighting and depth effects layered over the richer terrain projection.
+  - Adjusted overmap sampling/shading to reduce static-noise appearance and improve landform coherence.

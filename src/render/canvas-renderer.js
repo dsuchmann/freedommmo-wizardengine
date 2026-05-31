@@ -2,6 +2,7 @@ import { WORLD } from '../core/constants.js';
 import { getWorldSeed } from '../core/world-seed.js';
 import { floorDiv } from '../world/chunk.js';
 import { auditBiomesAround } from '../world/biome-audit.js';
+import { paintTerrainTile, shade, tint } from './tile-painter.js';
 
 export class CanvasRenderer {
   constructor(canvas, statsElement) {
@@ -49,13 +50,17 @@ export class CanvasRenderer {
         const south = ly < WORLD.chunkSize - 1 ? chunk.renderTiles[(ly + 1) * WORLD.chunkSize + lx].elevation : renderTile.elevation;
         const slope = ((renderTile.elevation - east) * sun.shadowX + (renderTile.elevation - south) * sun.shadowY) * 1.8;
         const contour = Math.floor(renderTile.elevation * 18) !== Math.floor((renderTile.elevation - 0.012) * 18) ? 0.10 : 0;
-        const depthDelta = focusTile.climate.elevation - renderTile.elevation;
-        const depthFade = Math.max(0, depthDelta - 0.08) * 0.55;
-        ctx.fillStyle = tint(shade(renderTile.color, (renderTile.elevation - 0.5) * 0.30 + slope + contour + depthFade), sun.tint, sun.ambient);
+        const tile = chunk.tiles[ly * WORLD.chunkSize + lx];
         const sx = Math.floor(tx * tilePx - camX);
         const sy = Math.floor(ty * tilePx - camY - elevationLift(renderTile.elevation) * camera.zoom);
         const tileSize = Math.ceil(tilePx);
-        ctx.fillRect(sx, sy, tileSize, tileSize + Math.ceil(elevationLift(renderTile.elevation) * 0.35 * camera.zoom));
+        paintTerrainTile(ctx, tile, sx, sy, tileSize, sun, focusTile.climate.elevation);
+        if (slope + contour > 0.015) {
+          ctx.fillStyle = `rgba(255,255,220,${Math.min(0.18, slope + contour)})`;
+          ctx.fillRect(sx, sy, tileSize, Math.max(1, tileSize * 0.18));
+        }
+        ctx.fillStyle = `rgba(0,0,0,${Math.max(0, -slope) * 0.18})`;
+        ctx.fillRect(sx, sy + tileSize * 0.75, tileSize, Math.max(1, tileSize * 0.25));
       }
     }
 
@@ -166,31 +171,3 @@ function elevationLift(elevation) {
   return Math.max(0, elevation - 0.35) * 18;
 }
 
-function tint(color, tintColor, ambient) {
-  const rgb = parseRgb(color);
-  return `rgb(${clamp(rgb.r * tintColor.r * ambient)},${clamp(rgb.g * tintColor.g * ambient)},${clamp(rgb.b * tintColor.b * ambient)})`;
-}
-
-function parseRgb(color) {
-  if (color.startsWith('rgb')) {
-    const parts = color.match(/\d+/g).map(Number);
-    return { r: parts[0], g: parts[1], b: parts[2] };
-  }
-  const n = parseInt(color.slice(1), 16);
-  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
-}
-
-function clamp(value) {
-  return Math.max(0, Math.min(255, value | 0));
-}
-
-function shade(hex, amount) {
-  const n = parseInt(hex.slice(1), 16);
-  let r = (n >> 16) & 255;
-  let g = (n >> 8) & 255;
-  let b = n & 255;
-  r = Math.max(0, Math.min(255, r + amount * 255));
-  g = Math.max(0, Math.min(255, g + amount * 255));
-  b = Math.max(0, Math.min(255, b + amount * 255));
-  return `rgb(${r | 0},${g | 0},${b | 0})`;
-}

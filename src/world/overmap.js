@@ -54,11 +54,13 @@ export class OvermapController {
       for (let px = 0; px < this.size; px++) {
         const cx = pcx + px - half;
         const cy = pcy + py - half;
-        const wx = Math.floor(cx * WORLD.chunkSize + WORLD.chunkSize / 2);
-        const wy = Math.floor(cy * WORLD.chunkSize + WORLD.chunkSize / 2);
+        const wx = Math.floor((cx * WORLD.chunkSize + WORLD.chunkSize / 2) / 8) * 8;
+        const wy = Math.floor((cy * WORLD.chunkSize + WORLD.chunkSize / 2) / 8) * 8;
         const sample = classifyBiome(wx, wy);
         const rgb = hexToRgb(sample.definition.color);
-        const hill = Math.max(-35, Math.min(45, (sample.climate.elevation - 0.5) * 95));
+        const east = classifyBiome(wx + WORLD.chunkSize, wy).climate.elevation;
+        const south = classifyBiome(wx, wy + WORLD.chunkSize).climate.elevation;
+        const hill = Math.max(-35, Math.min(45, (sample.climate.elevation - 0.5) * 80 + (sample.climate.elevation - east) * 120 + (sample.climate.elevation - south) * 90));
         const index = (py * this.size + px) * 4;
         image.data[index] = clamp(rgb.r + hill);
         image.data[index + 1] = clamp(rgb.g + hill);
