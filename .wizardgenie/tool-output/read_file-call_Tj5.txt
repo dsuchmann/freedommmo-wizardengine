@@ -1,0 +1,174 @@
+File: specs/2026-05-25-layer-architecture-spec.md (172 lines)
+
+1| # Layer Architecture Specification
+2| 
+3| > Established 2026-05-25. This is the authoritative reference for the rendering layer system.
+4| > All implementation must conform to this spec. Do not re-derive — reference this document.
+5| 
+6| ## Core Principle: Animation Cel Model
+7| 
+8| The world is composed like traditional animation cels — transparent sheets stacked on top of each other. Each layer is a separate sheet. Some sheets are fully painted (opaque), most have sparse content with transparency showing layers beneath.
+9| 
+10| The player sees one composite image. We know it's 8 separate layers.
+11| 
+12| ## Layer Stack
+13| 
+14| | Z | Layer | Blend Mode | Coverage | Purpose |
+15| |---|-------|-----------|----------|---------|
+16| | -2 | **Terrain** | Opaque fill | 100% of tiles | Base color — solid green/brown/blue/gray. Every pixel covered. |
+17| | -1 | **Shading** | Multiply | 100% of tiles | Elevation shadows, hillshade, ambient occlusion. Darkens/lightens terrain beneath. Never fully opaque. |
+18| | 0 | **Water** | Opaque where present | Sparse (~15-25%) | Rivers, lakes, ocean. Replaces terrain visually. Transparent elsewhere. Animated (ripple frames). |
+19| | 1 | **Ground Detail** | Transparent overlay | Dense (~60-80%) | Grass blades, pebbles, fallen leaves, sand ripples, moss patches. You see terrain between them. |
+20| | 2 | **Paths/Roads** | Opaque where present | Sparse (~5-10%) | Dirt trails, cobblestone roads, bridges. Covers terrain + ground detail where path exists. |
+21| | 3 | **Buildings** | Opaque where present | Sparse (~3-8%) | Floors, walls, doors, windows, interior furniture. Covers everything beneath. |
+22| | 4-5 | **Objects** | Transparent sprites | Moderate (~20-40%) | Trees, bushes, rocks, signs, wells, carts, flowers, branches. Sprites have transparent backgrounds. Y-sorted (front overlaps back). |
+23| | 6 | **Roofs** | Conditional alpha | Sparse (building footprints only) | Building canopies. Opaque normally, alpha-fades when player enters building. |
+24| | 7 | **Lighting** | Multiply/Additive | 100% of tiles | Day/night tint, torchlight radii, point light glow. Tints everything beneath. Never fully opaque. |
+25| 
+26| ## Blend Mode Definitions
+27| 
+28| - **Opaque fill**: Every pixel in this layer is drawn. Nothing beneath is visible.
+29| - **Opaque where present**: Where a tile exists on this layer, it fully covers what's beneath. Where no tile exists, the layer is invisible (pass-through).
+30| - **Transparent overlay**: Sprites/tiles are placed on this layer but have transparent backgrounds. You see through to all layers beneath between the drawn pixels.
+31| - **Multiply**: Darkens the composite beneath. White = no effect, black = full shadow. Used for lighting/shading.
+32| - **Additive**: Brightens the composite beneath. Black = no effect. Used for light sources.
+33| - **Conditional alpha**: Normally opaque, but fades to transparent based on game state (e.g., player enters building).
+34| 
+35| ## Layer -2: Terrain (Detail)
+36| 
+37| ### What it IS
+38| 
+39| A smooth continuous field of three values per tile, rendered as opaque colored tiles:
+40| 
+41| | Per-tile value | Range | Source |
+42| |---|---|---|
+43| | Elevation | 0.0 – 1.0 | Perlin noise |
+44| | Temperature | 0.0 – 1.0 | Perlin noise + latitude gradient |
+45| | Precipitation | 0.0 – 1.0 | Perlin noise + elevation influence |
+46| 
+47| Derived values (computed from the above):
+48| - **Slope**: magnitude of elevation gradient between neighbors
+49| - **Fertility**: derived from precipitation + temperature + slope
+50| - **Ocean distance**: BFS from ocean cells
+51| - **Water distance**: BFS from river/lake cells
+52| 
+53| ### Biome Labels
+54| 
+55| The continuous values get classified into 15 biome labels for convenience. These are NOT hard visual boundaries — they're indexes that higher layers use to select content.
+56| 
+57| | Biome | Elevation | Temperature | Precipitation | Visual Base |
+58| |---|---|---|---|---|
+59| | Deep Ocean | < 0.15 | — | — | Dark blue |
+60| | Ocean | 0.15–0.25 | — | — | Blue |
+61| | Shallow Water | 0.25–0.32 | — | — | Light blue |
+62| | Beach | 0.32–0.37 | — | — | Tan/yellow |
+63| | Grassland | mid | 0.3–0.6 | 0.3–0.55 | Green |
+64| | Forest | mid | > 0.4 | > 0.55 | Dark green |
+65| | Dense Forest | mid | 0.3–0.6 | > 0.75 | Very dark green |
+66| | Desert | mid-low | > 0.6 | < 0.3 | Sandy yellow |
+67| | Savanna | mid | > 0.6 | 0.2–0.5 | Yellow-green |
+68| | Steppe | mid | 0.3–0.6 | < 0.3 | Brown-green |
+69| | Hills | 0.65–0.82 | — | — | Olive/rocky |
+70| | Mountains | > 0.82 | > 0.3 | — | Gray |
+71| | Tundra | high or cold | < 0.25–0.3 | — | White-blue |
+72| | Taiga | — | 0.15–0.3 | > 0.4 | Dark blue-green |
+73| | Swamp | < 0.5 | > 0.3 | > 0.8 | Murky green |
+74| | Tropical Forest | mid | > 0.6 | > 0.5 | Bright green |
+75| | Volcanic | > 0.6 | > 0.85 | — | Dark red-gray |
+76| | Arctic | — | < 0.15 | — | White |
+77| | Frozen Lake | high | < 0.35 | > 0.4 | Ice blue |
+78| | Mushroom Forest | < 0.5 | > 0.55 | > 0.75 | Purple-green |
+79| 
+80| ### Biome Labels Are Convenience Indexes, Not Boundaries
+81| 
+82| The underlying data is continuous. Two adjacent tiles may have nearly identical temperature/moisture but fall on different sides of a classification threshold. Visually, they should look nearly identical — the transition is smooth via Wang tilesets, not a hard edge.
+83| 
+84| Higher layers query the biome label when they need a quick "what kind of place is this?" answer (e.g., "should I place oak trees or cacti here?"). They can also query the raw floats for finer-grained decisions.
+85| 
+86| ### Elevation as Visual Information
+87| 
+88| Elevation is communicated visually through multiple mechanisms:
+89| - **This layer (Layer -2)**: Tile selection shifts — higher elevation gets rockier, exposed stone at peaks
+90| - **Layer -1 (Shading)**: Hillshade — darker on north-facing slopes, lighter on south-facing
+91| - **Layer 1 (Ground Detail)**: Fewer grass blades on steep slopes, more exposed rock
+92| - **Layer 4-5 (Objects)**: Tree density decreases with elevation, different species at altitude
+93| 
+94| This is TERRAIN elevation (continuous, natural landscape). STRUCTURAL elevation (stairs, second floors, raised platforms) is a separate system on Layer 3.
+95| 
+96| ### What This Layer Does NOT Do
+97| 
+98| - Does not know about buildings, paths, or any man-made content
+99| - Does not carve holes for settlements
+100| - Does not render visual detail (that's Layer 1)
+101| - Does not determine walkability by itself (walkability comes from combining multiple layers)
+102| 
+103| ## How Layers Interact
+104| 
+105| ### Information flows DOWN → UP
+106| 
+107| Lower layers don't know about higher layers. Higher layers READ from lower layers.
+108| 
+109| ```
+110| Layer -2 (Terrain: elevation, temp, precip)
+111|   → Layer -1 reads elevation for shading
+112|   → Layer 0 reads elevation for water placement (below sea level = water)
+113|   → Layer 1 reads biome + fertility for ground detail selection
+114|   → Layer 2 reads terrain for road routing (prefer flat, avoid water)
+115|   → Layer 3 reads terrain for building placement (flat areas, near water, avoid flood zones)
+116|   → Layer 4-5 reads biome for object selection (oaks in forest, cacti in desert)
+117|   → Layer 7 reads elevation for fog density (valleys = foggy)
+118| ```
+119| 
+120| ### Visual compositing flows UP → DOWN (painter's algorithm)
+121| 
+122| Render from bottom to top. Each layer paints over what's beneath based on its blend mode.
+123| 
+124| ### Occlusion rules
+125| 
+126| - Opaque layers HIDE everything beneath them where they have content
+127| - Transparent layers ADD to what's beneath without hiding it
+128| - Building floors (Layer 3) hide terrain (Layer -2) and ground detail (Layer 1)
+129| - But objects (Layer 4-5) near buildings are removed by the SETTLEMENT SYSTEM, not by visual occlusion — you don't place flowers inside a tavern because the system knows not to, not because the floor hides them
+130| 
+131| ## The Grassland Example (All Layers)
+132| 
+133| What the player sees when looking at a grassy hillside with a nearby building:
+134| 
+135| 1. **Layer -2**: Solid green fill (base terrain — every pixel)
+136| 2. **Layer -1**: Subtle darkening on the north slope, slight brightening on south (multiply)
+137| 3. **Layer 0**: Nothing here (no water)
+138| 4. **Layer 1**: Dense grass blade sprites scattered across the green. A few pebbles near the hill crest. (transparent overlay — green shows between blades)
+139| 5. **Layer 2**: A dirt path cutting through (opaque — covers green + grass where it exists)
+140| 6. **Layer 3**: Tavern floor/walls (opaque — covers everything beneath within footprint)
+141| 7. **Layer 4-5**: Wildflowers in the grass. A fallen branch. Three oak trees. A sign by the path. (transparent sprites — y-sorted, you see through to grass between them)
+142| 8. **Layer 6**: Red thatch roof over the tavern (opaque, would alpha-fade if player enters)
+143| 9. **Layer 7**: Warm afternoon tint, torch glow from tavern windows (multiply/additive)
+144| 
+145| Each layer animates independently:
+146| - Grass blades sway (Layer 1)
+147| - Flowers bob slightly (Layer 4)
+148| - Torch light flickers (Layer 7)
+149| - Water ripples if present (Layer 0)
+150| 
+151| ## Design Philosophy
+152| 
+153| ### Layer -2 is primarily INFORMATION, secondarily visual
+154| 
+155| Its main job is providing the continuous terrain data that all other layers query. The visual rendering (solid colored tiles) is a baseline that's mostly hidden by the richer layers above it. But it must cover every pixel — it's the "canvas" that guarantees no gaps.
+156| 
+157| ### Higher layers ENRICH, lower layers INFORM
+158| 
+159| Layer -2 tells Layer 1 "this is grassland with 0.8 fertility" → Layer 1 places dense grass blades.
+160| Layer -2 tells Layer 4 "this is forest with 0.6 moisture" → Layer 4 places oak trees with ferns at their base.
+161| 
+162| ### Additive vs Replacement is per-layer, not per-tile
+163| 
+164| A layer's blend mode is fixed. Ground Detail (Layer 1) is ALWAYS transparent overlay. Buildings (Layer 3) are ALWAYS opaque where present. You don't decide per-tile whether to add or replace — the layer's role determines it.
+165| 
+166| ### The settlement system clears higher layers, not the terrain
+167| 
+168| When a building is placed, the settlement system removes grass blades (Layer 1) and objects (Layer 4-5) from within the footprint. It does NOT modify Layer -2. The terrain data persists beneath the building for:
+169| - Biome context ("the tavern is in a grassland")
+170| - Destruction recovery (if building burns, terrain is revealed)
+171| - Gameplay systems that query terrain regardless of structures
+172| 

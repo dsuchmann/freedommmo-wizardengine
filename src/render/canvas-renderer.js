@@ -69,7 +69,7 @@ export class CanvasRenderer {
 
   hud(chunkStore, player) {
     const tile = chunkStore.tileAt(player.x, player.y);
-    this.statsElement.innerHTML = `WASD / arrows to move<br>seed ${WORLD.seed} · chunks ${chunkStore.chunks.size}<br>tile ${Math.floor(player.x)}, ${Math.floor(player.y)} · chunk ${floorDiv(player.x)}, ${floorDiv(player.y)}<br>biome ${tile.biome} · material ${tile.material}<br>surface ${tile.layers[3].detail}<br>elev ${tile.climate.elevation.toFixed(2)} moist ${tile.climate.moisture.toFixed(2)} heat ${tile.climate.heat.toFixed(2)}`;
+    this.statsElement.innerHTML = `WASD / arrows to move · R reset spawn<br>position autosaves during live edits<br>seed ${WORLD.seed} · chunks ${chunkStore.chunks.size}<br>tile ${Math.floor(player.x)}, ${Math.floor(player.y)} · chunk ${floorDiv(player.x)}, ${floorDiv(player.y)}<br>biome ${tile.biome} · material ${tile.material}<br>surface ${tile.layers[3].detail}<br>elev ${tile.climate.elevation.toFixed(2)} moist ${tile.climate.moisture.toFixed(2)} heat ${tile.climate.heat.toFixed(2)}`;
   }
 }
 

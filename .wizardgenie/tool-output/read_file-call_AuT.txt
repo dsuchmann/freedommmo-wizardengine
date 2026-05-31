@@ -1,0 +1,199 @@
+File: specs/2026-05-27-elevation-cliff-rendering-design.md (197 lines)
+
+1| # Elevation Cliff Rendering System
+2| 
+3| **Date:** 2026-05-27
+4| **Status:** Approved
+5| **Scope:** Replace flat tile rendering with continuous elevation-driven cliff layers, where terrain height is expressed as stacked cliff walls and elevated surface tiles.
+6| 
+7| ## Problem
+8| 
+9| The current hypergraph terrain system selects the correct surface (grass, rock, snow) based on elevation, but renders everything on a single flat plane. A mountain peak and a valley floor sit at the same visual Y position — only the tile color differs. There is no visual topography: no cliffs, no height, no sense of the landscape rising and falling. The world looks like a painted carpet, not terrain.
+10| 
+11| ## Core Model
+12| 
+13| Elevation is continuous (0.0–1.0). Every tile's elevation maps to a visual Y-offset in pixels:
+14| 
+15| ```
+16| visual_y_offset = (elevation - SEA_LEVEL) * PIXELS_PER_UNIT
+17| ```
+18| 
+19| Where `SEA_LEVEL = 0.38` and `PIXELS_PER_UNIT = 512` (tunable). This means:
+20| - A tile at elevation 0.50 renders 61px above sea level
+21| - A tile at elevation 0.80 renders 215px above sea level
+22| - A tile at elevation 1.00 renders 317px above sea level
+23| - A tile at elevation 0.38 (sea level) renders at Y-offset 0
+24| 
+25| There are no fixed "levels" or "buckets." Every tile sits at its exact elevation. The number of visual layers in any given area is determined entirely by the terrain — a flat plain has zero cliff faces, a mountain might have cliff walls hundreds of pixels tall.
+26| 
+27| ## Cliff Walls
+28| 
+29| When adjacent tiles differ in elevation, the gap between them is filled with a **cliff wall** — a vertical textured face visible from the top-down camera.
+30| 
+31| ### Which edges get cliff walls
+32| 
+33| Cliff walls render on the **south and east** edges of elevated tiles. These are the sides visible to a top-down camera with a slight southward perspective (standard for 2D RPGs). North and west edges are occluded by the tile's own surface.
+34| 
+35| For a tile at (x, y) with elevation E:
+36| - **South wall:** if tile at (x, y+1) has elevation E_south < E, draw a cliff wall of height `(E - E_south) * PIXELS_PER_UNIT` pixels on the south edge
+37| - **East wall:** if tile at (x+1, y) has elevation E_east < E, draw a cliff wall of height `(E - E_east) * PIXELS_PER_UNIT` pixels on the east edge
+38| 
+39| ### Cliff wall composition
+40| 
+41| Each cliff wall is assembled from three tile pieces:
+42| 
+43| | Piece | Size | Purpose |
+44| |-------|------|---------|
+45| | `cliff_top` | 32×8px | Overhang where surface meets wall — grass roots, dirt edge, snow lip |
+46| | `cliff_mid` | 32×32px | Repeating wall face — stone layers, dirt strata, ice. Tiles vertically. |
+47| | `cliff_bot` | 32×8px | Base where wall meets lower ground — shadow, rubble, moss |
+48| 
+49| For a cliff wall of height H pixels:
+50| 1. Draw `cliff_top` (8px)
+51| 2. Draw `cliff_mid` repeated `floor((H - 16) / 32)` times (middle fill)
+52| 3. Draw remaining fractional `cliff_mid` height (partial tile)
+53| 4. Draw `cliff_bot` (8px)
+54| 
+55| Minimum cliff height to render: 4px (below this, the elevation difference is too small to see).
+56| 
+57| ### Cliff face variants per surface
+58| 
+59| Each of the 13 surface types needs its own cliff face set, because the wall should match the terrain it's part of:
+60| 
+61| | Surface | Cliff face appearance |
+62| |---------|----------------------|
+63| | lush_grass | Dirt/soil with grass roots hanging over the top edge |
+64| | golden_sand | Sandy crumbling cliff face with exposed rock |
+65| | forest_floor | Dark earth with tree roots and moss |
+66| | grey_rock | Layered stone with mineral veins |
+67| | snow | Packed snow over ice with frozen dirt |
+68| | frozen_earth | Permafrost layers with ice crystals |
+69| | glacial_ice | Blue-white ice face with pressure cracks |
+70| | volcanic_rock | Dark basalt with glowing lava veins |
+71| | swamp_mud | Wet mud layers with standing water seeping out |
+72| | dry_grass | Rocky soil with sparse root systems |
+73| | dark_humus | Very dark decomposing layers with fungal growth |
+74| | ocean_water | (no cliff face — water fills from below) |
+75| | mystic_crystal | Glowing purple crystal cross-section |
+76| 
+77| That's 12 cliff face sets × 3 pieces = 36 cliff tiles, plus corner and diagonal variants are required for V1:
+78| 
+79| **Corner variants** (where two cliff walls meet at 90°):
+80| - Inner corner (concave) — south wall meets east wall from adjacent tiles
+81| - Outer corner (convex) — cliff wraps around a protruding ledge
+82| 
+83| **Diagonal variants** (where elevation changes diagonally):
+84| - SW-NE diagonal cliff face
+85| - SE-NW diagonal cliff face
+86| 
+87| Each surface needs: 3 straight pieces + 2 corner pieces + 2 diagonal pieces = **7 cliff tiles per surface**.
+88| 
+89| Total: 12 surfaces × 7 pieces = **84 cliff tiles** to generate via PixelLab.
+90| 
+91| ## Render Order
+92| 
+93| Tiles render back-to-front using a **painter's algorithm** sorted by (world_y ascending, elevation ascending):
+94| 
+95| 1. **Water plane** at sea-level Y-offset (if any water visible in the viewport)
+96| 2. For each row (north to south):
+97|    a. For each tile in the row (sorted by elevation ascending):
+98|       - Draw cliff walls (south and east) descending from this tile to lower neighbors
+99|       - Draw surface tile at this tile's visual Y-offset
+100| 3. Higher tiles naturally occlude lower tiles' cliff walls
+101| 
+102| This ensures:
+103| - Cliffs face the camera (south-facing walls visible)
+104| - Higher terrain covers lower terrain's walls
+105| - Water sits at the bottom of basins
+106| 
+107| ## Water
+108| 
+109| Water is the floor at elevation 0.38 (sea level):
+110| 
+111| - Any tile with elevation < SEA_LEVEL is submerged — the water surface renders at the sea-level Y plane
+112| - The ocean_water surface tile renders ON the water plane for submerged tiles
+113| - Coastlines are natural cliff faces: land tiles at elevation > SEA_LEVEL have cliff walls descending to the water plane
+114| - Lakes are terrain depressions below sea level
+115| - Rivers are narrow channels cut below surrounding terrain elevation
+116| 
+117| This naturally fixes the overmap/render mismatch — areas the overmap shows as blue (low elevation) will visually be water basins with terrain rising out of them.
+118| 
+119| ## Camera
+120| 
+121| - **Follows player** at their visual position (grid position + elevation Y-offset)
+122| - **Zoom-out at height**: camera zoom decreases slightly as player elevation increases, giving a wider view from mountaintops. Scale factor: `zoom = base_zoom - (elevation - SEA_LEVEL) * ZOOM_ELEVATION_FACTOR`
+123| - **Bokeh/depth-of-field**: terrain below the player's current elevation gets progressively blurred. Already partially implemented — extend to use the new elevation offset system.
+124| 
+125| ## Player Movement (Deferred)
+126| 
+127| Not in scope for this spec, but the elevation system enables:
+128| 
+129| - **Walking**: traverse gentle slopes where adjacent tile elevation difference < MAX_WALK_SLOPE
+130| - **Climbing**: BotW/Genshin-style wall climbing on cliff faces (stamina-based)
+131| - **Gliding**: jump off cliff edges, trade height for horizontal distance
+132| - **Swimming**: enter water at sea level
+133| 
+134| These will be designed in a separate spec.
+135| 
+136| ## PIXELS_PER_UNIT Tuning
+137| 
+138| The single most important constant. Starting value: **512**.
+139| 
+140| | Scenario | Elevation diff | Visual height |
+141| |----------|---------------|---------------|
+142| | Gentle slope | 0.02 | 10px (subtle step) |
+143| | Small hill | 0.05 | 26px (visible rise) |
+144| | Significant hill | 0.15 | 77px (~2.4 tile heights) |
+145| | Mountain from plains | 0.40 | 205px (~6.4 tile heights) |
+146| | Full sea-to-peak | 0.62 | 317px (~10 tile heights) |
+147| 
+148| This is data, not code. Tunable at runtime for visual QA.
+149| 
+150| ## Architecture
+151| 
+152| ### Modified Components
+153| 
+154| **`LayeredChunkRenderer`** — Major rewrite. Instead of painting one flat image per chunk, it now:
+155| 1. Calculates visual Y-offset per tile from elevation
+156| 2. Creates cliff wall sprites between tiles with different elevations
+157| 3. Renders surface tiles at their elevated Y positions
+158| 4. Sorts everything back-to-front for correct occlusion
+159| 
+160| **`CleanWorld.gd`** — Camera system updates:
+161| - Track player elevation for Y-offset
+162| - Zoom-out factor based on elevation
+163| - Bokeh intensity based on elevation delta between player and terrain
+164| 
+165| ### New Components
+166| 
+167| **`CliffTileLoader`** — Loads cliff face tile assets (cliff_top, cliff_mid, cliff_bot per surface type). Similar to LayeredTilesetLoader but for vertical cliff tiles.
+168| 
+169| **`ElevationRenderer`** — Core rendering logic extracted from LayeredChunkRenderer. Given a chunk's elevation data, produces the sorted draw list of (surface tiles + cliff walls + water) with correct Y-offsets and z-ordering.
+170| 
+171| ### New Assets
+172| 
+173| - `assets/catalog/terrain_v3/cliffs/{surface_id}/cliff_top.png` (32×8)
+174| - `assets/catalog/terrain_v3/cliffs/{surface_id}/cliff_mid.png` (32×32)
+175| - `assets/catalog/terrain_v3/cliffs/{surface_id}/cliff_bot.png` (32×8)
+176| - ~48 total cliff tile images via PixelLab
+177| 
+178| ### Unchanged Components
+179| 
+180| - `ElevationGradientTable` — still provides surface_at(biome, elevation)
+181| - `HypergraphTileResolver` — still resolves surface + Wang index per tile
+182| - `LayeredTilesetLoader` — still loads surface and transition Wang tiles
+183| - `ChunkStreamer` — still streams chunks, emits chunk_loaded
+184| - `NativeChunkCompiler` (C++) — still produces elevation + biome data
+185| 
+186| ## Performance Considerations
+187| 
+188| Each chunk is 64×64 = 4,096 tiles. In the worst case (mountainous terrain), each tile could have south and east cliff walls. That's up to 8,192 cliff wall sprites per chunk plus 4,096 surface sprites = 12,288 draw calls per chunk. With a 7×7 chunk grid visible, that's up to 600K draw calls.
+189| 
+190| This will require optimization:
+191| - **Batch cliff walls** into chunk-level images (like the current surface image approach)
+192| - **Skip tiny cliffs** below the 4px minimum threshold
+193| - **LOD**: at far zoom, render cliff walls as simple dark lines instead of textured tiles
+194| - **Frustum culling**: only render cliff walls visible in the viewport
+195| 
+196| The GDScript prototype will be slow. This is a strong candidate for C++ migration after the visual design is validated.
+197| 

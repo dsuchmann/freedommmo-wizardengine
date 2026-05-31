@@ -1,0 +1,182 @@
+File: specs/2026-05-26-asset-pipeline-spec.md (180 lines)
+
+1| # Asset Pipeline Spec — Layered Cel-Animation Terrain System
+2| 
+3| **Date:** 2026-05-26
+4| **Status:** Draft
+5| **Scope:** How terrain assets are generated, organized, quality-gated, and cataloged.
+6| 
+7| ## Core Principle: Cel-Animation Layering
+8| 
+9| Every visible tile is composed of 5 semi-transparent layers stacked together, like animation cels. Each layer is independently swappable based on tile state (pristine, disturbed, burning, etc.). Layers composite at runtime via z-ordered Sprite2D nodes or shader blending.
+10| 
+11| Nothing is a single opaque image. Everything decomposes into atomic layers.
+12| 
+13| ## The 5 Sub-Layers (per biome)
+14| 
+15| | Sub-Layer | Z | Content | Opacity | Examples |
+16| |-----------|---|---------|---------|----------|
+17| | **L1: Base Ground** | 0 | Opaque ground surface — the foundational terrain | 100% opaque | Dirt, sand, stone, snow, mud, lava rock, crystal |
+18| | **L2: Ground Detail** | 1 | Surface texture patterns overlaid on base | Semi-transparent | Cracks, moss patches, puddles, root networks, frost patterns |
+19| | **L3: Vegetation** | 2 | Growing things attached to the ground | Semi-transparent | Grass blades, flowers, mushrooms, lichen, coral, crystals |
+20| | **L4: Scatter Objects** | 3 | Small loose items on the surface | Semi-transparent | Pebbles, shells, bones, fallen leaves, embers, ice shards |
+21| | **L5: Atmospheric** | 4 | Environmental particle effects near ground | Semi-transparent | Dust motes, mist wisps, pollen, volcanic ash, magical sparkles |
+22| 
+23| Not every biome uses all 5 layers. Ocean might only use L1 + L5 (water + foam). Desert might use L1 + L2 + L4 (sand + ripples + rocks). But the architecture supports all 5 everywhere.
+24| 
+25| ## Tile States
+26| 
+27| Each tile position tracks a state. Each state maps to different frames per layer:
+28| 
+29| | State | Trigger | Duration | Visual Effect |
+30| |-------|---------|----------|---------------|
+31| | **pristine** | Default | Permanent until changed | Normal appearance |
+32| | **disturbed** | Player walks through | 3-5 seconds | L3 vegetation sways/parts, L4 scatters shift |
+33| | **trampled** | Repeated foot traffic | 30-60 seconds | L3 flattened, L2 shows wear path |
+34| | **dug** | Dig action | Persistent | L1 shows hole, L2-L5 removed |
+35| | **burning** | Fire event | 5-10 seconds | L3-L5 replaced with flame frames, L1 darkens |
+36| | **burned** | After burning completes | Persistent until regrow | L1 scorched, L2 ash, L3-L5 gone |
+37| | **wet** | Rain/splash | 15-30 seconds | L2 shows puddles/sheen, L5 shows droplets |
+38| | **frozen** | Cold/magic | Persistent until thaw | L2 frost overlay, L3 ice-coated, L5 ice crystals |
+39| | **recovering** | After disturbed/trampled | Transition | Gradual return to pristine frames |
+40| 
+41| **Phase 1 generates pristine state only.** Architecture supports all states from day one.
+42| 
+43| ## Wang Tileset Format
+44| 
+45| Each layer is a standard 16-tile Wang tileset (corner-based autotiling). This means:
+46| - 16 tiles per layer per state per biome
+47| - Each tile is 32x32 pixels
+48| - L1 is FORMAT_RGBA8 fully opaque
+49| - L2-L5 are FORMAT_RGBA8 with transparency (alpha channel matters)
+50| 
+51| ## PixelLab Generation Rules
+52| 
+53| ### Self-Tilesets (base terrain)
+54| - Use `create_topdown_tileset` with `tile_size: {width: 32, height: 32}`
+55| - L1: `lower_description` = base terrain, `upper_description` = same terrain variant (self-transition)
+56| - L2-L5: Generate as separate tilesets with transparent backgrounds
+57|   - Use very specific prompts: "scattered small pebbles and stones on transparent background, pixel art, top-down view"
+58|   - Set `detail: "highly detailed"` and `shading: "detailed shading"`
+59| 
+60| ### Transition Tilesets
+61| - Transitions only apply to L1 (base ground)
+62| - Use `lower_base_tile_id` / `upper_base_tile_id` to chain with existing base tiles
+63| - L2-L5 transitions are handled by alpha blending at runtime (no dedicated transition tilesets needed)
+64| 
+65| ### Quality Gates
+66| Before accepting a generated tileset:
+67| 1. **Visual coherence**: Does it look like the biome it represents?
+68| 2. **Tileability**: Do tiles connect seamlessly at Wang boundaries?
+69| 3. **Scale consistency**: Are details appropriately sized for 32x32?
+70| 4. **Transparency correctness**: For L2-L5, is the background truly transparent (not colored)?
+71| 5. **Distinctiveness**: Does this biome look different from every other biome?
+72| 
+73| If a tileset fails any gate, regenerate. Don't compromise.
+74| 
+75| ## Catalog Structure
+76| 
+77| ```
+78| assets/catalog/terrain/
+79|   _manifest.json              # Master index of all biomes and their layers
+80|   ocean/
+81|     L1_base/
+82|       manifest.json           # PixelLab tileset ID, generation params, quality status
+83|       wang_0.png ... wang_15.png
+84|     L2_detail/
+85|       manifest.json
+86|       wang_0.png ... wang_15.png
+87|     L3_vegetation/
+88|       ...
+89|     L5_atmospheric/
+90|       ...
+91|     transitions/
+92|       ocean_to_beach/
+93|         manifest.json
+94|         wang_0.png ... wang_15.png
+95|   grassland/
+96|     L1_base/
+97|       ...
+98|     L2_detail/
+99|       ...
+100|     ...
+101|   volcanic/
+102|     L1_base/
+103|       ...
+104|     ...
+105| ```
+106| 
+107| ### Master Manifest (_manifest.json)
+108| 
+109| ```json
+110| {
+111|   "version": "2.0",
+112|   "tile_size": 32,
+113|   "layer_model": "cel_animation",
+114|   "biomes": {
+115|     "ocean": {
+116|       "layers": ["L1_base", "L5_atmospheric"],
+117|       "transitions": ["ocean_to_beach"],
+118|       "pixellab_ids": {
+119|         "L1_base": "9501a5de-...",
+120|         "L5_atmospheric": null
+121|       },
+122|       "quality_status": "approved"
+123|     },
+124|     "grassland": {
+125|       "layers": ["L1_base", "L2_detail", "L3_vegetation", "L4_scatter", "L5_atmospheric"],
+126|       "transitions": ["grassland_to_desert", "grassland_to_forest", "..."],
+127|       "pixellab_ids": { ... },
+128|       "quality_status": "pending"
+129|     }
+130|   }
+131| }
+132| ```
+133| 
+134| ### Per-Layer Manifest
+135| 
+136| ```json
+137| {
+138|   "biome": "grassland",
+139|   "layer": "L1_base",
+140|   "pixellab_tileset_id": "ac280f19-...",
+141|   "base_tile_ids": {
+142|     "lower": "abc-123",
+143|     "upper": "def-456"
+144|   },
+145|   "generation_prompt": {
+146|     "lower_description": "lush green grass with individual blade detail and natural color variation",
+147|     "upper_description": "lush green grass with slightly different blade pattern and small daisies"
+148|   },
+149|   "quality_status": "approved",
+150|   "states": {
+151|     "pristine": { "frames": 1, "downloaded": true },
+152|     "disturbed": { "frames": 3, "downloaded": false },
+153|     "burning": { "frames": 4, "downloaded": false }
+154|   }
+155| }
+156| ```
+157| 
+158| ## Reuse Policy
+159| 
+160| Existing PixelLab generations that meet quality gates are reused as L1 base layers:
+161| - Volcanic (`81944792`) — excellent, use as L1
+162| - Ocean variants — pick best, use as L1
+163| - Grassland variants — pick best, use as L1
+164| - Desert variants — pick best, use as L1
+165| 
+166| Everything else (L2-L5, missing biomes, transitions) is generated fresh with this spec's naming and organization rules.
+167| 
+168| Existing non-terrain assets (fences, windows, doors, characters, objects) are preserved in their current catalog locations. They're separate from terrain layers and will be used by the object/building systems.
+169| 
+170| ## Download Pipeline
+171| 
+172| After generating on PixelLab:
+173| 1. Call `get_topdown_tileset` to verify completion and quality
+174| 2. Download all 16 wang tile PNGs into the correct `assets/catalog/terrain/{biome}/{layer}/` directory
+175| 3. Write the per-layer manifest.json
+176| 4. Update the master _manifest.json
+177| 5. Git commit with descriptive message
+178| 
+179| All downloads use a Python script (`tools/download_tileset.py`) that handles the full pipeline.
+180| 

@@ -1,8 +1,13 @@
 export class Player {
-  constructor() {
+  constructor(position = { x: 0, y: 0 }) {
+    this.x = position.x;
+    this.y = position.y;
+    this.speed = 9;
+  }
+
+  reset() {
     this.x = 0;
     this.y = 0;
-    this.speed = 9;
   }
 
   update(input, dt) {

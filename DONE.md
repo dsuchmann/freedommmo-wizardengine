@@ -28,3 +28,8 @@
   - Added `src/render/canvas-renderer.js` for renderer projection and HUD.
   - Added `src/input.js` and `src/player.js`.
   - Slimmed `src/main.js` to orchestration only.
+- Fixed live-edit/player reset issue:
+  - Added `src/core/save.js` for local player position persistence.
+  - Player now restores position after preview reloads.
+  - Pressing `R` intentionally clears saved position and returns to spawn.
+  - Updated HUD and blocker notes with preview/error-reporting workflow.

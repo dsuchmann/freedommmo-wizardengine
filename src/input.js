@@ -1,8 +1,21 @@
 export class InputState {
   constructor(target = window) {
     this.keys = new Set();
-    target.addEventListener('keydown', event => this.keys.add(event.key.toLowerCase()));
+    this.pressedThisFrame = new Set();
+    target.addEventListener('keydown', event => {
+      const key = event.key.toLowerCase();
+      if (!this.keys.has(key)) this.pressedThisFrame.add(key);
+      this.keys.add(key);
+    });
     target.addEventListener('keyup', event => this.keys.delete(event.key.toLowerCase()));
+  }
+
+  wasPressed(key) {
+    return this.pressedThisFrame.has(key.toLowerCase());
+  }
+
+  endFrame() {
+    this.pressedThisFrame.clear();
   }
 
   axis() {
