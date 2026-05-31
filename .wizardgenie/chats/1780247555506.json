@@ -791,5 +791,150 @@
         "text": "Done."
       }
     ]
+  },
+  {
+    "role": "user",
+    "content": "All right. most of the Godot project has been brought in as a reference. You'll need to read the entire code base and review all of the assets.\n\nIt's just under a gigabyte of information. It's copying now. It'll take a little bit of time."
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "<plan>\nI’ll check the reference folder structure, create an intake plan for reviewing a very large Godot project safely, and add ignore rules so generated inventory files don’t pollute the project.\n</plan>\n"
+      },
+      {
+        "type": "tool_use",
+        "id": "call_HrsKt3NiUcTyJW8pbsU0CgOc",
+        "name": "recall_memory",
+        "input": {
+          "query": "FreedomMMO Godot reference codebase import review strategy",
+          "limit": 5
+        }
+      },
+      {
+        "type": "tool_use",
+        "id": "call_Dg70ViHfKrieBhwoxGw44ylz",
+        "name": "list_directory",
+        "input": {
+          "path": "reference/godot"
+        }
+      },
+      {
+        "type": "tool_use",
+        "id": "call_ph6z8U0cBzpTKziMUveHPzKL",
+        "name": "read_file",
+        "input": {
+          "path": ".gitignore"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_HrsKt3NiUcTyJW8pbsU0CgOc",
+        "content": "Memory system not initialized for this project (0 memories stored). Skip recall_memory for this turn and work from the project files directly.",
+        "is_error": false
+      },
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_Dg70ViHfKrieBhwoxGw44ylz",
+        "content": "reference/godot (17 items):\n\n[file] .gitkeep\n[dir] bin\n[dir] config\n[dir] data\n[dir] docs\n[dir] gdextension\n[dir] generated\n[dir] previousContext\n[dir] regions\n[dir] resources\n[dir] scenes\n[dir] screenshots\n[dir] scripts\n[dir] shaders\n[dir] tests\n[dir] tools\n[dir] user",
+        "is_error": false
+      },
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_ph6z8U0cBzpTKziMUveHPzKL",
+        "content": "File: .gitignore (6 lines)\n\n1| node_modules/\n2| dist/\n3| .cache/\n4| *.log\n5| .DS_Store\n6| ",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_b0lzigXFOT07nCJoHfocaMiu",
+        "name": "create_checkpoint",
+        "input": {
+          "message": "Before adding large Godot reference intake plan and ignore rules"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_b0lzigXFOT07nCJoHfocaMiu",
+        "content": "Checkpoint requested: Before adding large Godot reference intake plan and ignore rules",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_FtdrB9iCNoCMHtkuOphbl6oR",
+        "name": "edit_file",
+        "input": {
+          "path": ".gitignore",
+          "old_text": "node_modules/\ndist/\n.cache/\n*.log\n.DS_Store\n",
+          "new_text": "node_modules/\ndist/\n.cache/\n*.log\n.DS_Store\n\n# Local analysis outputs for large reference imports\nreference_inventory.json\nreference_inventory.txt\nspecs_combined.tmp.txt\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_FtdrB9iCNoCMHtkuOphbl6oR",
+        "content": "Applied edit to .gitignore",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_PUzv2ViX4e7TJ76S6V2wLGKK",
+        "name": "write_file",
+        "input": {
+          "path": "REFERENCE_INTAKE_PLAN.md",
+          "content": "# Godot Reference Intake Plan\n\nThe Godot project under `reference/godot/` is large and should be treated as reference material, not as code to port directly.\n\n## Current observed top-level folders\n\n- `bin/`\n- `config/`\n- `data/`\n- `docs/`\n- `gdextension/`\n- `generated/`\n- `previousContext/`\n- `regions/`\n- `resources/`\n- `scenes/`\n- `screenshots/`\n- `scripts/`\n- `shaders/`\n- `tests/`\n- `tools/`\n- `user/`\n\n## Intake strategy\n\nBecause the reference import is close to 1GB, review must be staged:\n\n1. Build a file inventory by extension, size, and directory.\n2. Prioritize readable source/config files over binary/generated assets.\n3. Identify overmap/worldgen/chunk/biome/noise code first.\n4. Extract algorithms, thresholds, data formats, and asset naming conventions.\n5. Review asset folders by manifest/inventory rather than opening every binary file.\n6. Create a Wizard Genie-native implementation plan from extracted facts.\n\n## Priority targets\n\nHighest priority:\n\n- Overmap generation.\n- Seed/noise utilities.\n- Biome and climate classification.\n- Chunk coordinate math.\n- Terrain compiler/render projection.\n- Asset manifests/catalogs.\n\nMedium priority:\n\n- Tile/object placement systems.\n- Pathfinding/walkability.\n- Runtime compositor.\n- Lighting/shaders.\n- Tests that reveal intended behavior.\n\nLow priority initially:\n\n- Screenshots.\n- Generated output caches.\n- Build binaries.\n- Godot editor/user state.\n- Old conversation/context dumps unless needed.\n\n## Rule\n\nUse Godot implementation details as evidence, but rebuild horizontally and cleanly in Wizard Genie.\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_PUzv2ViX4e7TJ76S6V2wLGKK",
+        "content": "Written 65 lines to REFERENCE_INTAKE_PLAN.md",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Done. I see the Godot reference folder and added a staged intake plan plus ignore rules for local analysis outputs."
+      }
+    ]
   }
 ]

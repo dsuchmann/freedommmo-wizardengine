@@ -3,3 +3,8 @@ dist/
 .cache/
 *.log
 .DS_Store
+
+# Local analysis outputs for large reference imports
+reference_inventory.json
+reference_inventory.txt
+specs_combined.tmp.txt
