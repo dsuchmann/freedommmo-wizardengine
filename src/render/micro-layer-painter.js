@@ -1,4 +1,5 @@
 import { tint } from './tile-painter.js';
+import { jitteredScatter, organicPresence } from '../world/scatter.js';
 
 export function paintMicroLayers(ctx, tile, sx, sy, size, sun, timeSeconds = 0, atlas = null) {
   const micro = tile.layers?.[6];
@@ -46,9 +47,13 @@ function paintGroundCover(ctx, layer, tile, sx, sy, size, sun, t, atlas) {
 
 function paintBlades(ctx, layer, tile, sx, sy, size, sun, t, atlas) {
   if (atlas) {
+    if (!organicPresence(tile.wx, tile.wy, 3101, 0.42 + layer.coverage * 0.28)) return;
+    const scatter = jitteredScatter(tile.wx, tile.wy, 3201, 0.72);
+    if (!scatter) return;
     const id = layer.material === 'glow_grass' ? 'mystic_grass_sway' : 'grass_sway';
-    const frame = atlas.frame(id, Math.floor(t * (layer.animation?.fps ?? 4)) + tile.wx + tile.wy);
-    ctx.drawImage(frame.image, frame.sx, frame.sy, frame.sw, frame.sh, sx, sy, size, size);
+    const frame = atlas.frame(id, Math.floor(t * (layer.animation?.fps ?? 4)) + scatter.frame);
+    const drawSize = size * scatter.scale;
+    ctx.drawImage(frame.image, frame.sx, frame.sy, frame.sw, frame.sh, sx + scatter.x * (size - drawSize), sy + scatter.y * (size - drawSize), drawSize, drawSize);
     return;
   }
   const sway = wind(layer, t, size);
@@ -68,8 +73,12 @@ function paintBlades(ctx, layer, tile, sx, sy, size, sun, t, atlas) {
 
 function paintFlowers(ctx, layer, tile, sx, sy, size, sun, t, atlas) {
   if (atlas && layer.material !== 'aether_flower') {
-    const frame = atlas.frame('wildflowers', tile.wx + tile.wy);
-    ctx.drawImage(frame.image, frame.sx, frame.sy, frame.sw, frame.sh, sx, sy, size, size);
+    if (!organicPresence(tile.wx, tile.wy, 4101, 0.18 + layer.coverage * 0.22)) return;
+    const scatter = jitteredScatter(tile.wx, tile.wy, 4201, 0.55);
+    if (!scatter) return;
+    const frame = atlas.frame('wildflowers', scatter.frame);
+    const drawSize = size * (0.75 + scatter.scale * 0.25);
+    ctx.drawImage(frame.image, frame.sx, frame.sy, frame.sw, frame.sh, sx + scatter.x * (size - drawSize), sy + scatter.y * (size - drawSize), drawSize, drawSize);
     return;
   }
   const x = sx + ((tile.wx * 5 + tile.wy * 3) % Math.max(1, Math.floor(size * 0.8))) + size * 0.1;

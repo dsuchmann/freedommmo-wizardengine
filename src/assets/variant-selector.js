@@ -16,7 +16,7 @@ const FAMILY_BY_OBJECT = Object.freeze({
 export function biomeVariantFrameId(biome, objectKind, wx, wy) {
   const family = familyForObject(objectKind);
   if (!family) return null;
-  const variant = Math.floor(rand2(wx, wy, 9301) * 256);
+  const variant = Math.floor(rand2(Math.floor(wx / 3), Math.floor(wy / 3), 9301) * 256);
   const rowStart = Math.floor(variant / 8) * 8;
   return { id: `${biome}_${family}_variant_${rowStart}`, frame: variant % 8, family, variant };
 }

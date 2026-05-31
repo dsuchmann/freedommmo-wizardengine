@@ -255,3 +255,8 @@
   - `performInteraction()` finds the nearest interactable object and stores transient reaction state.
   - Object rendering now reads reaction state and applies shake/pulse feedback for recently interacted objects.
   - The interaction path is staged for persistent reactions such as chopped trees, mined rocks, harvested bushes, and disturbed vegetation.
+- Reduced repeated diagonal ground-pattern artifacts:
+  - Added `src/world/scatter.js` with jittered scatter, organic patch density, and organic presence helpers.
+  - Grass and flower micro-layer atlas stamps now use patch-based organic presence plus jittered offsets/scales instead of direct coordinate-sum frame/placement patterns.
+  - Biome variant selection now quantizes larger spatial cells to reduce per-tile diagonal alternation.
+  - Added `src/world/object-scatter-rules.js` defining biome-specific clustering/solitary scatter rules for future object placement, starting with mystic/forest/default rules.
