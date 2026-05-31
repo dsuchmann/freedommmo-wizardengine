@@ -103,3 +103,12 @@
   - Added `assets/prompts/terrain-generation-prompts.md` and `assets/prompts/object-generation-prompts.md`.
   - Added runtime `AssetCatalog`, `defaultAssetCatalog`, and `RuntimeCompositor` scaffolds.
   - Wired the renderer through the compositor so procedural placeholders now carry the same asset signatures/layer/state model that future Sorceress assets will use.
+- Extended asset pipeline for full animation/physics/render metadata:
+  - Added `assets/schemas/asset-manifest-v1.md` documenting required direction, animation, state, physics, collision, draw-order, blend, shadow, lighting, and occlusion metadata.
+  - Added `src/assets/asset-metadata.js` helpers for 8-way directions, animation clips, physics, render metadata, and collision volumes.
+  - Rebuilt `src/assets/default-catalog.js` so terrain, water, cliffs, trees, underbrush, rocks, caves, and riverbeds include directions, animations, state clips, physics, collision, render layers, blend/shadow/light metadata.
+  - Added `src/physics/collision.js` for local-to-world collision shape conversion and movement/light blocking helpers.
+  - Added `src/render/draw-order.js` for layer ordering, y/elevation sorting, and blend mode application.
+  - Added `src/render/animation-state.js` for resolving animation frames/directions/events.
+  - Runtime compositor signatures now expose animation, physics, collision, and render metadata alongside layers/states.
+  - Updated Sorceress style guide to require directional/state animation coverage plus physics/collision/render metadata for every asset family.

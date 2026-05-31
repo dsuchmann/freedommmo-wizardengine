@@ -48,6 +48,42 @@ Prefer sprite sheets with regular cells:
 - no text
 - no watermark
 
+## Animation rule
+
+Every sprite/object family must be generated with animation coverage appropriate to its type:
+
+- 8-way directions: `S`, `SE`, `E`, `NE`, `N`, `NW`, `W`, `SW`
+- idle/ambient animation frames
+- interaction/action animation frames where relevant
+- state-change frames: wet, snow, burnt, damaged, cut, dead, opened, collapsed, lit, occupied, depleted
+- separate layer sheets for animated parts when possible
+
+Static-looking world objects are not exempt: trees need wind/chop/fall/burn frames; rocks need cracked/wet/snow/ore states; cave mouths need open/collapsed/lit/occupied states; water needs flow/foam/sparkle frames.
+
+## Physics/collision rule
+
+Pixels do not define physics. Each generated asset family must be paired with manifest metadata for:
+
+- collision shape(s)
+- body type
+- material
+- movement blocking
+- projectile blocking
+- climbability
+- portal/interaction volumes
+
+## Render rule
+
+Every asset must declare:
+
+- draw layer
+- y/elevation sort behavior
+- blend mode
+- shadow casting
+- light receiving
+- light/LOS occlusion
+- height class
+
 ## Consistency rule
 
 All generated sheets for a family must share:

@@ -28,4 +28,20 @@ export class AssetCatalog {
     if (kind === 'cave_entrance') return this.assets.get('cave_mouth');
     return this.findByBiomeAndCategory(biome, 'vegetation.underbrush')[0];
   }
+
+  animationFor(assetId, clip = 'idle') {
+    return this.assets.get(assetId)?.animations?.[clip] ?? null;
+  }
+
+  physicsFor(assetId) {
+    return this.assets.get(assetId)?.physics ?? null;
+  }
+
+  collisionFor(assetId) {
+    return this.assets.get(assetId)?.collision ?? [];
+  }
+
+  renderFor(assetId) {
+    return this.assets.get(assetId)?.render ?? null;
+  }
 }

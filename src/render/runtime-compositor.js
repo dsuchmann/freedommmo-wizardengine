@@ -12,7 +12,12 @@ export class RuntimeCompositor {
       assetId: asset?.id ?? 'unknown_ground',
       variant: Math.floor(rand2(tile.wx, tile.wy, 6100) * 100000),
       layers: terrainLayersFor(tile),
-      states: terrainStatesFor(tile)
+      states: terrainStatesFor(tile),
+      directions: asset?.directions ?? ['OMNI'],
+      animations: asset?.animations ?? {},
+      physics: asset?.physics ?? null,
+      collision: asset?.collision ?? [],
+      render: asset?.render ?? null
     };
   }
 
@@ -22,7 +27,12 @@ export class RuntimeCompositor {
       assetId: asset?.id ?? kind,
       variant: Math.floor(rand2(wx, wy, 6200) * 100000),
       layers: asset?.layers ?? ['shadow', 'base', 'detail', 'lighting_mask'],
-      states: ['default']
+      states: ['default'],
+      directions: asset?.directions ?? ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'],
+      animations: asset?.animations ?? {},
+      physics: asset?.physics ?? null,
+      collision: asset?.collision ?? [],
+      render: asset?.render ?? null
     };
   }
 }
