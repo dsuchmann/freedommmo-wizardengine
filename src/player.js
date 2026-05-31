@@ -10,9 +10,16 @@ export class Player {
     this.y = 0;
   }
 
-  update(input, dt) {
+  update(input, dt, chunkStore = null, movement = null) {
     const axis = input.axis();
-    this.x += axis.x * this.speed * dt;
-    this.y += axis.y * this.speed * dt;
+    const tile = chunkStore?.tileAt(this.x, this.y);
+    const cost = movement?.movementCost ? movement.movementCost(tile) : 1;
+    const dx = axis.x * this.speed * dt / cost;
+    const dy = axis.y * this.speed * dt / cost;
+    if (chunkStore && movement?.resolveMovement) movement.resolveMovement(this, chunkStore, dx, dy);
+    else {
+      this.x += dx;
+      this.y += dy;
+    }
   }
 }

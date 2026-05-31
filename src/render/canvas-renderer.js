@@ -4,6 +4,8 @@ import { floorDiv } from '../world/chunk.js';
 import { auditBiomesAround } from '../world/biome-audit.js';
 import { paintTerrainTile, shade, tint } from './tile-painter.js';
 import { paintTerrainFeatures } from './feature-painter.js';
+import { drawSortKey, applyBlend } from './draw-order.js';
+import { animationFrame } from './animation-state.js';
 
 export class CanvasRenderer {
   constructor(canvas, statsElement, compositor = null) {
@@ -67,25 +69,38 @@ export class CanvasRenderer {
       }
     }
 
-    this.drawObjects(chunkStore, camX, camY, w, h, sun, camera);
+    this.drawObjects(chunkStore, camX, camY, w, h, sun, camera, performance.now() / 1000);
     this.drawDepthBokeh(chunkStore, player, focusTile, camera, camX, camY, w, h);
     this.drawPlayer(w, h, camera.zoom);
     this.drawAtmosphere(sun, w, h);
   }
 
-  drawObjects(chunkStore, camX, camY, w, h, sun, camera) {
+  drawObjects(chunkStore, camX, camY, w, h, sun, camera, timeSeconds) {
     const ctx = this.ctx;
+    const drawables = [];
     for (const chunk of chunkStore.chunks.values()) {
       for (const object of chunk.objects) {
         const tile = chunk.tiles[object.y * WORLD.chunkSize + object.x];
         const tilePx = WORLD.tileSize * camera.zoom;
         const sx = (chunk.cx * WORLD.chunkSize + object.x) * tilePx - camX;
         const sy = (chunk.cy * WORLD.chunkSize + object.y) * tilePx - camY - elevationLift(tile.climate.elevation) * camera.zoom;
-        if (sx < -20 || sy < -20 || sx > w + 20 || sy > h + 20) continue;
-        ctx.fillStyle = `rgba(0,0,0,${0.28 * (1 - sun.height)})`;
-        ctx.fillRect(sx + sun.shadowX * 12 * camera.zoom, sy + sun.shadowY * 12 * camera.zoom + 10 * camera.zoom, 12 * camera.zoom, 5 * camera.zoom);
-        drawObject(ctx, object.kind, sx, sy, camera.zoom);
+        if (sx < -30 || sy < -40 || sx > w + 30 || sy > h + 30) continue;
+        const signature = this.compositor?.objectSignature(object.kind, tile.biome, object.wx, object.wy);
+        const render = signature?.render ?? { drawLayer: 'object', sort: 'elevationThenY', castsShadow: true, receivesLight: true };
+        drawables.push({ object, tile, sx, sy, signature, render, key: drawSortKey(render, object.wy, tile.climate.elevation) });
       }
+    }
+    drawables.sort((a, b) => a.key - b.key);
+    for (const item of drawables) {
+      ctx.save();
+      applyBlend(ctx, item.render);
+      if (item.render.castsShadow) {
+        ctx.fillStyle = `rgba(0,0,0,${0.22 * (1 - sun.height)})`;
+        ctx.fillRect(item.sx + sun.shadowX * 12 * camera.zoom, item.sy + sun.shadowY * 12 * camera.zoom + 10 * camera.zoom, 12 * camera.zoom, 5 * camera.zoom);
+      }
+      const anim = animationFrame(item.signature?.animations?.idle, timeSeconds, 'S');
+      drawObject(ctx, item.object.kind, item.sx, item.sy, camera.zoom, item.signature, anim, sun);
+      ctx.restore();
     }
   }
 
@@ -147,16 +162,18 @@ export class CanvasRenderer {
   }
 }
 
-function drawObject(ctx, kind, sx, sy, zoom = 1) {
+function drawObject(ctx, kind, sx, sy, zoom = 1, signature = null, anim = { frame: 0 }, sun = null) {
+  const bob = Math.sin((anim.frame ?? 0) * 0.9) * 0.6 * zoom;
+  const light = sun?.ambient ?? 1;
   if (kind === 'tree') {
-    ctx.fillStyle = '#12391f';
+    ctx.fillStyle = light < 0.85 ? '#0f2d19' : '#12391f';
     ctx.beginPath();
-    ctx.arc(sx + 8 * zoom, sy + 8 * zoom, 7 * zoom, 0, Math.PI * 2);
+    ctx.arc(sx + 8 * zoom, sy + (8 + bob) * zoom, 7 * zoom, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#6b4928';
     ctx.fillRect(sx + 6 * zoom, sy + 8 * zoom, 4 * zoom, 7 * zoom);
   } else if (kind.includes('rock')) {
-    ctx.fillStyle = '#555a5f';
+    ctx.fillStyle = signature?.assetId === 'boulder_cluster' ? '#60666b' : '#555a5f';
     ctx.fillRect(sx + 4 * zoom, sy + 5 * zoom, 9 * zoom, 8 * zoom);
   } else if (kind === 'flower') {
     ctx.fillStyle = '#ffd6f2';

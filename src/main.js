@@ -10,6 +10,7 @@ import { Camera } from './camera.js';
 import { PerformanceMonitor } from './core/performance.js';
 import { defaultAssetCatalog } from './assets/default-catalog.js';
 import { RuntimeCompositor } from './render/runtime-compositor.js';
+import { movementCost, resolveMovement } from './physics/movement.js';
 
 const canvas = document.getElementById('game');
 const stats = document.getElementById('stats');
@@ -35,7 +36,7 @@ function update(dt) {
   if (input.wasPressed('m')) overmap.toggle();
   if (input.wasPressed('l')) lighting.togglePause();
   lighting.update(dt);
-  player.update(input, dt);
+  player.update(input, dt, chunks, { movementCost, resolveMovement });
   chunks.streamAround(player.x, player.y);
   camera.update(dt, chunks.tileAt(player.x, player.y));
   if ((frame & 31) === 0) savePlayerPosition(player);
