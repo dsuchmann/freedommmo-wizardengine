@@ -1,0 +1,29 @@
+{
+  "tool": "sorceress",
+  "style": "More beautiful than CrossCode, Zelda, and Octopath Traveler; maximal elaborate organic fantasy pixel art; no square debug marks; no UI/text/watermark.",
+  "output": "assets/generated/landscape-states/savanna/burnt_overlays.png",
+  "kind": "create_state_overlays",
+  "cellSize": [
+    32,
+    32
+  ],
+  "columns": 8,
+  "rows": 14,
+  "rowsDescription": [
+    "bedrock",
+    "soil",
+    "ground_cover",
+    "flowers_herbs",
+    "stones_debris",
+    "shrubs_bushes_hedges",
+    "vines_roots",
+    "trees_trunks_branches",
+    "canopy",
+    "insects_small_life",
+    "terrain_forms",
+    "water_wetlands_shoreline",
+    "desert_dunes_drylands",
+    "mountains_cliffs_overhangs"
+  ],
+  "prompt": "Generate transparent burnt state overlays for every landscape layer in savanna. 8 frames/variants per row. Must stack cleanly over base assets."
+}

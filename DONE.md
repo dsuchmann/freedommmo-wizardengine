@@ -199,3 +199,8 @@
   - Added `src/character/modular-character.js` for programmatic animation-state selection.
   - Player now supports sprinting, jump physics, glide input, and dodge roll timing.
   - Renderer now draws a simple modular assembled player from legs, torso, arms, head, hair, and optional glide arc, replacing the old static circle player marker.
+- Defined maximal landscape taxonomy and generation schema:
+  - Added `docs/MAXIMAL_LANDSCAPE_TAXONOMY.md`, defining dirt, mud, stones, grass, vines, leaves, insects, trees, bushes, hedges, canopy, deserts/dunes, cliffs/overhangs, mountains, water/wetlands, states, animations, transitions, and interactions in maximal detail.
+  - Added `src/world/landscape-taxonomy.js` as runtime/data-facing taxonomy constants for landscape layers, asset families, animations, and states.
+  - Added `scripts/generate-maximal-landscape-jobs.mjs` to programmatically create maximal Sorceress landscape generation jobs.
+  - Generated `assets/sorceress/maximal-landscape-job-index.json` with 462 landscape jobs covering 21 biomes × 14 layer families plus per-biome state overlay jobs.

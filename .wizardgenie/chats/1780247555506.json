@@ -1,7 +1,7 @@
 [
   {
     "role": "user",
-    "content": "[Context window: 8 older messages moved to long-term memory. Use the recall_memory tool to retrieve past decisions, code changes, or debugging outcomes as needed.]"
+    "content": "[Context window: 44 older messages moved to long-term memory. Use the recall_memory tool to retrieve past decisions, code changes, or debugging outcomes as needed.]"
   },
   {
     "role": "assistant",
@@ -10,538 +10,6 @@
         "type": "text",
         "text": "Understood. I can use recall_memory to access prior context."
       },
-      {
-        "type": "tool_use",
-        "id": "call_hXfrEEdqRNUN55sJzng7QNru",
-        "name": "edit_file",
-        "input": {
-          "path": "src/render/canvas-renderer.js",
-          "old_text": "        paintTerrainTile(ctx, tile, sx, sy, tileSize, sun, focusTile.climate.elevation);\n",
-          "new_text": "        paintTerrainTile(ctx, tile, sx, sy, tileSize, sun, focusTile.climate.elevation, this.compositor);\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_hXfrEEdqRNUN55sJzng7QNru",
-        "content": "Applied edit to src/render/canvas-renderer.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_cDeMAowm9aIPgjpy1kgqnrsQ",
-        "name": "edit_file",
-        "input": {
-          "path": "src/main.js",
-          "old_text": "import { PerformanceMonitor } from './core/performance.js';\n\nconst canvas = document.getElementById('game');\n",
-          "new_text": "import { PerformanceMonitor } from './core/performance.js';\nimport { defaultAssetCatalog } from './assets/default-catalog.js';\nimport { RuntimeCompositor } from './render/runtime-compositor.js';\n\nconst canvas = document.getElementById('game');\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_cDeMAowm9aIPgjpy1kgqnrsQ",
-        "content": "Applied edit to src/main.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_me30ZMGSn2pWNlyNc8FNW3LU",
-        "name": "edit_file",
-        "input": {
-          "path": "src/main.js",
-          "old_text": "const chunks = new ChunkStore(new ChunkProvider());\nconst renderer = new CanvasRenderer(canvas, stats);\nconst lighting = new DayNightCycle();\n",
-          "new_text": "const chunks = new ChunkStore(new ChunkProvider());\nconst compositor = new RuntimeCompositor(defaultAssetCatalog);\nconst renderer = new CanvasRenderer(canvas, stats, compositor);\nconst lighting = new DayNightCycle();\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_me30ZMGSn2pWNlyNc8FNW3LU",
-        "content": "Applied edit to src/main.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_VPV7PFTC0MfZy9IdZUXcXGTg",
-        "name": "run_command",
-        "input": {
-          "command": "node --check src/assets/asset-catalog.js && node --check src/assets/default-catalog.js && node --check src/render/runtime-compositor.js && node --check src/render/tile-painter.js && node --check src/render/canvas-renderer.js && node --check src/main.js"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_VPV7PFTC0MfZy9IdZUXcXGTg",
-        "content": "$ node --check src/assets/asset-catalog.js && node --check src/assets/default-catalog.js && node --check src/render/runtime-compositor.js && node --check src/render/tile-painter.js && node --check src/render/canvas-renderer.js && node --check src/main.js\n\n",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_qY8rAS7wojoJvBOzW4EForHV",
-        "name": "read_file",
-        "input": {
-          "path": "DONE.md",
-          "start_line": 93,
-          "end_line": 120
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_qY8rAS7wojoJvBOzW4EForHV",
-        "content": "File: DONE.md (lines 93-98 of 98)\n\n93| - Fixed overmap static-noise problem:\n94|   - Added `src/world/regional-map.js`, a separate coherent chunk-scale regional sampler for the overmap.\n95|   - Overmap now samples low-frequency continent, mountain, moisture, heat, river, and biome fields directly in chunk space instead of using noisy tile-level classifier results per map pixel.\n96|   - Tuned overmap biome distribution so broad regions read as landforms rather than random per-pixel assignment.\n97|   - Updated `fbm` to normalize by amplitude and accept larger base scales/octave counts for regional generation.\n98| ",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_YTGGUR4H4Ht0FN9M9YRdRnI2",
-        "name": "edit_file",
-        "input": {
-          "path": "DONE.md",
-          "old_text": "- Fixed overmap static-noise problem:\n  - Added `src/world/regional-map.js`, a separate coherent chunk-scale regional sampler for the overmap.\n  - Overmap now samples low-frequency continent, mountain, moisture, heat, river, and biome fields directly in chunk space instead of using noisy tile-level classifier results per map pixel.\n  - Tuned overmap biome distribution so broad regions read as landforms rather than random per-pixel assignment.\n  - Updated `fbm` to normalize by amplitude and accept larger base scales/octave counts for regional generation.\n",
-          "new_text": "- Fixed overmap static-noise problem:\n  - Added `src/world/regional-map.js`, a separate coherent chunk-scale regional sampler for the overmap.\n  - Overmap now samples low-frequency continent, mountain, moisture, heat, river, and biome fields directly in chunk space instead of using noisy tile-level classifier results per map pixel.\n  - Tuned overmap biome distribution so broad regions read as landforms rather than random per-pixel assignment.\n  - Updated `fbm` to normalize by amplitude and accept larger base scales/octave counts for regional generation.\n- Added Sorceress-ready asset generation pipeline scaffolding:\n  - Added `assets/manifests/terrain.json` for terrain/water/cliff layered asset families, states, variants, anchors, and generation priorities.\n  - Added `assets/manifests/vegetation.json` for trees and underbrush with layer/state/variant grammar.\n  - Added `assets/manifests/geology.json` for rocks, cave mouths, and dry riverbeds.\n  - Added `assets/prompts/sorceress-style-guide.md`.\n  - Added `assets/prompts/terrain-generation-prompts.md` and `assets/prompts/object-generation-prompts.md`.\n  - Added runtime `AssetCatalog`, `defaultAssetCatalog`, and `RuntimeCompositor` scaffolds.\n  - Wired the renderer through the compositor so procedural placeholders now carry the same asset signatures/layer/state model that future Sorceress assets will use.\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_YTGGUR4H4Ht0FN9M9YRdRnI2",
-        "content": "Applied edit to DONE.md",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "text",
-        "text": "Done."
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": "Every single sprite or object has to have multiple frames of animation in every possible direction. They have to have multiple different frames of different state changes, depending on the type of object that they are.\n\nThey have to have physics and collision fully determined. Also, layering, blending, draw order, shadowing, and lighting all have to be fully realized as well. You can read the docs on this, read the reference files, read the specs."
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "text",
-        "text": "[Tool round summary]\nReasoning: <plan> I’ll extend the asset pipeline to encode directional animations, state animations, physics/collision, lighting/shadow/draw-order metadata, then...\nrecall_memory: Memory system not initialized for this project (0 memories stored). Skip recall_memory for this turn\nsemantic_search: No matching code found. Try search_files for exact text matches.\nRead `assets/manifests/vegetation.json` (42 lines)\nRead `assets/manifests/geology.json` (42 lines)\nRead `src/render/runtime-compositor.js` (54 lines)"
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "text",
-        "text": "Acknowledged. Continue."
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_YsrLBCyEOkTlOwTjcvV6Kj63",
-        "name": "create_checkpoint",
-        "input": {
-          "message": "Add animation physics collision lighting metadata to asset pipeline"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_YsrLBCyEOkTlOwTjcvV6Kj63",
-        "content": "Checkpoint requested: Add animation physics collision lighting metadata to asset pipeline",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_WPegotXwVdTFMsuJP6mWcI7w",
-        "name": "write_file",
-        "input": {
-          "path": "assets/schemas/asset-manifest-v1.md",
-          "content": "# FreedomMMO Asset Manifest Schema v1\n\nEvery renderable asset family must describe not only imagery, but also animation, state, physics, collision, draw order, shadowing, lighting, and blend behavior.\n\n## Required asset fields\n\n- `id` — stable asset family id.\n- `category` — dotted category, e.g. `vegetation.tree`, `actor.humanoid`, `terrain.elevation`.\n- `biomes` — biome affinity list.\n- `sizeTiles` — footprint in simulation tiles.\n- `layers` — composited visual layers in local draw order.\n- `states` — valid simulation/art states.\n- `directions` — supported facing directions.\n- `animations` — animation clips by state/action.\n- `physics` — movement/blocking/mass/material metadata.\n- `collision` — one or more collision volumes.\n- `render` — draw order, blend mode, shadow, lighting, occlusion metadata.\n- `anchors` — root/shadow/light/origin anchors.\n- `variants` — combinatorial variant counts.\n- `generation` — Sorceress prompt family and priority.\n\n## Direction conventions\n\nUse 8-way direction ids unless an asset is truly omnidirectional:\n\n`S`, `SE`, `E`, `NE`, `N`, `NW`, `W`, `SW`\n\nStatic assets still include directions so Sorceress can generate directional damage, wind, growth lean, openings, and interaction-facing variants.\n\n## Animation conventions\n\nEach clip contains:\n\n- `frames` — frame count per direction/state.\n- `fps` — playback rate.\n- `loop` — whether it loops.\n- `directions` — direction set.\n- `layers` — layers participating in the clip.\n- `events` — optional frame events such as footstep, leaf_drop, sparkle, hitbox_on.\n\n## Collision conventions\n\nCollision is simulation-owned, not inferred from pixels.\n\nShapes:\n\n- `circle`: `{ \"type\": \"circle\", \"cx\": 16, \"cy\": 26, \"r\": 8 }`\n- `rect`: `{ \"type\": \"rect\", \"x\": 6, \"y\": 20, \"w\": 20, \"h\": 10 }`\n- `polygon`: `{ \"type\": \"polygon\", \"points\": [[x,y], ...] }`\n\n## Render conventions\n\n- `drawLayer`: broad layer such as `terrain`, `decal`, `object`, `canopy`, `entity`, `effect`, `lighting`.\n- `sort`: `y`, `fixed`, or `elevationThenY`.\n- `blend`: `normal`, `multiply`, `screen`, `add`, `overlay`, `alphaClip`.\n- `castsShadow`: boolean.\n- `receivesLight`: boolean.\n- `occluder`: boolean for line-of-sight/light blocking.\n- `heightClass`: `flat`, `knee`, `body`, `canopy`, `cliff`, `overhead`.\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_WPegotXwVdTFMsuJP6mWcI7w",
-        "content": "Written 60 lines to assets/schemas/asset-manifest-v1.md",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_i6kmU9P8yTtSJZROmql92Ouu",
-        "name": "write_file",
-        "input": {
-          "path": "src/assets/asset-metadata.js",
-          "content": "export const DIRECTIONS_8 = Object.freeze(['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW']);\nexport const DIRECTION_OMNI = Object.freeze(['OMNI']);\n\nexport function staticAnimation({ frames = 1, fps = 1, directions = DIRECTION_OMNI, layers = [] } = {}) {\n  return { frames, fps, loop: false, directions, layers, events: [] };\n}\n\nexport function idleAnimation({ frames = 4, fps = 3, directions = DIRECTIONS_8, layers = [] } = {}) {\n  return { frames, fps, loop: true, directions, layers, events: [] };\n}\n\nexport function stateAnimation(frames, fps, loop, directions, layers, events = []) {\n  return { frames, fps, loop, directions, layers, events };\n}\n\nexport function defaultPhysics({ body = 'static', material = 'organic', mass = 1, blocksMovement = false, blocksProjectiles = false, climbable = false } = {}) {\n  return { body, material, mass, blocksMovement, blocksProjectiles, climbable };\n}\n\nexport function defaultRender({ drawLayer = 'object', sort = 'elevationThenY', blend = 'normal', castsShadow = true, receivesLight = true, occluder = false, heightClass = 'body' } = {}) {\n  return { drawLayer, sort, blend, castsShadow, receivesLight, occluder, heightClass };\n}\n\nexport function rectCollision(x, y, w, h, kind = 'solid') {\n  return { type: 'rect', kind, x, y, w, h };\n}\n\nexport function circleCollision(cx, cy, r, kind = 'solid') {\n  return { type: 'circle', kind, cx, cy, r };\n}\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_i6kmU9P8yTtSJZROmql92Ouu",
-        "content": "Written 31 lines to src/assets/asset-metadata.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "text",
-        "text": "[Tool round summary]\nWrote `src/assets/default-catalog.js` (139 lines)"
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "text",
-        "text": "Acknowledged. Continue."
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_zZXo7PYQKmMI5bIqIGYeKubG",
-        "name": "edit_file",
-        "input": {
-          "path": "src/assets/asset-catalog.js",
-          "old_text": "  objectForKind(kind, biome) {\n    if (kind === 'tree') return this.findByBiomeAndCategory(biome, 'vegetation.tree')[0];\n    if (kind.includes('rock')) return this.findByBiomeAndCategory(biome, 'geology.rock')[0];\n    if (kind === 'cave_entrance') return this.assets.get('cave_mouth');\n    return this.findByBiomeAndCategory(biome, 'vegetation.underbrush')[0];\n  }\n}\n",
-          "new_text": "  objectForKind(kind, biome) {\n    if (kind === 'tree') return this.findByBiomeAndCategory(biome, 'vegetation.tree')[0];\n    if (kind.includes('rock')) return this.findByBiomeAndCategory(biome, 'geology.rock')[0];\n    if (kind === 'cave_entrance') return this.assets.get('cave_mouth');\n    return this.findByBiomeAndCategory(biome, 'vegetation.underbrush')[0];\n  }\n\n  animationFor(assetId, clip = 'idle') {\n    return this.assets.get(assetId)?.animations?.[clip] ?? null;\n  }\n\n  physicsFor(assetId) {\n    return this.assets.get(assetId)?.physics ?? null;\n  }\n\n  collisionFor(assetId) {\n    return this.assets.get(assetId)?.collision ?? [];\n  }\n\n  renderFor(assetId) {\n    return this.assets.get(assetId)?.render ?? null;\n  }\n}\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_zZXo7PYQKmMI5bIqIGYeKubG",
-        "content": "Applied edit to src/assets/asset-catalog.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_qDfSqo3FYkrmTSG0bqD2HNfA",
-        "name": "write_file",
-        "input": {
-          "path": "src/physics/collision.js",
-          "content": "export function collisionWorldBounds(asset, wx, wy, tileSize = 32) {\n  const shapes = asset?.collision ?? [];\n  return shapes.map(shape => localShapeToWorld(shape, wx, wy, tileSize));\n}\n\nexport function blocksMovement(asset) {\n  return Boolean(asset?.physics?.blocksMovement);\n}\n\nexport function blocksLight(asset) {\n  return Boolean(asset?.render?.occluder);\n}\n\nexport function localShapeToWorld(shape, wx, wy, tileSize) {\n  const ox = wx * tileSize;\n  const oy = wy * tileSize;\n  if (shape.type === 'rect') return { ...shape, x: ox + shape.x, y: oy + shape.y };\n  if (shape.type === 'circle') return { ...shape, cx: ox + shape.cx, cy: oy + shape.cy };\n  if (shape.type === 'polygon') return { ...shape, points: shape.points.map(([x, y]) => [ox + x, oy + y]) };\n  return shape;\n}\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_qDfSqo3FYkrmTSG0bqD2HNfA",
-        "content": "Written 22 lines to src/physics/collision.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_zdKB6YMK3DypcbgUMHqgboJU",
-        "name": "write_file",
-        "input": {
-          "path": "src/render/draw-order.js",
-          "content": "export const DRAW_LAYER_ORDER = Object.freeze({\n  terrain: 0,\n  decal: 10,\n  object: 20,\n  canopy: 30,\n  entity: 40,\n  effect: 50,\n  lighting: 60\n});\n\nexport function drawSortKey(render, wy = 0, elevation = 0) {\n  const layer = DRAW_LAYER_ORDER[render?.drawLayer ?? 'object'] ?? 20;\n  if (render?.sort === 'fixed') return layer * 1000000;\n  if (render?.sort === 'elevationThenY') return layer * 1000000 + elevation * 10000 + wy;\n  return layer * 1000000 + wy;\n}\n\nexport function applyBlend(ctx, render) {\n  const blend = render?.blend ?? 'normal';\n  ctx.globalCompositeOperation = blend === 'add' ? 'lighter' : blend === 'multiply' ? 'multiply' : blend === 'screen' ? 'screen' : blend === 'overlay' ? 'overlay' : 'source-over';\n}\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_zdKB6YMK3DypcbgUMHqgboJU",
-        "content": "Written 22 lines to src/render/draw-order.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_oIPqukuhrabylElgU4vbVIgf",
-        "name": "write_file",
-        "input": {
-          "path": "src/render/animation-state.js",
-          "content": "export function animationFrame(animation, timeSeconds, direction = 'S') {\n  if (!animation) return { frame: 0, direction };\n  const directions = animation.directions ?? ['OMNI'];\n  const resolvedDirection = directions.includes(direction) ? direction : directions[0];\n  const frameCount = Math.max(1, animation.frames ?? 1);\n  const frame = animation.loop\n    ? Math.floor(timeSeconds * (animation.fps ?? 1)) % frameCount\n    : Math.min(frameCount - 1, Math.floor(timeSeconds * (animation.fps ?? 1)));\n  return { frame, direction: resolvedDirection };\n}\n\nexport function activeFrameEvents(animation, frame) {\n  return (animation?.events ?? []).filter(event => event.frame === frame);\n}\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_oIPqukuhrabylElgU4vbVIgf",
-        "content": "Written 15 lines to src/render/animation-state.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_8FE2up3uWatc0RqwnZEBYlPB",
-        "name": "edit_file",
-        "input": {
-          "path": "src/render/runtime-compositor.js",
-          "old_text": "    return {\n      assetId: asset?.id ?? 'unknown_ground',\n      variant: Math.floor(rand2(tile.wx, tile.wy, 6100) * 100000),\n      layers: terrainLayersFor(tile),\n      states: terrainStatesFor(tile)\n    };\n",
-          "new_text": "    return {\n      assetId: asset?.id ?? 'unknown_ground',\n      variant: Math.floor(rand2(tile.wx, tile.wy, 6100) * 100000),\n      layers: terrainLayersFor(tile),\n      states: terrainStatesFor(tile),\n      directions: asset?.directions ?? ['OMNI'],\n      animations: asset?.animations ?? {},\n      physics: asset?.physics ?? null,\n      collision: asset?.collision ?? [],\n      render: asset?.render ?? null\n    };\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_8FE2up3uWatc0RqwnZEBYlPB",
-        "content": "Applied edit to src/render/runtime-compositor.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_5yLCkSbyPkRwmLwQrTBpPlp9",
-        "name": "edit_file",
-        "input": {
-          "path": "src/render/runtime-compositor.js",
-          "old_text": "    return {\n      assetId: asset?.id ?? kind,\n      variant: Math.floor(rand2(wx, wy, 6200) * 100000),\n      layers: asset?.layers ?? ['shadow', 'base', 'detail', 'lighting_mask'],\n      states: ['default']\n    };\n",
-          "new_text": "    return {\n      assetId: asset?.id ?? kind,\n      variant: Math.floor(rand2(wx, wy, 6200) * 100000),\n      layers: asset?.layers ?? ['shadow', 'base', 'detail', 'lighting_mask'],\n      states: ['default'],\n      directions: asset?.directions ?? ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'],\n      animations: asset?.animations ?? {},\n      physics: asset?.physics ?? null,\n      collision: asset?.collision ?? [],\n      render: asset?.render ?? null\n    };\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_5yLCkSbyPkRwmLwQrTBpPlp9",
-        "content": "Applied edit to src/render/runtime-compositor.js",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_QObjbuJwNXBeRUoVA250xZsQ",
-        "name": "edit_file",
-        "input": {
-          "path": "assets/prompts/sorceress-style-guide.md",
-          "old_text": "## Output rule\n\nPrefer sprite sheets with regular cells:\n\n- terrain: 32×32 cells\n- single-tile object: 32×32 or 32×48 cells\n- two-tile object: 64×64 or 64×96 cells\n- transparent background\n- no UI framing\n- no text\n- no watermark\n",
-          "new_text": "## Output rule\n\nPrefer sprite sheets with regular cells:\n\n- terrain: 32×32 cells\n- single-tile object: 32×32 or 32×48 cells\n- two-tile object: 64×64 or 64×96 cells\n- transparent background\n- no UI framing\n- no text\n- no watermark\n\n## Animation rule\n\nEvery sprite/object family must be generated with animation coverage appropriate to its type:\n\n- 8-way directions: `S`, `SE`, `E`, `NE`, `N`, `NW`, `W`, `SW`\n- idle/ambient animation frames\n- interaction/action animation frames where relevant\n- state-change frames: wet, snow, burnt, damaged, cut, dead, opened, collapsed, lit, occupied, depleted\n- separate layer sheets for animated parts when possible\n\nStatic-looking world objects are not exempt: trees need wind/chop/fall/burn frames; rocks need cracked/wet/snow/ore states; cave mouths need open/collapsed/lit/occupied states; water needs flow/foam/sparkle frames.\n\n## Physics/collision rule\n\nPixels do not define physics. Each generated asset family must be paired with manifest metadata for:\n\n- collision shape(s)\n- body type\n- material\n- movement blocking\n- projectile blocking\n- climbability\n- portal/interaction volumes\n\n## Render rule\n\nEvery asset must declare:\n\n- draw layer\n- y/elevation sort behavior\n- blend mode\n- shadow casting\n- light receiving\n- light/LOS occlusion\n- height class\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_QObjbuJwNXBeRUoVA250xZsQ",
-        "content": "Applied edit to assets/prompts/sorceress-style-guide.md",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_kC36mfrhaIXaSAbflS3dI9mF",
-        "name": "run_command",
-        "input": {
-          "command": "node --check src/assets/asset-metadata.js && node --check src/assets/default-catalog.js && node --check src/assets/asset-catalog.js && node --check src/physics/collision.js && node --check src/render/draw-order.js && node --check src/render/animation-state.js && node --check src/render/runtime-compositor.js && node --check src/main.js"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_kC36mfrhaIXaSAbflS3dI9mF",
-        "content": "$ node --check src/assets/asset-metadata.js && node --check src/assets/default-catalog.js && node --check src/assets/asset-catalog.js && node --check src/physics/collision.js && node --check src/render/draw-order.js && node --check src/render/animation-state.js && node --check src/render/runtime-compositor.js && node --check src/main.js\n\n",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_FyZzlkUWZanXW3fpV8jAQv71",
-        "name": "read_file",
-        "input": {
-          "path": "DONE.md",
-          "start_line": 98,
-          "end_line": 125
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_FyZzlkUWZanXW3fpV8jAQv71",
-        "content": "File: DONE.md (lines 98-106 of 106)\n\n98| - Added Sorceress-ready asset generation pipeline scaffolding:\n99|   - Added `assets/manifests/terrain.json` for terrain/water/cliff layered asset families, states, variants, anchors, and generation priorities.\n100|   - Added `assets/manifests/vegetation.json` for trees and underbrush with layer/state/variant grammar.\n101|   - Added `assets/manifests/geology.json` for rocks, cave mouths, and dry riverbeds.\n102|   - Added `assets/prompts/sorceress-style-guide.md`.\n103|   - Added `assets/prompts/terrain-generation-prompts.md` and `assets/prompts/object-generation-prompts.md`.\n104|   - Added runtime `AssetCatalog`, `defaultAssetCatalog`, and `RuntimeCompositor` scaffolds.\n105|   - Wired the renderer through the compositor so procedural placeholders now carry the same asset signatures/layer/state model that future Sorceress assets will use.\n106| ",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
-      {
-        "type": "tool_use",
-        "id": "call_n1rK1a2GnZRQ10Y9b8Z4YfLZ",
-        "name": "edit_file",
-        "input": {
-          "path": "DONE.md",
-          "old_text": "- Added Sorceress-ready asset generation pipeline scaffolding:\n  - Added `assets/manifests/terrain.json` for terrain/water/cliff layered asset families, states, variants, anchors, and generation priorities.\n  - Added `assets/manifests/vegetation.json` for trees and underbrush with layer/state/variant grammar.\n  - Added `assets/manifests/geology.json` for rocks, cave mouths, and dry riverbeds.\n  - Added `assets/prompts/sorceress-style-guide.md`.\n  - Added `assets/prompts/terrain-generation-prompts.md` and `assets/prompts/object-generation-prompts.md`.\n  - Added runtime `AssetCatalog`, `defaultAssetCatalog`, and `RuntimeCompositor` scaffolds.\n  - Wired the renderer through the compositor so procedural placeholders now carry the same asset signatures/layer/state model that future Sorceress assets will use.\n",
-          "new_text": "- Added Sorceress-ready asset generation pipeline scaffolding:\n  - Added `assets/manifests/terrain.json` for terrain/water/cliff layered asset families, states, variants, anchors, and generation priorities.\n  - Added `assets/manifests/vegetation.json` for trees and underbrush with layer/state/variant grammar.\n  - Added `assets/manifests/geology.json` for rocks, cave mouths, and dry riverbeds.\n  - Added `assets/prompts/sorceress-style-guide.md`.\n  - Added `assets/prompts/terrain-generation-prompts.md` and `assets/prompts/object-generation-prompts.md`.\n  - Added runtime `AssetCatalog`, `defaultAssetCatalog`, and `RuntimeCompositor` scaffolds.\n  - Wired the renderer through the compositor so procedural placeholders now carry the same asset signatures/layer/state model that future Sorceress assets will use.\n- Extended asset pipeline for full animation/physics/render metadata:\n  - Added `assets/schemas/asset-manifest-v1.md` documenting required direction, animation, state, physics, collision, draw-order, blend, shadow, lighting, and occlusion metadata.\n  - Added `src/assets/asset-metadata.js` helpers for 8-way directions, animation clips, physics, render metadata, and collision volumes.\n  - Rebuilt `src/assets/default-catalog.js` so terrain, water, cliffs, trees, underbrush, rocks, caves, and riverbeds include directions, animations, state clips, physics, collision, render layers, blend/shadow/light metadata.\n  - Added `src/physics/collision.js` for local-to-world collision shape conversion and movement/light blocking helpers.\n  - Added `src/render/draw-order.js` for layer ordering, y/elevation sorting, and blend mode application.\n  - Added `src/render/animation-state.js` for resolving animation frames/directions/events.\n  - Runtime compositor signatures now expose animation, physics, collision, and render metadata alongside layers/states.\n  - Updated Sorceress style guide to require directional/state animation coverage plus physics/collision/render metadata for every asset family.\n"
-        }
-      }
-    ]
-  },
-  {
-    "role": "user",
-    "content": [
-      {
-        "type": "tool_result",
-        "tool_use_id": "call_n1rK1a2GnZRQ10Y9b8Z4YfLZ",
-        "content": "Applied edit to DONE.md",
-        "is_error": false
-      }
-    ]
-  },
-  {
-    "role": "assistant",
-    "content": [
       {
         "type": "text",
         "text": "Implemented the asset-pipeline requirements for animation, states, physics, collision, layering, blending, draw order, shadowing, lighting, and occlusion metadata.\n\nAdded:\n\n- `assets/schemas/asset-manifest-v1.md`\n- `src/assets/asset-metadata.js`\n- `src/physics/collision.js`\n- `src/render/draw-order.js`\n- `src/render/animation-state.js`\n\nUpdated:\n\n- `src/assets/default-catalog.js`\n- `src/assets/asset-catalog.js`\n- `src/render/runtime-compositor.js`\n- `assets/prompts/sorceress-style-guide.md`\n- `DONE.md`\n\nRuntime asset signatures now carry:\n\n- directional animation metadata\n- state animation clips\n- physics metadata\n- collision shapes\n- render layer\n- sort mode\n- blend mode\n- shadow casting\n- light receiving\n- occlusion\n- height class"
@@ -6301,13 +5769,8 @@
     "role": "assistant",
     "content": [
       {
-        "type": "tool_use",
-        "id": "call_zOY1a8jbgAd7Y7XD4akF2h4w",
-        "name": "write_file",
-        "input": {
-          "path": "docs/ASSET_GENERATION_MASTER_PLAN.md",
-          "content": "# FreedomMMO Asset Generation Master Plan\n\nThis document defines how the landscape, objects, characters, buildings, items, effects, and interaction-state art will be generated programmatically with Sorceress. The target is not a small tileset. The target is a massive composable visual library: tens of thousands of base assets and, after directional/state/biome/interaction variants, potentially hundreds of thousands of generated frames.\n\n## 1. Core principle\n\nEvery visual is a projection of simulation state. We do not generate a single sprite for an object; we generate a layered asset family with:\n\n- biome context\n- material composition\n- physical footprint\n- draw layer\n- lighting/shadow rules\n- collision/interaction volumes\n- animation clips\n- state overlays\n- elemental/biome reaction overlays\n- transition rules\n- assembly anchors\n\nA tile/object/NPC/building is assembled from multiple generated sheets, not painted as one monolithic sprite.\n\n## 2. Landscape construction layers\n\nLandscape tiles are horizontal stacks. A visible tile can be assembled from these layers:\n\n1. **Bedrock / deep substrate**\n   - invisible or partially exposed base geology\n   - controls mining, cliffs, caves, ore, elevation resistance\n\n2. **Soil / sediment / surface base**\n   - dirt, sand, clay, ash, frozen earth, humus, silt, aether moss\n   - seamless base terrain tiles per biome\n\n3. **Moisture / deposition layer**\n   - wetness, mud, salt crust, river silt, snow crust, ash dust\n   - transparent overlays\n\n4. **Ground-cover layer**\n   - short grass, moss, lichen, leaf litter, needles, reeds, fungal mats, mystic aether bloom\n   - crushable and reactive to footsteps\n\n5. **Foliage blade layer**\n   - animated grass, reeds, flowers, small plants\n   - wind/reactive animation\n   - bends away from player movement\n\n6. **Micro-object/debris layer**\n   - pebbles, shells, twigs, roots, mushrooms, crystals, bones, fallen leaves\n   - small collidable/collectible variants optional\n\n7. **Terrain-form layer**\n   - cliffs, ledges, slopes, overhangs, natural bridges, dry riverbeds, cave mouths\n   - controls traversal, climbing, jumping, gliding, visibility\n\n8. **Large object layer**\n   - trees, rocks, shrubs, logs, boulders, ruins, resource nodes\n   - y/elevation sorted\n\n9. **Structure layer**\n   - walls, floors, roofs, doors, windows, props, settlements, bridges\n   - assembled from material sheets\n\n10. **Entity layer**\n    - player, NPCs, creatures, mounts, projectiles\n    - modular body/equipment assembly\n\n11. **Effect layer**\n    - fire, water splash, dust, snow puff, magic motes, poison gas, gliding wind trails\n\n12. **Lighting/shadow layer**\n    - cast shadows, contact shadows, local lights, emissive mystic overlays, day/night tint masks\n\n## 3. Biomes\n\nAll asset families are generated across 21 biomes:\n\n- deep_ocean\n- ocean\n- shallow_water\n- beach\n- river\n- lake\n- grassland\n- forest\n- dense_forest\n- tropical_forest\n- taiga\n- savanna\n- steppe\n- desert\n- swamp\n- tundra\n- arctic\n- hills\n- mountains\n- volcanic\n- mystic\n\n## 4. Terrain asset categories\n\nFor each biome generate:\n\n### 4.1 Base terrain tiles\n\n- 64 seamless variants minimum per biome\n- dry/default/wet/snow/frozen/burnt/enchanted/depleted overlays\n- transition edge/corner masks\n- elevation-aware highlight/shadow variants\n\n### 4.2 Transitions between biome pairs\n\nOnly valid biome graph neighbors get transition sheets. Each pair gets:\n\n- straight edges N/E/S/W\n- inner corners\n- outer corners\n- noise/dither masks\n- object/debris transition hints\n- 8 variants per mask\n\n### 4.3 Terrain forms\n\nPer relevant biome/material:\n\n- cliff wall\n- cliff top lip\n- ledge\n- slope ramp\n- climbable rock face\n- cave mouth\n- overhang\n- natural bridge\n- dry riverbed\n- erosion cut\n- shoreline bank\n- waterfall lip\n\nEach form gets:\n\n- 8-direction exposed face variants where applicable\n- height bands: low, medium, high, extreme\n- traversal states: normal, slippery, crumbling, blocked, climbable\n\n### 4.4 Water/shoreline\n\n- deep water\n- shallow water\n- river flow\n- lake stillness\n- foam\n- ripple\n- waterfall\n- shoreline edge\n- wet sand/mud\n- ice sheet\n- broken ice\n- mystic shimmering water\n\nAnimations:\n\n- calm loop\n- wind loop\n- flow directional loop\n- splash\n- freeze/thaw\n- poison/taint\n- mystic shimmer\n\n## 5. Vegetation categories\n\nFor each biome:\n\n- canopy tree\n- understory tree\n- conifer/palm/mangrove/cactus/etc as appropriate\n- sapling\n- shrub\n- grass cluster\n- reeds\n- flowers\n- mushrooms/fungi\n- vines\n- roots\n- fallen log\n- stump\n- burnt stump\n- harvest/depleted state\n\nAnimations:\n\n- idle wind\n- strong wind\n- chopped/hit reaction\n- fall\n- burn\n- freeze shimmer\n- water drip\n- mystic enchant pulse\n- growth/sprout\n- harvest/deplete\n\nStates:\n\n- seedling\n- young\n- mature\n- ancient\n- wet\n- waterlogged\n- frozen\n- frosted\n- burning\n- charred\n- dead\n- diseased/rotting\n- enchanted\n- glowing\n- harvested\n- cut\n\n## 6. Geology/resource categories\n\nFor each biome/material:\n\n- small rock\n- boulder\n- cliff debris\n- ore node\n- crystal node\n- gemstone node\n- cave mouth\n- stalagmite/stalactite where relevant\n- basalt/obsidian\n- ice rock\n- rune stone\n- fossil/bone stone\n\nAnimations/states:\n\n- idle shine\n- hit/chip\n- cracked\n- depleted\n- wet/slick\n- frozen\n- heat-cracked\n- glowing ore\n- mystic rune pulse\n\n## 7. Buildings and settlements\n\nGenerated by biome + settlement tier + material:\n\n### 7.1 Tile materials\n\n- wall stone\n- wall wood\n- wall clay/adobe\n- thatch\n- roof shingle\n- roof slate\n- floor wood\n- floor stone\n- carpet/rug\n- dirt floor\n- trim\n- damage overlays\n\n### 7.2 Building parts\n\n- foundation\n- wall segments\n- wall corners\n- roof segments\n- roof corners\n- doors\n- windows\n- stairs\n- balconies\n- chimneys\n- signs\n- fences\n- gates\n- bridges\n\nStates:\n\n- intact\n- damaged\n- burnt\n- wet\n- snow covered\n- overgrown\n- enchanted\n- abandoned\n- occupied/lit\n\n## 8. Interior props\n\n- bed\n- table\n- chair\n- chest\n- shelf\n- forge\n- anvil\n- loom\n- cooking pot\n- barrel\n- crate\n- rug\n- altar\n- bookshelf\n- lamp\n- workstation\n\nStates:\n\n- closed/open\n- empty/full\n- lit/unlit\n- broken\n- burnt\n- wet\n- enchanted\n- occupied/in use\n\n## 9. Character modular assembly\n\nPlayer/NPC bodies are not monolithic. They are assembled from layers:\n\n1. shadow/contact\n2. back hair/back equipment\n3. rear arm\n4. rear shoulder\n5. rear hand\n6. rear leg\n7. rear foot\n8. hips/pelvis\n9. torso\n10. neck\n11. head\n12. face\n13. front leg\n14. front foot\n15. front arm\n16. front shoulder\n17. front hand\n18. hair front\n19. clothing torso\n20. clothing legs\n21. armor overlays\n22. held item/weapon/tool\n23. equipment effects\n24. lighting mask\n\nDirections:\n\n- S, SE, E, NE, N, NW, W, SW\n\nAnimation clips:\n\n- idle\n- walk\n- run/sprint\n- jump_start\n- jump_air\n- land\n- climb\n- climb_idle\n- glide_start\n- glide_loop\n- glide_land\n- dodge_roll\n- attack\n- cast\n- gather\n- carry\n- hurt\n- sleep/sit\n\nEach body part gets matching frames by direction/clip. Equipment and clothing are generated as compatible overlays with identical frame grids.\n\n## 10. Items/equipment\n\n- tools: axe, pickaxe, shovel, hoe, fishing rod\n- weapons: sword, dagger, bow, staff, spear\n- shields\n- held resources\n- backpacks\n- helmets\n- hair styles\n- shirts/coats/robes\n- pants/skirts\n- boots/gloves\n- jewelry\n\nStates:\n\n- idle equipped\n- swing/use\n- charged\n- broken\n- enchanted\n- wet/frozen/burning visual overlays\n\n## 11. Creatures/NPCs\n\nCategories:\n\n- humanoid villagers\n- merchants\n- guards\n- animals\n- monsters\n- spirits/fae\n- aquatic creatures\n- flying creatures\n\nAll use either modular humanoid assembly or creature-specific layered assemblies.\n\n## 12. Effects\n\nFor every element:\n\n- fire\n- water\n- ice\n- cold\n- mystic\n- rot\n- ash\n- poison\n- salt\n- wind\n- sun\n- ore/metal\n\nGenerate:\n\n- impact\n- loop aura\n- projectile\n- ground decal\n- object overlay\n- character overlay\n- environmental ambient motes\n\n## 13. Interaction combinatorics\n\nFor every material × element pair generate state overlays:\n\nMaterials:\n\n- wood\n- leaf\n- grass\n- stone\n- sand\n- water\n- metal\n- cloth\n- leather\n- bone\n- crystal\n- soil\n\nElements:\n\n- fire\n- water\n- ice\n- cold\n- mystic\n- rot\n- ash\n- poison\n- salt\n- wind\n- sun\n- ore/metal\n\nExamples:\n\n- wood + fire = burning/charred\n- wood + water = waterlogged/dripping\n- wood + mystic = enchanted/rune-lit\n- grass + ice = frozen/frosted\n- stone + mystic = rune etched\n- water + poison = tainted\n- sand + fire = glass scorched\n\n## 14. Generation scale\n\nInitial complete run target:\n\n- 21 biome base terrain sheets × 64 cells = 1,344 tiles\n- 21 biome micro-layer sheets × 64 cells = 1,344 overlays\n- ~70 valid biome transitions × 64 cells = 4,480 tiles\n- 21 nature object sheets × 64 cells = 1,344 object frames\n- 21 building material sheets × 64 cells = 1,344 tiles\n- material reaction sheets: 12 materials × 12 elements × 8 frames = 1,152 overlays\n- modular humanoid base: 24 layers × 8 directions × ~16 clips × 8 frames = 24,576 frames\n- clothing/equipment overlays: easily 50,000+ frames\n- effects: 12 elements × 6 effect types × 8 frames = 576 frames\n\nFull combinatorial target exceeds 100,000 frames/assets once equipment, NPC variants, biome states, and object reaction states are included.\n\n## 15. Execution approach\n\n1. Generate job manifests from data tables.\n2. Batch Sorceress jobs by family.\n3. Save outputs in `assets/generated/` using deterministic paths.\n4. Runtime atlas definitions load generated PNGs automatically.\n5. Fallback only used while a generated sheet is missing.\n6. Asset manifests record physics/collision/render/animation/state metadata.\n7. Renderer assembles scene from layer stacks and modular body parts.\n8. Validate coverage with audits:\n   - all biomes have base/micro/nature/building sheets\n   - all valid transitions exist\n   - all material × element overlays exist\n   - all character layers have matching frame grids\n"
-        }
+        "type": "text",
+        "text": "[Tool round summary]\nWrote `docs/ASSET_GENERATION_MASTER_PLAN.md` (524 lines)"
       }
     ]
   },
@@ -6315,10 +5778,8 @@
     "role": "user",
     "content": [
       {
-        "type": "tool_result",
-        "tool_use_id": "call_zOY1a8jbgAd7Y7XD4akF2h4w",
-        "content": "Written 524 lines to docs/ASSET_GENERATION_MASTER_PLAN.md",
-        "is_error": false
+        "type": "text",
+        "text": "Acknowledged. Continue."
       }
     ]
   },
@@ -6775,6 +6236,172 @@
       {
         "type": "tool_result",
         "tool_use_id": "call_bf9xZKfeNg40XLHAA6Uag294",
+        "content": "Applied edit to DONE.md",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "Done."
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": "For the landscape, I'm expecting to see dirt and mud, stones and grass, vines and leaves, insects and trees, bushes and hedges, and a canopy. I'm expecting to see deserts and dunes, cliffs and overhangs, and mountains, like all of those things. and i want you to define it maximally"
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "text",
+        "text": "<plan>\nI’ll add a maximal landscape taxonomy document and data schema covering every visible landscape layer/object/material/transition/state, then generate Sorceress batch specs from it so the asset library knows exactly how to produce dirt, mud, stones, grass, vines, leaves, insects, trees, bushes, hedges, canopy, deserts, dunes, cliffs, overhangs, mountains, and biome variants.\n</plan>\n"
+      },
+      {
+        "type": "tool_use",
+        "id": "call_83UHbMZKBLKALNrg9CH06S9S",
+        "name": "create_checkpoint",
+        "input": {
+          "message": "Define maximal landscape taxonomy and generation schema"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_83UHbMZKBLKALNrg9CH06S9S",
+        "content": "Checkpoint requested: Define maximal landscape taxonomy and generation schema",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_kPg0lz3cw9Gxs9LkxMawYcCN",
+        "name": "write_file",
+        "input": {
+          "path": "docs/MAXIMAL_LANDSCAPE_TAXONOMY.md",
+          "content": "# Maximal Landscape Taxonomy\n\nThis document defines the target landscape construction model for FreedomMMO. A landscape is not a colored tile. It is a layered simulation projection: geology, soil, water, vegetation, objects, canopy, atmosphere, living detail, and interaction states all stacked and composited.\n\n## 1. Landscape Stack\n\nEvery world tile is assembled from horizontal layers. Each layer can be empty, sparse, dense, animated, interactive, collidable, occluding, seasonal, damaged, or magically transformed.\n\n### L0 Bedrock / Geological Foundation\n\nPurpose: define mass, slope, cliffs, mountain forms, cave potential, stone color, ore veins, and collision hardness.\n\nAsset families:\n\n- bedrock base textures\n- stratified rock bands\n- exposed stone plates\n- cracked stone seams\n- boulder embedded forms\n- scree fields\n- gravel beds\n- ore veins\n- basalt plates\n- granite slabs\n- limestone shelves\n- sandstone ledges\n- shale flakes\n- obsidian glass\n- pumice chunks\n- glacial scoured stone\n- rune-etched mystic stone\n\nAnimations:\n\n- heat shimmer on volcanic stone\n- wet glisten shimmer\n- mystic rune pulse\n- falling pebble trickle on cliffs\n- dust drift on dry rock\n\nStates:\n\n- dry\n- wet\n- mossy\n- icy\n- snow-dusted\n- ash-dusted\n- cracked\n- fractured\n- rune-etched\n- glowing\n- ore-exposed\n- collapsed\n\nInteractions:\n\n- fire: heat cracks, ember seams\n- water: slick, mossy, erosion stains\n- ice/cold: frost, ice crusts\n- mystic: runes, levitating fragments, glow veins\n- impact: cracks, rubble\n- mining: ore exposed, debris\n\n### L1 Soil / Sediment\n\nPurpose: define what the player walks on beneath vegetation and debris.\n\nAsset families:\n\n- dry dirt\n- damp dirt\n- dark loam\n- clay mud\n- cracked mud\n- swamp muck\n- peat\n- silt\n- riverbank sediment\n- floodplain alluvium\n- beach sand\n- desert sand\n- dune sand\n- ash soil\n- tundra permafrost soil\n- snow-packed earth\n- leaf-mixed humus\n- root-threaded soil\n- fungal soil\n- aether moss soil\n\nAnimations:\n\n- mud squish impression frames\n- dust puff frames\n- water seep shimmer\n- aether mote pulsing\n- wind-blown sand creep\n\nStates:\n\n- dry\n- damp\n- wet\n- waterlogged\n- muddy\n- cracked\n- frozen\n- snow-covered\n- scorched\n- ashen\n- poisoned\n- enchanted\n- trampled\n- dug\n\nInteractions:\n\n- footsteps: prints, compression, sound type\n- rain/water: mud, puddles, darker color\n- fire: scorched, ash overlay\n- cold: frozen crust\n- mystic: glowing root filaments\n- digging: exposed subsoil\n\n### L2 Ground Cover / Low Vegetation\n\nPurpose: fill walkable surfaces with grass, moss, lichen, small plants, sprouts, needles, and low leaves.\n\nAsset families:\n\n- short grass\n- tall grass\n- lush grass\n- dry grass\n- yellow savanna grass\n- steppe grass tufts\n- moss mats\n- leaf litter\n- pine needles\n- reeds\n- cattails\n- marsh grass\n- tundra lichen\n- alpine cushion plants\n- dune scrub\n- cactus sprouts\n- fungal mats\n- aether moss\n- glowing grass\n- clover patches\n- fern starts\n\nAnimations:\n\n- wind sway loop\n- player brush displacement\n- rain flattening\n- frost sparkle\n- mystic pulse\n- insect disturbance rustle\n\nStates:\n\n- healthy\n- dry\n- wet\n- waterlogged\n- frosted\n- frozen\n- burnt\n- trampled\n- cut\n- blooming\n- seeded\n- enchanted\n- poisoned\n- ash-dusted\n\nInteractions:\n\n- player movement bends blades\n- sprinting flattens grass briefly\n- fire burns and propagates\n- water makes lush or waterlogged\n- ice freezes blades\n- mystic produces fae bloom\n- insects animate local rustle\n\n### L3 Flowers / Herbs / Detail Plants\n\nPurpose: create diversity and local identity.\n\nAsset families:\n\n- wildflower clusters\n- single blossoms\n- herb sprigs\n- medicinal herbs\n- poison flowers\n- desert blooms\n- swamp fungus flowers\n- alpine flowers\n- tundra blooms\n- mystic fae flowers\n- glowing pollen plants\n- seed heads\n- mushrooms\n- shelf fungi\n- small ferns\n\nAnimations:\n\n- blossom idle sway\n- pollen puff\n- glow pulse\n- petal fall\n- insect landing\n\nStates:\n\n- bud\n- blooming\n- seeded\n- wilted\n- wet\n- frozen\n- burnt\n- enchanted\n- harvested\n\nInteractions:\n\n- gatherable\n- trampling\n- pollination/insect attraction\n- fire destruction\n- mystic bloom transformation\n\n### L4 Stones / Debris / Surface Objects\n\nPurpose: non-tall detail objects that affect readability, collision, gathering, and biome identity.\n\nAsset families:\n\n- pebbles\n- stones\n- boulder chips\n- gravel scatter\n- shells\n- driftwood\n- fallen leaves\n- twigs\n- branches\n- roots exposed\n- bones\n- ash flakes\n- volcanic cinders\n- ice shards\n- snow clumps\n- pinecones\n- seed pods\n- fruit drops\n- insect mounds\n- anthills\n- termite mounds\n\nAnimations:\n\n- wind tumble for leaves\n- water bob for driftwood\n- insect activity on mounds\n- ember glow for cinders\n- mystic hover for enchanted fragments\n\nStates:\n\n- dry\n- wet\n- mossy\n- frozen\n- scorched\n- buried\n- uncovered\n- enchanted\n\nInteractions:\n\n- kickable small debris\n- harvestable shells/wood\n- collision for larger stones\n- hiding insects/items\n\n### L5 Shrubs / Bushes / Hedges\n\nPurpose: medium vegetation with partial collision, concealment, resource harvesting, and movement resistance.\n\nAsset families:\n\n- small shrub\n- round bush\n- bramble bush\n- berry bush\n- thorn bush\n- desert scrub\n- sagebrush\n- swamp bush\n- mangrove shrub\n- hedge segment straight\n- hedge corner\n- hedge endcap\n- hedge gate opening\n- mystic glow shrub\n- flowering bush\n- frozen shrub\n- burnt shrub\n\nAnimations:\n\n- idle sway\n- rustle on contact\n- berry sparkle/growth\n- thorn reaction\n- burn animation\n- freeze shimmer\n- mystic pulse\n\nStates:\n\n- young\n- mature\n- flowering\n- fruiting\n- harvested\n- cut\n- trampled\n- burning\n- burnt\n- frozen\n- waterlogged\n- enchanted\n- poisoned\n\nInteractions:\n\n- slows movement\n- hides small entities/items\n- harvest berries/herbs\n- can be cut/burned/frozen/enchanted\n- hedges block movement/projectiles depending density\n\n### L6 Vines / Creepers / Roots\n\nPurpose: vertical/horizontal connection layer; climbable, decorative, occluding, and interactive.\n\nAsset families:\n\n- ground vines\n- hanging vines\n- tree vines\n- cliff vines\n- root tendrils\n- swamp creepers\n- thorn creepers\n- flowering vines\n- ivy wall patches\n- jungle lianas\n- mystic glowing vines\n- frozen vines\n- burnt vines\n\nAnimations:\n\n- sway\n- crawl/growth loop\n- grasp/retract\n- magic pulse\n- burning propagation\n\nStates:\n\n- growing\n- mature\n- climbable\n- cut\n- burning\n- burnt\n- frozen\n- waterlogged\n- enchanted\n- thorned\n\nInteractions:\n\n- climbable on cliffs/trees\n- movement slowing on ground\n- burnable wood/leaf material\n- waterlogged and heavy\n- frozen brittle\n- mystic animated/active\n\n### L7 Trees / Trunks / Branches\n\nPurpose: major vertical objects, canopy sources, shadows, occlusion, collision, harvesting, habitats.\n\nAsset families:\n\n- broadleaf tree\n- ancient tree\n- sapling\n- dead tree\n- burnt tree\n- fallen log\n- hollow log\n- conifer\n- snow conifer\n- tropical tree\n- palm\n- mangrove\n- swamp cypress\n- savanna acacia\n- desert cactus tree\n- mystic tree\n- fruit tree\n- flowering tree\n- giant root tree\n\nSub-layers:\n\n- shadow\n- root base\n- trunk\n- bark details\n- branches\n- canopy mass back\n- canopy mass front\n- fruit/flowers\n- vines\n- snow overlay\n- wet overlay\n- burn overlay\n- mystic overlay\n- lighting mask\n\nAnimations:\n\n- canopy sway\n- leaf flutter\n- branch sway\n- fruit drop\n- pollen fall\n- burning\n- smoke\n- freeze shimmer\n- enchanted pulse\n- chop damage\n- fall animation\n\nStates:\n\n- sapling\n- young\n- mature\n- ancient\n- flowering\n- fruiting\n- autumn\n- winter bare\n- wet\n- waterlogged\n- burning\n- burnt\n- charred\n- dead\n- frozen\n- enchanted\n- diseased\n- chopped\n- fallen\n\nInteractions:\n\n- collision trunk\n- soft collision canopy\n- blocks projectiles depending density\n- casts shadows\n- occludes entities\n- climbable depending species\n- harvest wood/fruit/leaves/resin\n- burn/freeze/waterlog/enchant\n- habitat for insects/birds\n\n### L8 Canopy / Overhead Layer\n\nPurpose: large-scale occlusion, shadow, depth, and biome identity.\n\nAsset families:\n\n- canopy patches\n- canopy edges\n- canopy holes\n- dense canopy tiles\n- jungle canopy\n- conifer canopy\n- autumn canopy\n- snow canopy\n- swamp canopy\n- mystic glowing canopy\n- hanging moss canopy\n- overhanging branches\n\nAnimations:\n\n- slow canopy sway\n- dappled light movement\n- leaf fall\n- rain drip\n- snow fall from branches\n- glow pulse\n\nStates:\n\n- sparse\n- medium\n- dense\n- seasonal color\n- wet\n- snow-covered\n- burning\n- burnt\n- enchanted\n\nInteractions:\n\n- casts shadow\n- reduces visibility\n- affects lighting and temperature\n- hides entities under canopy\n- drops leaves/fruit/water/snow\n\n### L9 Insects / Small Life\n\nPurpose: living detail and ecological response layer.\n\nAsset families:\n\n- fireflies\n- butterflies\n- moths\n- bees\n- dragonflies\n- ants\n- beetles\n- flies\n- mosquitoes\n- crickets\n- glow bugs\n- desert scarabs\n- snow gnats\n- cave bugs\n- mystic sprites\n\nAnimations:\n\n- idle crawl\n- fly loop\n- swarm loop\n- scatter on player approach\n- gather around flowers/light\n- hide in grass\n\nStates:\n\n- idle\n- active\n- fleeing\n- swarming\n- attracted\n- sleeping\n- enchanted\n- poisoned\n\nInteractions:\n\n- flee from movement\n- gather near flowers/water/light\n- indicate biome health\n- can be caught/harvested\n- react to fire/smoke/cold/mystic\n\n### L10 Terrain Forms / Elevation Geometry\n\nPurpose: large visible structural forms beyond flat tiles.\n\nAsset families:\n\n- low slope\n- high slope\n- hill shoulder\n- ridge crest\n- valley floor\n- cliff face\n- cliff top edge\n- cliff bottom edge\n- overhang underside\n- cave mouth\n- natural bridge\n- ravine edge\n- plateau edge\n- mountain slope\n- mountain peak\n- scree slope\n- dune ridge\n- dune slipface\n- canyon wall\n- riverbank cut\n- waterfall edge\n- snow cornice\n- lava shelf\n- mystic floating ledge\n\nAnimations:\n\n- falling dust\n- pebble trickle\n- waterfall flow\n- sand drift\n- snow drift\n- lava glow\n- mystic levitation\n\nStates:\n\n- stable\n- cracked\n- wet\n- icy\n- snow-covered\n- eroded\n- collapsed\n- climbable\n- overhanging\n- bridged\n\nInteractions:\n\n- climb\n- jump up/down\n- glide down\n- slide on steep slopes\n- collision and occlusion\n- line-of-sight blocking\n- pathfinding cost\n\n### L11 Water / Wetlands / Shoreline\n\nPurpose: water bodies, moisture transitions, banks, mud, foam, and reflections.\n\nAsset families:\n\n- deep ocean\n- ocean waves\n- shallow water\n- river flow\n- lake still water\n- swamp water\n- puddles\n- wet mud\n- shoreline foam\n- beach wetline\n- riverbank reeds\n- waterfall\n- rapids\n- ice sheets\n- broken ice\n- mystic shimmering water\n\nAnimations:\n\n- wave loop\n- flow loop\n- foam loop\n- ripple impact\n- reflection shimmer\n- ice crack shimmer\n- mystic shimmer\n\nStates:\n\n- calm\n- windy\n- flowing\n- foamy\n- muddy\n- frozen\n- thawing\n- poisoned\n- enchanted\n- steaming\n\nInteractions:\n\n- blocks/permits movement depending depth\n- swim/wade future\n- waterlogs objects\n- extinguishes fire\n- freezes under cold\n- reflects light\n- forms mud/puddles nearby\n\n### L12 Desert / Dunes / Drylands\n\nPurpose: non-green biome identity with wind-shaped surfaces.\n\nAsset families:\n\n- sand base\n- ripple sand\n- dune crest\n- dune shadow side\n- dune slipface\n- cracked dry pan\n- salt flat\n- desert scrub\n- cactus\n- bleached bones\n- mirage shimmer\n- wind dust\n- sandstone rocks\n\nAnimations:\n\n- wind sand drift\n- dust devil\n- heat shimmer\n- cactus flower bloom\n\nStates:\n\n- dry\n- windblown\n- scorched\n- wet rare bloom\n- mystic star sand\n- ash-mixed\n\nInteractions:\n\n- slower uphill dune movement\n- sliding on slipface\n- footprints\n- sand burial/uncovering\n- heat effects\n\n### L13 Mountains / Cliffs / Overhangs\n\nPurpose: verticality, navigation, views, caves, and dramatic silhouettes.\n\nAsset families:\n\n- cliff wall tiles\n- cliff cap tiles\n- cliff foot tiles\n- ledge tiles\n- overhang shadow\n- cave entrance\n- ridge rocks\n- mountain snow line\n- alpine grass patches\n- scree fields\n- exposed strata\n- climbing handholds\n- rope/vine climb patches\n- natural bridge\n- ravine wall\n\nAnimations:\n\n- dust fall\n- snow gust\n- waterfall/ice fall\n- falling pebbles\n- mystic floating stones\n\nStates:\n\n- dry\n- wet\n- icy\n- snow-covered\n- cracked\n- unstable\n- climbable\n- blocked\n- collapsed\n- enchanted\n\nInteractions:\n\n- climbable handholds/vines\n- jump ledges\n- glide from height\n- fall damage later\n- occlusion and shadows\n- cave/subterranean transition\n\n## 2. Biome-Specific Landscape Assemblies\n\nEach biome selects a recipe from the same layer stack.\n\n- deep_ocean: deep water, foam, kelp hints, wave glints, no soil, occasional rocks\n- ocean: waves, foam, seaweed, driftwood near shore\n- shallow_water: sand/silt below, reeds, ripples, shells\n- beach: wet sand, dry sand, shells, driftwood, dunes, beach grass\n- river: flow, river stones, reeds, muddy banks, foam\n- lake: still water, reeds, lily pads, soft banks\n- grassland: dirt/loam, grass, flowers, insects, shrubs, scattered trees\n- forest: humus, moss, roots, leaf litter, underbrush, trees, canopy\n- dense_forest: dark humus, thick roots, vines, fungi, dense trees, heavy canopy\n- tropical_forest: wet humus, lianas, broad leaves, flowers, insects, jungle canopy\n- taiga: needle duff, moss, conifers, snow patches, lichen\n- savanna: dry grass, acacia, dust, termite mounds, sparse shrubs\n- steppe: short grass, wind grass, stones, sparse flowers\n- desert: sand, dunes, cracked pan, cactus, bones, heat shimmer\n- swamp: mud, standing water, reeds, roots, moss, insects, cypress/mangrove\n- tundra: frozen soil, lichen, snow clumps, low shrubs, ice rocks\n- arctic: ice, snow, glacial stones, sparse life, wind snow\n- hills: stony grass, shrubs, exposed stone, small cliffs, trees in pockets\n- mountains: rock, scree, snowline, cliffs, ledges, caves, sparse alpine plants\n- volcanic: basalt, ash, ember cracks, cinders, lava hints, heat shimmer\n- mystic: aether moss, glowing grass, crystals, floating motes, enchanted trees\n\n## 3. Required Transitions\n\nTransitions are generated for every valid biome graph edge.\n\n- terrain color/material blends\n- ground cover blends\n- vegetation density blends\n- object mix blends\n- shoreline/wetline blends\n- snowline blends\n- cliff cap/face/foot blends\n- dune-to-rock blends\n- forest-to-grass canopy thinning\n- swamp-to-water mud/reed blends\n- mystic enchantment bleed overlays\n\nTransition asset types:\n\n- edge N/E/S/W\n- corner NE/NW/SE/SW\n- diagonal feather\n- sparse noise mask\n- dense noise mask\n- path/worn interruption\n- elevation-aware transition\n- waterline transition\n\n## 4. Interaction State Cross Product\n\nEvery material family gets reactions to every element family. These are separate overlay sheets and can stack.\n\nMaterials:\n\n- wood\n- leaf\n- grass\n- flower\n- soil\n- mud\n- sand\n- stone\n- crystal\n- water\n- ice\n- metal\n- cloth\n- bone\n- fungus\n\nElements:\n\n- fire\n- water\n- ice\n- cold\n- mystic\n- rot\n- poison\n- ash\n- salt\n- wind\n- sun\n- lightning\n- impact\n- cut\n- trample\n- dig\n\nStates examples:\n\n- burning\n- burnt\n- charred\n- smoking\n- waterlogged\n- dripping\n- muddy\n- frozen\n- frosted\n- shattered\n- enchanted\n- glowing\n- rune-etched\n- rotting\n- poisoned\n- ash-dusted\n- salt-crusted\n- windblown\n- sunbaked\n- cracked\n- cut\n- trampled\n- dug\n\n## 5. Animation Requirements\n\nEvery asset class must declare animation clips even if subtle.\n\nTerrain:\n\n- ambient idle\n- wet shimmer\n- wind overlay\n- state pulse\n\nGrass/foliage:\n\n- idle sway\n- contact bend\n- recovery\n- burn\n- freeze\n- enchant pulse\n\nTrees/bushes/vines:\n\n- idle sway\n- contact rustle\n- damage\n- burning\n- frozen shimmer\n- enchanted pulse\n- harvest/cut\n\nWater:\n\n- calm\n- flow\n- wave\n- foam\n- ripple\n- frozen shimmer\n\nCliffs/mountains:\n\n- dust trickle\n- pebble fall\n- snow gust\n- lava glow\n- mystic float\n\nInsects:\n\n- idle\n- crawl/fly\n- swarm\n- flee\n- attracted\n\n## 6. Generation Scale\n\nThe target is tens or hundreds of thousands of frames, not a small demo set.\n\nApproximate first complete pass:\n\n- 21 biomes × 64 base tiles = 1,344 terrain base tiles\n- 21 biomes × 8 micro rows × 8 frames = 1,344 micro overlays\n- 21 biomes × 8 nature rows × 8 frames = 1,344 nature object frames\n- 21 biomes × 8 building rows × 8 variants = 1,344 building material frames\n- 15 materials × 16 elements × 8 frames = 1,920 reaction overlays\n- 30 valid biome transitions × 8 transition masks × 8 variants = 1,920 transition frames\n- 100 object archetypes × 16 states × 8 frames = 12,800 object-state frames\n- 20 character body parts × 8 directions × 18 animations × 8 frames = 23,040 character component frames per body family\n\nExpanded production target:\n\n- multiple species per biome\n- seasonal variants\n- rare variants\n- damage tiers\n- wet/dry/frozen/burnt/mystic state overlays\n- equipment layers\n- NPC archetypes\n\nThis pushes into 100,000+ generated frames.\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_kPg0lz3cw9Gxs9LkxMawYcCN",
+        "content": "Written 1008 lines to docs/MAXIMAL_LANDSCAPE_TAXONOMY.md",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_2zuYEcVXxAcYPn8qyAZoZm2z",
+        "name": "write_file",
+        "input": {
+          "path": "src/world/landscape-taxonomy.js",
+          "content": "export const LANDSCAPE_LAYERS = Object.freeze([\n  'bedrock', 'soil', 'ground_cover', 'flowers_herbs', 'stones_debris', 'shrubs_bushes_hedges',\n  'vines_roots', 'trees_trunks_branches', 'canopy', 'insects_small_life', 'terrain_forms',\n  'water_wetlands_shoreline', 'desert_dunes_drylands', 'mountains_cliffs_overhangs'\n]);\n\nexport const LANDSCAPE_ASSET_FAMILIES = Object.freeze({\n  bedrock: ['bedrock_base', 'strata', 'stone_plate', 'cracks', 'boulder_embedded', 'scree', 'gravel', 'ore_vein', 'basalt', 'granite', 'limestone', 'sandstone', 'shale', 'obsidian', 'glacial_stone', 'rune_stone'],\n  soil: ['dry_dirt', 'damp_dirt', 'loam', 'clay_mud', 'cracked_mud', 'swamp_muck', 'peat', 'silt', 'alluvium', 'sand', 'ash_soil', 'permafrost', 'snow_earth', 'humus', 'root_soil', 'fungal_soil', 'aether_moss_soil'],\n  ground_cover: ['short_grass', 'tall_grass', 'lush_grass', 'dry_grass', 'savanna_grass', 'steppe_tufts', 'moss', 'leaf_litter', 'pine_needles', 'reeds', 'cattails', 'marsh_grass', 'lichen', 'alpine_plants', 'dune_scrub', 'cactus_sprouts', 'fungal_mats', 'aether_moss', 'glow_grass', 'clover', 'fern_starts'],\n  flowers_herbs: ['wildflowers', 'single_blossoms', 'herbs', 'medicinal_herbs', 'poison_flowers', 'desert_blooms', 'fungus_flowers', 'alpine_flowers', 'tundra_blooms', 'fae_flowers', 'pollen_plants', 'seed_heads', 'mushrooms', 'shelf_fungi', 'small_ferns'],\n  stones_debris: ['pebbles', 'stones', 'boulder_chips', 'gravel_scatter', 'shells', 'driftwood', 'fallen_leaves', 'twigs', 'branches', 'exposed_roots', 'bones', 'ash_flakes', 'cinders', 'ice_shards', 'snow_clumps', 'pinecones', 'seed_pods', 'fruit_drops', 'anthills', 'termite_mounds'],\n  shrubs_bushes_hedges: ['small_shrub', 'round_bush', 'bramble', 'berry_bush', 'thorn_bush', 'desert_scrub', 'sagebrush', 'swamp_bush', 'mangrove_shrub', 'hedge_straight', 'hedge_corner', 'hedge_endcap', 'hedge_gap', 'glow_shrub', 'flowering_bush', 'frozen_shrub', 'burnt_shrub'],\n  vines_roots: ['ground_vines', 'hanging_vines', 'tree_vines', 'cliff_vines', 'root_tendrils', 'swamp_creepers', 'thorn_creepers', 'flowering_vines', 'ivy_wall', 'jungle_lianas', 'mystic_vines', 'frozen_vines', 'burnt_vines'],\n  trees_trunks_branches: ['broadleaf_tree', 'ancient_tree', 'sapling', 'dead_tree', 'burnt_tree', 'fallen_log', 'hollow_log', 'conifer', 'snow_conifer', 'tropical_tree', 'palm', 'mangrove', 'swamp_cypress', 'acacia', 'cactus_tree', 'mystic_tree', 'fruit_tree', 'flowering_tree', 'giant_root_tree'],\n  canopy: ['canopy_patch', 'canopy_edge', 'canopy_hole', 'dense_canopy', 'jungle_canopy', 'conifer_canopy', 'autumn_canopy', 'snow_canopy', 'swamp_canopy', 'mystic_canopy', 'hanging_moss', 'overhanging_branches'],\n  insects_small_life: ['fireflies', 'butterflies', 'moths', 'bees', 'dragonflies', 'ants', 'beetles', 'flies', 'mosquitoes', 'crickets', 'glow_bugs', 'scarabs', 'snow_gnats', 'cave_bugs', 'mystic_sprites'],\n  terrain_forms: ['low_slope', 'high_slope', 'hill_shoulder', 'ridge_crest', 'valley_floor', 'cliff_face', 'cliff_top', 'cliff_bottom', 'overhang_underside', 'cave_mouth', 'natural_bridge', 'ravine_edge', 'plateau_edge', 'mountain_slope', 'mountain_peak', 'scree_slope', 'dune_ridge', 'dune_slipface', 'canyon_wall', 'riverbank_cut', 'waterfall_edge', 'snow_cornice', 'lava_shelf', 'floating_ledge'],\n  water_wetlands_shoreline: ['deep_water', 'ocean_waves', 'shallow_water', 'river_flow', 'lake_water', 'swamp_water', 'puddles', 'wet_mud', 'shore_foam', 'beach_wetline', 'riverbank_reeds', 'waterfall', 'rapids', 'ice_sheet', 'broken_ice', 'mystic_water'],\n  desert_dunes_drylands: ['sand_base', 'ripple_sand', 'dune_crest', 'dune_shadow', 'dune_slipface', 'cracked_pan', 'salt_flat', 'desert_scrub', 'cactus', 'bleached_bones', 'mirage', 'wind_dust', 'sandstone_rocks'],\n  mountains_cliffs_overhangs: ['cliff_wall', 'cliff_cap', 'cliff_foot', 'ledge', 'overhang_shadow', 'cave_entrance', 'ridge_rocks', 'snowline', 'alpine_grass', 'scree_field', 'strata', 'handholds', 'climb_vines', 'natural_bridge', 'ravine_wall']\n});\n\nexport const LANDSCAPE_ANIMATIONS = Object.freeze(['ambient_idle', 'wind_sway', 'contact_bend', 'recovery', 'wet_shimmer', 'burn', 'smoke', 'freeze_shimmer', 'mystic_pulse', 'damage', 'harvest', 'growth', 'flow', 'foam', 'ripple', 'dust_trickle', 'pebble_fall', 'swarm', 'flee']);\n\nexport const LANDSCAPE_STATES = Object.freeze(['default', 'dry', 'damp', 'wet', 'waterlogged', 'muddy', 'frozen', 'frosted', 'snow_covered', 'burning', 'burnt', 'charred', 'scorched', 'ashen', 'poisoned', 'enchanted', 'glowing', 'rune_etched', 'trampled', 'cut', 'dug', 'harvested', 'flowering', 'fruiting', 'dead', 'diseased', 'collapsed', 'climbable']);\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_2zuYEcVXxAcYPn8qyAZoZm2z",
+        "content": "Written 27 lines to src/world/landscape-taxonomy.js",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_WwFz6W83Fw8nCigvuwElmVSq",
+        "name": "write_file",
+        "input": {
+          "path": "scripts/generate-maximal-landscape-jobs.mjs",
+          "content": "import { mkdirSync, writeFileSync } from 'node:fs';\nimport { dirname } from 'node:path';\n\nconst biomes = ['deep_ocean', 'ocean', 'shallow_water', 'beach', 'river', 'lake', 'grassland', 'forest', 'dense_forest', 'tropical_forest', 'taiga', 'savanna', 'steppe', 'desert', 'swamp', 'tundra', 'arctic', 'hills', 'mountains', 'volcanic', 'mystic'];\nconst layerFamilies = {\n  bedrock: ['bedrock_base', 'strata', 'stone_plate', 'cracks', 'boulder_embedded', 'scree', 'gravel', 'ore_vein'],\n  soil: ['dry_dirt', 'damp_dirt', 'loam', 'clay_mud', 'cracked_mud', 'swamp_muck', 'peat', 'silt'],\n  ground_cover: ['short_grass', 'tall_grass', 'lush_grass', 'dry_grass', 'moss', 'leaf_litter', 'reeds', 'lichen'],\n  flowers_herbs: ['wildflowers', 'herbs', 'poison_flowers', 'desert_blooms', 'alpine_flowers', 'fae_flowers', 'mushrooms', 'ferns'],\n  stones_debris: ['pebbles', 'stones', 'shells', 'driftwood', 'fallen_leaves', 'twigs', 'bones', 'insect_mounds'],\n  shrubs_bushes_hedges: ['small_shrub', 'round_bush', 'bramble', 'berry_bush', 'thorn_bush', 'hedge_straight', 'hedge_corner', 'glow_shrub'],\n  vines_roots: ['ground_vines', 'hanging_vines', 'tree_vines', 'cliff_vines', 'root_tendrils', 'thorn_creepers', 'ivy_wall', 'mystic_vines'],\n  trees_trunks_branches: ['sapling', 'broadleaf_tree', 'ancient_tree', 'dead_tree', 'fallen_log', 'conifer', 'tropical_tree', 'mystic_tree'],\n  canopy: ['canopy_patch', 'canopy_edge', 'canopy_hole', 'dense_canopy', 'jungle_canopy', 'snow_canopy', 'mystic_canopy', 'overhanging_branches'],\n  insects_small_life: ['fireflies', 'butterflies', 'bees', 'dragonflies', 'ants', 'beetles', 'crickets', 'mystic_sprites'],\n  terrain_forms: ['low_slope', 'high_slope', 'cliff_face', 'cliff_top', 'cliff_bottom', 'overhang_underside', 'cave_mouth', 'natural_bridge'],\n  water_wetlands_shoreline: ['water_surface', 'river_flow', 'lake_water', 'swamp_water', 'puddles', 'shore_foam', 'waterfall', 'ice_sheet'],\n  desert_dunes_drylands: ['sand_base', 'ripple_sand', 'dune_crest', 'dune_shadow', 'dune_slipface', 'cracked_pan', 'mirage', 'wind_dust'],\n  mountains_cliffs_overhangs: ['cliff_wall', 'cliff_cap', 'ledge', 'overhang_shadow', 'ridge_rocks', 'snowline', 'handholds', 'ravine_wall']\n};\nconst states = ['default', 'wet', 'waterlogged', 'frozen', 'burning', 'burnt', 'enchanted', 'trampled'];\nconst jobs = [];\n\nfor (const biome of biomes) {\n  for (const [layer, families] of Object.entries(layerFamilies)) {\n    addJob(`landscape/${biome}/${layer}.json`, {\n      output: `assets/generated/landscape/${biome}/${layer}.png`,\n      kind: 'create_tiles_pro',\n      cellSize: [32, 32], columns: 8, rows: families.length,\n      rowsDescription: families,\n      prompt: `Generate ${layer} landscape assets for ${biome}. Rows: ${families.join(', ')}. Each row has 8 variants/animation frames. Organic rich fantasy pixel art, transparent for overlays, seamless when terrain, strong readable silhouettes.`\n    });\n  }\n  for (const state of states) {\n    addJob(`landscape-states/${biome}/${state}_overlays.json`, {\n      output: `assets/generated/landscape-states/${biome}/${state}_overlays.png`,\n      kind: 'create_state_overlays', cellSize: [32, 32], columns: 8, rows: Object.keys(layerFamilies).length,\n      rowsDescription: Object.keys(layerFamilies),\n      prompt: `Generate transparent ${state} state overlays for every landscape layer in ${biome}. 8 frames/variants per row. Must stack cleanly over base assets.`\n    });\n  }\n}\n\nwriteFileSync('assets/sorceress/maximal-landscape-job-index.json', JSON.stringify({ schema: 'freedommmo.maximal-landscape-jobs.v1', count: jobs.length, jobs }, null, 2));\nconsole.log(`Wrote ${jobs.length} maximal landscape jobs`);\n\nfunction addJob(path, job) {\n  const full = `assets/sorceress/jobs/${path}`;\n  mkdirSync(dirname(full), { recursive: true });\n  const content = { tool: 'sorceress', style: 'More beautiful than CrossCode, Zelda, and Octopath Traveler; maximal elaborate organic fantasy pixel art; no square debug marks; no UI/text/watermark.', ...job };\n  writeFileSync(full, JSON.stringify(content, null, 2));\n  jobs.push(full);\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_WwFz6W83Fw8nCigvuwElmVSq",
+        "content": "Written 54 lines to scripts/generate-maximal-landscape-jobs.mjs",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_VfyaFih3yEK70ErhxMJivDYT",
+        "name": "run_command",
+        "input": {
+          "command": "node scripts/generate-maximal-landscape-jobs.mjs && node --check src/world/landscape-taxonomy.js && node --check scripts/generate-maximal-landscape-jobs.mjs"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_VfyaFih3yEK70ErhxMJivDYT",
+        "content": "$ node scripts/generate-maximal-landscape-jobs.mjs && node --check src/world/landscape-taxonomy.js && node --check scripts/generate-maximal-landscape-jobs.mjs\n\nWrote 462 maximal landscape jobs\n",
+        "is_error": false
+      }
+    ]
+  },
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "call_Aif62h4JYIJSHjUNDDHQcuHV",
+        "name": "edit_file",
+        "input": {
+          "path": "DONE.md",
+          "old_text": "- Added massive asset generation master plan and first movement/body systems:\n  - Added `docs/ASSET_GENERATION_MASTER_PLAN.md`, enumerating landscape layers, terrain categories, transitions, vegetation/geology/building/interior/character/item/effect assets, animations, states, and material-element interactions.\n  - Added modular humanoid body schema in `src/character/body-schema.js` with body parts, 8 directions, and animation clips.\n  - Added `src/character/modular-character.js` for programmatic animation-state selection.\n  - Player now supports sprinting, jump physics, glide input, and dodge roll timing.\n  - Renderer now draws a simple modular assembled player from legs, torso, arms, head, hair, and optional glide arc, replacing the old static circle player marker.\n",
+          "new_text": "- Added massive asset generation master plan and first movement/body systems:\n  - Added `docs/ASSET_GENERATION_MASTER_PLAN.md`, enumerating landscape layers, terrain categories, transitions, vegetation/geology/building/interior/character/item/effect assets, animations, states, and material-element interactions.\n  - Added modular humanoid body schema in `src/character/body-schema.js` with body parts, 8 directions, and animation clips.\n  - Added `src/character/modular-character.js` for programmatic animation-state selection.\n  - Player now supports sprinting, jump physics, glide input, and dodge roll timing.\n  - Renderer now draws a simple modular assembled player from legs, torso, arms, head, hair, and optional glide arc, replacing the old static circle player marker.\n- Defined maximal landscape taxonomy and generation schema:\n  - Added `docs/MAXIMAL_LANDSCAPE_TAXONOMY.md`, defining dirt, mud, stones, grass, vines, leaves, insects, trees, bushes, hedges, canopy, deserts/dunes, cliffs/overhangs, mountains, water/wetlands, states, animations, transitions, and interactions in maximal detail.\n  - Added `src/world/landscape-taxonomy.js` as runtime/data-facing taxonomy constants for landscape layers, asset families, animations, and states.\n  - Added `scripts/generate-maximal-landscape-jobs.mjs` to programmatically create maximal Sorceress landscape generation jobs.\n  - Generated `assets/sorceress/maximal-landscape-job-index.json` with 462 landscape jobs covering 21 biomes × 14 layer families plus per-biome state overlay jobs.\n"
+        }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "call_Aif62h4JYIJSHjUNDDHQcuHV",
         "content": "Applied edit to DONE.md",
         "is_error": false
       }

@@ -1,0 +1,23 @@
+{
+  "tool": "sorceress",
+  "style": "More beautiful than CrossCode, Zelda, and Octopath Traveler; maximal elaborate organic fantasy pixel art; no square debug marks; no UI/text/watermark.",
+  "output": "assets/generated/landscape/desert/desert_dunes_drylands.png",
+  "kind": "create_tiles_pro",
+  "cellSize": [
+    32,
+    32
+  ],
+  "columns": 8,
+  "rows": 8,
+  "rowsDescription": [
+    "sand_base",
+    "ripple_sand",
+    "dune_crest",
+    "dune_shadow",
+    "dune_slipface",
+    "cracked_pan",
+    "mirage",
+    "wind_dust"
+  ],
+  "prompt": "Generate desert_dunes_drylands landscape assets for desert. Rows: sand_base, ripple_sand, dune_crest, dune_shadow, dune_slipface, cracked_pan, mirage, wind_dust. Each row has 8 variants/animation frames. Organic rich fantasy pixel art, transparent for overlays, seamless when terrain, strong readable silhouettes."
+}
