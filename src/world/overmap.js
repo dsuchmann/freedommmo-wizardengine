@@ -13,6 +13,10 @@ export class OvermapController {
     this.sampleChunks = this.size; // Spec-accurate local view: one overmap canvas pixel = one chunk.
     this.lastCenter = '';
     this.redrawNeeded = true;
+    this.baseCanvas = document.createElement('canvas');
+    this.baseCanvas.width = this.size;
+    this.baseCanvas.height = this.size;
+    this.baseCtx = this.baseCanvas.getContext('2d', { alpha: false, willReadFrequently: false });
     element.width = this.size;
     element.height = this.size;
     element.addEventListener('click', event => this.teleportFromClick(event));
@@ -38,7 +42,7 @@ export class OvermapController {
 
   draw(force = false) {
     if (!this.visible) return;
-    const ctx = this.element.getContext('2d');
+    const ctx = this.element.getContext('2d', { alpha: false, willReadFrequently: false });
     const { pcx, pcy } = this.playerChunk();
     const centerKey = `${pcx},${pcy}`;
     if (!force && !this.redrawNeeded && centerKey === this.lastCenter) {
@@ -67,8 +71,8 @@ export class OvermapController {
       }
     }
 
-    ctx.putImageData(image, 0, 0);
-    this.baseImage = ctx.getImageData(0, 0, this.size, this.size);
+    this.baseCtx.putImageData(image, 0, 0);
+    ctx.drawImage(this.baseCanvas, 0, 0);
     this.drawOverlay(ctx, pcx, pcy);
   }
 
@@ -80,7 +84,7 @@ export class OvermapController {
   }
 
   drawOverlay(ctx, pcx, pcy) {
-    if (this.baseImage) ctx.putImageData(this.baseImage, 0, 0);
+    if (this.baseCanvas) ctx.drawImage(this.baseCanvas, 0, 0);
     const c = Math.floor(this.size / 2);
     const loadedRadius = WORLD.loadRadius;
     const loadedSize = loadedRadius * 2 + 1;

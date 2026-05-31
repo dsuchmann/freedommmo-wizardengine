@@ -119,3 +119,10 @@
   - Added Mystic visual placeholder details and aether crystal object rendering.
   - Expanded broadleaf tree and grassland catalog metadata with Mystic/enchantment/frozen/waterlogged/burnt state coverage.
   - Static biome audit confirms all tracked biomes, including Mystic, are represented.
+- Improved overmap/chunk biome coherency:
+  - Added `src/world/biome-definitions.js` to break circular imports and keep biome definitions shared between regional map and tile classifier.
+  - Added `src/world/biome-graph.js` for explicit biome adjacency/ecotone rules based on the hypergraph/ecotone design principle.
+  - Tile biome classification now uses the regional chunk biome as the primary biome, matching the overmap pixel the user clicked.
+  - Local tile-level candidates are only allowed in ecotone chunks and only if the candidate is an allowed neighboring biome.
+  - Reduced transition intrusion so a clicked tundra chunk remains tundra-dominant instead of randomly showing beach/sand interiors.
+  - Static coherency audit over 1,681 chunks now reports only 1 chunk whose sampled dominant tile biome differs from the regional overmap biome.

@@ -1,5 +1,5 @@
 import { fbm } from '../core/random.js';
-import { BIOMES } from './biomes.js';
+import { BIOMES } from './biome-definitions.js';
 
 const CHUNK_UNITS = 64;
 

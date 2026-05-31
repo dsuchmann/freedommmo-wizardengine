@@ -1,0 +1,112 @@
+File: src/world/overmap.js (lines 1-110 of 145)
+
+1| import { WORLD } from '../core/constants.js';
+2| import { getWorldSeed } from '../core/world-seed.js';
+3| import { auditBiomesAround } from './biome-audit.js';
+4| import { sampleRegionalMapChunk } from './regional-map.js';
+5| 
+6| export class OvermapController {
+7|   constructor(element, player, chunkStore) {
+8|     this.element = element;
+9|     this.player = player;
+10|     this.chunkStore = chunkStore;
+11|     this.visible = true;
+12|     this.size = 304;
+13|     this.sampleChunks = this.size; // Spec-accurate local view: one overmap canvas pixel = one chunk.
+14|     this.lastCenter = '';
+15|     this.redrawNeeded = true;
+16|     element.width = this.size;
+17|     element.height = this.size;
+18|     element.addEventListener('click', event => this.teleportFromClick(event));
+19|   }
+20| 
+21|   toggle() {
+22|     this.visible = !this.visible;
+23|     this.element.style.display = this.visible ? 'block' : 'none';
+24|   }
+25| 
+26|   teleportFromClick(event) {
+27|     const rect = this.element.getBoundingClientRect();
+28|     const px = Math.floor((event.clientX - rect.left) / rect.width * this.size);
+29|     const py = Math.floor((event.clientY - rect.top) / rect.height * this.size);
+30|     const { pcx, pcy } = this.playerChunk();
+31|     const targetCx = pcx + (px - Math.floor(this.size / 2));
+32|     const targetCy = pcy + (py - Math.floor(this.size / 2));
+33|     this.player.x = targetCx * WORLD.chunkSize + WORLD.chunkSize / 2;
+34|     this.player.y = targetCy * WORLD.chunkSize + WORLD.chunkSize / 2;
+35|     this.redrawNeeded = true;
+36|     this.chunkStore.streamAround(this.player.x, this.player.y);
+37|   }
+38| 
+39|   draw(force = false) {
+40|     if (!this.visible) return;
+41|     const ctx = this.element.getContext('2d');
+42|     const { pcx, pcy } = this.playerChunk();
+43|     const centerKey = `${pcx},${pcy}`;
+44|     if (!force && !this.redrawNeeded && centerKey === this.lastCenter) {
+45|       this.drawOverlay(ctx, pcx, pcy);
+46|       return;
+47|     }
+48|     this.lastCenter = centerKey;
+49|     this.redrawNeeded = false;
+50|     const image = ctx.createImageData(this.size, this.size);
+51|     const half = Math.floor(this.size / 2);
+52| 
+53|     for (let py = 0; py < this.size; py++) {
+54|       for (let px = 0; px < this.size; px++) {
+55|         const cx = pcx + px - half;
+56|         const cy = pcy + py - half;
+57|         const sample = sampleRegionalMapChunk(cx, cy);
+58|         const rgb = hexToRgb(sample.definition.color);
+59|         const east = sampleRegionalMapChunk(cx + 1, cy).climate.elevation;
+60|         const south = sampleRegionalMapChunk(cx, cy + 1).climate.elevation;
+61|         const hill = Math.max(-35, Math.min(45, (sample.climate.elevation - 0.5) * 80 + (sample.climate.elevation - east) * 180 + (sample.climate.elevation - south) * 140));
+62|         const index = (py * this.size + px) * 4;
+63|         image.data[index] = clamp(rgb.r + hill);
+64|         image.data[index + 1] = clamp(rgb.g + hill);
+65|         image.data[index + 2] = clamp(rgb.b + hill);
+66|         image.data[index + 3] = 255;
+67|       }
+68|     }
+69| 
+70|     ctx.putImageData(image, 0, 0);
+71|     this.baseImage = ctx.getImageData(0, 0, this.size, this.size);
+72|     this.drawOverlay(ctx, pcx, pcy);
+73|   }
+74| 
+75|   playerChunk() {
+76|     return {
+77|       pcx: Math.floor(this.player.x / WORLD.chunkSize),
+78|       pcy: Math.floor(this.player.y / WORLD.chunkSize)
+79|     };
+80|   }
+81| 
+82|   drawOverlay(ctx, pcx, pcy) {
+83|     if (this.baseImage) ctx.putImageData(this.baseImage, 0, 0);
+84|     const c = Math.floor(this.size / 2);
+85|     const loadedRadius = WORLD.loadRadius;
+86|     const loadedSize = loadedRadius * 2 + 1;
+87| 
+88|     // Distance rings are chunk distances because one overmap pixel is one chunk.
+89|     ctx.strokeStyle = 'rgba(255,255,255,.18)';
+90|     ctx.lineWidth = 1;
+91|     for (const chunks of [16, 32, 64, 128]) {
+92|       ctx.beginPath();
+93|       ctx.arc(c, c, chunks, 0, Math.PI * 2);
+94|       ctx.stroke();
+95|     }
+96| 
+97|     // Current loaded chunk window: exactly the chunk radius currently streamed around the player.
+98|     ctx.fillStyle = 'rgba(255,255,255,.12)';
+99|     ctx.fillRect(c - loadedRadius, c - loadedRadius, loadedSize, loadedSize);
+100|     ctx.strokeStyle = '#ffffff';
+101|     ctx.strokeRect(c - loadedRadius - 0.5, c - loadedRadius - 0.5, loadedSize + 1, loadedSize + 1);
+102| 
+103|     // Current chunk is a single overmap pixel. The player marker is deliberately exaggerated around it.
+104|     ctx.fillStyle = '#fffb9a';
+105|     ctx.fillRect(c, c, 1, 1);
+106|     ctx.strokeStyle = '#0b1720';
+107|     ctx.lineWidth = 2;
+108|     ctx.beginPath();
+109|     ctx.moveTo(c - 10, c);
+110|     ctx.lineTo(c - 3, c);

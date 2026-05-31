@@ -1,35 +1,9 @@
 import { fbm } from '../core/random.js';
+import { BIOMES, SPEC_BIOME_IDS } from './biome-definitions.js';
+import { sampleRegionalMapChunk } from './regional-map.js';
+import { transitionBiome } from './biome-graph.js';
 
-export const SPEC_BIOME_IDS = Object.freeze([
-  'ocean', 'deep_ocean', 'shallow_water', 'beach', 'river', 'lake',
-  'grassland', 'forest', 'dense_forest', 'tropical_forest', 'taiga',
-  'savanna', 'steppe', 'desert', 'swamp', 'tundra', 'arctic',
-  'hills', 'mountains', 'volcanic', 'mystic'
-]);
-
-export const BIOMES = Object.freeze({
-  deep_ocean: { material: 'deep_ocean_water', color: '#123d68', walkable: false, movementCost: Infinity },
-  ocean: { material: 'ocean_water', color: '#1c5d8f', walkable: false, movementCost: Infinity },
-  shallow_water: { material: 'shallow_water', color: '#2f83a7', walkable: false, movementCost: Infinity },
-  river: { material: 'river_water', color: '#287ca4', walkable: false, movementCost: Infinity },
-  lake: { material: 'lake_water', color: '#236f93', walkable: false, movementCost: Infinity },
-  beach: { material: 'golden_sand', color: '#d8bd75', walkable: true, movementCost: 1.15 },
-  grassland: { material: 'lush_grass', color: '#5fa64b', walkable: true, movementCost: 1 },
-  forest: { material: 'forest_floor', color: '#2f7137', walkable: true, movementCost: 1.35 },
-  dense_forest: { material: 'dark_humus', color: '#1f4e2d', walkable: true, movementCost: 1.8 },
-  tropical_forest: { material: 'tropical_humus', color: '#247b3d', walkable: true, movementCost: 1.7 },
-  taiga: { material: 'needle_duff', color: '#315d4c', walkable: true, movementCost: 1.55 },
-  savanna: { material: 'dry_grass', color: '#b3a24c', walkable: true, movementCost: 1.05 },
-  steppe: { material: 'short_grass', color: '#8f9a54', walkable: true, movementCost: 1.05 },
-  desert: { material: 'hot_sand', color: '#d7a94f', walkable: true, movementCost: 1.25 },
-  hills: { material: 'stony_grass', color: '#827d55', walkable: true, movementCost: 1.6 },
-  mountains: { material: 'grey_rock', color: '#777b82', walkable: true, movementCost: 2.2 },
-  volcanic: { material: 'basalt', color: '#4a3f3c', walkable: true, movementCost: 2.4 },
-  mystic: { material: 'aether_moss', color: '#8a5bd6', walkable: true, movementCost: 1.25 },
-  tundra: { material: 'frozen_earth', color: '#9fb0aa', walkable: true, movementCost: 1.7 },
-  arctic: { material: 'glacial_ice', color: '#c9e5ee', walkable: true, movementCost: 2.1 },
-  swamp: { material: 'wet_mud', color: '#42694a', walkable: true, movementCost: 2 }
-});
+export { BIOMES, SPEC_BIOME_IDS };
 
 export function sampleClimate(wx, wy) {
   const continental = fbm(wx, wy, 10);
@@ -46,27 +20,45 @@ export function sampleClimate(wx, wy) {
 
 export function classifyBiome(wx, wy) {
   const climate = sampleClimate(wx, wy);
+  const cx = Math.floor(wx / 64);
+  const cy = Math.floor(wy / 64);
+  const regional = sampleRegionalMapChunk(cx, cy);
+  const localCandidate = classifyLocalCandidate(climate);
+  const edge = regionalEcotoneStrength(cx, cy, regional.id);
+  const localDetail = fbm(wx + 71000, wy - 91000, 77, undefined, 720, 3);
+  const allowTransition = edge > 0 && localDetail > 0.86;
+  const id = allowTransition ? transitionBiome(regional.id, localCandidate) : regional.id;
+  return { id, definition: BIOMES[id], climate: { ...climate, regionalBiome: regional.id, localCandidate, ecotone: edge } };
+}
+
+function classifyLocalCandidate(climate) {
   const { elevation, moisture, heat, drainage, aether } = climate;
-  let id;
-  if (aether > 0.78 && elevation > 0.43 && elevation < 0.76) id = 'mystic';
-  else if (elevation < 0.26) id = 'deep_ocean';
-  else if (elevation < 0.36) id = 'ocean';
-  else if (elevation < 0.40) id = 'shallow_water';
-  else if (elevation < 0.42) id = moisture > 0.82 ? 'lake' : 'beach';
-  else if (drainage > 0.73 && moisture > 0.58 && elevation < 0.62) id = 'river';
-  else if (moisture > 0.86 && elevation < 0.58) id = 'lake';
-  else if (elevation > 0.74 && heat > 0.36 && moisture < 0.56 && drainage > 0.58) id = 'volcanic';
-  else if (elevation > 0.78) id = heat < 0.24 ? 'arctic' : 'mountains';
-  else if (elevation > 0.66) id = heat < 0.30 ? 'tundra' : 'hills';
-  else if (heat < 0.22) id = moisture > 0.45 ? 'taiga' : 'tundra';
-  else if (moisture > 0.80 && heat > 0.58) id = 'tropical_forest';
-  else if (moisture > 0.76 && heat > 0.32) id = 'swamp';
-  else if (moisture > 0.66) id = heat > 0.48 ? 'dense_forest' : 'forest';
-  else if (moisture < 0.25 && heat > 0.52) id = 'desert';
-  else if (moisture < 0.34 && heat > 0.34) id = 'steppe';
-  else if (moisture < 0.44 && heat > 0.48) id = 'savanna';
-  else id = 'grassland';
-  return { id, definition: BIOMES[id], climate };
+  if (aether > 0.78 && elevation > 0.43 && elevation < 0.76) return 'mystic';
+  if (elevation < 0.26) return 'deep_ocean';
+  if (elevation < 0.36) return 'ocean';
+  if (elevation < 0.40) return 'shallow_water';
+  if (elevation < 0.42) return moisture > 0.82 ? 'lake' : 'beach';
+  if (drainage > 0.73 && moisture > 0.58 && elevation < 0.62) return 'river';
+  if (moisture > 0.86 && elevation < 0.58) return 'lake';
+  if (elevation > 0.74 && heat > 0.36 && moisture < 0.56 && drainage > 0.58) return 'volcanic';
+  if (elevation > 0.78) return heat < 0.24 ? 'arctic' : 'mountains';
+  if (elevation > 0.66) return heat < 0.30 ? 'tundra' : 'hills';
+  if (heat < 0.22) return moisture > 0.45 ? 'taiga' : 'tundra';
+  if (moisture > 0.80 && heat > 0.58) return 'tropical_forest';
+  if (moisture > 0.76 && heat > 0.32) return 'swamp';
+  if (moisture > 0.66) return heat > 0.48 ? 'dense_forest' : 'forest';
+  if (moisture < 0.25 && heat > 0.52) return 'desert';
+  if (moisture < 0.34 && heat > 0.34) return 'steppe';
+  if (moisture < 0.44 && heat > 0.48) return 'savanna';
+  return 'grassland';
+}
+
+function regionalEcotoneStrength(cx, cy, id) {
+  const east = sampleRegionalMapChunk(cx + 1, cy).id;
+  const west = sampleRegionalMapChunk(cx - 1, cy).id;
+  const north = sampleRegionalMapChunk(cx, cy - 1).id;
+  const south = sampleRegionalMapChunk(cx, cy + 1).id;
+  return [east, west, north, south].some(next => next !== id) ? 1 : 0;
 }
 
 function clamp01(value) {

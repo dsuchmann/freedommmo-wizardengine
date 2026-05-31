@@ -1,0 +1,77 @@
+File: src/world/biomes.js (75 lines)
+
+1| import { fbm } from '../core/random.js';
+2| 
+3| export const SPEC_BIOME_IDS = Object.freeze([
+4|   'ocean', 'deep_ocean', 'shallow_water', 'beach', 'river', 'lake',
+5|   'grassland', 'forest', 'dense_forest', 'tropical_forest', 'taiga',
+6|   'savanna', 'steppe', 'desert', 'swamp', 'tundra', 'arctic',
+7|   'hills', 'mountains', 'volcanic', 'mystic'
+8| ]);
+9| 
+10| export const BIOMES = Object.freeze({
+11|   deep_ocean: { material: 'deep_ocean_water', color: '#123d68', walkable: false, movementCost: Infinity },
+12|   ocean: { material: 'ocean_water', color: '#1c5d8f', walkable: false, movementCost: Infinity },
+13|   shallow_water: { material: 'shallow_water', color: '#2f83a7', walkable: false, movementCost: Infinity },
+14|   river: { material: 'river_water', color: '#287ca4', walkable: false, movementCost: Infinity },
+15|   lake: { material: 'lake_water', color: '#236f93', walkable: false, movementCost: Infinity },
+16|   beach: { material: 'golden_sand', color: '#d8bd75', walkable: true, movementCost: 1.15 },
+17|   grassland: { material: 'lush_grass', color: '#5fa64b', walkable: true, movementCost: 1 },
+18|   forest: { material: 'forest_floor', color: '#2f7137', walkable: true, movementCost: 1.35 },
+19|   dense_forest: { material: 'dark_humus', color: '#1f4e2d', walkable: true, movementCost: 1.8 },
+20|   tropical_forest: { material: 'tropical_humus', color: '#247b3d', walkable: true, movementCost: 1.7 },
+21|   taiga: { material: 'needle_duff', color: '#315d4c', walkable: true, movementCost: 1.55 },
+22|   savanna: { material: 'dry_grass', color: '#b3a24c', walkable: true, movementCost: 1.05 },
+23|   steppe: { material: 'short_grass', color: '#8f9a54', walkable: true, movementCost: 1.05 },
+24|   desert: { material: 'hot_sand', color: '#d7a94f', walkable: true, movementCost: 1.25 },
+25|   hills: { material: 'stony_grass', color: '#827d55', walkable: true, movementCost: 1.6 },
+26|   mountains: { material: 'grey_rock', color: '#777b82', walkable: true, movementCost: 2.2 },
+27|   volcanic: { material: 'basalt', color: '#4a3f3c', walkable: true, movementCost: 2.4 },
+28|   mystic: { material: 'aether_moss', color: '#8a5bd6', walkable: true, movementCost: 1.25 },
+29|   tundra: { material: 'frozen_earth', color: '#9fb0aa', walkable: true, movementCost: 1.7 },
+30|   arctic: { material: 'glacial_ice', color: '#c9e5ee', walkable: true, movementCost: 2.1 },
+31|   swamp: { material: 'wet_mud', color: '#42694a', walkable: true, movementCost: 2 }
+32| });
+33| 
+34| export function sampleClimate(wx, wy) {
+35|   const continental = fbm(wx, wy, 10);
+36|   const detail = fbm(wx, wy, 99);
+37|   const elevation = clamp01(continental * 0.88 + detail * 0.30 - 0.06);
+38|   const moisture = clamp01(fbm(wx + 9000, wy - 4000, 20) * 1.12);
+39|   const latitudeCold = Math.min(0.55, Math.abs(wy) / 9000);
+40|   const altitudeCold = Math.max(0, elevation - 0.58) * 0.55;
+41|   const heat = clamp01(fbm(wx - 3000, wy + 7000, 30) * 1.12 - latitudeCold - altitudeCold + 0.08);
+42|   const drainage = fbm(wx + 17000, wy - 11000, 40);
+43|   const aether = fbm(wx - 52000, wy + 33000, 66, undefined, 1400, 4);
+44|   return { elevation, moisture, heat, drainage, aether };
+45| }
+46| 
+47| export function classifyBiome(wx, wy) {
+48|   const climate = sampleClimate(wx, wy);
+49|   const { elevation, moisture, heat, drainage, aether } = climate;
+50|   let id;
+51|   if (aether > 0.78 && elevation > 0.43 && elevation < 0.76) id = 'mystic';
+52|   else if (elevation < 0.26) id = 'deep_ocean';
+53|   else if (elevation < 0.36) id = 'ocean';
+54|   else if (elevation < 0.40) id = 'shallow_water';
+55|   else if (elevation < 0.42) id = moisture > 0.82 ? 'lake' : 'beach';
+56|   else if (drainage > 0.73 && moisture > 0.58 && elevation < 0.62) id = 'river';
+57|   else if (moisture > 0.86 && elevation < 0.58) id = 'lake';
+58|   else if (elevation > 0.74 && heat > 0.36 && moisture < 0.56 && drainage > 0.58) id = 'volcanic';
+59|   else if (elevation > 0.78) id = heat < 0.24 ? 'arctic' : 'mountains';
+60|   else if (elevation > 0.66) id = heat < 0.30 ? 'tundra' : 'hills';
+61|   else if (heat < 0.22) id = moisture > 0.45 ? 'taiga' : 'tundra';
+62|   else if (moisture > 0.80 && heat > 0.58) id = 'tropical_forest';
+63|   else if (moisture > 0.76 && heat > 0.32) id = 'swamp';
+64|   else if (moisture > 0.66) id = heat > 0.48 ? 'dense_forest' : 'forest';
+65|   else if (moisture < 0.25 && heat > 0.52) id = 'desert';
+66|   else if (moisture < 0.34 && heat > 0.34) id = 'steppe';
+67|   else if (moisture < 0.44 && heat > 0.48) id = 'savanna';
+68|   else id = 'grassland';
+69|   return { id, definition: BIOMES[id], climate };
+70| }
+71| 
+72| function clamp01(value) {
+73|   return Math.max(0, Math.min(1, value));
+74| }
+75| 
