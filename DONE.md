@@ -265,3 +265,7 @@
   - Added `assets/sorceress/jobs/reference_analysis.json` for Sorceress/Image Suite reference analysis into actionable art-direction notes.
   - Added `docs/REFERENCE_ART_DIRECTION_TARGET.md` describing how references guide density, polish, richness, transitions, biome identity, and runtime assembly without copying exact compositions.
   - Linked `assets/sorceress/system-prompt.json` to the reference manifest.
+- Improved coherent landscape flow and topology readability:
+  - Terrain base color variance now uses domain-warped coherent patch fields instead of per-tile random palette selection, reducing scattershot/noisy map appearance.
+  - Elevation overlay now samples north/south/east/west across chunk boundaries and renders stronger contours, highlights, shadows, and cliff bands based on elevation gradients.
+  - Added explicit cliff/step visual bands for steep gradients while keeping cached terrain chunks seam-aligned.

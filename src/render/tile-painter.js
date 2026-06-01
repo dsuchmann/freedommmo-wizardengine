@@ -1,12 +1,12 @@
-import { rand2 } from '../core/random.js';
+import { rand2, smoothNoise } from '../core/random.js';
 import { paletteFor } from './palette.js';
 import { paintMicroLayers } from './micro-layer-painter.js';
 
 export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation = tile.climate.elevation, compositor = null, timeSeconds = 0, atlas = null) {
   const signature = compositor?.terrainSignature(tile);
   const palette = paletteFor(tile.biome);
-  const micro = rand2(tile.wx, tile.wy, 1200);
-  const base = palette[Math.min(palette.length - 1, Math.floor(micro * palette.length))];
+  const patch = coherentPatch(tile.wx, tile.wy, tile.biome);
+  const base = palette[Math.min(palette.length - 1, Math.floor(patch * palette.length))];
   const elevationShade = (tile.climate.elevation - 0.5) * 0.22;
   const depthFade = Math.max(0, focusElevation - tile.climate.elevation - 0.08) * 0.50;
   ctx.fillStyle = tint(shade(base, elevationShade + depthFade), sun.tint, sun.ambient);
@@ -23,6 +23,16 @@ function paintCompositorDebugLayer(ctx, signature, sx, sy, size) {
     ctx.fillStyle = 'rgba(0,0,0,.16)';
     ctx.fillRect(sx, sy + size * 0.55, size, size * 0.45);
   }
+}
+
+function coherentPatch(wx, wy, biome) {
+  const warpX = smoothNoise(wx * 0.018, wy * 0.018, 700) * 10 - 5;
+  const warpY = smoothNoise(wx * 0.018, wy * 0.018, 701) * 10 - 5;
+  const broad = smoothNoise((wx + warpX) * 0.045, (wy + warpY) * 0.045, 702);
+  const medium = smoothNoise((wx + warpX) * 0.105, (wy + warpY) * 0.105, 703);
+  const fine = rand2(Math.floor(wx / 2), Math.floor(wy / 2), 704);
+  const biomeBias = biome === 'mystic' ? 0.08 : biome === 'desert' ? -0.05 : 0;
+  return Math.max(0, Math.min(0.999, broad * 0.58 + medium * 0.30 + fine * 0.12 + biomeBias));
 }
 
 function paintBiomeTexture(ctx, tile, sx, sy, size, sun) {
