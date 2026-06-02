@@ -42,6 +42,50 @@ function paintSwampPixelLabOverlay(ctx, tile, sx, sy, size) {
 }
 
 // ============================================================
+// Layer 2: Macro objects — procedural snags, stumps, logs, rocks
+// ============================================================
+function paintSwampMacroObjects(ctx, tile, sx, sy, size) {
+  if (tile.biome !== 'swamp') return;
+  var n = 1 + Math.floor(rand2(tile.wx, tile.wy, 16500) * 2);
+  for (var i = 0; i < n; i++) {
+    var k = Math.floor(rand2(tile.wx, tile.wy, 16520 + i) * 4);
+    var x = sx + Math.floor(rand2(tile.wx, tile.wy, 16510 + i * 7) * (size - 14)) + 7;
+    var y = sy + Math.floor(rand2(tile.wx, tile.wy, 16511 + i * 7) * (size - 14)) + 7;
+    ctx.save();
+    if (k === 0) {
+      var h = Math.floor(size * (0.35 + rand2(tile.wx, tile.wy, 16530 + i) * 0.30));
+      var w = Math.floor(size * (0.08 + rand2(tile.wx, tile.wy, 16531 + i) * 0.06));
+      ctx.fillStyle = 'rgba(36,22,16,0.90)';
+      ctx.fillRect(x - Math.floor(w / 2), y - h, w, h);
+      ctx.fillStyle = 'rgba(52,34,22,0.65)';
+      ctx.fillRect(x - Math.floor(w / 2) + 1, y - h + 1, Math.max(1, w - 2), Math.max(1, Math.floor(h * 0.5)));
+    } else if (k === 1) {
+      var sw = Math.floor(size * (0.18 + rand2(tile.wx, tile.wy, 16540 + i) * 0.16));
+      var sh = Math.floor(size * (0.06 + rand2(tile.wx, tile.wy, 16541 + i) * 0.05));
+      ctx.fillStyle = 'rgba(52,34,22,0.90)';
+      ctx.fillRect(x - Math.floor(sw / 2), y - Math.floor(sh / 2), sw, sh);
+      ctx.fillStyle = 'rgba(72,48,30,0.80)';
+      ctx.fillRect(x - Math.floor(sw * 0.3), y - Math.floor(sh * 0.3), Math.floor(sw * 0.6), Math.floor(sh * 0.6));
+    } else if (k === 2) {
+      var lw = Math.floor(size * (0.22 + rand2(tile.wx, tile.wy, 16550 + i) * 0.22));
+      var lh = Math.floor(size * (0.06 + rand2(tile.wx, tile.wy, 16551 + i) * 0.05));
+      ctx.fillStyle = 'rgba(48,28,18,0.88)';
+      ctx.fillRect(x - Math.floor(lw / 2), y - Math.floor(lh / 2), lw, lh);
+      ctx.fillStyle = 'rgba(30,16,10,0.45)';
+      ctx.fillRect(x - Math.floor(lw * 0.4), y - Math.floor(lh * 0.1), Math.floor(lw * 0.8), 1);
+    } else {
+      var rw = Math.floor(size * (0.12 + rand2(tile.wx, tile.wy, 16560 + i) * 0.14));
+      var rh = Math.floor(size * (0.08 + rand2(tile.wx, tile.wy, 16561 + i) * 0.08));
+      ctx.fillStyle = 'rgba(68,64,58,0.88)';
+      ctx.fillRect(x - Math.floor(rw / 2), y - Math.floor(rh / 2), rw, rh);
+      ctx.fillStyle = 'rgba(98,94,84,0.45)';
+      ctx.fillRect(x - Math.floor(rw * 0.3), y - Math.floor(rh * 0.3), Math.floor(rw * 0.4), Math.floor(rh * 0.3));
+    }
+    ctx.restore();
+  }
+}
+
+// ============================================================
 // Terrain tile painter
 // ============================================================
 export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation, compositor, timeSeconds, atlas) {
@@ -58,6 +102,7 @@ export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation, c
   ctx.fillRect(sx, sy, size, size);
 
   paintSwampPixelLabOverlay(ctx, tile, sx, sy, size);
+  paintSwampMacroObjects(ctx, tile, sx, sy, size);
   paintBiomeTexture(ctx, tile, sx, sy, size, sun);
   paintMicroLayers(ctx, tile, sx, sy, size, sun, timeSeconds, atlas);
   elevationLift(ctx, tile, sx, sy, size, sun, focusElevation);
