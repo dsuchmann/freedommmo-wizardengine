@@ -3,32 +3,72 @@ import { paletteFor } from './palette.js';
 
 const SWAMP_WANG_PREFIX = 'assets/pixelab/landscape_v2/base/swamp_wet_mud/wang/swamp_wet_mud__wang_';
 const SWAMP_WANG_SUFFIX = '__v000.png';
+const TRANSITIONS_BASE = 'assets/pixelab/landscape_v2/transitions/';
 
-// Preload all 16 Wang tiles (0-15) into canvases
-var wangCanvases = new Array(16);
-try {
-  for (var m = 0; m < 16; m++) {
-    (function(mask) {
-      var img = new Image();
-      img.onload = function() {
-        var cv = document.createElement('canvas');
-        cv.width = img.naturalWidth;
-        cv.height = img.naturalHeight;
-        cv.getContext('2d').drawImage(img, 0, 0);
-        wangCanvases[mask] = cv;
-      };
-      img.src = SWAMP_WANG_PREFIX + mask + SWAMP_WANG_SUFFIX;
-    })(m);
-  }
-} catch (e) { /* worker context — no DOM */ }
+// Transition dirs: neighbor biome → transition folder name
+var TRANSITION_DIRS = {
+  'beach': 'swamp_to_beach',
+  'forest': 'swamp_to_forest',
+  'dense_forest': 'swamp_to_dense_forest',
+  'tropical_forest': 'swamp_to_tropical_forest',
+  'grassland': 'swamp_to_grass',
+  'river': 'swamp_to_river',
+  'lake': 'swamp_to_lake',
+  'shallow_water': 'swamp_to_shallow_water',
+};
+
+// Preload Wang canvases: keyed by "full_path" → canvas
+var wangCanvasCache = {};
+
+function loadWangCanvas(fullPath) {
+  if (wangCanvasCache[fullPath] !== undefined) return wangCanvasCache[fullPath];
+  wangCanvasCache[fullPath] = null; // mark pending
+  try {
+    var img = new Image();
+    img.onload = function() {
+      var cv = document.createElement('canvas');
+      cv.width = img.naturalWidth;
+      cv.height = img.naturalHeight;
+      cv.getContext('2d').drawImage(img, 0, 0);
+      wangCanvasCache[fullPath] = cv;
+    };
+    img.src = fullPath;
+  } catch (e) { /* worker */ }
+  return null;
+}
+
+function wangPathForMask(baseDir, prefix, mask) {
+  return TRANSITIONS_BASE + baseDir + '/wang/' + prefix + '_wang_' + mask + SWAMP_WANG_SUFFIX;
+}
 
 function paintSwampWangBase(ctx, tile, sx, sy, size) {
   if (tile.biome !== 'swamp') return;
   var mask = tile.wangEdgeMask;
   if (mask === undefined) mask = 0;
-  var cv = wangCanvases[mask];
-  if (!cv) return;
-  ctx.drawImage(cv, 0, 0, cv.width, cv.height, sx, sy, size, size);
+  
+  // Determine the transition biome(s) on active edges
+  var edgeBiomes = {};
+  if ((mask & 1) && tile.neighborW) edgeBiomes[tile.neighborW] = true;
+  if ((mask & 2) && tile.neighborS) edgeBiomes[tile.neighborS] = true;
+  if ((mask & 4) && tile.neighborE) edgeBiomes[tile.neighborE] = true;
+  if ((mask & 8) && tile.neighborN) edgeBiomes[tile.neighborN] = true;
+  
+  var keys = Object.keys(edgeBiomes);
+  // Single biome transition
+  if (keys.length === 1 || keys.length === 0) {
+    var toBiome = keys[0] || null;
+    var prefix, src;
+    if (toBiome && TRANSITION_DIRS[toBiome]) {
+      prefix = 'swamp_to_' + toBiome;
+      src = wangPathForMask(TRANSITION_DIRS[toBiome], prefix, mask);
+    } else {
+      src = SWAMP_WANG_PREFIX + mask + SWAMP_WANG_SUFFIX;
+    }
+    var cv = wangCanvasCache[src];
+    if (cv === undefined) loadWangCanvas(src);
+    if (!cv) return;
+    ctx.drawImage(cv, 0, 0, cv.width, cv.height, sx, sy, size, size);
+  }
 }
 
 export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation = tile.climate.elevation, compositor = null, timeSeconds = 0, atlas = null) {
