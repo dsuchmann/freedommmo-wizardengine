@@ -1,30 +1,34 @@
 import { rand2, smoothNoise } from '../core/random.js';
 import { paletteFor } from './palette.js';
 
-const SWAMP_WANG_0_SRC = 'assets/pixelab/landscape_v2/base/swamp_wet_mud/wang/swamp_wet_mud__wang_0__v000.png';
 const SWAMP_WANG_PREFIX = 'assets/pixelab/landscape_v2/base/swamp_wet_mud/wang/swamp_wet_mud__wang_';
 const SWAMP_WANG_SUFFIX = '__v000.png';
 
-// Preload interior Wang — safely handles worker context where document is unavailable
-var wang0Canvas = null;
+// Preload all 16 Wang tiles (0-15) into canvases
+var wangCanvases = new Array(16);
 try {
-  var pre = new Image();
-  pre.onload = function() {
-    wang0Canvas = document.createElement('canvas');
-    wang0Canvas.width = pre.naturalWidth;
-    wang0Canvas.height = pre.naturalHeight;
-    wang0Canvas.getContext('2d').drawImage(pre, 0, 0);
-  };
-  pre.src = SWAMP_WANG_0_SRC;
+  for (var m = 0; m < 16; m++) {
+    (function(mask) {
+      var img = new Image();
+      img.onload = function() {
+        var cv = document.createElement('canvas');
+        cv.width = img.naturalWidth;
+        cv.height = img.naturalHeight;
+        cv.getContext('2d').drawImage(img, 0, 0);
+        wangCanvases[mask] = cv;
+      };
+      img.src = SWAMP_WANG_PREFIX + mask + SWAMP_WANG_SUFFIX;
+    })(m);
+  }
 } catch (e) { /* worker context — no DOM */ }
 
 function paintSwampWangBase(ctx, tile, sx, sy, size) {
   if (tile.biome !== 'swamp') return;
   var mask = tile.wangEdgeMask;
-  if (mask === undefined || mask === 0) {
-    if (!wang0Canvas) return;
-    ctx.drawImage(wang0Canvas, 0, 0, wang0Canvas.width, wang0Canvas.height, sx, sy, size, size);
-  }
+  if (mask === undefined) mask = 0;
+  var cv = wangCanvases[mask];
+  if (!cv) return;
+  ctx.drawImage(cv, 0, 0, cv.width, cv.height, sx, sy, size, size);
 }
 
 export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation = tile.climate.elevation, compositor = null, timeSeconds = 0, atlas = null) {
