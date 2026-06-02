@@ -16,28 +16,21 @@ var TRANSITION_DIRS = {
 function getWangSrc(tile) {
   var mask = tile.wangEdgeMask;
   if (mask === undefined) mask = 0;
-  // Check if any neighbor is a transition biome
-  var anyTransition = false;
-  var toBiome = null;
-  var dirs = ['neighborN','neighborW','neighborE','neighborS'];
-  for (var d = 0; d < dirs.length; d++) {
-    var nb = tile[dirs[d]];
-    if (nb && nb !== tile.biome && TRANSITION_DIRS[tile.biome === 'swamp' ? nb : tile.biome]) {
-      anyTransition = true;
-      toBiome = tile.biome === 'swamp' ? nb : 'swamp';
-      break;
+  if (tile.biome === 'swamp') {
+    var nb = tile.neighborW !== 'swamp' ? tile.neighborW : (tile.neighborS !== 'swamp' ? tile.neighborS : (tile.neighborN !== 'swamp' ? tile.neighborN : tile.neighborE));
+    if (nb && TRANSITION_DIRS[nb]) {
+      return TRANSITIONS_BASE + TRANSITION_DIRS[nb] + '/wang/' + TRANSITION_DIRS[nb] + '__wang_' + mask + SWAMP_WANG_SUFFIX;
     }
+    return SWAMP_WANG_PREFIX + mask + SWAMP_WANG_SUFFIX;
   }
-  if (anyTransition && toBiome) {
-    var dirKey = TRANSITION_DIRS[toBiome] || ('swamp_to_' + toBiome);
-    return TRANSITIONS_BASE + dirKey + '/wang/' + dirKey + '__wang_' + mask + SWAMP_WANG_SUFFIX;
+  if (tile.biome === 'beach') {
+    return 'assets/pixelab/landscape_v2/base/beach/wang/beach__wang_' + mask + SWAMP_WANG_SUFFIX;
   }
-  if (tile.biome === 'swamp') return SWAMP_WANG_PREFIX + mask + SWAMP_WANG_SUFFIX;
-  if (tile.biome === 'beach') return 'assets/pixelab/landscape_v2/base/beach/wang/beach__wang_' + mask + SWAMP_WANG_SUFFIX;
   return null;
 }
 
 function paintWangBase(ctx, tile, sx, sy, size) {
+  if (tile.biome !== 'swamp' && tile.biome !== 'beach') return;
   var src = getWangSrc(tile);
   if (!src) return;
   var img = wangImgCache[src];
