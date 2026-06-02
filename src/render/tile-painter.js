@@ -4,8 +4,15 @@ import { paletteFor } from './palette.js';
 const SWAMP_WANG_15_SRC = 'assets/pixelab/landscape_v2/base/swamp_wet_mud/wang/swamp_wet_mud__wang_15__v000.png';
 const wangImageCache = new Map();
 
+// Preload Wang image immediately — prevents flashing due to async loading
+var wang15Loaded = false;
+var wang15Image = new Image();
+wang15Image.onload = function() { wang15Loaded = true; };
+wang15Image.src = SWAMP_WANG_15_SRC;
+
 function wangImage(src) {
   if (!src) return null;
+  if (src === SWAMP_WANG_15_SRC) return wang15Image;
   if (wangImageCache.has(src)) return wangImageCache.get(src);
   var img = new Image();
   img.src = src;
@@ -15,11 +22,10 @@ function wangImage(src) {
 
 function paintSwampWangBase(ctx, tile, sx, sy, size) {
   if (tile.biome !== 'swamp') return;
-  var img = wangImage(SWAMP_WANG_15_SRC);
-  if (!img) return;
+  if (!wang15Loaded) return;
   ctx.save();
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(img, 0, 0, img.naturalWidth || 32, img.naturalHeight || 32, sx, sy, size, size);
+  ctx.drawImage(wang15Image, 0, 0, wang15Image.naturalWidth, wang15Image.naturalHeight, sx, sy, size, size);
   ctx.restore();
 }
 
