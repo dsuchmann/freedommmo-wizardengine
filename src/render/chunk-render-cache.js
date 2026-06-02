@@ -69,14 +69,18 @@ export class ChunkRenderCache {
         tile.neighborSW = (tileAt(wx - 1, wy + 1) || {}).biome;
         tile.neighborW  = (tileAt(wx - 1, wy) || {}).biome;
         tile.neighborNW = (tileAt(wx - 1, wy - 1) || {}).biome;
-        // Wang edge mask — DIFF edges (N=1,W=2,E=4,S=8) + corner influence
-        // S/SW/W influenced edges; NW-diff+N-same → special case mask=1
+        // Wang edge mask — DIFF edges (N=1,W=2,E=4,S=8). Corner diffusion.
         var mask = 0;
-        if (tile.neighborN !== tile.biome || tile.neighborNW !== tile.biome) mask |= 1;
-        if (tile.neighborW !== tile.biome || tile.neighborSW !== tile.biome) mask |= 2;
-        if (tile.neighborE !== tile.biome || tile.neighborSE !== tile.biome) mask |= 4;
-        if (tile.neighborS !== tile.biome || tile.neighborSW !== tile.biome) mask |= 8;
-        if (tile.neighborNW !== tile.biome && tile.neighborN === tile.biome) mask = mask & ~2;
+        if (tile.neighborN !== tile.biome) mask |= 1;
+        if (tile.neighborW !== tile.biome) mask |= 2;
+        if (tile.neighborE !== tile.biome) mask |= 4;
+        if (tile.neighborS !== tile.biome) mask |= 8;
+        // Corner diffusion: adj sw ≠  diag diff sets both edges
+        if (tile.neighborSW !== tile.biome) mask |= 2 | 8;
+        if (tile.neighborSE !== tile.biome) mask |= 4 | 8;
+        if (tile.neighborNE !== tile.biome) mask |= 1 | 4;
+        // NW special: NW diff + N same → clear W (transition wraps around corner)
+        if (tile.neighborNW !== tile.biome && tile.neighborN === tile.biome) mask &= ~2;
         tile.wangEdgeMask = mask;
         paintTerrainTile(ctx, tile, sx, sy, WORLD.tileSize, sun, tile.climate.elevation, this.compositor, 0, this.atlas);
         paintTerrainFeatures(ctx, tile, sx, sy, WORLD.tileSize, sun);
