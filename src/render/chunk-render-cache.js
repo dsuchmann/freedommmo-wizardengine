@@ -2,6 +2,8 @@ import { WORLD } from '../core/constants.js';
 import { paintTerrainTile } from './tile-painter.js';
 import { paintTerrainFeatures } from './feature-painter.js';
 
+const TERRAIN_RENDER_VERSION = 'wang-lookup-v1';
+
 export class ChunkRenderCache {
   constructor(compositor = null, atlas = null) {
     this.compositor = compositor;
@@ -15,7 +17,7 @@ export class ChunkRenderCache {
   }
 
   key(chunk, lightBucket) {
-    return `${chunk.cx},${chunk.cy},${lightBucket}`;
+    return `${TERRAIN_RENDER_VERSION},${chunk.cx},${chunk.cy},${lightBucket}`;
   }
 
   lightBucket(sun) {
