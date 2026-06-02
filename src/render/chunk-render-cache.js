@@ -177,15 +177,29 @@ export class ChunkRenderCache {
           }
         }
         if (!tile.transitionPair) {
-          // Scan small radius for any transition-eligible neighbor
+          // Scan radius for transition-eligible neighbor (only if neighbors are loaded)
           var foundPair = null;
-          for (var dy = -4; dy <= 4 && !foundPair; dy++) {
-            for (var dx = -4; dx <= 4 && !foundPair; dx++) {
+          for (var dy = -8; dy <= 8 && !foundPair; dy++) {
+            for (var dx = -8; dx <= 8 && !foundPair; dx++) {
               if (dx === 0 && dy === 0) continue;
               var far = tileAt(wx + dx, wy + dy);
               if (!far || far.biome === tile.biome) continue;
               var pair = transitionPairFor(tile.biome, far.biome);
               if (pair) { foundPair = pair; }
+            }
+          }
+          if (!foundPair) {
+            // If no nearby biome found, fall back to any available pair (prefer 'from')
+            var keys = Object.keys(TRANSITION_PAIRS).sort();
+            for (var k = 0; k < keys.length; k++) {
+              var p = TRANSITION_PAIRS[keys[k]];
+              if (p.from === tile.biome) { foundPair = p; break; }
+            }
+            if (!foundPair) {
+              for (var k = 0; k < keys.length; k++) {
+                var p = TRANSITION_PAIRS[keys[k]];
+                if (p.to === tile.biome) { foundPair = p; break; }
+              }
             }
           }
           if (foundPair) {
