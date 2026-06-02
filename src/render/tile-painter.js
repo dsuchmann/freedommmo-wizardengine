@@ -15,13 +15,14 @@ var TRANSITION_DIRS = {
 
 function getWangSrc(tile) {
   var mask = tile.wangEdgeMask;
-  if (mask === undefined) mask = 0;
+  if (mask === undefined) mask = 15;
+  // Transition: if any edge is NOT same (i.e., neighbor is different), pick transition tileset
   var toBiome = null;
-  if ((mask & 1) && tile.neighborN && tile.neighborN !== 'swamp') toBiome = tile.neighborN;
-  if ((mask & 2) && tile.neighborW && tile.neighborW !== 'swamp') toBiome = tile.neighborW;
-  if ((mask & 4) && tile.neighborE && tile.neighborE !== 'swamp') toBiome = tile.neighborE;
-  if ((mask & 8) && tile.neighborS && tile.neighborS !== 'swamp') toBiome = tile.neighborS;
-  if (toBiome && TRANSITION_DIRS[toBiome]) {
+  if (!(mask & 1)) toBiome = tile.neighborN;
+  if (!(mask & 2)) toBiome = tile.neighborW;
+  if (!(mask & 4)) toBiome = tile.neighborE;
+  if (!(mask & 8)) toBiome = tile.neighborS;
+  if (toBiome && toBiome !== 'swamp' && TRANSITION_DIRS[toBiome]) {
     return TRANSITIONS_BASE + TRANSITION_DIRS[toBiome] + '/wang/' + TRANSITION_DIRS[toBiome] + '__wang_' + mask + SWAMP_WANG_SUFFIX;
   }
   return SWAMP_WANG_PREFIX + mask + SWAMP_WANG_SUFFIX;
