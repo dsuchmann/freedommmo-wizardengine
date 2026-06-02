@@ -89,6 +89,8 @@ export class ChunkRenderCache {
     var key = this.key(chunk, bucket);
     var hit = this.cache.get(key);
     if (hit) { hit.lastUsed = performance.now(); return hit.canvas; }
+    if ((this._frameBudget ?? 0) <= 0) return null;
+    this._frameBudget--;
     var canvas = document.createElement('canvas');
     canvas.width = WORLD.chunkSize * WORLD.tileSize;
     canvas.height = WORLD.chunkSize * WORLD.tileSize;
