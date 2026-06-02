@@ -41,6 +41,24 @@ function paintSwampWangBase(ctx, tile, sx, sy, size) {
   ctx.drawImage(img, 0, 0, 32, 32, sx, sy, size, size);
 }
 
+// Beach base Wang (beach tiles don't own swamp edges)
+var BEACH_PREFIX = 'assets/pixelab/landscape_v2/base/beach/wang/beach__wang_';
+var beachImgCache = {};
+
+function paintBeachWangBase(ctx, tile, sx, sy, size) {
+  if (tile.biome !== 'beach') return;
+  var mask = tile.wangEdgeMask;
+  if (mask === undefined) mask = 0;
+  var src = BEACH_PREFIX + mask + SWAMP_WANG_SUFFIX;
+  var img = beachImgCache[src];
+  if (!img) {
+    img = new Image();
+    img.src = src;
+    beachImgCache[src] = img;
+  }
+  ctx.drawImage(img, 0, 0, 32, 32, sx, sy, size, size);
+}
+
 export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation = tile.climate.elevation, compositor = null, timeSeconds = 0, atlas = null) {
   const palette = paletteFor(tile.biome);
   const patch = coherentPatch(tile.wx, tile.wy, tile.biome);
@@ -50,6 +68,7 @@ export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation = 
   ctx.fillStyle = tint(shade(base, elevationShade + depthFade), sun.tint, sun.ambient);
   ctx.fillRect(sx, sy, size, size);
   paintSwampWangBase(ctx, tile, sx, sy, size);
+  paintBeachWangBase(ctx, tile, sx, sy, size);
 }
 
 function coherentPatch(wx, wy, biome) {
