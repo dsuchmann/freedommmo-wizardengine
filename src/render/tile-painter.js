@@ -16,20 +16,28 @@ var TRANSITION_DIRS = {
 function getWangSrc(tile) {
   var mask = tile.wangEdgeMask;
   if (mask === undefined) mask = 0;
-  // Transition: pick pixel values for any edge with different biome
+  // Check if any neighbor is a transition biome
+  var anyTransition = false;
   var toBiome = null;
-  if ((mask & 1)) toBiome = tile.neighborN;
-  if ((mask & 2)) toBiome = tile.neighborW;
-  if ((mask & 4)) toBiome = tile.neighborE;
-  if ((mask & 8)) toBiome = tile.neighborS;
-  if (toBiome && toBiome !== 'swamp' && TRANSITION_DIRS[toBiome]) {
-    return TRANSITIONS_BASE + TRANSITION_DIRS[toBiome] + '/wang/' + TRANSITION_DIRS[toBiome] + '__wang_' + mask + SWAMP_WANG_SUFFIX;
+  var dirs = ['neighborN','neighborW','neighborE','neighborS'];
+  for (var d = 0; d < dirs.length; d++) {
+    var nb = tile[dirs[d]];
+    if (nb && nb !== tile.biome && TRANSITION_DIRS[tile.biome === 'swamp' ? nb : tile.biome]) {
+      anyTransition = true;
+      toBiome = tile.biome === 'swamp' ? nb : 'swamp';
+      break;
+    }
   }
-  return SWAMP_WANG_PREFIX + mask + SWAMP_WANG_SUFFIX;
+  if (anyTransition && toBiome) {
+    var dirKey = TRANSITION_DIRS[toBiome] || ('swamp_to_' + toBiome);
+    return TRANSITIONS_BASE + dirKey + '/wang/' + dirKey + '__wang_' + mask + SWAMP_WANG_SUFFIX;
+  }
+  if (tile.biome === 'swamp') return SWAMP_WANG_PREFIX + mask + SWAMP_WANG_SUFFIX;
+  if (tile.biome === 'beach') return 'assets/pixelab/landscape_v2/base/beach/wang/beach__wang_' + mask + SWAMP_WANG_SUFFIX;
+  return null;
 }
 
-function paintSwampWangBase(ctx, tile, sx, sy, size) {
-  if (tile.biome !== 'swamp') return;
+function paintWangBase(ctx, tile, sx, sy, size) {
   var src = getWangSrc(tile);
   if (!src) return;
   var img = wangImgCache[src];
@@ -37,24 +45,6 @@ function paintSwampWangBase(ctx, tile, sx, sy, size) {
     img = new Image();
     img.src = src;
     wangImgCache[src] = img;
-  }
-  ctx.drawImage(img, 0, 0, 32, 32, sx, sy, size, size);
-}
-
-// Beach base Wang (beach tiles don't own swamp edges)
-var BEACH_PREFIX = 'assets/pixelab/landscape_v2/base/beach/wang/beach__wang_';
-var beachImgCache = {};
-
-function paintBeachWangBase(ctx, tile, sx, sy, size) {
-  if (tile.biome !== 'beach') return;
-  var mask = tile.wangEdgeMask;
-  if (mask === undefined) mask = 0;
-  var src = BEACH_PREFIX + mask + SWAMP_WANG_SUFFIX;
-  var img = beachImgCache[src];
-  if (!img) {
-    img = new Image();
-    img.src = src;
-    beachImgCache[src] = img;
   }
   ctx.drawImage(img, 0, 0, 32, 32, sx, sy, size, size);
 }
@@ -67,8 +57,7 @@ export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation = 
   const depthFade = Math.max(0, focusElevation - tile.climate.elevation - 0.08) * 0.50;
   ctx.fillStyle = tint(shade(base, elevationShade + depthFade), sun.tint, sun.ambient);
   ctx.fillRect(sx, sy, size, size);
-  paintSwampWangBase(ctx, tile, sx, sy, size);
-  paintBeachWangBase(ctx, tile, sx, sy, size);
+  paintWangBase(ctx, tile, sx, sy, size);
 }
 
 function coherentPatch(wx, wy, biome) {
