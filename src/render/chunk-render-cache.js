@@ -177,7 +177,7 @@ export class ChunkRenderCache {
           }
         }
         if (!tile.transitionPair) {
-          // Find any transition pair involving this biome (for interior filler)
+          // Find any transition pair involving an immediate neighbor (for interior filler)
           for (const other of immediate) {
             if (!other || other === tile.biome) continue;
             const pair = transitionPairFor(tile.biome, other);
@@ -185,18 +185,6 @@ export class ChunkRenderCache {
               tile.transitionPair = pair;
               tile.transitionSide = tile.biome === pair.from ? 'from' : 'to';
               break;
-            }
-          }
-          if (!tile.transitionPair) {
-            // Still no immediate neighbor pair — find any available transition for this biome
-            const TRANSITION_KEYS = Object.keys(TRANSITION_PAIRS);
-            for (const key of TRANSITION_KEYS) {
-              const pair = TRANSITION_PAIRS[key];
-              if (pair.from === tile.biome || pair.to === tile.biome) {
-                tile.transitionPair = pair;
-                tile.transitionSide = tile.biome === pair.from ? 'from' : 'to';
-                break;
-              }
             }
           }
         }
