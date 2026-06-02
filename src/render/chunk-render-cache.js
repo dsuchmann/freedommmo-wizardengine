@@ -77,6 +77,7 @@ export class ChunkRenderCache {
         if (tile.neighborE !== tile.biome || tile.neighborSE !== tile.biome) mask |= 4;
         if (tile.neighborS !== tile.biome || tile.neighborSW !== tile.biome) mask |= 8;
         if (tile.neighborNW !== tile.biome && tile.neighborN === tile.biome) mask = 1;
+        tile.wangEdgeMask = mask;
         paintTerrainTile(ctx, tile, sx, sy, WORLD.tileSize, sun, tile.climate.elevation, this.compositor, 0, this.atlas);
         paintTerrainFeatures(ctx, tile, sx, sy, WORLD.tileSize, sun);
       }
