@@ -93,6 +93,8 @@ export class ChunkRenderCache {
           '00000000': 6,  // all same interior near transition
           '00000100': 10, // SW-only according to tileset layout
           '00101000': 12, // beach tile with NE/E swamp
+          '00000100': 10, // exact: only SW differs
+          '01100000': 12, // exact beach: NE/E swamp
         };
         var mask = lookup[key];
         if (mask === undefined) {
