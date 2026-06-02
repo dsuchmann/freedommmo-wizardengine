@@ -24,6 +24,9 @@ function getWangSrc(tile) {
     return SWAMP_WANG_PREFIX + mask + SWAMP_WANG_SUFFIX;
   }
   if (tile.biome === 'beach') {
+    if (tile.neighborN === 'swamp' || tile.neighborNE === 'swamp' || tile.neighborE === 'swamp' || tile.neighborSE === 'swamp' || tile.neighborS === 'swamp' || tile.neighborSW === 'swamp' || tile.neighborW === 'swamp' || tile.neighborNW === 'swamp') {
+      return TRANSITIONS_BASE + 'swamp_to_beach/wang/swamp_to_beach__wang_' + mask + SWAMP_WANG_SUFFIX;
+    }
     return 'assets/pixelab/landscape_v2/base/beach/wang/beach__wang_' + mask + SWAMP_WANG_SUFFIX;
   }
   return null;
