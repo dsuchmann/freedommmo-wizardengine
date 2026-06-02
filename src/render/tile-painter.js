@@ -4,39 +4,27 @@ import { paletteFor } from './palette.js';
 const SWAMP_WANG_0_SRC = 'assets/pixelab/landscape_v2/base/swamp_wet_mud/wang/swamp_wet_mud__wang_0__v000.png';
 const SWAMP_WANG_PREFIX = 'assets/pixelab/landscape_v2/base/swamp_wet_mud/wang/swamp_wet_mud__wang_';
 const SWAMP_WANG_SUFFIX = '__v000.png';
-const wangImageCache = new Map();
 
-// Preload interior Wang (mask 0 = all neighbors same biome)
-var wang0Loaded = false;
-var wang0Image = new Image();
-wang0Image.onload = function() { wang0Loaded = true; };
-wang0Image.src = SWAMP_WANG_0_SRC;
-
-function wangSrcForMask(mask) {
-  if (mask === 0) return SWAMP_WANG_0_SRC;
-  return SWAMP_WANG_PREFIX + mask + SWAMP_WANG_SUFFIX;
-}
-
-function wangImage(src) {
-  if (!src) return null;
-  if (src === SWAMP_WANG_0_SRC) return wang0Image;
-  if (wangImageCache.has(src)) return wangImageCache.get(src);
-  var img = new Image();
-  img.src = src;
-  wangImageCache.set(src, img);
-  return img;
-}
+// Preload interior Wang into a canvas for guaranteed synchronous drawing
+var wang0Canvas = null;
+(function() {
+  var pre = new Image();
+  pre.onload = function() {
+    wang0Canvas = document.createElement('canvas');
+    wang0Canvas.width = pre.naturalWidth;
+    wang0Canvas.height = pre.naturalHeight;
+    wang0Canvas.getContext('2d').drawImage(pre, 0, 0);
+  };
+  pre.src = SWAMP_WANG_0_SRC;
+})();
 
 function paintSwampWangBase(ctx, tile, sx, sy, size) {
   if (tile.biome !== 'swamp') return;
-  var mask = tile.wangEdgeMask ?? 0;
-  var src = wangSrcForMask(mask);
-  var img = wangImage(src);
-  if (!img || !img.naturalWidth) return;
-  ctx.save();
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, sx, sy, size, size);
-  ctx.restore();
+  var mask = tile.wangEdgeMask;
+  if (mask === undefined || mask === 0) {
+    if (!wang0Canvas) return;
+    ctx.drawImage(wang0Canvas, 0, 0, wang0Canvas.width, wang0Canvas.height, sx, sy, size, size);
+  }
 }
 
 export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation = tile.climate.elevation, compositor = null, timeSeconds = 0, atlas = null) {
