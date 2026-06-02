@@ -83,10 +83,12 @@ export class ChunkRenderCache {
         var key = '' + nw + nn + ne + ww + ee + sw + ss + se;
         // Lookup table from user-provided examples (1=diff, 0=same)
         var lookup = {
-          '00010110': 8,  // W,S,SW diff (NW=N=NE=E=SE=0, W=SW=S=1)
+          '00010110': 8,  // W,S,SW diff
           '00000010': 10, // SW only
-          '00010010': 1,  // W,SW diff (S=0)
-          '10010110': 8,  // NW,W,S,SW diff
+          '00010100': 1,  // W,SW diff (S same)
+          '00010010': 10, // W,S diff (SW same)
+          '10010110': 8,  // NW,W,S,SW all diff
+          '00000000': 6,  // all same interior (transition tileset)
         };
         var mask = lookup[key];
         if (mask === undefined) {
