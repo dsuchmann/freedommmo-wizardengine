@@ -1,36 +1,23 @@
 import { rand2, smoothNoise } from '../core/random.js';
 import { paletteFor } from './palette.js';
 
-var SWAMP_WANG_PREFIX = 'assets/pixelab/landscape_v2/base/swamp_wet_mud/wang/swamp_wet_mud__wang_';
 var SWAMP_WANG_SUFFIX = '__v000.png';
 var TRANSITIONS_BASE = 'assets/pixelab/landscape_v2/transitions/';
 var wangImgCache = {};
-var TRANSITION_DIRS = {
-  beach: 'swamp_to_beach',
-  forest: 'swamp_to_forest',
-  dense_forest: 'swamp_to_dense_forest',
-  tropical_forest: 'swamp_to_tropical_forest',
-  grassland: 'swamp_to_grass'
+var BASE_WANG_PREFIX = {
+  swamp: 'assets/pixelab/landscape_v2/base/swamp_wet_mud/wang/swamp_wet_mud__wang_',
+  beach: 'assets/pixelab/landscape_v2/base/beach/wang/beach__wang_'
 };
 
 function getWangSrc(tile) {
   var mask = tile.wangEdgeMask;
   if (mask === undefined) mask = 0;
-  if (tile.biome === 'swamp') {
-    if (mask === 6) return TRANSITIONS_BASE + 'swamp_to_beach/wang/swamp_to_beach__wang_6' + SWAMP_WANG_SUFFIX;
-    var nb = tile.neighborW !== 'swamp' ? tile.neighborW : (tile.neighborS !== 'swamp' ? tile.neighborS : (tile.neighborN !== 'swamp' ? tile.neighborN : (tile.neighborSW !== 'swamp' ? tile.neighborSW : (tile.neighborNW !== 'swamp' ? tile.neighborNW : null))));
-    if (nb && TRANSITION_DIRS[nb]) {
-      return TRANSITIONS_BASE + TRANSITION_DIRS[nb] + '/wang/' + TRANSITION_DIRS[nb] + '__wang_' + mask + SWAMP_WANG_SUFFIX;
-    }
-    return SWAMP_WANG_PREFIX + mask + SWAMP_WANG_SUFFIX;
+  if (tile.transitionPair) {
+    var transitionMask = (mask === 6 && tile.transitionSide === 'to') ? 12 : mask;
+    return TRANSITIONS_BASE + tile.transitionPair.dir + '/wang/' + tile.transitionPair.dir + '__wang_' + transitionMask + SWAMP_WANG_SUFFIX;
   }
-  if (tile.biome === 'beach') {
-    if (tile.neighborN === 'swamp' || tile.neighborNE === 'swamp' || tile.neighborE === 'swamp' || tile.neighborSE === 'swamp' || tile.neighborS === 'swamp' || tile.neighborSW === 'swamp' || tile.neighborW === 'swamp' || tile.neighborNW === 'swamp') {
-      return TRANSITIONS_BASE + 'swamp_to_beach/wang/swamp_to_beach__wang_' + mask + SWAMP_WANG_SUFFIX;
-    }
-    return 'assets/pixelab/landscape_v2/base/beach/wang/beach__wang_' + mask + SWAMP_WANG_SUFFIX;
-  }
-  return null;
+  var prefix = BASE_WANG_PREFIX[tile.biome];
+  return prefix ? prefix + mask + SWAMP_WANG_SUFFIX : null;
 }
 
 function paintWangBase(ctx, tile, sx, sy, size) {
