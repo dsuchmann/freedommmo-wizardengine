@@ -32,6 +32,7 @@ function paintWangBase(ctx, tile, sx, sy, size) {
     img.src = src;
     wangImgCache[src] = img;
   }
+  if (!img.complete || !img.naturalWidth) return;
   ctx.drawImage(img, 0, 0, 32, 32, sx, sy, size, size);
 }
 

@@ -258,6 +258,7 @@ export class CanvasRenderer {
     }
     const audit = this.lastAudit;
     const topBiomes = audit.seen.slice(0, 6).map(entry => `${entry.id} ${(entry.pct * 100).toFixed(0)}%`).join(', ');
+    const transitionLine = transitionDiagnosticLine(chunkStore);
     const nearby = findNearbyInteraction(player, chunkStore);
     const interactionLine = nearby ? `<br>near ${nearby.target} · ${nearby.verb} · ${nearby.distance.toFixed(1)} tiles` : '';
     const chunkStats = chunkStore.stats();
@@ -311,7 +312,7 @@ export class CanvasRenderer {
       const surface = tile.layers?.[3]?.detail ?? '';
       if (surface.includes('mud')) pixelLabLine = '<br>pixelLab base swamp/wet_mud · assets/pixelab/landscape_v2/base/swamp_wet_mud/tiles/swamp_wet_mud__tile__v000-v015.png';
     }
-    this.statsElement.innerHTML = `WASD/arrows move · mousewheel zoom · R reset · T topology showcase · D debug<br>M map · L pause sun · click overmap teleport<br>seed ${getWorldSeed()} · chunks ${chunkStore.chunks.size} · zoom ${camera.zoom.toFixed(2)}${perfLine}<br>tile ${tileX}, ${tileY} · chunk ${chunkCX}, ${chunkCY} · z ${player.z.toFixed(2)} ${player.climbing ? 'climbing' : player.glide ? 'gliding' : player.rollTimer > 0 ? 'rolling' : ''}<br>biome ${tile.biome} · form ${tile.terrainForm} · plateau ${tile.layers?.[7]?.plateauLevel ?? 0} · form ${tile.terrainForm} · features ${tile.features.join(',') || 'none'}<br>material ${tile.material} · surface ${tile.layers[3].detail}<br>elev ${tile.climate.elevation.toFixed(2)} lift ${elevationLift(tile.climate.elevation).toFixed(1)} slope ${(tile.layers[7].slope ?? 0).toFixed(2)}<br>micro ${tile.layers[6].layers.map(layer => layer.kind).join('+')}<br>fertility ${tile.layers[6].fertility.toFixed(2)} vegetation ${tile.layers[6].vegetationDensity.toFixed(2)}<br>moist ${tile.climate.moisture.toFixed(2)} heat ${tile.climate.heat.toFixed(2)}<br>${sun.label} · light ${sun.ambient.toFixed(2)} · sun height ${sun.height.toFixed(2)}${interactionLine}<br>overmap biomes ${audit.seen.length}/${audit.spec.length}: ${topBiomes}<br>missing: ${audit.missing.join(', ') || 'none'}${wangEdgeLine}${neighborLine}${pixelLabLine}<br><span style="color:#aaf">${debugToggleStr}</span>${wangDebugLine}`;
+    this.statsElement.innerHTML = `WASD/arrows move · mousewheel zoom · R reset · T topology showcase · D debug<br>M map · L pause sun · click overmap teleport<br>seed ${getWorldSeed()} · chunks ${chunkStore.chunks.size} · zoom ${camera.zoom.toFixed(2)}${perfLine}<br>tile ${tileX}, ${tileY} · chunk ${chunkCX}, ${chunkCY} · z ${player.z.toFixed(2)} ${player.climbing ? 'climbing' : player.glide ? 'gliding' : player.rollTimer > 0 ? 'rolling' : ''}<br>biome ${tile.biome} · form ${tile.terrainForm} · plateau ${tile.layers?.[7]?.plateauLevel ?? 0} · form ${tile.terrainForm} · features ${tile.features.join(',') || 'none'}<br>material ${tile.material} · surface ${tile.layers[3].detail}<br>elev ${tile.climate.elevation.toFixed(2)} lift ${elevationLift(tile.climate.elevation).toFixed(1)} slope ${(tile.layers[7].slope ?? 0).toFixed(2)}<br>micro ${tile.layers[6].layers.map(layer => layer.kind).join('+')}<br>fertility ${tile.layers[6].fertility.toFixed(2)} vegetation ${tile.layers[6].vegetationDensity.toFixed(2)}<br>moist ${tile.climate.moisture.toFixed(2)} heat ${tile.climate.heat.toFixed(2)}<br>${sun.label} · light ${sun.ambient.toFixed(2)} · sun height ${sun.height.toFixed(2)}${interactionLine}<br>overmap biomes ${audit.seen.length}/${audit.spec.length}: ${topBiomes}<br>missing: ${audit.missing.join(', ') || 'none'}${transitionLine}${wangEdgeLine}${neighborLine}${pixelLabLine}<br><span style="color:#aaf">${debugToggleStr}</span>${wangDebugLine}`;
   }
 }
 
@@ -372,6 +373,32 @@ function drawModularPlayer(ctx, x, y, zoom, frame, animation) {
     ctx.stroke();
   }
   ctx.restore();
+}
+
+function transitionDiagnosticLine(chunkStore) {
+  const available = new Set([
+    'beach|desert','beach|grassland','deep_ocean|ocean','dense_forest|mystic','dense_forest|tropical_forest','desert|hills','desert|savanna','desert|volcanic','forest|dense_forest','forest|hills','forest|mystic','forest|taiga','forest|tropical_forest','grassland|forest','grassland|hills','grassland|mystic','grassland|savanna','grassland|steppe','hills|mountains','hills|volcanic','lake|forest','lake|grassland','lake|river','lake|shallow_water','lake|swamp','mountains|arctic','mountains|volcanic','ocean|beach','ocean|shallow_water','river|forest','river|grassland','river|hills','river|swamp','savanna|hills','savanna|steppe','shallow_water|beach','shallow_water|river','shallow_water|swamp','steppe|desert','steppe|hills','swamp|beach','swamp|dense_forest','swamp|forest','swamp|grassland','swamp|tropical_forest','taiga|hills','taiga|mountains','tropical_forest|mystic','tundra|hills','tundra|mountains','tundra|arctic','tundra|steppe','tundra|taiga'
+  ]);
+  const canonicalAvailable = new Set([...available].map(pair => pair.split('|').sort().join('|')));
+  const needed = new Set();
+  for (const chunk of chunkStore.chunks.values()) {
+    if (!chunk?.tiles) continue;
+    for (let y = 0; y < WORLD.chunkSize; y++) {
+      for (let x = 0; x < WORLD.chunkSize; x++) {
+        const tile = chunk.tiles[y * WORLD.chunkSize + x];
+        if (!tile) continue;
+        const right = x + 1 < WORLD.chunkSize ? chunk.tiles[y * WORLD.chunkSize + x + 1] : null;
+        const down = y + 1 < WORLD.chunkSize ? chunk.tiles[(y + 1) * WORLD.chunkSize + x] : null;
+        for (const other of [right, down]) {
+          if (!other || other.biome === tile.biome) continue;
+          const pair = [tile.biome, other.biome].sort().join('|');
+          needed.add(pair);
+        }
+      }
+    }
+  }
+  const missing = [...needed].filter(pair => !canonicalAvailable.has(pair));
+  return `<br>transitions loaded map: needed ${needed.size}, missing ${missing.length}${missing.length ? ' (' + missing.slice(0, 4).join(', ') + (missing.length > 4 ? '...' : '') + ')' : ''}`;
 }
 
 function drawObject(ctx, kind, sx, sy, zoom = 1, signature = null, anim = { frame: 0 }, sun = null, atlas = null, biome = null, wx = 0, wy = 0, reaction = null) {
