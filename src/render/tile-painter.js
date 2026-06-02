@@ -1,25 +1,25 @@
 import { rand2, smoothNoise } from '../core/random.js';
 import { paletteFor } from './palette.js';
 
-const SWAMP_WANG_15_SRC = 'assets/pixelab/landscape_v2/base/swamp_wet_mud/wang/swamp_wet_mud__wang_15__v000.png';
+const SWAMP_WANG_0_SRC = 'assets/pixelab/landscape_v2/base/swamp_wet_mud/wang/swamp_wet_mud__wang_0__v000.png';
 const SWAMP_WANG_PREFIX = 'assets/pixelab/landscape_v2/base/swamp_wet_mud/wang/swamp_wet_mud__wang_';
 const SWAMP_WANG_SUFFIX = '__v000.png';
 const wangImageCache = new Map();
 
-// Preload interior Wang for speed
-var wang15Loaded = false;
-var wang15Image = new Image();
-wang15Image.onload = function() { wang15Loaded = true; };
-wang15Image.src = SWAMP_WANG_15_SRC;
+// Preload interior Wang (mask 0 = all neighbors same biome)
+var wang0Loaded = false;
+var wang0Image = new Image();
+wang0Image.onload = function() { wang0Loaded = true; };
+wang0Image.src = SWAMP_WANG_0_SRC;
 
 function wangSrcForMask(mask) {
-  if (mask === 15) return SWAMP_WANG_15_SRC;
+  if (mask === 0) return SWAMP_WANG_0_SRC;
   return SWAMP_WANG_PREFIX + mask + SWAMP_WANG_SUFFIX;
 }
 
 function wangImage(src) {
   if (!src) return null;
-  if (src === SWAMP_WANG_15_SRC) return wang15Image;
+  if (src === SWAMP_WANG_0_SRC) return wang0Image;
   if (wangImageCache.has(src)) return wangImageCache.get(src);
   var img = new Image();
   img.src = src;
@@ -29,7 +29,7 @@ function wangImage(src) {
 
 function paintSwampWangBase(ctx, tile, sx, sy, size) {
   if (tile.biome !== 'swamp') return;
-  var mask = tile.wangEdgeMask ?? 15;
+  var mask = tile.wangEdgeMask ?? 0;
   var src = wangSrcForMask(mask);
   var img = wangImage(src);
   if (!img || !img.naturalWidth) return;
