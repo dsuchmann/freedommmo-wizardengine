@@ -2,7 +2,7 @@ import { WORLD } from '../core/constants.js';
 import { paintTerrainTile } from './tile-painter.js';
 import { paintTerrainFeatures } from './feature-painter.js';
 
-const TERRAIN_RENDER_VERSION = 'wang-lookup-v9';
+const TERRAIN_RENDER_VERSION = 'wang-lookup-v10';
 
 const TRANSITION_PAIRS = Object.freeze({
   'beach|desert': { from: 'beach', to: 'desert', dir: 'beach_to_desert' },
@@ -148,17 +148,9 @@ export class ChunkRenderCache {
           }
         }
         if (!tile.transitionPair) {
-          for (let dy = -24; dy <= 24 && !tile.transitionPair; dy++) {
-            for (let dx = -24; dx <= 24 && !tile.transitionPair; dx++) {
-              if (dx === 0 && dy === 0) continue;
-              const far = tileAt(wx + dx, wy + dy);
-              if (!far || far.biome === tile.biome) continue;
-              const pair = transitionPairFor(tile.biome, far.biome);
-              if (pair) {
-                tile.transitionPair = pair;
-                tile.transitionSide = tile.biome === pair.from ? 'from' : 'to';
-              }
-            }
+          if (tile.biome === 'swamp' || tile.biome === 'beach') {
+            tile.transitionPair = transitionPairFor('swamp', 'beach');
+            tile.transitionSide = tile.biome === tile.transitionPair.from ? 'from' : 'to';
           }
         }
         // Wang edge mask — pattern-based from tileset layout
