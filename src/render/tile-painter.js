@@ -13,7 +13,8 @@ function getWangSrc(tile) {
   var mask = tile.wangEdgeMask;
   if (mask === undefined) mask = 0;
   if (tile.transitionPair) {
-    var transitionMask = (mask === 6 && tile.transitionSide === 'to') ? 12 : mask;
+    var transitionMask = mask;
+    if (mask === 0 || mask === 6) transitionMask = tile.transitionSide === 'to' ? 12 : 6;
     return TRANSITIONS_BASE + tile.transitionPair.dir + '/wang/' + tile.transitionPair.dir + '__wang_' + transitionMask + SWAMP_WANG_SUFFIX;
   }
   var prefix = BASE_WANG_PREFIX[tile.biome];

@@ -2,7 +2,7 @@ import { WORLD } from '../core/constants.js';
 import { paintTerrainTile } from './tile-painter.js';
 import { paintTerrainFeatures } from './feature-painter.js';
 
-const TERRAIN_RENDER_VERSION = 'wang-lookup-v8';
+const TERRAIN_RENDER_VERSION = 'wang-lookup-v9';
 
 const TRANSITION_PAIRS = Object.freeze({
   'beach|desert': { from: 'beach', to: 'desert', dir: 'beach_to_desert' },
@@ -148,8 +148,8 @@ export class ChunkRenderCache {
           }
         }
         if (!tile.transitionPair) {
-          for (let dy = -6; dy <= 6 && !tile.transitionPair; dy++) {
-            for (let dx = -6; dx <= 6 && !tile.transitionPair; dx++) {
+          for (let dy = -24; dy <= 24 && !tile.transitionPair; dy++) {
+            for (let dx = -24; dx <= 24 && !tile.transitionPair; dx++) {
               if (dx === 0 && dy === 0) continue;
               const far = tileAt(wx + dx, wy + dy);
               if (!far || far.biome === tile.biome) continue;
