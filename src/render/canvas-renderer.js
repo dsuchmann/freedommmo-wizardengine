@@ -69,18 +69,26 @@ export class CanvasRenderer {
     const chunkPx = Math.round(WORLD.chunkSize * tilePx);
     const baseSX = Math.round(minCX * WORLD.chunkSize * tilePx - camX);
     const baseSY = Math.round(minCY * WORLD.chunkSize * tilePx - camY);
+    const playerCX = floorDiv(Math.floor(player.x), WORLD.chunkSize);
+    const playerCY = floorDiv(Math.floor(player.y), WORLD.chunkSize);
+    const chunkJobs = [];
     for (let cy = minCY; cy <= maxCY; cy++) {
       for (let cx = minCX; cx <= maxCX; cx++) {
         const chunk = chunkStore.getIfReady(cx, cy);
         if (!chunk) continue;
-        const key = `${cx},${cy}`;
-        const cached = this.chunkRenderCache.get(chunk, sun, chunkStore);
-        const sx = baseSX + (cx - minCX) * chunkPx;
-        const sy = baseSY + (cy - minCY) * chunkPx;
-        if (!cached) continue;
-        ctx.drawImage(cached, sx, sy, chunkPx, chunkPx);
-        visibleChunks.push({ cx, cy, key, sx, sy, dw: chunkPx, dh: chunkPx });
+        chunkJobs.push({ cx, cy, chunk, dist: Math.abs(cx - playerCX) + Math.abs(cy - playerCY) });
       }
+    }
+    chunkJobs.sort((a, b) => a.dist - b.dist);
+    for (const job of chunkJobs) {
+      const { cx, cy, chunk } = job;
+      const key = `${cx},${cy}`;
+      const cached = this.chunkRenderCache.get(chunk, sun, chunkStore);
+      const sx = baseSX + (cx - minCX) * chunkPx;
+      const sy = baseSY + (cy - minCY) * chunkPx;
+      if (!cached) continue;
+      ctx.drawImage(cached, sx, sy, chunkPx, chunkPx);
+      visibleChunks.push({ cx, cy, key, sx, sy, dw: chunkPx, dh: chunkPx });
     }
 
     // Wang debug overlay (toggle with D key)

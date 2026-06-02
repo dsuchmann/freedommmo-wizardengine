@@ -2,7 +2,7 @@ import { WORLD } from '../core/constants.js';
 import { paintTerrainTile } from './tile-painter.js';
 import { paintTerrainFeatures } from './feature-painter.js';
 
-const TERRAIN_RENDER_VERSION = 'wang-lookup-v10';
+const TERRAIN_RENDER_VERSION = 'wang-lookup-v11';
 
 const TRANSITION_PAIRS = Object.freeze({
   'beach|desert': { from: 'beach', to: 'desert', dir: 'beach_to_desert' },
@@ -81,7 +81,7 @@ export class ChunkRenderCache {
   }
 
   lightBucket(sun) {
-    return `${Math.round(sun.ambient * 3)},${Math.round(sun.height * 3)}`;
+    return 'static';
   }
 
   get(chunk, sun, chunkStore = null) {
