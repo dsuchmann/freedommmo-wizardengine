@@ -2,7 +2,7 @@ import { WORLD } from '../core/constants.js';
 import { paintTerrainTile } from './tile-painter.js';
 import { paintTerrainFeatures } from './feature-painter.js';
 
-const TERRAIN_RENDER_VERSION = 'wang-lookup-v7';
+const TERRAIN_RENDER_VERSION = 'wang-lookup-v8';
 
 const TRANSITION_PAIRS = Object.freeze({
   'beach|desert': { from: 'beach', to: 'desert', dir: 'beach_to_desert' },
@@ -187,7 +187,8 @@ export class ChunkRenderCache {
           '01100000': 12, // beach: NE/E swamp
           '01101000': 12, // beach: N/NE/E swamp
           '11100000': 12, // beach alternate N/NE/E swamp
-          '11110000': 12, // beach: N/NE/E/SE swamp
+          '11110000': 12, // beach: N/NE/E/SE swamp alternate key
+          '01101001': 12, // beach: N/NE/E/SE swamp exact key
         };
         var mask = lookup[key];
         if (mask === undefined) {
