@@ -69,14 +69,14 @@ export class ChunkRenderCache {
         tile.neighborSW = (tileAt(wx - 1, wy + 1) || {}).biome;
         tile.neighborW  = (tileAt(wx - 1, wy) || {}).biome;
         tile.neighborNW = (tileAt(wx - 1, wy - 1) || {}).biome;
-        // Wang edge mask — N=1, W=2, E=4, S=8
-        // Edge bits set when direct neighbor differs (NOT corners)
-        var mask = 0;
-        if (tile.neighborN !== tile.biome) mask |= 1;
-        if (tile.neighborW !== tile.biome) mask |= 2;
-        if (tile.neighborE !== tile.biome) mask |= 4;
-        if (tile.neighborS !== tile.biome) mask |= 8;
-        tile.wangEdgeMask = mask;
+        // Wang edge mask — inverted: bits = edges that are SAME (painted), N=1,W=2,E=4,S=8
+        // 15 = all swamp (interior), 0 = all different (isolated)
+        var same = 0;
+        if (tile.neighborN === tile.biome) same |= 1;
+        if (tile.neighborW === tile.biome) same |= 2;
+        if (tile.neighborE === tile.biome) same |= 4;
+        if (tile.neighborS === tile.biome) same |= 8;
+        tile.wangEdgeMask = same;
         paintTerrainTile(ctx, tile, sx, sy, WORLD.tileSize, sun, tile.climate.elevation, this.compositor, 0, this.atlas);
         paintTerrainFeatures(ctx, tile, sx, sy, WORLD.tileSize, sun);
       }
