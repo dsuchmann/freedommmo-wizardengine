@@ -88,7 +88,9 @@ export class ChunkRenderCache {
           '00010100': 1,  // W,SW diff (S same)
           '00010010': 10, // W,S diff (SW same)
           '10010110': 8,  // NW,W,S,SW all diff
-          '00000000': 6,  // all same interior (transition tileset)
+          '00000000': 6,  // all same interior near transition
+          '00000100': 10, // SW-only according to tileset layout
+          '00101000': 12, // beach tile with NE/E swamp
         };
         var mask = lookup[key];
         if (mask === undefined) {
