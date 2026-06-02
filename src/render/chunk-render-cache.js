@@ -69,12 +69,12 @@ export class ChunkRenderCache {
         tile.neighborSW = (tileAt(wx - 1, wy + 1) || {}).biome;
         tile.neighborW  = (tileAt(wx - 1, wy) || {}).biome;
         tile.neighborNW = (tileAt(wx - 1, wy - 1) || {}).biome;
-        // Wang edge mask — convention N=1, E=4, S=8, W=2
+        // Wang edge mask — transition tile convention: N=1, W=2, E=4, S=8
         var mask = 0;
         if (tile.neighborN !== tile.biome) mask |= 1;
+        if (tile.neighborW !== tile.biome) mask |= 2;
         if (tile.neighborE !== tile.biome) mask |= 4;
         if (tile.neighborS !== tile.biome) mask |= 8;
-        if (tile.neighborW !== tile.biome) mask |= 2;
         tile.wangEdgeMask = mask;
         paintTerrainTile(ctx, tile, sx, sy, WORLD.tileSize, sun, tile.climate.elevation, this.compositor, 0, this.atlas);
         paintTerrainFeatures(ctx, tile, sx, sy, WORLD.tileSize, sun);
