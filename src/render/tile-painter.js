@@ -16,10 +16,10 @@ function wangImage(src) {
 function paintSwampWangBase(ctx, tile, sx, sy, size) {
   if (tile.biome !== 'swamp') return;
   var img = wangImage(SWAMP_WANG_15_SRC);
-  if (!img || !img.naturalWidth) return;
+  if (!img) return;
   ctx.save();
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, sx, sy, size, size);
+  ctx.drawImage(img, 0, 0, img.naturalWidth || 32, img.naturalHeight || 32, sx, sy, size, size);
   ctx.restore();
 }
 
