@@ -83,11 +83,10 @@ export class ChunkRenderCache {
         var key = '' + nw + nn + ne + ww + ee + sw + ss + se;
         // Lookup table from user-provided examples (1=diff, 0=same)
         var lookup = {
-          '00100110': 8,  // -10535,-19980: W,S,SW diff
-          '00000010': 10, // -10534,-19980: SW only
-          '00100010': 1,  // -10534,-19979: W,SW diff
-          '10010110': 8,  // -10534,-19978: NW,W,S,SW diff
-          '10100010': 1,  // unknown config but close to above
+          '00010110': 8,  // W,S,SW diff (NW=N=NE=E=SE=0, W=SW=S=1)
+          '00000010': 10, // SW only
+          '00010010': 1,  // W,SW diff (S=0)
+          '10010110': 8,  // NW,W,S,SW diff
         };
         var mask = lookup[key];
         if (mask === undefined) {
