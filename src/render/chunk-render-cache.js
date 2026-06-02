@@ -110,10 +110,24 @@ export class ChunkRenderCache {
     canvas.height = WORLD.chunkSize * WORLD.tileSize;
     var ctx = canvas.getContext('2d', { alpha: true, willReadFrequently: false });
     this.renderChunk(ctx, chunk, sun, chunkStore);
-    this.cache.set(key, { canvas, lastUsed: performance.now() });
-    this.lastCanvasByChunk.set(stableKey, canvas);
-    this.evict();
+    if (this.neighborChunksReady(chunk, chunkStore)) {
+      this.cache.set(key, { canvas, lastUsed: performance.now() });
+      this.lastCanvasByChunk.set(stableKey, canvas);
+      this.evict();
+    }
     return canvas;
+  }
+
+  neighborChunksReady(chunk, chunkStore) {
+    if (!chunkStore) return true;
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const cx = chunk.cx + dx;
+        const cy = chunk.cy + dy;
+        if (!chunkStore.getIfReady(cx, cy)) return false;
+      }
+    }
+    return true;
   }
 
   renderChunk(ctx, chunk, sun, chunkStore) {
