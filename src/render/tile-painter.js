@@ -5,9 +5,9 @@ const SWAMP_WANG_0_SRC = 'assets/pixelab/landscape_v2/base/swamp_wet_mud/wang/sw
 const SWAMP_WANG_PREFIX = 'assets/pixelab/landscape_v2/base/swamp_wet_mud/wang/swamp_wet_mud__wang_';
 const SWAMP_WANG_SUFFIX = '__v000.png';
 
-// Preload interior Wang into a canvas for guaranteed synchronous drawing
+// Preload interior Wang — safely handles worker context where document is unavailable
 var wang0Canvas = null;
-(function() {
+try {
   var pre = new Image();
   pre.onload = function() {
     wang0Canvas = document.createElement('canvas');
@@ -16,7 +16,7 @@ var wang0Canvas = null;
     wang0Canvas.getContext('2d').drawImage(pre, 0, 0);
   };
   pre.src = SWAMP_WANG_0_SRC;
-})();
+} catch (e) { /* worker context — no DOM */ }
 
 function paintSwampWangBase(ctx, tile, sx, sy, size) {
   if (tile.biome !== 'swamp') return;
