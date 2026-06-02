@@ -299,7 +299,7 @@ export class CanvasRenderer {
     const debugToggleStr = this.debugWang ? '<b style="color:#ff8">DEBUG ON</b> (D to toggle, overlay shows mask numbers)' : 'debug off (D toggle)';
 
       let pixelLabLine = tile.pixelLabBaseSrc ? `<br>pixelLab base ${tile.pixelLabBaseFamily || 'unknown'} mask=${tile.pixelLabBaseMask ?? 15} · ${tile.pixelLabBaseSrc}${tile.pixelLabBaseVariantSrc ? ' · var ' + tile.pixelLabBaseVariantSrc : ''}${tile.swampDetailLayer ? ' · detail ' + tile.swampDetailLayer : ''}` : '';
-      const wangEdgeLine = tile.wangEdgeMask !== undefined ? `<br><b>wangEdgeMask=${tile.wangEdgeMask}</b>` : ''; 
+      const wangEdgeLine = tile.wangEdgeMask !== undefined ? `<br><b>wangEdgeMask=${tile.wangEdgeMask}</b>${tile.wangSelectedSrc ? ' · ' + tile.wangSelectedSrc : ''}` : ''; 
       const neighborLine = tile.neighborN !== undefined ? `<br>neighbors: N=${tile.neighborN||'?'} NE=${tile.neighborNE||'?'} E=${tile.neighborE||'?'} SE=${tile.neighborSE||'?'} S=${tile.neighborS||'?'} SW=${tile.neighborSW||'?'} W=${tile.neighborW||'?'} NW=${tile.neighborNW||'?'}` : '';
     if (tile.pixelLabSkipBase) {
       pixelLabLine = `<br>pixelLab base skipped at external boundary · missing transition ${tile.pixelLabMissingTransition || 'unknown'}`;

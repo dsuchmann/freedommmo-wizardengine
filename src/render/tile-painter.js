@@ -35,6 +35,7 @@ function getWangSrc(tile) {
 function paintWangBase(ctx, tile, sx, sy, size) {
   if (tile.biome !== 'swamp' && tile.biome !== 'beach') return;
   var src = getWangSrc(tile);
+  tile.wangSelectedSrc = src;
   if (!src) return;
   var img = wangImgCache[src];
   if (!img) {
