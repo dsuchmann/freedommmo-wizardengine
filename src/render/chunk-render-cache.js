@@ -69,7 +69,7 @@ export class ChunkRenderCache {
     this.compositor = compositor;
     this.atlas = atlas;
     this.cache = new Map();
-    this.maxEntries = 36;
+    this.maxEntries = 160;
   }
 
   beginFrame(maxJobs = 1) {
