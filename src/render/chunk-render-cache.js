@@ -71,10 +71,16 @@ export class ChunkRenderCache {
     this.cache = new Map();
     this.lastCanvasByChunk = new Map();
     this.maxEntries = 160;
+    this.renderedThisFrame = 0;
+    this.fallbackThisFrame = 0;
+    this.missThisFrame = 0;
   }
 
   beginFrame(maxJobs = 1) {
     this._frameBudget = maxJobs;
+    this.renderedThisFrame = 0;
+    this.fallbackThisFrame = 0;
+    this.missThisFrame = 0;
   }
 
   key(chunk, lightBucket) {
@@ -91,8 +97,14 @@ export class ChunkRenderCache {
     var hit = this.cache.get(key);
     if (hit) { hit.lastUsed = performance.now(); return hit.canvas; }
     const stableKey = `${chunk.cx},${chunk.cy}`;
-    if ((this._frameBudget ?? 0) <= 0) return this.lastCanvasByChunk.get(stableKey) ?? null;
+    if ((this._frameBudget ?? 0) <= 0) {
+      const fallback = this.lastCanvasByChunk.get(stableKey) ?? null;
+      if (fallback) this.fallbackThisFrame++;
+      else this.missThisFrame++;
+      return fallback;
+    }
     this._frameBudget--;
+    this.renderedThisFrame++;
     var canvas = document.createElement('canvas');
     canvas.width = WORLD.chunkSize * WORLD.tileSize;
     canvas.height = WORLD.chunkSize * WORLD.tileSize;
@@ -114,7 +126,7 @@ export class ChunkRenderCache {
         return chunk.tiles[ty * WORLD.chunkSize + tx];
       }
       if (chunkStore) {
-        var nbChunk = chunkStore.get(cx, cy);
+        var nbChunk = chunkStore.getIfReady(cx, cy);
         if (nbChunk && nbChunk.tiles) return nbChunk.tiles[ty * WORLD.chunkSize + tx];
       }
       return null;
@@ -128,14 +140,14 @@ export class ChunkRenderCache {
         // Compute all 8 neighbor biomes for this tile
         var wx = chunk.cx * WORLD.chunkSize + x;
         var wy = chunk.cy * WORLD.chunkSize + y;
-        tile.neighborN  = (tileAt(wx, wy - 1) || {}).biome;
-        tile.neighborNE = (tileAt(wx + 1, wy - 1) || {}).biome;
-        tile.neighborE  = (tileAt(wx + 1, wy) || {}).biome;
-        tile.neighborSE = (tileAt(wx + 1, wy + 1) || {}).biome;
-        tile.neighborS  = (tileAt(wx, wy + 1) || {}).biome;
-        tile.neighborSW = (tileAt(wx - 1, wy + 1) || {}).biome;
-        tile.neighborW  = (tileAt(wx - 1, wy) || {}).biome;
-        tile.neighborNW = (tileAt(wx - 1, wy - 1) || {}).biome;
+        tile.neighborN  = (tileAt(wx, wy - 1) || tile).biome;
+        tile.neighborNE = (tileAt(wx + 1, wy - 1) || tile).biome;
+        tile.neighborE  = (tileAt(wx + 1, wy) || tile).biome;
+        tile.neighborSE = (tileAt(wx + 1, wy + 1) || tile).biome;
+        tile.neighborS  = (tileAt(wx, wy + 1) || tile).biome;
+        tile.neighborSW = (tileAt(wx - 1, wy + 1) || tile).biome;
+        tile.neighborW  = (tileAt(wx - 1, wy) || tile).biome;
+        tile.neighborNW = (tileAt(wx - 1, wy - 1) || tile).biome;
 
         // Generic transition context: if a transition folder exists for any
         // nearby biome pair, use that transition set for both edges and filler.
@@ -216,7 +228,7 @@ export class ChunkRenderCache {
   }
 
   stats() {
-    return { cachedTerrainChunks: this.cache.size, maxTerrainChunks: this.maxEntries };
+    return { cachedTerrainChunks: this.cache.size, maxTerrainChunks: this.maxEntries, renderedTerrainChunks: this.renderedThisFrame, fallbackTerrainChunks: this.fallbackThisFrame, missedTerrainChunks: this.missThisFrame };
   }
 }
 
