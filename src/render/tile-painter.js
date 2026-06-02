@@ -1,74 +1,43 @@
 import { rand2, smoothNoise } from '../core/random.js';
 import { paletteFor } from './palette.js';
 
-const SWAMP_WANG_PREFIX = 'assets/pixelab/landscape_v2/base/swamp_wet_mud/wang/swamp_wet_mud__wang_';
-const SWAMP_WANG_SUFFIX = '__v000.png';
-const TRANSITIONS_BASE = 'assets/pixelab/landscape_v2/transitions/';
-
-// Transition dirs: neighbor biome → transition folder name
+var SWAMP_WANG_PREFIX = 'assets/pixelab/landscape_v2/base/swamp_wet_mud/wang/swamp_wet_mud__wang_';
+var SWAMP_WANG_SUFFIX = '__v000.png';
+var TRANSITIONS_BASE = 'assets/pixelab/landscape_v2/transitions/';
+var wangImgCache = {};
 var TRANSITION_DIRS = {
-  'beach': 'swamp_to_beach',
-  'forest': 'swamp_to_forest',
-  'dense_forest': 'swamp_to_dense_forest',
-  'tropical_forest': 'swamp_to_tropical_forest',
-  'grassland': 'swamp_to_grass',
-  'river': 'swamp_to_river',
-  'lake': 'swamp_to_lake',
-  'shallow_water': 'swamp_to_shallow_water',
+  beach: 'swamp_to_beach',
+  forest: 'swamp_to_forest',
+  dense_forest: 'swamp_to_dense_forest',
+  tropical_forest: 'swamp_to_tropical_forest',
+  grassland: 'swamp_to_grass'
 };
 
-// Preload Wang canvases: keyed by "full_path" → canvas
-var wangCanvasCache = {};
-
-function loadWangCanvas(fullPath) {
-  if (wangCanvasCache[fullPath] !== undefined) return wangCanvasCache[fullPath];
-  wangCanvasCache[fullPath] = null; // mark pending
-  try {
-    var img = new Image();
-    img.onload = function() {
-      var cv = document.createElement('canvas');
-      cv.width = img.naturalWidth;
-      cv.height = img.naturalHeight;
-      cv.getContext('2d').drawImage(img, 0, 0);
-      wangCanvasCache[fullPath] = cv;
-    };
-    img.src = fullPath;
-  } catch (e) { /* worker */ }
-  return null;
-}
-
-function wangPathForMask(baseDir, prefix, mask) {
-  return TRANSITIONS_BASE + baseDir + '/wang/' + prefix + '__wang_' + mask + SWAMP_WANG_SUFFIX;
+function getWangSrc(tile) {
+  var mask = tile.wangEdgeMask;
+  if (mask === undefined) mask = 0;
+  var toBiome = null;
+  if ((mask & 1) && tile.neighborN && tile.neighborN !== 'swamp') toBiome = tile.neighborN;
+  if ((mask & 2) && tile.neighborW && tile.neighborW !== 'swamp') toBiome = tile.neighborW;
+  if ((mask & 4) && tile.neighborE && tile.neighborE !== 'swamp') toBiome = tile.neighborE;
+  if ((mask & 8) && tile.neighborS && tile.neighborS !== 'swamp') toBiome = tile.neighborS;
+  if (toBiome && TRANSITION_DIRS[toBiome]) {
+    return TRANSITIONS_BASE + TRANSITION_DIRS[toBiome] + '/wang/' + TRANSITION_DIRS[toBiome] + '__wang_' + mask + SWAMP_WANG_SUFFIX;
+  }
+  return SWAMP_WANG_PREFIX + mask + SWAMP_WANG_SUFFIX;
 }
 
 function paintSwampWangBase(ctx, tile, sx, sy, size) {
   if (tile.biome !== 'swamp') return;
-  var mask = tile.wangEdgeMask;
-  if (mask === undefined) mask = 0;
-  
-  // Determine the transition biome(s) on active edges
-  var edgeBiomes = {};
-  if ((mask & 1) && tile.neighborW) edgeBiomes[tile.neighborW] = true;
-  if ((mask & 2) && tile.neighborS) edgeBiomes[tile.neighborS] = true;
-  if ((mask & 4) && tile.neighborE) edgeBiomes[tile.neighborE] = true;
-  if ((mask & 8) && tile.neighborN) edgeBiomes[tile.neighborN] = true;
-  
-  var keys = Object.keys(edgeBiomes);
-  // Single biome transition
-  if (keys.length === 1 || keys.length === 0) {
-    var toBiome = keys[0] || null;
-    var prefix, src;
-    if (toBiome && TRANSITION_DIRS[toBiome]) {
-      prefix = 'swamp_to_' + toBiome;
-      src = wangPathForMask(TRANSITION_DIRS[toBiome], prefix, mask);
-    } else {
-      src = SWAMP_WANG_PREFIX + mask + SWAMP_WANG_SUFFIX;
-    }
-    var cv = wangCanvasCache[src];
-    if (cv === undefined) loadWangCanvas(src);
-    if (!cv) return;
-    ctx.drawImage(cv, 0, 0, cv.width, cv.height, sx, sy, size, size);
+  var src = getWangSrc(tile);
+  if (!src) return;
+  var img = wangImgCache[src];
+  if (!img) {
+    img = new Image();
+    img.src = src;
+    wangImgCache[src] = img;
   }
+  ctx.drawImage(img, 0, 0, 32, 32, sx, sy, size, size);
 }
 
 export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation = tile.climate.elevation, compositor = null, timeSeconds = 0, atlas = null) {
