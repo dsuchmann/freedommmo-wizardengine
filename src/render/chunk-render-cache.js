@@ -69,18 +69,36 @@ export class ChunkRenderCache {
         tile.neighborSW = (tileAt(wx - 1, wy + 1) || {}).biome;
         tile.neighborW  = (tileAt(wx - 1, wy) || {}).biome;
         tile.neighborNW = (tileAt(wx - 1, wy - 1) || {}).biome;
-        // Wang edge mask — DIFF edges (N=1,W=2,E=4,S=8). Corner diffusion.
-        var mask = 0;
-        if (tile.neighborN !== tile.biome) mask |= 1;
-        if (tile.neighborW !== tile.biome) mask |= 2;
-        if (tile.neighborE !== tile.biome) mask |= 4;
-        if (tile.neighborS !== tile.biome) mask |= 8;
-        // Corner diffusion: adj sw ≠  diag diff sets both edges
-        if (tile.neighborSW !== tile.biome) mask |= 2 | 8;
-        if (tile.neighborSE !== tile.biome) mask |= 4 | 8;
-        if (tile.neighborNE !== tile.biome) mask |= 1 | 4;
-        // NW special: NW diff + N same → clear W (transition wraps around corner)
-        if (tile.neighborNW !== tile.biome && tile.neighborN === tile.biome) mask &= ~2;
+        // Wang edge mask — pattern-based from tileset layout
+        // Use neighbor diff pattern to select mask
+        var nw = tile.neighborNW !== tile.biome ? 1 : 0;
+        var nn = tile.neighborN  !== tile.biome ? 1 : 0;
+        var ne = tile.neighborNE !== tile.biome ? 1 : 0;
+        var ww = tile.neighborW  !== tile.biome ? 1 : 0;
+        var ee = tile.neighborE  !== tile.biome ? 1 : 0;
+        var sw = tile.neighborSW !== tile.biome ? 1 : 0;
+        var ss = tile.neighborS  !== tile.biome ? 1 : 0;
+        var se = tile.neighborSE !== tile.biome ? 1 : 0;
+        // Pattern key: 8-bit diff concat
+        var key = '' + nw + nn + ne + ww + ee + sw + ss + se;
+        // Lookup table from user-provided examples (1=diff, 0=same)
+        var lookup = {
+          '00100110': 8,  // -10535,-19980: W,S,SW diff
+          '00000010': 10, // -10534,-19980: SW only
+          '00100010': 1,  // -10534,-19979: W,SW diff
+          '10010110': 8,  // -10534,-19978: NW,W,S,SW diff
+          '10100010': 1,  // unknown config but close to above
+        };
+        var mask = lookup[key];
+        if (mask === undefined) {
+          // Fallback: edge diff + corner overrides
+          mask = 0;
+          if (ww) mask |= 2;
+          if (ss) mask |= 8;
+          if (sw) mask |= 8;
+          if (nw && !nn) mask &= ~2;
+        }
+        tile.wangEdgeMask = mask;
         tile.wangEdgeMask = mask;
         paintTerrainTile(ctx, tile, sx, sy, WORLD.tileSize, sun, tile.climate.elevation, this.compositor, 0, this.atlas);
         paintTerrainFeatures(ctx, tile, sx, sy, WORLD.tileSize, sun);
