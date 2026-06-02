@@ -58,17 +58,17 @@ export class ChunkRenderCache {
         var tile = chunk.tiles[index];
         var sx = x * WORLD.tileSize;
         var sy = y * WORLD.tileSize;
-        // compute Wang edge mask with cross-chunk neighbor lookup
+        // compute Wang edge mask — convention: W=1, S=2, E=4, N=8
         var mask = 0;
         var wx = chunk.cx * WORLD.chunkSize + x;
         var wy = chunk.cy * WORLD.chunkSize + y;
-        var nTile = tileAt(wx, wy - 1);
+        var nTile = tileAt(wx - 1, wy);
         if (nTile && nTile.biome !== tile.biome) mask |= 1;
-        nTile = tileAt(wx + 1, wy);
-        if (nTile && nTile.biome !== tile.biome) mask |= 2;
         nTile = tileAt(wx, wy + 1);
+        if (nTile && nTile.biome !== tile.biome) mask |= 2;
+        nTile = tileAt(wx + 1, wy);
         if (nTile && nTile.biome !== tile.biome) mask |= 4;
-        nTile = tileAt(wx - 1, wy);
+        nTile = tileAt(wx, wy - 1);
         if (nTile && nTile.biome !== tile.biome) mask |= 8;
         tile.wangEdgeMask = mask;
         paintTerrainTile(ctx, tile, sx, sy, WORLD.tileSize, sun, tile.climate.elevation, this.compositor, 0, this.atlas);
