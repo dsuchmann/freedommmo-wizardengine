@@ -268,11 +268,7 @@ export class CanvasRenderer {
     }
     const audit = this.lastAudit;
     const topBiomes = audit.seen.slice(0, 6).map(entry => `${entry.id} ${(entry.pct * 100).toFixed(0)}%`).join(', ');
-    if (!this.lastTransitionLine || now - this.lastTransitionLineAt > 3000) {
-      this.lastTransitionLine = transitionDiagnosticLine(chunkStore);
-      this.lastTransitionLineAt = now;
-    }
-    const transitionLine = this.lastTransitionLine;
+    const transitionLine = '';
     const nearby = findNearbyInteraction(player, chunkStore);
     const interactionLine = nearby ? `<br>near ${nearby.target} · ${nearby.verb} · ${nearby.distance.toFixed(1)} tiles` : '';
     const chunkStats = chunkStore.stats();

@@ -4,10 +4,20 @@ import { paletteFor } from './palette.js';
 var SWAMP_WANG_SUFFIX = '__v000.png';
 var TRANSITIONS_BASE = 'assets/pixelab/landscape_v2/transitions/';
 var wangImgCache = {};
+function preloadWangImage(src) {
+  var img = new Image();
+  img.src = src;
+  wangImgCache[src] = img;
+}
 var BASE_WANG_PREFIX = {
   swamp: 'assets/pixelab/landscape_v2/base/swamp_wet_mud/wang/swamp_wet_mud__wang_',
   beach: 'assets/pixelab/landscape_v2/base/beach/wang/beach__wang_'
 };
+for (var preloadMask = 0; preloadMask < 16; preloadMask++) {
+  preloadWangImage(BASE_WANG_PREFIX.swamp + preloadMask + SWAMP_WANG_SUFFIX);
+  preloadWangImage(BASE_WANG_PREFIX.beach + preloadMask + SWAMP_WANG_SUFFIX);
+  preloadWangImage(TRANSITIONS_BASE + 'swamp_to_beach/wang/swamp_to_beach__wang_' + preloadMask + SWAMP_WANG_SUFFIX);
+}
 
 function getWangSrc(tile) {
   var mask = tile.wangEdgeMask;
@@ -27,12 +37,7 @@ function paintWangBase(ctx, tile, sx, sy, size) {
   tile.wangSelectedSrc = src;
   if (!src) return;
   var img = wangImgCache[src];
-  if (!img) {
-    img = new Image();
-    img.src = src;
-    wangImgCache[src] = img;
-  }
-  if (!img.complete || !img.naturalWidth) return;
+  if (!img || !img.complete || !img.naturalWidth) return;
   ctx.drawImage(img, 0, 0, 32, 32, sx, sy, size, size);
 }
 
