@@ -47,6 +47,18 @@ export class ChunkRenderCache {
         const tile = chunk.tiles[index];
         const sx = x * WORLD.tileSize;
         const sy = y * WORLD.tileSize;
+        // compute Wang edge mask from tile neighbors
+        const nb = (dx, dy) => {
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || nx >= WORLD.chunkSize || ny < 0 || ny >= WORLD.chunkSize) return tile.biome;
+          return chunk.tiles[ny * WORLD.chunkSize + nx]?.biome ?? tile.biome;
+        };
+        var mask = 0;
+        if (nb(0, -1) !== tile.biome) mask |= 1;
+        if (nb(1, 0) !== tile.biome) mask |= 2;
+        if (nb(0, 1) !== tile.biome) mask |= 4;
+        if (nb(-1, 0) !== tile.biome) mask |= 8;
+        tile.wangEdgeMask = mask;
         paintTerrainTile(ctx, tile, sx, sy, WORLD.tileSize, sun, tile.climate.elevation, this.compositor, 0, this.atlas);
         paintTerrainFeatures(ctx, tile, sx, sy, WORLD.tileSize, sun);
       }
