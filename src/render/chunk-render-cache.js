@@ -2,7 +2,7 @@ import { WORLD } from '../core/constants.js';
 import { paintTerrainTile } from './tile-painter.js';
 import { paintTerrainFeatures } from './feature-painter.js';
 
-const TERRAIN_RENDER_VERSION = 'wang-lookup-v12';
+const TERRAIN_RENDER_VERSION = 'wang-lookup-v13';
 
 const TRANSITION_PAIRS = Object.freeze({
   'beach|desert': { from: 'beach', to: 'desert', dir: 'beach_to_desert' },
@@ -177,9 +177,27 @@ export class ChunkRenderCache {
           }
         }
         if (!tile.transitionPair) {
-          if (tile.biome === 'swamp' || tile.biome === 'beach') {
-            tile.transitionPair = transitionPairFor('swamp', 'beach');
-            tile.transitionSide = tile.biome === tile.transitionPair.from ? 'from' : 'to';
+          // Find any transition pair involving this biome (for interior filler)
+          for (const other of immediate) {
+            if (!other || other === tile.biome) continue;
+            const pair = transitionPairFor(tile.biome, other);
+            if (pair) {
+              tile.transitionPair = pair;
+              tile.transitionSide = tile.biome === pair.from ? 'from' : 'to';
+              break;
+            }
+          }
+          if (!tile.transitionPair) {
+            // Still no immediate neighbor pair — find any available transition for this biome
+            const TRANSITION_KEYS = Object.keys(TRANSITION_PAIRS);
+            for (const key of TRANSITION_KEYS) {
+              const pair = TRANSITION_PAIRS[key];
+              if (pair.from === tile.biome || pair.to === tile.biome) {
+                tile.transitionPair = pair;
+                tile.transitionSide = tile.biome === pair.from ? 'from' : 'to';
+                break;
+              }
+            }
           }
         }
         // Wang edge mask — pattern-based from tileset layout

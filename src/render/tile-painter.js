@@ -11,7 +11,26 @@ function preloadWangImage(src) {
 }
 var BASE_WANG_PREFIX = {
   swamp: 'assets/pixelab/landscape_v2/base/swamp_wet_mud/wang/swamp_wet_mud__wang_',
-  beach: 'assets/pixelab/landscape_v2/base/beach/wang/beach__wang_'
+  beach: 'assets/pixelab/landscape_v2/base/beach/wang/beach__wang_',
+  forest: 'assets/pixelab/landscape_v2/base/forest/wang/forest__wang_',
+  dense_forest: 'assets/pixelab/landscape_v2/base/dense_forest/wang/dense_forest__wang_',
+  tropical_forest: 'assets/pixelab/landscape_v2/base/tropical_forest/wang/tropical_forest__wang_',
+  taiga: 'assets/pixelab/landscape_v2/base/taiga/wang/taiga__wang_',
+  grassland: 'assets/pixelab/landscape_v2/base/grassland/wang/grassland__wang_',
+  savanna: 'assets/pixelab/landscape_v2/base/savanna/wang/savanna__wang_',
+  steppe: 'assets/pixelab/landscape_v2/base/steppe/wang/steppe__wang_',
+  desert: 'assets/pixelab/landscape_v2/base/desert/wang/desert__wang_',
+  tundra: 'assets/pixelab/landscape_v2/base/tundra/wang/tundra__wang_',
+  arctic: 'assets/pixelab/landscape_v2/base/arctic/wang/arctic__wang_',
+  hills: 'assets/pixelab/landscape_v2/base/hills/wang/hills__wang_',
+  mountains: 'assets/pixelab/landscape_v2/base/mountains/wang/mountains__wang_',
+  volcanic: 'assets/pixelab/landscape_v2/base/volcanic/wang/volcanic__wang_',
+  mystic: 'assets/pixelab/landscape_v2/base/mystic/wang/mystic__wang_',
+  ocean: 'assets/pixelab/landscape_v2/base/ocean/wang/ocean__wang_',
+  deep_ocean: 'assets/pixelab/landscape_v2/base/deep_ocean/wang/deep_ocean__wang_',
+  shallow_water: 'assets/pixelab/landscape_v2/base/shallow_water/wang/shallow_water__wang_',
+  lake: 'assets/pixelab/landscape_v2/base/lake/wang/lake__wang_',
+  river: 'assets/pixelab/landscape_v2/base/river/wang/river__wang_'
 };
 for (var preloadMask = 0; preloadMask < 16; preloadMask++) {
   preloadWangImage(BASE_WANG_PREFIX.swamp + preloadMask + SWAMP_WANG_SUFFIX);
@@ -32,7 +51,6 @@ function getWangSrc(tile) {
 }
 
 function paintWangBase(ctx, tile, sx, sy, size) {
-  if (tile.biome !== 'swamp' && tile.biome !== 'beach') return;
   var src = getWangSrc(tile);
   tile.wangSelectedSrc = src;
   if (!src) return;
