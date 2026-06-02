@@ -177,15 +177,20 @@ export class ChunkRenderCache {
           }
         }
         if (!tile.transitionPair) {
-          // Find any transition pair involving an immediate neighbor (for interior filler)
-          for (const other of immediate) {
-            if (!other || other === tile.biome) continue;
-            const pair = transitionPairFor(tile.biome, other);
-            if (pair) {
-              tile.transitionPair = pair;
-              tile.transitionSide = tile.biome === pair.from ? 'from' : 'to';
-              break;
+          // Scan small radius for any transition-eligible neighbor
+          var foundPair = null;
+          for (var dy = -4; dy <= 4 && !foundPair; dy++) {
+            for (var dx = -4; dx <= 4 && !foundPair; dx++) {
+              if (dx === 0 && dy === 0) continue;
+              var far = tileAt(wx + dx, wy + dy);
+              if (!far || far.biome === tile.biome) continue;
+              var pair = transitionPairFor(tile.biome, far.biome);
+              if (pair) { foundPair = pair; }
             }
+          }
+          if (foundPair) {
+            tile.transitionPair = foundPair;
+            tile.transitionSide = tile.biome === foundPair.from ? 'from' : 'to';
           }
         }
         // Wang edge mask — pattern-based from tileset layout
