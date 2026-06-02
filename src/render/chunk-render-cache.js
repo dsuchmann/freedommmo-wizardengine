@@ -69,6 +69,7 @@ export class ChunkRenderCache {
     this.compositor = compositor;
     this.atlas = atlas;
     this.cache = new Map();
+    this.lastCanvasByChunk = new Map();
     this.maxEntries = 160;
   }
 
@@ -89,7 +90,8 @@ export class ChunkRenderCache {
     var key = this.key(chunk, bucket);
     var hit = this.cache.get(key);
     if (hit) { hit.lastUsed = performance.now(); return hit.canvas; }
-    if ((this._frameBudget ?? 0) <= 0) return null;
+    const stableKey = `${chunk.cx},${chunk.cy}`;
+    if ((this._frameBudget ?? 0) <= 0) return this.lastCanvasByChunk.get(stableKey) ?? null;
     this._frameBudget--;
     var canvas = document.createElement('canvas');
     canvas.width = WORLD.chunkSize * WORLD.tileSize;
@@ -97,6 +99,7 @@ export class ChunkRenderCache {
     var ctx = canvas.getContext('2d', { alpha: true, willReadFrequently: false });
     this.renderChunk(ctx, chunk, sun, chunkStore);
     this.cache.set(key, { canvas, lastUsed: performance.now() });
+    this.lastCanvasByChunk.set(stableKey, canvas);
     this.evict();
     return canvas;
   }
@@ -209,6 +212,7 @@ export class ChunkRenderCache {
 
   clear() {
     this.cache.clear();
+    this.lastCanvasByChunk.clear();
   }
 
   stats() {
