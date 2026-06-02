@@ -2,7 +2,7 @@ import { WORLD } from '../core/constants.js';
 import { paintTerrainTile } from './tile-painter.js';
 import { paintTerrainFeatures } from './feature-painter.js';
 
-const TERRAIN_RENDER_VERSION = 'wang-lookup-v4';
+const TERRAIN_RENDER_VERSION = 'wang-lookup-v5';
 
 export class ChunkRenderCache {
   constructor(compositor = null, atlas = null) {
@@ -95,7 +95,8 @@ export class ChunkRenderCache {
           '00101000': 12, // beach tile with NE/E swamp
           '00000100': 10, // exact: only SW differs
           '01100000': 12, // beach: NE/E swamp
-          '11100000': 12, // beach: N/NE/E swamp
+          '01101000': 12, // beach: N/NE/E swamp
+          '11100000': 12, // beach alternate N/NE/E swamp
         };
         var mask = lookup[key];
         if (mask === undefined) {

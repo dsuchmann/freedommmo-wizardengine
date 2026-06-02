@@ -17,7 +17,8 @@ function getWangSrc(tile) {
   var mask = tile.wangEdgeMask;
   if (mask === undefined) mask = 0;
   if (tile.biome === 'swamp') {
-    var nb = tile.neighborW !== 'swamp' ? tile.neighborW : (tile.neighborS !== 'swamp' ? tile.neighborS : (tile.neighborN !== 'swamp' ? tile.neighborN : tile.neighborE));
+    var nb = tile.neighborW !== 'swamp' ? tile.neighborW : (tile.neighborS !== 'swamp' ? tile.neighborS : (tile.neighborN !== 'swamp' ? tile.neighborN : (tile.neighborSW !== 'swamp' ? tile.neighborSW : (tile.neighborNW !== 'swamp' ? tile.neighborNW : tile.neighborE))));
+    if (!nb && mask === 6) nb = 'beach';
     if (nb && TRANSITION_DIRS[nb]) {
       return TRANSITIONS_BASE + TRANSITION_DIRS[nb] + '/wang/' + TRANSITION_DIRS[nb] + '__wang_' + mask + SWAMP_WANG_SUFFIX;
     }
