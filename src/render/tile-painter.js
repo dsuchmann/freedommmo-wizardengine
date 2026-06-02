@@ -1,6 +1,28 @@
 import { rand2, smoothNoise } from '../core/random.js';
 import { paletteFor } from './palette.js';
 
+const SWAMP_WANG_15_SRC = 'assets/pixelab/landscape_v2/base/swamp_wet_mud/wang/swamp_wet_mud__wang_15__v000.png';
+const wangImageCache = new Map();
+
+function wangImage(src) {
+  if (!src) return null;
+  if (wangImageCache.has(src)) return wangImageCache.get(src);
+  var img = new Image();
+  img.src = src;
+  wangImageCache.set(src, img);
+  return img;
+}
+
+function paintSwampWangBase(ctx, tile, sx, sy, size) {
+  if (tile.biome !== 'swamp') return;
+  var img = wangImage(SWAMP_WANG_15_SRC);
+  if (!img || !img.naturalWidth) return;
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, sx, sy, size, size);
+  ctx.restore();
+}
+
 export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation = tile.climate.elevation, compositor = null, timeSeconds = 0, atlas = null) {
   const palette = paletteFor(tile.biome);
   const patch = coherentPatch(tile.wx, tile.wy, tile.biome);
@@ -9,6 +31,7 @@ export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation = 
   const depthFade = Math.max(0, focusElevation - tile.climate.elevation - 0.08) * 0.50;
   ctx.fillStyle = tint(shade(base, elevationShade + depthFade), sun.tint, sun.ambient);
   ctx.fillRect(sx, sy, size, size);
+  paintSwampWangBase(ctx, tile, sx, sy, size);
 }
 
 function coherentPatch(wx, wy, biome) {
