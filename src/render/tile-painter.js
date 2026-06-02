@@ -38,7 +38,7 @@ function loadWangCanvas(fullPath) {
 }
 
 function wangPathForMask(baseDir, prefix, mask) {
-  return TRANSITIONS_BASE + baseDir + '/wang/' + prefix + '_wang_' + mask + SWAMP_WANG_SUFFIX;
+  return TRANSITIONS_BASE + baseDir + '/wang/' + prefix + '__wang_' + mask + SWAMP_WANG_SUFFIX;
 }
 
 function paintSwampWangBase(ctx, tile, sx, sy, size) {
