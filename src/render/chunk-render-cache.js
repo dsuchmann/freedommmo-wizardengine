@@ -2,7 +2,7 @@ import { WORLD } from '../core/constants.js';
 import { paintTerrainTile } from './tile-painter.js';
 import { paintTerrainFeatures } from './feature-painter.js';
 
-const TERRAIN_RENDER_VERSION = 'wang-lookup-v11';
+const TERRAIN_RENDER_VERSION = 'wang-lookup-v12';
 
 const TRANSITION_PAIRS = Object.freeze({
   'beach|desert': { from: 'beach', to: 'desert', dir: 'beach_to_desert' },
@@ -83,8 +83,8 @@ export class ChunkRenderCache {
     this.missThisFrame = 0;
   }
 
-  key(chunk, lightBucket) {
-    return `${TERRAIN_RENDER_VERSION},${chunk.cx},${chunk.cy},${lightBucket}`;
+  key(chunk, lightBucket, neighborMask = '') {
+    return `${TERRAIN_RENDER_VERSION},${chunk.cx},${chunk.cy},${lightBucket},${neighborMask}`;
   }
 
   lightBucket(sun) {
@@ -93,7 +93,8 @@ export class ChunkRenderCache {
 
   get(chunk, sun, chunkStore = null) {
     var bucket = this.lightBucket(sun);
-    var key = this.key(chunk, bucket);
+    var neighborMask = this.neighborReadyMask(chunk, chunkStore);
+    var key = this.key(chunk, bucket, neighborMask);
     var hit = this.cache.get(key);
     if (hit) { hit.lastUsed = performance.now(); return hit.canvas; }
     const stableKey = `${chunk.cx},${chunk.cy}`;
@@ -110,24 +111,21 @@ export class ChunkRenderCache {
     canvas.height = WORLD.chunkSize * WORLD.tileSize;
     var ctx = canvas.getContext('2d', { alpha: true, willReadFrequently: false });
     this.renderChunk(ctx, chunk, sun, chunkStore);
-    if (this.neighborChunksReady(chunk, chunkStore)) {
-      this.cache.set(key, { canvas, lastUsed: performance.now() });
-      this.lastCanvasByChunk.set(stableKey, canvas);
-      this.evict();
-    }
+    this.cache.set(key, { canvas, lastUsed: performance.now() });
+    this.lastCanvasByChunk.set(stableKey, canvas);
+    this.evict();
     return canvas;
   }
 
-  neighborChunksReady(chunk, chunkStore) {
-    if (!chunkStore) return true;
-    for (let dy = -1; dy <= 1; dy++) {
-      for (let dx = -1; dx <= 1; dx++) {
-        const cx = chunk.cx + dx;
-        const cy = chunk.cy + dy;
-        if (!chunkStore.getIfReady(cx, cy)) return false;
-      }
-    }
-    return true;
+  neighborReadyMask(chunk, chunkStore) {
+    if (!chunkStore) return 'none';
+    let mask = 0;
+    if (chunkStore.getIfReady(chunk.cx, chunk.cy)) mask |= 1;
+    if (chunkStore.getIfReady(chunk.cx - 1, chunk.cy)) mask |= 2;
+    if (chunkStore.getIfReady(chunk.cx + 1, chunk.cy)) mask |= 4;
+    if (chunkStore.getIfReady(chunk.cx, chunk.cy - 1)) mask |= 8;
+    if (chunkStore.getIfReady(chunk.cx, chunk.cy + 1)) mask |= 16;
+    return mask;
   }
 
   renderChunk(ctx, chunk, sun, chunkStore) {
