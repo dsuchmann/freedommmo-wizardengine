@@ -2,7 +2,7 @@ import { WORLD } from '../core/constants.js';
 import { paintTerrainTile } from './tile-painter.js';
 import { paintTerrainFeatures } from './feature-painter.js';
 
-const TERRAIN_RENDER_VERSION = 'wang-lookup-v1';
+const TERRAIN_RENDER_VERSION = 'wang-lookup-v2';
 
 export class ChunkRenderCache {
   constructor(compositor = null, atlas = null) {
