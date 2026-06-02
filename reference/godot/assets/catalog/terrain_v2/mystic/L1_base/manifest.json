@@ -1,0 +1,24 @@
+{
+  "biome": "mystic",
+  "layer": "L1_base",
+  "pixellab_tileset_id": "54dc133e-6c8d-491b-a543-60853b5f353c",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "d84527b3-a30e-4483-b4c4-641c2ea52a01",
+    "upper": "8eda3471-c6fc-4e3a-b215-aa77064c58c6"
+  },
+  "generation_prompt": {
+    "lower_description": "purple glowing crystal cave floor with shimmering minerals",
+    "upper_description": "dark cave stone with stalactite shadows"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

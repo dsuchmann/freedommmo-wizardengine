@@ -1,0 +1,24 @@
+{
+  "biome": "volcanic",
+  "layer": "L3_vegetation",
+  "pixellab_tileset_id": "a7f9ac54-71df-4f30-af58-cc3f7ada7193",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "679027b3-ea6b-4e47-b7ec-6409807a0503",
+    "upper": "45250b24-107e-42b2-8431-4065745f8298"
+  },
+  "generation_prompt": {
+    "lower_description": "small heat-resistant dark plants and glowing ember flowers on fully transparent background, pixel art, top-down view",
+    "upper_description": "different heat-resistant scrub with more ember bloom on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

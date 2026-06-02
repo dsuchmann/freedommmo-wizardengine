@@ -1,0 +1,60 @@
+  const fertility = tile.climate?.fertility ?? 0.55;
+  const vegetation = tile.climate?.vegetation ?? 0.55;
+  const moisture = tile.climate?.moisture ?? 0.65;
+  const broad = smoothNoise(tile.wx, tile.wy, 16, 16031);
+  const mossAlpha = clamp((fertility * 0.36 + vegetation * 0.44 + moisture * 0.20 + broad * 0.25 - 0.58) * 0.42, 0.04, 0.24);
+  ctx.save();
+  ctx.fillStyle = `rgba(52, 96, 48, ${mossAlpha.toFixed(3)})`;
+  ctx.fillRect(sx, sy, size, size);
+  const wet = smoothNoise(tile.wx + 11, tile.wy - 7, 9, 16032);
+  if (wet > 0.52) {
+    ctx.fillStyle = `rgba(25, 42, 34, ${((wet - 0.52) * 0.18).toFixed(3)})`;
+    ctx.fillRect(sx, sy, size, size);
+  }
+  const speck = rand2(tile.wx, tile.wy, 16033);
+  if (speck > 0.62) {
+    const count = speck > 0.88 ? 2 : 1;
+    ctx.fillStyle = 'rgba(79, 121, 55, 0.34)';
+    for (let i = 0; i < count; i++) {
+      const px = sx + Math.floor(rand2(tile.wx, tile.wy, 16034 + i) * (size - 3));
+      const py = sy + Math.floor(rand2(tile.wx, tile.wy, 16044 + i) * (size - 3));
+      ctx.fillRect(px, py, Math.max(2, Math.floor(size * 0.10)), 1);
+    }
+  }
+  ctx.restore();
+}
+
+function drawSwampDecal(ctx, family, tile, sx, sy, size, salt, alpha, scale = 1, xBias = 0.5, yBias = 0.5) {
+  const variants = PIXEL_SWAMP_DECALS[family];
+  if (!variants?.length) return false;
+  const index = Math.floor(rand2(tile.wx, tile.wy, salt) * variants.length) % variants.length;
+  const image = pixelBaseImage(variants[index]);
+  if (!image?.complete || !(image.naturalWidth || image.width)) return false;
+  const previousSmoothing = ctx.imageSmoothingEnabled;
+  const previousAlpha = ctx.globalAlpha;
+  ctx.imageSmoothingEnabled = true;
+  ctx.globalAlpha = previousAlpha * alpha;
+  const w = size * scale * (0.75 + rand2(tile.wx, tile.wy, salt + 1) * 0.50);
+  const h = size * scale * (0.75 + rand2(tile.wx, tile.wy, salt + 2) * 0.50);
+  const xJitter = (rand2(tile.wx, tile.wy, salt + 3) - 0.5) * size * 0.72;
+  const yJitter = (rand2(tile.wx, tile.wy, salt + 4) - 0.5) * size * 0.72;
+  const dx = sx + size * xBias + xJitter - w / 2;
+  const dy = sy + size * yBias + yJitter - h / 2;
+  const rotate = (Math.floor(rand2(tile.wx, tile.wy, salt + 5) * 4) & 3) * Math.PI / 2;
+  const flip = rand2(tile.wx, tile.wy, salt + 6) > 0.5;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(sx, sy, size, size);
+  ctx.clip();
+  ctx.translate(dx + w / 2, dy + h / 2);
+  ctx.rotate(rotate);
+  ctx.scale(flip ? -1 : 1, 1);
+  ctx.drawImage(image, -w / 2, -h / 2, w, h);
+  ctx.restore();
+  ctx.imageSmoothingEnabled = previousSmoothing;
+  ctx.globalAlpha = previousAlpha;
+  return true;
+}
+
+function paintSwampPixelLocalOverlays(ctx, tile, sx, sy, size) {
+  const fertility = tile.climate?.fertility ?? 0.55;

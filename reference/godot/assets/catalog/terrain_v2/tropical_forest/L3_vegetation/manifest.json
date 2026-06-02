@@ -1,0 +1,24 @@
+{
+  "biome": "tropical_forest",
+  "layer": "L3_vegetation",
+  "pixellab_tileset_id": "0e97a5a5-a3a2-4889-b49a-fc957caf1919",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "82cf8035-f7c0-4cfd-b720-64fffebe2ba3",
+    "upper": "521f1a3b-b933-4974-8964-f6a241d221c2"
+  },
+  "generation_prompt": {
+    "lower_description": "large tropical broad-leaf plants and colorful orchid flowers on fully transparent background, pixel art, top-down view",
+    "upper_description": "different tropical plant arrangement with bird-of-paradise flowers on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

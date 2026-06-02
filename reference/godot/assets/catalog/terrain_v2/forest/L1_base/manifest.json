@@ -1,0 +1,24 @@
+{
+  "biome": "forest",
+  "layer": "L1_base",
+  "pixellab_tileset_id": "3f7e9b46-b1cc-42df-8e04-c440c2a9f260",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "e7e0c590-42a3-44af-b0db-4e479514813e",
+    "upper": "1a6c5646-e2e8-4934-b203-cc24b8760cce"
+  },
+  "generation_prompt": {
+    "lower_description": "dark forest floor with fallen leaves, twigs and moss",
+    "upper_description": "dense tree canopy shadows with mushrooms and ferns"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

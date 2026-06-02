@@ -1,0 +1,24 @@
+{
+  "biome": "volcanic",
+  "layer": "L1_base",
+  "pixellab_tileset_id": "81944792-c6db-4ba9-a526-ceb901463c59",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "9d5c96a5-0fe8-48c2-922e-33762437a63b",
+    "upper": "35d14473-1d43-40ec-a071-446dd440278e"
+  },
+  "generation_prompt": {
+    "lower_description": "dark grey volcanic rock with glowing orange lava cracks",
+    "upper_description": "bright flowing orange-red lava with heat distortion"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

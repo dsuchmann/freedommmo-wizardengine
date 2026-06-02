@@ -1,0 +1,24 @@
+{
+  "biome": "arctic",
+  "layer": "L2_detail",
+  "pixellab_tileset_id": "4e34c9aa-4ec1-46eb-bbf1-56c962d9392d",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "58454781-2abb-49a3-82d7-0179644cde3f",
+    "upper": "fdc3bead-115b-4d4a-aa2e-6fd3e1863e6b"
+  },
+  "generation_prompt": {
+    "lower_description": "deep blue ice crevasses and frozen air bubbles visible in ice on fully transparent background, pixel art, top-down view",
+    "upper_description": "different crevasse pattern with more frozen bubble detail on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

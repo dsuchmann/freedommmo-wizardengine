@@ -1,0 +1,163 @@
+  const signature = compositor?.terrainSignature(tile);
+  const palette = paletteFor(tile.biome);
+  const patch = coherentPatch(tile.wx, tile.wy, tile.biome);
+  const grassSea = tile.biome === 'grassland' || tile.biome === 'savanna' || tile.biome === 'steppe';
+  const beachTouchingSwamp = (tile.biome === 'beach' || tile.biome === 'desert') && Number.isInteger(tile.pixelLabTransitionMask) && tile.pixelLabTransitionMask !== 0;
+  // Use biome blend if available for smooth color interpolation
+  // Use biome blend for smooth color interpolation at boundaries
+  const useBlend = tile.biomeBlend && tile.biomeBlend.length > 1;
+  const base = useBlend ? blendBaseColor(tile.biomeBlend, patch) :
+    (grassSea ? palette[1] : palette[Math.min(palette.length - 1, Math.floor(patch * palette.length))]);
+  const renderPalette = useBlend ? blendedPalette(tile.biomeBlend, palette) : palette;
+  const elevationShade = (tile.climate.elevation - 0.5) * 0.08;
+  const depthFade = Math.max(0, focusElevation - tile.climate.elevation - 0.08) * 0.16;
+  const stableSun = { ...sun, ambient: 0.92, tint: { r: 1, g: 1, b: 1 } };
+  ctx.fillStyle = shade(base, elevationShade + depthFade);
+  ctx.fillRect(sx, sy, size, size);
+  const recipe = buildLandscapeRecipe(tile);
+  const pixelBasePainted = paintPixelLabBase(ctx, tile, recipe, sx, sy, size);
+  if (!pixelBasePainted) {
+    if (grassSea) paintGrassSea(ctx, tile, sx, sy, size, stableSun, atlas, patch, renderPalette);
+    else paintBiomeTexture(ctx, tile, sx, sy, size, stableSun, renderPalette);
+    assembleLandscapeLayers(ctx, tile, sx, sy, size, stableSun, timeSeconds, atlas, patch, focusElevation);
+    if (!grassSea) paintMicroLayers(ctx, tile, sx, sy, size, stableSun, timeSeconds, atlas);
+    if (beachTouchingSwamp) paintSwampTransitionGradient(ctx, tile, sx, sy, size);
+    paintElevationTint(ctx, tile, sx, sy, size);
+  } else {
+    // PixelLab swamp already owns the foundation. The broad landscape/micro
+    // painters add biome-wide stripe fields, so keep only local swamp detail here.
+    paintSwampPixelLocalOverlays(ctx, tile, sx, sy, size);
+    paintElevationTint(ctx, tile, sx, sy, size);
+  }
+}
+
+function paintCompositorDebugLayer(ctx, signature, sx, sy, size) {
+  const hash = signature.variant % 360;
+  ctx.fillStyle = `hsla(${hash}, 45%, 62%, 0.08)`;
+  ctx.fillRect(sx, sy, size, size);
+  if (signature.layers.includes('cliff_wall')) {
+    ctx.fillStyle = 'rgba(40,45,42,.16)';
+    ctx.fillRect(sx, sy + size * 0.55, size, size * 0.45);
+  }
+}
+
+function paintGrassSea(ctx, tile, sx, sy, size, sun, atlas, patch, renderPalette) {
+  // Use blended palette when available for smooth biome transitions
+  const bp = renderPalette || paletteFor(tile.biome);
+  const base = bp[1] || '#58a946';
+  const light = bp[2] || (tile.biome === 'savanna' ? '#c8c65a' : '#79c85a');
+  const dark = bp[0] || (tile.biome === 'savanna' ? '#788638' : '#347f35');
+  ctx.fillStyle = base;
+  ctx.fillRect(sx, sy, size, size);
+  // Per-tile organic variation so fixed-position strips don't create
+  // visible horizontal bands across the screen.
+  const topBright = 0.06 + rand2(tile.wx, tile.wy, 6601) * 0.16;
+  const bottomShade = 0.44 + rand2(tile.wx, tile.wy, 6602) * 0.18;
+  const brightH = Math.max(1, size * (0.10 + rand2(tile.wx, tile.wy, 6603) * 0.10));
+  const shadeH = Math.max(1, size * (0.32 + rand2(tile.wx, tile.wy, 6604) * 0.18));
+  ctx.fillStyle = light;
+  ctx.globalAlpha = 0.12 + patch * 0.08;
+  ctx.fillRect(sx, sy + size * topBright, size, brightH);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = dark;
+  ctx.globalAlpha = 0.18 + patch * 0.12;
+  ctx.fillRect(sx, sy + size * bottomShade, size, shadeH);
+  ctx.globalAlpha = 1;
+  paintGrassTuftField(ctx, tile, sx, sy, size, dark, light);
+  if (rand2(tile.wx, tile.wy, 6130) > 0.88) drawAtlasSprite(ctx, atlas, 'wildflowers', tile, sx, sy, size, 0.15, 0.22, 0.42, 0.42, 6135);
+}
+
+function paintGrassTuftField(ctx, tile, sx, sy, size, dark, light) {
+  if (rand2(tile.wx, tile.wy, 6099) < 0.72) return;
+  const count = 1 + Math.floor(rand2(tile.wx, tile.wy, 6100) * 3);
+  for (let i = 0; i < count; i++) {
+    const x = sx + size * (0.16 + rand2(tile.wx, tile.wy, 6200 + i) * 0.68);
+    const y = sy + size * (0.22 + rand2(tile.wx, tile.wy, 6300 + i) * 0.52);
+    const h = size * (0.12 + rand2(tile.wx, tile.wy, 6400 + i) * 0.08);
+    ctx.strokeStyle = i % 2 === 0 ? dark : light;
+    ctx.lineWidth = Math.max(1, size * 0.03);
+    ctx.beginPath();
+    ctx.moveTo(x, y + h);
+    ctx.lineTo(x + size * 0.02, y);
+    ctx.moveTo(x + size * 0.045, y + h * 0.9);
+    ctx.lineTo(x + size * 0.025, y + h * 0.16);
+    ctx.stroke();
+  }
+}
+
+function assembleLandscapeLayers(ctx, tile, sx, sy, size, sun, timeSeconds, atlas, patch, focusElevation) {
+  const e = tile.climate?.elevation ?? 0.5;
+  const slope = Math.abs(e - focusElevation);
+  const recipe = buildLandscapeRecipe(tile);
+
+  // Terrain form evidence: cliffs/steps/valleys respond to physical state.
+  if (recipe.structure.elevationMarks) paintElevationSteps(ctx, tile, sx, sy, size, sun, atlas, e, slope);
+  if (recipe.structure.valleyMarks) paintPathAndValleyLayer(ctx, tile, sx, sy, size, sun, atlas, patch);
+
+  // Surface evidence: one coherent ground accent pass, not stacked decoration.
+  if (recipe.structure.soilRockMarks) paintDirtAndRockLayer(ctx, tile, sx, sy, size, sun, atlas, patch, e);
+
+  // Catalog/PixelLab accents: sparse horizontal features selected by tile ecology.
+  const terrainAccent = coarseScatter(tile, 13, 11, 8100);
+  if (recipe.geology && terrainAccent > recipe.geology.threshold && rand2(tile.wx, tile.wy, 8101) > recipe.geology.roll) {
+    paintGeologyLayer(ctx, tile, sx, sy, size, sun, atlas, e);
+  } else if (recipe.groundAccent && terrainAccent > recipe.groundAccent.threshold && rand2(tile.wx, tile.wy, 8201) > recipe.groundAccent.roll) {
+    paintCatalogGroundChildren(ctx, tile, sx, sy, size, sun, atlas, patch);
+  } else if (recipe.detailAccent && terrainAccent > recipe.detailAccent.threshold && rand2(tile.wx, tile.wy, 8301) > recipe.detailAccent.roll) {
+    paintCatalogDetailChildren(ctx, tile, sx, sy, size, sun, atlas, patch, e);
+  }
+
+  // Object-like silhouettes remain rare here; gameplay objects are handled by object placement.
+  if (recipe.bush && terrainAccent > recipe.bush.threshold && rand2(tile.wx, tile.wy, 8401) > recipe.bush.roll) paintBushLayer(ctx, tile, sx, sy, size, sun, atlas);
+  if (recipe.canopy && rand2(tile.wx, tile.wy, 8501) > recipe.canopy.roll) paintTreeCanopyLayer(ctx, tile, sx, sy, size, sun, atlas);
+}
+
+function coarseScatter(tile, cellW, cellH, salt) {
+  return rand2(Math.floor(tile.wx / cellW), Math.floor(tile.wy / cellH), salt);
+}
+
+function paintElevationTint(ctx, tile, sx, sy, size) {
+  const e = tile.climate?.elevation ?? 0.5;
+  // Smooth elevation tint — more visible than before so terrain shape is clear.
+  // Map elevation 0.30→0.90 to tint alpha 0→0.35.
+  const alpha = Math.max(0, Math.min(0.35, (e - 0.35) * 0.70));
+  if (alpha > 0.005) {
+    ctx.fillStyle = `rgba(245,225,160,${alpha.toFixed(4)})`;
+    ctx.fillRect(sx, sy, size, size);
+  }
+  // Valley/low-elevation green tint — visible on low ground
+  const valleyBase = tile.terrainForm === 'valley' ? 0.15 : 0;
+  const lowAlpha = Math.max(valleyBase, (0.45 - e) * 0.80);
+  if (lowAlpha > 0.005) {
+    ctx.fillStyle = `rgba(20,55,35,${lowAlpha.toFixed(4)})`;
+    ctx.fillRect(sx, sy, size, size);
+  }
+}
+
+function paintCatalogGroundChildren(ctx, tile, sx, sy, size, sun, atlas, patch) {
+  if (isWaterBiome(tile.biome)) {
+    drawLandscapeAssetOnAxis(ctx, atlas, 'water', tile, sx, sy, size, -0.05, -0.05, 1.10, 1.10, 5001, 0);
+    return;
+  }
+  if (tile.features?.includes('dry_riverbed') || tile.terrainForm === 'valley') drawLandscapeAssetOnAxis(ctx, atlas, 'path', tile, sx, sy, size, -0.04, 0.18, 1.08, 0.62, 5002, 1);
+  const grassField = smoothNoise(tile.wx * 0.18, tile.wy * 0.18, 5003);
+  if (grassField > 0.58) drawLandscapeAssetOnAxis(ctx, atlas, 'grass', tile, sx, sy, size, -0.28, -0.18, 0.86, 0.86, 5003, 2);
+  if (grassField > 0.70) drawLandscapeAssetOnAxis(ctx, atlas, 'grass', tile, sx, sy, size, 0.10, 0.08, 0.74, 0.74, 5004, 3);
+  const litterField = smoothNoise(tile.wx * 0.12 + 19, tile.wy * 0.12 - 7, 5005);
+  if ((tile.biome.includes('forest') || tile.biome === 'taiga' || tile.biome === 'swamp') && litterField > 0.62) drawLandscapeAssetOnAxis(ctx, atlas, 'leaves', tile, sx, sy, size, -0.22, 0.08, 0.92, 0.62, 5005, 4);
+}
+
+function paintCatalogDetailChildren(ctx, tile, sx, sy, size, sun, atlas, patch, e) {
+  if (isWaterBiome(tile.biome)) return;
+  const flowerField = smoothNoise(tile.wx * 0.10 + 31, tile.wy * 0.10 - 11, 5010);
+  const deadwoodField = smoothNoise(tile.wx * 0.08 - 17, tile.wy * 0.08 + 23, 5012);
+  const fernField = smoothNoise(tile.wx * 0.14 + 7, tile.wy * 0.14 + 41, 5014);
+  const rockField = smoothNoise(tile.wx * 0.09 - 29, tile.wy * 0.09 + 5, 5018);
+  if (flowerField > 0.76 && rand2(tile.wx, tile.wy, 5010) > 0.72) drawLandscapeAssetOnAxis(ctx, atlas, 'flowers', tile, sx, sy, size, -0.10, -0.04, 0.46, 0.46, 5011, 5);
+  if ((tile.biome.includes('forest') || tile.biome === 'taiga' || tile.biome === 'swamp') && deadwoodField > 0.64 && rand2(tile.wx, tile.wy, 5012) > 0.55) drawLandscapeAssetOnAxis(ctx, atlas, 'log', tile, sx, sy, size, -0.16, 0.12, 0.78, 0.46, 5013, 1);
+  if ((tile.biome === 'swamp' || tile.biome.includes('forest')) && fernField > 0.58 && rand2(tile.wx, tile.wy, 5014) > 0.48) drawLandscapeAssetOnAxis(ctx, atlas, 'fern', tile, sx, sy, size, -0.16, -0.02, 0.70, 0.70, 5015, 3);
+  if (tile.biome.includes('forest') && fernField > 0.66 && rand2(tile.wx, tile.wy, 5016) > 0.58) drawLandscapeAssetOnAxis(ctx, atlas, 'shrub', tile, sx, sy, size, -0.12, -0.06, 0.72, 0.72, 5017, 4);
+  if ((tile.terrainForm === 'cliff' || tile.terrainForm === 'mountain_slope' || tile.terrainForm === 'mountain_peak' || tile.biome === 'hills' || tile.biome === 'mountains' || e > 0.68 || rockField > 0.82) && rand2(tile.wx, tile.wy, 5018) > 0.40) drawLandscapeAssetOnAxis(ctx, atlas, 'rock', tile, sx, sy, size, -0.12, 0.04, 0.74, 0.74, 5018, 2);
+}
+
+function isWaterBiome(biome) {

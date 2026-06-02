@@ -1,0 +1,38 @@
+  const previousSmoothing = ctx.imageSmoothingEnabled;
+  const previousAlpha = ctx.globalAlpha;
+  ctx.imageSmoothingEnabled = true;
+  ctx.globalAlpha = previousAlpha * alpha;
+  // Use smaller, quadrant-biased source windows so the generated tile's center
+  // motif is not stamped in the middle of every world tile.
+  const cropScale = 0.38 + rand2(tile.wx, tile.wy, salt) * 0.18;
+  const sourceWidth = Math.max(8, Math.floor(canvas.width * cropScale));
+  const sourceHeight = Math.max(8, Math.floor(canvas.height * cropScale));
+  const maxOx = Math.max(1, canvas.width - sourceWidth);
+  const maxOy = Math.max(1, canvas.height - sourceHeight);
+  const quadrant = Math.floor(rand2(tile.wx, tile.wy, salt + 10) * 4);
+  const edgeBiasX = (quadrant & 1) ? 0.62 : 0.04;
+  const edgeBiasY = (quadrant & 2) ? 0.62 : 0.04;
+  const ox = Math.floor(clamp(edgeBiasX + rand2(tile.wx, tile.wy, salt + 1) * 0.34, 0, 1) * maxOx);
+  const oy = Math.floor(clamp(edgeBiasY + rand2(tile.wx, tile.wy, salt + 2) * 0.34, 0, 1) * maxOy);
+  const { rotate, flip } = pixelBaseTransform(tile, salt + 3);
+  ctx.save();
+  ctx.translate(sx + size / 2, sy + size / 2);
+  ctx.rotate(rotate * Math.PI / 2);
+  ctx.scale(flip ? -1 : 1, 1);
+  ctx.drawImage(canvas, ox, oy, sourceWidth, sourceHeight, -size / 2, -size / 2, size, size);
+  ctx.restore();
+  ctx.imageSmoothingEnabled = previousSmoothing;
+  ctx.globalAlpha = previousAlpha;
+}
+
+for (const variants of Object.values(PIXEL_BASE_WANG_VARIANTS)) {
+  for (const src of variants) pixelBaseImage(src);
+}
+for (const variants of Object.values(PIXEL_BASE_TILE_VARIANTS)) {
+  for (const src of variants) pixelBaseImage(src);
+}
+for (const variants of Object.values(PIXEL_SWAMP_TRANSITION_WANG)) {
+  for (const src of variants) pixelBaseImage(src);
+}
+
+function paintSwampMudFoundation(ctx, tile, baseFamily, sx, sy, size) {

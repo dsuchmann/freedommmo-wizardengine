@@ -1,0 +1,30 @@
+{
+  "category": "buildings",
+  "tile_size": 32,
+  "tiles": {
+    "wood_wall": "tile_0.png",
+    "stone_wall": "tile_1.png",
+    "wood_floor": "tile_2.png",
+    "stone_floor": "tile_3.png",
+    "wood_door": "tile_4.png",
+    "window": "tile_5.png",
+    "thatched_roof": "tile_16.png"
+  },
+  "variants": {
+    "wood_wall": ["tile_0.png", "tile_6.png", "tile_12.png"],
+    "stone_wall": ["tile_1.png", "tile_7.png", "tile_13.png"],
+    "wood_floor": ["tile_2.png", "tile_8.png", "tile_14.png"],
+    "stone_floor": ["tile_3.png", "tile_9.png", "tile_15.png"],
+    "wood_door": ["tile_4.png", "tile_10.png"],
+    "window": ["tile_5.png", "tile_11.png"],
+    "thatched_roof": ["tile_16.png", "tile_17.png"]
+  },
+  "pixellab_ids": {
+    "wood_wall": ["08cf7e34-906d-4218-889e-3d303bd747de", "8ab297ab-1f40-4c73-9550-e6ee7db211a3"],
+    "stone_wall": ["8d16f9b8-1b87-48c1-bc68-4582586e2a6c", "29a7c289-14f0-4a8d-9ea0-ff98bab1380b"],
+    "wood_door": ["85d593bf-89c6-4ea9-9108-9d35448f14f7", "2378bb17-7a96-44b5-a48f-cf38672ed045"],
+    "window": ["2e348c71-0584-47f8-9430-ee251d787cd9", "7b7502df-8992-491b-97e1-6343111b7f98"],
+    "wood_floor": ["532cad9f-b2b7-475c-92b7-b958de9ad0a8", "42af23ce-7d08-43b0-86ea-e0c5edd10341"],
+    "thatched_roof": ["1d6716fb-1092-4a60-b020-83465ed5e8a2", "6350e7ea-cda3-42bd-ae75-c94a76a2b7c7"]
+  }
+}

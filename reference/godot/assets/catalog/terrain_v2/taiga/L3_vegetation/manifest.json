@@ -1,0 +1,24 @@
+{
+  "biome": "taiga",
+  "layer": "L3_vegetation",
+  "pixellab_tileset_id": "56b40ca0-e81c-4632-9680-8d1abbeb0706",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "17d5357e-f87f-4ff7-b93d-356aea9acc57",
+    "upper": "4547bd35-97e1-43eb-86e9-1da3edd27c1d"
+  },
+  "generation_prompt": {
+    "lower_description": "low dark green evergreen shrubs and red winterberry clusters on fully transparent background, pixel art, top-down view",
+    "upper_description": "different evergreen shrub pattern with holly berries on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

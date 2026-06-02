@@ -1,0 +1,84 @@
+L1: function paintSwampPixelLocalOverlays(ctx, tile, sx, sy, size) {
+L2:   const fertility = tile.climate?.fertility ?? 0.55;
+L3:   const vegetation = tile.climate?.vegetation ?? 0.55;
+L4:   const density = clamp(fertility * 0.45 + vegetation * 0.55, 0, 1);
+L5:   const moisture = tile.climate?.moisture ?? 0.65;
+L6:   const cluster = smoothNoise(tile.wx, tile.wy, 5, 16050);
+L7:   const bladeGate = !(cluster < 0.38 && rand2(tile.wx, tile.wy, 16051) < 0.72);
+L8:   const count = bladeGate ? Math.floor(1 + density * 2 + rand2(tile.wx, tile.wy, 16052) * 2) : 0;
+L9:   ctx.save();
+L10:   for (let i = 0; i < count; i++) {
+L11:     const px = sx + Math.floor(rand2(tile.wx, tile.wy, 16053 + i * 17) * (size - 6)) + 3;
+L12:     const py = sy + Math.floor(rand2(tile.wx, tile.wy, 16054 + i * 17) * (size - 6)) + 3;
+L13:     const h = Math.max(2, Math.floor(size * (0.08 + rand2(tile.wx, tile.wy, 16055 + i * 17) * 0.10)));
+L14:     const alpha = 0.18 + rand2(tile.wx, tile.wy, 16056 + i * 17) * 0.18;
+L15:     ctx.strokeStyle = `rgba(68, 118, 56, ${alpha.toFixed(3)})`;
+L16:     ctx.lineWidth = 1;
+L17:     ctx.beginPath();
+L18:     ctx.moveTo(px, py + h);
+L19:     ctx.lineTo(px + 1, py);
+L20:     if (rand2(tile.wx, tile.wy, 16057 + i * 17) > 0.45) {
+L21:       ctx.moveTo(px + 2, py + h);
+L22:       ctx.lineTo(px + 3, py + 1);
+L23:     }
+L24:     ctx.stroke();
+L25:   }
+L26:   if (rand2(tile.wx, tile.wy, 16080) > 0.74) {
+L27:     ctx.fillStyle = 'rgba(20, 35, 30, 0.18)';
+L28:     const w = Math.max(2, Math.floor(size * 0.14));
+L29:     const h = Math.max(1, Math.floor(size * 0.05));
+L30:     ctx.fillRect(sx + Math.floor(rand2(tile.wx, tile.wy, 16081) * (size - w)), sy + Math.floor(rand2(tile.wx, tile.wy, 16082) * (size - h)), w, h);
+L31:   }
+L32: 
+L33:   // Procedural swamp enrichment. Direct PixelLab decal stamping is intentionally
+L34:   // disabled here: the current decal PNGs need alpha/edge normalization before
+L35:   // they can be stamped without square patches.
+L36:   const wetness = clamp((moisture - 0.48) / 0.42, 0, 1);
+L37:   const mossiness = clamp(density * 0.72 + wetness * 0.28, 0, 1);
+L38:   const detailTags = ['flecks'];
+L39:   const flecks = Math.floor(3 + wetness * 4 + rand2(tile.wx, tile.wy, 16101) * 4);
+L40:   for (let i = 0; i < flecks; i++) {
+L41:     const fx = sx + Math.floor(rand2(tile.wx, tile.wy, 16110 + i * 11) * size);
+L42:     const fy = sy + Math.floor(rand2(tile.wx, tile.wy, 16111 + i * 11) * size);
+L43:     ctx.fillStyle = `rgba(10, 17, 14, ${(0.18 + wetness * 0.10).toFixed(3)})`;
+L44:     ctx.fillRect(fx, fy, 2 + Math.floor(rand2(tile.wx, tile.wy, 16112 + i * 11) * 4), 1 + Math.floor(rand2(tile.wx, tile.wy, 16113 + i * 11) * 2));
+L45:   }
+L46:   if (mossiness > 0.34 && rand2(tile.wx, tile.wy, 16120) < mossiness * 1.25) {
+L47:     detailTags.push('moss');
+L48:     ctx.fillStyle = `rgba(61, 126, 52, ${(0.20 + mossiness * 0.14).toFixed(3)})`;
+L49:     const mx = sx + Math.floor(rand2(tile.wx, tile.wy, 16121) * (size - 10));
+L50:     const my = sy + Math.floor(rand2(tile.wx, tile.wy, 16122) * (size - 7));
+L51:     ctx.fillRect(mx, my, Math.max(5, Math.floor(size * 0.28)), 2);
+L52:     ctx.fillRect(mx + 2, my + 3, Math.max(3, Math.floor(size * 0.18)), 1);
+L53:   }
+L54:   if (wetness > 0.42 && rand2(tile.wx, tile.wy, 16130) < wetness * 0.88) {
+L55:     detailTags.push('glint');
+L56:     ctx.strokeStyle = `rgba(158, 180, 137, ${(0.16 + wetness * 0.12).toFixed(3)})`;
+L57:     ctx.lineWidth = 1;
+L58:     const gx = sx + Math.floor(rand2(tile.wx, tile.wy, 16131) * (size - 8)) + 4;
+L59:     const gy = sy + Math.floor(rand2(tile.wx, tile.wy, 16132) * (size - 6)) + 3;
+L60:     ctx.beginPath();
+L61:     ctx.moveTo(gx, gy);
+L62:     ctx.lineTo(gx + Math.floor(size * 0.30), gy - 1);
+L63:     ctx.stroke();
+L64:   }
+L65:   if (bladeGate && rand2(tile.wx, tile.wy, 16160) < density * 0.52) {
+L66:     detailTags.push('reeds');
+L67:     ctx.strokeStyle = 'rgba(60, 130, 54, 0.36)';
+L68:     const rx = sx + Math.floor(rand2(tile.wx, tile.wy, 16161) * (size - 6)) + 3;
+L69:     const ry = sy + Math.floor(rand2(tile.wx, tile.wy, 16162) * (size - 5)) + 5;
+L70:     ctx.beginPath();
+L71:     ctx.moveTo(rx, ry);
+L72:     ctx.lineTo(rx + 1, ry - Math.floor(size * 0.16));
+L73:     ctx.moveTo(rx + 3, ry);
+L74:     ctx.lineTo(rx + 4, ry - Math.floor(size * 0.12));
+L75:     ctx.stroke();
+L76:   }
+L77: 
+L78:   if (wetness > 0.50 && rand2(tile.wx, tile.wy, 16180) < wetness * 0.55) {
+L79:     detailTags.push('wetpatch');
+L80:     const cx = sx + size * (0.28 + rand2(tile.wx, tile.wy, 16181) * 0.44);
+L81:     const cy = sy + size * (0.30 + rand2(tile.wx, tile.wy, 16182) * 0.40);
+L82:     ctx.fillStyle = `rgba(20, 31, 27, ${(0.18 + wetness * 0.16).toFixed(3)})`;
+L83:     ctx.beginPath();
+L84:     ctx.ellipse(cx, cy, size * (0.16 + rand2(tile.wx, tile.wy, 16183) * 0.10), size * (0.06 + rand2(tile.wx, tile.wy, 16184) * 0.06), rand2(tile.wx, tile.wy, 16185) * Math.PI, 0, Math.PI * 2);

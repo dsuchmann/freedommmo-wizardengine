@@ -1,0 +1,24 @@
+{
+  "biome": "grassland",
+  "layer": "transitions/grassland_to_forest",
+  "pixellab_tileset_id": "47ff7382-2d0a-4a02-9c30-b8610f01e1bf",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "26c7450c-1759-4f9d-aef5-790dc60cf0ad",
+    "upper": "e7e0c590-42a3-44af-b0db-4e479514813e"
+  },
+  "generation_prompt": {
+    "lower_description": "lush green grassland",
+    "upper_description": "dark forest floor with fallen leaves"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

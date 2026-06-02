@@ -1,6 +1,4 @@
 import { WORLD } from '../core/constants.js';
-import { getWorldSeed } from '../core/world-seed.js';
-import { auditBiomesAround } from './biome-audit.js';
 import { sampleRegionalMapChunk } from './regional-map.js';
 
 export class OvermapController {
@@ -9,10 +7,13 @@ export class OvermapController {
     this.player = player;
     this.chunkStore = chunkStore;
     this.visible = true;
-    this.size = 304;
-    this.sampleChunks = this.size; // Spec-accurate local view: one overmap canvas pixel = one chunk.
+    // Render the overmap at half display resolution; CSS scales it to 304px.
+    // This avoids a 300k+ sample burst every time the player enters a chunk.
+    this.size = 152;
+    this.sampleChunks = this.size;
     this.lastCenter = '';
     this.redrawNeeded = true;
+    this.lastFullRedrawAt = 0;
     this.baseCanvas = document.createElement('canvas');
     this.baseCanvas.width = this.size;
     this.baseCanvas.height = this.size;
@@ -32,8 +33,8 @@ export class OvermapController {
     const px = Math.floor((event.clientX - rect.left) / rect.width * this.size);
     const py = Math.floor((event.clientY - rect.top) / rect.height * this.size);
     const { pcx, pcy } = this.playerChunk();
-    const targetCx = pcx + (px - Math.floor(this.size / 2));
-    const targetCy = pcy + (py - Math.floor(this.size / 2));
+    const targetCx = pcx + (px - Math.floor(this.size / 2)) * 2;
+    const targetCy = pcy + (py - Math.floor(this.size / 2)) * 2;
     this.player.x = targetCx * WORLD.chunkSize + WORLD.chunkSize / 2;
     this.player.y = targetCy * WORLD.chunkSize + WORLD.chunkSize / 2;
     this.redrawNeeded = true;
@@ -49,6 +50,14 @@ export class OvermapController {
       this.drawOverlay(ctx, pcx, pcy);
       return;
     }
+    // Full overmap redraws are expensive; defer/throttle them so crossing a
+    // chunk boundary never coincides with a costly 152x152 regional resample.
+    const now = performance.now();
+    if (!force && centerKey !== this.lastCenter && now - this.lastFullRedrawAt < 1200) {
+      this.drawOverlay(ctx, pcx, pcy);
+      return;
+    }
+    this.lastFullRedrawAt = now;
     this.lastCenter = centerKey;
     this.redrawNeeded = false;
     const image = ctx.createImageData(this.size, this.size);
@@ -56,8 +65,8 @@ export class OvermapController {
 
     for (let py = 0; py < this.size; py++) {
       for (let px = 0; px < this.size; px++) {
-        const cx = pcx + px - half;
-        const cy = pcy + py - half;
+        const cx = pcx + (px - half) * 2;
+        const cy = pcy + (py - half) * 2;
         const sample = sampleRegionalMapChunk(cx, cy);
         const rgb = hexToRgb(sample.definition.color);
         const east = sampleRegionalMapChunk(cx + 1, cy).climate.elevation;
@@ -86,10 +95,10 @@ export class OvermapController {
   drawOverlay(ctx, pcx, pcy) {
     if (this.baseCanvas) ctx.drawImage(this.baseCanvas, 0, 0);
     const c = Math.floor(this.size / 2);
-    const loadedRadius = WORLD.loadRadius;
+    const loadedRadius = Math.max(1, Math.ceil(WORLD.loadRadius / 2));
     const loadedSize = loadedRadius * 2 + 1;
 
-    // Distance rings are chunk distances because one overmap pixel is one chunk.
+    // Distance rings are approximate because one overmap pixel is two chunks.
     ctx.strokeStyle = 'rgba(255,255,255,.18)';
     ctx.lineWidth = 1;
     for (const chunks of [16, 32, 64, 128]) {
@@ -126,15 +135,7 @@ export class OvermapController {
     ctx.strokeStyle = 'rgba(255,255,255,.75)';
     ctx.strokeRect(0, 0, this.size, this.size);
 
-    const audit = auditBiomesAround(this.player, this.sampleChunks, 8);
-    ctx.fillStyle = 'rgba(0,0,0,.66)';
-    ctx.fillRect(6, this.size - 62, 232, 56);
-    ctx.fillStyle = '#e8f6ff';
-    ctx.font = '10px ui-monospace, Consolas, monospace';
-    ctx.fillText(`seed ${getWorldSeed()} · chunk ${pcx}, ${pcy}`, 10, this.size - 48);
-    ctx.fillText(`1 map pixel = 1 chunk = ${WORLD.chunkSize}×${WORLD.chunkSize} tiles`, 10, this.size - 35);
-    ctx.fillText(`loaded window ${loadedSize}×${loadedSize} chunks`, 10, this.size - 22);
-    ctx.fillText(`seen ${audit.seen.length}/${audit.spec.length} · missing ${audit.missing.slice(0, 3).join(', ') || 'none'}`, 10, this.size - 9);
+    // Text diagnostics live in the main HUD only; keep minimap visual-only.
   }
 }
 

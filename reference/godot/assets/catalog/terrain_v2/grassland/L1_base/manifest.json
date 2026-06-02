@@ -1,0 +1,24 @@
+{
+  "biome": "grassland",
+  "layer": "L1_base",
+  "pixellab_tileset_id": "ac280f19-cbc8-487c-9557-dbf840207134",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "4e8b7a63-af2a-4444-9039-54814fb5d80f",
+    "upper": "26c7450c-1759-4f9d-aef5-790dc60cf0ad"
+  },
+  "generation_prompt": {
+    "lower_description": "lush green grass with small blades and natural texture",
+    "upper_description": "lush green grass with slightly different shade and clover patches"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

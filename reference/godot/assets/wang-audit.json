@@ -1,0 +1,40 @@
+{
+  "schema": "freedommmo.godot-wang-audit.v1",
+  "report": [
+    {
+      "path": "reference/godot/assets/tilesets/grassland.png",
+      "exists": true,
+      "bytes": 15714,
+      "assumedCell": 32,
+      "assumedMasks": 16
+    },
+    {
+      "path": "reference/godot/assets/tilesets/forest.png",
+      "exists": true,
+      "bytes": 12438,
+      "assumedCell": 32,
+      "assumedMasks": 16
+    },
+    {
+      "path": "reference/godot/assets/tilesets/desert.png",
+      "exists": true,
+      "bytes": 14505,
+      "assumedCell": 32,
+      "assumedMasks": 16
+    },
+    {
+      "path": "reference/godot/assets/tilesets/ocean_beach.png",
+      "exists": true,
+      "bytes": 10481,
+      "assumedCell": 32,
+      "assumedMasks": 16
+    },
+    {
+      "path": "reference/godot/assets/tilesets/grassland_lush.png",
+      "exists": true,
+      "bytes": 31355,
+      "assumedCell": 32,
+      "assumedMasks": 16
+    }
+  ]
+}

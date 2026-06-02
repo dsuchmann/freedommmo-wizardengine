@@ -1,0 +1,24 @@
+{
+  "biome": "grassland",
+  "layer": "transitions/grassland_to_steppe",
+  "pixellab_tileset_id": "1b81ce26-2244-46b3-aea1-1e7c795ca6c9",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "26c7450c-1759-4f9d-aef5-790dc60cf0ad",
+    "upper": "10e7d7c2-191e-4a04-a4a6-dec773c43e61"
+  },
+  "generation_prompt": {
+    "lower_description": "lush green grassland",
+    "upper_description": "short windswept steppe grass on rocky soil"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

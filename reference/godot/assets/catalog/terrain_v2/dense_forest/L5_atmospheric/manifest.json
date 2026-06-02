@@ -1,0 +1,24 @@
+{
+  "biome": "dense_forest",
+  "layer": "L5_atmospheric",
+  "pixellab_tileset_id": "a85cf190-abdc-4ead-a3c8-2406b17d7e80",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "1e828524-2603-4a23-a85f-1bcfe97764ba",
+    "upper": "9f7fd768-fa41-40ef-988f-f0dae409bac6"
+  },
+  "generation_prompt": {
+    "lower_description": "deep green shadow overlay with tiny yellow-green firefly lights on fully transparent background, pixel art, top-down view",
+    "upper_description": "different shadow pattern with fewer but brighter fireflies on transparent background, sparse, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

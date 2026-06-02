@@ -1,0 +1,70 @@
+
+    // 8: Tiny mushroom — rare, small cap on stalk
+    if (objType === 8 && density > 0.45 && rand2(tile.wx, tile.wy, 16160 + i) > 0.50) {
+      const stalkH = 2 + Math.floor(rand2(tile.wx, tile.wy, 16161 + i) * 2);
+      ctx.strokeStyle = `rgba(48, 38, 28, 0.18)`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(px, py + stalkH);
+      ctx.lineTo(px, py + 1);
+      ctx.stroke();
+      ctx.fillStyle = `rgba(168, 68, 48, 0.20)`;
+      ctx.fillRect(px - 2, py - 1, 4, 2);
+      continue;
+    }
+
+    // 9: Organic fleck — tiny dark speck
+    if (objType === 9) {
+      ctx.fillStyle = `rgba(10, 17, 14, ${(0.12 + wetness * 0.14).toFixed(3)})`;
+      ctx.fillRect(px, py, 1 + Math.floor(rand2(tile.wx, tile.wy, 16170 + i) * 3), 1);
+      continue;
+    }
+  }
+
+  // Wet puddle — occasional dark pool on the mud surface
+  if (wetness > 0.42 && rand2(tile.wx, tile.wy, 16180) < wetness * 0.72) {
+    const poolX = sx + Math.floor(rand2(tile.wx, tile.wy, 16181) * (size - 10));
+    const poolY = sy + Math.floor(rand2(tile.wx, tile.wy, 16182) * (size - 8));
+    ctx.fillStyle = 'rgba(12, 28, 26, 0.32)';
+    ctx.fillRect(poolX, poolY, Math.max(4, Math.floor(size * 0.28)), Math.max(2, Math.floor(size * 0.10)));
+    // Light reflection on the puddle
+    ctx.strokeStyle = `rgba(168, 218, 182, ${(0.12 + wetness * 0.10).toFixed(3)})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(poolX + 2, poolY + 1);
+    ctx.lineTo(poolX + Math.floor(size * 0.18), poolY);
+    ctx.stroke();
+  }
+
+  // Twig accent
+  if (rand2(tile.wx, tile.wy, 16240) < 0.60) {
+    detailTags.push('twig');
+    const sx2 = sx + size * (0.06 + rand2(tile.wx, tile.wy, 16241) * 0.88);
+    const sy2 = sy + size * (0.06 + rand2(tile.wx, tile.wy, 16242) * 0.88);
+    const rot2 = rand2(tile.wx, tile.wy, 16243) * Math.PI;
+    const len2 = size * (0.14 + rand2(tile.wx, tile.wy, 16244) * 0.20);
+    ctx.strokeStyle = 'rgba(82, 48, 30, 0.85)';
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.050));
+    ctx.beginPath();
+    ctx.moveTo(sx2, sy2);
+    ctx.lineTo(sx2 + Math.cos(rot2) * len2, sy2 + Math.sin(rot2) * len2);
+    ctx.moveTo(sx2, sy2);
+    ctx.lineTo(sx2 + Math.cos(rot2 + 0.7) * len2 * 0.35, sy2 + Math.sin(rot2 + 0.7) * len2 * 0.35);
+    ctx.stroke();
+  }
+
+  // Reed clumps on wet tiles
+  if (wetness > 0.35 && rand2(tile.wx, tile.wy, 16260) < 0.82) {
+    detailTags.push('reeds');
+    const rx = sx + size * (0.12 + rand2(tile.wx, tile.wy, 16261) * 0.76);
+    const ry = sy + size * (0.28 + rand2(tile.wx, tile.wy, 16262) * 0.56);
+    const stalks = 4 + Math.floor(rand2(tile.wx, tile.wy, 16263) * 5);
+    ctx.strokeStyle = 'rgba(48, 148, 56, 0.86)';
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.040));
+    ctx.beginPath();
+    for (let i = 0; i < stalks; i++) {
+      const dx = (i - stalks / 2) * size * 0.060 + (rand2(tile.wx, tile.wy, 16264 + i) - 0.5) * size * 0.035;
+      const h = size * (0.25 + rand2(tile.wx, tile.wy, 16270 + i) * 0.22);
+      ctx.moveTo(rx + dx, ry);
+      ctx.lineTo(rx + dx + (rand2(tile.wx, tile.wy, 16280 + i) - 0.5) * size * 0.06, ry - h);
+    }

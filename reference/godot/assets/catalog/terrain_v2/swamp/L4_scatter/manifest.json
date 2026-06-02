@@ -1,0 +1,24 @@
+{
+  "biome": "swamp",
+  "layer": "L4_scatter",
+  "pixellab_tileset_id": "781053e3-e975-4853-ac04-7ead2dcab374",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "a10f5a40-4a4d-4a7a-b226-cb8f94a80ddb",
+    "upper": "02912654-6503-46a7-bbab-60f411ddaee1"
+  },
+  "generation_prompt": {
+    "lower_description": "scattered lily pads and waterlogged branch debris on fully transparent background, pixel art, top-down view",
+    "upper_description": "different lily pad arrangement with floating twigs on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

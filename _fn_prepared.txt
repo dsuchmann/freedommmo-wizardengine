@@ -1,0 +1,109 @@
+  const image = pixelBaseImage(src);
+  if (!image?.complete || !(image.naturalWidth || image.width)) return null;
+  const width = image.naturalWidth || image.width;
+  const height = image.naturalHeight || image.height;
+  const key = `${src}|${baseFamily}|${width}x${height}|${mode}|normalized-v2`;
+  if (preparedPixelBaseCache.has(key)) return preparedPixelBaseCache.get(key);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const pctx = canvas.getContext('2d');
+  pctx.imageSmoothingEnabled = false;
+  pctx.drawImage(image, 0, 0);
+
+  const data = pctx.getImageData(0, 0, width, height);
+  const target = PIXEL_BASE_TARGET_RGB[baseFamily];
+  if (target) {
+    let r = 0, g = 0, b = 0, n = 0;
+    // Ignore generator borders when measuring the tile's color. Several variants
+    // have bright/dark frame pixels, and using them raw caused visible grid seams.
+    for (let y = 2; y < height - 2; y++) {
+      for (let x = 2; x < width - 2; x++) {
+        const i = (y * width + x) * 4;
+        const a = data.data[i + 3] / 255;
+        if (a <= 0.01) continue;
+        r += data.data[i] * a;
+        g += data.data[i + 1] * a;
+        b += data.data[i + 2] * a;
+        n += a;
+      }
+    }
+    if (n > 0) {
+      const sourceAverage = [r / n, g / n, b / n];
+      const dr = target[0] - sourceAverage[0];
+      const dg = target[1] - sourceAverage[1];
+      const db = target[2] - sourceAverage[2];
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const i = (y * width + x) * 4;
+          const sourceAlpha = data.data[i + 3];
+          if (sourceAlpha <= 1) {
+            data.data[i + 3] = 0;
+            continue;
+          }
+          const nr = clamp(data.data[i] + dr * 0.82, 0, 255);
+          const ng = clamp(data.data[i + 1] + dg * 0.82, 0, 255);
+          const nb = clamp(data.data[i + 2] + db * 0.82, 0, 255);
+          if (mode === 'detail' || mode === 'texture') {
+            // Texture-transfer pass: keep the source tile's local strokes and
+            // value structure, but remove its full-tile color identity. The
+            // texture mode is intentionally stronger so PixelLab strokes remain
+            // visible over the continuous swamp foundation.
+            const lumDelta = ((nr - target[0]) + (ng - target[1]) + (nb - target[2])) / 3;
+            const chroma = (Math.abs((nr - target[0]) - lumDelta) + Math.abs((ng - target[1]) - lumDelta) + Math.abs((nb - target[2]) - lumDelta)) / 3;
+            const detail = Math.min(1, (Math.abs(lumDelta) + chroma * 0.35) / (mode === 'texture' ? 54 : 82));
+            const edge = Math.min(x, y, width - 1 - x, height - 1 - y);
+            const feather = mode === 'texture' ? clamp((edge - 1) / 4, 0, 1) : clamp((edge - 2) / 7, 0, 1);
+            const strength = mode === 'texture' ? 0.92 : 0.68;
+            const chromaStrength = mode === 'texture' ? 0.14 : 0.06;
+            data.data[i] = clamp(target[0] + lumDelta * strength + (nr - target[0] - lumDelta) * chromaStrength, 0, 255);
+            data.data[i + 1] = clamp(target[1] + lumDelta * strength + (ng - target[1] - lumDelta) * chromaStrength, 0, 255);
+            data.data[i + 2] = clamp(target[2] + lumDelta * strength + (nb - target[2] - lumDelta) * chromaStrength, 0, 255);
+            data.data[i + 3] = clamp(sourceAlpha * feather * detail, 0, mode === 'texture' ? 178 : 96);
+          } else if (mode === 'transition') {
+            data.data[i] = data.data[i];
+            data.data[i + 1] = data.data[i + 1];
+            data.data[i + 2] = data.data[i + 2];
+            data.data[i + 3] = sourceAlpha;
+          } else {
+            data.data[i] = nr;
+            data.data[i + 1] = ng;
+            data.data[i + 2] = nb;
+            data.data[i + 3] = sourceAlpha;
+          }
+        }
+      }
+      pctx.putImageData(data, 0, 0);
+    }
+  }
+
+  preparedPixelBaseCache.set(key, canvas);
+  return canvas;
+}
+
+function pixelBaseInteriorVariantIndex(tile, variants) {
+  if (!variants?.length) return 0;
+  // Explicit blue-noise variant cycling: adjacent swamp tiles should not land on
+  // the same PixelLab donor, otherwise the center motif reads as one repeated PNG.
+  const sequence = Math.abs(tile.wx * 7 + tile.wy * 11 + Math.floor(rand2(tile.wx, tile.wy, 16003) * variants.length));
+  return sequence % variants.length;
+}
+
+function pixelBaseSecondaryVariantIndex(tile, variants, primaryIndex) {
+  if (!variants?.length) return primaryIndex;
+  let index = Math.abs(tile.wx * 13 - tile.wy * 5 + Math.floor(rand2(tile.wx + 17, tile.wy - 23, 16061) * variants.length)) % variants.length;
+  if (index === primaryIndex && variants.length > 1) index = (index + 5) % variants.length;
+  return index;
+}
+
+function pixelBaseTransform(tile, salt = 16004) {
+  const h = Math.floor(rand2(tile.wx, tile.wy, salt) * 8) & 7;
+  return {
+    rotate: h & 3,
+    flip: (h & 4) !== 0
+  };
+}
+
+function drawPreparedPixelBase(ctx, canvas, tile, sx, sy, size, allowTransform, alpha = 1) {
+  const previousSmoothing = ctx.imageSmoothingEnabled;

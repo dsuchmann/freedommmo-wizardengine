@@ -1,0 +1,24 @@
+{
+  "biome": "taiga",
+  "layer": "L4_scatter",
+  "pixellab_tileset_id": "c944894c-275b-4407-828c-9ea363a93365",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "6f70446f-12de-44c2-81ed-8a57c6c1edfe",
+    "upper": "8c3065d8-fc8c-42dc-99aa-6e3b6594dd56"
+  },
+  "generation_prompt": {
+    "lower_description": "scattered pinecones and pieces of birch bark on fully transparent background, pixel art, top-down view",
+    "upper_description": "different pinecone arrangement with frozen twig fragments on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

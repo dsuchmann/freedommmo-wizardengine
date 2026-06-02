@@ -1,0 +1,24 @@
+{
+  "biome": "volcanic",
+  "layer": "L5_atmospheric",
+  "pixellab_tileset_id": "f8e75344-c51c-4512-8178-89f1f4c32a71",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "40dca665-25f4-46a5-9ba8-80102b5700ce",
+    "upper": "44db8129-d98e-49b7-9d0f-3d9ff4652f4f"
+  },
+  "generation_prompt": {
+    "lower_description": "rising orange ember particles and grey volcanic ash on fully transparent background, pixel art, top-down view",
+    "upper_description": "different ember pattern with more ash particles on transparent background, sparse, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

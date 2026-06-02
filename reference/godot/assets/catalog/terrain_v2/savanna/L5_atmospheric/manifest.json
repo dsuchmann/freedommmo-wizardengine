@@ -1,0 +1,24 @@
+{
+  "biome": "savanna",
+  "layer": "L5_atmospheric",
+  "pixellab_tileset_id": "b7f5db5d-a544-4206-8453-82e353f8be1f",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "d4b81060-77fd-434b-ac9d-78dd1509ebd4",
+    "upper": "39435617-3589-4657-b1a7-fc7752d6d26f"
+  },
+  "generation_prompt": {
+    "lower_description": "floating dust and dry grass particles on fully transparent background, sparse, pixel art, top-down view",
+    "upper_description": "different dust particle pattern with heat shimmer on transparent background, very sparse, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

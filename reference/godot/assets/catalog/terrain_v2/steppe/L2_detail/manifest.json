@@ -1,0 +1,24 @@
+{
+  "biome": "steppe",
+  "layer": "L2_detail",
+  "pixellab_tileset_id": "33be1569-0f05-4b14-b365-b54054995cea",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "365305c8-a464-4757-9e8c-d1a6d2a12b39",
+    "upper": "93ace16e-8c21-45c1-b620-a84ae9dfa63a"
+  },
+  "generation_prompt": {
+    "lower_description": "exposed grey bedrock patches and wind erosion patterns on fully transparent background, pixel art, top-down view",
+    "upper_description": "different bedrock exposure with deeper erosion channels on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

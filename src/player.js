@@ -31,7 +31,7 @@ export class Player {
     this.glide = input.down?.('e') && this.z > 0.6 && this.vz < 0;
 
     const tile = chunkStore?.tileAt(this.x, this.y);
-    this.climbing = Boolean(tile?.layers?.[7]?.slope > 0.09 && tile?.layers?.[7]?.slope <= 0.16 && moving && this.z <= 0.05);
+    this.climbing = Boolean((tile?.terrainForm === 'step' || tile?.layers?.[7]?.slope > 0.09) && tile?.layers?.[7]?.slope <= 0.16 && moving && this.z <= 0.05);
     const cost = movement?.movementCost ? movement.movementCost(tile) : 1;
     const rollBoost = this.rollTimer > 0 ? 2.4 : 1;
     const speed = this.speed * (sprinting ? this.sprintMultiplier : 1) * rollBoost;

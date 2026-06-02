@@ -1,0 +1,24 @@
+{
+  "biome": "tundra",
+  "layer": "L4_scatter",
+  "pixellab_tileset_id": "639e0280-0983-43df-9ef2-803e8c6a29c1",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "ad6dd898-9511-435f-a031-59f40b4f13c5",
+    "upper": "74cfae10-171b-4e56-88d3-179b8486afea"
+  },
+  "generation_prompt": {
+    "lower_description": "scattered frost-covered pebbles and small ice shard fragments on fully transparent background, pixel art, top-down view",
+    "upper_description": "different arrangement of icy pebbles and frost shards on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

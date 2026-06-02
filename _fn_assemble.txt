@@ -1,0 +1,47 @@
+  const e = tile.climate?.elevation ?? 0.5;
+  const slope = Math.abs(e - focusElevation);
+  const recipe = buildLandscapeRecipe(tile);
+
+  // Terrain form evidence: cliffs/steps/valleys respond to physical state.
+  if (recipe.structure.elevationMarks) paintElevationSteps(ctx, tile, sx, sy, size, sun, atlas, e, slope);
+  if (recipe.structure.valleyMarks) paintPathAndValleyLayer(ctx, tile, sx, sy, size, sun, atlas, patch);
+
+  // Surface evidence: one coherent ground accent pass, not stacked decoration.
+  if (recipe.structure.soilRockMarks) paintDirtAndRockLayer(ctx, tile, sx, sy, size, sun, atlas, patch, e);
+
+  // Catalog/PixelLab accents: sparse horizontal features selected by tile ecology.
+  const terrainAccent = coarseScatter(tile, 13, 11, 8100);
+  if (recipe.geology && terrainAccent > recipe.geology.threshold && rand2(tile.wx, tile.wy, 8101) > recipe.geology.roll) {
+    paintGeologyLayer(ctx, tile, sx, sy, size, sun, atlas, e);
+  } else if (recipe.groundAccent && terrainAccent > recipe.groundAccent.threshold && rand2(tile.wx, tile.wy, 8201) > recipe.groundAccent.roll) {
+    paintCatalogGroundChildren(ctx, tile, sx, sy, size, sun, atlas, patch);
+  } else if (recipe.detailAccent && terrainAccent > recipe.detailAccent.threshold && rand2(tile.wx, tile.wy, 8301) > recipe.detailAccent.roll) {
+    paintCatalogDetailChildren(ctx, tile, sx, sy, size, sun, atlas, patch, e);
+  }
+
+  // Object-like silhouettes remain rare here; gameplay objects are handled by object placement.
+  if (recipe.bush && terrainAccent > recipe.bush.threshold && rand2(tile.wx, tile.wy, 8401) > recipe.bush.roll) paintBushLayer(ctx, tile, sx, sy, size, sun, atlas);
+  if (recipe.canopy && rand2(tile.wx, tile.wy, 8501) > recipe.canopy.roll) paintTreeCanopyLayer(ctx, tile, sx, sy, size, sun, atlas);
+}
+
+function coarseScatter(tile, cellW, cellH, salt) {
+  return rand2(Math.floor(tile.wx / cellW), Math.floor(tile.wy / cellH), salt);
+}
+
+function paintElevationTint(ctx, tile, sx, sy, size) {
+  const e = tile.climate?.elevation ?? 0.5;
+  // Smooth elevation tint — more visible than before so terrain shape is clear.
+  // Map elevation 0.30→0.90 to tint alpha 0→0.35.
+  const alpha = Math.max(0, Math.min(0.35, (e - 0.35) * 0.70));
+  if (alpha > 0.005) {
+    ctx.fillStyle = `rgba(245,225,160,${alpha.toFixed(4)})`;
+    ctx.fillRect(sx, sy, size, size);
+  }
+  // Valley/low-elevation green tint — visible on low ground
+  const valleyBase = tile.terrainForm === 'valley' ? 0.15 : 0;
+  const lowAlpha = Math.max(valleyBase, (0.45 - e) * 0.80);
+  if (lowAlpha > 0.005) {
+    ctx.fillStyle = `rgba(20,55,35,${lowAlpha.toFixed(4)})`;
+    ctx.fillRect(sx, sy, size, size);
+  }
+}

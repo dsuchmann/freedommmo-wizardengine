@@ -1,0 +1,147 @@
+import { WORLD } from '../core/constants.js';
+import { paletteFor } from './palette.js';
+import { catalogWangTerrainDefs } from '../assets/catalog-wang-terrain-defs.js';
+
+const imageCache = new Map();
+let preloaded = false;
+
+export function preloadWangTiles() {
+  if (preloaded) return;
+  preloaded = true;
+  const dirs = new Set();
+  for (const def of Object.values(catalogWangTerrainDefs)) {
+    if (def?.dir) dirs.add(def.dir);
+  }
+  for (const dir of dirs) {
+    for (let mask = 0; mask < 16; mask++) {
+      cachedImage(`${dir}/wang_${mask}.png`);
+    }
+  }
+}
+
+const chunkStoreRef = { current: null };
+
+export function setChunkStore(store) {
+  chunkStoreRef.current = store;
+}
+
+export function paintWangTerrainChunk(ctx, chunk, sun) {
+  const painted = new Array(WORLD.chunkSize * WORLD.chunkSize).fill(false);
+  for (let y = 0; y < WORLD.chunkSize; y++) {
+    for (let x = 0; x < WORLD.chunkSize; x++) {
+      const index = y * WORLD.chunkSize + x;
+      const tile = chunk.tiles[index];
+      const sx = x * WORLD.tileSize;
+      const sy = y * WORLD.tileSize;
+      painted[index] = paintWangTile(ctx, chunk, x, y, tile, sx, sy, WORLD.tileSize);
+      if (!painted[index]) paintFlatFallback(ctx, tile, sx, sy, WORLD.tileSize);
+    }
+  }
+  paintCliffEdges(ctx, chunk, sun);
+  return painted;
+}
+
+function paintWangTile(ctx, chunk, x, y, tile, sx, sy, size) {
+  const def = catalogWangTerrainDefs[tile.biome];
+  if (!def?.dir) return false;
+  const biome = tile.biome;
+  const cxs = chunk.cx, cys = chunk.cy;
+  const mask = cornerWangMask(chunk, cxs, cys, x, y, biome);
+  const src = `${def.dir}/wang_${mask}.png`;
+  const image = cachedImage(src);
+  if (!image?.complete || !image.naturalWidth) return false;
+  ctx.drawImage(image, 0, 0, image.naturalWidth || image.width, image.naturalHeight || image.height, sx, sy, size, size);
+  return true;
+}
+
+function safeBiome(chunk, cxs, cys, xx, yy, ownBiome) {
+  // Try tile at (xx, yy) in local chunk coords.
+  if (xx >= 0 && xx < WORLD.chunkSize && yy >= 0 && yy < WORLD.chunkSize) {
+    return chunk.tiles[yy * WORLD.chunkSize + xx]?.biome;
+  }
+  // Cross-chunk: look up in chunk store.
+  const store = chunkStoreRef.current;
+  if (store) {
+    const neighborTile = store.tileAt(cxs * WORLD.chunkSize + xx, cys * WORLD.chunkSize + yy);
+    if (neighborTile) return neighborTile.biome;
+  }
+  // Neighbor chunk not generated yet — return own biome so the mask treats
+  // this corner as "same" (mask bit stays 1).  This prevents visible seams
+  // along chunk edges while the neighbor is still loading.
+  return ownBiome;
+}
+
+function cornerWangMask(chunk, cxs, cys, x, y, biome) {
+  const tl = safeBiome(chunk, cxs, cys, x - 1, y - 1, biome) === biome ? 8 : 0;
+  const tr = safeBiome(chunk, cxs, cys, x, y - 1, biome) === biome ? 4 : 0;
+  const bl = safeBiome(chunk, cxs, cys, x - 1, y, biome) === biome ? 2 : 0;
+  const br = safeBiome(chunk, cxs, cys, x, y, biome) === biome ? 1 : 0;
+  return tl | tr | bl | br;
+}
+
+function elevationLevel(tile) {
+  const e = tile?.climate?.elevation ?? 0.5;
+  return Math.max(0, Math.min(5, Math.floor((e - 0.34) / 0.10)));
+}
+
+function paintCliffEdges(ctx, chunk, sun) {
+  const size = WORLD.tileSize;
+  for (let y = 0; y < WORLD.chunkSize; y++) {
+    for (let x = 0; x < WORLD.chunkSize; x++) {
+      const tile = chunk.tiles[y * WORLD.chunkSize + x];
+      const level = elevationLevel(tile);
+      const sx = x * size;
+      const sy = y * size;
+      const south = y + 1 < WORLD.chunkSize ? elevationLevel(chunk.tiles[(y + 1) * WORLD.chunkSize + x]) : level;
+      const east = x + 1 < WORLD.chunkSize ? elevationLevel(chunk.tiles[y * WORLD.chunkSize + x + 1]) : level;
+      if (level > south) drawCliffFace(ctx, sx, sy + size * 0.62, size, size * 0.38, level - south, sun);
+      if (level > east) drawCliffSide(ctx, sx + size * 0.72, sy + size * 0.12, size * 0.28, size * 0.76, level - east, sun);
+    }
+  }
+}
+
+function drawCliffFace(ctx, x, y, w, h, drop, sun) {
+  const img = cachedImage('assets/catalog/terrain_objects/mineral/cliff_face/cliff_face/intact/base.png');
+  if (img?.complete && img.naturalWidth) {
+    ctx.drawImage(img, 0, 0, img.naturalWidth || img.width, img.naturalHeight || img.height, x, y, w, h * Math.min(1.35, 0.85 + drop * 0.22));
+    return;
+  }
+  ctx.fillStyle = `rgba(59,74,43,${0.42 + Math.min(0.25, drop * 0.08)})`;
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = `rgba(24,34,21,${0.38 + (sun?.ambient ?? 1) * 0.10})`;
+  ctx.lineWidth = Math.max(1, w * 0.035);
+  for (let i = 1; i < 4; i++) {
+    ctx.beginPath();
+    ctx.moveTo(x + (w * i) / 4, y + h * 0.08);
+    ctx.lineTo(x + (w * (i - 0.35)) / 4, y + h * 0.92);
+    ctx.stroke();
+  }
+}
+
+function drawCliffSide(ctx, x, y, w, h, drop, sun) {
+  ctx.fillStyle = `rgba(38,55,31,${0.32 + Math.min(0.24, drop * 0.08)})`;
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = `rgba(15,25,16,${0.32 + (sun?.ambient ?? 1) * 0.08})`;
+  ctx.lineWidth = Math.max(1, w * 0.14);
+  ctx.beginPath();
+  ctx.moveTo(x + w * 0.25, y + h * 0.08);
+  ctx.lineTo(x + w * 0.72, y + h * 0.92);
+  ctx.stroke();
+}
+
+function cachedImage(src) {
+  let record = imageCache.get(src);
+  if (record) return record;
+  const img = new Image();
+  img.decoding = 'async';
+  img.loading = 'eager';
+  img.src = src;
+  imageCache.set(src, img);
+  return img;
+}
+
+function paintFlatFallback(ctx, tile, sx, sy, size) {
+  const palette = paletteFor(tile.biome);
+  ctx.fillStyle = palette[1] ?? palette[0] ?? '#5fa64b';
+  ctx.fillRect(sx, sy, size, size);
+}

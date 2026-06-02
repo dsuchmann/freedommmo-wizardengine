@@ -1,0 +1,24 @@
+{
+  "biome": "lake",
+  "layer": "L3_vegetation",
+  "pixellab_tileset_id": "70d4056d-dcea-4f24-b91d-77cc748aebef",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "f30220f4-0384-40c6-939b-9a591eed7625",
+    "upper": "3e2145ce-f7dc-4649-9814-8c94dabba7a4"
+  },
+  "generation_prompt": {
+    "lower_description": "water lily pads and small floating algae patches on fully transparent background, pixel art, top-down view",
+    "upper_description": "different lily pad arrangement with duckweed on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

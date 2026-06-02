@@ -1,0 +1,24 @@
+{
+  "biome": "forest",
+  "layer": "L2_detail",
+  "pixellab_tileset_id": "8ab9b9ce-bc8e-4a77-b668-4cd1caeb038a",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "acb9042c-7ecd-4f1b-82f1-21c8b1f783b5",
+    "upper": "5eb0b056-6fef-4989-9b1c-dcb6dd927ef4"
+  },
+  "generation_prompt": {
+    "lower_description": "tree root networks and green moss patches on fully transparent background, pixel art, top-down view",
+    "upper_description": "different root pattern with small mushroom clusters on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

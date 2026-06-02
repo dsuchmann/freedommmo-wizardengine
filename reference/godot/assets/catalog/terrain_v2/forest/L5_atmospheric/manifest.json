@@ -1,0 +1,24 @@
+{
+  "biome": "forest",
+  "layer": "L5_atmospheric",
+  "pixellab_tileset_id": "13600c2c-d451-46c1-973b-5192a48e54fd",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "2aa32912-762f-481d-ab5b-ba409ca5acf9",
+    "upper": "19336f13-fbc6-4f15-9098-3c95dabef1dc"
+  },
+  "generation_prompt": {
+    "lower_description": "dappled golden light spots and floating dust particles on transparent background, pixel art, top-down view",
+    "upper_description": "different light spot pattern with fewer particles on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

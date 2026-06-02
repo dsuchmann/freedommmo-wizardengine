@@ -6,6 +6,8 @@ import { areBiomeNeighbors, transitionBiome } from './biome-graph.js';
 export { BIOMES, SPEC_BIOME_IDS };
 
 export function sampleClimate(wx, wy) {
+  const showcase = topologyShowcaseClimate(wx, wy);
+  if (showcase) return showcase;
   const continental = fbm(wx, wy, 10);
   const detail = fbm(wx, wy, 99);
   const elevation = clamp01(continental * 0.88 + detail * 0.30 - 0.06);
@@ -20,19 +22,20 @@ export function sampleClimate(wx, wy) {
 
 export function classifyBiome(wx, wy) {
   const climate = sampleClimate(wx, wy);
-  const cx = Math.floor(wx / 64);
-  const cy = Math.floor(wy / 64);
-  const regional = sampleRegionalMapChunk(cx, cy);
+  // Sample regional biome at fractional chunk coordinates so per-tile biome
+  // assignment is continuous. Using floored chunk coords makes the entire
+  // 64x64 chunk one biome and causes hard square seams.
+  const regionalCandidate = sampleRegionalMapChunk(wx / 64, wy / 64).id;
   const localCandidate = classifyLocalCandidate(climate);
-  const edge = regionalEcotone(cx, cy, regional.id);
-  const lx = mod(wx, 64);
-  const ly = mod(wy, 64);
-  const borderCandidate = borderTransitionCandidate(lx, ly, edge);
-  const localDetail = fbm(wx + 71000, wy - 91000, 77, undefined, 720, 3);
-  const allowedBorder = borderCandidate && borderCandidate !== regional.id && areBiomeNeighbors(regional.id, borderCandidate);
-  const allowedLocal = allowedBorder && localCandidate === borderCandidate && localDetail > 0.82;
-  const id = allowedLocal ? transitionBiome(regional.id, borderCandidate) : regional.id;
-  return { id, definition: BIOMES[id], climate: { ...climate, regionalBiome: regional.id, localCandidate, ecotone: edge.strength, borderCandidate } };
+  // IMPORTANT: choose from continuous world-space fields only.
+  // Never use chunk-local x/y or random local overrides to decide biome;
+  // those create triangular/square artifacts. Local climate still affects
+  // terrain form, objects, fertility, water, etc., but biome ID comes from
+  // the continuous weighted regional field.
+  const id = regionalCandidate;
+  const localAllowed = localCandidate !== regionalCandidate && areBiomeNeighbors(regionalCandidate, localCandidate);
+
+  return { id, definition: BIOMES[id], climate: { ...climate, regionalBiome: regionalCandidate, localCandidate, ecotone: localAllowed ? 1 : 0, borderCandidate: localAllowed ? localCandidate : null } };
 }
 
 function classifyLocalCandidate(climate) {
@@ -71,13 +74,35 @@ function regionalEcotone(cx, cy, id) {
   };
 }
 
-function borderTransitionCandidate(lx, ly, edge) {
-  const border = 6;
-  if (lx >= 64 - border) return edge.east;
-  if (lx < border) return edge.west;
-  if (ly < border) return edge.north;
-  if (ly >= 64 - border) return edge.south;
-  return null;
+function borderTransitionCandidate(lx, ly, edge, wx, wy) {
+  const border = 18;
+  // Use independent world-space noise per side. This creates wide, wavy,
+  // non-rectangular ecotones while still honoring the regional neighbor biomes.
+  const eastN = (fbm(wx + 33000, wy - 22000, 555, undefined, 140, 4) - 0.5) * 18;
+  const westN = (fbm(wx - 17000, wy + 44000, 556, undefined, 140, 4) - 0.5) * 18;
+  const northN = (fbm(wx + 12000, wy + 71000, 557, undefined, 140, 4) - 0.5) * 18;
+  const southN = (fbm(wx - 52000, wy - 15000, 558, undefined, 140, 4) - 0.5) * 18;
+  const candidates = [];
+  if (lx >= 64 - border + eastN) candidates.push({ id: edge.east, score: lx - (64 - border + eastN) });
+  if (lx < border + westN) candidates.push({ id: edge.west, score: (border + westN) - lx });
+  if (ly < border + northN) candidates.push({ id: edge.north, score: (border + northN) - ly });
+  if (ly >= 64 - border + southN) candidates.push({ id: edge.south, score: ly - (64 - border + southN) });
+  candidates.sort((a, b) => b.score - a.score);
+  return candidates[0]?.id ?? null;
+}
+
+function topologyShowcaseClimate(wx, wy) {
+  if (wx < 180 || wx > 245 || wy < 180 || wy > 245) return null;
+  const x = wx - 180;
+  const y = wy - 180;
+  let elevation = 0.42 + x * 0.004;
+  if (x > 18) elevation += 0.12;
+  if (x > 34) elevation += 0.12;
+  if (x > 50) elevation += 0.12;
+  const ramp = Math.abs((y - 32) / 12);
+  if (ramp < 1 && x > 14 && x < 54) elevation -= (1 - ramp) * 0.12;
+  elevation += Math.sin(y * 0.18) * 0.015;
+  return { elevation: clamp01(elevation), moisture: 0.62, heat: 0.52, weird: 0.78, magic: 0.72 };
 }
 
 function mod(value, size) {

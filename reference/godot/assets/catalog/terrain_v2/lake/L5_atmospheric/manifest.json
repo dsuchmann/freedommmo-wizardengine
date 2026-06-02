@@ -1,0 +1,24 @@
+{
+  "biome": "lake",
+  "layer": "L5_atmospheric",
+  "pixellab_tileset_id": "96bcb577-a97b-46e3-80f3-dcbdd18e3b26",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "1e7f3349-0ff2-4e24-8295-ad1a4faaeaff",
+    "upper": "14166a54-1857-41b4-b2ca-8a7656fe5a8a"
+  },
+  "generation_prompt": {
+    "lower_description": "white light reflections on water surface and tiny water strider insects on fully transparent background, pixel art, top-down view",
+    "upper_description": "different light reflection pattern with ripple rings on transparent background, sparse, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

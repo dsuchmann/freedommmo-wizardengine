@@ -1,0 +1,24 @@
+{
+  "biome": "tundra",
+  "layer": "L3_vegetation",
+  "pixellab_tileset_id": "ce195bc3-5ebf-4029-a87a-c30a9c1b279e",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "ca1081ee-5d7b-4343-8c01-af8840b36ddc",
+    "upper": "347f71cc-4905-4a12-9795-36abc4313244"
+  },
+  "generation_prompt": {
+    "lower_description": "low arctic moss and tiny colorful tundra flowers on fully transparent background, pixel art, top-down view",
+    "upper_description": "different moss pattern with purple and yellow arctic blooms on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

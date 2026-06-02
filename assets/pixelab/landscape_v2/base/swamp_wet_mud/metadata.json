@@ -1,0 +1,1 @@
+{"family":"swamp/wet_mud","layer":"base","biomes":["swamp"],"materials":["wet_mud"],"surfaces":["mud_pools","ground_cover"],"terrainForms":["plains","valley","water_basin"],"dimensions":[32,32],"alpha":false,"tileable":true,"wang":true,"variants":64,"seedBase":{"tiles":100000000,"wang":200000000},"familyIndex":0}

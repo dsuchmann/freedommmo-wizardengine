@@ -1,0 +1,24 @@
+{
+  "biome": "tropical_forest",
+  "layer": "L1_base",
+  "pixellab_tileset_id": "3cd6dee0-4a98-4b72-abbc-1dccbc97bfdb",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "17ef40c4-1e2a-42ae-a1a6-671a2aefd944",
+    "upper": "5fc1498c-61c5-41b8-97d3-add4ccb422eb"
+  },
+  "generation_prompt": {
+    "lower_description": "rich dark tropical soil with large colorful fallen leaves and vine remnants",
+    "upper_description": "rich dark tropical soil with different leaf pattern and small puddle reflections"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

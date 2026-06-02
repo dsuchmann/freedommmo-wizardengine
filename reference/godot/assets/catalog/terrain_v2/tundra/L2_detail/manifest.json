@@ -1,0 +1,24 @@
+{
+  "biome": "tundra",
+  "layer": "L2_detail",
+  "pixellab_tileset_id": "48497092-f3e2-460f-b454-7f39992b5e75",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "8a67da98-a9a9-46aa-b748-4676e032e58e",
+    "upper": "8805922f-84cd-4fcc-8879-4c2afe64cc42"
+  },
+  "generation_prompt": {
+    "lower_description": "white frost patterns and small ice crystal formations on fully transparent background, pixel art, top-down view",
+    "upper_description": "different frost pattern with larger crystal clusters on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

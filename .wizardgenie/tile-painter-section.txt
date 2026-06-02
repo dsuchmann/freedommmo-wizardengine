@@ -1,0 +1,51 @@
+120: function paintCatalogGroundChildren(ctx, tile, sx, sy, size, sun, atlas, patch) {
+121:   if (isWaterBiome(tile.biome)) {
+122:     drawLandscapeAssetOnAxis(ctx, atlas, 'water', tile, sx, sy, size, -0.05, -0.05, 1.10, 1.10, 5001, 0);
+123:     return;
+124:   }
+125:   if (tile.features?.includes('dry_riverbed') || tile.terrainForm === 'valley') drawLandscapeAssetOnAxis(ctx, atlas, 'path', tile, sx, sy, size, -0.04, 0.18, 1.08, 0.62, 5002, 1);
+126:   const grassField = smoothNoise(tile.wx * 0.18, tile.wy * 0.18, 5003);
+127:   if (grassField > 0.58) drawLandscapeAssetOnAxis(ctx, atlas, 'grass', tile, sx, sy, size, -0.28, -0.18, 0.86, 0.86, 5003, 2);
+128:   if (grassField > 0.70) drawLandscapeAssetOnAxis(ctx, atlas, 'grass', tile, sx, sy, size, 0.10, 0.08, 0.74, 0.74, 5004, 3);
+129:   const litterField = smoothNoise(tile.wx * 0.12 + 19, tile.wy * 0.12 - 7, 5005);
+130:   if ((tile.biome.includes('forest') || tile.biome === 'taiga' || tile.biome === 'swamp') && litterField > 0.62) drawLandscapeAssetOnAxis(ctx, atlas, 'leaves', tile, sx, sy, size, -0.22, 0.08, 0.92, 0.62, 5005, 4);
+131: }
+132: 
+133: function paintCatalogDetailChildren(ctx, tile, sx, sy, size, sun, atlas, patch, e) {
+134:   if (isWaterBiome(tile.biome)) return;
+135:   const flowerField = smoothNoise(tile.wx * 0.10 + 31, tile.wy * 0.10 - 11, 5010);
+136:   const deadwoodField = smoothNoise(tile.wx * 0.08 - 17, tile.wy * 0.08 + 23, 5012);
+137:   const fernField = smoothNoise(tile.wx * 0.14 + 7, tile.wy * 0.14 + 41, 5014);
+138:   const rockField = smoothNoise(tile.wx * 0.09 - 29, tile.wy * 0.09 + 5, 5018);
+139:   if (flowerField > 0.76 && rand2(tile.wx, tile.wy, 5010) > 0.72) drawLandscapeAssetOnAxis(ctx, atlas, 'flowers', tile, sx, sy, size, -0.10, -0.04, 0.46, 0.46, 5011, 5);
+140:   if ((tile.biome.includes('forest') || tile.biome === 'taiga' || tile.biome === 'swamp') && deadwoodField > 0.64 && rand2(tile.wx, tile.wy, 5012) > 0.55) drawLandscapeAssetOnAxis(ctx, atlas, 'log', tile, sx, sy, size, -0.16, 0.12, 0.78, 0.46, 5013, 1);
+141:   if ((tile.biome === 'swamp' || tile.biome.includes('forest')) && fernField > 0.58 && rand2(tile.wx, tile.wy, 5014) > 0.48) drawLandscapeAssetOnAxis(ctx, atlas, 'fern', tile, sx, sy, size, -0.16, -0.02, 0.70, 0.70, 5015, 3);
+142:   if (tile.biome.includes('forest') && fernField > 0.66 && rand2(tile.wx, tile.wy, 5016) > 0.58) drawLandscapeAssetOnAxis(ctx, atlas, 'shrub', tile, sx, sy, size, -0.12, -0.06, 0.72, 0.72, 5017, 4);
+143:   if ((tile.terrainForm === 'cliff' || tile.terrainForm === 'mountain_slope' || tile.terrainForm === 'mountain_peak' || tile.biome === 'hills' || tile.biome === 'mountains' || e > 0.68 || rockField > 0.82) && rand2(tile.wx, tile.wy, 5018) > 0.40) drawLandscapeAssetOnAxis(ctx, atlas, 'rock', tile, sx, sy, size, -0.12, 0.04, 0.74, 0.74, 5018, 2);
+144: }
+145: 
+146: function isWaterBiome(biome) {
+147:   return biome === 'river' || biome === 'lake' || biome === 'ocean' || biome === 'deep_ocean' || biome === 'shallow_water';
+148: }
+149: 
+150: function paintElevationSteps(ctx, tile, sx, sy, size, sun, atlas, e, slope) {
+151:   const form = tile.layers?.[7] ?? {};
+152:   const level = form.plateauLevel ?? Math.max(0, Math.min(4, Math.floor((e - 0.36) / 0.115)));
+153:   const delta = form.plateauDelta ?? 0;
+154:   const isHardEdge = tile.terrainForm === 'step' || tile.terrainForm === 'cliff' || tile.terrainForm === 'mountain_slope' || tile.terrainForm === 'mountain_peak' || delta > 0;
+155:   if (!isHardEdge) return;
+156: 
+157:   if (tile.terrainForm === 'cliff' || tile.terrainForm === 'mountain_slope' || tile.terrainForm === 'mountain_peak') {
+158:     drawAtlasSprite(ctx, atlas, `${tile.biome}_stones_variant_${Math.floor(rand2(tile.wx, tile.wy, 5111) * 256)}`, tile, sx, sy, size, -0.02, 0.14, 1.04, 0.78, 5112, Math.floor(rand2(tile.wx, tile.wy, 5113) * 8));
+159:     if (tile.features?.includes('cave_entrance')) drawAtlasSprite(ctx, atlas, 'cave_mouth', tile, sx, sy, size, 0.12, 0.30, 0.72, 0.72, 5114, Math.floor(rand2(tile.wx, tile.wy, 5115) * 8));
+160:   }
+161: 
+162:   const strength = Math.min(1, 0.35 + delta * 0.22 + Math.max(0, level - 1) * 0.08);
+163:   const faceHeight = size * (0.10 + Math.min(0.16, delta * 0.045 + Math.max(0, e - 0.56) * 0.12));
+164:   ctx.fillStyle = `rgba(58,42,27,${0.16 * strength})`;
+165:   ctx.fillRect(sx, sy + size - faceHeight, size, faceHeight);
+166:   ctx.strokeStyle = `rgba(236,220,150,${0.12 * strength})`;
+167:   ctx.lineWidth = Math.max(1, size * 0.025);
+168:   ctx.beginPath();
+169:   ctx.moveTo(sx, sy + size - faceHeight);
+170:   ctx.lineTo(sx + size, sy + size - faceHeight);

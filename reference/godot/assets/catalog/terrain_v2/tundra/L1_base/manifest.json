@@ -1,0 +1,24 @@
+{
+  "biome": "tundra",
+  "layer": "L1_base",
+  "pixellab_tileset_id": "5a6a0efb-683c-4795-957b-b8be95199e92",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "02655816-f988-45ba-baf6-ac9e15b6e84a",
+    "upper": "ff24884a-a9b1-410a-91fd-5030bde4e665"
+  },
+  "generation_prompt": {
+    "lower_description": "white snow covering the ground with footprint-like impressions",
+    "upper_description": "frozen blue-white ice sheet with cracks and frost patterns"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

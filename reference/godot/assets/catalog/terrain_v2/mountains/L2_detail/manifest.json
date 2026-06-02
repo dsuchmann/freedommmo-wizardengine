@@ -1,0 +1,24 @@
+{
+  "biome": "mountains",
+  "layer": "L2_detail",
+  "pixellab_tileset_id": "1fc4b7d6-4475-4900-b4ae-065f861ebd58",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "4ab89c54-20dd-44a2-a302-d20228a9ba89",
+    "upper": "7796a75f-71e4-4d3a-94c8-96abd92a1456"
+  },
+  "generation_prompt": {
+    "lower_description": "deep rock cracks with mineral veins and water seepage marks on fully transparent background, pixel art, top-down view",
+    "upper_description": "different crack pattern with copper and quartz mineral veins on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

@@ -1,0 +1,34 @@
+  if (!(tile.biome.includes('forest') || tile.biome === 'grassland' || tile.biome === 'mystic' || tile.biome === 'swamp' || tile.biome === 'savanna' || tile.biome === 'steppe')) return;
+  const density = tile.biome.includes('forest') ? 0.66 : tile.biome === 'grassland' ? 0.30 : 0.42;
+  if (rand2(tile.wx, tile.wy, 5400) > density) return;
+  const variantId = `${tile.biome}_shrubs_variant_${Math.floor(rand2(tile.wx, tile.wy, 7210) * 256)}`;
+  if (drawAtlasSprite(ctx, atlas, variantId, tile, sx, sy, size, -0.02, 0.10, 0.68, 0.68, 7200, Math.floor(rand2(tile.wx, tile.wy, 7211) * 8))) return;
+  const bushId = tile.biome === 'mystic' ? 'glow_shrub' : 'underbrush_cluster';
+  if (drawAtlasSprite(ctx, atlas, bushId, tile, sx, sy, size, 0.02, 0.12, 0.62, 0.62, 7200, Math.floor(rand2(tile.wx, tile.wy, 7212) * 8))) return;
+  if (drawLandscapeAsset(ctx, atlas, tile.biome === 'swamp' ? 'fern' : 'shrub', tile, sx, sy, size, 0.05, 0.18, 0.50, 0.50, 7200)) return;
+  const frame = atlas?.frame('godot_bush', 0) ?? atlas?.frame('godot_fern', 0);
+  const x = sx + size * (0.12 + rand2(tile.wx, tile.wy, 5401) * 0.56);
+  const y = sy + size * (0.18 + rand2(tile.wx, tile.wy, 5402) * 0.50);
+  const d = size * 0.46;
+  if (frame && frame.sw <= 96 && frame.sh <= 96) ctx.drawImage(frame.image, frame.sx, frame.sy, frame.sw, frame.sh, x, y, d, d);
+}
+
+function paintTreeCanopyLayer(ctx, tile, sx, sy, size, sun, atlas) {
+  if (!(tile.biome === 'forest' || tile.biome === 'dense_forest' || tile.biome === 'tropical_forest' || tile.biome === 'taiga' || tile.biome === 'mystic')) return;
+  const density = tile.biome === 'dense_forest' || tile.biome === 'tropical_forest' ? 0.82 : tile.biome === 'forest' || tile.biome === 'mystic' ? 0.62 : 0.46;
+  if (rand2(tile.wx, tile.wy, 5500) > density) return;
+  const treeFamily = tile.biome === 'taiga' ? 'conifer_tree' : tile.biome === 'mystic' ? 'mystic_tree' : 'broadleaf_tree';
+  const variantId = `${tile.biome}_trees_variant_${Math.floor(rand2(tile.wx, tile.wy, 7310) * 256)}`;
+  if (drawAtlasSprite(ctx, atlas, variantId, tile, sx, sy, size, -0.20, -0.78, 1.35, 1.95, 7300, Math.floor(rand2(tile.wx, tile.wy, 7311) * 8))) return;
+  if (drawAtlasSprite(ctx, atlas, treeFamily, tile, sx, sy, size, -0.10, -0.58, 1.15, 1.55, 7300, Math.floor(rand2(tile.wx, tile.wy, 7312) * 8))) return;
+  if (drawLandscapeAsset(ctx, atlas, 'tree', tile, sx, sy, size, -0.10, -0.58, 1.05, 1.45, 7300)) return;
+  const frame = atlas?.frame('godot_tree', 0) ?? atlas?.frame('godot_pine', 0);
+  const d = size * 1.25;
+  const x = sx - size * 0.12;
+  const y = sy - size * 0.58;
+  if (frame && frame.sw <= 128 && frame.sh <= 128) ctx.drawImage(frame.image, frame.sx, frame.sy, frame.sw, frame.sh, x, y, d, d);
+}
+
+function coherentPatch(wx, wy, biome) {
+  const warpX = smoothNoise(wx * 0.018, wy * 0.018, 700) * 10 - 5;
+  const warpY = smoothNoise(wx * 0.018, wy * 0.018, 701) * 10 - 5;

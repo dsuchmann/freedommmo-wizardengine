@@ -1,0 +1,24 @@
+{
+  "biome": "swamp",
+  "layer": "L3_vegetation",
+  "pixellab_tileset_id": "5b42540d-c4cb-4bda-a6fe-aacde41cce2f",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "68958ccd-6667-4988-8c30-d3767b5af6cc",
+    "upper": "930d663e-8ecd-4cfc-a2df-fbc7854674b9"
+  },
+  "generation_prompt": {
+    "lower_description": "tall green swamp reeds and cattail plants on fully transparent background, pixel art, top-down view",
+    "upper_description": "different reed arrangement with hanging moss on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

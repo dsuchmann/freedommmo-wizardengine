@@ -1,0 +1,24 @@
+{
+  "biome": "tundra",
+  "layer": "transitions/tundra_to_taiga",
+  "pixellab_tileset_id": "0dfd68a8-52b8-4dd1-869c-879cac259b4d",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "ff24884a-a9b1-410a-91fd-5030bde4e665",
+    "upper": "be7bc5cb-3433-4a13-a0ff-24e70b924e61"
+  },
+  "generation_prompt": {
+    "lower_description": "frozen grey-brown tundra earth",
+    "upper_description": "dark boreal taiga floor with pine needles"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

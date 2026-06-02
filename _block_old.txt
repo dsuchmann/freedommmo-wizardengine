@@ -1,0 +1,13 @@
+// Procedural swamp enrichment. Direct PixelLab decal stamping is intentionally
+  // disabled here: the current decal PNGs need alpha/edge normalization before
+  // they can be stamped without square patches.
+  const wetness = clamp((moisture - 0.48) / 0.42, 0, 1);
+  const mossiness = clamp(density * 0.72 + wetness * 0.28, 0, 1);
+  const detailTags = ['flecks'];
+  const flecks = Math.floor(3 + wetness * 4 + rand2(tile.wx, tile.wy, 16101) * 4);
+  for (let i = 0; i < flecks; i++) {
+    const fx = sx + Math.floor(rand2(tile.wx, tile.wy, 16110 + i * 11) * size);
+    const fy = sy + Math.floor(rand2(tile.wx, tile.wy, 16111 + i * 11) * size);
+    ctx.fillStyle = `rgba(10, 17, 14, ${(0.18 + wetness * 0.10).toFixed(3)})`;
+    ctx.fillRect(fx, fy, 2 + Math.floor(rand2(tile.wx, tile.wy, 16112 + i * 11) * 4), 1 + Math.floor(rand2(tile.wx, tile.wy, 16113 + i * 11) * 2));
+  }

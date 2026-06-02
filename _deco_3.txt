@@ -1,0 +1,108 @@
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(98, 165, 72, 0.68)';
+    ctx.fillRect(rx - size * 0.14, ry - 1, size * 0.28, Math.max(2, size * 0.05));
+  }
+
+  // Stump accent
+  if (rand2(tile.wx, tile.wy, 16320) < 0.50) {
+    detailTags.push('stump');
+    const sx3 = sx + size * (0.22 + rand2(tile.wx, tile.wy, 16321) * 0.56);
+    const sy3 = sy + size * (0.26 + rand2(tile.wx, tile.wy, 16322) * 0.52);
+    ctx.fillStyle = 'rgba(62, 36, 24, 0.88)';
+    ctx.beginPath();
+    ctx.ellipse(sx3, sy3, size * 0.095, size * 0.065, rand2(tile.wx, tile.wy, 16323) * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(172, 108, 54, 0.72)';
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.040));
+    ctx.beginPath();
+    ctx.ellipse(sx3, sy3 - size * 0.006, size * 0.058, size * 0.030, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  if (rand2(tile.wx, tile.wy, 16330) < 0.34) {
+    detailTags.push('stump');
+    const x = sx + size * (0.24 + rand2(tile.wx, tile.wy, 16321) * 0.52);
+    const y = sy + size * (0.30 + rand2(tile.wx, tile.wy, 16322) * 0.48);
+    ctx.fillStyle = 'rgba(42, 28, 20, 0.68)';
+    ctx.beginPath();
+    ctx.ellipse(x, y, size * 0.090, size * 0.060, rand2(tile.wx, tile.wy, 16323) * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(130, 86, 48, 0.60)';
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.035));
+    ctx.beginPath();
+    ctx.ellipse(x, y - size * 0.006, size * 0.055, size * 0.028, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  if (wetness > 0.38 && rand2(tile.wx, tile.wy, 16340) < 0.44 + wetness * 0.34) {
+    detailTags.push('pool');
+    const x = sx + size * (0.18 + rand2(tile.wx, tile.wy, 16341) * 0.64);
+    const y = sy + size * (0.22 + rand2(tile.wx, tile.wy, 16342) * 0.56);
+    const rot = rand2(tile.wx, tile.wy, 16343) * Math.PI;
+    ctx.fillStyle = `rgba(4, 20, 22, ${(0.64 + wetness * 0.24).toFixed(3)})`;
+    ctx.beginPath();
+    ctx.ellipse(x, y, size * (0.20 + rand2(tile.wx, tile.wy, 16344) * 0.16), size * (0.080 + rand2(tile.wx, tile.wy, 16345) * 0.075), rot, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = `rgba(146, 198, 162, ${(0.54 + wetness * 0.24).toFixed(3)})`;
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.04));
+    ctx.beginPath();
+    ctx.ellipse(x, y - size * 0.01, size * 0.15, size * 0.040, rot, 0.15, Math.PI * 0.85);
+    ctx.stroke();
+  }
+
+  if (mossiness > 0.55 && rand2(tile.wx, tile.wy, 16360) < 0.30) {
+    detailTags.push('fungi');
+    const x = sx + size * (0.20 + rand2(tile.wx, tile.wy, 16361) * 0.60);
+    const y = sy + size * (0.30 + rand2(tile.wx, tile.wy, 16362) * 0.50);
+    ctx.fillStyle = 'rgba(165, 146, 92, 0.46)';
+    ctx.beginPath();
+    ctx.arc(x, y, Math.max(1.2, size * 0.025), Math.PI, 0);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(198, 181, 124, 0.40)';
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y + size * 0.045);
+    ctx.stroke();
+  }
+
+  if (vegetation > 0.50 && rand2(tile.wx, tile.wy, 16380) < 0.26) {
+    detailTags.push('swamp-shrub');
+    const x = sx + size * (0.22 + rand2(tile.wx, tile.wy, 16381) * 0.56);
+    const y = sy + size * (0.30 + rand2(tile.wx, tile.wy, 16382) * 0.46);
+    ctx.fillStyle = 'rgba(24, 74, 31, 0.62)';
+    ctx.beginPath();
+    ctx.ellipse(x, y, size * 0.12, size * 0.08, rand2(tile.wx, tile.wy, 16383) * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(55, 118, 45, 0.55)';
+    ctx.beginPath();
+    ctx.ellipse(x + size * 0.04, y - size * 0.025, size * 0.07, size * 0.045, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(31, 54, 26, 0.55)';
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.035));
+    ctx.beginPath();
+    ctx.moveTo(x - size * 0.05, y + size * 0.08);
+    ctx.lineTo(x + size * 0.04, y + size * 0.01);
+    ctx.stroke();
+  }
+
+  if (rand2(tile.wx, tile.wy, 16400) < 0.24) {
+    detailTags.push('root-fan');
+    const x = sx + size * (0.18 + rand2(tile.wx, tile.wy, 16401) * 0.64);
+    const y = sy + size * (0.25 + rand2(tile.wx, tile.wy, 16402) * 0.54);
+    const rot = rand2(tile.wx, tile.wy, 16403) * Math.PI * 2;
+    ctx.strokeStyle = 'rgba(34, 24, 18, 0.54)';
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.035));
+    ctx.beginPath();
+    for (let i = 0; i < 4; i++) {
+      const a = rot + (i - 1.5) * 0.45;
+      const len = size * (0.12 + rand2(tile.wx, tile.wy, 16410 + i) * 0.14);
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + Math.cos(a) * len, y + Math.sin(a) * len);
+    }
+    ctx.stroke();
+  }
+
+  tile.swampDetailLayer = `local ${detailTags.join('+')} dressed-v3`;
+  ctx.restore();
+}
+

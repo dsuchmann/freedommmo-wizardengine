@@ -1,0 +1,48 @@
+{
+  "version": "2.0",
+  "tile_size": 32,
+  "layer_model": "cel_animation",
+  "total_tiles": 1472,
+  "layer_tiles": 1296,
+  "transition_tiles": 176,
+  "layers": {
+    "L1_base": {"z_index": 0, "opacity": "opaque", "description": "Base ground surface"},
+    "L2_detail": {"z_index": 1, "opacity": "transparent", "description": "Surface texture overlays"},
+    "L3_vegetation": {"z_index": 2, "opacity": "transparent", "description": "Growing things"},
+    "L4_scatter": {"z_index": 3, "opacity": "transparent", "description": "Small loose objects"},
+    "L5_atmospheric": {"z_index": 4, "opacity": "transparent", "description": "Environmental particles"}
+  },
+  "biomes": {
+    "ocean": {"active_layers": ["L1_base", "L5_atmospheric"], "quality_status": "complete", "tiles": 32, "transitions": ["ocean_to_beach"]},
+    "beach": {"active_layers": ["L1_base", "L2_detail", "L4_scatter"], "quality_status": "complete", "tiles": 48, "transitions": ["beach_to_grassland"]},
+    "grassland": {"active_layers": ["L1_base", "L2_detail", "L3_vegetation", "L4_scatter", "L5_atmospheric"], "quality_status": "complete", "tiles": 80, "transitions": ["grassland_to_forest", "grassland_to_desert", "grassland_to_steppe"]},
+    "forest": {"active_layers": ["L1_base", "L2_detail", "L3_vegetation", "L4_scatter", "L5_atmospheric"], "quality_status": "complete", "tiles": 80, "transitions": ["forest_to_dense_forest"]},
+    "dense_forest": {"active_layers": ["L1_base", "L2_detail", "L3_vegetation", "L4_scatter", "L5_atmospheric"], "quality_status": "complete", "tiles": 80, "transitions": []},
+    "desert": {"active_layers": ["L1_base", "L2_detail", "L4_scatter", "L5_atmospheric"], "quality_status": "complete", "tiles": 64, "transitions": ["desert_to_savanna"]},
+    "savanna": {"active_layers": ["L1_base", "L2_detail", "L3_vegetation", "L4_scatter", "L5_atmospheric"], "quality_status": "complete", "tiles": 80, "transitions": ["savanna_to_tropical_forest"]},
+    "steppe": {"active_layers": ["L1_base", "L2_detail", "L3_vegetation", "L4_scatter", "L5_atmospheric"], "quality_status": "complete", "tiles": 80, "transitions": ["steppe_to_mountains"]},
+    "tundra": {"active_layers": ["L1_base", "L2_detail", "L3_vegetation", "L4_scatter", "L5_atmospheric"], "quality_status": "complete", "tiles": 80, "transitions": ["tundra_to_taiga"]},
+    "taiga": {"active_layers": ["L1_base", "L2_detail", "L3_vegetation", "L4_scatter", "L5_atmospheric"], "quality_status": "complete", "tiles": 80, "transitions": []},
+    "mountains": {"active_layers": ["L1_base", "L2_detail", "L3_vegetation", "L4_scatter", "L5_atmospheric"], "quality_status": "complete", "tiles": 80, "transitions": ["mountains_to_arctic"]},
+    "swamp": {"active_layers": ["L1_base", "L2_detail", "L3_vegetation", "L4_scatter", "L5_atmospheric"], "quality_status": "complete", "tiles": 80, "transitions": []},
+    "tropical_forest": {"active_layers": ["L1_base", "L2_detail", "L3_vegetation", "L4_scatter", "L5_atmospheric"], "quality_status": "complete", "tiles": 80, "transitions": []},
+    "volcanic": {"active_layers": ["L1_base", "L2_detail", "L3_vegetation", "L4_scatter", "L5_atmospheric"], "quality_status": "complete", "tiles": 80, "transitions": []},
+    "arctic": {"active_layers": ["L1_base", "L2_detail", "L3_vegetation", "L4_scatter", "L5_atmospheric"], "quality_status": "complete", "tiles": 80, "transitions": []},
+    "lake": {"active_layers": ["L1_base", "L2_detail", "L3_vegetation", "L5_atmospheric"], "quality_status": "complete", "tiles": 64, "transitions": []},
+    "river": {"active_layers": ["L1_base", "L2_detail", "L5_atmospheric"], "quality_status": "complete", "tiles": 48, "transitions": []},
+    "mystic": {"active_layers": ["L1_base", "L2_detail", "L3_vegetation", "L4_scatter", "L5_atmospheric"], "quality_status": "complete", "tiles": 80, "transitions": []}
+  },
+  "transition_pairs": [
+    {"from": "ocean", "to": "beach", "path": "ocean/transitions/ocean_to_beach"},
+    {"from": "beach", "to": "grassland", "path": "beach/transitions/beach_to_grassland"},
+    {"from": "grassland", "to": "forest", "path": "grassland/transitions/grassland_to_forest"},
+    {"from": "grassland", "to": "desert", "path": "grassland/transitions/grassland_to_desert"},
+    {"from": "grassland", "to": "steppe", "path": "grassland/transitions/grassland_to_steppe"},
+    {"from": "forest", "to": "dense_forest", "path": "forest/transitions/forest_to_dense_forest"},
+    {"from": "desert", "to": "savanna", "path": "desert/transitions/desert_to_savanna"},
+    {"from": "savanna", "to": "tropical_forest", "path": "savanna/transitions/savanna_to_tropical_forest"},
+    {"from": "steppe", "to": "mountains", "path": "steppe/transitions/steppe_to_mountains"},
+    {"from": "mountains", "to": "arctic", "path": "mountains/transitions/mountains_to_arctic"},
+    {"from": "tundra", "to": "taiga", "path": "tundra/transitions/tundra_to_taiga"}
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "biome": "beach",
+  "layer": "transitions/beach_to_grassland",
+  "pixellab_tileset_id": "9971a329-e178-4879-b169-a89087c4e99c",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "d04e1ef8-7f5f-4b0e-8603-9649d1400de5",
+    "upper": "4e8b7a63-af2a-4444-9039-54814fb5d80f"
+  },
+  "generation_prompt": {
+    "lower_description": "golden sandy beach",
+    "upper_description": "lush green grassland"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

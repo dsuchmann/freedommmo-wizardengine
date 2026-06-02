@@ -1,0 +1,75 @@
+  if (tile.pixelLabSkipBase) return false;
+  const baseFamily = recipe?.base?.family ?? recipe?.baseFamily;
+  const wangVariants = PIXEL_BASE_WANG_VARIANTS[baseFamily];
+  const variants = PIXEL_BASE_TILE_VARIANTS[baseFamily];
+  const foundationSrc = PIXEL_BASE_FOUNDATION_SRC[baseFamily] ?? variants?.[0];
+  const mask = Number.isInteger(tile.pixelLabBaseMask) ? tile.pixelLabBaseMask : 15;
+  const wangSrc = mask !== 15 ? wangVariants?.[mask] : null;
+  if (!foundationSrc && !wangSrc) return false;
+
+  // Continuous base color first; PixelLab imagery is used as structure/detail,
+  // not as a fully opaque wallpaper tile.
+  if (!paintSwampMudFoundation(ctx, tile, baseFamily, sx, sy, size)) return false;
+  paintSwampTransitionGradient(ctx, tile, sx, sy, size);
+
+  const texturePool = variants ?? [];
+  const variantIndex = pixelBaseInteriorVariantIndex(tile, texturePool);
+  const variantSrc = texturePool?.[variantIndex];
+  if (variantSrc) {
+    const detailCanvas = preparedPixelBaseCanvas(variantSrc, baseFamily, 'texture');
+    if (detailCanvas) {
+      const detailAlpha = 0.24 + smoothNoise(tile.wx, tile.wy, 18, 16005) * 0.08;
+      drawPreparedPixelTextureCrop(ctx, detailCanvas, tile, sx, sy, size, detailAlpha, 16066);
+    }
+  }
+  const secondaryIndex = pixelBaseSecondaryVariantIndex(tile, texturePool, variantIndex);
+  const secondarySrc = texturePool?.[secondaryIndex];
+  if (secondarySrc && secondarySrc !== variantSrc) {
+    const secondaryCanvas = preparedPixelBaseCanvas(secondarySrc, baseFamily, 'texture');
+    if (secondaryCanvas) {
+      const secondaryAlpha = 0.18 + smoothNoise(tile.wx + 13, tile.wy - 11, 11, 16064) * 0.08;
+      drawPreparedPixelTextureCrop(ctx, secondaryCanvas, tile, sx, sy, size, secondaryAlpha, 16070);
+    }
+  }
+  const tertiaryIndex = (Math.floor(rand2(tile.wx - 17, tile.wy + 29, 16090) * texturePool.length) + 11) % Math.max(1, texturePool.length);
+  const tertiarySrc = texturePool?.[tertiaryIndex];
+  if (tertiarySrc && tertiarySrc !== variantSrc && tertiarySrc !== secondarySrc && rand2(tile.wx, tile.wy, 16091) > 0.28) {
+    const tertiaryCanvas = preparedPixelBaseCanvas(tertiarySrc, baseFamily, 'texture');
+    if (tertiaryCanvas) drawPreparedPixelTextureCrop(ctx, tertiaryCanvas, tile, sx, sy, size, 0.10, 16092);
+  }
+  paintSwampOverlayRevival(ctx, tile, sx, sy, size);
+
+  if (wangSrc) {
+    const wangCanvas = preparedPixelBaseCanvas(wangSrc, baseFamily, 'texture');
+    if (wangCanvas) drawPreparedPixelTextureCrop(ctx, wangCanvas, tile, sx, sy, size, 0.18, 16120);
+  }
+
+  let transitionSrc = '';
+  const transitionBiome = tile.pixelLabTransitionBiome;
+  const transitionMask = Number.isInteger(tile.pixelLabTransitionMask) ? tile.pixelLabTransitionMask : 0;
+  const transitionSet = PIXEL_SWAMP_TRANSITION_SETS[transitionBiome];
+  // PixelLab transition metadata encodes the "upper" terrain as set bits. For
+  // swamp_to_* sets, upper is the neighboring biome; for *_to_swamp sets, upper
+  // is swamp. The chunk cache stores swamp-presence bits, so invert only the
+  // swamp_to_* families before selecting the PNG.
+  const transitionImageMask = transitionSet?.startsWith('swamp_to_') ? (15 ^ transitionMask) : transitionMask;
+  const transitionVariants = PIXEL_SWAMP_TRANSITION_WANG[transitionBiome];
+  if (transitionImageMask !== 0 && transitionVariants?.[transitionImageMask]) {
+    transitionSrc = transitionVariants[transitionImageMask];
+    // Current PixelLab transition PNGs are good texture donors but too chunky as
+    // full tiles on a diagonal coast. Keep the procedural mask shape in charge,
+    // and sample transition art as de-aligned flecks only.
+    const transitionCanvas = preparedPixelBaseCanvas(transitionSrc, baseFamily, 'detail');
+    if (transitionCanvas) drawPreparedPixelTextureCrop(ctx, transitionCanvas, tile, sx, sy, size, 0.04, 16160);
+  }
+
+  tile.pixelLabBaseSrc = foundationSrc ? 'procedural mud foundation + blended PixelLab variant donors' : (wangSrc || '');
+  tile.pixelLabBaseVariantSrc = variantSrc ? `cropped variant donors v${String(variantIndex).padStart(3, '0')}+v${String(secondaryIndex).padStart(3, '0')}` : '';
+  tile.pixelLabBaseFamily = baseFamily ?? 'none';
+  tile.pixelLabBaseMask = mask;
+  tile.pixelLabTransitionSrc = transitionSrc;
+  tile.pixelLabTransitionImageMask = transitionSrc ? transitionImageMask : 0;
+  return true;
+}
+
+export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation = tile.climate.elevation, compositor = null, timeSeconds = 0, atlas = null, baseAlreadyPainted = false) {

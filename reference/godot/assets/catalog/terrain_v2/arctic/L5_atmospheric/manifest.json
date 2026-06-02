@@ -1,0 +1,24 @@
+{
+  "biome": "arctic",
+  "layer": "L5_atmospheric",
+  "pixellab_tileset_id": "9629d67a-7ae6-4d15-bb37-b9e12a7abc27",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "0965f343-7732-423e-b80f-a6451ddd0091",
+    "upper": "eae83c33-72f7-4c85-ba2e-56a153ee5973"
+  },
+  "generation_prompt": {
+    "lower_description": "sparkling diamond dust ice particles and faint aurora color reflections on fully transparent background, pixel art, top-down view",
+    "upper_description": "different diamond dust pattern with stronger aurora shimmer on transparent background, sparse, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

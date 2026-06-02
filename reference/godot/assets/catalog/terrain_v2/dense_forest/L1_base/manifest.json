@@ -1,0 +1,24 @@
+{
+  "biome": "dense_forest",
+  "layer": "L1_base",
+  "pixellab_tileset_id": "254a7ef3-59f9-49b8-aba9-a47411ce9b63",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "8d7d8dad-0e1e-4ceb-ab0f-213fc3615b0b",
+    "upper": "12093f22-2cab-4ec6-80c3-b8b895609e19"
+  },
+  "generation_prompt": {
+    "lower_description": "very dark forest floor with thick decomposing leaf carpet and rich humus soil",
+    "upper_description": "very dark forest floor with heavy green moss coverage and bracket fungus"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

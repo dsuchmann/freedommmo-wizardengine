@@ -1,0 +1,34 @@
+{
+  "tag": "terrain_pine",
+  "source": "pixellab_batch_review",
+  "pixel_size": [
+    64,
+    64
+  ],
+  "variant_count": 4,
+  "variants": [
+    {
+      "variant_index": 1,
+      "pixellab_object_id": "3db4b74e-2665-4a38-90b0-2add77007c42",
+      "file": "variants/v1/base.png"
+    },
+    {
+      "variant_index": 2,
+      "pixellab_object_id": "e7e3b842-67ce-41fc-bf15-57a9d10dcb60",
+      "file": "variants/v2/base.png"
+    },
+    {
+      "variant_index": 3,
+      "pixellab_object_id": "acd3b30c-9e47-4c4d-a8d9-052c069d08ec",
+      "file": "variants/v3/base.png"
+    },
+    {
+      "variant_index": 4,
+      "pixellab_object_id": "b94a257c-4ec9-437f-8b36-6faa950ea0fd",
+      "file": "variants/v4/base.png"
+    }
+  ],
+  "has_embedded_shadow": false,
+  "perspective": "top-down",
+  "art_style": "pixel_art_rpg"
+}

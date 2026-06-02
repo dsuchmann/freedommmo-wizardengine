@@ -1,0 +1,24 @@
+{
+  "biome": "savanna",
+  "layer": "L4_scatter",
+  "pixellab_tileset_id": "4fa797c6-c337-4c4b-983d-19724d1f4d98",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "62b5e7aa-0f8e-4015-8447-cae396a40dfc",
+    "upper": "fd848823-0951-42b3-8082-1b5fdc25f8f8"
+  },
+  "generation_prompt": {
+    "lower_description": "scattered dry seed pods and small reddish rocks on fully transparent background, pixel art, top-down view",
+    "upper_description": "different seed pod arrangement with bone fragments on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

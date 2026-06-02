@@ -1,0 +1,24 @@
+{
+  "biome": "river",
+  "layer": "L2_detail",
+  "pixellab_tileset_id": "240b60d4-88cf-4272-82ad-8dc111ae5dcc",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "dc339f44-13e2-4988-b94e-7aa7da5e0673",
+    "upper": "030f8e70-1d92-4361-be3f-1d541db88a2b"
+  },
+  "generation_prompt": {
+    "lower_description": "submerged smooth river rocks on sandy bottom visible through water on fully transparent background, pixel art, top-down view",
+    "upper_description": "different river rock arrangement with more sand on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

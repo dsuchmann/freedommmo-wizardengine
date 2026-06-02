@@ -1,0 +1,24 @@
+{
+  "biome": "mountains",
+  "layer": "L4_scatter",
+  "pixellab_tileset_id": "5cbdd836-d0e4-4cd5-b3b8-3d09ceda38bc",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "a9bae6f6-93ba-4983-96b8-149a52963a6e",
+    "upper": "70cb97ca-1eff-42b9-a02b-21c8df2f3138"
+  },
+  "generation_prompt": {
+    "lower_description": "scattered loose rock scree and fallen stone fragments on fully transparent background, pixel art, top-down view",
+    "upper_description": "different scree arrangement with larger fallen rocks on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

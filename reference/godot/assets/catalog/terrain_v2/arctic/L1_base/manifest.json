@@ -1,0 +1,24 @@
+{
+  "biome": "arctic",
+  "layer": "L1_base",
+  "pixellab_tileset_id": "2ae47592-930b-4f98-ac13-cea4a2c2b7df",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "c9b2466b-0c35-4a4a-aee5-60ceb417ae2a",
+    "upper": "1e6e1476-3036-46e4-874a-6d1308959d40"
+  },
+  "generation_prompt": {
+    "lower_description": "white-blue glacial ice surface with deep pressure cracks and blue crystal shadows",
+    "upper_description": "white-blue glacial ice with different crack pattern and frozen bubble formations"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

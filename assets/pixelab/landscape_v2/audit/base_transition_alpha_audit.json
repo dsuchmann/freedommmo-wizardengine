@@ -1,0 +1,46 @@
+{
+  "generatedAt": "2026-06-02",
+  "purpose": "Corrected QA audit before wiring PixelLab base/transition assets into the renderer",
+  "result": "base_wang_is_usable_for_swamp_interior",
+  "summary": {
+    "correction": "Previous audit was wrong because it inspected deflated PNG rows without applying PNG row filters. Correct unfiltering shows the sampled 32x32 RGBA PNGs are fully opaque.",
+    "totalPngsOnDisk": 632,
+    "baseFamiliesChecked": ["swamp_wet_mud", "swamp_mud_pool"],
+    "finding": "Swamp base Wang and tile variants are usable as opaque foundational base tiles. Transition families still require visual/mask QA before broad integration."
+  },
+  "sampledFiles": [
+    {
+      "path": "assets/pixelab/landscape_v2/base/swamp_mud_pool/wang/swamp_mud_pool__wang_0__v000.png",
+      "dimensions": "32x32",
+      "opaquePixels": 1024,
+      "semiTransparentPixels": 0,
+      "transparentPixels": 0,
+      "verdict": "usable_opaque_wang_tile"
+    },
+    {
+      "path": "assets/pixelab/landscape_v2/base/swamp_mud_pool/wang/swamp_mud_pool__wang_15__v000.png",
+      "dimensions": "32x32",
+      "opaquePixels": 1024,
+      "semiTransparentPixels": 0,
+      "transparentPixels": 0,
+      "verdict": "usable_opaque_interior_wang_tile"
+    },
+    {
+      "path": "assets/pixelab/landscape_v2/base/swamp_mud_pool/tiles/swamp_mud_pool__tile__v000.png",
+      "dimensions": "32x32",
+      "opaquePixels": 1024,
+      "semiTransparentPixels": 0,
+      "transparentPixels": 0,
+      "verdict": "usable_opaque_base_variant"
+    },
+    {
+      "path": "assets/pixelab/landscape_v2/base/swamp_wet_mud/wang/swamp_wet_mud__wang_15__v000.png",
+      "dimensions": "32x32",
+      "opaquePixels": 1024,
+      "semiTransparentPixels": 0,
+      "transparentPixels": 0,
+      "verdict": "usable_opaque_interior_wang_tile"
+    }
+  ],
+  "nextAction": "Renderer now uses swamp wet_mud/mud_pool Wang-15 tiles as the foundational base for swamp top surfaces. Next integration step is neighbor-aware use of wang_0..15 masks and visual QA of transition families."
+}

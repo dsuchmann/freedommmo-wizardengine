@@ -1,6 +1,7 @@
 import { ChunkStore } from './world/chunk.js';
 import { ChunkProvider } from './world/chunk-provider.js';
 import { CanvasRenderer } from './render/canvas-renderer.js';
+import { preloadWangTiles } from './render/wang-terrain-painter.js';
 import { InputState } from './input.js';
 import { Player } from './player.js';
 import { clearPlayerPosition, loadPlayerPosition, savePlayerPosition } from './core/save.js';
@@ -16,10 +17,14 @@ const canvas = document.getElementById('game');
 const stats = document.getElementById('stats');
 const overmapCanvas = document.getElementById('overmap');
 const input = new InputState();
-const player = new Player(loadPlayerPosition() ?? { x: 0, y: 0 });
+const params = new URLSearchParams(window.location.search);
+const spawnX = params.has('x') ? parseFloat(params.get('x')) : null;
+const spawnY = params.has('y') ? parseFloat(params.get('y')) : null;
+const player = new Player(spawnX != null && spawnY != null ? { x: spawnX, y: spawnY } : (loadPlayerPosition() ?? { x: 0, y: 0 }));
 const chunks = new ChunkStore(new ChunkProvider());
 const compositor = new RuntimeCompositor(defaultAssetCatalog);
 const renderer = new CanvasRenderer(canvas, stats, compositor);
+preloadWangTiles();
 const lighting = new DayNightCycle();
 const overmap = new OvermapController(overmapCanvas, player, chunks);
 const camera = new Camera();
@@ -30,11 +35,18 @@ let frame = 0;
 
 function update(dt) {
   if (input.wasPressed('r')) {
-    player.reset();
-    clearPlayerPosition();
+    renderer.chunkRenderCache.clear();
   }
   if (input.wasPressed('m')) overmap.toggle();
   if (input.wasPressed('l')) lighting.togglePause();
+  if (input.wasPressed('d')) renderer.debugWang = !renderer.debugWang;
+  if (input.wasPressed('t')) {
+    player.x = 208;
+    player.y = 212;
+    player.z = 0;
+    player.vz = 0;
+    chunks.streamAround(player.x, player.y);
+  }
   lighting.update(dt);
   player.update(input, dt, chunks, { movementCost, resolveMovement });
   chunks.streamAround(player.x, player.y);

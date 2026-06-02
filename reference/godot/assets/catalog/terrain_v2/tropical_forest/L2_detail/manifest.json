@@ -1,0 +1,24 @@
+{
+  "biome": "tropical_forest",
+  "layer": "L2_detail",
+  "pixellab_tileset_id": "27f9fe1e-2a12-45cc-ba05-de3f4116f881",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "8d7503dd-10ce-49a9-baae-0b7ab01ea139",
+    "upper": "09ec18d1-68f9-4539-bb7e-7ea316da423a"
+  },
+  "generation_prompt": {
+    "lower_description": "sprawling vine networks and small tropical puddles on fully transparent background, pixel art, top-down view",
+    "upper_description": "different vine pattern with more mud patches on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

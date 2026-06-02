@@ -1,0 +1,24 @@
+{
+  "biome": "steppe",
+  "layer": "L5_atmospheric",
+  "pixellab_tileset_id": "1f4797ca-96cd-44f6-bf30-882c195fe510",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "d2999bf7-a187-41d6-8efc-ee644fba989e",
+    "upper": "0d5148be-6031-4a53-8ee6-c78512c6f27f"
+  },
+  "generation_prompt": {
+    "lower_description": "horizontal wind-blown dust streaks on fully transparent background, directional, pixel art, top-down view",
+    "upper_description": "different wind streak pattern with sand grain trails on transparent background, sparse, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

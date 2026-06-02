@@ -1,0 +1,24 @@
+{
+  "biome": "mountains",
+  "layer": "L1_base",
+  "pixellab_tileset_id": "6e33396d-1f22-4034-a672-2ee534338fad",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "72d37b69-fd50-49bb-910d-08693949838b",
+    "upper": "37c7c750-5146-41fb-823b-934a20ccfe9c"
+  },
+  "generation_prompt": {
+    "lower_description": "grey mountain stone with moss patches and mineral veins",
+    "upper_description": "white snow-capped mountain peak with ice crystals"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

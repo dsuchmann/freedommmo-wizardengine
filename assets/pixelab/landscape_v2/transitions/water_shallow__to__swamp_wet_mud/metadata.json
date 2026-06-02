@@ -1,0 +1,1 @@
+{"family":"water_shallow__to__swamp_wet_mud","layer":"transition","from":"water/shallow_water","to":"swamp/wet_mud","dimensions":[32,32],"alpha":false,"wang":true,"wangMasks":16,"overlayVariants":16,"seedBase":{"wang":300000000,"overlays":300000100},"transitionIndex":0}

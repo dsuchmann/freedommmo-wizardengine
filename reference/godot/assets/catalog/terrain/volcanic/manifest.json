@@ -1,0 +1,25 @@
+{
+  "biome": "volcanic",
+  "lower_biome": "volcanic",
+  "upper_biome": "volcanic",
+  "tile_size": 32,
+  "tileset_id": "81944792-c6db-4ba9-a526-ceb901463c59",
+  "tiles": {
+    "13": "wang_13.png",
+    "10": "wang_10.png",
+    "4": "wang_4.png",
+    "12": "wang_12.png",
+    "6": "wang_6.png",
+    "8": "wang_8.png",
+    "0": "wang_0.png",
+    "1": "wang_1.png",
+    "11": "wang_11.png",
+    "3": "wang_3.png",
+    "2": "wang_2.png",
+    "5": "wang_5.png",
+    "15": "wang_15.png",
+    "14": "wang_14.png",
+    "9": "wang_9.png",
+    "7": "wang_7.png"
+  }
+}

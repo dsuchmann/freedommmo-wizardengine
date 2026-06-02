@@ -1,0 +1,24 @@
+{
+  "biome": "grassland",
+  "layer": "L2_detail",
+  "pixellab_tileset_id": "0feb307e-33e0-4790-bd4f-735e74f999b7",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "ca746efc-9941-4609-bb5a-490ed8efb3a7",
+    "upper": "4ead5c56-32c0-42f8-8463-d713ee3d4923"
+  },
+  "generation_prompt": {
+    "lower_description": "small bare dirt patches and thin root lines on fully transparent background, pixel art, top-down view",
+    "upper_description": "slightly different bare dirt patches and root pattern on fully transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

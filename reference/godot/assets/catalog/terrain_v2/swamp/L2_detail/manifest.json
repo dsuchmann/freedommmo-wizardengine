@@ -1,0 +1,24 @@
+{
+  "biome": "swamp",
+  "layer": "L2_detail",
+  "pixellab_tileset_id": "b426645c-e761-47bf-a091-aecf7ad56f5c",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "684cff22-001c-4c39-8e4e-b54aa7848c58",
+    "upper": "5d2f8cd0-f72e-4d4f-8506-1e1b278cb6d5"
+  },
+  "generation_prompt": {
+    "lower_description": "green algae film and dark submerged root networks on fully transparent background, pixel art, top-down view",
+    "upper_description": "different algae pattern with more root visibility on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

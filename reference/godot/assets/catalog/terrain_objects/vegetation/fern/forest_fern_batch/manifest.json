@@ -1,0 +1,54 @@
+{
+  "tag": "terrain_fern",
+  "source": "pixellab_batch_review",
+  "pixel_size": [
+    32,
+    32
+  ],
+  "variant_count": 8,
+  "variants": [
+    {
+      "variant_index": 1,
+      "pixellab_object_id": "673f0c84-9a58-46f3-841b-2189145da573",
+      "file": "variants/v1/base.png"
+    },
+    {
+      "variant_index": 2,
+      "pixellab_object_id": "b49e4676-4926-4faa-8402-fec46fee7f72",
+      "file": "variants/v2/base.png"
+    },
+    {
+      "variant_index": 3,
+      "pixellab_object_id": "b2de07c2-619b-498d-af12-c6f089382baf",
+      "file": "variants/v3/base.png"
+    },
+    {
+      "variant_index": 4,
+      "pixellab_object_id": "fa0f2779-402b-4c4e-9895-aa9ed0a8765d",
+      "file": "variants/v4/base.png"
+    },
+    {
+      "variant_index": 5,
+      "pixellab_object_id": "36eb617e-8428-4b6c-9b4a-829da630252f",
+      "file": "variants/v5/base.png"
+    },
+    {
+      "variant_index": 6,
+      "pixellab_object_id": "02fe510d-c494-4255-b71f-392f723b64b6",
+      "file": "variants/v6/base.png"
+    },
+    {
+      "variant_index": 7,
+      "pixellab_object_id": "a882b40a-6ec1-449b-966f-942854d7f5e2",
+      "file": "variants/v7/base.png"
+    },
+    {
+      "variant_index": 8,
+      "pixellab_object_id": "f9d3032b-fe7d-4595-a2a7-62438b08c750",
+      "file": "variants/v8/base.png"
+    }
+  ],
+  "has_embedded_shadow": false,
+  "perspective": "top-down",
+  "art_style": "pixel_art_rpg"
+}

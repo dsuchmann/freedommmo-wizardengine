@@ -1,0 +1,54 @@
+{
+  "tag": "terrain_mushroom",
+  "source": "pixellab_batch_review",
+  "pixel_size": [
+    32,
+    32
+  ],
+  "variant_count": 8,
+  "variants": [
+    {
+      "variant_index": 1,
+      "pixellab_object_id": "edb2fb06-b7ef-4867-ab2f-97ddc012454f",
+      "file": "variants/v1/base.png"
+    },
+    {
+      "variant_index": 2,
+      "pixellab_object_id": "d0ba4a03-88fe-4af2-b1e6-6dd789439cae",
+      "file": "variants/v2/base.png"
+    },
+    {
+      "variant_index": 3,
+      "pixellab_object_id": "36f5ca6c-ae2e-4a59-97c6-b5307e448064",
+      "file": "variants/v3/base.png"
+    },
+    {
+      "variant_index": 4,
+      "pixellab_object_id": "0783a98c-4600-4be9-a697-d2a7b4443589",
+      "file": "variants/v4/base.png"
+    },
+    {
+      "variant_index": 5,
+      "pixellab_object_id": "c23380e4-2efc-4513-9fb5-356f925eed8a",
+      "file": "variants/v5/base.png"
+    },
+    {
+      "variant_index": 6,
+      "pixellab_object_id": "abdcf213-5658-4613-bce4-180e7623ba37",
+      "file": "variants/v6/base.png"
+    },
+    {
+      "variant_index": 7,
+      "pixellab_object_id": "6c4dc36f-e3a4-418e-93db-6fc46a9b1383",
+      "file": "variants/v7/base.png"
+    },
+    {
+      "variant_index": 8,
+      "pixellab_object_id": "ecbb4b28-0a4e-45b0-9cec-32ed8d6ab85d",
+      "file": "variants/v8/base.png"
+    }
+  ],
+  "has_embedded_shadow": false,
+  "perspective": "top-down",
+  "art_style": "pixel_art_rpg"
+}

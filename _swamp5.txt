@@ -1,0 +1,35 @@
+  }
+  paintSwampOverlayRevival(ctx, tile, sx, sy, size);
+
+  if (wangSrc) {
+    const wangCanvas = preparedPixelBaseCanvas(wangSrc, baseFamily, 'texture');
+    if (wangCanvas) drawPreparedPixelTextureCrop(ctx, wangCanvas, tile, sx, sy, size, 0.18, 16120);
+  }
+
+  let transitionSrc = '';
+  const transitionBiome = tile.pixelLabTransitionBiome;
+  const transitionMask = Number.isInteger(tile.pixelLabTransitionMask) ? tile.pixelLabTransitionMask : 0;
+  const transitionSet = PIXEL_SWAMP_TRANSITION_SETS[transitionBiome];
+  // PixelLab transition metadata encodes the "upper" terrain as set bits. For
+  // swamp_to_* sets, upper is the neighboring biome; for *_to_swamp sets, upper
+  // is swamp. The chunk cache stores swamp-presence bits, so invert only the
+  // swamp_to_* families before selecting the PNG.
+  const transitionImageMask = transitionSet?.startsWith('swamp_to_') ? (15 ^ transitionMask) : transitionMask;
+  const transitionVariants = PIXEL_SWAMP_TRANSITION_WANG[transitionBiome];
+  if (transitionImageMask !== 0 && transitionVariants?.[transitionImageMask]) {
+    transitionSrc = transitionVariants[transitionImageMask];
+    // Current PixelLab transition PNGs are good texture donors but too chunky as
+    // full tiles on a diagonal coast. Keep the procedural mask shape in charge,
+    // and sample transition art as de-aligned flecks only.
+    const transitionCanvas = preparedPixelBaseCanvas(transitionSrc, baseFamily, 'detail');
+    if (transitionCanvas) drawPreparedPixelTextureCrop(ctx, transitionCanvas, tile, sx, sy, size, 0.04, 16160);
+  }
+
+  tile.pixelLabBaseSrc = foundationSrc ? 'procedural mud foundation + blended PixelLab variant donors' : (wangSrc || '');
+  tile.pixelLabBaseVariantSrc = variantSrc ? `cropped variant donors v${String(variantIndex).padStart(3, '0')}+v${String(secondaryIndex).padStart(3, '0')}` : '';
+  tile.pixelLabBaseFamily = baseFamily ?? 'none';
+  tile.pixelLabBaseMask = mask;
+  tile.pixelLabTransitionSrc = transitionSrc;
+  tile.pixelLabTransitionImageMask = transitionSrc ? transitionImageMask : 0;
+  return true;
+}

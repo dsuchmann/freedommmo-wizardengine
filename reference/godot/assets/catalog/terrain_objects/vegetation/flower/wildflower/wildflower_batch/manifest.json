@@ -1,0 +1,69 @@
+{
+  "tag": "terrain_wildflower",
+  "source": "pixellab_batch_review",
+  "pixel_size": [
+    32,
+    32
+  ],
+  "variant_count": 11,
+  "variants": [
+    {
+      "variant_index": 1,
+      "pixellab_object_id": "1db99a42-1855-4b41-8e6f-979948fc6c81",
+      "file": "variants/v1/base.png"
+    },
+    {
+      "variant_index": 2,
+      "pixellab_object_id": "fff92abe-567b-4975-b634-c8546e63631b",
+      "file": "variants/v2/base.png"
+    },
+    {
+      "variant_index": 3,
+      "pixellab_object_id": "0b3eebfa-66a5-4f51-8bf7-a044ceb5be2f",
+      "file": "variants/v3/base.png"
+    },
+    {
+      "variant_index": 4,
+      "pixellab_object_id": "b6fbd171-1ea6-4331-936f-c7c3c9795a00",
+      "file": "variants/v4/base.png"
+    },
+    {
+      "variant_index": 5,
+      "pixellab_object_id": "4e54c5a2-cf31-47bf-9d71-a9e200b4f299",
+      "file": "variants/v5/base.png"
+    },
+    {
+      "variant_index": 6,
+      "pixellab_object_id": "6c0014b6-ded0-4cde-a047-d7b7102a1ae6",
+      "file": "variants/v6/base.png"
+    },
+    {
+      "variant_index": 7,
+      "pixellab_object_id": "0169da98-ad5d-467e-80b0-b31c132559b9",
+      "file": "variants/v7/base.png"
+    },
+    {
+      "variant_index": 8,
+      "pixellab_object_id": "82c7833a-4889-45e5-8df4-659665dbf89d",
+      "file": "variants/v8/base.png"
+    },
+    {
+      "variant_index": 9,
+      "pixellab_object_id": "dde05780-6f15-444c-9b41-38f4cda2e0e7",
+      "file": "variants/v9/base.png"
+    },
+    {
+      "variant_index": 10,
+      "pixellab_object_id": "771c2163-d747-4328-9f3e-af508daf5f30",
+      "file": "variants/v10/base.png"
+    },
+    {
+      "variant_index": 11,
+      "pixellab_object_id": "79d9a27e-e583-40ef-828b-2e663f6145d0",
+      "file": "variants/v11/base.png"
+    }
+  ],
+  "has_embedded_shadow": false,
+  "perspective": "top-down",
+  "art_style": "pixel_art_rpg"
+}

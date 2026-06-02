@@ -1,0 +1,299 @@
+  // High-density environmental decoration: procedurally draw many small varied
+  // objects that feel contextual to the swamp — reeds, mud cracks, hummocks,
+  // puddles, root traces, mushrooms, pebbles, water lilies, logs, fireflies.
+  // All sub-tile scale (3-12px) for organic fit.
+  const wetness = clamp((moisture - 0.48) / 0.42, 0, 1);
+  const mossiness = clamp(density * 0.72 + wetness * 0.28, 0, 1);
+  const baseSeed = tile.wx * 313 + tile.wy * 997;
+  const objCount = Math.floor(8 + density * 7 + wetness * 5 + rand2(tile.wx, tile.wy, 16101) * 4);
+  const detailTags = [];
+
+  for (let i = 0; i < objCount; i++) {
+    const seed = baseSeed + i * 37;
+    const objType = (seed + Math.floor(i * 7.3)) % 12;
+    const px = sx + Math.floor(rand2(tile.wx, tile.wy, 16102 + i * 7) * (size - 8)) + 4;
+    const py = sy + Math.floor(rand2(tile.wx, tile.wy, 16103 + i * 7) * (size - 8)) + 4;
+
+    // 0-2: Reed/cattail stalk — thin vertical green line with brown top
+    if (objType < 3 && density > 0.15) {
+      detailTags.push('reed');
+      const len = Math.floor(size * (0.20 + rand2(tile.wx, tile.wy, 16110 + i) * 0.24));
+      ctx.strokeStyle = 'rgba(52, 142, 62, 0.54)';
+      ctx.lineWidth = Math.max(1, Math.floor(size * 0.050));
+      ctx.beginPath();
+      ctx.moveTo(px, py + len);
+      ctx.lineTo(px, py + 1);
+      ctx.stroke();
+      if (rand2(tile.wx, tile.wy, 16112 + i) > 0.50) {
+        ctx.fillStyle = 'rgba(118, 82, 48, 0.42)';
+        ctx.fillRect(px - 1, py, 3, 3 + Math.floor(rand2(tile.wx, tile.wy, 16113 + i) * 2));
+      }
+      continue;
+    }
+
+    // 3: Mud crack — short jagged dark line
+    if (objType === 3 && wetness < 0.70) {
+      detailTags.push('crack');
+      const len = Math.floor(size * (0.08 + rand2(tile.wx, tile.wy, 16120 + i) * 0.14));
+      const angle = rand2(tile.wx, tile.wy, 16130 + i) * Math.PI * 2;
+      ctx.strokeStyle = 'rgba(22, 18, 14, 0.28)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(px + Math.cos(angle) * len, py + Math.sin(angle) * len);
+      if (rand2(tile.wx, tile.wy, 16131 + i) > 0.55) {
+        ctx.moveTo(px + Math.floor(len * 0.5), py + Math.floor(Math.sin(angle) * len * 0.5));
+        ctx.lineTo(px + Math.floor(len * 0.5) + Math.cos(angle + 0.8) * len * 0.4, py + Math.floor(Math.sin(angle) * len * 0.5) + Math.sin(angle + 0.8) * len * 0.4);
+      }
+      ctx.stroke();
+      continue;
+    }
+
+    // 4: Moss hummock — small layered green patch
+    if (objType === 4 && mossiness > 0.30) {
+      detailTags.push('moss');
+      const w = Math.floor(size * (0.08 + rand2(tile.wx, tile.wy, 16140 + i) * 0.12));
+      const h = Math.floor(size * (0.04 + rand2(tile.wx, tile.wy, 16141 + i) * 0.06));
+      ctx.fillStyle = 'rgba(48, 112, 44, ' + (0.22 + mossiness * 0.18).toFixed(3) + ')';
+      ctx.fillRect(px, py, w, h);
+      ctx.fillStyle = 'rgba(72, 132, 58, ' + (0.14 + mossiness * 0.12).toFixed(3) + ')';
+      ctx.fillRect(px + 1, py - 1, Math.max(1, w - 2), h + 1);
+      continue;
+    }
+
+    // 5: Dark wet puddle — small ellipse
+    if (objType === 5 && wetness > 0.25) {
+      detailTags.push('puddle');
+      const w = Math.floor(size * (0.08 + rand2(tile.wx, tile.wy, 16150 + i) * 0.14));
+      const h = Math.floor(size * (0.04 + rand2(tile.wx, tile.wy, 16151 + i) * 0.06));
+      ctx.fillStyle = 'rgba(12, 34, 30, ' + (0.28 + wetness * 0.24).toFixed(3) + ')';
+      ctx.beginPath();
+      ctx.ellipse(px + w / 2, py + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      continue;
+    }
+
+    // 6: Root trace — thin brown ground line
+    if (objType === 6 && density > 0.30) {
+      detailTags.push('root');
+      const len = Math.floor(size * (0.10 + rand2(tile.wx, tile.wy, 16160 + i) * 0.14));
+      ctx.strokeStyle = 'rgba(52, 38, 28, 0.28)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(px + len, py + Math.floor(rand2(tile.wx, tile.wy, 16151 + i) * 2));
+      if (rand2(tile.wx, tile.wy, 16152 + i) > 0.55) {
+        ctx.moveTo(px + Math.floor(len * 0.5), py + 1);
+        ctx.lineTo(px + Math.floor(len * 0.5) - 1, py - 2);
+      }
+      ctx.stroke();
+      continue;
+    }
+
+    // 7: Tiny mushroom — rare, small cap on stalk
+    if (objType === 7 && density > 0.45 && rand2(tile.wx, tile.wy, 16160 + i) > 0.55) {
+      detailTags.push('mushroom');
+      const stalkH = 2 + Math.floor(rand2(tile.wx, tile.wy, 16161 + i) * 3);
+      ctx.strokeStyle = 'rgba(48, 38, 28, 0.22)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(px, py + stalkH);
+      ctx.lineTo(px, py + 1);
+      ctx.stroke();
+      const r = 148 + Math.floor(rand2(tile.wx, tile.wy, 16162 + i) * 40);
+      const g = 48 + Math.floor(rand2(tile.wx, tile.wy, 16163 + i) * 40);
+      const b = 38 + Math.floor(rand2(tile.wx, tile.wy, 16164 + i) * 30);
+      ctx.fillStyle = 'rgba(' + r + ', ' + g + ', ' + b + ', 0.24)';
+      ctx.fillRect(px - 2, py - 1, 5, 3);
+      continue;
+    }
+
+    // 8: Organic fleck — tiny dark speck
+    if (objType === 8) {
+      ctx.fillStyle = 'rgba(10, 17, 14, ' + (0.12 + wetness * 0.14).toFixed(3) + ')';
+      ctx.fillRect(px, py, 1 + Math.floor(rand2(tile.wx, tile.wy, 16170 + i) * 3), 1 + Math.floor(rand2(tile.wx, tile.wy, 16171 + i) * 2));
+      continue;
+    }
+
+    // 9: Water lily pad — green oval on wet tiles
+    if (objType === 9 && wetness > 0.35 && rand2(tile.wx, tile.wy, 16200 + i) > 0.40) {
+      detailTags.push('lily');
+      const w = Math.floor(size * (0.06 + rand2(tile.wx, tile.wy, 16201 + i) * 0.10));
+      const h = Math.floor(size * (0.03 + rand2(tile.wx, tile.wy, 16202 + i) * 0.05));
+      ctx.fillStyle = 'rgba(48, 128, 58, 0.32)';
+      ctx.beginPath();
+      ctx.ellipse(px, py, w, h, rand2(tile.wx, tile.wy, 16203 + i) * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(168, 148, 192, 0.20)';
+      ctx.fillRect(px - 1, py - 1, 2, 2);
+      continue;
+    }
+
+    // 10: Firefly particle — tiny glowing dot (rare)
+    if (objType === 10 && moisture > 0.30 && rand2(tile.wx, tile.wy, 16230 + i) > 0.65) {
+      detailTags.push('firefly');
+      ctx.fillStyle = 'rgba(218, 232, 148, ' + (0.18 + rand2(tile.wx, tile.wy, 16231 + i) * 0.22).toFixed(3) + ')';
+      ctx.fillRect(px, py, 2, 2);
+      continue;
+    }
+
+    // 11: Twig debris — small brown line
+    if (objType === 11) {
+      detailTags.push('twig');
+      const len = Math.floor(size * (0.06 + rand2(tile.wx, tile.wy, 16240 + i) * 0.10));
+      const r = 60 + Math.floor(rand2(tile.wx, tile.wy, 16241 + i) * 40);
+      const g2 = 40 + Math.floor(rand2(tile.wx, tile.wy, 16242 + i) * 30);
+      const b2 = 24 + Math.floor(rand2(tile.wx, tile.wy, 16243 + i) * 20);
+      ctx.strokeStyle = 'rgba(' + r + ', ' + g2 + ', ' + b2 + ', 0.22)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(px + len, py + Math.floor(rand2(tile.wx, tile.wy, 16244 + i) * (len > 3 ? 2 : 0)));
+      ctx.stroke();
+      continue;
+    }
+  }
+
+  // Wet puddle — occasional dark pool on the mud surface
+  if (wetness > 0.42 && rand2(tile.wx, tile.wy, 16180) < wetness * 0.72) {
+    const poolX = sx + Math.floor(rand2(tile.wx, tile.wy, 16181) * (size - 10));
+    const poolY = sy + Math.floor(rand2(tile.wx, tile.wy, 16182) * (size - 8));
+    ctx.fillStyle = 'rgba(12, 28, 26, 0.32)';
+    ctx.fillRect(poolX, poolY, Math.max(4, Math.floor(size * 0.28)), Math.max(2, Math.floor(size * 0.10)));
+    ctx.strokeStyle = 'rgba(168, 218, 182, 0.12)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(poolX + 2, poolY + 1);
+    ctx.lineTo(poolX + Math.floor(size * 0.18), poolY);
+    ctx.stroke();
+  }
+
+  // Reed clumps on wet tiles
+  if (wetness > 0.35 && rand2(tile.wx, tile.wy, 16260) < 0.82) {
+    detailTags.push('reeds');
+    const rx = sx + size * (0.12 + rand2(tile.wx, tile.wy, 16261) * 0.76);
+    const ry = sy + size * (0.28 + rand2(tile.wx, tile.wy, 16262) * 0.56);
+    const stalks = 3 + Math.floor(rand2(tile.wx, tile.wy, 16263) * 4);
+    ctx.strokeStyle = 'rgba(48, 148, 56, 0.72)';
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.050));
+    ctx.beginPath();
+    for (let i = 0; i < stalks; i++) {
+      const dx = (i - stalks / 2) * size * 0.060 + (rand2(tile.wx, tile.wy, 16264 + i) - 0.5) * size * 0.035;
+      const h = size * (0.22 + rand2(tile.wx, tile.wy, 16270 + i) * 0.20);
+      ctx.moveTo(rx + dx, ry);
+      ctx.lineTo(rx + dx + (rand2(tile.wx, tile.wy, 16280 + i) - 0.5) * size * 0.06, ry - h);
+    }
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(98, 165, 72, 0.58)';
+    ctx.fillRect(rx - size * 0.14, ry - 1, size * 0.28, Math.max(2, size * 0.06));
+  }
+
+  // Stump accent
+  if (rand2(tile.wx, tile.wy, 16320) < 0.38) {
+    detailTags.push('stump');
+    const sx3 = sx + size * (0.22 + rand2(tile.wx, tile.wy, 16321) * 0.56);
+    const sy3 = sy + size * (0.26 + rand2(tile.wx, tile.wy, 16322) * 0.52);
+    ctx.fillStyle = 'rgba(62, 36, 24, 0.72)';
+    ctx.beginPath();
+    ctx.ellipse(sx3, sy3, size * 0.095, size * 0.065, rand2(tile.wx, tile.wy, 16323) * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(172, 108, 54, 0.58)';
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.045));
+    ctx.beginPath();
+    ctx.ellipse(sx3, sy3 - size * 0.006, size * 0.058, size * 0.030, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Second stump variant (different seed)
+  if (rand2(tile.wx, tile.wy, 16330) < 0.28) {
+    detailTags.push('stump');
+    const x = sx + size * (0.24 + rand2(tile.wx, tile.wy, 16331) * 0.52);
+    const y = sy + size * (0.30 + rand2(tile.wx, tile.wy, 16332) * 0.48);
+    ctx.fillStyle = 'rgba(42, 28, 20, 0.58)';
+    ctx.beginPath();
+    ctx.ellipse(x, y, size * 0.090, size * 0.060, rand2(tile.wx, tile.wy, 16333) * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(130, 86, 48, 0.50)';
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.038));
+    ctx.beginPath();
+    ctx.ellipse(x, y - size * 0.006, size * 0.055, size * 0.028, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Water pool with reflection
+  if (wetness > 0.38 && rand2(tile.wx, tile.wy, 16340) < 0.44 + wetness * 0.34) {
+    detailTags.push('pool');
+    const x = sx + size * (0.18 + rand2(tile.wx, tile.wy, 16341) * 0.64);
+    const y = sy + size * (0.22 + rand2(tile.wx, tile.wy, 16342) * 0.56);
+    const rot = rand2(tile.wx, tile.wy, 16343) * Math.PI;
+    ctx.fillStyle = 'rgba(4, 20, 22, 0.54)';
+    ctx.beginPath();
+    ctx.ellipse(x, y, size * (0.18 + rand2(tile.wx, tile.wy, 16344) * 0.14), size * (0.070 + rand2(tile.wx, tile.wy, 16345) * 0.065), rot, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(146, 198, 162, 0.42)';
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.04));
+    ctx.beginPath();
+    ctx.ellipse(x, y - size * 0.01, size * 0.13, size * 0.035, rot, 0.15, Math.PI * 0.85);
+    ctx.stroke();
+  }
+
+  // Fungi cluster on mossy ground
+  if (mossiness > 0.55 && rand2(tile.wx, tile.wy, 16360) < 0.30) {
+    detailTags.push('fungi');
+    const x = sx + size * (0.20 + rand2(tile.wx, tile.wy, 16361) * 0.60);
+    const y = sy + size * (0.30 + rand2(tile.wx, tile.wy, 16362) * 0.50);
+    ctx.fillStyle = 'rgba(165, 146, 92, 0.38)';
+    ctx.beginPath();
+    ctx.ellipse(x, y, size * 0.030, size * 0.020, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(198, 181, 124, 0.32)';
+    ctx.beginPath();
+    ctx.ellipse(x + size * 0.025, y + size * 0.02, size * 0.025, size * 0.015, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(120, 100, 60, 0.30)';
+    ctx.beginPath();
+    ctx.moveTo(x, y + size * 0.02);
+    ctx.lineTo(x, y + size * 0.045);
+    ctx.stroke();
+  }
+
+  // Swamp shrub — small rounded bush
+  if (vegetation > 0.50 && rand2(tile.wx, tile.wy, 16380) < 0.26) {
+    detailTags.push('swamp-shrub');
+    const x = sx + size * (0.22 + rand2(tile.wx, tile.wy, 16381) * 0.56);
+    const y = sy + size * (0.30 + rand2(tile.wx, tile.wy, 16382) * 0.46);
+    ctx.fillStyle = 'rgba(24, 74, 31, 0.52)';
+    ctx.beginPath();
+    ctx.ellipse(x, y, size * 0.12, size * 0.08, rand2(tile.wx, tile.wy, 16383) * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(55, 118, 45, 0.45)';
+    ctx.beginPath();
+    ctx.ellipse(x + size * 0.04, y - size * 0.025, size * 0.07, size * 0.045, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(31, 54, 26, 0.45)';
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.035));
+    ctx.beginPath();
+    ctx.moveTo(x - size * 0.05, y + size * 0.08);
+    ctx.lineTo(x + size * 0.04, y + size * 0.01);
+    ctx.stroke();
+  }
+
+  // Root fan — spreading surface roots
+  if (rand2(tile.wx, tile.wy, 16400) < 0.24) {
+    detailTags.push('root-fan');
+    const x = sx + size * (0.18 + rand2(tile.wx, tile.wy, 16401) * 0.64);
+    const y = sy + size * (0.25 + rand2(tile.wx, tile.wy, 16402) * 0.54);
+    const rot = rand2(tile.wx, tile.wy, 16403) * Math.PI * 2;
+    ctx.strokeStyle = 'rgba(34, 24, 18, 0.44)';
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.035));
+    ctx.beginPath();
+    for (let i = 0; i < 4; i++) {
+      const a = rot + (i - 1.5) * 0.45;
+      const len = size * (0.06 + rand2(tile.wx, tile.wy, 16410 + i) * 0.08);
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + Math.cos(a) * len, y + Math.sin(a) * len);
+    }
+    ctx.stroke();
+  }
+
+  tile.swampDetailLayer = 'local ' + detailTags.join('+') + ' dressed-v4';

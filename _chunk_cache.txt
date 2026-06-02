@@ -1,0 +1,245 @@
+import { WORLD } from '../core/constants.js';
+import { paintTerrainTile } from './tile-painter.js';
+import { landscapeRecipe } from './landscape-recipe.js';
+import { paintTerrainFeatures } from './feature-painter.js';
+import { paintWangTerrainChunk, getDebugWangData, clearDebugWangData } from './wang-terrain-painter.js';
+
+const TERRAIN_RENDER_VERSION = 'swamp-macro-v18';
+
+export class ChunkRenderCache {
+  constructor(compositor = null, atlas = null) {
+    this.compositor = compositor;
+    this.atlas = atlas;
+    this.cache = new Map();
+    this.jobs = new Map();
+    this.maxEntries = 30;
+    this.tileBudget = 1024;
+    this.jobBudget = 1;
+  }
+
+  beginFrame(maxJobs = 1) {
+    this.jobBudget = maxJobs;
+  }
+
+  key(chunk) {
+    return `${chunk.cx},${chunk.cy}:${TERRAIN_RENDER_VERSION}`;
+  }
+
+  lightBucket(sun) {
+    return 'terrain-static';
+  }
+
+  get(chunk, sun) {
+    const key = this.key(chunk);
+    const hit = this.cache.get(key);
+    if (hit) {
+      hit.lastUsed = performance.now();
+      return hit.canvas;
+    }
+
+    let job = this.jobs.get(key);
+    if (!job) {
+      const canvas = document.createElement('canvas');
+      canvas.width = WORLD.chunkSize * WORLD.tileSize;
+      canvas.height = WORLD.chunkSize * WORLD.tileSize;
+      const ctx = canvas.getContext('2d', { alpha: true, willReadFrequently: false });
+      ctx.imageSmoothingEnabled = false;
+      const terrainSun = { ...sun, ambient: 0.92, height: 1, tint: { r: 1, g: 1, b: 1 } };
+      job = { key, chunk, canvas, ctx, terrainSun, phase: 'terrain', cursor: 0 };
+      this.jobs.set(key, job);
+    }
+
+    if (this.jobBudget <= 0) return null;
+    this.jobBudget--;
+    this.stepJob(job);
+
+    if (job.done) {
+      this.jobs.delete(key);
+      this.cache.set(key, { canvas: job.canvas, lastUsed: performance.now() });
+      this.evict();
+      return job.canvas;
+    }
+
+    return null;
+  }
+
+  stepJob(job) {
+    const total = WORLD.chunkSize * WORLD.chunkSize;
+    let remaining = this.tileBudget;
+
+    while (remaining > 0 && !job.done) {
+      if (job.phase === 'terrain') {
+        const start = job.cursor;
+        const end = Math.min(total, job.cursor + remaining);
+        for (; job.cursor < end; job.cursor++) {
+          const x = job.cursor % WORLD.chunkSize;
+          const y = Math.floor(job.cursor / WORLD.chunkSize);
+          const tile = job.chunk.tiles[job.cursor];
+          preparePixelLabBaseMask(job.chunk, x, y, tile);
+          paintTerrainTile(job.ctx, tile, x * WORLD.tileSize, y * WORLD.tileSize, WORLD.tileSize, job.terrainSun, tile.climate.elevation, this.compositor, 0, this.atlas);
+        }
+        remaining -= (end - start);
+        if (job.cursor >= total) {
+          job.phase = 'wang';
+          job.cursor = 0;
+        }
+      } else if (job.phase === 'wang') {
+        paintWangTerrainChunk(job.ctx, job.chunk, job.terrainSun);
+        job.phase = 'features';
+        job.cursor = 0;
+      } else if (job.phase === 'features') {
+        const end = Math.min(total, job.cursor + remaining);
+        for (; job.cursor < end; job.cursor++) {
+          const x = job.cursor % WORLD.chunkSize;
+          const y = Math.floor(job.cursor / WORLD.chunkSize);
+          const tile = job.chunk.tiles[job.cursor];
+          paintTerrainFeatures(job.ctx, tile, x * WORLD.tileSize, y * WORLD.tileSize, WORLD.tileSize, job.terrainSun);
+        }
+        if (job.cursor >= total) job.done = true;
+        remaining = 0;
+      }
+    }
+  }
+
+  /** Get Wang debug data for a chunk, or null if not rendered yet */
+  getDebug(key) {
+    return getDebugWangData(key) ?? null;
+  }
+
+  /** Clear all cached terrain and debug data */
+  clear() {
+    this.cache.clear();
+    this.jobs.clear();
+    clearDebugWangData();
+  }
+
+  evict() {
+    if (this.cache.size <= this.maxEntries) return;
+    const entries = [...this.cache.entries()].sort((a, b) => a[1].lastUsed - b[1].lastUsed);
+    while (entries.length && this.cache.size > this.maxEntries) this.cache.delete(entries.shift()[0]);
+  }
+
+  stats() {
+    return { cachedTerrainChunks: this.cache.size, maxTerrainChunks: this.maxEntries };
+  }
+}
+
+function preparePixelLabBaseMask(chunk, x, y, tile) {
+  const family = landscapeRecipe(tile).base.family;
+  if (family !== 'swamp/wet_mud' && family !== 'swamp/mud_pool') {
+    preparePixelLabBeachSwampFeather(chunk, x, y, tile);
+    return;
+  }
+  tile.pixelLabSkipBase = false;
+  tile.pixelLabMissingTransition = '';
+  tile.pixelLabTransitionBiome = '';
+  tile.pixelLabTransitionMask = 0;
+  tile.pixelLabTransitionSides = 0;
+  tile.pixelLabTransitionSrc = '';
+  tile.pixelLabTransitionImageMask = 0;
+
+  const neighborTile = (dx, dy) => {
+    const nx = x + dx;
+    const ny = y + dy;
+    if (nx < 0 || ny < 0 || nx >= WORLD.chunkSize || ny >= WORLD.chunkSize) return null;
+    return chunk.tiles[ny * WORLD.chunkSize + nx] ?? null;
+  };
+  const isForeign = (dx, dy) => {
+    const other = neighborTile(dx, dy);
+    return Boolean(other?.biome && other.biome !== tile.biome);
+  };
+
+  const foreignCounts = new Map();
+  const countForeign = (dx, dy, weight) => {
+    const other = neighborTile(dx, dy);
+    if (other?.biome && other.biome !== tile.biome) {
+      foreignCounts.set(other.biome, (foreignCounts.get(other.biome) ?? 0) + weight);
+    }
+  };
+  countForeign(0, -1, 4);
+  countForeign(1, 0, 4);
+  countForeign(0, 1, 4);
+  countForeign(-1, 0, 4);
+  countForeign(-1, -1, 1);
+  countForeign(1, -1, 1);
+  countForeign(-1, 1, 1);
+  countForeign(1, 1, 1);
+  const transitionBiome = [...foreignCounts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] ?? '';
+
+  if (transitionBiome) {
+    const n = isForeign(0, -1);
+    const e = isForeign(1, 0);
+    const s = isForeign(0, 1);
+    const w = isForeign(-1, 0);
+    const nw = isForeign(-1, -1);
+    const ne = isForeign(1, -1);
+    const sw = isForeign(-1, 1);
+    const se = isForeign(1, 1);
+    let transitionMask = 0;
+    // Corner bits are swamp-present bits. Mark a corner as foreign when either
+    // adjacent side or its diagonal is foreign; this removes the alternating
+    // diagonal checker pattern from swamp/beach boundaries.
+    if (!(n || w || nw)) transitionMask |= 8;
+    if (!(n || e || ne)) transitionMask |= 4;
+    if (!(s || w || sw)) transitionMask |= 2;
+    if (!(s || e || se)) transitionMask |= 1;
+    let sideMask = 0;
+    if (n) sideMask |= 1;
+    if (e) sideMask |= 2;
+    if (s) sideMask |= 4;
+    if (w) sideMask |= 8;
+    tile.pixelLabBaseMask = 15;
+    tile.pixelLabBaseFamily = family;
+    tile.pixelLabTransitionBiome = transitionBiome;
+    tile.pixelLabTransitionMask = transitionMask;
+    tile.pixelLabTransitionSides = sideMask;
+    tile.pixelLabMissingTransition = `${family}__to__${transitionBiome}`;
+    return;
+  }
+
+  const same = (dx, dy) => {
+    const other = neighborTile(dx, dy);
+    if (!other) return true;
+    return landscapeRecipe(other).base.family === family;
+  };
+  let mask = 0;
+  if (same(-1, -1)) mask |= 8;
+  if (same(1, -1)) mask |= 4;
+  if (same(-1, 1)) mask |= 2;
+  if (same(1, 1)) mask |= 1;
+  tile.pixelLabBaseMask = mask;
+  tile.pixelLabBaseFamily = family;
+}
+
+function preparePixelLabBeachSwampFeather(chunk, x, y, tile) {
+  if (tile.biome !== 'beach' && tile.biome !== 'desert') return;
+  const neighborTile = (dx, dy) => {
+    const nx = x + dx;
+    const ny = y + dy;
+    if (nx < 0 || ny < 0 || nx >= WORLD.chunkSize || ny >= WORLD.chunkSize) return null;
+    return chunk.tiles[ny * WORLD.chunkSize + nx] ?? null;
+  };
+  const isSwamp = (dx, dy) => neighborTile(dx, dy)?.biome === 'swamp';
+  const n = isSwamp(0, -1), e = isSwamp(1, 0), s = isSwamp(0, 1), w = isSwamp(-1, 0);
+  const nw = isSwamp(-1, -1), ne = isSwamp(1, -1), sw = isSwamp(-1, 1), se = isSwamp(1, 1);
+  if (!(n || e || s || w || nw || ne || sw || se)) return;
+  let swampMask = 0;
+  if (n || w || nw) swampMask |= 8;
+  if (n || e || ne) swampMask |= 4;
+  if (s || w || sw) swampMask |= 2;
+  if (s || e || se) swampMask |= 1;
+  let sideMask = 0;
+  if (n) sideMask |= 1;
+  if (e) sideMask |= 2;
+  if (s) sideMask |= 4;
+  if (w) sideMask |= 8;
+  tile.pixelLabTransitionBiome = tile.biome;
+  tile.pixelLabTransitionMask = swampMask;
+  tile.pixelLabTransitionSides = sideMask;
+  tile.pixelLabTransitionImageMask = 15 ^ swampMask;
+}
+
+function elevationLift(elevation) {
+  return Math.max(0, elevation - 0.35) * 18;
+}
+

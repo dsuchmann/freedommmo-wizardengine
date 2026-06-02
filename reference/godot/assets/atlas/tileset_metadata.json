@@ -1,0 +1,51 @@
+{
+  "version": "1.0",
+  "tile_size": 16,
+  "biomes": {
+    "forest": {
+      "atlas_files": {},
+      "tiles": [],
+      "tile_count": 0
+    },
+    "grass": {
+      "atlas_files": {},
+      "tiles": [],
+      "tile_count": 0
+    },
+    "desert": {
+      "atlas_files": {},
+      "tiles": [],
+      "tile_count": 0
+    }
+  },
+  "terrain_sets": [
+    {
+      "name": "ground_water",
+      "mode": "match_corners_and_sides",
+      "terrains": [
+        {
+          "name": "water",
+          "color": "#2d5a87"
+        },
+        {
+          "name": "ground",
+          "color": "#50a050"
+        }
+      ]
+    },
+    {
+      "name": "ground_cliff",
+      "mode": "match_corners_and_sides",
+      "terrains": [
+        {
+          "name": "ground",
+          "color": "#50a050"
+        },
+        {
+          "name": "cliff",
+          "color": "#606060"
+        }
+      ]
+    }
+  ]
+}

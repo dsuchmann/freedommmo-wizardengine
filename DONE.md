@@ -269,3 +269,56 @@
   - Terrain base color variance now uses domain-warped coherent patch fields instead of per-tile random palette selection, reducing scattershot/noisy map appearance.
   - Elevation overlay now samples north/south/east/west across chunk boundaries and renders stronger contours, highlights, shadows, and cliff bands based on elevation gradients.
   - Added explicit cliff/step visual bands for steep gradients while keeping cached terrain chunks seam-aligned.
+- Improved topology classification and movement constraints:
+  - Terrain form classification now computes local step height and convexity in addition to broad slope/ridge/valley signals.
+  - Added `step` and `mountain_bowl` terrain forms; ridges/valleys now use convexity for stronger topological identity.
+  - Movement now blocks only true cliffs/extreme local steps, allows climbable steps, and assigns different movement costs for step/ridge/valley/mountain bowl terrain.
+  - Player climb detection now treats step terrain as climbable.
+  - Elevation overlay now draws distinct step ledge marks in addition to cliff bands.
+- Added dual smooth-incline and quantized-plateau topology model:
+  - Added `docs/DUAL_TOPOLOGY_SYSTEM.md` describing smooth implied elevation plus SNES-style stepped plateau grammar.
+  - Terrain forms now compute `plateauLevel` and `plateauDelta` from quantized elevation bands.
+  - Plateau deltas classify explicit `step` and `cliff` transitions before smooth slope fallback.
+  - Camera now subtly zooms out and vertically offsets based on elevation, slope, and plateau level to communicate uphill/downhill travel in 2D.
+  - Movement cost now reacts to both smooth slope and local step height.
+  - HUD displays terrain form and plateau level.
+- Added topology showcase area and teleport:
+  - Added deterministic topology showcase climate patch at world coordinates roughly `180..245, 180..245` with smooth incline, multiple plateau levels, and a ramp corridor.
+  - Added `T` hotkey to teleport the player to the showcase at approximately `(208, 212)`.
+  - HUD help now lists `T topology showcase`.
+  - Verified sampled showcase points include plains, step, and mountain_slope forms with plateau levels `0..4`.
+- Inventoried and started wiring Godot/Pixellab assets:
+  - Added `docs/LANDSCAPE_LAYER_ENUMERATION_FROM_SPECS.md` enumerating 20 landscape assembly layers from regional biome through terrain, topology, Wang transitions, micro-details, objects, canopy, interactions, lighting, and actors.
+  - Added `scripts/inventory-godot-assets.mjs` and generated `reference/godot/assets/inventory.json` containing 16,341 image assets.
+  - Added `src/assets/godot-asset-defs.js` with first terrain/object asset definitions and biome-to-terrain frame mapping.
+  - `AtlasManager` now loads Godot/Pixellab terrain/object definitions before generated/fallback art.
+  - Terrain painting now tries to draw Godot/Pixellab biome terrain tiles first, falling back to procedural coherent patch terrain if the image is unavailable.
+- Added explicit plateau cliff wall rendering:
+  - Elevation overlay now samples neighboring plateau levels and draws dark wall faces plus highlighted ledge caps where the current tile drops to a lower neighboring plateau.
+  - Plateau transitions should now read as stacked shelves/steps/cliffs instead of only subtle slope shading.
+- Fixed likely Godot/Pixellab tile rendering issue and strengthened visible topology:
+  - `ImageAtlas` now supports `fullImage` frames so standalone PNG tiles/objects are drawn from the full source image instead of incorrectly slicing only the top-left 32x32 area.
+  - Godot/Pixellab terrain/object definitions are marked `fullImage: true`.
+  - Plateau overlay now tints higher levels and draws much larger/darker wall faces plus brighter ledge caps, making stacked topology visibly obvious instead of subtle.
+- Disabled incorrect Godot/Pixellab terrain sheet stretching:
+  - Screenshot showed large sheet/stripe artifacts caused by drawing full tileset/Wang images as if they were single terrain tiles.
+  - Added `safeGodotTerrainFrame()` so terrain only uses Godot frames that are tile-sized/safe; large/suspicious sheets fall back to coherent procedural terrain until properly sliced.
+  - Added `docs/GODOT_ASSET_IMPORT_FIXME.md` documenting the needed Wang/autotile parsing pipeline.
+- Implemented first sliced Godot/Pixellab Wang terrain import:
+  - `ImageAtlas` now supports explicit row/column frame rects in addition to full-image and simple row sprites.
+  - Added `src/assets/godot-wang-defs.js` with 32x32 sliced frame definitions for grassland, forest, desert, ocean/beach, and mystic/grassland_lush sheets.
+  - `AtlasManager` now loads sliced Wang defs before standalone Godot/generated/fallback assets.
+  - Added `scripts/audit-godot-wang-sheets.mjs` and generated `reference/godot/assets/wang-audit.json` for the initial Wang sheet assumptions.
+  - Temporarily disabled Wang frames in the live base terrain painter after screenshots showed black/grid artifacts from unaudited sheet sampling; Wang sets remain available for a later verified autotile pass.
+- Improved landscape assembly rendering:
+  - Base terrain now uses coherent procedural biome color/noise instead of unsafe full-sheet image sampling, eliminating disappearing tiles from invalid atlas frames.
+  - Added visible assembled layers over the base floor: organic dirt/rock slope patches, grass blades, bushes, tree canopy overlays, and existing micro-layers.
+  - Replaced hard rectangular elevation step bands with noisy organic slope polygons and soft contour strokes to avoid straight artificial landscape edges.
+  - Follow-up pass reduced oversized procedural grass from brushstroke-sized marks to pixel-scale tufts.
+  - Reworked elevation visualization toward Zelda/CrossCode readability: organic top lip, visible vertical cliff face, darker side wall, and rocky vertical striation rather than flat contour bands.
+  - Verified asset inventory: the project contains 16,454 image files, but the generated variants directory referenced by `biome-variant-atlas-defs.js` is currently missing, so many copied assets exist on disk but are not yet wired into the atlas manifest/loader.
+- Added contextual landscape-art inventory and wiring:
+  - Generated `src/assets/landscape-art-inventory.js` from existing image files under `assets/` and `reference/godot/assets/`, grouped by landscape categories including grass, dirt, rock/stone, tree, shrub/bush, flower, moss, fern, cliff/ledge, branch, twig, and log.
+  - Added `src/assets/landscape-art-defs.js` to expose the discovered images as atlas full-image frames with biome-aware selection.
+  - Registered `landscapeArtDefs` in `AtlasManager`, so the live renderer can now request discovered art assets instead of only procedural placeholders.
+  - Updated terrain assembly to contextually place real grass/fern, moss/dirt, rock, shrub, log, and tree assets where appropriate for the current biome, while keeping small procedural fallbacks.

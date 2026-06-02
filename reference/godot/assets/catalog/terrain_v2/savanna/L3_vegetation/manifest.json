@@ -1,0 +1,24 @@
+{
+  "biome": "savanna",
+  "layer": "L3_vegetation",
+  "pixellab_tileset_id": "83c89881-5267-4416-9bf4-92302b1d1023",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "4244213b-31dc-4b50-b3e0-a7901804a88e",
+    "upper": "f834a835-01ee-4582-946d-b489fb5ba603"
+  },
+  "generation_prompt": {
+    "lower_description": "tall dry yellow-brown grass tufts and small thorny bushes on fully transparent background, pixel art, top-down view",
+    "upper_description": "different dry grass tuft pattern with acacia seedlings on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

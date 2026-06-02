@@ -1,0 +1,24 @@
+{
+  "biome": "ocean",
+  "layer": "transitions/ocean_to_beach",
+  "pixellab_tileset_id": "e5f404d3-e3b5-448b-9a7b-d0d4192beada",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "0f7673ef-dd33-44ec-a092-52d581201380",
+    "upper": "3396105f-6c43-43b0-9179-443b6fdc85cb"
+  },
+  "generation_prompt": {
+    "lower_description": "deep blue ocean water with gentle waves",
+    "upper_description": "golden sandy beach with fine grain texture"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

@@ -1,0 +1,16 @@
+wang_0.png: 5/1024
+wang_1.png: 4/1024
+wang_2.png: 6/1024
+wang_3.png: 6/1024
+wang_4.png: 7/1024
+wang_5.png: 1/1024
+wang_6.png: 8/1024
+wang_7.png: 3/1024
+wang_8.png: 6/1024
+wang_9.png: 1/1024
+wang_10.png: 1/1024
+wang_11.png: 6/1024
+wang_12.png: 6/1024
+wang_13.png: 4/1024
+wang_14.png: 3/1024
+wang_15.png: 4/1024

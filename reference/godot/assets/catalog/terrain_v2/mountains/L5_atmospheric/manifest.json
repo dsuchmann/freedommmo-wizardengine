@@ -1,0 +1,24 @@
+{
+  "biome": "mountains",
+  "layer": "L5_atmospheric",
+  "pixellab_tileset_id": "25cf6cf6-9fd9-4992-aafd-0135897c92fa",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "6929ed88-9c64-43c7-868e-2637aadae73b",
+    "upper": "9aa4a35f-cf42-4dd6-9ab3-a989ad6d0b39"
+  },
+  "generation_prompt": {
+    "lower_description": "thin mountain mist wisps and wind-blown particles on fully transparent background, pixel art, top-down view",
+    "upper_description": "different mist pattern with less density on transparent background, sparse, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

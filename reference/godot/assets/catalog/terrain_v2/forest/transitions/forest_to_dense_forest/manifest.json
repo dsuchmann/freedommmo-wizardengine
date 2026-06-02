@@ -1,0 +1,24 @@
+{
+  "biome": "forest",
+  "layer": "transitions/forest_to_dense_forest",
+  "pixellab_tileset_id": "28df4cfc-aa46-42d6-a862-126b904ab14f",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "1a6c5646-e2e8-4934-b203-cc24b8760cce",
+    "upper": "8d7d8dad-0e1e-4ceb-ab0f-213fc3615b0b"
+  },
+  "generation_prompt": {
+    "lower_description": "dark forest floor",
+    "upper_description": "very dark dense forest floor with thick leaves"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

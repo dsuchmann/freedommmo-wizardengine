@@ -1,0 +1,24 @@
+{
+  "biome": "dense_forest",
+  "layer": "L4_scatter",
+  "pixellab_tileset_id": "22e124e0-7143-41b2-824a-597be825b100",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "f9a489b3-fd27-4078-9b3f-25afbbd88464",
+    "upper": "ac3ab768-b6e0-4383-b92e-b2a2879ab3d9"
+  },
+  "generation_prompt": {
+    "lower_description": "scattered rotting wood pieces and fallen branches on fully transparent background, pixel art, top-down view",
+    "upper_description": "different rotting log arrangement with bark fragments on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

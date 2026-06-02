@@ -1,0 +1,24 @@
+{
+  "biome": "mountains",
+  "layer": "L3_vegetation",
+  "pixellab_tileset_id": "8d600c66-0238-48cc-8cbc-80f2976c67b2",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "cb0af1a4-716b-478a-ad7a-ffd3b07de312",
+    "upper": "312babaa-62cb-4666-9f43-b1e5ab13914b"
+  },
+  "generation_prompt": {
+    "lower_description": "small hardy mountain plants and colorful cliff flowers in rock crevices on fully transparent background, pixel art, top-down view",
+    "upper_description": "different alpine flower arrangement with grey-green lichen on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

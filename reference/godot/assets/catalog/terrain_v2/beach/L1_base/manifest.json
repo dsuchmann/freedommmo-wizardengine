@@ -1,0 +1,24 @@
+{
+  "biome": "beach",
+  "layer": "L1_base",
+  "pixellab_tileset_id": "13c04106-50fe-4d15-963c-4ccc1427004f",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "3396105f-6c43-43b0-9179-443b6fdc85cb",
+    "upper": "d04e1ef8-7f5f-4b0e-8603-9649d1400de5"
+  },
+  "generation_prompt": {
+    "lower_description": "golden sandy beach with fine grain texture and scattered tiny shell fragments",
+    "upper_description": "golden sandy beach with slightly different sand grain pattern and wave-washed smooth areas"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

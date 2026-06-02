@@ -1,0 +1,101 @@
+    const seed = baseSeed + i * 53;
+    const objType = (seed + Math.floor(i * 13.7)) % 6;
+    const px = sx + Math.floor(rand2(tile.wx, tile.wy, 16510 + i * 7) * (size - 12)) + 6;
+    const py = sy + Math.floor(rand2(tile.wx, tile.wy, 16511 + i * 7) * (size - 12)) + 6;
+
+    // 0: Fallen log — thick brown oval with dark cracks
+    if (objType === 0) {
+      const logLen = size * (0.30 + rand2(tile.wx, tile.wy, 16520 + i) * 0.30);
+      const logW  = size * (0.07 + rand2(tile.wx, tile.wy, 16521 + i) * 0.05);
+      const rot   = rand2(tile.wx, tile.wy, 16522 + i) * Math.PI;
+      ctx.fillStyle = 'rgba(52, 32, 22, 0.85)';
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(rot);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, logLen / 2, logW / 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Crack line
+      ctx.strokeStyle = 'rgba(22, 14, 10, 0.50)';
+      ctx.lineWidth = Math.max(1, Math.floor(size * 0.025));
+      ctx.beginPath();
+      ctx.moveTo(-logLen * 0.30, 0);
+      ctx.lineTo(logLen * 0.25, 1);
+      ctx.stroke();
+      ctx.restore();
+      continue;
+    }
+
+    // 1: Dead snag — upright dark post with side branch
+    if (objType === 1 && vegetation > 0.40) {
+      const trunkH = size * (0.28 + rand2(tile.wx, tile.wy, 16530 + i) * 0.30);
+      const trunkW = size * (0.04 + rand2(tile.wx, tile.wy, 16531 + i) * 0.03);
+      ctx.fillStyle = 'rgba(42, 24, 16, 0.90)';
+      ctx.fillRect(px - trunkW / 2, py - trunkH, trunkW, trunkH);
+      // Branch
+      ctx.strokeStyle = 'rgba(42, 24, 16, 0.72)';
+      ctx.lineWidth = Math.max(1, Math.floor(trunkW * 0.6));
+      ctx.beginPath();
+      ctx.moveTo(px, py - trunkH * 0.7);
+      ctx.lineTo(px + trunkW * 2.5, py - trunkH * 0.55);
+      ctx.stroke();
+      continue;
+    }
+
+    // 2: Large reed clump — thick green stalks with brown tops
+    if (objType === 2 && moisture > 0.30) {
+      const stalks = 3 + Math.floor(rand2(tile.wx, tile.wy, 16540 + i) * 4);
+      ctx.strokeStyle = 'rgba(38, 128, 48, 0.78)';
+      ctx.lineWidth = Math.max(2, Math.floor(size * 0.055));
+      for (let s = 0; s < stalks; s++) {
+        const dx = (s - stalks / 2) * size * 0.07;
+        const h = size * (0.35 + rand2(tile.wx, tile.wy, 16550 + i * 3 + s) * 0.30);
+        ctx.beginPath();
+        ctx.moveTo(px + dx, py);
+        ctx.lineTo(px + dx + (rand2(tile.wx, tile.wy, 16560 + i * 3 + s) - 0.5) * size * 0.05, py - h);
+        ctx.stroke();
+        // Cattail head
+        if (rand2(tile.wx, tile.wy, 16570 + i * 3 + s) > 0.45) {
+          ctx.fillStyle = 'rgba(142, 98, 48, 0.70)';
+          const headY = py - h;
+          ctx.fillRect(px + dx - size * 0.03, headY - size * 0.04, size * 0.06, size * 0.08);
+        }
+      }
+      continue;
+    }
+
+    // 3: Root snarl — tangled brown lines at ground level
+    if (objType === 3 && vegetation > 0.35) {
+      ctx.strokeStyle = 'rgba(48, 30, 18, 0.60)';
+      ctx.lineWidth = Math.max(2, Math.floor(size * 0.050));
+      const cx = px, cy = py;
+      for (let r = 0; r < 5; r++) {
+        const a = rand2(tile.wx, tile.wy, 16580 + i * 5 + r) * Math.PI * 2;
+        const len = size * (0.10 + rand2(tile.wx, tile.wy, 16590 + i * 5 + r) * 0.20);
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(a) * len, cy + Math.sin(a) * len);
+        ctx.stroke();
+      }
+      continue;
+    }
+
+    // 4: Water pool — dark oval with edge reflection (only on wet tiles)
+    if (objType === 4 && moisture > 0.45) {
+      const poolW = size * (0.28 + rand2(tile.wx, tile.wy, 16600 + i) * 0.24);
+      const poolH = size * (0.10 + rand2(tile.wx, tile.wy, 16601 + i) * 0.10);
+      const rot = rand2(tile.wx, tile.wy, 16602 + i) * Math.PI * 0.5;
+      ctx.fillStyle = 'rgba(4, 18, 20, 0.72)';
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(rot);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, poolW / 2, poolH / 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Reflection highlight on edge
+      ctx.strokeStyle = 'rgba(168, 218, 182, 0.18)';
+      ctx.lineWidth = Math.max(1, Math.floor(size * 0.03));
+      ctx.beginPath();
+      ctx.ellipse(poolW * 0.12, -poolH * 0.10, poolW * 0.32, poolH * 0.20, 0.2, 0, Math.PI * 0.8);
+      ctx.stroke();
+      ctx.restore();

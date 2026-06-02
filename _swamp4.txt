@@ -1,0 +1,80 @@
+  if (vegetation > 0.50 && rand2(tile.wx, tile.wy, 16380) < 0.26) {
+    detailTags.push('swamp-shrub');
+    const x = sx + size * (0.22 + rand2(tile.wx, tile.wy, 16381) * 0.56);
+    const y = sy + size * (0.30 + rand2(tile.wx, tile.wy, 16382) * 0.46);
+    ctx.fillStyle = 'rgba(24, 74, 31, 0.62)';
+    ctx.beginPath();
+    ctx.ellipse(x, y, size * 0.12, size * 0.08, rand2(tile.wx, tile.wy, 16383) * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(55, 118, 45, 0.55)';
+    ctx.beginPath();
+    ctx.ellipse(x + size * 0.04, y - size * 0.025, size * 0.07, size * 0.045, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(31, 54, 26, 0.55)';
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.035));
+    ctx.beginPath();
+    ctx.moveTo(x - size * 0.05, y + size * 0.08);
+    ctx.lineTo(x + size * 0.04, y + size * 0.01);
+    ctx.stroke();
+  }
+
+  if (rand2(tile.wx, tile.wy, 16400) < 0.24) {
+    detailTags.push('root-fan');
+    const x = sx + size * (0.18 + rand2(tile.wx, tile.wy, 16401) * 0.64);
+    const y = sy + size * (0.25 + rand2(tile.wx, tile.wy, 16402) * 0.54);
+    const rot = rand2(tile.wx, tile.wy, 16403) * Math.PI * 2;
+    ctx.strokeStyle = 'rgba(34, 24, 18, 0.54)';
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.035));
+    ctx.beginPath();
+    for (let i = 0; i < 4; i++) {
+      const a = rot + (i - 1.5) * 0.45;
+      const len = size * (0.12 + rand2(tile.wx, tile.wy, 16410 + i) * 0.14);
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + Math.cos(a) * len, y + Math.sin(a) * len);
+    }
+    ctx.stroke();
+  }
+
+  tile.swampDetailLayer = `local ${detailTags.join('+')} dressed-v3`;
+  ctx.restore();
+}
+
+function paintPixelLabBase(ctx, tile, recipe, sx, sy, size) {
+  if (tile.pixelLabSkipBase) return false;
+  const baseFamily = recipe?.base?.family ?? recipe?.baseFamily;
+  const wangVariants = PIXEL_BASE_WANG_VARIANTS[baseFamily];
+  const variants = PIXEL_BASE_TILE_VARIANTS[baseFamily];
+  const foundationSrc = PIXEL_BASE_FOUNDATION_SRC[baseFamily] ?? variants?.[0];
+  const mask = Number.isInteger(tile.pixelLabBaseMask) ? tile.pixelLabBaseMask : 15;
+  const wangSrc = mask !== 15 ? wangVariants?.[mask] : null;
+  if (!foundationSrc && !wangSrc) return false;
+
+  // Continuous base color first; PixelLab imagery is used as structure/detail,
+  // not as a fully opaque wallpaper tile.
+  if (!paintSwampMudFoundation(ctx, tile, baseFamily, sx, sy, size)) return false;
+  paintSwampTransitionGradient(ctx, tile, sx, sy, size);
+
+  const texturePool = variants ?? [];
+  const variantIndex = pixelBaseInteriorVariantIndex(tile, texturePool);
+  const variantSrc = texturePool?.[variantIndex];
+  if (variantSrc) {
+    const detailCanvas = preparedPixelBaseCanvas(variantSrc, baseFamily, 'texture');
+    if (detailCanvas) {
+      const detailAlpha = 0.24 + smoothNoise(tile.wx, tile.wy, 18, 16005) * 0.08;
+      drawPreparedPixelTextureCrop(ctx, detailCanvas, tile, sx, sy, size, detailAlpha, 16066);
+    }
+  }
+  const secondaryIndex = pixelBaseSecondaryVariantIndex(tile, texturePool, variantIndex);
+  const secondarySrc = texturePool?.[secondaryIndex];
+  if (secondarySrc && secondarySrc !== variantSrc) {
+    const secondaryCanvas = preparedPixelBaseCanvas(secondarySrc, baseFamily, 'texture');
+    if (secondaryCanvas) {
+      const secondaryAlpha = 0.18 + smoothNoise(tile.wx + 13, tile.wy - 11, 11, 16064) * 0.08;
+      drawPreparedPixelTextureCrop(ctx, secondaryCanvas, tile, sx, sy, size, secondaryAlpha, 16070);
+    }
+  }
+  const tertiaryIndex = (Math.floor(rand2(tile.wx - 17, tile.wy + 29, 16090) * texturePool.length) + 11) % Math.max(1, texturePool.length);
+  const tertiarySrc = texturePool?.[tertiaryIndex];
+  if (tertiarySrc && tertiarySrc !== variantSrc && tertiarySrc !== secondarySrc && rand2(tile.wx, tile.wy, 16091) > 0.28) {
+    const tertiaryCanvas = preparedPixelBaseCanvas(tertiarySrc, baseFamily, 'texture');
+    if (tertiaryCanvas) drawPreparedPixelTextureCrop(ctx, tertiaryCanvas, tile, sx, sy, size, 0.10, 16092);

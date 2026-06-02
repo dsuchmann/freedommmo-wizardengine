@@ -1,0 +1,24 @@
+{
+  "biome": "mystic",
+  "layer": "L2_detail",
+  "pixellab_tileset_id": "153c94d8-ea8e-43e9-8f75-afcbfcc9feb4",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "ab4131a5-2b32-47f1-b237-f71d6cce4601",
+    "upper": "04431d15-b291-4647-926c-38fe092c4ce0"
+  },
+  "generation_prompt": {
+    "lower_description": "glowing purple arcane rune patterns and energy vein lines on fully transparent background, pixel art, top-down view",
+    "upper_description": "different rune pattern with more energy concentration on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

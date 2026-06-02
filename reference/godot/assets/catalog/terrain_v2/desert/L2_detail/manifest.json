@@ -1,0 +1,24 @@
+{
+  "biome": "desert",
+  "layer": "L2_detail",
+  "pixellab_tileset_id": "d4209329-0c1b-4256-ab63-1646595f6ee7",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "8edace23-81b1-440e-9fe0-9f460c674e77",
+    "upper": "b4319f3f-934a-413d-afb5-f697efa92d6e"
+  },
+  "generation_prompt": {
+    "lower_description": "cracked dry earth patches and exposed dark rock on fully transparent background, pixel art, top-down view",
+    "upper_description": "different crack pattern with more exposed sandstone on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

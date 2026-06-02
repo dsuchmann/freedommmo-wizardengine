@@ -1,0 +1,24 @@
+{
+  "biome": "tropical_forest",
+  "layer": "L4_scatter",
+  "pixellab_tileset_id": "494df00e-bde9-4398-b7ba-acbbfc3ce189",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "432a924e-efb5-41e7-86d2-2810f9628764",
+    "upper": "f348cc88-dadf-4400-9fc9-1910accfc501"
+  },
+  "generation_prompt": {
+    "lower_description": "scattered fallen tropical fruits and colorful seeds on fully transparent background, pixel art, top-down view",
+    "upper_description": "different fruit arrangement with exotic beetle shells on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

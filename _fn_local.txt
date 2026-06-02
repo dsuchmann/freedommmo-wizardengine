@@ -1,0 +1,63 @@
+  const fertility = tile.climate?.fertility ?? 0.55;
+  const vegetation = tile.climate?.vegetation ?? 0.55;
+  const density = clamp(fertility * 0.45 + vegetation * 0.55, 0, 1);
+  const moisture = tile.climate?.moisture ?? 0.65;
+  const cluster = smoothNoise(tile.wx, tile.wy, 5, 16050);
+  const bladeGate = !(cluster < 0.38 && rand2(tile.wx, tile.wy, 16051) < 0.72);
+  const count = bladeGate ? Math.floor(1 + density * 2 + rand2(tile.wx, tile.wy, 16052) * 2) : 0;
+  ctx.save();
+  for (let i = 0; i < count; i++) {
+    const px = sx + Math.floor(rand2(tile.wx, tile.wy, 16053 + i * 17) * (size - 6)) + 3;
+    const py = sy + Math.floor(rand2(tile.wx, tile.wy, 16054 + i * 17) * (size - 6)) + 3;
+    const h = Math.max(2, Math.floor(size * (0.08 + rand2(tile.wx, tile.wy, 16055 + i * 17) * 0.10)));
+    const alpha = 0.18 + rand2(tile.wx, tile.wy, 16056 + i * 17) * 0.18;
+    ctx.strokeStyle = `rgba(68, 118, 56, ${alpha.toFixed(3)})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(px, py + h);
+    ctx.lineTo(px + 1, py);
+    if (rand2(tile.wx, tile.wy, 16057 + i * 17) > 0.45) {
+      ctx.moveTo(px + 2, py + h);
+      ctx.lineTo(px + 3, py + 1);
+    }
+    ctx.stroke();
+  }
+  if (rand2(tile.wx, tile.wy, 16080) > 0.74) {
+    ctx.fillStyle = 'rgba(20, 35, 30, 0.18)';
+    const w = Math.max(2, Math.floor(size * 0.14));
+    const h = Math.max(1, Math.floor(size * 0.05));
+    ctx.fillRect(sx + Math.floor(rand2(tile.wx, tile.wy, 16081) * (size - w)), sy + Math.floor(rand2(tile.wx, tile.wy, 16082) * (size - h)), w, h);
+  }
+
+  // Procedural swamp enrichment. Direct PixelLab decal stamping is intentionally
+  // disabled here: the current decal PNGs need alpha/edge normalization before
+  // they can be stamped without square patches.
+  const wetness = clamp((moisture - 0.48) / 0.42, 0, 1);
+  const mossiness = clamp(density * 0.72 + wetness * 0.28, 0, 1);
+  const detailTags = ['flecks'];
+  const flecks = Math.floor(3 + wetness * 4 + rand2(tile.wx, tile.wy, 16101) * 4);
+  for (let i = 0; i < flecks; i++) {
+    const fx = sx + Math.floor(rand2(tile.wx, tile.wy, 16110 + i * 11) * size);
+    const fy = sy + Math.floor(rand2(tile.wx, tile.wy, 16111 + i * 11) * size);
+    ctx.fillStyle = `rgba(10, 17, 14, ${(0.18 + wetness * 0.10).toFixed(3)})`;
+    ctx.fillRect(fx, fy, 2 + Math.floor(rand2(tile.wx, tile.wy, 16112 + i * 11) * 4), 1 + Math.floor(rand2(tile.wx, tile.wy, 16113 + i * 11) * 2));
+  }
+  if (mossiness > 0.34 && rand2(tile.wx, tile.wy, 16120) < mossiness * 1.25) {
+    detailTags.push('moss');
+    ctx.fillStyle = `rgba(61, 126, 52, ${(0.20 + mossiness * 0.14).toFixed(3)})`;
+    const mx = sx + Math.floor(rand2(tile.wx, tile.wy, 16121) * (size - 10));
+    const my = sy + Math.floor(rand2(tile.wx, tile.wy, 16122) * (size - 7));
+    ctx.fillRect(mx, my, Math.max(5, Math.floor(size * 0.28)), 2);
+    ctx.fillRect(mx + 2, my + 3, Math.max(3, Math.floor(size * 0.18)), 1);
+  }
+  if (wetness > 0.42 && rand2(tile.wx, tile.wy, 16130) < wetness * 0.88) {
+    detailTags.push('glint');
+    ctx.strokeStyle = `rgba(158, 180, 137, ${(0.16 + wetness * 0.12).toFixed(3)})`;
+    ctx.lineWidth = 1;
+    const gx = sx + Math.floor(rand2(tile.wx, tile.wy, 16131) * (size - 8)) + 4;
+    const gy = sy + Math.floor(rand2(tile.wx, tile.wy, 16132) * (size - 6)) + 3;
+    ctx.beginPath();
+    ctx.moveTo(gx, gy);
+    ctx.lineTo(gx + Math.floor(size * 0.30), gy - 1);
+    ctx.stroke();
+  }

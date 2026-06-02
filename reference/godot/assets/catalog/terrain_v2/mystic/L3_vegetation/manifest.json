@@ -1,0 +1,24 @@
+{
+  "biome": "mystic",
+  "layer": "L3_vegetation",
+  "pixellab_tileset_id": "304d81ae-0031-4a09-b4c8-ee1107965b9a",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "b159fe0f-6b10-4be0-8645-1bce4e931366",
+    "upper": "5026e4c5-4435-4530-a6c1-d43c6dc1516a"
+  },
+  "generation_prompt": {
+    "lower_description": "growing purple and blue crystal formations and glowing magical mushrooms on fully transparent background, pixel art, top-down view",
+    "upper_description": "different crystal cluster with enchanted flora on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

@@ -1,7 +1,7 @@
 export const WORLD = Object.freeze({
   seed: 42,
   chunkSize: 64,
-  tileSize: 16,
+  tileSize: 32,
   sourceTileSize: 32,
   overmapChunks: 6400,
   loadRadius: 1,

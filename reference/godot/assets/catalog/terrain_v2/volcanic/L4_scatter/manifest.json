@@ -1,0 +1,24 @@
+{
+  "biome": "volcanic",
+  "layer": "L4_scatter",
+  "pixellab_tileset_id": "fef03c13-9e64-4e20-9f0f-a40f1eb6de71",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "c7ae9df8-fdde-4dc4-a81e-cc8f6d5f46fc",
+    "upper": "a34bfb32-f090-472d-8bfd-6a3cdfc05d47"
+  },
+  "generation_prompt": {
+    "lower_description": "scattered black obsidian shards and grey pumice stones on fully transparent background, pixel art, top-down view",
+    "upper_description": "different obsidian fragment arrangement with volcanic ash clumps on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

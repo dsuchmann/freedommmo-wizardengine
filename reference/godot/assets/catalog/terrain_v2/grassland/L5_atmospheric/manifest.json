@@ -1,0 +1,24 @@
+{
+  "biome": "grassland",
+  "layer": "L5_atmospheric",
+  "pixellab_tileset_id": "640544c6-e4a9-4ff5-a0c5-93e09169d821",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "798fd61e-6697-4953-928c-8f712164747a",
+    "upper": "8272923a-40e3-4351-987e-1cc8f4a1b58d"
+  },
+  "generation_prompt": {
+    "lower_description": "floating pollen particles and dandelion seeds on fully transparent background, sparse, pixel art, top-down view",
+    "upper_description": "different pollen particle pattern on fully transparent background, very sparse, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

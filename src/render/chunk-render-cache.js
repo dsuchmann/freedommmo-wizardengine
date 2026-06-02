@@ -10,6 +10,10 @@ export class ChunkRenderCache {
     this.maxEntries = 36;
   }
 
+  beginFrame(maxJobs = 1) {
+    this._frameBudget = maxJobs;
+  }
+
   key(chunk, lightBucket) {
     return `${chunk.cx},${chunk.cy},${lightBucket}`;
   }

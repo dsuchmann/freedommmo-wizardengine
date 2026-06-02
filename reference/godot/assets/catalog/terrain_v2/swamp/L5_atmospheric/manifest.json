@@ -1,0 +1,24 @@
+{
+  "biome": "swamp",
+  "layer": "L5_atmospheric",
+  "pixellab_tileset_id": "1b85b40e-9bbb-445d-9bf2-dc41e063a540",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "c6238871-1ae8-43df-808d-7b5c479a3491",
+    "upper": "f0fca829-819a-4aef-a7bc-486fcb2ccda0"
+  },
+  "generation_prompt": {
+    "lower_description": "green swamp mist and tiny insect swarm particles on fully transparent background, pixel art, top-down view",
+    "upper_description": "different mist pattern with fewer insects on transparent background, sparse, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

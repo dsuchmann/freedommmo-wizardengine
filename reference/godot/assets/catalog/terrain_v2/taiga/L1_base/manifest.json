@@ -1,0 +1,24 @@
+{
+  "biome": "taiga",
+  "layer": "L1_base",
+  "pixellab_tileset_id": "4fc59d6e-bb50-4cb6-b9c1-528a5635b65a",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "be7bc5cb-3433-4a13-a0ff-24e70b924e61",
+    "upper": "84abc645-5cd7-4823-95d7-f9e457bb5890"
+  },
+  "generation_prompt": {
+    "lower_description": "dark boreal forest floor covered in brown pine needles with small snow patches",
+    "upper_description": "dark boreal forest floor with different pine needle pattern and small frozen puddle"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

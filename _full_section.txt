@@ -1,0 +1,359 @@
+function paintSwampPixelLocalOverlays(ctx, tile, sx, sy, size) {
+  const fertility = tile.climate?.fertility ?? 0.55;
+  const vegetation = tile.climate?.vegetation ?? 0.55;
+  const density = clamp(fertility * 0.45 + vegetation * 0.55, 0, 1);
+  const moisture = tile.climate?.moisture ?? 0.65;
+  const cluster = smoothNoise(tile.wx, tile.wy, 5, 16050);
+  const bladeGate = !(cluster < 0.38 && rand2(tile.wx, tile.wy, 16051) < 0.72);
+  const count = bladeGate ? Math.floor(1 + density * 2 + rand2(tile.wx, tile.wy, 16052) * 2) : 0;
+  ctx.save();
+  for (let i = 0; i < count; i++) {
+    const px = sx + Math.floor(rand2(tile.wx, tile.wy, 16053 + i * 17) * (size - 6)) + 3;
+    const py = sy + Math.floor(rand2(tile.wx, tile.wy, 16054 + i * 17) * (size - 6)) + 3;
+    const h = Math.max(2, Math.floor(size * (0.08 + rand2(tile.wx, tile.wy, 16055 + i * 17) * 0.10)));
+    const alpha = 0.18 + rand2(tile.wx, tile.wy, 16056 + i * 17) * 0.18;
+    ctx.strokeStyle = `rgba(68, 118, 56, ${alpha.toFixed(3)})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(px, py + h);
+    ctx.lineTo(px + 1, py);
+    if (rand2(tile.wx, tile.wy, 16057 + i * 17) > 0.45) {
+      ctx.moveTo(px + 2, py + h);
+      ctx.lineTo(px + 3, py + 1);
+    }
+    ctx.stroke();
+  }
+  if (rand2(tile.wx, tile.wy, 16080) > 0.74) {
+    ctx.fillStyle = 'rgba(20, 35, 30, 0.18)';
+    const w = Math.max(2, Math.floor(size * 0.14));
+    const h = Math.max(1, Math.floor(size * 0.05));
+    ctx.fillRect(sx + Math.floor(rand2(tile.wx, tile.wy, 16081) * (size - w)), sy + Math.floor(rand2(tile.wx, tile.wy, 16082) * (size - h)), w, h);
+  }
+
+  // Procedural swamp enrichment. Direct PixelLab decal stamping is intentionally
+  // disabled here: the current decal PNGs need alpha/edge normalization before
+  // they can be stamped without square patches.
+  const wetness = clamp((moisture - 0.48) / 0.42, 0, 1);
+  const mossiness = clamp(density * 0.72 + wetness * 0.28, 0, 1);
+  const detailTags = ['flecks'];
+  const flecks = Math.floor(3 + wetness * 4 + rand2(tile.wx, tile.wy, 16101) * 4);
+  for (let i = 0; i < flecks; i++) {
+    const fx = sx + Math.floor(rand2(tile.wx, tile.wy, 16110 + i * 11) * size);
+    const fy = sy + Math.floor(rand2(tile.wx, tile.wy, 16111 + i * 11) * size);
+    ctx.fillStyle = `rgba(10, 17, 14, ${(0.18 + wetness * 0.10).toFixed(3)})`;
+    ctx.fillRect(fx, fy, 2 + Math.floor(rand2(tile.wx, tile.wy, 16112 + i * 11) * 4), 1 + Math.floor(rand2(tile.wx, tile.wy, 16113 + i * 11) * 2));
+  }
+  if (mossiness > 0.34 && rand2(tile.wx, tile.wy, 16120) < mossiness * 1.25) {
+    detailTags.push('moss');
+    ctx.fillStyle = `rgba(61, 126, 52, ${(0.20 + mossiness * 0.14).toFixed(3)})`;
+    const mx = sx + Math.floor(rand2(tile.wx, tile.wy, 16121) * (size - 10));
+    const my = sy + Math.floor(rand2(tile.wx, tile.wy, 16122) * (size - 7));
+    ctx.fillRect(mx, my, Math.max(5, Math.floor(size * 0.28)), 2);
+    ctx.fillRect(mx + 2, my + 3, Math.max(3, Math.floor(size * 0.18)), 1);
+  }
+  if (wetness > 0.42 && rand2(tile.wx, tile.wy, 16130) < wetness * 0.88) {
+    detailTags.push('glint');
+    ctx.strokeStyle = `rgba(158, 180, 137, ${(0.16 + wetness * 0.12).toFixed(3)})`;
+    ctx.lineWidth = 1;
+    const gx = sx + Math.floor(rand2(tile.wx, tile.wy, 16131) * (size - 8)) + 4;
+    const gy = sy + Math.floor(rand2(tile.wx, tile.wy, 16132) * (size - 6)) + 3;
+    ctx.beginPath();
+    ctx.moveTo(gx, gy);
+    ctx.lineTo(gx + Math.floor(size * 0.30), gy - 1);
+    ctx.stroke();
+  }
+  if (bladeGate && rand2(tile.wx, tile.wy, 16160) < density * 0.52) {
+    detailTags.push('reeds');
+    ctx.strokeStyle = 'rgba(60, 130, 54, 0.36)';
+    const rx = sx + Math.floor(rand2(tile.wx, tile.wy, 16161) * (size - 6)) + 3;
+    const ry = sy + Math.floor(rand2(tile.wx, tile.wy, 16162) * (size - 5)) + 5;
+    ctx.beginPath();
+    ctx.moveTo(rx, ry);
+    ctx.lineTo(rx + 1, ry - Math.floor(size * 0.16));
+    ctx.moveTo(rx + 3, ry);
+    ctx.lineTo(rx + 4, ry - Math.floor(size * 0.12));
+    ctx.stroke();
+  }
+
+  if (wetness > 0.50 && rand2(tile.wx, tile.wy, 16180) < wetness * 0.55) {
+    detailTags.push('wetpatch');
+    const cx = sx + size * (0.28 + rand2(tile.wx, tile.wy, 16181) * 0.44);
+    const cy = sy + size * (0.30 + rand2(tile.wx, tile.wy, 16182) * 0.40);
+    ctx.fillStyle = `rgba(20, 31, 27, ${(0.18 + wetness * 0.16).toFixed(3)})`;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, size * (0.16 + rand2(tile.wx, tile.wy, 16183) * 0.10), size * (0.06 + rand2(tile.wx, tile.wy, 16184) * 0.06), rand2(tile.wx, tile.wy, 16185) * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  if (mossiness > 0.48 && rand2(tile.wx, tile.wy, 16190) < mossiness * 0.50) {
+    detailTags.push('mossmat');
+    const cx = sx + size * (0.25 + rand2(tile.wx, tile.wy, 16191) * 0.50);
+    const cy = sy + size * (0.25 + rand2(tile.wx, tile.wy, 16192) * 0.50);
+    ctx.fillStyle = `rgba(44, 112, 42, ${(0.16 + mossiness * 0.14).toFixed(3)})`;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, size * (0.11 + rand2(tile.wx, tile.wy, 16193) * 0.09), size * (0.05 + rand2(tile.wx, tile.wy, 16194) * 0.05), rand2(tile.wx, tile.wy, 16195) * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Guaranteed large visible props per tile — every tile gets at least 2 features
+  const tileSeed = Math.floor(rand2(tile.wx, tile.wy, 16200) * 1000);
+  const propStyle = tileSeed % 4;
+  const bigX = sx + size * 0.15 + (tileSeed % 71) * size * 0.010;
+  const bigY = sy + size * 0.20 + ((tileSeed * 7) % 61) * size * 0.010;
+  const bigRot = (tileSeed * 0.1723) % (Math.PI * 2);
+
+  // Every tile: big bright green moss mat
+  detailTags.push('moss');
+  ctx.fillStyle = 'rgba(78, 194, 66, 0.88)';
+  ctx.beginPath();
+  ctx.ellipse(bigX, bigY, size * 0.28, size * 0.14, bigRot, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(132, 226, 102, 0.72)';
+  ctx.beginPath();
+  ctx.ellipse(bigX + size * 0.08, bigY - size * 0.03, size * 0.14, size * 0.06, bigRot + 0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Prop: dark log or puddle pool
+  if (propStyle < 2 || wetness > 0.50) {
+    detailTags.push('log');
+    ctx.save();
+    ctx.translate(bigX + size * (0.06 + rand2(tile.wx, tile.wy, 16301) * 0.14), bigY + size * (0.02 + rand2(tile.wx, tile.wy, 16302) * 0.08));
+    ctx.rotate(bigRot + 0.5 + rand2(tile.wx, tile.wy, 16303) * 0.3);
+    ctx.fillStyle = 'rgba(70, 40, 22, 0.92)';
+    ctx.beginPath();
+    ctx.roundRect(-size * 0.30, -size * 0.055, size * 0.60, size * 0.11, size * 0.035);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(176, 108, 52, 0.78)';
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.040));
+    ctx.beginPath();
+    ctx.moveTo(-size * 0.18, -size * 0.02);
+    ctx.lineTo(size * 0.18, -size * 0.03);
+    ctx.stroke();
+    ctx.restore();
+  } else {
+    detailTags.push('pool');
+    ctx.fillStyle = 'rgba(3, 18, 20, 0.88)';
+    ctx.beginPath();
+    ctx.ellipse(bigX + size * 0.02, bigY + size * 0.06, size * 0.30, size * 0.12, bigRot + 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(168, 218, 182, 0.72)';
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.040));
+    ctx.beginPath();
+    ctx.ellipse(bigX + size * 0.06, bigY + size * 0.03, size * 0.18, size * 0.04, bigRot + 0.3, 0.2, Math.PI * 0.80);
+    ctx.stroke();
+  }
+
+  // Twig accent
+  if (rand2(tile.wx, tile.wy, 16240) < 0.60) {
+    detailTags.push('twig');
+    const sx2 = sx + size * (0.06 + rand2(tile.wx, tile.wy, 16241) * 0.88);
+    const sy2 = sy + size * (0.06 + rand2(tile.wx, tile.wy, 16242) * 0.88);
+    const rot2 = rand2(tile.wx, tile.wy, 16243) * Math.PI;
+    const len2 = size * (0.14 + rand2(tile.wx, tile.wy, 16244) * 0.20);
+    ctx.strokeStyle = 'rgba(82, 48, 30, 0.85)';
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.050));
+    ctx.beginPath();
+    ctx.moveTo(sx2, sy2);
+    ctx.lineTo(sx2 + Math.cos(rot2) * len2, sy2 + Math.sin(rot2) * len2);
+    ctx.moveTo(sx2, sy2);
+    ctx.lineTo(sx2 + Math.cos(rot2 + 0.7) * len2 * 0.35, sy2 + Math.sin(rot2 + 0.7) * len2 * 0.35);
+    ctx.stroke();
+  }
+
+  // Reed clumps on wet tiles
+  if (wetness > 0.35 && rand2(tile.wx, tile.wy, 16260) < 0.82) {
+    detailTags.push('reeds');
+    const rx = sx + size * (0.12 + rand2(tile.wx, tile.wy, 16261) * 0.76);
+    const ry = sy + size * (0.28 + rand2(tile.wx, tile.wy, 16262) * 0.56);
+    const stalks = 4 + Math.floor(rand2(tile.wx, tile.wy, 16263) * 5);
+    ctx.strokeStyle = 'rgba(48, 148, 56, 0.86)';
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.040));
+    ctx.beginPath();
+    for (let i = 0; i < stalks; i++) {
+      const dx = (i - stalks / 2) * size * 0.060 + (rand2(tile.wx, tile.wy, 16264 + i) - 0.5) * size * 0.035;
+      const h = size * (0.25 + rand2(tile.wx, tile.wy, 16270 + i) * 0.22);
+      ctx.moveTo(rx + dx, ry);
+      ctx.lineTo(rx + dx + (rand2(tile.wx, tile.wy, 16280 + i) - 0.5) * size * 0.06, ry - h);
+    }
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(98, 165, 72, 0.68)';
+    ctx.fillRect(rx - size * 0.14, ry - 1, size * 0.28, Math.max(2, size * 0.05));
+  }
+
+  // Stump accent
+  if (rand2(tile.wx, tile.wy, 16320) < 0.50) {
+    detailTags.push('stump');
+    const sx3 = sx + size * (0.22 + rand2(tile.wx, tile.wy, 16321) * 0.56);
+    const sy3 = sy + size * (0.26 + rand2(tile.wx, tile.wy, 16322) * 0.52);
+    ctx.fillStyle = 'rgba(62, 36, 24, 0.88)';
+    ctx.beginPath();
+    ctx.ellipse(sx3, sy3, size * 0.095, size * 0.065, rand2(tile.wx, tile.wy, 16323) * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(172, 108, 54, 0.72)';
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.040));
+    ctx.beginPath();
+    ctx.ellipse(sx3, sy3 - size * 0.006, size * 0.058, size * 0.030, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  if (rand2(tile.wx, tile.wy, 16320) < 0.34) {
+    detailTags.push('stump');
+    const x = sx + size * (0.24 + rand2(tile.wx, tile.wy, 16321) * 0.52);
+    const y = sy + size * (0.30 + rand2(tile.wx, tile.wy, 16322) * 0.48);
+    ctx.fillStyle = 'rgba(42, 28, 20, 0.68)';
+    ctx.beginPath();
+    ctx.ellipse(x, y, size * 0.090, size * 0.060, rand2(tile.wx, tile.wy, 16323) * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(130, 86, 48, 0.60)';
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.035));
+    ctx.beginPath();
+    ctx.ellipse(x, y - size * 0.006, size * 0.055, size * 0.028, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  if (wetness > 0.38 && rand2(tile.wx, tile.wy, 16340) < 0.44 + wetness * 0.34) {
+    detailTags.push('pool');
+    const x = sx + size * (0.18 + rand2(tile.wx, tile.wy, 16341) * 0.64);
+    const y = sy + size * (0.22 + rand2(tile.wx, tile.wy, 16342) * 0.56);
+    const rot = rand2(tile.wx, tile.wy, 16343) * Math.PI;
+    ctx.fillStyle = `rgba(4, 20, 22, ${(0.64 + wetness * 0.24).toFixed(3)})`;
+    ctx.beginPath();
+    ctx.ellipse(x, y, size * (0.20 + rand2(tile.wx, tile.wy, 16344) * 0.16), size * (0.080 + rand2(tile.wx, tile.wy, 16345) * 0.075), rot, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = `rgba(146, 198, 162, ${(0.54 + wetness * 0.24).toFixed(3)})`;
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.04));
+    ctx.beginPath();
+    ctx.ellipse(x, y - size * 0.01, size * 0.15, size * 0.040, rot, 0.15, Math.PI * 0.85);
+    ctx.stroke();
+  }
+
+  if (mossiness > 0.55 && rand2(tile.wx, tile.wy, 16360) < 0.30) {
+    detailTags.push('fungi');
+    const x = sx + size * (0.20 + rand2(tile.wx, tile.wy, 16361) * 0.60);
+    const y = sy + size * (0.30 + rand2(tile.wx, tile.wy, 16362) * 0.50);
+    ctx.fillStyle = 'rgba(165, 146, 92, 0.46)';
+    ctx.beginPath();
+    ctx.arc(x, y, Math.max(1.2, size * 0.025), Math.PI, 0);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(198, 181, 124, 0.40)';
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y + size * 0.045);
+    ctx.stroke();
+  }
+
+  if (vegetation > 0.50 && rand2(tile.wx, tile.wy, 16380) < 0.26) {
+    detailTags.push('swamp-shrub');
+    const x = sx + size * (0.22 + rand2(tile.wx, tile.wy, 16381) * 0.56);
+    const y = sy + size * (0.30 + rand2(tile.wx, tile.wy, 16382) * 0.46);
+    ctx.fillStyle = 'rgba(24, 74, 31, 0.62)';
+    ctx.beginPath();
+    ctx.ellipse(x, y, size * 0.12, size * 0.08, rand2(tile.wx, tile.wy, 16383) * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(55, 118, 45, 0.55)';
+    ctx.beginPath();
+    ctx.ellipse(x + size * 0.04, y - size * 0.025, size * 0.07, size * 0.045, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(31, 54, 26, 0.55)';
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.035));
+    ctx.beginPath();
+    ctx.moveTo(x - size * 0.05, y + size * 0.08);
+    ctx.lineTo(x + size * 0.04, y + size * 0.01);
+    ctx.stroke();
+  }
+
+  if (rand2(tile.wx, tile.wy, 16400) < 0.24) {
+    detailTags.push('root-fan');
+    const x = sx + size * (0.18 + rand2(tile.wx, tile.wy, 16401) * 0.64);
+    const y = sy + size * (0.25 + rand2(tile.wx, tile.wy, 16402) * 0.54);
+    const rot = rand2(tile.wx, tile.wy, 16403) * Math.PI * 2;
+    ctx.strokeStyle = 'rgba(34, 24, 18, 0.54)';
+    ctx.lineWidth = Math.max(1, Math.floor(size * 0.035));
+    ctx.beginPath();
+    for (let i = 0; i < 4; i++) {
+      const a = rot + (i - 1.5) * 0.45;
+      const len = size * (0.12 + rand2(tile.wx, tile.wy, 16410 + i) * 0.14);
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + Math.cos(a) * len, y + Math.sin(a) * len);
+    }
+    ctx.stroke();
+  }
+
+  tile.swampDetailLayer = `local ${detailTags.join('+')} dressed-v3`;
+  ctx.restore();
+}
+
+function paintPixelLabBase(ctx, tile, recipe, sx, sy, size) {
+  if (tile.pixelLabSkipBase) return false;
+  const baseFamily = recipe?.base?.family ?? recipe?.baseFamily;
+  const wangVariants = PIXEL_BASE_WANG_VARIANTS[baseFamily];
+  const variants = PIXEL_BASE_TILE_VARIANTS[baseFamily];
+  const foundationSrc = PIXEL_BASE_FOUNDATION_SRC[baseFamily] ?? variants?.[0];
+  const mask = Number.isInteger(tile.pixelLabBaseMask) ? tile.pixelLabBaseMask : 15;
+  const wangSrc = mask !== 15 ? wangVariants?.[mask] : null;
+  if (!foundationSrc && !wangSrc) return false;
+
+  // Continuous base color first; PixelLab imagery is used as structure/detail,
+  // not as a fully opaque wallpaper tile.
+  if (!paintSwampMudFoundation(ctx, tile, baseFamily, sx, sy, size)) return false;
+  paintSwampTransitionGradient(ctx, tile, sx, sy, size);
+
+  const texturePool = variants ?? [];
+  const variantIndex = pixelBaseInteriorVariantIndex(tile, texturePool);
+  const variantSrc = texturePool?.[variantIndex];
+  if (variantSrc) {
+    const detailCanvas = preparedPixelBaseCanvas(variantSrc, baseFamily, 'texture');
+    if (detailCanvas) {
+      const detailAlpha = 0.24 + smoothNoise(tile.wx, tile.wy, 18, 16005) * 0.08;
+      drawPreparedPixelTextureCrop(ctx, detailCanvas, tile, sx, sy, size, detailAlpha, 16066);
+    }
+  }
+  const secondaryIndex = pixelBaseSecondaryVariantIndex(tile, texturePool, variantIndex);
+  const secondarySrc = texturePool?.[secondaryIndex];
+  if (secondarySrc && secondarySrc !== variantSrc) {
+    const secondaryCanvas = preparedPixelBaseCanvas(secondarySrc, baseFamily, 'texture');
+    if (secondaryCanvas) {
+      const secondaryAlpha = 0.18 + smoothNoise(tile.wx + 13, tile.wy - 11, 11, 16064) * 0.08;
+      drawPreparedPixelTextureCrop(ctx, secondaryCanvas, tile, sx, sy, size, secondaryAlpha, 16070);
+    }
+  }
+  const tertiaryIndex = (Math.floor(rand2(tile.wx - 17, tile.wy + 29, 16090) * texturePool.length) + 11) % Math.max(1, texturePool.length);
+  const tertiarySrc = texturePool?.[tertiaryIndex];
+  if (tertiarySrc && tertiarySrc !== variantSrc && tertiarySrc !== secondarySrc && rand2(tile.wx, tile.wy, 16091) > 0.28) {
+    const tertiaryCanvas = preparedPixelBaseCanvas(tertiarySrc, baseFamily, 'texture');
+    if (tertiaryCanvas) drawPreparedPixelTextureCrop(ctx, tertiaryCanvas, tile, sx, sy, size, 0.10, 16092);
+  }
+  paintSwampOverlayRevival(ctx, tile, sx, sy, size);
+
+  if (wangSrc) {
+    const wangCanvas = preparedPixelBaseCanvas(wangSrc, baseFamily, 'texture');
+    if (wangCanvas) drawPreparedPixelTextureCrop(ctx, wangCanvas, tile, sx, sy, size, 0.18, 16120);
+  }
+
+  let transitionSrc = '';
+  const transitionBiome = tile.pixelLabTransitionBiome;
+  const transitionMask = Number.isInteger(tile.pixelLabTransitionMask) ? tile.pixelLabTransitionMask : 0;
+  const transitionSet = PIXEL_SWAMP_TRANSITION_SETS[transitionBiome];
+  // PixelLab transition metadata encodes the "upper" terrain as set bits. For
+  // swamp_to_* sets, upper is the neighboring biome; for *_to_swamp sets, upper
+  // is swamp. The chunk cache stores swamp-presence bits, so invert only the
+  // swamp_to_* families before selecting the PNG.
+  const transitionImageMask = transitionSet?.startsWith('swamp_to_') ? (15 ^ transitionMask) : transitionMask;
+  const transitionVariants = PIXEL_SWAMP_TRANSITION_WANG[transitionBiome];
+  if (transitionImageMask !== 0 && transitionVariants?.[transitionImageMask]) {
+    transitionSrc = transitionVariants[transitionImageMask];
+    // Current PixelLab transition PNGs are good texture donors but too chunky as
+    // full tiles on a diagonal coast. Keep the procedural mask shape in charge,
+    // and sample transition art as de-aligned flecks only.
+    const transitionCanvas = preparedPixelBaseCanvas(transitionSrc, baseFamily, 'detail');
+    if (transitionCanvas) drawPreparedPixelTextureCrop(ctx, transitionCanvas, tile, sx, sy, size, 0.04, 16160);
+  }
+
+  tile.pixelLabBaseSrc = foundationSrc ? 'procedural mud foundation + blended PixelLab variant donors' : (wangSrc || '');
+  tile.pixelLabBaseVariantSrc = variantSrc ? `cropped variant donors v${String(variantIndex).padStart(3, '0')}+v${String(secondaryIndex).padStart(3, '0')}` : '';
+  tile.pixelLabBaseFamily = baseFamily ?? 'none';
+  tile.pixelLabBaseMask = mask;
+  tile.pixelLabTransitionSrc = transitionSrc;
+  tile.pixelLabTransitionImageMask = transitionSrc ? transitionImageMask : 0;
+  return true;
+}

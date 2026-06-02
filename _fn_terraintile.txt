@@ -1,0 +1,34 @@
+  const signature = compositor?.terrainSignature(tile);
+  const palette = paletteFor(tile.biome);
+  const patch = coherentPatch(tile.wx, tile.wy, tile.biome);
+  const grassSea = tile.biome === 'grassland' || tile.biome === 'savanna' || tile.biome === 'steppe';
+  const beachTouchingSwamp = (tile.biome === 'beach' || tile.biome === 'desert') && Number.isInteger(tile.pixelLabTransitionMask) && tile.pixelLabTransitionMask !== 0;
+  // Use biome blend if available for smooth color interpolation
+  // Use biome blend for smooth color interpolation at boundaries
+  const useBlend = tile.biomeBlend && tile.biomeBlend.length > 1;
+  const base = useBlend ? blendBaseColor(tile.biomeBlend, patch) :
+    (grassSea ? palette[1] : palette[Math.min(palette.length - 1, Math.floor(patch * palette.length))]);
+  const renderPalette = useBlend ? blendedPalette(tile.biomeBlend, palette) : palette;
+  const elevationShade = (tile.climate.elevation - 0.5) * 0.08;
+  const depthFade = Math.max(0, focusElevation - tile.climate.elevation - 0.08) * 0.16;
+  const stableSun = { ...sun, ambient: 0.92, tint: { r: 1, g: 1, b: 1 } };
+  ctx.fillStyle = shade(base, elevationShade + depthFade);
+  ctx.fillRect(sx, sy, size, size);
+  const recipe = buildLandscapeRecipe(tile);
+  const pixelBasePainted = paintPixelLabBase(ctx, tile, recipe, sx, sy, size);
+  if (!pixelBasePainted) {
+    if (grassSea) paintGrassSea(ctx, tile, sx, sy, size, stableSun, atlas, patch, renderPalette);
+    else paintBiomeTexture(ctx, tile, sx, sy, size, stableSun, renderPalette);
+    assembleLandscapeLayers(ctx, tile, sx, sy, size, stableSun, timeSeconds, atlas, patch, focusElevation);
+    if (!grassSea) paintMicroLayers(ctx, tile, sx, sy, size, stableSun, timeSeconds, atlas);
+    if (beachTouchingSwamp) paintSwampTransitionGradient(ctx, tile, sx, sy, size);
+    paintElevationTint(ctx, tile, sx, sy, size);
+  } else {
+    // PixelLab swamp already owns the foundation. The broad landscape/micro
+    // painters add biome-wide stripe fields, so keep only local swamp detail here.
+    paintSwampPixelLocalOverlays(ctx, tile, sx, sy, size);
+    paintElevationTint(ctx, tile, sx, sy, size);
+  }
+}
+
+function paintCompositorDebugLayer(ctx, signature, sx, sy, size) {

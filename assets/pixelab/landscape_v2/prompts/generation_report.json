@@ -1,0 +1,99 @@
+{
+  "reportVersion": "2.0.0",
+  "generatedAt": "2026-06-01",
+  "updatedAt": "2026-06-01T21:00:00Z",
+  "phase": "swamp_calibration",
+  "loopsCompleted": 4,
+
+  "scaffoldFiles": {
+    "README.md": "created",
+    "manifest.json": "created",
+    "PROGRESS.md": "created",
+    "prompts/generated_prompts.jsonl": "created (192 rows)",
+    "audit/existing_asset_audit.json": "created",
+    "audit/missing_asset_report.md": "created",
+    "audit/layer_contract_report.md": "created",
+    "metadata.json": "created (18 family directories)"
+  },
+
+  "assetsDownloaded": {
+    "total": 40,
+    "base": {
+      "swamp_wet_mud": {
+        "tileset": 1,
+        "wang_masks": 16,
+        "source": "pixellab_topdown_tileset",
+        "job_id": "89a7e289-59d3-4653-8e7c-6fa858b88335",
+        "quality": "GOOD — 21-38 unique colors per transition tile, organic borders"
+      },
+      "swamp_mud_pool": {
+        "status": "STUCK_95_PERCENT",
+        "job_id": "465c8506-0549-40b1-a0c1-1391ab873310",
+        "note": "Server-side finalization delay, may complete later"
+      }
+    },
+    "surface_overlays": {
+      "mud_pool": { "count": 2, "dimensions": "32x32", "source": "pixellab_tiles_pro" },
+      "wet_mud_shine": { "count": 2, "dimensions": "32x32", "source": "pixellab_tiles_pro" },
+      "algae_film": { "count": 4, "dimensions": "32x32", "source": "pixellab_tiles_pro" }
+    },
+    "micro": {
+      "dark_mud_flecks": { "count": 4, "dimensions": "32x32", "quality": "MIXED — v000-v001 good alpha, v002-v003 too opaque" },
+      "moss_ground_cover": { "count": 2, "dimensions": "32x32", "quality": "GOOD" },
+      "reeds_grass_blades": { "count": 2, "dimensions": "32x32", "quality": "MIXED — low transparency" }
+    },
+    "medium": {
+      "reeds": { "count": 2, "dimensions": ["32x32", "48x48"], "quality": "GOOD" },
+      "cattails": { "count": 1, "dimensions": "32x32", "quality": "GOOD — 96 colors" },
+      "root_cluster": { "count": 1, "dimensions": "48x48", "quality": "GOOD" },
+      "moss_clump": { "count": 1, "dimensions": "32x32", "quality": "OK — only 13 colors" }
+    },
+    "objects": {
+      "forage_bush_swamp": { "count": 1, "dimensions": "64x64", "quality": "GOOD — 82 colors, 79% transparent" },
+      "swamp_tree": { "count": 1, "dimensions": "96x96", "quality": "GOOD — detailed canopy sprite" },
+      "reed_harvest_node": { "status": "STUCK_95_PERCENT" }
+    },
+    "transitions": {
+      "water_shallow_to_swamp": {
+        "attempt1": { "job_id": "35614bf0-a2b8-475b-afe3-2fffc90300e1", "status": "FAILED", "reason": "chained base tile not ready" },
+        "attempt2": { "job_id": "c360c3f7-21e3-4708-a2c3-1b580572b705", "status": "generating" }
+      },
+      "water_river_to_swamp": {
+        "job_id": "6f95a842-8374-4a00-9a5b-bc0b113b11cf",
+        "status": "waiting_on_base_tiles"
+      },
+      "forest_floor_to_swamp": {
+        "attempt1": { "job_id": "2f51ba8b-a46c-4732-8da0-dd14dca8f4a5", "status": "FAILED", "reason": "chained base tile not ready" },
+        "attempt2": { "job_id": "0700877d-0796-44e7-95f3-3dd024372d28", "status": "generating" }
+      }
+    }
+  },
+
+  "stuckJobs": {
+    "note": "Multiple jobs stuck at 95% with 0s ETA — likely PixelLab server queue issue. These may complete eventually.",
+    "jobs": [
+      "465c8506-0549-40b1-a0c1-1391ab873310",
+      "a3b899eb-fe3c-49f5-8c93-90246ec8c715",
+      "6aa3b2fa-effc-4015-a4d4-318e20ea7d8a",
+      "ba962d92-42cb-411c-9a56-38fad066b23c",
+      "c217ad2f-18a4-41b9-88c5-665649398645",
+      "db2220f5-9998-4402-ad27-7b4538423398",
+      "56785be4-77c1-4f95-99e9-a8f2a452d15e"
+    ]
+  },
+
+  "lessons": [
+    "Do NOT chain transition tilesets with upper_base_tile_id until the base tileset is fully completed",
+    "tiles_pro with square_topdown produces tiles with background fill — use create_map_object for better alpha control on decals",
+    "PixelLab can get stuck at 95% for extended periods — build retry logic",
+    "Map objects auto-delete after 8 hours — download immediately when completed"
+  ],
+
+  "nextActions": [
+    "Poll stuck jobs periodically — they may unstick",
+    "When transition retries complete, download and slice",
+    "Generate more variants per family (current: 1-4 per family, target: 8+)",
+    "Regenerate micro decals with create_map_object for better transparency",
+    "Begin grassland/water biome batch after swamp calibration validates"
+  ]
+}

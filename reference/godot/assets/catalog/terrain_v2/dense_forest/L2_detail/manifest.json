@@ -1,0 +1,24 @@
+{
+  "biome": "dense_forest",
+  "layer": "L2_detail",
+  "pixellab_tileset_id": "d3e127df-6de6-41f2-8eb1-e63da731fa1c",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "7cf8a981-a58c-4271-8ed5-301d3d005c85",
+    "upper": "d90aabad-5315-4249-9dc5-ae7ac1d963f8"
+  },
+  "generation_prompt": {
+    "lower_description": "thick green moss carpet and shelf mushrooms growing on fully transparent background, pixel art, top-down view",
+    "upper_description": "different moss coverage with bracket fungus patterns on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

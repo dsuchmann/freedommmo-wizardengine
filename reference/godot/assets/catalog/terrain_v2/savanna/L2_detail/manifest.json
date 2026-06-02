@@ -1,0 +1,24 @@
+{
+  "biome": "savanna",
+  "layer": "L2_detail",
+  "pixellab_tileset_id": "76c5361c-7148-4f86-b351-d702874f1f79",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "35a4713d-7d8c-458a-a4a5-1f6b2699cd99",
+    "upper": "76defd11-06ec-4b4f-a2c8-eb6ffeb27bef"
+  },
+  "generation_prompt": {
+    "lower_description": "red clay dirt patches and subtle animal hoof prints on fully transparent background, pixel art, top-down view",
+    "upper_description": "different red clay pattern with more animal tracks on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

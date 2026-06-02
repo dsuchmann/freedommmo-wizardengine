@@ -1,0 +1,24 @@
+{
+  "biome": "grassland",
+  "layer": "L4_scatter",
+  "pixellab_tileset_id": "3bd7e8eb-e5c8-4ccf-9812-d41a8bd95b04",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "d99dc2a5-5a69-4591-be9d-117ff66d6f5a",
+    "upper": "f7ab13b6-74b3-4d83-8b79-c6ad7bb6b911"
+  },
+  "generation_prompt": {
+    "lower_description": "scattered small pebbles and fallen flower petals on fully transparent background, pixel art, top-down view",
+    "upper_description": "different pebble arrangement with small twigs on fully transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

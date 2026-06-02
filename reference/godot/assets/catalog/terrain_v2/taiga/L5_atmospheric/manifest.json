@@ -1,0 +1,24 @@
+{
+  "biome": "taiga",
+  "layer": "L5_atmospheric",
+  "pixellab_tileset_id": "1d170e66-a95b-4e13-9aff-637dfdd7b5a9",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "75f2f43d-f420-4c3f-bd3a-923d0dbfc6ef",
+    "upper": "5506cccb-425c-4a6e-8c01-973a14ad5e5e"
+  },
+  "generation_prompt": {
+    "lower_description": "gentle falling snow particles on fully transparent background, sparse, pixel art, top-down view",
+    "upper_description": "different snowfall pattern with less density on transparent background, very sparse, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

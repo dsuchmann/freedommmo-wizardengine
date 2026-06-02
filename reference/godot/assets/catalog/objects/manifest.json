@@ -1,0 +1,4136 @@
+{
+  "items/armor": [
+    {
+      "id": "399b8dcc-2af6-45ff-90b3-8e5533883b8e",
+      "description": "Fantasy armor and clothing",
+      "filename": "fantasy_armor_and_clothing_399b8dcc.png",
+      "path": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_399b8dcc.png"
+    },
+    {
+      "id": "8bb8d860-dbbe-4a4d-9433-5ee00f5ca3ac",
+      "description": "Fantasy armor and clothing",
+      "filename": "fantasy_armor_and_clothing_8bb8d860.png",
+      "path": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_8bb8d860.png"
+    },
+    {
+      "id": "c6875eb4-b9e4-482f-9375-ec59e1ac2afd",
+      "description": "Fantasy armor and clothing",
+      "filename": "fantasy_armor_and_clothing_c6875eb4.png",
+      "path": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_c6875eb4.png"
+    },
+    {
+      "id": "f076101c-70bd-463e-bd32-1ef35e5de9cb",
+      "description": "Fantasy armor and clothing",
+      "filename": "fantasy_armor_and_clothing_f076101c.png",
+      "path": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_f076101c.png"
+    },
+    {
+      "id": "4757dc80-a0b8-4454-8283-54f7527af5df",
+      "description": "Fantasy armor and clothing",
+      "filename": "fantasy_armor_and_clothing_4757dc80.png",
+      "path": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_4757dc80.png"
+    },
+    {
+      "id": "af61ec65-2b63-4103-a472-2b141277bc56",
+      "description": "Fantasy armor and clothing",
+      "filename": "fantasy_armor_and_clothing_af61ec65.png",
+      "path": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_af61ec65.png"
+    },
+    {
+      "id": "63ca952f-47e5-4417-a9d6-f4d8ddf0470b",
+      "description": "Fantasy armor and clothing",
+      "filename": "fantasy_armor_and_clothing_63ca952f.png",
+      "path": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_63ca952f.png"
+    },
+    {
+      "id": "5cba7250-651e-49df-8839-840457ccfa85",
+      "description": "Fantasy armor and clothing",
+      "filename": "fantasy_armor_and_clothing_5cba7250.png",
+      "path": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_5cba7250.png"
+    },
+    {
+      "id": "b843cc5b-ebce-4c51-86fd-c5064e909630",
+      "description": "Fantasy armor and clothing",
+      "filename": "fantasy_armor_and_clothing_b843cc5b.png",
+      "path": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_b843cc5b.png"
+    },
+    {
+      "id": "a9803884-d15b-4054-80a1-ac0620964379",
+      "description": "Fantasy armor and clothing",
+      "filename": "fantasy_armor_and_clothing_a9803884.png",
+      "path": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_a9803884.png"
+    },
+    {
+      "id": "43380935-eba4-4e3c-a8dd-6f9529021adf",
+      "description": "Fantasy armor and clothing",
+      "filename": "fantasy_armor_and_clothing_43380935.png",
+      "path": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_43380935.png"
+    },
+    {
+      "id": "a03f96db-befd-4920-9fd1-ce8f12946530",
+      "description": "Fantasy armor and clothing",
+      "filename": "fantasy_armor_and_clothing_a03f96db.png",
+      "path": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_a03f96db.png"
+    },
+    {
+      "id": "9afcb261-2c98-46f9-8977-b3ecd21f5cb6",
+      "description": "Fantasy armor and clothing",
+      "filename": "fantasy_armor_and_clothing_9afcb261.png",
+      "path": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_9afcb261.png"
+    },
+    {
+      "id": "a085f9c8-bc7d-488d-82a6-076aac4cd07e",
+      "description": "Fantasy armor and clothing",
+      "filename": "fantasy_armor_and_clothing_a085f9c8.png",
+      "path": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_a085f9c8.png"
+    },
+    {
+      "id": "221c2e3f-3e43-44ff-9045-3983fdc18189",
+      "description": "Fantasy armor and clothing",
+      "filename": "fantasy_armor_and_clothing_221c2e3f.png",
+      "path": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_221c2e3f.png"
+    },
+    {
+      "id": "793b6fcf-e0e0-458a-a090-1c4f8ff29071",
+      "description": "Fantasy armor and clothing",
+      "filename": "fantasy_armor_and_clothing_793b6fcf.png",
+      "path": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_793b6fcf.png"
+    },
+    {
+      "id": "09869d57-9261-4a5f-86a4-cbff4b9382cd",
+      "description": "Fantasy armor and clothing",
+      "filename": "fantasy_armor_and_clothing_09869d57.png",
+      "path": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_09869d57.png"
+    },
+    {
+      "id": "f14471a1-1599-4191-bfcb-72cbec71a0c8",
+      "description": "Fantasy armor and clothing",
+      "filename": "fantasy_armor_and_clothing_f14471a1.png",
+      "path": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_f14471a1.png"
+    }
+  ],
+  "nature": [
+    {
+      "id": "9f37786d-90ff-44d5-874c-b5f3c4df5439",
+      "description": "Nature terrain details",
+      "filename": "nature_terrain_details_9f37786d.png",
+      "path": "assets/catalog/objects/nature/nature_terrain_details_9f37786d.png"
+    },
+    {
+      "id": "c8463be9-4188-4e2f-a219-4012e9f8f3e0",
+      "description": "Nature terrain details",
+      "filename": "nature_terrain_details_c8463be9.png",
+      "path": "assets/catalog/objects/nature/nature_terrain_details_c8463be9.png"
+    },
+    {
+      "id": "72b2959c-85db-47cc-86ca-f697b0cad1ab",
+      "description": "Nature terrain details",
+      "filename": "nature_terrain_details_72b2959c.png",
+      "path": "assets/catalog/objects/nature/nature_terrain_details_72b2959c.png"
+    },
+    {
+      "id": "47267cbd-b468-41de-b121-28dcfc276f0b",
+      "description": "Nature terrain details",
+      "filename": "nature_terrain_details_47267cbd.png",
+      "path": "assets/catalog/objects/nature/nature_terrain_details_47267cbd.png"
+    },
+    {
+      "id": "e8dfe247-243a-4f73-95f4-ab60c8ba1ec1",
+      "description": "Nature terrain details",
+      "filename": "nature_terrain_details_e8dfe247.png",
+      "path": "assets/catalog/objects/nature/nature_terrain_details_e8dfe247.png"
+    },
+    {
+      "id": "8cb6f943-5e39-4450-9ab5-b0e78e0712d5",
+      "description": "Nature terrain details",
+      "filename": "nature_terrain_details_8cb6f943.png",
+      "path": "assets/catalog/objects/nature/nature_terrain_details_8cb6f943.png"
+    },
+    {
+      "id": "28c79dfb-2fe6-4f75-ac97-f8e12ecb8792",
+      "description": "Nature terrain details",
+      "filename": "nature_terrain_details_28c79dfb.png",
+      "path": "assets/catalog/objects/nature/nature_terrain_details_28c79dfb.png"
+    },
+    {
+      "id": "95c13dcf-b906-4c8b-812b-67dce5e353cf",
+      "description": "Nature terrain details",
+      "filename": "nature_terrain_details_95c13dcf.png",
+      "path": "assets/catalog/objects/nature/nature_terrain_details_95c13dcf.png"
+    },
+    {
+      "id": "5968b8a3-ef47-4a25-bb92-894ce617b3af",
+      "description": "Nature terrain details",
+      "filename": "nature_terrain_details_5968b8a3.png",
+      "path": "assets/catalog/objects/nature/nature_terrain_details_5968b8a3.png"
+    },
+    {
+      "id": "93120fb3-3f33-46e7-b1fa-63ec9239df0c",
+      "description": "Nature terrain details",
+      "filename": "nature_terrain_details_93120fb3.png",
+      "path": "assets/catalog/objects/nature/nature_terrain_details_93120fb3.png"
+    },
+    {
+      "id": "34d8396c-e5ad-40fe-8d8a-aa5acbd1b757",
+      "description": "Nature terrain details",
+      "filename": "nature_terrain_details_34d8396c.png",
+      "path": "assets/catalog/objects/nature/nature_terrain_details_34d8396c.png"
+    },
+    {
+      "id": "f93f8262-5732-4672-9889-bc1d698af120",
+      "description": "Nature terrain details",
+      "filename": "nature_terrain_details_f93f8262.png",
+      "path": "assets/catalog/objects/nature/nature_terrain_details_f93f8262.png"
+    },
+    {
+      "id": "ee91084f-4668-4565-a630-964d9f5290c4",
+      "description": "Nature terrain details",
+      "filename": "nature_terrain_details_ee91084f.png",
+      "path": "assets/catalog/objects/nature/nature_terrain_details_ee91084f.png"
+    },
+    {
+      "id": "8d859f6e-e011-463e-ab4f-286f4811bfe2",
+      "description": "Nature terrain details",
+      "filename": "nature_terrain_details_8d859f6e.png",
+      "path": "assets/catalog/objects/nature/nature_terrain_details_8d859f6e.png"
+    },
+    {
+      "id": "363debaf-af76-4c7d-a617-daadf646a688",
+      "description": "Nature terrain details",
+      "filename": "nature_terrain_details_363debaf.png",
+      "path": "assets/catalog/objects/nature/nature_terrain_details_363debaf.png"
+    },
+    {
+      "id": "7949d49c-5876-49c5-a4fe-f0cde8c92bf1",
+      "description": "Nature terrain details",
+      "filename": "nature_terrain_details_7949d49c.png",
+      "path": "assets/catalog/objects/nature/nature_terrain_details_7949d49c.png"
+    },
+    {
+      "id": "59dcc523-0934-449e-be0e-b6711a65ad56",
+      "description": "Nature terrain details",
+      "filename": "nature_terrain_details_59dcc523.png",
+      "path": "assets/catalog/objects/nature/nature_terrain_details_59dcc523.png"
+    },
+    {
+      "id": "4a6cba9f-a823-482a-8c18-17a3ea9f0a72",
+      "description": "small pond",
+      "filename": "small_pond_4a6cba9f.png",
+      "path": "assets/catalog/objects/nature/small_pond_4a6cba9f.png"
+    }
+  ],
+  "buildings": [
+    {
+      "id": "22e1c48a-ecff-490d-baa9-2d268a937fdd",
+      "description": "Building architecture tiles",
+      "filename": "building_architecture_tiles_22e1c48a.png",
+      "path": "assets/catalog/objects/buildings/building_architecture_tiles_22e1c48a.png"
+    },
+    {
+      "id": "cb2d3762-ec3e-4af4-8090-ed0c54e0b117",
+      "description": "Building architecture tiles",
+      "filename": "building_architecture_tiles_cb2d3762.png",
+      "path": "assets/catalog/objects/buildings/building_architecture_tiles_cb2d3762.png"
+    },
+    {
+      "id": "fee6a3d7-6c4d-4bb3-87a3-5872fdcdc70e",
+      "description": "Building architecture tiles",
+      "filename": "building_architecture_tiles_fee6a3d7.png",
+      "path": "assets/catalog/objects/buildings/building_architecture_tiles_fee6a3d7.png"
+    },
+    {
+      "id": "1e46b691-0b0f-4d81-8256-aafb42fba30a",
+      "description": "Building architecture tiles",
+      "filename": "building_architecture_tiles_1e46b691.png",
+      "path": "assets/catalog/objects/buildings/building_architecture_tiles_1e46b691.png"
+    },
+    {
+      "id": "68838642-0088-42a3-9115-90e86fcb7ef4",
+      "description": "Building architecture tiles",
+      "filename": "building_architecture_tiles_68838642.png",
+      "path": "assets/catalog/objects/buildings/building_architecture_tiles_68838642.png"
+    },
+    {
+      "id": "f557fa47-14b8-4c82-b3e4-41443f34a525",
+      "description": "Building architecture tiles",
+      "filename": "building_architecture_tiles_f557fa47.png",
+      "path": "assets/catalog/objects/buildings/building_architecture_tiles_f557fa47.png"
+    },
+    {
+      "id": "072eb638-262c-40d2-97c8-04ec8e1b0e5e",
+      "description": "Building architecture tiles",
+      "filename": "building_architecture_tiles_072eb638.png",
+      "path": "assets/catalog/objects/buildings/building_architecture_tiles_072eb638.png"
+    },
+    {
+      "id": "31cfc357-e93c-4255-8db6-5fb2a302241f",
+      "description": "Building architecture tiles",
+      "filename": "building_architecture_tiles_31cfc357.png",
+      "path": "assets/catalog/objects/buildings/building_architecture_tiles_31cfc357.png"
+    },
+    {
+      "id": "573def64-7176-421f-961d-fa84d7092bbd",
+      "description": "Building architecture tiles",
+      "filename": "building_architecture_tiles_573def64.png",
+      "path": "assets/catalog/objects/buildings/building_architecture_tiles_573def64.png"
+    },
+    {
+      "id": "b4ff1024-822a-4189-95e3-ff9e98a1accc",
+      "description": "Building architecture tiles",
+      "filename": "building_architecture_tiles_b4ff1024.png",
+      "path": "assets/catalog/objects/buildings/building_architecture_tiles_b4ff1024.png"
+    },
+    {
+      "id": "4807d20d-f90d-4f07-b2e2-bb42540e4ae1",
+      "description": "Building architecture tiles",
+      "filename": "building_architecture_tiles_4807d20d.png",
+      "path": "assets/catalog/objects/buildings/building_architecture_tiles_4807d20d.png"
+    },
+    {
+      "id": "ce784e41-c710-47b4-9222-12cb3418555d",
+      "description": "Building architecture tiles",
+      "filename": "building_architecture_tiles_ce784e41.png",
+      "path": "assets/catalog/objects/buildings/building_architecture_tiles_ce784e41.png"
+    },
+    {
+      "id": "08e5bff9-ebd3-423c-be69-6004104cfaf8",
+      "description": "Building architecture tiles",
+      "filename": "building_architecture_tiles_08e5bff9.png",
+      "path": "assets/catalog/objects/buildings/building_architecture_tiles_08e5bff9.png"
+    },
+    {
+      "id": "87140ee8-2608-4710-9668-017d02e05055",
+      "description": "Building architecture tiles",
+      "filename": "building_architecture_tiles_87140ee8.png",
+      "path": "assets/catalog/objects/buildings/building_architecture_tiles_87140ee8.png"
+    },
+    {
+      "id": "8d63fca0-e126-4f75-8480-cc2ddb56017e",
+      "description": "Building architecture tiles",
+      "filename": "building_architecture_tiles_8d63fca0.png",
+      "path": "assets/catalog/objects/buildings/building_architecture_tiles_8d63fca0.png"
+    },
+    {
+      "id": "1a1914d5-cf78-47ba-9542-7f2f6c535b34",
+      "description": "Building architecture tiles",
+      "filename": "building_architecture_tiles_1a1914d5.png",
+      "path": "assets/catalog/objects/buildings/building_architecture_tiles_1a1914d5.png"
+    },
+    {
+      "id": "7a9e7ade-ad3c-4090-b66c-38c2f2267c86",
+      "description": "Building architecture tiles",
+      "filename": "building_architecture_tiles_7a9e7ade.png",
+      "path": "assets/catalog/objects/buildings/building_architecture_tiles_7a9e7ade.png"
+    },
+    {
+      "id": "406290bf-7ef2-4f75-85d5-51cfd4668cff",
+      "description": "Building architecture tiles",
+      "filename": "building_architecture_tiles_406290bf.png",
+      "path": "assets/catalog/objects/buildings/building_architecture_tiles_406290bf.png"
+    },
+    {
+      "id": "4c77c228-4c31-42b1-99af-45266f85c77b",
+      "description": "Building architecture tiles",
+      "filename": "building_architecture_tiles_4c77c228.png",
+      "path": "assets/catalog/objects/buildings/building_architecture_tiles_4c77c228.png"
+    },
+    {
+      "id": "0f5d6835-4656-4b72-ab5b-2eafae7d3df4",
+      "description": "Building architecture tiles",
+      "filename": "building_architecture_tiles_0f5d6835.png",
+      "path": "assets/catalog/objects/buildings/building_architecture_tiles_0f5d6835.png"
+    },
+    {
+      "id": "5faa5c4b-cb88-45de-a5d7-5d27c231ac90",
+      "description": "Building architecture tiles",
+      "filename": "building_architecture_tiles_5faa5c4b.png",
+      "path": "assets/catalog/objects/buildings/building_architecture_tiles_5faa5c4b.png"
+    },
+    {
+      "id": "ce32c19c-a08f-4108-a2ce-e0ac8d187a64",
+      "description": "small cottage",
+      "filename": "small_cottage_ce32c19c.png",
+      "path": "assets/catalog/objects/buildings/small_cottage_ce32c19c.png"
+    },
+    {
+      "id": "d760ba36-c69c-4f3e-a24a-deae733b3479",
+      "description": "small cottage",
+      "filename": "small_cottage_d760ba36.png",
+      "path": "assets/catalog/objects/buildings/small_cottage_d760ba36.png"
+    },
+    {
+      "id": "24741902-03df-452b-89d8-2fde45863154",
+      "description": "small cottage",
+      "filename": "small_cottage_24741902.png",
+      "path": "assets/catalog/objects/buildings/small_cottage_24741902.png"
+    },
+    {
+      "id": "08944349-2d59-4948-8979-11eedc582027",
+      "description": "small cottage",
+      "filename": "small_cottage_08944349.png",
+      "path": "assets/catalog/objects/buildings/small_cottage_08944349.png"
+    },
+    {
+      "id": "c50839f7-fa9b-4112-8f67-c20b61a37ca6",
+      "description": "small cottage",
+      "filename": "small_cottage_c50839f7.png",
+      "path": "assets/catalog/objects/buildings/small_cottage_c50839f7.png"
+    },
+    {
+      "id": "8e6d2419-97b7-434c-9b20-242d0f4c9147",
+      "description": "small cottage",
+      "filename": "small_cottage_8e6d2419.png",
+      "path": "assets/catalog/objects/buildings/small_cottage_8e6d2419.png"
+    },
+    {
+      "id": "5ed5320b-b1df-44a3-bc0b-6cf9b1d7b8d5",
+      "description": "small cottage",
+      "filename": "small_cottage_5ed5320b.png",
+      "path": "assets/catalog/objects/buildings/small_cottage_5ed5320b.png"
+    },
+    {
+      "id": "bba67458-fc3c-4ccf-8553-c6d4ba4175a5",
+      "description": "small cottage",
+      "filename": "small_cottage_bba67458.png",
+      "path": "assets/catalog/objects/buildings/small_cottage_bba67458.png"
+    },
+    {
+      "id": "e515c2a2-dac2-47a1-a9ad-3b1d50633655",
+      "description": "small cottage",
+      "filename": "small_cottage_e515c2a2.png",
+      "path": "assets/catalog/objects/buildings/small_cottage_e515c2a2.png"
+    },
+    {
+      "id": "dd1fdb41-38c2-40b8-91e9-c81b18f20bea",
+      "description": "small cottage",
+      "filename": "small_cottage_dd1fdb41.png",
+      "path": "assets/catalog/objects/buildings/small_cottage_dd1fdb41.png"
+    },
+    {
+      "id": "929575a6-1baa-41f0-95b4-48212edb12b6",
+      "description": "small cottage",
+      "filename": "small_cottage_929575a6.png",
+      "path": "assets/catalog/objects/buildings/small_cottage_929575a6.png"
+    },
+    {
+      "id": "0c46aa7b-1153-48e4-a016-70ee394b8d82",
+      "description": "small cottage",
+      "filename": "small_cottage_0c46aa7b.png",
+      "path": "assets/catalog/objects/buildings/small_cottage_0c46aa7b.png"
+    },
+    {
+      "id": "93a8b24f-244c-43c3-a2fe-3ff62455c17f",
+      "description": "small cottage",
+      "filename": "small_cottage_93a8b24f.png",
+      "path": "assets/catalog/objects/buildings/small_cottage_93a8b24f.png"
+    },
+    {
+      "id": "9dfb505c-ed90-455f-aded-ed851326bd93",
+      "description": "small cottage",
+      "filename": "small_cottage_9dfb505c.png",
+      "path": "assets/catalog/objects/buildings/small_cottage_9dfb505c.png"
+    },
+    {
+      "id": "d2709394-0cfd-4dd0-a745-3839013b32fc",
+      "description": "small cottage",
+      "filename": "small_cottage_d2709394.png",
+      "path": "assets/catalog/objects/buildings/small_cottage_d2709394.png"
+    },
+    {
+      "id": "1186ee51-806c-44c9-8f5c-741cd94f116e",
+      "description": "small cottage",
+      "filename": "small_cottage_1186ee51.png",
+      "path": "assets/catalog/objects/buildings/small_cottage_1186ee51.png"
+    },
+    {
+      "id": "0355ed83-dca4-481c-be7f-ff93d08c0e63",
+      "description": "inn building",
+      "filename": "inn_building_0355ed83.png",
+      "path": "assets/catalog/objects/buildings/inn_building_0355ed83.png"
+    },
+    {
+      "id": "5e319c10-5620-4982-9192-6a61f3d6ca6a",
+      "description": "outhouse",
+      "filename": "outhouse_5e319c10.png",
+      "path": "assets/catalog/objects/buildings/outhouse_5e319c10.png"
+    },
+    {
+      "id": "1c86d068-4141-4dee-9f74-ce34295254fa",
+      "description": "windmill",
+      "filename": "windmill_1c86d068.png",
+      "path": "assets/catalog/objects/buildings/windmill_1c86d068.png"
+    },
+    {
+      "id": "f6e7440a-bcd4-4242-aed1-2b062f176bf9",
+      "description": "mining cave",
+      "filename": "mining_cave_f6e7440a.png",
+      "path": "assets/catalog/objects/buildings/mining_cave_f6e7440a.png"
+    },
+    {
+      "id": "3d5ea9cd-b302-454b-93b0-2c1b3a972461",
+      "description": "small wooden cottage",
+      "filename": "small_wooden_cottage_3d5ea9cd.png",
+      "path": "assets/catalog/objects/buildings/small_wooden_cottage_3d5ea9cd.png"
+    },
+    {
+      "id": "3c2f625c-3fc8-4a54-b7de-092f6a21c5a7",
+      "description": "storage shed",
+      "filename": "storage_shed_3c2f625c.png",
+      "path": "assets/catalog/objects/buildings/storage_shed_3c2f625c.png"
+    },
+    {
+      "id": "0576e4d1-27b4-4e2d-ae21-68f432a79e0f",
+      "description": "medieval windmill",
+      "filename": "medieval_windmill_0576e4d1.png",
+      "path": "assets/catalog/objects/buildings/medieval_windmill_0576e4d1.png"
+    },
+    {
+      "id": "28687555-72a8-44b0-9b28-7681cef49069",
+      "description": "medieval church",
+      "filename": "medieval_church_28687555.png",
+      "path": "assets/catalog/objects/buildings/medieval_church_28687555.png"
+    },
+    {
+      "id": "f8726270-1e22-47d9-9022-0d5b0ba78473",
+      "description": "village house",
+      "filename": "village_house_f8726270.png",
+      "path": "assets/catalog/objects/buildings/village_house_f8726270.png"
+    },
+    {
+      "id": "2d72b1f5-6013-48d3-99b6-3c028d2265e0",
+      "description": "village house 2",
+      "filename": "village_house_2_2d72b1f5.png",
+      "path": "assets/catalog/objects/buildings/village_house_2_2d72b1f5.png"
+    },
+    {
+      "id": "754133aa-0a75-4d37-a20e-9c975216cd4b",
+      "description": "stone watchtower",
+      "filename": "stone_watchtower_754133aa.png",
+      "path": "assets/catalog/objects/buildings/stone_watchtower_754133aa.png"
+    },
+    {
+      "id": "fb9b7517-447d-4037-9fcd-c4fbf85d7c90",
+      "description": "medieval tavern",
+      "filename": "medieval_tavern_fb9b7517.png",
+      "path": "assets/catalog/objects/buildings/medieval_tavern_fb9b7517.png"
+    },
+    {
+      "id": "0fa19119-d134-4b78-a91c-c1cec7d640c7",
+      "description": "market stall",
+      "filename": "market_stall_0fa19119.png",
+      "path": "assets/catalog/objects/buildings/market_stall_0fa19119.png"
+    },
+    {
+      "id": "6c31e290-3a0c-40aa-a044-3e9246e3141b",
+      "description": "blacksmith forge",
+      "filename": "blacksmith_forge_6c31e290.png",
+      "path": "assets/catalog/objects/buildings/blacksmith_forge_6c31e290.png"
+    },
+    {
+      "id": "f4dbec20-97f1-4517-83af-5099518ea5a9",
+      "description": "village house 3",
+      "filename": "village_house_3_f4dbec20.png",
+      "path": "assets/catalog/objects/buildings/village_house_3_f4dbec20.png"
+    }
+  ],
+  "items/food": [
+    {
+      "id": "63a8e383-9deb-4acc-8412-5bd0ed03cde7",
+      "description": "Food and consumables",
+      "filename": "food_and_consumables_63a8e383.png",
+      "path": "assets/catalog/objects/items/food/food_and_consumables_63a8e383.png"
+    },
+    {
+      "id": "9be5d3a6-bdcb-41a7-ab5a-cd1bc38a8264",
+      "description": "Food and consumables",
+      "filename": "food_and_consumables_9be5d3a6.png",
+      "path": "assets/catalog/objects/items/food/food_and_consumables_9be5d3a6.png"
+    },
+    {
+      "id": "eccffe13-4a0e-4707-a7bc-3cf2e39de697",
+      "description": "Food and consumables",
+      "filename": "food_and_consumables_eccffe13.png",
+      "path": "assets/catalog/objects/items/food/food_and_consumables_eccffe13.png"
+    },
+    {
+      "id": "62cb5d41-55ea-46c3-b021-1ef01fa293c7",
+      "description": "Food and consumables",
+      "filename": "food_and_consumables_62cb5d41.png",
+      "path": "assets/catalog/objects/items/food/food_and_consumables_62cb5d41.png"
+    },
+    {
+      "id": "47e85e26-0553-40fa-9d99-d7a9ab7e78a5",
+      "description": "Food and consumables",
+      "filename": "food_and_consumables_47e85e26.png",
+      "path": "assets/catalog/objects/items/food/food_and_consumables_47e85e26.png"
+    },
+    {
+      "id": "b0a14f9e-3735-41da-9e24-df7765baaf3e",
+      "description": "Food and consumables",
+      "filename": "food_and_consumables_b0a14f9e.png",
+      "path": "assets/catalog/objects/items/food/food_and_consumables_b0a14f9e.png"
+    },
+    {
+      "id": "2df8c201-7f49-416b-a2bb-8de2dbc23964",
+      "description": "Food and consumables",
+      "filename": "food_and_consumables_2df8c201.png",
+      "path": "assets/catalog/objects/items/food/food_and_consumables_2df8c201.png"
+    },
+    {
+      "id": "55d298e7-2b3b-4dc3-b538-458599bfb3c5",
+      "description": "Food and consumables",
+      "filename": "food_and_consumables_55d298e7.png",
+      "path": "assets/catalog/objects/items/food/food_and_consumables_55d298e7.png"
+    },
+    {
+      "id": "1e865bf4-e7bf-4ccd-8b36-f47ce44d0c91",
+      "description": "Food and consumables",
+      "filename": "food_and_consumables_1e865bf4.png",
+      "path": "assets/catalog/objects/items/food/food_and_consumables_1e865bf4.png"
+    },
+    {
+      "id": "0e2bbc2b-0308-4be9-bf26-f6548b24e4b2",
+      "description": "Food and consumables",
+      "filename": "food_and_consumables_0e2bbc2b.png",
+      "path": "assets/catalog/objects/items/food/food_and_consumables_0e2bbc2b.png"
+    },
+    {
+      "id": "12b6bb01-8a68-4fdf-9883-6ecbd04f39e9",
+      "description": "Food and consumables",
+      "filename": "food_and_consumables_12b6bb01.png",
+      "path": "assets/catalog/objects/items/food/food_and_consumables_12b6bb01.png"
+    },
+    {
+      "id": "a53f3f8e-524b-4c68-b821-58e03e1d49a8",
+      "description": "Food and consumables",
+      "filename": "food_and_consumables_a53f3f8e.png",
+      "path": "assets/catalog/objects/items/food/food_and_consumables_a53f3f8e.png"
+    },
+    {
+      "id": "4aa340b4-f152-4070-a83b-152a2d3ad42e",
+      "description": "Food and consumables",
+      "filename": "food_and_consumables_4aa340b4.png",
+      "path": "assets/catalog/objects/items/food/food_and_consumables_4aa340b4.png"
+    },
+    {
+      "id": "afa349fb-ffe0-4978-9072-9b15f5fd1f11",
+      "description": "Food and consumables",
+      "filename": "food_and_consumables_afa349fb.png",
+      "path": "assets/catalog/objects/items/food/food_and_consumables_afa349fb.png"
+    },
+    {
+      "id": "b9728e54-15b3-4c33-b4e7-fdb303b0aa81",
+      "description": "Food and consumables",
+      "filename": "food_and_consumables_b9728e54.png",
+      "path": "assets/catalog/objects/items/food/food_and_consumables_b9728e54.png"
+    },
+    {
+      "id": "a20f2d0c-f9c3-4b23-88a5-67ccf63a5ed0",
+      "description": "Food and consumables",
+      "filename": "food_and_consumables_a20f2d0c.png",
+      "path": "assets/catalog/objects/items/food/food_and_consumables_a20f2d0c.png"
+    },
+    {
+      "id": "760fad9f-f773-475f-8354-41d761a988aa",
+      "description": "Food and consumables",
+      "filename": "food_and_consumables_760fad9f.png",
+      "path": "assets/catalog/objects/items/food/food_and_consumables_760fad9f.png"
+    },
+    {
+      "id": "911a19a8-5605-42f2-9264-6a3a25068f3c",
+      "description": "Food and consumables",
+      "filename": "food_and_consumables_911a19a8.png",
+      "path": "assets/catalog/objects/items/food/food_and_consumables_911a19a8.png"
+    },
+    {
+      "id": "07735caf-cfb7-42d0-b40c-cb266fc7d4a9",
+      "description": "Food and consumables",
+      "filename": "food_and_consumables_07735caf.png",
+      "path": "assets/catalog/objects/items/food/food_and_consumables_07735caf.png"
+    },
+    {
+      "id": "05008a4f-e768-4d24-9de2-ea3e93843bc6",
+      "description": "Food and consumables",
+      "filename": "food_and_consumables_05008a4f.png",
+      "path": "assets/catalog/objects/items/food/food_and_consumables_05008a4f.png"
+    },
+    {
+      "id": "d9cb0c53-f932-44ed-915c-92b39bf9cb83",
+      "description": "Food and consumables",
+      "filename": "food_and_consumables_d9cb0c53.png",
+      "path": "assets/catalog/objects/items/food/food_and_consumables_d9cb0c53.png"
+    },
+    {
+      "id": "8e543faa-6562-40ed-ab54-8f4829dd11f3",
+      "description": "Food and consumables",
+      "filename": "food_and_consumables_8e543faa.png",
+      "path": "assets/catalog/objects/items/food/food_and_consumables_8e543faa.png"
+    }
+  ],
+  "items/treasure": [
+    {
+      "id": "edeb2047-6450-4288-9d81-44abefa21a34",
+      "description": "Treasure and valuables",
+      "filename": "treasure_and_valuables_edeb2047.png",
+      "path": "assets/catalog/objects/items/treasure/treasure_and_valuables_edeb2047.png"
+    },
+    {
+      "id": "8695def4-99fe-4bd8-b217-fba81094a405",
+      "description": "Treasure and valuables",
+      "filename": "treasure_and_valuables_8695def4.png",
+      "path": "assets/catalog/objects/items/treasure/treasure_and_valuables_8695def4.png"
+    },
+    {
+      "id": "e003ef57-2308-4809-8cb0-c38399c70eb5",
+      "description": "Treasure and valuables",
+      "filename": "treasure_and_valuables_e003ef57.png",
+      "path": "assets/catalog/objects/items/treasure/treasure_and_valuables_e003ef57.png"
+    },
+    {
+      "id": "18e976d3-7a1f-4d20-a91e-8e15f3443cfd",
+      "description": "Treasure and valuables",
+      "filename": "treasure_and_valuables_18e976d3.png",
+      "path": "assets/catalog/objects/items/treasure/treasure_and_valuables_18e976d3.png"
+    },
+    {
+      "id": "74ebb526-bccf-4229-a6ea-f512eacd1b7c",
+      "description": "Treasure and valuables",
+      "filename": "treasure_and_valuables_74ebb526.png",
+      "path": "assets/catalog/objects/items/treasure/treasure_and_valuables_74ebb526.png"
+    },
+    {
+      "id": "4f53e23a-f61b-46d3-9e42-7be419a4404c",
+      "description": "Treasure and valuables",
+      "filename": "treasure_and_valuables_4f53e23a.png",
+      "path": "assets/catalog/objects/items/treasure/treasure_and_valuables_4f53e23a.png"
+    },
+    {
+      "id": "e25ff947-be63-4cee-b367-6be77a659084",
+      "description": "Treasure and valuables",
+      "filename": "treasure_and_valuables_e25ff947.png",
+      "path": "assets/catalog/objects/items/treasure/treasure_and_valuables_e25ff947.png"
+    },
+    {
+      "id": "8e9881c2-0d96-4f17-9efa-f2957716d41a",
+      "description": "Treasure and valuables",
+      "filename": "treasure_and_valuables_8e9881c2.png",
+      "path": "assets/catalog/objects/items/treasure/treasure_and_valuables_8e9881c2.png"
+    },
+    {
+      "id": "2f0b61d2-8d06-44b8-beb6-e98029bca7dc",
+      "description": "Treasure and valuables",
+      "filename": "treasure_and_valuables_2f0b61d2.png",
+      "path": "assets/catalog/objects/items/treasure/treasure_and_valuables_2f0b61d2.png"
+    },
+    {
+      "id": "5e3c33ca-f3ed-47f8-a4ca-c46229e18d2b",
+      "description": "Treasure and valuables",
+      "filename": "treasure_and_valuables_5e3c33ca.png",
+      "path": "assets/catalog/objects/items/treasure/treasure_and_valuables_5e3c33ca.png"
+    },
+    {
+      "id": "9d43a2dc-8378-47c8-ba9a-238e55484666",
+      "description": "Treasure and valuables",
+      "filename": "treasure_and_valuables_9d43a2dc.png",
+      "path": "assets/catalog/objects/items/treasure/treasure_and_valuables_9d43a2dc.png"
+    },
+    {
+      "id": "4caf9465-e295-4740-a4e2-73a00aee147b",
+      "description": "Treasure and valuables",
+      "filename": "treasure_and_valuables_4caf9465.png",
+      "path": "assets/catalog/objects/items/treasure/treasure_and_valuables_4caf9465.png"
+    },
+    {
+      "id": "77104d44-e451-4a95-ace1-e6069da1b9b2",
+      "description": "Treasure and valuables",
+      "filename": "treasure_and_valuables_77104d44.png",
+      "path": "assets/catalog/objects/items/treasure/treasure_and_valuables_77104d44.png"
+    },
+    {
+      "id": "3b5dfdb9-a43b-4efc-ad6d-48c7050cd699",
+      "description": "Treasure and valuables",
+      "filename": "treasure_and_valuables_3b5dfdb9.png",
+      "path": "assets/catalog/objects/items/treasure/treasure_and_valuables_3b5dfdb9.png"
+    },
+    {
+      "id": "11aa8b8b-09dd-4a01-b1f2-06c7e3c68db2",
+      "description": "Treasure and valuables",
+      "filename": "treasure_and_valuables_11aa8b8b.png",
+      "path": "assets/catalog/objects/items/treasure/treasure_and_valuables_11aa8b8b.png"
+    },
+    {
+      "id": "a0c5c586-05ce-45b8-95b0-b33d927f0be0",
+      "description": "Treasure and valuables",
+      "filename": "treasure_and_valuables_a0c5c586.png",
+      "path": "assets/catalog/objects/items/treasure/treasure_and_valuables_a0c5c586.png"
+    },
+    {
+      "id": "10ff1fb4-ca25-463f-addf-1c6acd21794a",
+      "description": "Treasure and valuables",
+      "filename": "treasure_and_valuables_10ff1fb4.png",
+      "path": "assets/catalog/objects/items/treasure/treasure_and_valuables_10ff1fb4.png"
+    },
+    {
+      "id": "48293d64-88fb-4a06-9de2-39641849043a",
+      "description": "Treasure and valuables",
+      "filename": "treasure_and_valuables_48293d64.png",
+      "path": "assets/catalog/objects/items/treasure/treasure_and_valuables_48293d64.png"
+    },
+    {
+      "id": "6f9ae157-0ad2-4874-817a-3db004076ddd",
+      "description": "Treasure and valuables",
+      "filename": "treasure_and_valuables_6f9ae157.png",
+      "path": "assets/catalog/objects/items/treasure/treasure_and_valuables_6f9ae157.png"
+    },
+    {
+      "id": "ea65f1f6-86e3-4144-8d7f-46bcb86bf04d",
+      "description": "Treasure and valuables",
+      "filename": "treasure_and_valuables_ea65f1f6.png",
+      "path": "assets/catalog/objects/items/treasure/treasure_and_valuables_ea65f1f6.png"
+    },
+    {
+      "id": "28efa760-ed55-4f0b-a2eb-d173f5781808",
+      "description": "treasure chest",
+      "filename": "treasure_chest_28efa760.png",
+      "path": "assets/catalog/objects/items/treasure/treasure_chest_28efa760.png"
+    }
+  ],
+  "items/crafting": [
+    {
+      "id": "ff7e8a2b-a4b6-409b-9742-941789b8d147",
+      "description": "Crafting materials",
+      "filename": "crafting_materials_ff7e8a2b.png",
+      "path": "assets/catalog/objects/items/crafting/crafting_materials_ff7e8a2b.png"
+    },
+    {
+      "id": "105cfe6d-302b-4c28-9fe5-a17f2bb804ec",
+      "description": "Crafting materials",
+      "filename": "crafting_materials_105cfe6d.png",
+      "path": "assets/catalog/objects/items/crafting/crafting_materials_105cfe6d.png"
+    },
+    {
+      "id": "3c769e75-7071-4a4b-bd03-02eb53a898cc",
+      "description": "Crafting materials",
+      "filename": "crafting_materials_3c769e75.png",
+      "path": "assets/catalog/objects/items/crafting/crafting_materials_3c769e75.png"
+    },
+    {
+      "id": "2cd059a4-63fd-48c9-adbc-8368162f5603",
+      "description": "Crafting materials",
+      "filename": "crafting_materials_2cd059a4.png",
+      "path": "assets/catalog/objects/items/crafting/crafting_materials_2cd059a4.png"
+    },
+    {
+      "id": "ccd9161d-64b0-4947-b46d-ca410a3dfdf9",
+      "description": "Crafting materials",
+      "filename": "crafting_materials_ccd9161d.png",
+      "path": "assets/catalog/objects/items/crafting/crafting_materials_ccd9161d.png"
+    },
+    {
+      "id": "d51ff36f-f0d1-4642-a732-54bbbeb527fc",
+      "description": "Crafting materials",
+      "filename": "crafting_materials_d51ff36f.png",
+      "path": "assets/catalog/objects/items/crafting/crafting_materials_d51ff36f.png"
+    },
+    {
+      "id": "309a3066-b900-4962-9a1f-63f3a590e663",
+      "description": "Crafting materials",
+      "filename": "crafting_materials_309a3066.png",
+      "path": "assets/catalog/objects/items/crafting/crafting_materials_309a3066.png"
+    },
+    {
+      "id": "aa73184f-39a0-42b0-b5fb-c64ef2fa547c",
+      "description": "Crafting materials",
+      "filename": "crafting_materials_aa73184f.png",
+      "path": "assets/catalog/objects/items/crafting/crafting_materials_aa73184f.png"
+    },
+    {
+      "id": "e14dc489-c925-4aaf-ab87-36b033e83032",
+      "description": "Crafting materials",
+      "filename": "crafting_materials_e14dc489.png",
+      "path": "assets/catalog/objects/items/crafting/crafting_materials_e14dc489.png"
+    },
+    {
+      "id": "03444863-be10-4318-8a0e-e99d1073aa8a",
+      "description": "Crafting materials",
+      "filename": "crafting_materials_03444863.png",
+      "path": "assets/catalog/objects/items/crafting/crafting_materials_03444863.png"
+    },
+    {
+      "id": "a564ee39-6fe0-4692-b6eb-4a708383c66f",
+      "description": "Crafting materials",
+      "filename": "crafting_materials_a564ee39.png",
+      "path": "assets/catalog/objects/items/crafting/crafting_materials_a564ee39.png"
+    },
+    {
+      "id": "73546ec5-50b6-4d0b-9221-0c9f483eab58",
+      "description": "Crafting materials",
+      "filename": "crafting_materials_73546ec5.png",
+      "path": "assets/catalog/objects/items/crafting/crafting_materials_73546ec5.png"
+    },
+    {
+      "id": "7be50a87-a0e4-4362-ab94-04ec3300d4fc",
+      "description": "Crafting materials",
+      "filename": "crafting_materials_7be50a87.png",
+      "path": "assets/catalog/objects/items/crafting/crafting_materials_7be50a87.png"
+    },
+    {
+      "id": "753ecb79-dd75-4837-8c73-8a55e734f3de",
+      "description": "Crafting materials",
+      "filename": "crafting_materials_753ecb79.png",
+      "path": "assets/catalog/objects/items/crafting/crafting_materials_753ecb79.png"
+    }
+  ],
+  "items/weapons": [
+    {
+      "id": "5b9cff2b-6aae-4add-952c-295aa64cc321",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_5b9cff2b.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_5b9cff2b.png"
+    },
+    {
+      "id": "37997d4a-bfa3-4a77-a478-b4c3df1b573c",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_37997d4a.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_37997d4a.png"
+    },
+    {
+      "id": "08a9eb5a-d4c6-4a6e-ba6d-b3c6545cfc39",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_08a9eb5a.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_08a9eb5a.png"
+    },
+    {
+      "id": "bf5db0dd-930c-4023-a97d-bf43d027b6cd",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_bf5db0dd.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_bf5db0dd.png"
+    },
+    {
+      "id": "92f8f29f-448c-4e2b-852d-d37b5c198b83",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_92f8f29f.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_92f8f29f.png"
+    },
+    {
+      "id": "73b4e9d5-61e7-4758-94fa-a4ae7ebb4981",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_73b4e9d5.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_73b4e9d5.png"
+    },
+    {
+      "id": "5bbcf9bd-729d-4fcb-89ca-b11c0693eb4e",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_5bbcf9bd.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_5bbcf9bd.png"
+    },
+    {
+      "id": "13aa29c4-e197-4ee6-97ee-6dcb3b850563",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_13aa29c4.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_13aa29c4.png"
+    },
+    {
+      "id": "087b68a1-d1cc-4886-9ce1-ffb2774aa8c3",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_087b68a1.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_087b68a1.png"
+    },
+    {
+      "id": "b6efe3de-b68d-4f4c-8455-a3f3ff71cdbf",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_b6efe3de.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_b6efe3de.png"
+    },
+    {
+      "id": "81ad8c29-fec9-4a1e-bbb6-b8f7da8c0cd9",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_81ad8c29.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_81ad8c29.png"
+    },
+    {
+      "id": "b88ff115-c08d-4385-bd76-8ccf89672e10",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_b88ff115.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_b88ff115.png"
+    },
+    {
+      "id": "927d7742-98b7-4e72-955b-1b8c868943d3",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_927d7742.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_927d7742.png"
+    },
+    {
+      "id": "2d396a11-e8df-4ddc-9102-4b83c807929f",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_2d396a11.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_2d396a11.png"
+    },
+    {
+      "id": "986fb4ac-35df-4112-b60d-9b42a4add096",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_986fb4ac.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_986fb4ac.png"
+    },
+    {
+      "id": "f45a13f9-e965-4486-abea-a2b16a8312a9",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_f45a13f9.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_f45a13f9.png"
+    },
+    {
+      "id": "af4ef23e-0d20-4832-a241-c79e9c5c33d3",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_af4ef23e.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_af4ef23e.png"
+    },
+    {
+      "id": "7fa192ca-aaea-400f-8b1e-92575915d028",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_7fa192ca.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_7fa192ca.png"
+    },
+    {
+      "id": "2cf7a7a6-0c39-478f-ac20-a4244049f3fb",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_2cf7a7a6.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_2cf7a7a6.png"
+    },
+    {
+      "id": "52073737-5dca-44e8-aa6b-b57595724fa0",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_52073737.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_52073737.png"
+    },
+    {
+      "id": "ed160838-0369-40b9-af93-e4ddff332d9d",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_ed160838.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_ed160838.png"
+    },
+    {
+      "id": "07f749af-f186-4c89-a3cf-3b5478210480",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_07f749af.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_07f749af.png"
+    },
+    {
+      "id": "3b2d7095-f379-491c-a520-dfd0181518fc",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_3b2d7095.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_3b2d7095.png"
+    },
+    {
+      "id": "d5583ee7-f05b-4219-81e1-e40cc71dd929",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_d5583ee7.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_d5583ee7.png"
+    },
+    {
+      "id": "031780eb-581b-46f9-ade2-37b2dd7d9949",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_031780eb.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_031780eb.png"
+    },
+    {
+      "id": "28562e20-b5f2-43ed-a76b-b3cd4e924f43",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_28562e20.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_28562e20.png"
+    },
+    {
+      "id": "d1257f64-324f-4f7e-a8a7-92d8bd988f40",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_d1257f64.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_d1257f64.png"
+    },
+    {
+      "id": "20b9fbcf-48dc-49d6-b9a0-cc6c31eb8b75",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_20b9fbcf.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_20b9fbcf.png"
+    },
+    {
+      "id": "d41d71f9-68d4-4e6d-a67a-17c1125c7afd",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_d41d71f9.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_d41d71f9.png"
+    },
+    {
+      "id": "892b496a-9337-49a3-88b8-50524a8bccbe",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_892b496a.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_892b496a.png"
+    },
+    {
+      "id": "b875d043-d88a-49dd-b2a1-4684e912068d",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_b875d043.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_b875d043.png"
+    },
+    {
+      "id": "30e182c7-874c-48e4-b108-2a9cb607a606",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_30e182c7.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_30e182c7.png"
+    },
+    {
+      "id": "2ed9f9a7-7d09-45f4-b71c-e112d8dc5175",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_2ed9f9a7.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_2ed9f9a7.png"
+    },
+    {
+      "id": "ff59404b-cb75-4d41-9e35-a0567769286b",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_ff59404b.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_ff59404b.png"
+    },
+    {
+      "id": "4de29739-4139-4dc7-a8ae-1e04703ad06c",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_4de29739.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_4de29739.png"
+    },
+    {
+      "id": "fa517edc-53e6-4aec-9e4f-6d55a8110fa8",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_fa517edc.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_fa517edc.png"
+    },
+    {
+      "id": "b8caa8b0-ee06-40c8-b689-eed10ef80da9",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_b8caa8b0.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_b8caa8b0.png"
+    },
+    {
+      "id": "5c70eef4-2cea-488d-b9e5-3e8a7c1f84f3",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_5c70eef4.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_5c70eef4.png"
+    },
+    {
+      "id": "d8b79a37-f3f4-4752-a018-403d6efe9dd2",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_d8b79a37.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_d8b79a37.png"
+    },
+    {
+      "id": "c18e31b7-3a01-47b9-ad85-434717684251",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_c18e31b7.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_c18e31b7.png"
+    },
+    {
+      "id": "a7860ca4-1006-4994-9703-a1bf19346df8",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_a7860ca4.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_a7860ca4.png"
+    },
+    {
+      "id": "525ff202-33bc-4a3c-b639-a4444008d5c6",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_525ff202.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_525ff202.png"
+    },
+    {
+      "id": "4191ed14-20da-4eda-b460-e0958b8fbfcd",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_4191ed14.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_4191ed14.png"
+    },
+    {
+      "id": "26f03c7a-5f3e-4b6e-8bcb-b1e9c09a1d83",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_26f03c7a.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_26f03c7a.png"
+    },
+    {
+      "id": "bf5abb3c-320c-486c-a089-52b7ded76bc6",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_bf5abb3c.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_bf5abb3c.png"
+    },
+    {
+      "id": "c92c12db-ba64-48b9-a891-f69f93573de4",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_c92c12db.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_c92c12db.png"
+    },
+    {
+      "id": "9df57929-ceef-4f56-9bc1-07bf9afb181d",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_9df57929.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_9df57929.png"
+    },
+    {
+      "id": "f49657d5-d245-4f59-a34c-c5f7b6dfe778",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_f49657d5.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_f49657d5.png"
+    },
+    {
+      "id": "73c37972-7108-41f5-b5c2-fb095894a94b",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_73c37972.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_73c37972.png"
+    },
+    {
+      "id": "346dfa24-777c-41b3-b676-c41099e7d100",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_346dfa24.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_346dfa24.png"
+    },
+    {
+      "id": "c9aab6e2-1df5-4836-9332-46d0e1c0ff31",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_c9aab6e2.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_c9aab6e2.png"
+    },
+    {
+      "id": "39d55d4b-7c89-4066-8c76-aa00714eb479",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_39d55d4b.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_39d55d4b.png"
+    },
+    {
+      "id": "2bd53f5b-0e17-41bb-b79e-f076d06d97ae",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_2bd53f5b.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_2bd53f5b.png"
+    },
+    {
+      "id": "6432389d-d3f8-4458-bff4-fb9961467d45",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_6432389d.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_6432389d.png"
+    },
+    {
+      "id": "7c1d193b-a06c-4b79-a0ba-82bb9915915d",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_7c1d193b.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_7c1d193b.png"
+    },
+    {
+      "id": "f6610246-bdb2-485b-b8de-290d439c0772",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_f6610246.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_f6610246.png"
+    },
+    {
+      "id": "13156d34-5f2d-4fbb-b0f4-e4a8f22117ca",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_13156d34.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_13156d34.png"
+    },
+    {
+      "id": "eebec7e0-177f-4fa8-a2b4-33d1bfbd1d6e",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_eebec7e0.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_eebec7e0.png"
+    },
+    {
+      "id": "6f6393c7-f862-4f57-ada9-c0eaa733d265",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_6f6393c7.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_6f6393c7.png"
+    },
+    {
+      "id": "e3afa4af-99e0-48b2-842a-53ea3d0024c5",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_e3afa4af.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_e3afa4af.png"
+    },
+    {
+      "id": "3972a993-2d97-4fd6-a413-5913531abebd",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_3972a993.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_3972a993.png"
+    },
+    {
+      "id": "d02025c0-40c5-43f0-a2b8-3fd34aff4c83",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_d02025c0.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_d02025c0.png"
+    },
+    {
+      "id": "80da8179-dc81-47db-89b2-eafc51d5fc1a",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_80da8179.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_80da8179.png"
+    },
+    {
+      "id": "aad7dab4-d14d-460e-97e9-53bddee56145",
+      "description": "Fantasy weapons",
+      "filename": "fantasy_weapons_aad7dab4.png",
+      "path": "assets/catalog/objects/items/weapons/fantasy_weapons_aad7dab4.png"
+    }
+  ],
+  "furniture": [
+    {
+      "id": "f1eccb74-f602-4c98-a688-758c8eac823b",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_f1eccb74.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_f1eccb74.png"
+    },
+    {
+      "id": "c904fd26-a1d5-4c9f-9425-a938e5172ecd",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_c904fd26.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_c904fd26.png"
+    },
+    {
+      "id": "107c1c64-8296-4953-b968-8aec07201f92",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_107c1c64.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_107c1c64.png"
+    },
+    {
+      "id": "846f0cd9-1464-45c5-a778-2efb560116f8",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_846f0cd9.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_846f0cd9.png"
+    },
+    {
+      "id": "1f807e88-9938-460e-a4d2-f985c4c1206a",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_1f807e88.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_1f807e88.png"
+    },
+    {
+      "id": "305e1e26-8178-4dac-87b4-4c2c93532e53",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_305e1e26.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_305e1e26.png"
+    },
+    {
+      "id": "15f7c643-a450-461b-961c-f0724034ac0b",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_15f7c643.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_15f7c643.png"
+    },
+    {
+      "id": "7745f8c3-ba8a-4317-a3a4-42880a93518e",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_7745f8c3.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_7745f8c3.png"
+    },
+    {
+      "id": "5d4c21df-9555-4956-ab61-63ff39054895",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_5d4c21df.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_5d4c21df.png"
+    },
+    {
+      "id": "28de5a20-8565-4950-ab88-b8f652f310bf",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_28de5a20.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_28de5a20.png"
+    },
+    {
+      "id": "a189a070-f0c6-4686-abab-6862f5e636fb",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_a189a070.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_a189a070.png"
+    },
+    {
+      "id": "99b397b6-948b-4758-b924-1f10a94f292c",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_99b397b6.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_99b397b6.png"
+    },
+    {
+      "id": "4fbb0f83-b8b3-439b-bf0f-0c43e73b1c6b",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_4fbb0f83.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_4fbb0f83.png"
+    },
+    {
+      "id": "003daeb1-4938-402c-9c95-3143a5aba944",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_003daeb1.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_003daeb1.png"
+    },
+    {
+      "id": "834f77de-05cc-4518-b848-d0b885003bf7",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_834f77de.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_834f77de.png"
+    },
+    {
+      "id": "a6f46d7b-b6e3-4f77-9524-565c3fcad645",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_a6f46d7b.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_a6f46d7b.png"
+    },
+    {
+      "id": "d8de562a-e143-444d-97ee-33589e713433",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_d8de562a.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_d8de562a.png"
+    },
+    {
+      "id": "f7bc5929-87d3-408e-84ca-860bcc9fa3b4",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_f7bc5929.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_f7bc5929.png"
+    },
+    {
+      "id": "6070f0b6-254a-405d-b60f-f5aed637a2ff",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_6070f0b6.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_6070f0b6.png"
+    },
+    {
+      "id": "17205893-123e-42e9-8fc3-61b9096d4a90",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_17205893.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_17205893.png"
+    },
+    {
+      "id": "5909dc2e-9e3a-42bc-8c75-337b5d56f8fc",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_5909dc2e.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_5909dc2e.png"
+    },
+    {
+      "id": "0a7d6461-95c5-47a2-87de-f706d7e85e42",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_0a7d6461.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_0a7d6461.png"
+    },
+    {
+      "id": "0d9b3b0b-c817-4763-9eae-3905368997c2",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_0d9b3b0b.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_0d9b3b0b.png"
+    },
+    {
+      "id": "4c83a414-a519-47b8-b4d2-a06aed0d6037",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_4c83a414.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_4c83a414.png"
+    },
+    {
+      "id": "d968bfee-0124-4fb1-be1b-a8db562fc3db",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_d968bfee.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_d968bfee.png"
+    },
+    {
+      "id": "d4a07f95-0617-4e16-8335-ad7f9d0f6365",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_d4a07f95.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_d4a07f95.png"
+    },
+    {
+      "id": "29b51292-a3d9-4545-9838-a73bc77a1495",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_29b51292.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_29b51292.png"
+    },
+    {
+      "id": "4dc3e576-60a6-4687-9c5c-22ab53e25884",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_4dc3e576.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_4dc3e576.png"
+    },
+    {
+      "id": "9c064970-9787-4e71-a998-56643978df87",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_9c064970.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_9c064970.png"
+    },
+    {
+      "id": "0e50cf94-85e8-4dd0-ad70-c68e10c2df4e",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_0e50cf94.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_0e50cf94.png"
+    },
+    {
+      "id": "5f8aefc7-440a-4bf1-bae5-69841a49a06e",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_5f8aefc7.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_5f8aefc7.png"
+    },
+    {
+      "id": "48aac2ba-93fe-4fe9-9574-f972651ed37e",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_48aac2ba.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_48aac2ba.png"
+    },
+    {
+      "id": "c6c1b3a6-f6fd-4e2e-be1b-e77e1eee41d5",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_c6c1b3a6.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_c6c1b3a6.png"
+    },
+    {
+      "id": "cfc721d9-63fb-46a3-9b37-67835082f400",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_cfc721d9.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_cfc721d9.png"
+    },
+    {
+      "id": "583a214b-98b2-4c71-860a-268d2559fdcb",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_583a214b.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_583a214b.png"
+    },
+    {
+      "id": "3713f1ff-4af4-418a-a541-f0a3103a59d8",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_3713f1ff.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_3713f1ff.png"
+    },
+    {
+      "id": "d36df2b5-626d-46e0-9c06-78191a1b44b1",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_d36df2b5.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_d36df2b5.png"
+    },
+    {
+      "id": "1fc223df-5fde-411b-a6bc-f05e00aef3f4",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_1fc223df.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_1fc223df.png"
+    },
+    {
+      "id": "e4b4c342-ba10-4c16-bdea-1341993692f4",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_e4b4c342.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_e4b4c342.png"
+    },
+    {
+      "id": "55b3b4ec-1f08-4507-bf25-616242e66912",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_55b3b4ec.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_55b3b4ec.png"
+    },
+    {
+      "id": "683b7acc-4145-4b2b-904e-2aa4a3c82bbf",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_683b7acc.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_683b7acc.png"
+    },
+    {
+      "id": "2a30ea0e-ea0b-411a-b80e-c039bec4be39",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_2a30ea0e.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_2a30ea0e.png"
+    },
+    {
+      "id": "35105783-5ce4-4058-a079-d36de2b79280",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_35105783.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_35105783.png"
+    },
+    {
+      "id": "fd66ad62-8bfc-45f5-9f7d-c4800c1c44ea",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_fd66ad62.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_fd66ad62.png"
+    },
+    {
+      "id": "4ebf1ebc-f53f-4a85-999f-b92250d3d3fa",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_4ebf1ebc.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_4ebf1ebc.png"
+    },
+    {
+      "id": "0ccc14ad-4a9a-4090-a158-cba20f090721",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_0ccc14ad.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_0ccc14ad.png"
+    },
+    {
+      "id": "a56c8ab4-3bfd-4ae3-b408-c4922aa238db",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_a56c8ab4.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_a56c8ab4.png"
+    },
+    {
+      "id": "908cd13c-31a8-4d15-9809-ef7c10a8ab87",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_908cd13c.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_908cd13c.png"
+    },
+    {
+      "id": "75d37889-0efd-4b08-8963-8761c5ddd7ac",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_75d37889.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_75d37889.png"
+    },
+    {
+      "id": "1eef8570-7dbe-465d-99f5-5b6f5e6f4698",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_1eef8570.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_1eef8570.png"
+    },
+    {
+      "id": "2c397cde-6b07-41e9-9bc0-4476235a96c9",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_2c397cde.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_2c397cde.png"
+    },
+    {
+      "id": "64539c48-314d-47a5-937f-5ffecc28f907",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_64539c48.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_64539c48.png"
+    },
+    {
+      "id": "6188e89a-dc15-4634-8260-5bf47a201e55",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_6188e89a.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_6188e89a.png"
+    },
+    {
+      "id": "460f9aa0-27c5-40da-89c4-939c8d10b048",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_460f9aa0.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_460f9aa0.png"
+    },
+    {
+      "id": "c0dab129-9199-4f56-90d5-d4fe10340d44",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_c0dab129.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_c0dab129.png"
+    },
+    {
+      "id": "61e0d37d-77a8-423e-8452-08ce68c012f4",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_61e0d37d.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_61e0d37d.png"
+    },
+    {
+      "id": "2bd951dc-79da-4306-8968-2f628e05f20d",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_2bd951dc.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_2bd951dc.png"
+    },
+    {
+      "id": "e095b9cf-7f6f-4f6e-978e-259daa640c0f",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_e095b9cf.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_e095b9cf.png"
+    },
+    {
+      "id": "92f50712-923b-4699-b664-b4b9b1d08b1e",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_92f50712.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_92f50712.png"
+    },
+    {
+      "id": "712fe247-3ccd-459c-a197-84cfde0bde89",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_712fe247.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_712fe247.png"
+    },
+    {
+      "id": "a6384790-4235-4d68-b986-3323d581bb66",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_a6384790.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_a6384790.png"
+    },
+    {
+      "id": "5a7a6a8d-49ab-4e41-9cd5-5fbc8fb36ada",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_5a7a6a8d.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_5a7a6a8d.png"
+    },
+    {
+      "id": "9143c7e2-39ac-4861-b1f3-e414cd542da9",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_9143c7e2.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_9143c7e2.png"
+    },
+    {
+      "id": "70f24ee4-7a14-4e74-945e-35ee2be8ba32",
+      "description": "Medieval fantasy furniture",
+      "filename": "medieval_fantasy_furniture_70f24ee4.png",
+      "path": "assets/catalog/objects/furniture/medieval_fantasy_furniture_70f24ee4.png"
+    }
+  ],
+  "nature/flowers": [
+    {
+      "id": "f04d09c9-95f2-40b9-aa9a-71e05390da2f",
+      "description": "flower patch",
+      "filename": "flower_patch_f04d09c9.png",
+      "path": "assets/catalog/objects/nature/flowers/flower_patch_f04d09c9.png"
+    },
+    {
+      "id": "04c046c5-be9d-4949-98cf-a985d8d9c4ab",
+      "description": "flower patch",
+      "filename": "flower_patch_04c046c5.png",
+      "path": "assets/catalog/objects/nature/flowers/flower_patch_04c046c5.png"
+    },
+    {
+      "id": "5e1ba4b8-8325-4398-bdcf-517de9357da2",
+      "description": "flower patch",
+      "filename": "flower_patch_5e1ba4b8.png",
+      "path": "assets/catalog/objects/nature/flowers/flower_patch_5e1ba4b8.png"
+    },
+    {
+      "id": "5e6ef9f2-52b1-4f00-81a6-2743df41385e",
+      "description": "flower patch",
+      "filename": "flower_patch_5e6ef9f2.png",
+      "path": "assets/catalog/objects/nature/flowers/flower_patch_5e6ef9f2.png"
+    },
+    {
+      "id": "44f04514-e8da-466c-8f2e-8daccd8a7aa5",
+      "description": "flower patch",
+      "filename": "flower_patch_44f04514.png",
+      "path": "assets/catalog/objects/nature/flowers/flower_patch_44f04514.png"
+    },
+    {
+      "id": "1884fab7-53a8-4760-ba5f-b2d64b2f6e3c",
+      "description": "flower patch",
+      "filename": "flower_patch_1884fab7.png",
+      "path": "assets/catalog/objects/nature/flowers/flower_patch_1884fab7.png"
+    },
+    {
+      "id": "91253498-405b-471d-be87-4c12522acd7b",
+      "description": "flower patch",
+      "filename": "flower_patch_91253498.png",
+      "path": "assets/catalog/objects/nature/flowers/flower_patch_91253498.png"
+    },
+    {
+      "id": "d3450abc-1117-4f3d-91e8-d2c7fc9d4b70",
+      "description": "flower patch",
+      "filename": "flower_patch_d3450abc.png",
+      "path": "assets/catalog/objects/nature/flowers/flower_patch_d3450abc.png"
+    },
+    {
+      "id": "efdac244-9df3-484e-9539-8dab801f7555",
+      "description": "flower patch",
+      "filename": "flower_patch_efdac244.png",
+      "path": "assets/catalog/objects/nature/flowers/flower_patch_efdac244.png"
+    },
+    {
+      "id": "82da37ab-c763-40b5-8b58-05f2878d2462",
+      "description": "flower patch",
+      "filename": "flower_patch_82da37ab.png",
+      "path": "assets/catalog/objects/nature/flowers/flower_patch_82da37ab.png"
+    },
+    {
+      "id": "998acc65-7e61-49f7-b096-dcd11c7b7b9e",
+      "description": "flower patch",
+      "filename": "flower_patch_998acc65.png",
+      "path": "assets/catalog/objects/nature/flowers/flower_patch_998acc65.png"
+    },
+    {
+      "id": "3fdca31a-4440-4465-8d3b-df8325c198e3",
+      "description": "flower patch",
+      "filename": "flower_patch_3fdca31a.png",
+      "path": "assets/catalog/objects/nature/flowers/flower_patch_3fdca31a.png"
+    },
+    {
+      "id": "156ae38b-94c1-4e42-887c-1483dbfb0c2a",
+      "description": "wildflower",
+      "filename": "wildflower_156ae38b.png",
+      "path": "assets/catalog/objects/nature/flowers/wildflower_156ae38b.png"
+    },
+    {
+      "id": "3e8ce0f6-1d0e-4186-a20f-c638c879203c",
+      "description": "wildflower",
+      "filename": "wildflower_3e8ce0f6.png",
+      "path": "assets/catalog/objects/nature/flowers/wildflower_3e8ce0f6.png"
+    },
+    {
+      "id": "c954b50d-35dc-42ad-a77e-1d29391ac843",
+      "description": "wildflower",
+      "filename": "wildflower_c954b50d.png",
+      "path": "assets/catalog/objects/nature/flowers/wildflower_c954b50d.png"
+    },
+    {
+      "id": "51de36b4-a0f1-48a6-8a00-9c75f5e58972",
+      "description": "wildflower",
+      "filename": "wildflower_51de36b4.png",
+      "path": "assets/catalog/objects/nature/flowers/wildflower_51de36b4.png"
+    },
+    {
+      "id": "91137adf-34d2-4701-82e9-57bb4d82ce47",
+      "description": "wildflower",
+      "filename": "wildflower_91137adf.png",
+      "path": "assets/catalog/objects/nature/flowers/wildflower_91137adf.png"
+    },
+    {
+      "id": "c32e98a6-0c02-48c8-ae46-690195478b2f",
+      "description": "wildflower",
+      "filename": "wildflower_c32e98a6.png",
+      "path": "assets/catalog/objects/nature/flowers/wildflower_c32e98a6.png"
+    },
+    {
+      "id": "e3e2de6c-1537-494a-a656-61892bce6a4c",
+      "description": "wildflower",
+      "filename": "wildflower_e3e2de6c.png",
+      "path": "assets/catalog/objects/nature/flowers/wildflower_e3e2de6c.png"
+    },
+    {
+      "id": "fa4dff77-ed95-40ab-90ca-1a6a7666a47d",
+      "description": "wildflower",
+      "filename": "wildflower_fa4dff77.png",
+      "path": "assets/catalog/objects/nature/flowers/wildflower_fa4dff77.png"
+    },
+    {
+      "id": "00822dd0-903d-45a1-90ab-dcb24ba6d1ef",
+      "description": "wildflower",
+      "filename": "wildflower_00822dd0.png",
+      "path": "assets/catalog/objects/nature/flowers/wildflower_00822dd0.png"
+    },
+    {
+      "id": "ed735193-8754-44e4-a8ab-1007ad82db05",
+      "description": "wildflower",
+      "filename": "wildflower_ed735193.png",
+      "path": "assets/catalog/objects/nature/flowers/wildflower_ed735193.png"
+    },
+    {
+      "id": "21839c2a-df9d-44ea-a092-4747b1e81262",
+      "description": "wildflower",
+      "filename": "wildflower_21839c2a.png",
+      "path": "assets/catalog/objects/nature/flowers/wildflower_21839c2a.png"
+    },
+    {
+      "id": "c27a3ae7-4a6d-409e-97f7-ea077ffae730",
+      "description": "wildflower",
+      "filename": "wildflower_c27a3ae7.png",
+      "path": "assets/catalog/objects/nature/flowers/wildflower_c27a3ae7.png"
+    },
+    {
+      "id": "f577f135-901d-4acf-bcf4-39fa10a7074b",
+      "description": "wildflower small",
+      "filename": "wildflower_small_f577f135.png",
+      "path": "assets/catalog/objects/nature/flowers/wildflower_small_f577f135.png"
+    },
+    {
+      "id": "9975f179-92c0-42fd-9ff7-8fecf2ddf363",
+      "description": "purple flower garden",
+      "filename": "purple_flower_garden_9975f179.png",
+      "path": "assets/catalog/objects/nature/flowers/purple_flower_garden_9975f179.png"
+    },
+    {
+      "id": "9d12950a-160f-4ae1-a5eb-047be21c1e2c",
+      "description": "flower garden bed",
+      "filename": "flower_garden_bed_9d12950a.png",
+      "path": "assets/catalog/objects/nature/flowers/flower_garden_bed_9d12950a.png"
+    }
+  ],
+  "nature/bushes": [
+    {
+      "id": "afd1003a-a19b-4ae1-92b0-b7ccb92c773a",
+      "description": "green bush",
+      "filename": "green_bush_afd1003a.png",
+      "path": "assets/catalog/objects/nature/bushes/green_bush_afd1003a.png"
+    },
+    {
+      "id": "a0fba398-1ce0-415b-afcb-315f42f3baa6",
+      "description": "green bush",
+      "filename": "green_bush_a0fba398.png",
+      "path": "assets/catalog/objects/nature/bushes/green_bush_a0fba398.png"
+    },
+    {
+      "id": "d44f9252-0c6a-4285-8bba-a6051283db44",
+      "description": "green bush",
+      "filename": "green_bush_d44f9252.png",
+      "path": "assets/catalog/objects/nature/bushes/green_bush_d44f9252.png"
+    },
+    {
+      "id": "2dcd8052-faba-494b-aa95-8b2da184d462",
+      "description": "green bush",
+      "filename": "green_bush_2dcd8052.png",
+      "path": "assets/catalog/objects/nature/bushes/green_bush_2dcd8052.png"
+    },
+    {
+      "id": "5814e446-f122-47a8-a1fa-6745028b015c",
+      "description": "green bush",
+      "filename": "green_bush_5814e446.png",
+      "path": "assets/catalog/objects/nature/bushes/green_bush_5814e446.png"
+    },
+    {
+      "id": "79473a6d-d713-4f8e-93f0-d48f937a1d71",
+      "description": "green bush",
+      "filename": "green_bush_79473a6d.png",
+      "path": "assets/catalog/objects/nature/bushes/green_bush_79473a6d.png"
+    },
+    {
+      "id": "0f56044d-4632-4c05-b7ec-a14be7db36ea",
+      "description": "green bush",
+      "filename": "green_bush_0f56044d.png",
+      "path": "assets/catalog/objects/nature/bushes/green_bush_0f56044d.png"
+    },
+    {
+      "id": "ff389bd3-7e4f-404e-8b76-e24a9ad64682",
+      "description": "green bush",
+      "filename": "green_bush_ff389bd3.png",
+      "path": "assets/catalog/objects/nature/bushes/green_bush_ff389bd3.png"
+    },
+    {
+      "id": "ee09f9d4-cfde-4e3b-a6e1-466907c1d002",
+      "description": "green bush",
+      "filename": "green_bush_ee09f9d4.png",
+      "path": "assets/catalog/objects/nature/bushes/green_bush_ee09f9d4.png"
+    },
+    {
+      "id": "abc771c2-a048-4834-abde-0d2b3f872318",
+      "description": "green bush",
+      "filename": "green_bush_abc771c2.png",
+      "path": "assets/catalog/objects/nature/bushes/green_bush_abc771c2.png"
+    },
+    {
+      "id": "94d363a9-fc00-4249-aca2-35a930531926",
+      "description": "green bush",
+      "filename": "green_bush_94d363a9.png",
+      "path": "assets/catalog/objects/nature/bushes/green_bush_94d363a9.png"
+    },
+    {
+      "id": "4c2a7a1a-67d3-426d-b4c1-31906c192a4c",
+      "description": "green bush",
+      "filename": "green_bush_4c2a7a1a.png",
+      "path": "assets/catalog/objects/nature/bushes/green_bush_4c2a7a1a.png"
+    },
+    {
+      "id": "24b81c92-d53c-4fe5-876d-af42ea1ad1f7",
+      "description": "small bush",
+      "filename": "small_bush_24b81c92.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_24b81c92.png"
+    },
+    {
+      "id": "d7c7f6f3-d556-48b2-bdfb-55086c40127a",
+      "description": "small bush",
+      "filename": "small_bush_d7c7f6f3.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_d7c7f6f3.png"
+    },
+    {
+      "id": "d5a04b2d-b522-4f11-9cf3-03d04c435eeb",
+      "description": "small bush",
+      "filename": "small_bush_d5a04b2d.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_d5a04b2d.png"
+    },
+    {
+      "id": "6ec333e8-7973-4ade-ac16-3c486c2baf40",
+      "description": "small bush",
+      "filename": "small_bush_6ec333e8.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_6ec333e8.png"
+    },
+    {
+      "id": "97b81bde-6cc2-4e53-af5d-8d81f7e4166b",
+      "description": "small bush",
+      "filename": "small_bush_97b81bde.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_97b81bde.png"
+    },
+    {
+      "id": "d6051dd2-b8cf-4c6e-b32b-243fafb08f52",
+      "description": "small bush",
+      "filename": "small_bush_d6051dd2.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_d6051dd2.png"
+    },
+    {
+      "id": "51ec4d1b-1ae4-4b03-b2d5-b928b698e995",
+      "description": "small bush",
+      "filename": "small_bush_51ec4d1b.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_51ec4d1b.png"
+    },
+    {
+      "id": "9ea2a44b-98cc-4d44-bf45-e14105b4af7c",
+      "description": "small bush",
+      "filename": "small_bush_9ea2a44b.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_9ea2a44b.png"
+    },
+    {
+      "id": "93419ef3-afd3-4384-8982-67270f0a82d9",
+      "description": "small bush",
+      "filename": "small_bush_93419ef3.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_93419ef3.png"
+    },
+    {
+      "id": "c5d077af-4c3d-45e5-b429-67628b6d7e56",
+      "description": "small bush",
+      "filename": "small_bush_c5d077af.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_c5d077af.png"
+    },
+    {
+      "id": "bd0c6750-b7d4-4b72-910b-44e3e773ac09",
+      "description": "hedge row",
+      "filename": "hedge_row_bd0c6750.png",
+      "path": "assets/catalog/objects/nature/bushes/hedge_row_bd0c6750.png"
+    },
+    {
+      "id": "450ed479-fb4b-4fa8-ae9f-128539f5c897",
+      "description": "berry bush",
+      "filename": "berry_bush_450ed479.png",
+      "path": "assets/catalog/objects/nature/bushes/berry_bush_450ed479.png"
+    },
+    {
+      "id": "502326bd-679c-4281-baf6-d894b74e15d0",
+      "description": "small bush",
+      "filename": "small_bush_502326bd.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_502326bd.png"
+    },
+    {
+      "id": "4bba745a-1ac4-4998-970c-5a3d7c88974f",
+      "description": "small bush",
+      "filename": "small_bush_4bba745a.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_4bba745a.png"
+    },
+    {
+      "id": "e0098010-72c8-42f7-a042-e528e5dc364a",
+      "description": "small bush",
+      "filename": "small_bush_e0098010.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_e0098010.png"
+    },
+    {
+      "id": "6180a0c6-0cac-4903-afae-3e63e5f53ad7",
+      "description": "small bush",
+      "filename": "small_bush_6180a0c6.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_6180a0c6.png"
+    },
+    {
+      "id": "f92e5fa2-c1a1-41b4-b0f5-62c908ce85c3",
+      "description": "small bush",
+      "filename": "small_bush_f92e5fa2.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_f92e5fa2.png"
+    },
+    {
+      "id": "115bf2ac-334d-48e9-b84e-bfd424236714",
+      "description": "small bush",
+      "filename": "small_bush_115bf2ac.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_115bf2ac.png"
+    },
+    {
+      "id": "a2b14654-3d94-4d29-bd20-a55db56c4c56",
+      "description": "small bush",
+      "filename": "small_bush_a2b14654.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_a2b14654.png"
+    },
+    {
+      "id": "9913cba8-3fc8-406f-b3ba-cb1f4d2f0461",
+      "description": "small bush",
+      "filename": "small_bush_9913cba8.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_9913cba8.png"
+    },
+    {
+      "id": "e77db377-64f7-49a4-8d19-996b2b8d2160",
+      "description": "small bush",
+      "filename": "small_bush_e77db377.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_e77db377.png"
+    },
+    {
+      "id": "60d5f92d-dcc2-49a8-b20c-50241f848f25",
+      "description": "small bush",
+      "filename": "small_bush_60d5f92d.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_60d5f92d.png"
+    },
+    {
+      "id": "f7d3b573-3168-4758-92a8-881db7b21a4f",
+      "description": "small bush",
+      "filename": "small_bush_f7d3b573.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_f7d3b573.png"
+    },
+    {
+      "id": "7f0a34a0-1243-4c1c-a541-d18463b3841d",
+      "description": "small bush",
+      "filename": "small_bush_7f0a34a0.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_7f0a34a0.png"
+    },
+    {
+      "id": "676985bc-ee03-4e55-90ef-3a69c0c199d0",
+      "description": "small bush",
+      "filename": "small_bush_676985bc.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_676985bc.png"
+    },
+    {
+      "id": "a1c46a71-7ef9-47df-ad61-bfda5dcc94c1",
+      "description": "small bush",
+      "filename": "small_bush_a1c46a71.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_a1c46a71.png"
+    },
+    {
+      "id": "a0da5bb7-96f2-4dd8-8e84-c588ab0ab77d",
+      "description": "small bush",
+      "filename": "small_bush_a0da5bb7.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_a0da5bb7.png"
+    },
+    {
+      "id": "b8b54e1e-0cfd-425c-a8f9-ac08cf443875",
+      "description": "small bush",
+      "filename": "small_bush_b8b54e1e.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_b8b54e1e.png"
+    },
+    {
+      "id": "73fe8619-9736-4b4c-a753-a27f9cb4cbc4",
+      "description": "small bush",
+      "filename": "small_bush_73fe8619.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_73fe8619.png"
+    },
+    {
+      "id": "9947bad4-c116-44c1-bd65-9a8e360ae0d0",
+      "description": "small bush",
+      "filename": "small_bush_9947bad4.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_9947bad4.png"
+    },
+    {
+      "id": "b21ed0e2-f08e-4eac-8f6e-4989e9af87fd",
+      "description": "small bush",
+      "filename": "small_bush_b21ed0e2.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_b21ed0e2.png"
+    },
+    {
+      "id": "8ec21549-2ef6-4449-bbad-ad370b6e3005",
+      "description": "small bush",
+      "filename": "small_bush_8ec21549.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_8ec21549.png"
+    },
+    {
+      "id": "6fa112fd-ac48-4485-a07e-c5c19e1395be",
+      "description": "small bush",
+      "filename": "small_bush_6fa112fd.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_6fa112fd.png"
+    },
+    {
+      "id": "e4182cb8-8e8c-4b60-8052-e4c742c5032d",
+      "description": "small bush",
+      "filename": "small_bush_e4182cb8.png",
+      "path": "assets/catalog/objects/nature/bushes/small_bush_e4182cb8.png"
+    }
+  ],
+  "nature/trees": [
+    {
+      "id": "d2053845-87f8-4f87-a6c7-8729a15dff2e",
+      "description": "palm tree",
+      "filename": "palm_tree_d2053845.png",
+      "path": "assets/catalog/objects/nature/trees/palm_tree_d2053845.png"
+    },
+    {
+      "id": "0c04c141-a604-45f6-93fc-eb32c0fa41b9",
+      "description": "palm tree",
+      "filename": "palm_tree_0c04c141.png",
+      "path": "assets/catalog/objects/nature/trees/palm_tree_0c04c141.png"
+    },
+    {
+      "id": "e1db5c33-f2e8-43e8-b7c3-c5ed02b8a215",
+      "description": "palm tree",
+      "filename": "palm_tree_e1db5c33.png",
+      "path": "assets/catalog/objects/nature/trees/palm_tree_e1db5c33.png"
+    },
+    {
+      "id": "b07699f9-68a7-422b-8069-c5d234ce1ba9",
+      "description": "palm tree",
+      "filename": "palm_tree_b07699f9.png",
+      "path": "assets/catalog/objects/nature/trees/palm_tree_b07699f9.png"
+    },
+    {
+      "id": "e8a29d46-9445-48c1-8ad3-e901a0e14484",
+      "description": "palm tree",
+      "filename": "palm_tree_e8a29d46.png",
+      "path": "assets/catalog/objects/nature/trees/palm_tree_e8a29d46.png"
+    },
+    {
+      "id": "07980bc6-0dff-455e-ad20-0f60d4b58398",
+      "description": "palm tree",
+      "filename": "palm_tree_07980bc6.png",
+      "path": "assets/catalog/objects/nature/trees/palm_tree_07980bc6.png"
+    },
+    {
+      "id": "d0429804-6548-44e5-bf10-ac223ba04588",
+      "description": "palm tree",
+      "filename": "palm_tree_d0429804.png",
+      "path": "assets/catalog/objects/nature/trees/palm_tree_d0429804.png"
+    },
+    {
+      "id": "15c6f4a0-eb55-48bb-9a3a-ae6d011794bf",
+      "description": "palm tree",
+      "filename": "palm_tree_15c6f4a0.png",
+      "path": "assets/catalog/objects/nature/trees/palm_tree_15c6f4a0.png"
+    },
+    {
+      "id": "be5918f2-aee5-44ba-ab26-8c42de695575",
+      "description": "palm tree",
+      "filename": "palm_tree_be5918f2.png",
+      "path": "assets/catalog/objects/nature/trees/palm_tree_be5918f2.png"
+    },
+    {
+      "id": "63680737-12aa-4276-a18c-c7855c48daa9",
+      "description": "palm tree",
+      "filename": "palm_tree_63680737.png",
+      "path": "assets/catalog/objects/nature/trees/palm_tree_63680737.png"
+    },
+    {
+      "id": "98a6be8c-d9b1-4a29-b1fc-a7855d12d3ef",
+      "description": "palm tree",
+      "filename": "palm_tree_98a6be8c.png",
+      "path": "assets/catalog/objects/nature/trees/palm_tree_98a6be8c.png"
+    },
+    {
+      "id": "30b924b0-3488-43fc-bac1-28032dcfecbf",
+      "description": "palm tree",
+      "filename": "palm_tree_30b924b0.png",
+      "path": "assets/catalog/objects/nature/trees/palm_tree_30b924b0.png"
+    },
+    {
+      "id": "0f0a0ec8-273b-4415-8118-e0f4b8c1c020",
+      "description": "dead tree",
+      "filename": "dead_tree_0f0a0ec8.png",
+      "path": "assets/catalog/objects/nature/trees/dead_tree_0f0a0ec8.png"
+    },
+    {
+      "id": "488303df-078d-4898-b53e-c6670eb5fd8b",
+      "description": "dead tree",
+      "filename": "dead_tree_488303df.png",
+      "path": "assets/catalog/objects/nature/trees/dead_tree_488303df.png"
+    },
+    {
+      "id": "013ad96c-8286-4ead-aed5-79db2ee2deef",
+      "description": "dead tree",
+      "filename": "dead_tree_013ad96c.png",
+      "path": "assets/catalog/objects/nature/trees/dead_tree_013ad96c.png"
+    },
+    {
+      "id": "92cf22cb-024a-47a3-992c-6d4739f09fee",
+      "description": "dead tree",
+      "filename": "dead_tree_92cf22cb.png",
+      "path": "assets/catalog/objects/nature/trees/dead_tree_92cf22cb.png"
+    },
+    {
+      "id": "e587adad-eb45-462c-9631-7b45accd9ea3",
+      "description": "dead tree",
+      "filename": "dead_tree_e587adad.png",
+      "path": "assets/catalog/objects/nature/trees/dead_tree_e587adad.png"
+    },
+    {
+      "id": "22becc0e-ebd9-438b-afae-cd97c97088bf",
+      "description": "dead tree",
+      "filename": "dead_tree_22becc0e.png",
+      "path": "assets/catalog/objects/nature/trees/dead_tree_22becc0e.png"
+    },
+    {
+      "id": "13ed9319-ca49-4ff6-b24e-b111ebeef08c",
+      "description": "dead tree",
+      "filename": "dead_tree_13ed9319.png",
+      "path": "assets/catalog/objects/nature/trees/dead_tree_13ed9319.png"
+    },
+    {
+      "id": "5f9ee1a8-b37d-4e64-980d-c4d945110cfd",
+      "description": "dead tree",
+      "filename": "dead_tree_5f9ee1a8.png",
+      "path": "assets/catalog/objects/nature/trees/dead_tree_5f9ee1a8.png"
+    },
+    {
+      "id": "048c4927-6501-451b-8672-5198d07835d8",
+      "description": "dead tree",
+      "filename": "dead_tree_048c4927.png",
+      "path": "assets/catalog/objects/nature/trees/dead_tree_048c4927.png"
+    },
+    {
+      "id": "74276bec-3002-4f11-83bd-11126c601197",
+      "description": "dead tree",
+      "filename": "dead_tree_74276bec.png",
+      "path": "assets/catalog/objects/nature/trees/dead_tree_74276bec.png"
+    },
+    {
+      "id": "16765684-8edf-4865-b86d-14b2719cdf62",
+      "description": "dead tree",
+      "filename": "dead_tree_16765684.png",
+      "path": "assets/catalog/objects/nature/trees/dead_tree_16765684.png"
+    },
+    {
+      "id": "b1567404-466f-4cb6-b206-ef39c4811174",
+      "description": "dead tree",
+      "filename": "dead_tree_b1567404.png",
+      "path": "assets/catalog/objects/nature/trees/dead_tree_b1567404.png"
+    },
+    {
+      "id": "7c84a6fe-a17c-412b-8cbc-a0a8bd98b0df",
+      "description": "pine tree",
+      "filename": "pine_tree_7c84a6fe.png",
+      "path": "assets/catalog/objects/nature/trees/pine_tree_7c84a6fe.png"
+    },
+    {
+      "id": "21d3a3a5-3ebe-46f6-be72-0d2887de7ed5",
+      "description": "pine tree",
+      "filename": "pine_tree_21d3a3a5.png",
+      "path": "assets/catalog/objects/nature/trees/pine_tree_21d3a3a5.png"
+    },
+    {
+      "id": "c86ee5cb-a2de-4a46-a77e-4eedb34cf90a",
+      "description": "pine tree",
+      "filename": "pine_tree_c86ee5cb.png",
+      "path": "assets/catalog/objects/nature/trees/pine_tree_c86ee5cb.png"
+    },
+    {
+      "id": "59e6976f-f656-435b-8873-156ce9bffce8",
+      "description": "pine tree",
+      "filename": "pine_tree_59e6976f.png",
+      "path": "assets/catalog/objects/nature/trees/pine_tree_59e6976f.png"
+    },
+    {
+      "id": "d6cfa0b9-c853-40bf-9b7b-adb0a23a79ff",
+      "description": "pine tree",
+      "filename": "pine_tree_d6cfa0b9.png",
+      "path": "assets/catalog/objects/nature/trees/pine_tree_d6cfa0b9.png"
+    },
+    {
+      "id": "f46888c2-6a50-4d82-a55e-b51cbc899d0a",
+      "description": "pine tree",
+      "filename": "pine_tree_f46888c2.png",
+      "path": "assets/catalog/objects/nature/trees/pine_tree_f46888c2.png"
+    },
+    {
+      "id": "98bf532f-56d3-4578-ae31-2d6713b56fdb",
+      "description": "pine tree",
+      "filename": "pine_tree_98bf532f.png",
+      "path": "assets/catalog/objects/nature/trees/pine_tree_98bf532f.png"
+    },
+    {
+      "id": "2df4436e-f526-46ab-9dc8-cc1aa4e19227",
+      "description": "pine tree",
+      "filename": "pine_tree_2df4436e.png",
+      "path": "assets/catalog/objects/nature/trees/pine_tree_2df4436e.png"
+    },
+    {
+      "id": "417535f3-5854-4b3e-bae3-40a8638aefb1",
+      "description": "pine tree",
+      "filename": "pine_tree_417535f3.png",
+      "path": "assets/catalog/objects/nature/trees/pine_tree_417535f3.png"
+    },
+    {
+      "id": "19456cb0-e9ab-47cd-b2d8-375ed48a050b",
+      "description": "pine tree",
+      "filename": "pine_tree_19456cb0.png",
+      "path": "assets/catalog/objects/nature/trees/pine_tree_19456cb0.png"
+    },
+    {
+      "id": "2fb900e2-4d8b-49f0-88ed-b120e1467ec2",
+      "description": "pine tree",
+      "filename": "pine_tree_2fb900e2.png",
+      "path": "assets/catalog/objects/nature/trees/pine_tree_2fb900e2.png"
+    },
+    {
+      "id": "1068767b-b8a9-4397-aa46-10189185c179",
+      "description": "pine tree",
+      "filename": "pine_tree_1068767b.png",
+      "path": "assets/catalog/objects/nature/trees/pine_tree_1068767b.png"
+    },
+    {
+      "id": "55ae2521-8a6d-4a97-8022-7c914fd3037d",
+      "description": "pine tree",
+      "filename": "pine_tree_55ae2521.png",
+      "path": "assets/catalog/objects/nature/trees/pine_tree_55ae2521.png"
+    },
+    {
+      "id": "626d72e5-e586-4c8c-993a-75df1f6f5f88",
+      "description": "pine tree",
+      "filename": "pine_tree_626d72e5.png",
+      "path": "assets/catalog/objects/nature/trees/pine_tree_626d72e5.png"
+    },
+    {
+      "id": "fd41ca85-b373-4602-bce3-5426cac33a7f",
+      "description": "pine tree",
+      "filename": "pine_tree_fd41ca85.png",
+      "path": "assets/catalog/objects/nature/trees/pine_tree_fd41ca85.png"
+    },
+    {
+      "id": "5938e73f-46e0-457c-8d89-ff9d2f96ce55",
+      "description": "pine tree",
+      "filename": "pine_tree_5938e73f.png",
+      "path": "assets/catalog/objects/nature/trees/pine_tree_5938e73f.png"
+    },
+    {
+      "id": "0eb5bdd7-cd1b-4d69-9f75-1c218e6109b8",
+      "description": "oak tree",
+      "filename": "oak_tree_0eb5bdd7.png",
+      "path": "assets/catalog/objects/nature/trees/oak_tree_0eb5bdd7.png"
+    },
+    {
+      "id": "3b3e1365-9cc8-4c6d-be92-7803a499d10b",
+      "description": "oak tree",
+      "filename": "oak_tree_3b3e1365.png",
+      "path": "assets/catalog/objects/nature/trees/oak_tree_3b3e1365.png"
+    },
+    {
+      "id": "b5c36871-b086-4696-90e2-96b0fa7ab460",
+      "description": "oak tree",
+      "filename": "oak_tree_b5c36871.png",
+      "path": "assets/catalog/objects/nature/trees/oak_tree_b5c36871.png"
+    },
+    {
+      "id": "35db4968-24d7-4468-8f8c-9d55c613fa70",
+      "description": "oak tree",
+      "filename": "oak_tree_35db4968.png",
+      "path": "assets/catalog/objects/nature/trees/oak_tree_35db4968.png"
+    },
+    {
+      "id": "21fa2efa-9b50-4e5b-ba90-4da1a8c068b3",
+      "description": "oak tree",
+      "filename": "oak_tree_21fa2efa.png",
+      "path": "assets/catalog/objects/nature/trees/oak_tree_21fa2efa.png"
+    },
+    {
+      "id": "4f913847-8a40-4bc2-85f2-291ff84cea8a",
+      "description": "oak tree",
+      "filename": "oak_tree_4f913847.png",
+      "path": "assets/catalog/objects/nature/trees/oak_tree_4f913847.png"
+    },
+    {
+      "id": "78717b96-97f1-4b76-9dcd-f7a8bf73d2bb",
+      "description": "oak tree",
+      "filename": "oak_tree_78717b96.png",
+      "path": "assets/catalog/objects/nature/trees/oak_tree_78717b96.png"
+    },
+    {
+      "id": "117979e1-e4e7-41c9-809a-f758af242d85",
+      "description": "oak tree",
+      "filename": "oak_tree_117979e1.png",
+      "path": "assets/catalog/objects/nature/trees/oak_tree_117979e1.png"
+    },
+    {
+      "id": "6d6929cf-8268-490b-9128-94e01e8e5be4",
+      "description": "oak tree",
+      "filename": "oak_tree_6d6929cf.png",
+      "path": "assets/catalog/objects/nature/trees/oak_tree_6d6929cf.png"
+    },
+    {
+      "id": "313d6df3-09e4-47f8-952c-37115575239a",
+      "description": "oak tree",
+      "filename": "oak_tree_313d6df3.png",
+      "path": "assets/catalog/objects/nature/trees/oak_tree_313d6df3.png"
+    },
+    {
+      "id": "699bf1e2-6a22-4438-8703-5044439fbce5",
+      "description": "oak tree",
+      "filename": "oak_tree_699bf1e2.png",
+      "path": "assets/catalog/objects/nature/trees/oak_tree_699bf1e2.png"
+    },
+    {
+      "id": "fbfa0049-8cb1-4aab-8553-3865d93550a5",
+      "description": "oak tree",
+      "filename": "oak_tree_fbfa0049.png",
+      "path": "assets/catalog/objects/nature/trees/oak_tree_fbfa0049.png"
+    },
+    {
+      "id": "ed777b63-fb09-4896-a141-d133c9bffc38",
+      "description": "oak tree",
+      "filename": "oak_tree_ed777b63.png",
+      "path": "assets/catalog/objects/nature/trees/oak_tree_ed777b63.png"
+    },
+    {
+      "id": "01e5f2e8-6341-44a9-abda-ba7d2b5bcb87",
+      "description": "oak tree",
+      "filename": "oak_tree_01e5f2e8.png",
+      "path": "assets/catalog/objects/nature/trees/oak_tree_01e5f2e8.png"
+    },
+    {
+      "id": "e15c40c8-c5c7-48a2-9367-b1c8bdb1201a",
+      "description": "oak tree",
+      "filename": "oak_tree_e15c40c8.png",
+      "path": "assets/catalog/objects/nature/trees/oak_tree_e15c40c8.png"
+    },
+    {
+      "id": "d290899e-e3bf-43ef-a069-44bc2b9984aa",
+      "description": "oak tree",
+      "filename": "oak_tree_d290899e.png",
+      "path": "assets/catalog/objects/nature/trees/oak_tree_d290899e.png"
+    },
+    {
+      "id": "f5862ebd-c033-49fa-a751-85dbd943eb23",
+      "description": "snow-covered",
+      "filename": "snow_covered_f5862ebd.png",
+      "path": "assets/catalog/objects/nature/trees/snow_covered_f5862ebd.png"
+    },
+    {
+      "id": "011d14cb-89c3-415e-babb-1e3a307a2532",
+      "description": "snow-covered",
+      "filename": "snow_covered_011d14cb.png",
+      "path": "assets/catalog/objects/nature/trees/snow_covered_011d14cb.png"
+    },
+    {
+      "id": "2a6b6306-114d-4fe8-8056-e1cd66e2ea79",
+      "description": "snow-covered",
+      "filename": "snow_covered_2a6b6306.png",
+      "path": "assets/catalog/objects/nature/trees/snow_covered_2a6b6306.png"
+    },
+    {
+      "id": "12438c4e-5ff9-4bae-8634-6e9b3eb4955c",
+      "description": "snow-covered",
+      "filename": "snow_covered_12438c4e.png",
+      "path": "assets/catalog/objects/nature/trees/snow_covered_12438c4e.png"
+    },
+    {
+      "id": "ac3e4257-6841-4fb4-a4b7-362ed8796c02",
+      "description": "snow-covered",
+      "filename": "snow_covered_ac3e4257.png",
+      "path": "assets/catalog/objects/nature/trees/snow_covered_ac3e4257.png"
+    },
+    {
+      "id": "4ac048d9-2874-499f-b9e7-8e9316673ef2",
+      "description": "snow-covered",
+      "filename": "snow_covered_4ac048d9.png",
+      "path": "assets/catalog/objects/nature/trees/snow_covered_4ac048d9.png"
+    },
+    {
+      "id": "64eb387f-d3c1-4c8d-a5cb-61d6c684391a",
+      "description": "snow-covered",
+      "filename": "snow_covered_64eb387f.png",
+      "path": "assets/catalog/objects/nature/trees/snow_covered_64eb387f.png"
+    },
+    {
+      "id": "c039af02-60e6-4479-bf1a-e366a527f3df",
+      "description": "snow-covered",
+      "filename": "snow_covered_c039af02.png",
+      "path": "assets/catalog/objects/nature/trees/snow_covered_c039af02.png"
+    },
+    {
+      "id": "c3203b3a-9fda-42a8-834b-a5bc7359f4b1",
+      "description": "snow-covered",
+      "filename": "snow_covered_c3203b3a.png",
+      "path": "assets/catalog/objects/nature/trees/snow_covered_c3203b3a.png"
+    },
+    {
+      "id": "89ca975c-c56e-4169-8914-654fd0f889a4",
+      "description": "snow-covered",
+      "filename": "snow_covered_89ca975c.png",
+      "path": "assets/catalog/objects/nature/trees/snow_covered_89ca975c.png"
+    },
+    {
+      "id": "7df8e67b-9c47-4c2d-8492-b2f89becde22",
+      "description": "snow-covered",
+      "filename": "snow_covered_7df8e67b.png",
+      "path": "assets/catalog/objects/nature/trees/snow_covered_7df8e67b.png"
+    },
+    {
+      "id": "977efce2-a50f-4406-8ec5-6b1fcec310e7",
+      "description": "snow-covered",
+      "filename": "snow_covered_977efce2.png",
+      "path": "assets/catalog/objects/nature/trees/snow_covered_977efce2.png"
+    },
+    {
+      "id": "4f67e161-2835-479b-9025-fe3f36649fb8",
+      "description": "snow-covered",
+      "filename": "snow_covered_4f67e161.png",
+      "path": "assets/catalog/objects/nature/trees/snow_covered_4f67e161.png"
+    },
+    {
+      "id": "9974244f-75ec-4099-92aa-c50926b13afb",
+      "description": "snow-covered",
+      "filename": "snow_covered_9974244f.png",
+      "path": "assets/catalog/objects/nature/trees/snow_covered_9974244f.png"
+    },
+    {
+      "id": "86f009b3-17e6-4280-82d9-b4bf10d4d975",
+      "description": "snow-covered",
+      "filename": "snow_covered_86f009b3.png",
+      "path": "assets/catalog/objects/nature/trees/snow_covered_86f009b3.png"
+    },
+    {
+      "id": "63e6633f-f4ce-4e0f-9a13-12172c6fed5a",
+      "description": "snow-covered",
+      "filename": "snow_covered_63e6633f.png",
+      "path": "assets/catalog/objects/nature/trees/snow_covered_63e6633f.png"
+    },
+    {
+      "id": "5defff02-57ed-424b-8b42-5099c9a3d25f",
+      "description": "cactus",
+      "filename": "cactus_5defff02.png",
+      "path": "assets/catalog/objects/nature/trees/cactus_5defff02.png"
+    },
+    {
+      "id": "89304593-f288-47ed-9305-92a9aef94f05",
+      "description": "cactus",
+      "filename": "cactus_89304593.png",
+      "path": "assets/catalog/objects/nature/trees/cactus_89304593.png"
+    },
+    {
+      "id": "63572c4c-15d6-4e29-a8d8-cf3cc8c8fa89",
+      "description": "cactus",
+      "filename": "cactus_63572c4c.png",
+      "path": "assets/catalog/objects/nature/trees/cactus_63572c4c.png"
+    },
+    {
+      "id": "8f84ff0d-7a13-47a3-9d9c-2d09bca0d034",
+      "description": "cactus",
+      "filename": "cactus_8f84ff0d.png",
+      "path": "assets/catalog/objects/nature/trees/cactus_8f84ff0d.png"
+    },
+    {
+      "id": "051d310a-958d-4d35-bfec-0214e5a33e4e",
+      "description": "cactus",
+      "filename": "cactus_051d310a.png",
+      "path": "assets/catalog/objects/nature/trees/cactus_051d310a.png"
+    },
+    {
+      "id": "3074ba06-6f3f-40c8-a13e-e0696066f545",
+      "description": "cactus",
+      "filename": "cactus_3074ba06.png",
+      "path": "assets/catalog/objects/nature/trees/cactus_3074ba06.png"
+    },
+    {
+      "id": "ed30290a-2794-45f9-a6db-cb5fbb2f3fc7",
+      "description": "cactus",
+      "filename": "cactus_ed30290a.png",
+      "path": "assets/catalog/objects/nature/trees/cactus_ed30290a.png"
+    },
+    {
+      "id": "78487393-39e4-4f06-b068-1326ac31fbb1",
+      "description": "cactus",
+      "filename": "cactus_78487393.png",
+      "path": "assets/catalog/objects/nature/trees/cactus_78487393.png"
+    },
+    {
+      "id": "94faba25-0356-40f7-8591-e3c9c9e2ec34",
+      "description": "cactus",
+      "filename": "cactus_94faba25.png",
+      "path": "assets/catalog/objects/nature/trees/cactus_94faba25.png"
+    },
+    {
+      "id": "f805dc2b-2749-4f10-8268-0ecdb6a51988",
+      "description": "cactus",
+      "filename": "cactus_f805dc2b.png",
+      "path": "assets/catalog/objects/nature/trees/cactus_f805dc2b.png"
+    },
+    {
+      "id": "8794991c-f10d-42fe-941c-c3a7c39c467a",
+      "description": "cactus",
+      "filename": "cactus_8794991c.png",
+      "path": "assets/catalog/objects/nature/trees/cactus_8794991c.png"
+    },
+    {
+      "id": "879b77a3-5677-4801-8e7a-396a2e9c24cd",
+      "description": "cactus",
+      "filename": "cactus_879b77a3.png",
+      "path": "assets/catalog/objects/nature/trees/cactus_879b77a3.png"
+    },
+    {
+      "id": "2a7dce97-81b4-427b-a155-7a5b28fe8c27",
+      "description": "cactus",
+      "filename": "cactus_2a7dce97.png",
+      "path": "assets/catalog/objects/nature/trees/cactus_2a7dce97.png"
+    },
+    {
+      "id": "fca6eca8-dca4-44cf-9bef-0019fb7dcfa2",
+      "description": "cactus",
+      "filename": "cactus_fca6eca8.png",
+      "path": "assets/catalog/objects/nature/trees/cactus_fca6eca8.png"
+    },
+    {
+      "id": "aa405235-fc21-4c0c-bf98-4cd6a4fe9d0e",
+      "description": "cactus",
+      "filename": "cactus_aa405235.png",
+      "path": "assets/catalog/objects/nature/trees/cactus_aa405235.png"
+    },
+    {
+      "id": "84f1e1ac-bb20-4cac-827c-deb1a5ccf5fa",
+      "description": "cactus",
+      "filename": "cactus_84f1e1ac.png",
+      "path": "assets/catalog/objects/nature/trees/cactus_84f1e1ac.png"
+    },
+    {
+      "id": "ddd6a3d9-3a2e-4097-b784-aca6dd241236",
+      "description": "large maple tree",
+      "filename": "large_maple_tree_ddd6a3d9.png",
+      "path": "assets/catalog/objects/nature/trees/large_maple_tree_ddd6a3d9.png"
+    },
+    {
+      "id": "78f0dca6-4f94-4c95-9899-1055d826dfce",
+      "description": "cactus saguaro",
+      "filename": "cactus_saguaro_78f0dca6.png",
+      "path": "assets/catalog/objects/nature/trees/cactus_saguaro_78f0dca6.png"
+    },
+    {
+      "id": "24ba5c4c-59db-45b9-9c51-d3a9b86ed856",
+      "description": "snow pine tree",
+      "filename": "snow_pine_tree_24ba5c4c.png",
+      "path": "assets/catalog/objects/nature/trees/snow_pine_tree_24ba5c4c.png"
+    },
+    {
+      "id": "3da9142a-620b-4b66-8865-8c0fec3011e6",
+      "description": "tall palm tree",
+      "filename": "tall_palm_tree_3da9142a.png",
+      "path": "assets/catalog/objects/nature/trees/tall_palm_tree_3da9142a.png"
+    },
+    {
+      "id": "7efb99ba-0508-431f-aa21-2759e1a27fe7",
+      "description": "decorative tree",
+      "filename": "decorative_tree_7efb99ba.png",
+      "path": "assets/catalog/objects/nature/trees/decorative_tree_7efb99ba.png"
+    },
+    {
+      "id": "e37d1e9c-83d6-4963-baa2-56e8db6099dd",
+      "description": "old growth tree",
+      "filename": "old_growth_tree_e37d1e9c.png",
+      "path": "assets/catalog/objects/nature/trees/old_growth_tree_e37d1e9c.png"
+    },
+    {
+      "id": "996f5c47-2362-48f7-892d-b256752d19fa",
+      "description": "apple tree",
+      "filename": "apple_tree_996f5c47.png",
+      "path": "assets/catalog/objects/nature/trees/apple_tree_996f5c47.png"
+    },
+    {
+      "id": "95657185-564c-4099-9fe5-e3b28b7bd439",
+      "description": "dead leafless tree",
+      "filename": "dead_leafless_tree_95657185.png",
+      "path": "assets/catalog/objects/nature/trees/dead_leafless_tree_95657185.png"
+    },
+    {
+      "id": "35c0a34e-ff1e-44af-992c-d4ce9b9807ae",
+      "description": "birch tree",
+      "filename": "birch_tree_35c0a34e.png",
+      "path": "assets/catalog/objects/nature/trees/birch_tree_35c0a34e.png"
+    },
+    {
+      "id": "d871193c-2890-4d44-8c32-96d51c60505d",
+      "description": "autumn maple tree",
+      "filename": "autumn_maple_tree_d871193c.png",
+      "path": "assets/catalog/objects/nature/trees/autumn_maple_tree_d871193c.png"
+    },
+    {
+      "id": "9829328e-85fc-4577-aa34-ddba4cac2f0f",
+      "description": "willow tree",
+      "filename": "willow_tree_9829328e.png",
+      "path": "assets/catalog/objects/nature/trees/willow_tree_9829328e.png"
+    },
+    {
+      "id": "02bac2a4-ed29-4816-93ee-42af1c5a6460",
+      "description": "cherry blossom",
+      "filename": "cherry_blossom_02bac2a4.png",
+      "path": "assets/catalog/objects/nature/trees/cherry_blossom_02bac2a4.png"
+    },
+    {
+      "id": "f1d73bc8-211b-4fd7-9716-68a1116563ac",
+      "description": "lush oak tree",
+      "filename": "lush_oak_tree_f1d73bc8.png",
+      "path": "assets/catalog/objects/nature/trees/lush_oak_tree_f1d73bc8.png"
+    },
+    {
+      "id": "e5ac299e-f57a-497d-8ec7-d8e00088ec99",
+      "description": "tall green pine",
+      "filename": "tall_green_pine_e5ac299e.png",
+      "path": "assets/catalog/objects/nature/trees/tall_green_pine_e5ac299e.png"
+    },
+    {
+      "id": "9d02bbd8-bf28-4123-ab4a-cf51295008a6",
+      "description": "large lush oak",
+      "filename": "large_lush_oak_9d02bbd8.png",
+      "path": "assets/catalog/objects/nature/trees/large_lush_oak_9d02bbd8.png"
+    }
+  ],
+  "stone": [
+    {
+      "id": "0a572aca-1959-40d2-ad95-43aadc04dc64",
+      "description": "stone boulder",
+      "filename": "stone_boulder_0a572aca.png",
+      "path": "assets/catalog/objects/stone/stone_boulder_0a572aca.png"
+    },
+    {
+      "id": "0bc0969a-deef-4537-bd23-16a9739a809b",
+      "description": "stone boulder",
+      "filename": "stone_boulder_0bc0969a.png",
+      "path": "assets/catalog/objects/stone/stone_boulder_0bc0969a.png"
+    },
+    {
+      "id": "5e03adfd-1064-46b3-b774-c1af1748a793",
+      "description": "stone boulder",
+      "filename": "stone_boulder_5e03adfd.png",
+      "path": "assets/catalog/objects/stone/stone_boulder_5e03adfd.png"
+    },
+    {
+      "id": "1b43696a-9a4a-40e3-84a7-2926b1b08ac4",
+      "description": "stone boulder",
+      "filename": "stone_boulder_1b43696a.png",
+      "path": "assets/catalog/objects/stone/stone_boulder_1b43696a.png"
+    },
+    {
+      "id": "f5d09767-4827-4abf-b081-32bdf4f3a0de",
+      "description": "stone boulder",
+      "filename": "stone_boulder_f5d09767.png",
+      "path": "assets/catalog/objects/stone/stone_boulder_f5d09767.png"
+    },
+    {
+      "id": "c77edeec-81a8-4f7d-8e63-1f2e9d743d7c",
+      "description": "stone boulder",
+      "filename": "stone_boulder_c77edeec.png",
+      "path": "assets/catalog/objects/stone/stone_boulder_c77edeec.png"
+    },
+    {
+      "id": "a8d58123-06c7-466b-9fa0-6d683fdee27d",
+      "description": "stone boulder",
+      "filename": "stone_boulder_a8d58123.png",
+      "path": "assets/catalog/objects/stone/stone_boulder_a8d58123.png"
+    },
+    {
+      "id": "b373254b-3d7f-4eeb-8aff-e418b1fc89a0",
+      "description": "stone boulder",
+      "filename": "stone_boulder_b373254b.png",
+      "path": "assets/catalog/objects/stone/stone_boulder_b373254b.png"
+    },
+    {
+      "id": "3fd58924-7e16-4df7-bb24-f6642f69825f",
+      "description": "stone boulder",
+      "filename": "stone_boulder_3fd58924.png",
+      "path": "assets/catalog/objects/stone/stone_boulder_3fd58924.png"
+    },
+    {
+      "id": "d1304e62-4700-4c5c-9615-e4e2312c3f5c",
+      "description": "stone boulder",
+      "filename": "stone_boulder_d1304e62.png",
+      "path": "assets/catalog/objects/stone/stone_boulder_d1304e62.png"
+    },
+    {
+      "id": "6bf46ad3-3cfa-48b4-b739-56451705910c",
+      "description": "stone boulder",
+      "filename": "stone_boulder_6bf46ad3.png",
+      "path": "assets/catalog/objects/stone/stone_boulder_6bf46ad3.png"
+    },
+    {
+      "id": "761de475-d7c0-48d5-af09-9251751cd5a0",
+      "description": "stone boulder",
+      "filename": "stone_boulder_761de475.png",
+      "path": "assets/catalog/objects/stone/stone_boulder_761de475.png"
+    },
+    {
+      "id": "adf4340e-ac40-43fd-ac0c-28a9ca4d8471",
+      "description": "stone boulder",
+      "filename": "stone_boulder_adf4340e.png",
+      "path": "assets/catalog/objects/stone/stone_boulder_adf4340e.png"
+    },
+    {
+      "id": "87329267-6f70-48ba-9fd7-98cc16530036",
+      "description": "stone boulder",
+      "filename": "stone_boulder_87329267.png",
+      "path": "assets/catalog/objects/stone/stone_boulder_87329267.png"
+    },
+    {
+      "id": "c5a04273-80c5-42b1-ad1d-dce87d5027b2",
+      "description": "stone boulder",
+      "filename": "stone_boulder_c5a04273.png",
+      "path": "assets/catalog/objects/stone/stone_boulder_c5a04273.png"
+    },
+    {
+      "id": "a935db6d-6a76-4776-a95d-e1072f8f9089",
+      "description": "stone boulder",
+      "filename": "stone_boulder_a935db6d.png",
+      "path": "assets/catalog/objects/stone/stone_boulder_a935db6d.png"
+    },
+    {
+      "id": "78bbafd3-6987-4841-82ae-b9a230a039a0",
+      "description": "large boulder",
+      "filename": "large_boulder_78bbafd3.png",
+      "path": "assets/catalog/objects/stone/large_boulder_78bbafd3.png"
+    },
+    {
+      "id": "1a736f9a-b343-4c44-a9fd-a321dde95fe1",
+      "description": "large boulder",
+      "filename": "large_boulder_1a736f9a.png",
+      "path": "assets/catalog/objects/stone/large_boulder_1a736f9a.png"
+    },
+    {
+      "id": "48fdb083-aad4-4e5c-882b-c130d7e4930c",
+      "description": "large boulder",
+      "filename": "large_boulder_48fdb083.png",
+      "path": "assets/catalog/objects/stone/large_boulder_48fdb083.png"
+    },
+    {
+      "id": "2065df20-f832-467d-99f9-87d8ebea162e",
+      "description": "large boulder",
+      "filename": "large_boulder_2065df20.png",
+      "path": "assets/catalog/objects/stone/large_boulder_2065df20.png"
+    },
+    {
+      "id": "6e6a5f9e-6899-465d-94e3-b3f46790eb5c",
+      "description": "large boulder",
+      "filename": "large_boulder_6e6a5f9e.png",
+      "path": "assets/catalog/objects/stone/large_boulder_6e6a5f9e.png"
+    },
+    {
+      "id": "b5559fc2-9429-4204-bf97-d851a177d16a",
+      "description": "large boulder",
+      "filename": "large_boulder_b5559fc2.png",
+      "path": "assets/catalog/objects/stone/large_boulder_b5559fc2.png"
+    },
+    {
+      "id": "9fc45654-4814-477e-af95-3583c2c75821",
+      "description": "large boulder",
+      "filename": "large_boulder_9fc45654.png",
+      "path": "assets/catalog/objects/stone/large_boulder_9fc45654.png"
+    },
+    {
+      "id": "222c2ada-7f8f-4833-b662-ec4270758817",
+      "description": "large boulder",
+      "filename": "large_boulder_222c2ada.png",
+      "path": "assets/catalog/objects/stone/large_boulder_222c2ada.png"
+    },
+    {
+      "id": "9358e92c-f910-4a43-b320-005efa8d2f7c",
+      "description": "large boulder",
+      "filename": "large_boulder_9358e92c.png",
+      "path": "assets/catalog/objects/stone/large_boulder_9358e92c.png"
+    },
+    {
+      "id": "a2d1317a-acc1-4316-b48b-95b608f06105",
+      "description": "large boulder",
+      "filename": "large_boulder_a2d1317a.png",
+      "path": "assets/catalog/objects/stone/large_boulder_a2d1317a.png"
+    },
+    {
+      "id": "f2730910-b950-4b66-bfb8-a3b42fde3fb8",
+      "description": "large boulder",
+      "filename": "large_boulder_f2730910.png",
+      "path": "assets/catalog/objects/stone/large_boulder_f2730910.png"
+    },
+    {
+      "id": "d25b8f70-53e8-428d-973e-296ed77eee02",
+      "description": "large boulder",
+      "filename": "large_boulder_d25b8f70.png",
+      "path": "assets/catalog/objects/stone/large_boulder_d25b8f70.png"
+    },
+    {
+      "id": "a6e8d9bb-42ec-4123-919e-c7c4cb046030",
+      "description": "large boulder",
+      "filename": "large_boulder_a6e8d9bb.png",
+      "path": "assets/catalog/objects/stone/large_boulder_a6e8d9bb.png"
+    },
+    {
+      "id": "d4fd051b-556f-41d3-b1fd-d4f17d9ac5bc",
+      "description": "large boulder",
+      "filename": "large_boulder_d4fd051b.png",
+      "path": "assets/catalog/objects/stone/large_boulder_d4fd051b.png"
+    },
+    {
+      "id": "419a7d00-b500-4190-8658-fe35f76f218d",
+      "description": "large boulder",
+      "filename": "large_boulder_419a7d00.png",
+      "path": "assets/catalog/objects/stone/large_boulder_419a7d00.png"
+    },
+    {
+      "id": "e9046bae-9a97-4e6d-b403-7c8e3f1d4e0e",
+      "description": "large boulder",
+      "filename": "large_boulder_e9046bae.png",
+      "path": "assets/catalog/objects/stone/large_boulder_e9046bae.png"
+    },
+    {
+      "id": "3cdc4298-9d12-4cb8-a233-9f729b4c6aa5",
+      "description": "small rock",
+      "filename": "small_rock_3cdc4298.png",
+      "path": "assets/catalog/objects/stone/small_rock_3cdc4298.png"
+    },
+    {
+      "id": "81f3ff0d-87e3-4a85-a20d-a57d6a8ae132",
+      "description": "small rock",
+      "filename": "small_rock_81f3ff0d.png",
+      "path": "assets/catalog/objects/stone/small_rock_81f3ff0d.png"
+    },
+    {
+      "id": "ba6187b9-8a3c-4d7b-80c5-7571f3c1c8ee",
+      "description": "small rock",
+      "filename": "small_rock_ba6187b9.png",
+      "path": "assets/catalog/objects/stone/small_rock_ba6187b9.png"
+    },
+    {
+      "id": "41c2da54-3107-4abc-b412-65a9a1539279",
+      "description": "small rock",
+      "filename": "small_rock_41c2da54.png",
+      "path": "assets/catalog/objects/stone/small_rock_41c2da54.png"
+    },
+    {
+      "id": "8cb99de1-67f4-47ec-a718-457297f2bae0",
+      "description": "small rock",
+      "filename": "small_rock_8cb99de1.png",
+      "path": "assets/catalog/objects/stone/small_rock_8cb99de1.png"
+    },
+    {
+      "id": "990a65ea-5a58-4bfc-a90f-f7d098570b84",
+      "description": "small rock",
+      "filename": "small_rock_990a65ea.png",
+      "path": "assets/catalog/objects/stone/small_rock_990a65ea.png"
+    },
+    {
+      "id": "f90d7b72-c9b1-424f-922a-aacecd7f784a",
+      "description": "small rock",
+      "filename": "small_rock_f90d7b72.png",
+      "path": "assets/catalog/objects/stone/small_rock_f90d7b72.png"
+    },
+    {
+      "id": "1f536357-c1ad-4cc5-8357-970230fca6aa",
+      "description": "small rock",
+      "filename": "small_rock_1f536357.png",
+      "path": "assets/catalog/objects/stone/small_rock_1f536357.png"
+    },
+    {
+      "id": "306af08a-036e-4765-935e-23c5c2e528ad",
+      "description": "small rock",
+      "filename": "small_rock_306af08a.png",
+      "path": "assets/catalog/objects/stone/small_rock_306af08a.png"
+    },
+    {
+      "id": "2e5ca893-da27-437c-bc24-95702bcbb5c1",
+      "description": "small rock",
+      "filename": "small_rock_2e5ca893.png",
+      "path": "assets/catalog/objects/stone/small_rock_2e5ca893.png"
+    },
+    {
+      "id": "5e290ae4-88c9-48f4-9af5-07bbb7b86498",
+      "description": "small rock",
+      "filename": "small_rock_5e290ae4.png",
+      "path": "assets/catalog/objects/stone/small_rock_5e290ae4.png"
+    },
+    {
+      "id": "74a96278-2eba-439f-b4c7-7ee59d9d317b",
+      "description": "small rock",
+      "filename": "small_rock_74a96278.png",
+      "path": "assets/catalog/objects/stone/small_rock_74a96278.png"
+    },
+    {
+      "id": "6608dae8-a1b9-4f33-a73a-522355259680",
+      "description": "small rock",
+      "filename": "small_rock_6608dae8.png",
+      "path": "assets/catalog/objects/stone/small_rock_6608dae8.png"
+    },
+    {
+      "id": "a8fb0f63-a39b-460e-8a14-d80c82c545b9",
+      "description": "small rock",
+      "filename": "small_rock_a8fb0f63.png",
+      "path": "assets/catalog/objects/stone/small_rock_a8fb0f63.png"
+    },
+    {
+      "id": "311a5cb2-db41-499c-93da-b08ed2cd0bee",
+      "description": "small rock",
+      "filename": "small_rock_311a5cb2.png",
+      "path": "assets/catalog/objects/stone/small_rock_311a5cb2.png"
+    }
+  ],
+  "decorations": [
+    {
+      "id": "43854fae-ca56-44a2-8369-053ccc76ec69",
+      "description": "wooden fence",
+      "filename": "wooden_fence_43854fae.png",
+      "path": "assets/catalog/objects/decorations/wooden_fence_43854fae.png"
+    },
+    {
+      "id": "769ed938-4cac-4308-acd1-540d93173d51",
+      "description": "wooden fence",
+      "filename": "wooden_fence_769ed938.png",
+      "path": "assets/catalog/objects/decorations/wooden_fence_769ed938.png"
+    },
+    {
+      "id": "3d3ab454-28cb-4320-b892-507ce9340a05",
+      "description": "wooden fence",
+      "filename": "wooden_fence_3d3ab454.png",
+      "path": "assets/catalog/objects/decorations/wooden_fence_3d3ab454.png"
+    },
+    {
+      "id": "cae7b575-1d85-4d9c-ba7c-a7df99ad69d0",
+      "description": "wooden fence",
+      "filename": "wooden_fence_cae7b575.png",
+      "path": "assets/catalog/objects/decorations/wooden_fence_cae7b575.png"
+    },
+    {
+      "id": "9eae38ec-ac5f-4464-a252-f424f11a7d2d",
+      "description": "wooden fence",
+      "filename": "wooden_fence_9eae38ec.png",
+      "path": "assets/catalog/objects/decorations/wooden_fence_9eae38ec.png"
+    },
+    {
+      "id": "c19ef356-365b-4445-9a01-a54bd085a959",
+      "description": "wooden fence",
+      "filename": "wooden_fence_c19ef356.png",
+      "path": "assets/catalog/objects/decorations/wooden_fence_c19ef356.png"
+    },
+    {
+      "id": "b730576c-3350-4fab-b21d-38ab20297e1f",
+      "description": "wooden fence",
+      "filename": "wooden_fence_b730576c.png",
+      "path": "assets/catalog/objects/decorations/wooden_fence_b730576c.png"
+    },
+    {
+      "id": "7c42cfa8-e1e8-4622-bce5-9385db24e723",
+      "description": "wooden fence",
+      "filename": "wooden_fence_7c42cfa8.png",
+      "path": "assets/catalog/objects/decorations/wooden_fence_7c42cfa8.png"
+    },
+    {
+      "id": "9cbed217-2f66-4f76-9eab-0db5f8095963",
+      "description": "wooden fence",
+      "filename": "wooden_fence_9cbed217.png",
+      "path": "assets/catalog/objects/decorations/wooden_fence_9cbed217.png"
+    },
+    {
+      "id": "c1333b28-5121-4a16-9224-509d143d96ae",
+      "description": "wooden fence",
+      "filename": "wooden_fence_c1333b28.png",
+      "path": "assets/catalog/objects/decorations/wooden_fence_c1333b28.png"
+    },
+    {
+      "id": "3c366c3a-bb79-4325-8189-a68c4a9a215b",
+      "description": "wooden fence",
+      "filename": "wooden_fence_3c366c3a.png",
+      "path": "assets/catalog/objects/decorations/wooden_fence_3c366c3a.png"
+    },
+    {
+      "id": "03aa3cfe-6f94-49b0-b1f4-0892b2cc0641",
+      "description": "wooden fence",
+      "filename": "wooden_fence_03aa3cfe.png",
+      "path": "assets/catalog/objects/decorations/wooden_fence_03aa3cfe.png"
+    },
+    {
+      "id": "84b378d7-ba6b-4718-acc1-e24c8f13dd57",
+      "description": "wooden fence",
+      "filename": "wooden_fence_84b378d7.png",
+      "path": "assets/catalog/objects/decorations/wooden_fence_84b378d7.png"
+    },
+    {
+      "id": "45e58731-f401-40bb-a0f8-410cbee7775c",
+      "description": "wooden fence",
+      "filename": "wooden_fence_45e58731.png",
+      "path": "assets/catalog/objects/decorations/wooden_fence_45e58731.png"
+    },
+    {
+      "id": "ef9f8c0b-ff66-4db1-aeb6-062e5091edb3",
+      "description": "wooden fence",
+      "filename": "wooden_fence_ef9f8c0b.png",
+      "path": "assets/catalog/objects/decorations/wooden_fence_ef9f8c0b.png"
+    },
+    {
+      "id": "fabb06d3-798c-4b5e-b6fa-45289edb2b4b",
+      "description": "wooden fence",
+      "filename": "wooden_fence_fabb06d3.png",
+      "path": "assets/catalog/objects/decorations/wooden_fence_fabb06d3.png"
+    },
+    {
+      "id": "d33c1a55-91b4-4264-ae6c-751a63adcabd",
+      "description": "wooden barrel",
+      "filename": "wooden_barrel_d33c1a55.png",
+      "path": "assets/catalog/objects/decorations/wooden_barrel_d33c1a55.png"
+    },
+    {
+      "id": "6254dad6-d8c1-4fa1-9b19-221a3ab20a26",
+      "description": "wooden barrel",
+      "filename": "wooden_barrel_6254dad6.png",
+      "path": "assets/catalog/objects/decorations/wooden_barrel_6254dad6.png"
+    },
+    {
+      "id": "19362997-2c58-41b2-b73c-d2e77de08926",
+      "description": "wooden barrel",
+      "filename": "wooden_barrel_19362997.png",
+      "path": "assets/catalog/objects/decorations/wooden_barrel_19362997.png"
+    },
+    {
+      "id": "aae25559-37b2-4dd3-81ad-8dca77244a4a",
+      "description": "wooden barrel",
+      "filename": "wooden_barrel_aae25559.png",
+      "path": "assets/catalog/objects/decorations/wooden_barrel_aae25559.png"
+    },
+    {
+      "id": "aa55d4ed-eada-479e-a73f-24892306607b",
+      "description": "wooden barrel",
+      "filename": "wooden_barrel_aa55d4ed.png",
+      "path": "assets/catalog/objects/decorations/wooden_barrel_aa55d4ed.png"
+    },
+    {
+      "id": "861af67b-962a-4f8f-9422-a6f1649014dc",
+      "description": "wooden barrel",
+      "filename": "wooden_barrel_861af67b.png",
+      "path": "assets/catalog/objects/decorations/wooden_barrel_861af67b.png"
+    },
+    {
+      "id": "43554347-3d50-4322-ac67-159d0d74f8f0",
+      "description": "wooden barrel",
+      "filename": "wooden_barrel_43554347.png",
+      "path": "assets/catalog/objects/decorations/wooden_barrel_43554347.png"
+    },
+    {
+      "id": "86839c4e-1d5b-4903-87ec-5422b82ab815",
+      "description": "wooden barrel",
+      "filename": "wooden_barrel_86839c4e.png",
+      "path": "assets/catalog/objects/decorations/wooden_barrel_86839c4e.png"
+    },
+    {
+      "id": "ffb7802c-a180-4a78-a1af-dc6c280b5d1f",
+      "description": "wooden barrel",
+      "filename": "wooden_barrel_ffb7802c.png",
+      "path": "assets/catalog/objects/decorations/wooden_barrel_ffb7802c.png"
+    },
+    {
+      "id": "a615d70c-ad71-4d7e-89ae-a240edc0e6c8",
+      "description": "wooden barrel",
+      "filename": "wooden_barrel_a615d70c.png",
+      "path": "assets/catalog/objects/decorations/wooden_barrel_a615d70c.png"
+    },
+    {
+      "id": "c1588ccd-08f2-41d9-be4b-73725e162824",
+      "description": "wooden barrel",
+      "filename": "wooden_barrel_c1588ccd.png",
+      "path": "assets/catalog/objects/decorations/wooden_barrel_c1588ccd.png"
+    },
+    {
+      "id": "37ab20ec-aca8-48d4-9aee-9696294b8341",
+      "description": "wooden barrel",
+      "filename": "wooden_barrel_37ab20ec.png",
+      "path": "assets/catalog/objects/decorations/wooden_barrel_37ab20ec.png"
+    },
+    {
+      "id": "80a54fc4-cd08-406e-b5f2-f6d8a704b04d",
+      "description": "campfire",
+      "filename": "campfire_80a54fc4.png",
+      "path": "assets/catalog/objects/decorations/campfire_80a54fc4.png"
+    },
+    {
+      "id": "0b52deb0-f9e4-4282-b9fc-ea921da14464",
+      "description": "campfire",
+      "filename": "campfire_0b52deb0.png",
+      "path": "assets/catalog/objects/decorations/campfire_0b52deb0.png"
+    },
+    {
+      "id": "98cffdac-653e-429a-83ec-10a30d1eb6fc",
+      "description": "campfire",
+      "filename": "campfire_98cffdac.png",
+      "path": "assets/catalog/objects/decorations/campfire_98cffdac.png"
+    },
+    {
+      "id": "366b297a-2fd9-4954-85bc-d8e68cd4c4a1",
+      "description": "campfire",
+      "filename": "campfire_366b297a.png",
+      "path": "assets/catalog/objects/decorations/campfire_366b297a.png"
+    },
+    {
+      "id": "b7dd0a54-44c6-4ac9-b775-e0fd0080e0bd",
+      "description": "campfire",
+      "filename": "campfire_b7dd0a54.png",
+      "path": "assets/catalog/objects/decorations/campfire_b7dd0a54.png"
+    },
+    {
+      "id": "02a3880c-994e-497c-a81d-415a371e49c0",
+      "description": "campfire",
+      "filename": "campfire_02a3880c.png",
+      "path": "assets/catalog/objects/decorations/campfire_02a3880c.png"
+    },
+    {
+      "id": "6f65e705-dd3d-4ef0-a11e-6ea2316d3e0c",
+      "description": "campfire",
+      "filename": "campfire_6f65e705.png",
+      "path": "assets/catalog/objects/decorations/campfire_6f65e705.png"
+    },
+    {
+      "id": "cb9e27a5-aa79-4918-aeff-7adcc0c2ec0c",
+      "description": "campfire",
+      "filename": "campfire_cb9e27a5.png",
+      "path": "assets/catalog/objects/decorations/campfire_cb9e27a5.png"
+    },
+    {
+      "id": "16e7c672-da55-4034-b781-b9e49d245874",
+      "description": "campfire",
+      "filename": "campfire_16e7c672.png",
+      "path": "assets/catalog/objects/decorations/campfire_16e7c672.png"
+    },
+    {
+      "id": "fed46306-2bff-4551-8e8b-e379fb57f593",
+      "description": "campfire",
+      "filename": "campfire_fed46306.png",
+      "path": "assets/catalog/objects/decorations/campfire_fed46306.png"
+    },
+    {
+      "id": "4d4977f0-1c1b-40d7-ac25-4a58e417df16",
+      "description": "wooden item",
+      "filename": "wooden_item_4d4977f0.png",
+      "path": "assets/catalog/objects/decorations/wooden_item_4d4977f0.png"
+    },
+    {
+      "id": "5f43b9ba-71cc-497e-808f-b6aa2edd1e70",
+      "description": "wooden item",
+      "filename": "wooden_item_5f43b9ba.png",
+      "path": "assets/catalog/objects/decorations/wooden_item_5f43b9ba.png"
+    },
+    {
+      "id": "8d8f4026-236f-4cca-ab29-25097fa17552",
+      "description": "wooden item",
+      "filename": "wooden_item_8d8f4026.png",
+      "path": "assets/catalog/objects/decorations/wooden_item_8d8f4026.png"
+    },
+    {
+      "id": "928e2650-5677-42c3-b684-7bce60f6d88f",
+      "description": "wooden item",
+      "filename": "wooden_item_928e2650.png",
+      "path": "assets/catalog/objects/decorations/wooden_item_928e2650.png"
+    },
+    {
+      "id": "ba91a3a4-bfff-4580-be62-e34ce1c30601",
+      "description": "wooden item",
+      "filename": "wooden_item_ba91a3a4.png",
+      "path": "assets/catalog/objects/decorations/wooden_item_ba91a3a4.png"
+    },
+    {
+      "id": "777f6169-c61b-49ed-92ca-9d43ed1ae3e0",
+      "description": "wooden item",
+      "filename": "wooden_item_777f6169.png",
+      "path": "assets/catalog/objects/decorations/wooden_item_777f6169.png"
+    },
+    {
+      "id": "87b2e1a6-1189-4526-ac03-b8ba225ba8dc",
+      "description": "wooden item",
+      "filename": "wooden_item_87b2e1a6.png",
+      "path": "assets/catalog/objects/decorations/wooden_item_87b2e1a6.png"
+    },
+    {
+      "id": "42e13ad0-08d5-42c8-9329-b329f539c875",
+      "description": "wooden item",
+      "filename": "wooden_item_42e13ad0.png",
+      "path": "assets/catalog/objects/decorations/wooden_item_42e13ad0.png"
+    },
+    {
+      "id": "b68d0ad5-e54e-4a4d-82cd-64421167eb88",
+      "description": "wooden item",
+      "filename": "wooden_item_b68d0ad5.png",
+      "path": "assets/catalog/objects/decorations/wooden_item_b68d0ad5.png"
+    },
+    {
+      "id": "02d53dc0-ddca-4262-903c-be92e18be5d5",
+      "description": "wooden item",
+      "filename": "wooden_item_02d53dc0.png",
+      "path": "assets/catalog/objects/decorations/wooden_item_02d53dc0.png"
+    },
+    {
+      "id": "3b3d21a3-4667-46ec-8a6a-6d3c5b217117",
+      "description": "wooden item",
+      "filename": "wooden_item_3b3d21a3.png",
+      "path": "assets/catalog/objects/decorations/wooden_item_3b3d21a3.png"
+    },
+    {
+      "id": "fffa63c5-d11a-4535-8173-8029fafede92",
+      "description": "wooden item",
+      "filename": "wooden_item_fffa63c5.png",
+      "path": "assets/catalog/objects/decorations/wooden_item_fffa63c5.png"
+    },
+    {
+      "id": "3fc97ba3-f508-42db-9386-6e2ab47a6c1c",
+      "description": "wooden item",
+      "filename": "wooden_item_3fc97ba3.png",
+      "path": "assets/catalog/objects/decorations/wooden_item_3fc97ba3.png"
+    },
+    {
+      "id": "c79c11b4-bab4-4a95-8004-ad37603bd1b6",
+      "description": "training dummy",
+      "filename": "training_dummy_c79c11b4.png",
+      "path": "assets/catalog/objects/decorations/training_dummy_c79c11b4.png"
+    },
+    {
+      "id": "0c9e574c-83c9-41fb-b0b7-25c5ec178699",
+      "description": "covered well",
+      "filename": "covered_well_0c9e574c.png",
+      "path": "assets/catalog/objects/decorations/covered_well_0c9e574c.png"
+    },
+    {
+      "id": "99e081e6-bd0c-43bb-9971-174f581917e5",
+      "description": "stone bridge",
+      "filename": "stone_bridge_99e081e6.png",
+      "path": "assets/catalog/objects/decorations/stone_bridge_99e081e6.png"
+    },
+    {
+      "id": "258da35a-fce6-4b31-8b1a-d0a57b9bd4e5",
+      "description": "hanging flower pots",
+      "filename": "hanging_flower_pots_258da35a.png",
+      "path": "assets/catalog/objects/decorations/hanging_flower_pots_258da35a.png"
+    },
+    {
+      "id": "4226ee6b-5aff-4850-9a9e-c5b6fe71f45a",
+      "description": "wagon wheel",
+      "filename": "wagon_wheel_4226ee6b.png",
+      "path": "assets/catalog/objects/decorations/wagon_wheel_4226ee6b.png"
+    },
+    {
+      "id": "9d7ba728-c884-408f-89bc-cea796fb0f5f",
+      "description": "stone ruins",
+      "filename": "stone_ruins_9d7ba728.png",
+      "path": "assets/catalog/objects/decorations/stone_ruins_9d7ba728.png"
+    },
+    {
+      "id": "de1792fe-3887-4146-9da6-ecaa2f883179",
+      "description": "boat dock",
+      "filename": "boat_dock_de1792fe.png",
+      "path": "assets/catalog/objects/decorations/boat_dock_de1792fe.png"
+    },
+    {
+      "id": "9c2a1c19-5a91-4a44-bb1a-1cbd8dff8d2b",
+      "description": "rain barrel",
+      "filename": "rain_barrel_9c2a1c19.png",
+      "path": "assets/catalog/objects/decorations/rain_barrel_9c2a1c19.png"
+    },
+    {
+      "id": "0e4b9abd-d4d8-441a-b123-dc87d3f736bd",
+      "description": "vegetable garden",
+      "filename": "vegetable_garden_0e4b9abd.png",
+      "path": "assets/catalog/objects/decorations/vegetable_garden_0e4b9abd.png"
+    },
+    {
+      "id": "5a20f36c-9512-4b2d-8daf-368ffaee3441",
+      "description": "hay cart",
+      "filename": "hay_cart_5a20f36c.png",
+      "path": "assets/catalog/objects/decorations/hay_cart_5a20f36c.png"
+    },
+    {
+      "id": "7a6cf436-26ad-4d82-b920-21f017820c3d",
+      "description": "stone stairs",
+      "filename": "stone_stairs_7a6cf436.png",
+      "path": "assets/catalog/objects/decorations/stone_stairs_7a6cf436.png"
+    },
+    {
+      "id": "40ca6245-3edc-4b66-aea4-a08efee5d9c8",
+      "description": "clothesline",
+      "filename": "clothesline_40ca6245.png",
+      "path": "assets/catalog/objects/decorations/clothesline_40ca6245.png"
+    },
+    {
+      "id": "74bd05d6-57a9-4be4-898c-8d2c7a9a041f",
+      "description": "log pile",
+      "filename": "log_pile_74bd05d6.png",
+      "path": "assets/catalog/objects/decorations/log_pile_74bd05d6.png"
+    },
+    {
+      "id": "383d3deb-9ea2-49d6-85b5-bc606ab2f7ba",
+      "description": "stone bench",
+      "filename": "stone_bench_383d3deb.png",
+      "path": "assets/catalog/objects/decorations/stone_bench_383d3deb.png"
+    },
+    {
+      "id": "cb69807d-29b3-4a63-89f1-b55de10e8e3a",
+      "description": "street lamp",
+      "filename": "street_lamp_cb69807d.png",
+      "path": "assets/catalog/objects/decorations/street_lamp_cb69807d.png"
+    },
+    {
+      "id": "6b4fd2ce-523c-4d32-843a-c8ee3a75c17e",
+      "description": "wooden crates",
+      "filename": "wooden_crates_6b4fd2ce.png",
+      "path": "assets/catalog/objects/decorations/wooden_crates_6b4fd2ce.png"
+    },
+    {
+      "id": "bda4167f-9009-4b9d-bb81-fb1c3f5c82be",
+      "description": "stone archway",
+      "filename": "stone_archway_bda4167f.png",
+      "path": "assets/catalog/objects/decorations/stone_archway_bda4167f.png"
+    },
+    {
+      "id": "735abc1f-f175-4b2c-a756-31bd5ea5db7b",
+      "description": "wooden dock",
+      "filename": "wooden_dock_735abc1f.png",
+      "path": "assets/catalog/objects/decorations/wooden_dock_735abc1f.png"
+    },
+    {
+      "id": "e538fed8-b8a4-4e2d-a2c4-cbdfe0d1b329",
+      "description": "farm plot",
+      "filename": "farm_plot_e538fed8.png",
+      "path": "assets/catalog/objects/decorations/farm_plot_e538fed8.png"
+    },
+    {
+      "id": "1b32bf64-1d7a-4ade-b95b-6fc637024ee2",
+      "description": "barrel stack",
+      "filename": "barrel_stack_1b32bf64.png",
+      "path": "assets/catalog/objects/decorations/barrel_stack_1b32bf64.png"
+    },
+    {
+      "id": "c565c024-8fa6-49d9-a967-5afee961e83a",
+      "description": "wooden signpost",
+      "filename": "wooden_signpost_c565c024.png",
+      "path": "assets/catalog/objects/decorations/wooden_signpost_c565c024.png"
+    },
+    {
+      "id": "8f9fbe90-0831-4ba0-bdb6-0cf0c7ad9e08",
+      "description": "stone altar",
+      "filename": "stone_altar_8f9fbe90.png",
+      "path": "assets/catalog/objects/decorations/stone_altar_8f9fbe90.png"
+    },
+    {
+      "id": "89396846-a228-4018-b9dc-9438008d2d1d",
+      "description": "campfire logs",
+      "filename": "campfire_logs_89396846.png",
+      "path": "assets/catalog/objects/decorations/campfire_logs_89396846.png"
+    },
+    {
+      "id": "f1039ad5-14d0-476b-a998-ed8c0838159b",
+      "description": "wooden bridge",
+      "filename": "wooden_bridge_f1039ad5.png",
+      "path": "assets/catalog/objects/decorations/wooden_bridge_f1039ad5.png"
+    },
+    {
+      "id": "15651d44-1e12-477d-9933-8539caad8d4d",
+      "description": "wooden cart",
+      "filename": "wooden_cart_15651d44.png",
+      "path": "assets/catalog/objects/decorations/wooden_cart_15651d44.png"
+    },
+    {
+      "id": "32d7fe49-bb3f-40fd-94c4-e90c5a001ac5",
+      "description": "wooden fence section",
+      "filename": "wooden_fence_section_32d7fe49.png",
+      "path": "assets/catalog/objects/decorations/wooden_fence_section_32d7fe49.png"
+    },
+    {
+      "id": "68e6f6c8-225b-4c86-9642-e91a2684d552",
+      "description": "stone fountain",
+      "filename": "stone_fountain_68e6f6c8.png",
+      "path": "assets/catalog/objects/decorations/stone_fountain_68e6f6c8.png"
+    },
+    {
+      "id": "726fbe66-27da-4a5c-9792-00d768812d6a",
+      "description": "stone water well",
+      "filename": "stone_water_well_726fbe66.png",
+      "path": "assets/catalog/objects/decorations/stone_water_well_726fbe66.png"
+    },
+    {
+      "id": "d80ad6be-903a-49b8-bac8-7d9cf224ed68",
+      "description": "wooden item",
+      "filename": "wooden_item_d80ad6be.png",
+      "path": "assets/catalog/objects/decorations/wooden_item_d80ad6be.png"
+    },
+    {
+      "id": "42a003ca-c61d-4ce9-987f-a307bfb97f25",
+      "description": "wooden item",
+      "filename": "wooden_item_42a003ca.png",
+      "path": "assets/catalog/objects/decorations/wooden_item_42a003ca.png"
+    },
+    {
+      "id": "20bd1ced-b4e4-458d-9c2b-9cac895bf6ab",
+      "description": "wooden item",
+      "filename": "wooden_item_20bd1ced.png",
+      "path": "assets/catalog/objects/decorations/wooden_item_20bd1ced.png"
+    },
+    {
+      "id": "da57d761-542c-40fa-9b15-3158f3cc83ba",
+      "description": "wooden item",
+      "filename": "wooden_item_da57d761.png",
+      "path": "assets/catalog/objects/decorations/wooden_item_da57d761.png"
+    }
+  ],
+  "nature/mushrooms": [
+    {
+      "id": "a9ba0341-8cc5-4b67-961d-6cbcfbedcb19",
+      "description": "red mushroom",
+      "filename": "red_mushroom_a9ba0341.png",
+      "path": "assets/catalog/objects/nature/mushrooms/red_mushroom_a9ba0341.png"
+    },
+    {
+      "id": "ca21bb7e-f0ec-43d8-a330-16c6f10cef50",
+      "description": "red mushroom",
+      "filename": "red_mushroom_ca21bb7e.png",
+      "path": "assets/catalog/objects/nature/mushrooms/red_mushroom_ca21bb7e.png"
+    },
+    {
+      "id": "4175a41f-ddd7-4a13-9158-5ceb50f470d9",
+      "description": "red mushroom",
+      "filename": "red_mushroom_4175a41f.png",
+      "path": "assets/catalog/objects/nature/mushrooms/red_mushroom_4175a41f.png"
+    },
+    {
+      "id": "efc5d034-8ba3-4017-a739-713e47eb3642",
+      "description": "red mushroom",
+      "filename": "red_mushroom_efc5d034.png",
+      "path": "assets/catalog/objects/nature/mushrooms/red_mushroom_efc5d034.png"
+    },
+    {
+      "id": "44a3a079-4490-4d44-8fcf-f39333d10766",
+      "description": "red mushroom",
+      "filename": "red_mushroom_44a3a079.png",
+      "path": "assets/catalog/objects/nature/mushrooms/red_mushroom_44a3a079.png"
+    },
+    {
+      "id": "55ce1bca-5e5c-42fb-954f-9c55e4addfbe",
+      "description": "red mushroom",
+      "filename": "red_mushroom_55ce1bca.png",
+      "path": "assets/catalog/objects/nature/mushrooms/red_mushroom_55ce1bca.png"
+    },
+    {
+      "id": "aac3cc60-830e-437d-828b-d004e1ac9b1f",
+      "description": "red mushroom",
+      "filename": "red_mushroom_aac3cc60.png",
+      "path": "assets/catalog/objects/nature/mushrooms/red_mushroom_aac3cc60.png"
+    },
+    {
+      "id": "3db1246d-8ec7-4cc4-9cdb-d059c781dcf0",
+      "description": "red mushroom",
+      "filename": "red_mushroom_3db1246d.png",
+      "path": "assets/catalog/objects/nature/mushrooms/red_mushroom_3db1246d.png"
+    },
+    {
+      "id": "04134614-9499-4ad6-86df-2755a179b285",
+      "description": "red mushroom",
+      "filename": "red_mushroom_04134614.png",
+      "path": "assets/catalog/objects/nature/mushrooms/red_mushroom_04134614.png"
+    },
+    {
+      "id": "1ca46694-a2c5-4a26-ba22-acf7f1b423e5",
+      "description": "red mushroom",
+      "filename": "red_mushroom_1ca46694.png",
+      "path": "assets/catalog/objects/nature/mushrooms/red_mushroom_1ca46694.png"
+    },
+    {
+      "id": "9c8678b5-90dc-4cc9-b5a4-9eaa26ada055",
+      "description": "red mushroom",
+      "filename": "red_mushroom_9c8678b5.png",
+      "path": "assets/catalog/objects/nature/mushrooms/red_mushroom_9c8678b5.png"
+    },
+    {
+      "id": "30fb3505-651a-4148-8d64-c4453b82b774",
+      "description": "red mushroom",
+      "filename": "red_mushroom_30fb3505.png",
+      "path": "assets/catalog/objects/nature/mushrooms/red_mushroom_30fb3505.png"
+    },
+    {
+      "id": "ae42ea7b-9066-4dd5-ae7d-a7345c3f541d",
+      "description": "mushroom cluster",
+      "filename": "mushroom_cluster_ae42ea7b.png",
+      "path": "assets/catalog/objects/nature/mushrooms/mushroom_cluster_ae42ea7b.png"
+    },
+    {
+      "id": "752ba13e-13ff-48f9-a2a4-594e1b7c3b74",
+      "description": "red mushroom cluster",
+      "filename": "red_mushroom_cluster_752ba13e.png",
+      "path": "assets/catalog/objects/nature/mushrooms/red_mushroom_cluster_752ba13e.png"
+    }
+  ],
+  "nature/fallen_logs": [
+    {
+      "id": "fd4b21ac-7b70-4058-bd33-73c32405eac2",
+      "description": "fallen log",
+      "filename": "fallen_log_fd4b21ac.png",
+      "path": "assets/catalog/objects/nature/fallen_logs/fallen_log_fd4b21ac.png"
+    },
+    {
+      "id": "d3a5097c-fce7-43a5-93b5-6ddc95408c04",
+      "description": "fallen log",
+      "filename": "fallen_log_d3a5097c.png",
+      "path": "assets/catalog/objects/nature/fallen_logs/fallen_log_d3a5097c.png"
+    },
+    {
+      "id": "aa33a7b0-60cf-4b9c-82af-9db373ee00dc",
+      "description": "fallen log",
+      "filename": "fallen_log_aa33a7b0.png",
+      "path": "assets/catalog/objects/nature/fallen_logs/fallen_log_aa33a7b0.png"
+    },
+    {
+      "id": "77e81c9c-c1d8-4c5b-9251-e58e73e12f63",
+      "description": "fallen log",
+      "filename": "fallen_log_77e81c9c.png",
+      "path": "assets/catalog/objects/nature/fallen_logs/fallen_log_77e81c9c.png"
+    },
+    {
+      "id": "f9616881-4bd8-4ef6-9cbe-9842e019dd91",
+      "description": "fallen log",
+      "filename": "fallen_log_f9616881.png",
+      "path": "assets/catalog/objects/nature/fallen_logs/fallen_log_f9616881.png"
+    },
+    {
+      "id": "f829cb1e-9519-4144-bc4c-2bd1d67b6446",
+      "description": "fallen log",
+      "filename": "fallen_log_f829cb1e.png",
+      "path": "assets/catalog/objects/nature/fallen_logs/fallen_log_f829cb1e.png"
+    },
+    {
+      "id": "bd1e8053-3af5-4499-bae2-f73ef73486db",
+      "description": "fallen log",
+      "filename": "fallen_log_bd1e8053.png",
+      "path": "assets/catalog/objects/nature/fallen_logs/fallen_log_bd1e8053.png"
+    },
+    {
+      "id": "068b2e75-f895-47dc-8d84-ab238acc65b3",
+      "description": "fallen log",
+      "filename": "fallen_log_068b2e75.png",
+      "path": "assets/catalog/objects/nature/fallen_logs/fallen_log_068b2e75.png"
+    },
+    {
+      "id": "e5d8ba1e-c8d9-4e07-8523-e17f4375b82d",
+      "description": "fallen log",
+      "filename": "fallen_log_e5d8ba1e.png",
+      "path": "assets/catalog/objects/nature/fallen_logs/fallen_log_e5d8ba1e.png"
+    },
+    {
+      "id": "725ab891-efa0-4aa1-a404-72e4efdb56d0",
+      "description": "fallen log",
+      "filename": "fallen_log_725ab891.png",
+      "path": "assets/catalog/objects/nature/fallen_logs/fallen_log_725ab891.png"
+    },
+    {
+      "id": "79b48030-591b-4dec-b0b2-5aa415f33139",
+      "description": "fallen log",
+      "filename": "fallen_log_79b48030.png",
+      "path": "assets/catalog/objects/nature/fallen_logs/fallen_log_79b48030.png"
+    },
+    {
+      "id": "513f7217-8fc1-4a78-a1d0-9647581eb044",
+      "description": "fallen log",
+      "filename": "fallen_log_513f7217.png",
+      "path": "assets/catalog/objects/nature/fallen_logs/fallen_log_513f7217.png"
+    },
+    {
+      "id": "af36315f-a719-466e-8fce-215def2db36e",
+      "description": "fallen log",
+      "filename": "fallen_log_af36315f.png",
+      "path": "assets/catalog/objects/nature/fallen_logs/fallen_log_af36315f.png"
+    },
+    {
+      "id": "b17204f5-9733-47db-9692-516bb4eae6c1",
+      "description": "fallen log",
+      "filename": "fallen_log_b17204f5.png",
+      "path": "assets/catalog/objects/nature/fallen_logs/fallen_log_b17204f5.png"
+    },
+    {
+      "id": "3775c91b-d6a2-4495-827e-db5b04a08b04",
+      "description": "fallen log",
+      "filename": "fallen_log_3775c91b.png",
+      "path": "assets/catalog/objects/nature/fallen_logs/fallen_log_3775c91b.png"
+    },
+    {
+      "id": "8cb5f488-f1aa-4962-a3ce-139f78455a1b",
+      "description": "fallen log",
+      "filename": "fallen_log_8cb5f488.png",
+      "path": "assets/catalog/objects/nature/fallen_logs/fallen_log_8cb5f488.png"
+    },
+    {
+      "id": "75defc57-79a8-420a-8963-97b2aa97b168",
+      "description": "fallen log mossy",
+      "filename": "fallen_log_mossy_75defc57.png",
+      "path": "assets/catalog/objects/nature/fallen_logs/fallen_log_mossy_75defc57.png"
+    }
+  ],
+  "nature/lily_pads": [
+    {
+      "id": "0a9259da-ef3b-4c06-b106-5cacebc9bc5d",
+      "description": "lily pad",
+      "filename": "lily_pad_0a9259da.png",
+      "path": "assets/catalog/objects/nature/lily_pads/lily_pad_0a9259da.png"
+    },
+    {
+      "id": "f0630349-c53a-4a67-8524-f34b1f2ec0ff",
+      "description": "lily pad",
+      "filename": "lily_pad_f0630349.png",
+      "path": "assets/catalog/objects/nature/lily_pads/lily_pad_f0630349.png"
+    },
+    {
+      "id": "7651e9d7-4154-4b9d-96c0-a15934058473",
+      "description": "lily pad",
+      "filename": "lily_pad_7651e9d7.png",
+      "path": "assets/catalog/objects/nature/lily_pads/lily_pad_7651e9d7.png"
+    },
+    {
+      "id": "921994aa-83b1-4256-abf3-3c2de7acfffc",
+      "description": "lily pad",
+      "filename": "lily_pad_921994aa.png",
+      "path": "assets/catalog/objects/nature/lily_pads/lily_pad_921994aa.png"
+    },
+    {
+      "id": "65c11dad-d095-4a61-a271-e450224b56b8",
+      "description": "lily pad",
+      "filename": "lily_pad_65c11dad.png",
+      "path": "assets/catalog/objects/nature/lily_pads/lily_pad_65c11dad.png"
+    },
+    {
+      "id": "b2484697-b9f8-40bb-bcc6-d98a5f3cd18c",
+      "description": "lily pad",
+      "filename": "lily_pad_b2484697.png",
+      "path": "assets/catalog/objects/nature/lily_pads/lily_pad_b2484697.png"
+    },
+    {
+      "id": "98122cc1-b250-43dd-864c-acb5b8a8401e",
+      "description": "lily pad",
+      "filename": "lily_pad_98122cc1.png",
+      "path": "assets/catalog/objects/nature/lily_pads/lily_pad_98122cc1.png"
+    },
+    {
+      "id": "196698a5-b781-4d72-a339-73c53db19067",
+      "description": "lily pad",
+      "filename": "lily_pad_196698a5.png",
+      "path": "assets/catalog/objects/nature/lily_pads/lily_pad_196698a5.png"
+    },
+    {
+      "id": "29c86c60-ebc4-4701-b3ac-33ce3c2a1975",
+      "description": "lily pad",
+      "filename": "lily_pad_29c86c60.png",
+      "path": "assets/catalog/objects/nature/lily_pads/lily_pad_29c86c60.png"
+    },
+    {
+      "id": "17003200-c57e-4e82-8cbc-79fa38eab926",
+      "description": "lily pad",
+      "filename": "lily_pad_17003200.png",
+      "path": "assets/catalog/objects/nature/lily_pads/lily_pad_17003200.png"
+    },
+    {
+      "id": "f89a91d4-f430-45f5-a882-60d1abb7dba2",
+      "description": "lily pad",
+      "filename": "lily_pad_f89a91d4.png",
+      "path": "assets/catalog/objects/nature/lily_pads/lily_pad_f89a91d4.png"
+    },
+    {
+      "id": "41cf962d-4cc4-469a-95f1-e608d8fe0c78",
+      "description": "lily pad",
+      "filename": "lily_pad_41cf962d.png",
+      "path": "assets/catalog/objects/nature/lily_pads/lily_pad_41cf962d.png"
+    },
+    {
+      "id": "bf47fe7f-c7c4-4fd9-9f1f-1f222b48fc54",
+      "description": "lily pad",
+      "filename": "lily_pad_bf47fe7f.png",
+      "path": "assets/catalog/objects/nature/lily_pads/lily_pad_bf47fe7f.png"
+    },
+    {
+      "id": "725bfe69-80a0-4058-882e-1bb85d2fe051",
+      "description": "lily pad",
+      "filename": "lily_pad_725bfe69.png",
+      "path": "assets/catalog/objects/nature/lily_pads/lily_pad_725bfe69.png"
+    },
+    {
+      "id": "bc0a1f97-2ad0-4c96-947c-a7d026ffc0de",
+      "description": "lily pad",
+      "filename": "lily_pad_bc0a1f97.png",
+      "path": "assets/catalog/objects/nature/lily_pads/lily_pad_bc0a1f97.png"
+    },
+    {
+      "id": "2184639a-51db-47bb-9ac5-783bba67d5d6",
+      "description": "lily pad",
+      "filename": "lily_pad_2184639a.png",
+      "path": "assets/catalog/objects/nature/lily_pads/lily_pad_2184639a.png"
+    },
+    {
+      "id": "fed20437-2376-427b-9446-52ef15f56a47",
+      "description": "lily pad",
+      "filename": "lily_pad_fed20437.png",
+      "path": "assets/catalog/objects/nature/lily_pads/lily_pad_fed20437.png"
+    }
+  ],
+  "nature/grass": [
+    {
+      "id": "da8375ff-5228-4f9a-9138-977ab492eecb",
+      "description": "tall grass",
+      "filename": "tall_grass_da8375ff.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_da8375ff.png"
+    },
+    {
+      "id": "1ac4c255-a2f4-4a08-a6e2-c51fa681d60a",
+      "description": "tall grass",
+      "filename": "tall_grass_1ac4c255.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_1ac4c255.png"
+    },
+    {
+      "id": "53d58652-76ab-48a2-9c3d-66069eb15ba5",
+      "description": "tall grass",
+      "filename": "tall_grass_53d58652.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_53d58652.png"
+    },
+    {
+      "id": "831a0336-0b3b-4644-9ee2-ac918891e5c2",
+      "description": "tall grass",
+      "filename": "tall_grass_831a0336.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_831a0336.png"
+    },
+    {
+      "id": "814e4f6d-26e5-43ac-a869-49b78101cea7",
+      "description": "tall grass",
+      "filename": "tall_grass_814e4f6d.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_814e4f6d.png"
+    },
+    {
+      "id": "19e930ca-892e-42a5-bdd8-094ed7e43711",
+      "description": "tall grass",
+      "filename": "tall_grass_19e930ca.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_19e930ca.png"
+    },
+    {
+      "id": "e27d8241-0153-40c3-96d1-8b962da15f08",
+      "description": "tall grass",
+      "filename": "tall_grass_e27d8241.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_e27d8241.png"
+    },
+    {
+      "id": "97afd952-08cf-4338-8d6c-f7c355c9ee89",
+      "description": "tall grass",
+      "filename": "tall_grass_97afd952.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_97afd952.png"
+    },
+    {
+      "id": "501a6c1a-786e-4c74-b407-9cab9abdf5ad",
+      "description": "tall grass tuft",
+      "filename": "tall_grass_tuft_501a6c1a.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_tuft_501a6c1a.png"
+    },
+    {
+      "id": "11ae5982-5326-4f3c-aedd-8642663e6353",
+      "description": "tall grass",
+      "filename": "tall_grass_11ae5982.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_11ae5982.png"
+    },
+    {
+      "id": "e49a3cb7-27d8-4143-bb28-92f6847eb690",
+      "description": "tall grass",
+      "filename": "tall_grass_e49a3cb7.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_e49a3cb7.png"
+    },
+    {
+      "id": "f5f358df-c61a-4cf2-80ca-ef49dcc47278",
+      "description": "tall grass",
+      "filename": "tall_grass_f5f358df.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_f5f358df.png"
+    },
+    {
+      "id": "6c82d212-59e2-42cb-b1b1-9976faae35f0",
+      "description": "tall grass",
+      "filename": "tall_grass_6c82d212.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_6c82d212.png"
+    },
+    {
+      "id": "d1d96d1a-7ade-459d-9a6b-0cfda1237ada",
+      "description": "tall grass",
+      "filename": "tall_grass_d1d96d1a.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_d1d96d1a.png"
+    },
+    {
+      "id": "bb4107dc-6d8f-48f7-8724-649e5cf1b2d2",
+      "description": "tall grass",
+      "filename": "tall_grass_bb4107dc.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_bb4107dc.png"
+    },
+    {
+      "id": "83cfcb7d-6e54-4fbb-8d97-ce5c1ab6fc08",
+      "description": "tall grass",
+      "filename": "tall_grass_83cfcb7d.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_83cfcb7d.png"
+    },
+    {
+      "id": "1540cd28-a81f-43c1-844d-1c2917661791",
+      "description": "tall grass",
+      "filename": "tall_grass_1540cd28.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_1540cd28.png"
+    },
+    {
+      "id": "2b538592-89b0-41c9-b702-794fb851a7fa",
+      "description": "tall grass",
+      "filename": "tall_grass_2b538592.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_2b538592.png"
+    },
+    {
+      "id": "ecf8a498-8c62-4d0e-9729-11a6e063c922",
+      "description": "tall grass",
+      "filename": "tall_grass_ecf8a498.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_ecf8a498.png"
+    },
+    {
+      "id": "0bbfa043-12de-4eff-b8a7-123e07bf77da",
+      "description": "tall grass",
+      "filename": "tall_grass_0bbfa043.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_0bbfa043.png"
+    },
+    {
+      "id": "0312bfbf-3e1a-40d1-952d-e4e8dce17af3",
+      "description": "tall grass",
+      "filename": "tall_grass_0312bfbf.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_0312bfbf.png"
+    },
+    {
+      "id": "1bd66bc8-dcf8-42d0-aa82-abc5b9d83999",
+      "description": "tall grass",
+      "filename": "tall_grass_1bd66bc8.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_1bd66bc8.png"
+    },
+    {
+      "id": "4e2869f9-235d-4142-8d42-f8cf141247b0",
+      "description": "tall grass",
+      "filename": "tall_grass_4e2869f9.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_4e2869f9.png"
+    },
+    {
+      "id": "541e58db-befe-434e-a221-8156fc02a373",
+      "description": "tall grass",
+      "filename": "tall_grass_541e58db.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_541e58db.png"
+    },
+    {
+      "id": "344375cb-3545-4e22-9583-b59dfb0693ff",
+      "description": "tall grass",
+      "filename": "tall_grass_344375cb.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_344375cb.png"
+    },
+    {
+      "id": "593b5a49-7989-470e-a863-15a2b365fe2d",
+      "description": "tall grass",
+      "filename": "tall_grass_593b5a49.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_593b5a49.png"
+    },
+    {
+      "id": "76886518-1a00-4653-a06e-deca9cfc3ac0",
+      "description": "tall grass",
+      "filename": "tall_grass_76886518.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_76886518.png"
+    },
+    {
+      "id": "4cd6fc0e-4d96-493e-acd7-4a6b3a332553",
+      "description": "tall grass",
+      "filename": "tall_grass_4cd6fc0e.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_4cd6fc0e.png"
+    },
+    {
+      "id": "5ddeb0a4-ead2-4174-8027-bce7c6ec0665",
+      "description": "tall grass",
+      "filename": "tall_grass_5ddeb0a4.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_5ddeb0a4.png"
+    },
+    {
+      "id": "80070574-952e-4a10-becb-cfb8c1ef36b8",
+      "description": "tall grass",
+      "filename": "tall_grass_80070574.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_80070574.png"
+    },
+    {
+      "id": "51b910c9-dc16-46dc-b6ec-9ac38315268a",
+      "description": "tall grass",
+      "filename": "tall_grass_51b910c9.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_51b910c9.png"
+    },
+    {
+      "id": "673f57e4-2261-474f-b138-8458c953b1c6",
+      "description": "tall grass",
+      "filename": "tall_grass_673f57e4.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_673f57e4.png"
+    },
+    {
+      "id": "7e469792-88a1-4bf0-bbaf-7efa8ac9a5af",
+      "description": "tall grass",
+      "filename": "tall_grass_7e469792.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_7e469792.png"
+    },
+    {
+      "id": "d7a60f67-b3c2-4eb0-af1d-e98ed3768783",
+      "description": "tall grass",
+      "filename": "tall_grass_d7a60f67.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_d7a60f67.png"
+    },
+    {
+      "id": "a7281618-b77d-44a8-9a28-7f4f663ce301",
+      "description": "tall grass",
+      "filename": "tall_grass_a7281618.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_a7281618.png"
+    },
+    {
+      "id": "7a437693-f098-459b-a82e-16750ec2c25d",
+      "description": "tall grass",
+      "filename": "tall_grass_7a437693.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_7a437693.png"
+    },
+    {
+      "id": "7e0e77b6-0f1e-40a9-9749-2ff2e5d08a74",
+      "description": "tall grass",
+      "filename": "tall_grass_7e0e77b6.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_7e0e77b6.png"
+    },
+    {
+      "id": "9c0d1cb7-23df-4ec5-aa79-7fa7eb0407af",
+      "description": "tall grass",
+      "filename": "tall_grass_9c0d1cb7.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_9c0d1cb7.png"
+    },
+    {
+      "id": "7369a7b5-1210-4ed9-8511-b46ae05a454f",
+      "description": "tall grass",
+      "filename": "tall_grass_7369a7b5.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_7369a7b5.png"
+    },
+    {
+      "id": "83b1d348-ec65-42eb-9d33-d91f6e00daa1",
+      "description": "tall grass",
+      "filename": "tall_grass_83b1d348.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_83b1d348.png"
+    },
+    {
+      "id": "13bb39fd-2d3f-4261-b4cc-f8b7f629f6b9",
+      "description": "tall grass",
+      "filename": "tall_grass_13bb39fd.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_13bb39fd.png"
+    },
+    {
+      "id": "47c5ee41-6d30-4a43-b87b-cc52cae09e5c",
+      "description": "tall grass",
+      "filename": "tall_grass_47c5ee41.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_47c5ee41.png"
+    },
+    {
+      "id": "1a4c28e1-2043-4cac-ac09-260254c3e0f2",
+      "description": "tall grass",
+      "filename": "tall_grass_1a4c28e1.png",
+      "path": "assets/catalog/objects/nature/grass/tall_grass_1a4c28e1.png"
+    }
+  ],
+  "nature/stumps": [
+    {
+      "id": "a993e468-9feb-414c-95c6-702434365400",
+      "description": "tree stump",
+      "filename": "tree_stump_a993e468.png",
+      "path": "assets/catalog/objects/nature/stumps/tree_stump_a993e468.png"
+    },
+    {
+      "id": "c470e067-6765-4205-b0fb-32aa8638082d",
+      "description": "tree stump",
+      "filename": "tree_stump_c470e067.png",
+      "path": "assets/catalog/objects/nature/stumps/tree_stump_c470e067.png"
+    },
+    {
+      "id": "31d9e124-0947-40b1-aff8-a173b680eee0",
+      "description": "tree stump",
+      "filename": "tree_stump_31d9e124.png",
+      "path": "assets/catalog/objects/nature/stumps/tree_stump_31d9e124.png"
+    },
+    {
+      "id": "d15b0b0e-8dc9-4a36-b883-09d0e3a7b91c",
+      "description": "tree stump",
+      "filename": "tree_stump_d15b0b0e.png",
+      "path": "assets/catalog/objects/nature/stumps/tree_stump_d15b0b0e.png"
+    },
+    {
+      "id": "6cdd6f66-e3e7-48cb-a2c3-0e05a3ac7ca2",
+      "description": "tree stump",
+      "filename": "tree_stump_6cdd6f66.png",
+      "path": "assets/catalog/objects/nature/stumps/tree_stump_6cdd6f66.png"
+    },
+    {
+      "id": "f8f1df09-0fb5-49a0-bd73-4e8531a2a07b",
+      "description": "tree stump",
+      "filename": "tree_stump_f8f1df09.png",
+      "path": "assets/catalog/objects/nature/stumps/tree_stump_f8f1df09.png"
+    },
+    {
+      "id": "30d5de21-7419-4557-bcc7-e8fc6f25e5bd",
+      "description": "tree stump",
+      "filename": "tree_stump_30d5de21.png",
+      "path": "assets/catalog/objects/nature/stumps/tree_stump_30d5de21.png"
+    },
+    {
+      "id": "42f26dc6-3066-4099-bda0-e13fa82ba37c",
+      "description": "tree stump",
+      "filename": "tree_stump_42f26dc6.png",
+      "path": "assets/catalog/objects/nature/stumps/tree_stump_42f26dc6.png"
+    },
+    {
+      "id": "cc32bdd3-06ee-4b25-b4b6-e341f3f1f0b9",
+      "description": "ancient tree stump",
+      "filename": "ancient_tree_stump_cc32bdd3.png",
+      "path": "assets/catalog/objects/nature/stumps/ancient_tree_stump_cc32bdd3.png"
+    }
+  ],
+  "nature/leaves": [
+    {
+      "id": "322838be-51bf-4d14-a802-cd11c655f5cc",
+      "description": "autumn leaves",
+      "filename": "autumn_leaves_322838be.png",
+      "path": "assets/catalog/objects/nature/leaves/autumn_leaves_322838be.png"
+    }
+  ],
+  "nature/ferns": [
+    {
+      "id": "bd0f40dc-5c48-4a7b-977d-95e06a6bddca",
+      "description": "small fern",
+      "filename": "small_fern_bd0f40dc.png",
+      "path": "assets/catalog/objects/nature/ferns/small_fern_bd0f40dc.png"
+    }
+  ],
+  "nature/pebbles": [
+    {
+      "id": "bc5afbbf-7596-4e70-9ee7-00e5a1203a5d",
+      "description": "pebbles pile",
+      "filename": "pebbles_pile_bc5afbbf.png",
+      "path": "assets/catalog/objects/nature/pebbles/pebbles_pile_bc5afbbf.png"
+    }
+  ]
+}

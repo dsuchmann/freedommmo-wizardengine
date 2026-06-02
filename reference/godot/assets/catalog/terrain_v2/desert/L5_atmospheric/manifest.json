@@ -1,0 +1,24 @@
+{
+  "biome": "desert",
+  "layer": "L5_atmospheric",
+  "pixellab_tileset_id": "6c889bf6-cef9-4493-a95f-2d715ab8c302",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "775cefbc-dbed-4e71-a209-abf771bc9763",
+    "upper": "5ec50975-ba9e-4c62-ae62-df6aedce265f"
+  },
+  "generation_prompt": {
+    "lower_description": "blowing sand dust particles and heat distortion on fully transparent background, sparse, pixel art, top-down view",
+    "upper_description": "different sand particle pattern with less density on transparent background, very sparse, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

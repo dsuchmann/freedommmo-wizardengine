@@ -1,0 +1,24 @@
+{
+  "biome": "forest",
+  "layer": "L4_scatter",
+  "pixellab_tileset_id": "d0051a6f-ced4-4405-a86f-92145bcdf4de",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "74785324-9845-4294-a98c-9f51542916fe",
+    "upper": "f8d3dc4e-f094-4cf6-9af4-1cdcacfb0416"
+  },
+  "generation_prompt": {
+    "lower_description": "scattered fallen acorns, small twigs, and pinecones on fully transparent background, pixel art, top-down view",
+    "upper_description": "different arrangement of fallen leaves and bark pieces on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

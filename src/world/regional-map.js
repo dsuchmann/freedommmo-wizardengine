@@ -1,10 +1,12 @@
 import { fbm } from '../core/random.js';
-import { BIOMES } from './biome-definitions.js';
+import { BIOMES, SPEC_BIOME_IDS } from './biome-definitions.js';
 import { provinceBiomeAt } from './biome-provinces.js';
 
 const CHUNK_UNITS = 64;
 
 export function sampleRegionalMapChunk(cx, cy) {
+  // cx/cy may be fractional. That is intentional: per-tile biome sampling uses
+  // fractional chunk coords so regions are continuous instead of chunk-blocked.
   const x = cx * CHUNK_UNITS;
   const y = cy * CHUNK_UNITS;
   const continent = fbm(x, y, 8000, undefined, 5200, 5);
@@ -18,36 +20,56 @@ export function sampleRegionalMapChunk(cx, cy) {
   const river = riverSignal(cx, cy, elevation, moisture);
   const naturalId = classifyRegionalBiome(elevation, moisture, heat, mountains, river, aether);
   const province = provinceBiomeAt(cx, cy);
-  const id = province?.score < 0.82 ? province.id : naturalId;
+  const provinceId = province?.id ?? naturalId;
+  const id = chooseContinuousBiome(cx, cy, naturalId, provinceId, province?.score ?? 1);
   return { id, definition: BIOMES[id], climate: { elevation, moisture, heat, river, mountains, aether, naturalBiome: naturalId, province } };
+}
+
+function chooseContinuousBiome(cx, cy, naturalId, provinceId, provinceScore) {
+  // Fast continuous field: natural climate dominates, provinces fade in smoothly.
+  // No per-tile neighbor resampling here — that was the teleport slowdown.
+  if (!provinceId || provinceId === naturalId) return naturalId;
+  const provinceInfluence = smoothstep(0.95, 0.20, provinceScore);
+  if (provinceInfluence <= 0.05) return naturalId;
+
+  // World-space noise only chooses within the smooth province influence band.
+  const n = fbm(cx * 64 + 11000, cy * 64 - 9000, 8500, undefined, 260, 3);
+  return n < provinceInfluence ? provinceId : naturalId;
+}
+function add(map, id, amount) {
+  map.set(id, (map.get(id) ?? 0) + amount);
 }
 
 function riverSignal(cx, cy, elevation, moisture) {
   if (elevation < 0.40 || elevation > 0.78 || moisture < 0.48) return 1;
   const channelA = Math.abs(fbm(cx * 64 + 9000, cy * 64 - 3000, 8040, undefined, 1800, 3) - 0.5);
-  const channelB = Math.abs(fbm(cx * 64 - 12000, cy * 64 + 15000, 8050, undefined, 2200, 3) - 0.5);
+  const channelB = Math.abs(fbm(cx * 64 - 14000, cy * 64 + 6000, 8050, undefined, 900, 3) - 0.5);
   return Math.min(channelA, channelB);
 }
 
 function classifyRegionalBiome(elevation, moisture, heat, mountains, river, aether) {
-  if (aether > 0.76 && elevation > 0.43 && elevation < 0.76) return 'mystic';
-  if (elevation < 0.22) return 'deep_ocean';
-  if (elevation < 0.34) return 'ocean';
-  if (elevation < 0.39) return 'shallow_water';
-  if (elevation < 0.42) return 'beach';
-  if (river < 0.012) return 'river';
-  if (moisture > 0.86 && elevation < 0.58) return 'lake';
-  if (elevation > 0.76 && heat > 0.34 && moisture < 0.52 && mountains > 0.62) return 'volcanic';
-  if (elevation > 0.72) return heat < 0.24 ? 'arctic' : 'mountains';
-  if (elevation > 0.58) return heat < 0.28 ? 'tundra' : 'hills';
-  if (heat < 0.22) return moisture > 0.45 ? 'taiga' : 'tundra';
-  if (moisture > 0.80 && heat > 0.58) return 'tropical_forest';
-  if (moisture > 0.74 && heat > 0.32) return 'swamp';
-  if (moisture > 0.65) return heat > 0.48 ? 'dense_forest' : 'forest';
-  if (moisture < 0.25 && heat > 0.50) return 'desert';
-  if (moisture < 0.34) return 'steppe';
-  if (moisture < 0.44 && heat > 0.48) return 'savanna';
+  if (aether > 0.78 && elevation > 0.42 && elevation < 0.74) return 'mystic';
+  if (elevation < 0.30) return 'deep_ocean';
+  if (elevation < 0.39) return 'ocean';
+  if (elevation < 0.43) return 'shallow_water';
+  if (river < 0.030) return 'river';
+  if (moisture > 0.86 && elevation < 0.60) return 'lake';
+  if (elevation < 0.47) return moisture > 0.64 ? 'swamp' : 'beach';
+  if (elevation > 0.78) return heat < 0.25 ? 'arctic' : 'mountains';
+  if (elevation > 0.68 || mountains > 0.72) return heat > 0.60 && moisture < 0.42 ? 'volcanic' : 'hills';
+  if (heat < 0.18) return moisture > 0.52 ? 'tundra' : 'arctic';
+  if (heat < 0.30) return moisture > 0.48 ? 'taiga' : 'steppe';
+  if (moisture > 0.78) return heat > 0.66 ? 'tropical_forest' : 'dense_forest';
+  if (moisture > 0.58) return heat > 0.62 ? 'tropical_forest' : 'forest';
+  if (heat > 0.72 && moisture < 0.34) return 'desert';
+  if (heat > 0.58 && moisture < 0.48) return 'savanna';
+  if (moisture < 0.36) return 'steppe';
   return 'grassland';
+}
+
+function smoothstep(edge0, edge1, x) {
+  const t = clamp01((x - edge0) / (edge1 - edge0));
+  return t * t * (3 - 2 * t);
 }
 
 function clamp01(value) {

@@ -1,0 +1,24 @@
+{
+  "biome": "tropical_forest",
+  "layer": "L5_atmospheric",
+  "pixellab_tileset_id": "1127b225-98d0-48ed-9b7f-4bce2daffe21",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "1c7da9b6-b9ae-441b-aac4-f3f16f1d9190",
+    "upper": "dcc84417-55aa-4100-aa72-e493e588aaa8"
+  },
+  "generation_prompt": {
+    "lower_description": "humid tropical mist with colorful butterfly silhouettes on fully transparent background, pixel art, top-down view",
+    "upper_description": "different mist pattern with floating pollen on transparent background, sparse, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

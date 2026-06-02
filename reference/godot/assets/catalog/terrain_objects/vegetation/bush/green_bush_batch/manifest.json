@@ -1,0 +1,54 @@
+{
+  "tag": "terrain_bush",
+  "source": "pixellab_batch_review",
+  "pixel_size": [
+    32,
+    32
+  ],
+  "variant_count": 8,
+  "variants": [
+    {
+      "variant_index": 1,
+      "pixellab_object_id": "b4805c27-980f-4203-a3c3-f17dea15eb31",
+      "file": "variants/v1/base.png"
+    },
+    {
+      "variant_index": 2,
+      "pixellab_object_id": "f150c401-cfb6-4b93-8a1e-0b1e007cc05e",
+      "file": "variants/v2/base.png"
+    },
+    {
+      "variant_index": 3,
+      "pixellab_object_id": "b9754735-f761-4e75-917d-7973d2a8b493",
+      "file": "variants/v3/base.png"
+    },
+    {
+      "variant_index": 4,
+      "pixellab_object_id": "b0108fdf-12ba-4519-8782-3d657ebd9019",
+      "file": "variants/v4/base.png"
+    },
+    {
+      "variant_index": 5,
+      "pixellab_object_id": "854610bf-f9ee-4929-8ae3-ac7346318716",
+      "file": "variants/v5/base.png"
+    },
+    {
+      "variant_index": 6,
+      "pixellab_object_id": "1b67ec54-2c03-42b8-bc99-8fca6476ad5c",
+      "file": "variants/v6/base.png"
+    },
+    {
+      "variant_index": 7,
+      "pixellab_object_id": "569a8fb8-908c-4ebe-9753-e5d7343047f1",
+      "file": "variants/v7/base.png"
+    },
+    {
+      "variant_index": 8,
+      "pixellab_object_id": "4f806c52-7220-4c14-b1eb-64afe93f5fc6",
+      "file": "variants/v8/base.png"
+    }
+  ],
+  "has_embedded_shadow": false,
+  "perspective": "top-down",
+  "art_style": "pixel_art_rpg"
+}

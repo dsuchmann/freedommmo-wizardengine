@@ -1,0 +1,24 @@
+{
+  "biome": "volcanic",
+  "layer": "L2_detail",
+  "pixellab_tileset_id": "a06026ac-3434-4b0e-a8be-118e7c70d432",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "7eb4005f-232a-434e-b508-6da030add9e3",
+    "upper": "075171c8-4f74-42db-ab4b-a34c469e02d1"
+  },
+  "generation_prompt": {
+    "lower_description": "glowing orange-red lava fissures and yellow sulfur crystal deposits on fully transparent background, pixel art, top-down view",
+    "upper_description": "different lava crack pattern with more sulfur deposits on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

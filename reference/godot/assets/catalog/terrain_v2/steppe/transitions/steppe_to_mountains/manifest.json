@@ -1,0 +1,24 @@
+{
+  "biome": "steppe",
+  "layer": "transitions/steppe_to_mountains",
+  "pixellab_tileset_id": "ce72428f-569b-4134-9077-088c5237da33",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "868e5018-a6de-4008-bb79-2267dc1fc3d2",
+    "upper": "72d37b69-fd50-49bb-910d-08693949838b"
+  },
+  "generation_prompt": {
+    "lower_description": "short windswept steppe grass on rocky soil",
+    "upper_description": "grey craggy mountain rock"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

@@ -1,0 +1,1 @@
+{"family":"swamp/mud_pool","layer":"base","biomes":["swamp"],"materials":["mud_pool"],"surfaces":["mud_pools"],"dimensions":[32,32],"alpha":false,"tileable":true,"wang":true,"variants":64,"seedBase":{"tiles":100100000,"wang":200100000},"familyIndex":1}

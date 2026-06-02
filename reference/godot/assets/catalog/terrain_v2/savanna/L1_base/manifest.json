@@ -1,0 +1,24 @@
+{
+  "biome": "savanna",
+  "layer": "L1_base",
+  "pixellab_tileset_id": "1f330b67-e60f-40bb-a781-154b2108ca31",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "c3f64243-156e-4bc1-9e98-13ca463a2d29",
+    "upper": "c5ecb952-101f-4a2a-8083-df1e875b6933"
+  },
+  "generation_prompt": {
+    "lower_description": "dry golden savanna grass on reddish-brown African earth with natural variation",
+    "upper_description": "dry golden savanna grass with slightly different pattern and exposed red clay patches"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

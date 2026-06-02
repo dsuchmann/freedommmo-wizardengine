@@ -1,0 +1,120 @@
+{
+  "auditDate": "2026-06-01",
+  "totalCatalogPNGs": 15492,
+  "swampRelevant": {
+    "base": {
+      "swamp_wang": {
+        "path": "assets/catalog/terrain/swamp/",
+        "files": 17,
+        "wangMasks": 16,
+        "tileset": true,
+        "dimensions": [32, 32],
+        "opaque": true,
+        "quality": "LOW — very flat, 2-18 unique colors per tile. wang_15 is essentially a 2-color solid fill. Needs replacement with richer organic texture.",
+        "avgColors": { "wang_0": 18, "wang_5": 16, "wang_10": 9, "wang_15": 2 },
+        "colorRange": "Very dark (avg RGB 5-18, 15-54, 43-46). Excessively blue/teal, not muddy enough for wet_mud.",
+        "usable": false,
+        "recommendation": "Replace with PixelLab-generated tiles with 50+ unique colors, organic noise, visible mud texture."
+      }
+    },
+    "transitions": {
+      "swamp_to_forest": {
+        "path": "assets/catalog/terrain/swamp_to_forest/",
+        "files": 17,
+        "wangMasks": 16,
+        "tileset": true,
+        "quality": "UNKNOWN — file sizes suggest similar low-detail as swamp base. Needs visual inspection.",
+        "recommendation": "Audit visually, likely needs replacement."
+      },
+      "swamp_to_grass": {
+        "path": "assets/catalog/terrain/swamp_to_grass/",
+        "files": 17,
+        "wangMasks": 16,
+        "tileset": true,
+        "quality": "UNKNOWN — same concern as swamp_to_forest.",
+        "recommendation": "Audit visually, likely needs replacement."
+      }
+    },
+    "surfaceOverlays": {
+      "mud_pool": { "exists": false },
+      "wet_mud_shine": { "exists": false },
+      "algae_film": { "exists": false }
+    },
+    "micro": {
+      "dark_mud_flecks": { "exists": false },
+      "moss_ground_cover": { "exists": false },
+      "reeds_grass_blades": { "exists": false }
+    },
+    "medium": {
+      "reeds": { "exists": false },
+      "cattails": { "exists": false },
+      "root_cluster": { "exists": false },
+      "moss_clump": { "exists": false }
+    },
+    "objects": {
+      "forage_bush_swamp": { "exists": false },
+      "swamp_tree": { "exists": false },
+      "reed_harvest_node": { "exists": false }
+    }
+  },
+  "waterRelevant": {
+    "base": {
+      "water_tiles": {
+        "path": "assets/catalog/terrain/water_*.png",
+        "files": 6,
+        "dimensions": "32x32 assumed",
+        "wangMasks": false,
+        "quality": "Basic flat water tiles. No Wang set for water bodies.",
+        "recommendation": "Need full Wang sets for: deep_ocean, ocean, shallow_water, river, lake."
+      },
+      "ocean_wang": {
+        "path": "assets/catalog/terrain/ocean/",
+        "exists": true,
+        "quality": "UNKNOWN — needs visual audit."
+      }
+    },
+    "transitions": {
+      "ocean_to_beach": {
+        "path": "assets/catalog/terrain/ocean_to_beach/",
+        "files": 17,
+        "quality": "Full Wang set exists. Quality unknown."
+      },
+      "ocean_to_grassland": {
+        "path": "assets/catalog/terrain/ocean_to_grassland/",
+        "exists": true,
+        "quality": "Unknown."
+      },
+      "shallow_water_to_swamp": { "exists": false, "critical": true },
+      "river_to_swamp": { "exists": false, "critical": true },
+      "river_to_grassland": { "exists": false, "critical": true },
+      "river_to_savanna": { "exists": false, "critical": true }
+    }
+  },
+  "otherTerrainSets": {
+    "existingWangDirs": [
+      "beach_to_grass", "cobblestone_road", "crystal_cave", "desert",
+      "desert_to_mountains", "dungeon_stone", "fertile_soil", "forest",
+      "forest_to_mountains", "grass_to_dirt", "grass_to_forest",
+      "grass_to_sand", "grass_to_stone", "grassland", "grassland_clovers",
+      "grassland_to_desert", "grassland_to_tundra", "mountains",
+      "ocean", "ocean_to_beach", "ocean_to_grassland", "stone_to_snow",
+      "swamp", "swamp_to_forest", "swamp_to_grass", "tundra",
+      "volcanic", "wheat_field", "wooden_floor"
+    ],
+    "totalTerrainDirs": 32
+  },
+  "natureObjects": {
+    "bushes": { "path": "assets/catalog/objects/nature/bushes/", "exists": true },
+    "fallen_logs": { "path": "assets/catalog/objects/nature/fallen_logs/", "exists": true },
+    "ferns": { "path": "assets/catalog/objects/nature/ferns/", "exists": true },
+    "flowers": { "path": "assets/catalog/objects/nature/flowers/", "exists": true },
+    "grass": { "path": "assets/catalog/objects/nature/grass/", "exists": true },
+    "leaves": { "path": "assets/catalog/objects/nature/leaves/", "exists": true },
+    "lily_pads": { "path": "assets/catalog/objects/nature/lily_pads/", "exists": true },
+    "mushrooms": { "path": "assets/catalog/objects/nature/mushrooms/", "exists": true },
+    "pebbles": { "path": "assets/catalog/objects/nature/pebbles/", "exists": true },
+    "stumps": { "path": "assets/catalog/objects/nature/stumps/", "exists": true },
+    "trees": { "path": "assets/catalog/objects/nature/trees/", "exists": true },
+    "note": "These are generic nature objects, not biome-specific swamp assets. lily_pads could be relevant for swamp surface overlays."
+  }
+}

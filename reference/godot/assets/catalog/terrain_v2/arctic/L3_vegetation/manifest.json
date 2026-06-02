@@ -1,0 +1,24 @@
+{
+  "biome": "arctic",
+  "layer": "L3_vegetation",
+  "pixellab_tileset_id": "5506eb15-9718-411a-881a-17edc7abb5df",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "1f6d771e-0c16-4dbd-b825-344819d1876d",
+    "upper": "ae25e067-d67b-4957-9d2f-c5c2167a98a0"
+  },
+  "generation_prompt": {
+    "lower_description": "jagged ice crystal formations and hoarfrost structures on fully transparent background, pixel art, top-down view",
+    "upper_description": "different ice crystal arrangement with rime frost on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

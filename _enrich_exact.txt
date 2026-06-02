@@ -1,0 +1,87 @@
+  // Procedural swamp enrichment. Direct PixelLab decal stamping is intentionally
+  // disabled here: the current decal PNGs need alpha/edge normalization before
+  // they can be stamped without square patches.
+  const wetness = clamp((moisture - 0.48) / 0.42, 0, 1);
+  const mossiness = clamp(density * 0.72 + wetness * 0.28, 0, 1);
+  const detailTags = ['flecks'];
+  const flecks = Math.floor(3 + wetness * 4 + rand2(tile.wx, tile.wy, 16101) * 4);
+  for (let i = 0; i < flecks; i++) {
+    const fx = sx + Math.floor(rand2(tile.wx, tile.wy, 16110 + i * 11) * size);
+    const fy = sy + Math.floor(rand2(tile.wx, tile.wy, 16111 + i * 11) * size);
+    ctx.fillStyle = `rgba(10, 17, 14, ${(0.18 + wetness * 0.10).toFixed(3)})`;
+    ctx.fillRect(fx, fy, 2 + Math.floor(rand2(tile.wx, tile.wy, 16112 + i * 11) * 4), 1 + Math.floor(rand2(tile.wx, tile.wy, 16113 + i * 11) * 2));
+  }
+  if (mossiness > 0.34 && rand2(tile.wx, tile.wy, 16120) < mossiness * 1.25) {
+    detailTags.push('moss');
+    ctx.fillStyle = `rgba(61, 126, 52, ${(0.20 + mossiness * 0.14).toFixed(3)})`;
+    const mx = sx + Math.floor(rand2(tile.wx, tile.wy, 16121) * (size - 10));
+    const my = sy + Math.floor(rand2(tile.wx, tile.wy, 16122) * (size - 7));
+    ctx.fillRect(mx, my, Math.max(5, Math.floor(size * 0.28)), 2);
+    ctx.fillRect(mx + 2, my + 3, Math.max(3, Math.floor(size * 0.18)), 1);
+  }
+  if (wetness > 0.42 && rand2(tile.wx, tile.wy, 16130) < wetness * 0.88) {
+    detailTags.push('glint');
+    ctx.strokeStyle = `rgba(158, 180, 137, ${(0.16 + wetness * 0.12).toFixed(3)})`;
+    ctx.lineWidth = 1;
+    const gx = sx + Math.floor(rand2(tile.wx, tile.wy, 16131) * (size - 8)) + 4;
+    const gy = sy + Math.floor(rand2(tile.wx, tile.wy, 16132) * (size - 6)) + 3;
+    ctx.beginPath();
+    ctx.moveTo(gx, gy);
+    ctx.lineTo(gx + Math.floor(size * 0.30), gy - 1);
+    ctx.stroke();
+  }
+  if (bladeGate && rand2(tile.wx, tile.wy, 16160) < density * 0.52) {
+    detailTags.push('reeds');
+    ctx.strokeStyle = 'rgba(60, 130, 54, 0.36)';
+    const rx = sx + Math.floor(rand2(tile.wx, tile.wy, 16161) * (size - 6)) + 3;
+    const ry = sy + Math.floor(rand2(tile.wx, tile.wy, 16162) * (size - 5)) + 5;
+    ctx.beginPath();
+    ctx.moveTo(rx, ry);
+    ctx.lineTo(rx + 1, ry - Math.floor(size * 0.16));
+    ctx.moveTo(rx + 3, ry);
+    ctx.lineTo(rx + 4, ry - Math.floor(size * 0.12));
+    ctx.stroke();
+  }
+
+  if (wetness > 0.50 && rand2(tile.wx, tile.wy, 16180) < wetness * 0.55) {
+    detailTags.push('wetpatch');
+    const cx = sx + size * (0.28 + rand2(tile.wx, tile.wy, 16181) * 0.44);
+    const cy = sy + size * (0.30 + rand2(tile.wx, tile.wy, 16182) * 0.40);
+    ctx.fillStyle = `rgba(20, 31, 27, ${(0.18 + wetness * 0.16).toFixed(3)})`;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, size * (0.16 + rand2(tile.wx, tile.wy, 16183) * 0.10), size * (0.06 + rand2(tile.wx, tile.wy, 16184) * 0.06), rand2(tile.wx, tile.wy, 16185) * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  if (mossiness > 0.48 && rand2(tile.wx, tile.wy, 16190) < mossiness * 0.50) {
+    detailTags.push('mossmat');
+    const cx = sx + size * (0.25 + rand2(tile.wx, tile.wy, 16191) * 0.50);
+    const cy = sy + size * (0.25 + rand2(tile.wx, tile.wy, 16192) * 0.50);
+    ctx.fillStyle = `rgba(44, 112, 42, ${(0.16 + mossiness * 0.14).toFixed(3)})`;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, size * (0.11 + rand2(tile.wx, tile.wy, 16193) * 0.09), size * (0.05 + rand2(tile.wx, tile.wy, 16194) * 0.05), rand2(tile.wx, tile.wy, 16195) * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Guaranteed large visible props per tile — every tile gets at least 2 features
+  const tileSeed = Math.floor(rand2(tile.wx, tile.wy, 16200) * 1000);
+  const propStyle = tileSeed % 4;
+  const bigX = sx + size * 0.15 + (tileSeed % 71) * size * 0.010;
+  const bigY = sy + size * 0.20 + ((tileSeed * 7) % 61) * size * 0.010;
+  const bigRot = (tileSeed * 0.1723) % (Math.PI * 2);
+
+  // Every tile: big bright green moss mat
+  detailTags.push('moss');
+  ctx.fillStyle = 'rgba(78, 194, 66, 0.88)';
+  ctx.beginPath();
+  ctx.ellipse(bigX, bigY, size * 0.28, size * 0.14, bigRot, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(132, 226, 102, 0.72)';
+  ctx.beginPath();
+  ctx.ellipse(bigX + size * 0.08, bigY - size * 0.03, size * 0.14, size * 0.06, bigRot + 0.3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Prop: dark log or puddle pool
+  if (propStyle < 2 || wetness > 0.50) {
+    detailTags.push('log');
+    ctx.save();

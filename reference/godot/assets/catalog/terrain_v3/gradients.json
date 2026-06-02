@@ -1,0 +1,137 @@
+{
+  "version": "1.0",
+  "surfaces": [
+    "ocean_water", "golden_sand", "lush_grass", "dry_grass",
+    "forest_floor", "dark_humus", "swamp_mud", "grey_rock",
+    "volcanic_rock", "frozen_earth", "glacial_ice", "snow",
+    "mystic_crystal"
+  ],
+  "gradients": {
+    "grassland": [
+      [0.38, "ocean_water"],
+      [0.42, "golden_sand"],
+      [0.65, "lush_grass"],
+      [0.78, "dry_grass"],
+      [0.88, "grey_rock"],
+      [1.00, "snow"]
+    ],
+    "desert": [
+      [0.38, "ocean_water"],
+      [0.42, "golden_sand"],
+      [0.60, "golden_sand"],
+      [0.75, "dry_grass"],
+      [0.85, "grey_rock"],
+      [1.00, "snow"]
+    ],
+    "forest": [
+      [0.38, "ocean_water"],
+      [0.42, "golden_sand"],
+      [0.58, "lush_grass"],
+      [0.72, "forest_floor"],
+      [0.85, "grey_rock"],
+      [1.00, "snow"]
+    ],
+    "dense_forest": [
+      [0.38, "ocean_water"],
+      [0.42, "golden_sand"],
+      [0.52, "lush_grass"],
+      [0.65, "forest_floor"],
+      [0.78, "dark_humus"],
+      [0.88, "grey_rock"],
+      [1.00, "snow"]
+    ],
+    "tundra": [
+      [0.38, "ocean_water"],
+      [0.42, "frozen_earth"],
+      [0.55, "frozen_earth"],
+      [0.75, "snow"],
+      [1.00, "glacial_ice"]
+    ],
+    "arctic": [
+      [0.38, "ocean_water"],
+      [0.42, "frozen_earth"],
+      [0.55, "snow"],
+      [0.75, "glacial_ice"],
+      [1.00, "glacial_ice"]
+    ],
+    "taiga": [
+      [0.38, "ocean_water"],
+      [0.42, "frozen_earth"],
+      [0.50, "forest_floor"],
+      [0.70, "frozen_earth"],
+      [0.85, "snow"],
+      [1.00, "glacial_ice"]
+    ],
+    "mountains": [
+      [0.38, "ocean_water"],
+      [0.42, "golden_sand"],
+      [0.50, "dry_grass"],
+      [0.65, "grey_rock"],
+      [0.85, "snow"],
+      [1.00, "glacial_ice"]
+    ],
+    "steppe": [
+      [0.38, "ocean_water"],
+      [0.42, "golden_sand"],
+      [0.55, "dry_grass"],
+      [0.72, "grey_rock"],
+      [0.88, "snow"],
+      [1.00, "snow"]
+    ],
+    "savanna": [
+      [0.38, "ocean_water"],
+      [0.42, "golden_sand"],
+      [0.55, "dry_grass"],
+      [0.70, "golden_sand"],
+      [0.82, "grey_rock"],
+      [1.00, "snow"]
+    ],
+    "tropical_forest": [
+      [0.38, "ocean_water"],
+      [0.42, "golden_sand"],
+      [0.48, "lush_grass"],
+      [0.60, "forest_floor"],
+      [0.72, "dark_humus"],
+      [0.85, "grey_rock"],
+      [1.00, "snow"]
+    ],
+    "swamp": [
+      [0.38, "ocean_water"],
+      [0.42, "swamp_mud"],
+      [0.55, "swamp_mud"],
+      [0.65, "forest_floor"],
+      [0.80, "grey_rock"],
+      [1.00, "snow"]
+    ],
+    "volcanic": [
+      [0.38, "ocean_water"],
+      [0.42, "golden_sand"],
+      [0.55, "volcanic_rock"],
+      [0.75, "grey_rock"],
+      [0.88, "snow"],
+      [1.00, "snow"]
+    ],
+    "mystic": [
+      [0.38, "ocean_water"],
+      [0.42, "mystic_crystal"],
+      [0.60, "mystic_crystal"],
+      [0.75, "grey_rock"],
+      [0.90, "snow"],
+      [1.00, "glacial_ice"]
+    ],
+    "ocean": [
+      [1.00, "ocean_water"]
+    ],
+    "beach": [
+      [0.38, "ocean_water"],
+      [0.44, "golden_sand"],
+      [1.00, "golden_sand"]
+    ],
+    "lake": [
+      [1.00, "ocean_water"]
+    ],
+    "river": [
+      [1.00, "ocean_water"]
+    ]
+  }
+}

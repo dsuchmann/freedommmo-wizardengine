@@ -15,7 +15,10 @@ export function provinceBiomeAt(cx, cy) {
     const radius = PROVINCE_RADIUS[id] ?? 14;
     const dx = cx - center.x;
     const dy = cy - center.y;
-    const d = Math.hypot(dx, dy);
+    // Use warped coordinates so province edges are organic instead of circles/rectangles.
+    const warpX = seededOffset(i, 10) * 5 + seededNoise(cx * 0.11, cy * 0.11, i + 20) * 9;
+    const warpY = seededOffset(i, 11) * 5 + seededNoise(cx * 0.11 + 70, cy * 0.11 - 30, i + 30) * 9;
+    const d = Math.hypot(dx + warpX, dy + warpY);
     if (d <= radius && (!best || d / radius < best.score)) best = { id, score: d / radius, center, radius };
   }
   return best;
@@ -33,5 +36,10 @@ export function provinceCenter(index) {
 
 function seededOffset(index, salt) {
   const n = Math.sin((index + 1) * 127.1 + salt * 311.7) * 43758.5453;
+  return (n - Math.floor(n)) * 2 - 1;
+}
+
+function seededNoise(x, y, salt) {
+  const n = Math.sin(x * 127.1 + y * 311.7 + salt * 74.7) * 43758.5453;
   return (n - Math.floor(n)) * 2 - 1;
 }

@@ -1,0 +1,24 @@
+{
+  "biome": "desert",
+  "layer": "L1_base",
+  "pixellab_tileset_id": "ad90a767-17b1-42d3-96ac-add8867b3ab5",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "c1d8d8db-5fba-402c-8f4c-c284fb31bd72",
+    "upper": "e4e92cdd-9962-4070-a796-7d185531ff8c"
+  },
+  "generation_prompt": {
+    "lower_description": "dry sandy desert with golden sand dunes and wind ripples",
+    "upper_description": "dry sandy desert with slightly darker sand and small pebbles"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

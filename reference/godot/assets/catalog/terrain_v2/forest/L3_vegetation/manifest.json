@@ -1,0 +1,24 @@
+{
+  "biome": "forest",
+  "layer": "L3_vegetation",
+  "pixellab_tileset_id": "9ba86f7e-4ad4-48a9-812f-8cdd74d6bcac",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "48668f68-ac94-4de6-bdae-0b502b95f036",
+    "upper": "f6f6e712-8e68-4ae1-a0e4-6342fd77f214"
+  },
+  "generation_prompt": {
+    "lower_description": "small green ferns and forest undergrowth plants on fully transparent background, pixel art, top-down view",
+    "upper_description": "different fern arrangement with tiny saplings on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

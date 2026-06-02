@@ -1,0 +1,12 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://shaders/water_animated.gdshader" id="1"]
+
+[resource]
+shader = ExtResource("1")
+shader_parameter/flow_direction = Vector2(0.1, 0.05)
+shader_parameter/flow_speed = 0.5
+shader_parameter/wave_strength = 0.3
+shader_parameter/water_color = Color(0.2, 0.4, 0.8, 0.8)
+shader_parameter/foam_color = Color(1, 1, 1, 1)
+shader_parameter/foam_threshold = 0.7

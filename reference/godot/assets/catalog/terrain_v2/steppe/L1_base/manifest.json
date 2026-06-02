@@ -1,0 +1,24 @@
+{
+  "biome": "steppe",
+  "layer": "L1_base",
+  "pixellab_tileset_id": "445aba55-60dc-4539-9f10-9888719700b5",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "10e7d7c2-191e-4a04-a4a6-dec773c43e61",
+    "upper": "868e5018-a6de-4008-bb79-2267dc1fc3d2"
+  },
+  "generation_prompt": {
+    "lower_description": "short windswept grass on grey-brown rocky soil, sparse vegetation, exposed stone",
+    "upper_description": "short windswept grass with different wind pattern and more exposed grey bedrock"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

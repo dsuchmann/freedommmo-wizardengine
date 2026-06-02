@@ -1,0 +1,24 @@
+{
+  "biome": "grassland",
+  "layer": "L3_vegetation",
+  "pixellab_tileset_id": "af134523-bc05-42bf-8587-5d6e5364fdfe",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "e0caf0ad-706d-4933-8cc5-7b2ec140340c",
+    "upper": "100c0087-0906-4e8b-bd32-d8f50fc3683d"
+  },
+  "generation_prompt": {
+    "lower_description": "tall green grass blades with small wildflowers on fully transparent background, pixel art, top-down view",
+    "upper_description": "different tall grass blade pattern with clovers on fully transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

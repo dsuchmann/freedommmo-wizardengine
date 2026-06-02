@@ -1,0 +1,24 @@
+{
+  "biome": "ocean",
+  "layer": "L1_base",
+  "pixellab_tileset_id": "9501a5de-7d36-4788-860d-2edd0320083a",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "f16a1457-545f-43d6-b434-3592027c3c95",
+    "upper": "0f7673ef-dd33-44ec-a092-52d581201380"
+  },
+  "generation_prompt": {
+    "lower_description": "calm blue ocean water with gentle waves and light reflections",
+    "upper_description": "calm blue ocean water with slightly different wave pattern"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

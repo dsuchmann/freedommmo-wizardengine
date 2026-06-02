@@ -1,0 +1,24 @@
+{
+  "biome": "mystic",
+  "layer": "L4_scatter",
+  "pixellab_tileset_id": "af6d7d57-4bb4-43bf-b21d-09702191242c",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "0a0ee8a1-fcbd-4ee2-a79b-e84d369e65ef",
+    "upper": "674aac36-8e69-440f-9cb8-984d0e690e28"
+  },
+  "generation_prompt": {
+    "lower_description": "scattered glowing gemstones and broken enchanted crystal fragments on fully transparent background, pixel art, top-down view",
+    "upper_description": "different gemstone arrangement with magical residue on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

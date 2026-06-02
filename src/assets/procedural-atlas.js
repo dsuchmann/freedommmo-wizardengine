@@ -14,7 +14,7 @@ export class ProceduralAtlas {
     this.drawGrassBladeSet('mystic_grass_sway', 1, '#49d6c5', '#8a5bd6');
     this.drawFlowerSet('wildflowers', 2);
     this.drawRockSet('boulder_cluster', 3);
-    this.drawTreeSet('broadleaf_tree', 4, '#12391f', '#6b4928');
+    this.drawTreeSet('broadleaf_tree', 4, '#356640', '#6b4928');
     this.drawTreeSet('mystic_tree', 5, '#2c1b57', '#49d6c5');
   }
 
@@ -74,7 +74,7 @@ export class ProceduralAtlas {
     for (let f = 0; f < 8; f++) {
       const x = f * this.cell;
       const baseY = row * this.cell;
-      this.ctx.fillStyle = 'rgba(0,0,0,.22)';
+      this.ctx.fillStyle = 'rgba(70,74,72,.24)';
       this.ctx.beginPath();
       this.ctx.ellipse(x + 16, baseY + 26, 10, 3, 0, 0, Math.PI * 2);
       this.ctx.fill();
@@ -94,7 +94,7 @@ export class ProceduralAtlas {
       this.ctx.lineTo(x + 22, baseY + 16);
       this.ctx.lineTo(x + 15, baseY + 18);
       this.ctx.fill();
-      this.ctx.strokeStyle = '#2b2d30';
+      this.ctx.strokeStyle = '#555b5d';
       this.ctx.lineWidth = 1;
       this.ctx.beginPath();
       this.ctx.moveTo(x + 12 + (f % 3), baseY + 20);
@@ -109,7 +109,7 @@ export class ProceduralAtlas {
       const x = f * this.cell;
       const sway = Math.sin((f / 8) * Math.PI * 2) * 2;
       const baseY = row * this.cell;
-      this.ctx.fillStyle = 'rgba(0,0,0,.24)';
+      this.ctx.fillStyle = 'rgba(38,48,38,.22)';
       this.ctx.beginPath();
       this.ctx.ellipse(x + 17, baseY + 27, 10, 3, 0, 0, Math.PI * 2);
       this.ctx.fill();

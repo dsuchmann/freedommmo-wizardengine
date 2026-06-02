@@ -1,0 +1,24 @@
+{
+  "biome": "tundra",
+  "layer": "L5_atmospheric",
+  "pixellab_tileset_id": "1ea376d4-cfc6-478c-9398-102b6e408988",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "841945f7-4c16-48d2-811c-b2541b52b093",
+    "upper": "5e77d111-c349-4098-a9f6-750cc3d196b3"
+  },
+  "generation_prompt": {
+    "lower_description": "blowing snow particles and ice sparkle reflections on fully transparent background, pixel art, top-down view",
+    "upper_description": "different snow particle pattern with aurora shimmer on transparent background, sparse, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

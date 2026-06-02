@@ -1,0 +1,24 @@
+{
+  "biome": "mountains",
+  "layer": "transitions/mountains_to_arctic",
+  "pixellab_tileset_id": "ac639b06-968a-46f8-8203-1621575c1f61",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "37c7c750-5146-41fb-823b-934a20ccfe9c",
+    "upper": "c9b2466b-0c35-4a4a-aee5-60ceb417ae2a"
+  },
+  "generation_prompt": {
+    "lower_description": "grey craggy mountain rock",
+    "upper_description": "white-blue glacial ice with pressure cracks"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

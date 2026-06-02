@@ -1,0 +1,24 @@
+{
+  "biome": "taiga",
+  "layer": "L2_detail",
+  "pixellab_tileset_id": "84967a2e-d448-46c4-b7a8-be8fe378d860",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "1d76c979-87c0-4bf7-b755-6a6c0485c45d",
+    "upper": "d84dfa40-e119-45b5-8c73-4e8ae3816174"
+  },
+  "generation_prompt": {
+    "lower_description": "scattered white snow patches and small frozen puddles on fully transparent background, pixel art, top-down view",
+    "upper_description": "different snow patch arrangement with more ice coverage on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

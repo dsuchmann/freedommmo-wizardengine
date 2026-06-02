@@ -1,0 +1,24 @@
+{
+  "biome": "lake",
+  "layer": "L1_base",
+  "pixellab_tileset_id": "a401b289-5495-4880-a7a0-1762280a808d",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "dbb295d5-42d5-4dbb-849f-69d814536b43",
+    "upper": "3d040cb9-3610-47b5-b93f-6215cce3b6ed"
+  },
+  "generation_prompt": {
+    "lower_description": "clear calm lake water with subtle blue-green depth coloring and gentle ripples",
+    "upper_description": "clear calm lake water with slightly different ripple pattern and light reflection spots"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

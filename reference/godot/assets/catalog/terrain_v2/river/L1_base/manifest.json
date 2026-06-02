@@ -1,0 +1,24 @@
+{
+  "biome": "river",
+  "layer": "L1_base",
+  "pixellab_tileset_id": "1f82cfe7-c658-473b-b4e3-03f3b4ea78da",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "9987b7da-70fe-4528-9ec8-fe042ce0efbc",
+    "upper": "b908b157-525d-4f5c-a045-fc387500289a"
+  },
+  "generation_prompt": {
+    "lower_description": "flowing river water with visible directional current lines and small white rapids",
+    "upper_description": "flowing river water with different current pattern and submerged rock shadows"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

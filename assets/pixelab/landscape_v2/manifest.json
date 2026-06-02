@@ -1,0 +1,228 @@
+{
+  "version": "2.0.0",
+  "phase": "swamp_calibration",
+  "generatedAt": "2026-06-01",
+  "layerContract": {
+    "layer1_base": { "role": "opaque_terrain_wang", "alpha": false, "directory": "base/" },
+    "layer2_structure": { "role": "terrain_form_marks", "alpha": true, "directory": "surface_overlays/structure_*/" },
+    "layer3_surface": { "role": "surface_overlays", "alpha": true, "directory": "surface_overlays/" },
+    "layer4_micro": { "role": "micro_alpha_decals", "alpha": true, "directory": "micro/" },
+    "layer5_medium": { "role": "medium_dressing_sprites", "alpha": true, "directory": "medium/" },
+    "layer6_objects": { "role": "gameplay_objects", "alpha": true, "directory": "objects/" },
+    "layer7_lighting": { "role": "runtime_atmosphere", "alpha": true, "directory": null }
+  },
+  "seedScheme": {
+    "base": { "offset": 100000000, "formula": "offset + familyIndex * 100000 + variant" },
+    "wang": { "offset": 200000000, "formula": "offset + familyIndex * 100000 + mask * 1000 + variant" },
+    "transitions": { "offset": 300000000, "formula": "offset + transitionIndex * 100000 + mask * 1000 + variant" },
+    "surface_overlays": { "offset": 400000000, "formula": "offset + familyIndex * 100000 + variant" },
+    "micro": { "offset": 500000000, "formula": "offset + familyIndex * 100000 + variant" },
+    "medium": { "offset": 600000000, "formula": "offset + familyIndex * 100000 + variant" },
+    "objects": { "offset": 700000000, "formula": "offset + familyIndex * 100000 + variant" },
+    "structure": { "offset": 800000000, "formula": "offset + familyIndex * 100000 + variant" }
+  },
+  "familyIndex": {
+    "swamp_wet_mud": 0,
+    "swamp_mud_pool": 1,
+    "mud_pool": 0,
+    "wet_mud_shine": 1,
+    "algae_film": 2,
+    "dark_mud_flecks": 0,
+    "moss_ground_cover": 1,
+    "reeds_grass_blades": 2,
+    "reeds": 0,
+    "cattails": 1,
+    "root_cluster": 2,
+    "moss_clump": 3,
+    "forage_bush_swamp": 0,
+    "swamp_tree": 1,
+    "reed_harvest_node": 2,
+    "water_shallow__to__swamp_wet_mud": 0,
+    "water_river__to__swamp_wet_mud": 1,
+    "forest_floor__to__swamp_ground": 2
+  },
+  "families": {
+    "base": [
+      {
+        "id": "swamp_wet_mud",
+        "family": "swamp/wet_mud",
+        "biomes": ["swamp"],
+        "materials": ["wet_mud"],
+        "surfaces": ["mud_pools", "ground_cover"],
+        "dimensions": [32, 32],
+        "alpha": false,
+        "tileable": true,
+        "wang": true,
+        "assets": {
+          "tiles": 32,
+          "wang_masks": 16,
+          "noise_variants": 8,
+          "detail_variants": 8
+        }
+      },
+      {
+        "id": "swamp_mud_pool",
+        "family": "swamp/mud_pool",
+        "biomes": ["swamp"],
+        "materials": ["mud_pool"],
+        "surfaces": ["mud_pools"],
+        "dimensions": [32, 32],
+        "alpha": false,
+        "tileable": true,
+        "wang": true,
+        "assets": {
+          "tiles": 32,
+          "wang_masks": 16,
+          "noise_variants": 8,
+          "detail_variants": 8
+        }
+      }
+    ],
+    "surface_overlays": [
+      {
+        "id": "mud_pool",
+        "biomes": ["swamp"],
+        "materials": ["wet_mud", "mud_pool"],
+        "dimensions_mix": [[32, 32], [16, 16], [64, 64]],
+        "alpha": true,
+        "assets": { "decals_32": 64, "decals_16": 32, "broad_64": 16 }
+      },
+      {
+        "id": "wet_mud_shine",
+        "biomes": ["swamp"],
+        "materials": ["wet_mud"],
+        "dimensions_mix": [[32, 32], [16, 16], [64, 64]],
+        "alpha": true,
+        "assets": { "decals_32": 64, "decals_16": 32, "broad_64": 16 }
+      },
+      {
+        "id": "algae_film",
+        "biomes": ["swamp"],
+        "materials": ["wet_mud", "algae_mud"],
+        "dimensions_mix": [[32, 32], [16, 16], [64, 64]],
+        "alpha": true,
+        "assets": { "decals_32": 64, "decals_16": 32, "broad_64": 16 }
+      }
+    ],
+    "micro": [
+      {
+        "id": "dark_mud_flecks",
+        "biomes": ["swamp"],
+        "dimensions_mix": [[8, 8], [12, 12], [16, 16]],
+        "alpha": true,
+        "assets": { "decals": 128, "sparse_sheets": 32, "dense_sheets": 16 }
+      },
+      {
+        "id": "moss_ground_cover",
+        "biomes": ["swamp"],
+        "dimensions_mix": [[8, 8], [12, 12], [16, 16]],
+        "alpha": true,
+        "assets": { "decals": 128, "sparse_sheets": 32, "dense_sheets": 16 }
+      },
+      {
+        "id": "reeds_grass_blades",
+        "biomes": ["swamp"],
+        "dimensions_mix": [[8, 8], [12, 12], [16, 16]],
+        "alpha": true,
+        "assets": { "decals": 128, "sparse_sheets": 32, "dense_sheets": 16 }
+      }
+    ],
+    "medium": [
+      {
+        "id": "reeds",
+        "biomes": ["swamp", "river", "lake"],
+        "dimensions_mix": [[32, 32], [48, 48], [64, 64]],
+        "alpha": true,
+        "assets": { "sprites_32": 96, "sprites_48": 48, "sprites_64": 24 }
+      },
+      {
+        "id": "cattails",
+        "biomes": ["swamp", "river", "lake"],
+        "dimensions_mix": [[32, 32], [48, 48], [64, 64]],
+        "alpha": true,
+        "assets": { "sprites_32": 96, "sprites_48": 48, "sprites_64": 24 }
+      },
+      {
+        "id": "root_cluster",
+        "biomes": ["swamp"],
+        "dimensions_mix": [[32, 32], [48, 48], [64, 64]],
+        "alpha": true,
+        "assets": { "sprites_32": 96, "sprites_48": 48, "sprites_64": 24 }
+      },
+      {
+        "id": "moss_clump",
+        "biomes": ["swamp", "forest"],
+        "dimensions_mix": [[32, 32], [48, 48], [64, 64]],
+        "alpha": true,
+        "assets": { "sprites_32": 96, "sprites_48": 48, "sprites_64": 24 }
+      }
+    ],
+    "objects": [
+      {
+        "id": "forage_bush_swamp",
+        "biomes": ["swamp"],
+        "interaction": "forage",
+        "dimensions": [64, 64],
+        "alpha": true,
+        "assets": { "base": 64, "damaged": 16, "highlighted": 16 }
+      },
+      {
+        "id": "swamp_tree",
+        "biomes": ["swamp"],
+        "interaction": "chop",
+        "dimensions": [96, 96],
+        "alpha": true,
+        "assets": { "base": 64, "damaged": 16, "highlighted": 16 }
+      },
+      {
+        "id": "reed_harvest_node",
+        "biomes": ["swamp", "river", "lake"],
+        "interaction": "harvest",
+        "dimensions": [32, 32],
+        "alpha": true,
+        "assets": { "base": 64, "damaged": 16, "highlighted": 16 }
+      }
+    ],
+    "transitions": [
+      {
+        "id": "water_shallow__to__swamp_wet_mud",
+        "from": "water/shallow_water",
+        "to": "swamp/wet_mud",
+        "assets": { "wang_masks": 16, "alpha_overlays": 16, "edge_decals": 8 }
+      },
+      {
+        "id": "water_river__to__swamp_wet_mud",
+        "from": "water/river",
+        "to": "swamp/wet_mud",
+        "assets": { "wang_masks": 16, "alpha_overlays": 16, "edge_decals": 8 }
+      },
+      {
+        "id": "forest_floor__to__swamp_ground",
+        "from": "forest/forest_floor",
+        "to": "ground/swamp_ground",
+        "assets": { "wang_masks": 16, "alpha_overlays": 16, "edge_decals": 8 }
+      }
+    ]
+  },
+  "totalPlannedAssets": {
+    "base_swamp_wet_mud": 64,
+    "base_swamp_mud_pool": 64,
+    "surface_mud_pool": 112,
+    "surface_wet_mud_shine": 112,
+    "surface_algae_film": 112,
+    "micro_dark_mud_flecks": 176,
+    "micro_moss_ground_cover": 176,
+    "micro_reeds_grass_blades": 176,
+    "medium_reeds": 168,
+    "medium_cattails": 168,
+    "medium_root_cluster": 168,
+    "medium_moss_clump": 168,
+    "objects_forage_bush_swamp": 96,
+    "objects_swamp_tree": 96,
+    "objects_reed_harvest_node": 96,
+    "transitions_water_shallow_to_swamp": 40,
+    "transitions_water_river_to_swamp": 40,
+    "transitions_forest_to_swamp": 40,
+    "total": 2072
+  }
+}

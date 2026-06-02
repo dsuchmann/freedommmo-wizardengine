@@ -1,0 +1,75 @@
+L763:   if (tile.pixelLabSkipBase) return false;
+L764:   const baseFamily = recipe?.base?.family ?? recipe?.baseFamily;
+L765:   const wangVariants = PIXEL_BASE_WANG_VARIANTS[baseFamily];
+L766:   const variants = PIXEL_BASE_TILE_VARIANTS[baseFamily];
+L767:   const foundationSrc = PIXEL_BASE_FOUNDATION_SRC[baseFamily] ?? variants?.[0];
+L768:   const mask = Number.isInteger(tile.pixelLabBaseMask) ? tile.pixelLabBaseMask : 15;
+L769:   const wangSrc = mask !== 15 ? wangVariants?.[mask] : null;
+L770:   if (!foundationSrc && !wangSrc) return false;
+L771: 
+L772:   // Continuous base color first; PixelLab imagery is used as structure/detail,
+L773:   // not as a fully opaque wallpaper tile.
+L774:   if (!paintSwampMudFoundation(ctx, tile, baseFamily, sx, sy, size)) return false;
+L775:   paintSwampTransitionGradient(ctx, tile, sx, sy, size);
+L776: 
+L777:   const texturePool = variants ?? [];
+L778:   const variantIndex = pixelBaseInteriorVariantIndex(tile, texturePool);
+L779:   const variantSrc = texturePool?.[variantIndex];
+L780:   if (variantSrc) {
+L781:     const detailCanvas = preparedPixelBaseCanvas(variantSrc, baseFamily, 'texture');
+L782:     if (detailCanvas) {
+L783:       const detailAlpha = 0.24 + smoothNoise(tile.wx, tile.wy, 18, 16005) * 0.08;
+L784:       drawPreparedPixelTextureCrop(ctx, detailCanvas, tile, sx, sy, size, detailAlpha, 16066);
+L785:     }
+L786:   }
+L787:   const secondaryIndex = pixelBaseSecondaryVariantIndex(tile, texturePool, variantIndex);
+L788:   const secondarySrc = texturePool?.[secondaryIndex];
+L789:   if (secondarySrc && secondarySrc !== variantSrc) {
+L790:     const secondaryCanvas = preparedPixelBaseCanvas(secondarySrc, baseFamily, 'texture');
+L791:     if (secondaryCanvas) {
+L792:       const secondaryAlpha = 0.18 + smoothNoise(tile.wx + 13, tile.wy - 11, 11, 16064) * 0.08;
+L793:       drawPreparedPixelTextureCrop(ctx, secondaryCanvas, tile, sx, sy, size, secondaryAlpha, 16070);
+L794:     }
+L795:   }
+L796:   const tertiaryIndex = (Math.floor(rand2(tile.wx - 17, tile.wy + 29, 16090) * texturePool.length) + 11) % Math.max(1, texturePool.length);
+L797:   const tertiarySrc = texturePool?.[tertiaryIndex];
+L798:   if (tertiarySrc && tertiarySrc !== variantSrc && tertiarySrc !== secondarySrc && rand2(tile.wx, tile.wy, 16091) > 0.28) {
+L799:     const tertiaryCanvas = preparedPixelBaseCanvas(tertiarySrc, baseFamily, 'texture');
+L800:     if (tertiaryCanvas) drawPreparedPixelTextureCrop(ctx, tertiaryCanvas, tile, sx, sy, size, 0.10, 16092);
+L801:   }
+L802:   paintSwampOverlayRevival(ctx, tile, sx, sy, size);
+L803: 
+L804:   if (wangSrc) {
+L805:     const wangCanvas = preparedPixelBaseCanvas(wangSrc, baseFamily, 'texture');
+L806:     if (wangCanvas) drawPreparedPixelTextureCrop(ctx, wangCanvas, tile, sx, sy, size, 0.18, 16120);
+L807:   }
+L808: 
+L809:   let transitionSrc = '';
+L810:   const transitionBiome = tile.pixelLabTransitionBiome;
+L811:   const transitionMask = Number.isInteger(tile.pixelLabTransitionMask) ? tile.pixelLabTransitionMask : 0;
+L812:   const transitionSet = PIXEL_SWAMP_TRANSITION_SETS[transitionBiome];
+L813:   // PixelLab transition metadata encodes the "upper" terrain as set bits. For
+L814:   // swamp_to_* sets, upper is the neighboring biome; for *_to_swamp sets, upper
+L815:   // is swamp. The chunk cache stores swamp-presence bits, so invert only the
+L816:   // swamp_to_* families before selecting the PNG.
+L817:   const transitionImageMask = transitionSet?.startsWith('swamp_to_') ? (15 ^ transitionMask) : transitionMask;
+L818:   const transitionVariants = PIXEL_SWAMP_TRANSITION_WANG[transitionBiome];
+L819:   if (transitionImageMask !== 0 && transitionVariants?.[transitionImageMask]) {
+L820:     transitionSrc = transitionVariants[transitionImageMask];
+L821:     // Current PixelLab transition PNGs are good texture donors but too chunky as
+L822:     // full tiles on a diagonal coast. Keep the procedural mask shape in charge,
+L823:     // and sample transition art as de-aligned flecks only.
+L824:     const transitionCanvas = preparedPixelBaseCanvas(transitionSrc, baseFamily, 'detail');
+L825:     if (transitionCanvas) drawPreparedPixelTextureCrop(ctx, transitionCanvas, tile, sx, sy, size, 0.04, 16160);
+L826:   }
+L827: 
+L828:   tile.pixelLabBaseSrc = foundationSrc ? 'procedural mud foundation + blended PixelLab variant donors' : (wangSrc || '');
+L829:   tile.pixelLabBaseVariantSrc = variantSrc ? `cropped variant donors v${String(variantIndex).padStart(3, '0')}+v${String(secondaryIndex).padStart(3, '0')}` : '';
+L830:   tile.pixelLabBaseFamily = baseFamily ?? 'none';
+L831:   tile.pixelLabBaseMask = mask;
+L832:   tile.pixelLabTransitionSrc = transitionSrc;
+L833:   tile.pixelLabTransitionImageMask = transitionSrc ? transitionImageMask : 0;
+L834:   return true;
+L835: }
+L836: 
+L837: export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation = tile.climate.elevation, compositor = null, timeSeconds = 0, atlas = null, baseAlreadyPainted = false) {

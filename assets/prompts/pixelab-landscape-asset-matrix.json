@@ -1,0 +1,83 @@
+{
+  "root": "assets/generated/pixelab_landscape_v2",
+  "tileSize": 32,
+  "maskBits": { "NW": 8, "NE": 4, "SW": 2, "SE": 1 },
+  "layers": {
+    "base_wang": {
+      "opaque": true,
+      "requiredMasks": [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
+      "families": [
+        "water/deep_ocean", "water/ocean", "water/shallow_water", "water/river", "water/lake",
+        "beach/dry_sand", "beach/wet_sand",
+        "ground/grassland", "dry/savanna", "dry/steppe", "dry/desert",
+        "forest/forest", "forest/dense_forest", "forest/tropical_forest", "forest/taiga",
+        "swamp/wet_mud", "swamp/swamp_ground",
+        "cold/tundra_ground", "cold/snow_ice",
+        "rock/hills", "rock/mountains", "rock/volcanic",
+        "mystic/aether_moss", "mystic/crystal_ground"
+      ]
+    },
+    "surface_overlays": {
+      "alpha": true,
+      "cellSizes": [32, 16],
+      "kinds": [
+        "wet_mud_shine", "mud_pool_glints", "water_surface_noise", "shallow_water_ripples",
+        "river_flow_lines", "lake_soft_ripples", "ocean_foam", "algae_film",
+        "snow_drift", "ice_sheen", "leaf_litter", "needle_duff", "dry_dust",
+        "sand_grain_noise", "stone_scatter_overlay", "ash_dust", "crystal_sparkle_motes",
+        "aether_bloom_overlay"
+      ]
+    },
+    "micro_decals": {
+      "alpha": true,
+      "cellSizes": [16, 8],
+      "kinds": [
+        "soil_flecks_dark", "soil_flecks_warm", "soil_flecks_cold", "mud_specks",
+        "moss_ground_cover", "algae_specks", "ground_cover_green", "ground_cover_dry",
+        "ground_cover_snow_peek", "dry_grass_blades", "lush_grass_blades", "reeds_grass_blades",
+        "steppe_blades", "savanna_blades", "tundra_tufts", "arctic_crystals",
+        "sparse_flowers_warm", "flowers_meadow", "flowers_swamp", "leaf_debris",
+        "needle_debris", "stone_pebbles", "volcanic_embers", "mystic_motes"
+      ]
+    },
+    "medium_dressing": {
+      "alpha": true,
+      "cellSizes": [32, 48],
+      "kinds": [
+        "reeds", "cattails", "root_cluster", "moss_clump", "swamp_bush",
+        "dry_shrub", "savanna_bush", "steppe_scrub", "desert_scrub", "forest_underbrush",
+        "taiga_underbrush", "tropical_fern_cluster", "tundra_scrub", "snow_buried_stones",
+        "rock_scatter", "mountain_rocks", "volcanic_rocks", "crystal_cluster_small",
+        "aether_moss_clump", "beach_driftwood", "beach_grass_clump", "riverbank_reeds"
+      ]
+    },
+    "objects_interactive": {
+      "alpha": true,
+      "cellSizes": [32, 48],
+      "kinds": [
+        "bush_forage_grassland", "bush_forage_savanna", "bush_forage_swamp", "bush_forage_tundra",
+        "reed_harvest", "cattail_harvest", "tree_forest", "tree_taiga", "tree_tropical",
+        "tree_swamp", "tree_savanna_acacia", "stone_mine_hills", "stone_mine_mountains",
+        "volcanic_ore", "crystal_node_mystic", "driftwood_inspect", "shell_cluster_inspect"
+      ]
+    },
+    "plateau_edges": {
+      "alpha": true,
+      "requiredFiles": ["edge_n.png", "edge_e.png", "edge_s.png", "edge_w.png", "corner_ne.png", "corner_nw.png", "corner_se.png", "corner_sw.png", "face_0.png", "face_1.png", "face_2.png", "face_3.png"],
+      "families": [
+        "soil_bank", "mud_bank", "sand_bank", "snow_bank", "grass_ledge", "forest_ledge",
+        "rock_cliff", "mountain_cliff", "volcanic_cliff", "crystal_cliff",
+        "waterline_mud", "waterline_sand", "waterline_grass", "waterline_snow"
+      ]
+    }
+  },
+  "seedRanges": {
+    "base_wang": [10000, 19999],
+    "surface_overlays": [20000, 29999],
+    "micro_decals": [30000, 39999],
+    "medium_dressing": [40000, 49999],
+    "objects_interactive": [50000, 59999],
+    "plateau_edges": [60000, 69999],
+    "transition_reference": [70000, 79999]
+  }
+}

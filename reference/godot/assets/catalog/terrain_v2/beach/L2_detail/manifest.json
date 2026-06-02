@@ -1,0 +1,24 @@
+{
+  "biome": "beach",
+  "layer": "L2_detail",
+  "pixellab_tileset_id": "7251410d-6e9e-4faf-8e81-33c9c3037c13",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "2797ac17-7c6b-40c1-8a73-350e12f94f06",
+    "upper": "1b0053f5-8ec3-4777-a2a3-433f5270bc3d"
+  },
+  "generation_prompt": {
+    "lower_description": "wet dark sand patches and wave tide marks on fully transparent background, pixel art, top-down view",
+    "upper_description": "different wet sand pattern with foam residue lines on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

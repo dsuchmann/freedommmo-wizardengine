@@ -1,13 +1,5 @@
 export function paintTerrainFeatures(ctx, tile, sx, sy, size, sun) {
-  const form = tile.terrainForm;
-  if (form === 'valley') paintValley(ctx, sx, sy, size);
-  if (form === 'ridge') paintRidge(ctx, sx, sy, size, sun);
-  if (form === 'cliff') paintCliff(ctx, tile, sx, sy, size, sun);
-  if (form === 'mountain_slope' || form === 'mountain_peak') paintMountainStrata(ctx, sx, sy, size);
-  if (tile.features.includes('dry_riverbed')) paintDryRiverbed(ctx, sx, sy, size);
-  if (tile.features.includes('overhang')) paintOverhang(ctx, sx, sy, size);
-  if (tile.features.includes('natural_bridge')) paintBridge(ctx, sx, sy, size);
-  if (tile.features.includes('cave_entrance')) paintCaveEntrance(ctx, sx, sy, size);
+  return;
 }
 
 function paintValley(ctx, sx, sy, size) {
@@ -33,7 +25,7 @@ function paintCliff(ctx, tile, sx, sy, size, sun) {
 function paintMountainStrata(ctx, sx, sy, size) {
   ctx.fillStyle = 'rgba(255,255,255,.13)';
   ctx.fillRect(sx, sy + size * 0.18, size, 1);
-  ctx.fillStyle = 'rgba(0,0,0,.18)';
+  ctx.fillStyle = 'rgba(70,64,56,.18)';
   ctx.fillRect(sx, sy + size * 0.64, size, 1);
 }
 
@@ -63,7 +55,7 @@ function paintBridge(ctx, sx, sy, size) {
 }
 
 function paintCaveEntrance(ctx, sx, sy, size) {
-  ctx.fillStyle = 'rgba(0,0,0,.82)';
+  ctx.fillStyle = 'rgba(38,34,32,.82)';
   ctx.beginPath();
   ctx.ellipse(sx + size * 0.5, sy + size * 0.58, size * 0.35, size * 0.28, 0, 0, Math.PI * 2);
   ctx.fill();

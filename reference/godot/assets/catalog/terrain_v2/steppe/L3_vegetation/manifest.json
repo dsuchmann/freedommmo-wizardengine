@@ -1,0 +1,24 @@
+{
+  "biome": "steppe",
+  "layer": "L3_vegetation",
+  "pixellab_tileset_id": "38c0927c-b4a3-4e0f-b8d6-d88f94db3341",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "471fcd68-5c5c-4864-8afd-195edb25b406",
+    "upper": "67e0217a-f8d2-4102-9601-93668ba55faa"
+  },
+  "generation_prompt": {
+    "lower_description": "very sparse tough grass clumps and grey lichen on fully transparent background, pixel art, top-down view",
+    "upper_description": "different sparse grass arrangement with hardy weeds on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

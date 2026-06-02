@@ -1,0 +1,59 @@
+  const mask = Number.isInteger(tile.pixelLabTransitionMask) ? tile.pixelLabTransitionMask : 0;
+  const sideMask = Number.isInteger(tile.pixelLabTransitionSides) ? tile.pixelLabTransitionSides : 0;
+  const other = PIXEL_TRANSITION_TARGET_RGB[tile.pixelLabTransitionBiome];
+  const swampBase = PIXEL_BASE_TARGET_RGB[tile.pixelLabBaseFamily] ?? PIXEL_BASE_TARGET_RGB['swamp/wet_mud'];
+  const swamp = [swampBase[0] * 0.78 + 62 * 0.22, swampBase[1] * 0.78 + 91 * 0.22, swampBase[2] * 0.78 + 48 * 0.22];
+  if (!mask || !other || !swamp) return false;
+  const mix = (a, b, t) => [a[0] * (1 - t) + b[0] * t, a[1] * (1 - t) + b[1] * t, a[2] * (1 - t) + b[2] * t];
+  const rgba = (c, alpha = 1) => `rgba(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])},${alpha})`;
+  const beachSide = tile.biome === 'beach' || tile.biome === 'desert';
+  const edge = mix(swamp, other, beachSide ? 0.42 : 0.46);
+  const lip = mix(swamp, other, beachSide ? 0.28 : 0.24);
+  const band = size * (beachSide ? 0.18 : 0.40);
+  const edgeAlpha = beachSide ? 0.10 : 0.38;
+  const lipAlpha = beachSide ? 0.05 : 0.18;
+
+  const fillLinear = (x0, y0, x1, y1, rect, color, alpha) => {
+    const gradient = ctx.createLinearGradient(x0, y0, x1, y1);
+    gradient.addColorStop(0, rgba(color, alpha));
+    gradient.addColorStop(0.58, rgba(color, alpha * 0.42));
+    gradient.addColorStop(1, rgba(color, 0));
+    ctx.fillStyle = gradient;
+    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+  };
+  const fillRadial = (cx, cy, radius, color, alpha) => {
+    const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+    gradient.addColorStop(0, rgba(color, alpha));
+    gradient.addColorStop(0.52, rgba(color, alpha * 0.38));
+    gradient.addColorStop(1, rgba(color, 0));
+    ctx.fillStyle = gradient;
+    ctx.fillRect(sx, sy, size, size);
+  };
+
+  ctx.save();
+  // Gradients replace the former polygon stamps. They still respect Wang-side
+  // metadata, but no longer leave full tile-width trapezoids along diagonal
+  // swamp/sand borders.
+  if (sideMask & 1) fillLinear(sx, sy, sx, sy + band, { x: sx, y: sy, w: size, h: band }, edge, edgeAlpha);
+  if (sideMask & 2) fillLinear(sx + size, sy, sx + size - band, sy, { x: sx + size - band, y: sy, w: band, h: size }, edge, edgeAlpha);
+  if (sideMask & 4) fillLinear(sx, sy + size, sx, sy + size - band, { x: sx, y: sy + size - band, w: size, h: band }, edge, edgeAlpha);
+  if (sideMask & 8) fillLinear(sx, sy, sx + band, sy, { x: sx, y: sy, w: band, h: size }, edge, edgeAlpha);
+
+  if (!beachSide) {
+    const cornerAlpha = 0.20;
+    if (!(mask & 8)) fillRadial(sx, sy, size * 0.46, edge, cornerAlpha);
+    if (!(mask & 4)) fillRadial(sx + size, sy, size * 0.46, edge, cornerAlpha);
+    if (!(mask & 2)) fillRadial(sx, sy + size, size * 0.46, edge, cornerAlpha);
+    if (!(mask & 1)) fillRadial(sx + size, sy + size, size * 0.46, edge, cornerAlpha);
+  }
+
+  const lipBand = size * (beachSide ? 0.10 : 0.18);
+  if (sideMask & 1) fillLinear(sx, sy, sx, sy + lipBand, { x: sx, y: sy, w: size, h: lipBand }, lip, lipAlpha);
+  if (sideMask & 2) fillLinear(sx + size, sy, sx + size - lipBand, sy, { x: sx + size - lipBand, y: sy, w: lipBand, h: size }, lip, lipAlpha);
+  if (sideMask & 4) fillLinear(sx, sy + size, sx, sy + size - lipBand, { x: sx, y: sy + size - lipBand, w: size, h: lipBand }, lip, lipAlpha);
+  if (sideMask & 8) fillLinear(sx, sy, sx + lipBand, sy, { x: sx, y: sy, w: lipBand, h: size }, lip, lipAlpha);
+  ctx.restore();
+  return true;
+}
+
+function paintSwampOverlayRevival(ctx, tile, sx, sy, size) {

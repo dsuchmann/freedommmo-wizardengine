@@ -1,0 +1,24 @@
+{
+  "biome": "mystic",
+  "layer": "L5_atmospheric",
+  "pixellab_tileset_id": "9ae44f8f-2804-48fa-bbee-8bfce5037d4f",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "e0c73f85-a932-4ac3-b0e0-020ae5de07dc",
+    "upper": "6c9145d0-e06d-41c1-9e7a-da03e4e8ba11"
+  },
+  "generation_prompt": {
+    "lower_description": "floating purple magical energy particles and faint glowing rune symbols on fully transparent background, pixel art, top-down view",
+    "upper_description": "different magical particle pattern with ethereal wisps on transparent background, sparse, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

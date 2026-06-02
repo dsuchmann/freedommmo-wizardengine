@@ -1,0 +1,24 @@
+{
+  "biome": "ocean",
+  "layer": "L5_atmospheric",
+  "pixellab_tileset_id": "0c67b6e2-5d40-4d79-9d2c-a6f8b66a99b3",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "ba71eda3-d894-4c38-a38f-7527f249f3e4",
+    "upper": "a9e8ff57-b507-4ff9-8d06-1262383b696f"
+  },
+  "generation_prompt": {
+    "lower_description": "white sea foam and spray particles on fully transparent background, scattered, pixel art, top-down view",
+    "upper_description": "different foam pattern with light reflection spots on transparent background, sparse, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

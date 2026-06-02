@@ -1,0 +1,107 @@
+{
+  "description": "All PixelLab jobs that need downloading. Check status, download when complete, mark downloaded.",
+  "updatedAt": "2026-06-02T00:25Z",
+
+  "session3_tiles_pro_batch2": [
+    { "id": "1e8b93a7-86a8-41b9-ae21-240a2f265bf6", "seed": 500200900, "tiles": 16, "family": "reeds_grass_blades", "layer": "micro", "type": "micro", "downloaded": false },
+    { "id": "629943c0-71f8-44cd-aec3-e3a9630378f2", "seed": 500101200, "tiles": 16, "family": "moss_ground_cover", "layer": "micro", "type": "micro", "downloaded": false }
+  ],
+
+  "session3_map_objects_batch2": [
+    { "id": "a2f60501-c5f1-4e1f-b4e7-95c8ae8040b8", "family": "cattails", "layer": "medium", "size": "48x48", "type": "medium", "downloaded": false },
+    { "id": "ca43278e-9b09-44fe-b209-dceff085059e", "family": "root_cluster", "layer": "medium", "size": "64x64", "type": "medium", "downloaded": false },
+    { "id": "63779db9-2d5d-4fc6-a036-6eaa6ef83f13", "family": "swamp_tree", "layer": "objects", "size": "96x96", "type": "object", "downloaded": false },
+    { "id": "6987eafc-c849-47dc-b585-bc34111d9058", "family": "forage_bush_swamp", "layer": "objects", "size": "64x64", "type": "object", "downloaded": false },
+    { "id": "81b9513f-f01c-4a5d-a250-a2ad899fb5d5", "family": "reed_harvest_node", "layer": "objects", "size": "32x32", "type": "object", "downloaded": false }
+  ],
+
+  "session3_tiles_pro": [
+    { "id": "80e8eeb9-503e-4097-ad35-4c9df76ed182", "seed": 500100900, "tiles": 16, "family": "moss_ground_cover", "layer": "micro", "type": "micro", "downloaded": false, "note": "still processing" },
+    { "id": "4b00efe5-4971-4b97-a26e-37dfcbf3dec3", "seed": 500101000, "tiles": 16, "family": "moss_ground_cover", "layer": "micro", "type": "micro", "downloaded": true },
+    { "id": "69e07bf8-7d59-4342-865b-5584774fe66d", "seed": 500101100, "tiles": 16, "family": "moss_ground_cover", "layer": "micro", "type": "micro", "downloaded": true },
+    { "id": "dc91d590-ee9d-4746-831d-de4fb690a82f", "seed": 400000900, "tiles": 16, "family": "mud_pool", "layer": "surface_overlays", "type": "overlay", "downloaded": true },
+    { "id": "1dd909b9-3bdb-4c7d-997d-898a05480308", "seed": 400100900, "tiles": 16, "family": "wet_mud_shine", "layer": "surface_overlays", "type": "overlay", "downloaded": true },
+    { "id": "c6d5b781-6584-4a7e-87ce-61b807d89f2c", "seed": 500000900, "tiles": 16, "family": "dark_mud_flecks", "layer": "micro", "type": "micro", "downloaded": true }
+  ],
+
+  "session3_tileset": [
+    { "id": "7dfe8675-59b3-4095-8217-f0b9c55103b6", "desc": "river -> swamp (retry3, 32x32)", "downloaded": false }
+  ],
+
+  "session3_map_objects": [
+    { "id": "9fba9f23-2ff4-486f-9c2f-3b520b279c6b", "family": "reeds", "layer": "medium", "size": "32x32", "type": "medium", "downloaded": true },
+    { "id": "8feac458-d1d7-45fe-aec9-abed0f229108", "family": "reeds", "layer": "medium", "size": "48x48", "type": "medium", "downloaded": true },
+    { "id": "368355b4-bf9a-4ed3-b96f-5db557a5bee6", "family": "cattails", "layer": "medium", "size": "32x32", "type": "medium", "downloaded": true },
+    { "id": "09a9ff6c-fb2a-4ef3-90d2-6ef89dfd5316", "family": "root_cluster", "layer": "medium", "size": "48x48", "type": "medium", "downloaded": true },
+    { "id": "1fd7a261-f8c6-4dc8-9329-17ad1ab46507", "family": "moss_clump", "layer": "medium", "size": "48x48", "type": "medium", "downloaded": true }
+  ],
+
+  "map_object_jobs_batch4": [
+    { "id": "90be43cd-7db7-4c22-a894-1d4c6d039784", "family": "reeds", "layer": "medium", "size": "32x32", "type": "medium", "downloaded": true },
+    { "id": "b11e3739-b30c-4af6-8afa-8a6eb2f99fae", "family": "reeds", "layer": "medium", "size": "48x48", "type": "medium", "downloaded": true },
+    { "id": "0079bdae-6376-400b-a9b2-d1bd478ed5b1", "family": "cattails", "layer": "medium", "size": "32x32", "type": "medium", "downloaded": true },
+    { "id": "2ec80bb7-55ee-4c85-a59f-5f2b2ce54c2a", "family": "cattails", "layer": "medium", "size": "48x48", "type": "medium", "downloaded": true },
+    { "id": "9d9084fa-4d90-4924-8e0e-ac8339bc5572", "family": "cattails", "layer": "medium", "size": "64x64", "type": "medium", "downloaded": true },
+    { "id": "7758f7b6-c08a-4c7f-a0ea-8c091bdd2345", "family": "moss_clump", "layer": "medium", "size": "32x32", "type": "medium", "downloaded": true }
+  ],
+
+  "tiles_pro_jobs_batch4": [
+    { "id": "d429e055-609b-471d-b3e8-ffb4698ed754", "seed": 400000800, "tiles": 16, "family": "mud_pool", "layer": "surface_overlays", "type": "overlay", "downloaded": true },
+    { "id": "e5bfc727-fc33-4a26-9e8f-f175e1f0cb29", "seed": 400100800, "tiles": 16, "family": "wet_mud_shine", "layer": "surface_overlays", "type": "overlay", "downloaded": true },
+    { "id": "7a4a0333-61cd-431f-8f44-3520622d6cb8", "seed": 500100800, "tiles": 16, "family": "moss_ground_cover", "layer": "micro", "type": "micro", "downloaded": true },
+    { "id": "ac3f535e-9ae6-47c9-a525-e1fb19023b49", "seed": 500200800, "tiles": 16, "family": "reeds_grass_blades", "layer": "micro", "type": "micro", "downloaded": true }
+  ],
+
+  "tiles_pro_jobs_batch2": [
+    { "id": "18197343-b763-44b1-bb1d-21ee4383aa2f", "seed": 400000700, "tiles": 16, "family": "mud_pool", "downloaded": true },
+    { "id": "fe1ead9c-90cd-43e5-92c7-698cc9b79149", "seed": 400100700, "tiles": 16, "family": "wet_mud_shine", "downloaded": true },
+    { "id": "10061267-fad6-4d08-9e1f-49c483c7e466", "seed": 400200700, "tiles": 16, "family": "algae_film", "downloaded": true },
+    { "id": "eb81b2c7-68be-4c09-b8b7-6140b2d39e86", "seed": 400200800, "tiles": 16, "family": "algae_film", "downloaded": true },
+    { "id": "1d0e37f0-60c4-4eee-ad2c-05633e4b7fea", "seed": 500000700, "tiles": 16, "family": "dark_mud_flecks", "downloaded": true },
+    { "id": "7a95920c-5a6b-4c97-bb0a-4a9e2d34087b", "seed": 500000800, "tiles": 16, "family": "dark_mud_flecks", "downloaded": true },
+    { "id": "0b8cced3-f492-4bce-a957-55f2c576290d", "seed": 500100700, "tiles": 16, "family": "moss_ground_cover", "downloaded": true },
+    { "id": "b2811eed-b01e-4605-9c46-986ff142a41e", "seed": 500200700, "tiles": 16, "family": "reeds_grass_blades", "downloaded": true }
+  ],
+
+  "map_object_jobs_batch3": [
+    { "id": "2223a457-3cfe-429f-8414-c5c4cf70784d", "family": "reeds", "status": "failed_429", "downloaded": false },
+    { "id": "77533e5f-992b-4155-8bba-9f7759c7a872", "family": "reeds", "status": "failed_429", "downloaded": false },
+    { "id": "95893746-f850-4db3-aaef-cfa6b15afb46", "family": "cattails", "status": "failed_429", "downloaded": false },
+    { "id": "4d2e054b-2cab-4ea0-a3e3-d9ad99dd36d8", "family": "cattails", "status": "failed_429", "downloaded": false },
+    { "id": "66c50a3e-5196-48eb-a216-f0a947b338a9", "family": "cattails", "status": "failed_429", "downloaded": false },
+    { "id": "407ba972-f613-4784-9796-582b0ac6488e", "family": "moss_clump", "status": "failed_429", "downloaded": false },
+    { "id": "5b529c18-b0ee-4e96-b0ed-568625e3accc", "family": "moss_clump", "status": "failed_429", "downloaded": false },
+    { "id": "8a3bb004-41a8-4468-b172-ade8e420bf20", "family": "reeds", "status": "failed_429", "downloaded": false }
+  ],
+
+  "map_object_jobs_batch2": [
+    { "id": "80d5f344-63e2-42b0-abde-02026372ce9b", "family": "moss_clump", "downloaded": true },
+    { "id": "efd54ea4-7715-4032-a1d1-bcbe9a9da9b1", "family": "forage_bush_swamp", "downloaded": true },
+    { "id": "bc60baac-8aac-41ff-81ab-968c01909cd2", "family": "forage_bush_swamp", "downloaded": true },
+    { "id": "aaa09832-167b-40cf-901e-d4e81b152687", "family": "swamp_tree", "downloaded": true },
+    { "id": "603a593f-aa1e-495a-ae0c-26555b05fdb0", "family": "swamp_tree", "downloaded": true },
+    { "id": "c797aabc-ce6f-4a5a-8698-dde4b5393238", "family": "reed_harvest_node", "downloaded": true },
+    { "id": "0f5533dd-a07f-48bb-82b7-be6420c01785", "family": "reed_harvest_node", "downloaded": true },
+    { "id": "440c9029-532c-4411-b73d-a4f43631f2a5", "family": "root_cluster", "downloaded": true }
+  ],
+
+  "tileset_jobs_batch2_retry": [
+    { "id": "c2936acb-9f53-4dff-95c3-182c64997511", "desc": "river -> swamp (retry2)", "status": "failed_deleted", "downloaded": false }
+  ],
+
+  "tileset_jobs_batch2": [
+    { "id": "886b9478-5b2b-43f8-9332-eac8a3db5e0c", "desc": "river -> swamp (resubmit)", "status": "failed_deleted", "downloaded": false }
+  ],
+
+  "download_mapping": {
+    "map_object_layer_lookup": {
+      "reeds": { "layer": "medium", "subdir": "sprites", "type": "medium" },
+      "cattails": { "layer": "medium", "subdir": "sprites", "type": "medium" },
+      "root_cluster": { "layer": "medium", "subdir": "sprites", "type": "medium" },
+      "moss_clump": { "layer": "medium", "subdir": "sprites", "type": "medium" },
+      "forage_bush_swamp": { "layer": "objects", "subdir": "sprites", "type": "object" },
+      "swamp_tree": { "layer": "objects", "subdir": "sprites", "type": "object" },
+      "reed_harvest_node": { "layer": "objects", "subdir": "sprites", "type": "object" }
+    }
+  }
+}

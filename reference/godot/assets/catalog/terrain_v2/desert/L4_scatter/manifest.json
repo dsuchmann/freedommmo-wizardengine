@@ -1,0 +1,24 @@
+{
+  "biome": "desert",
+  "layer": "L4_scatter",
+  "pixellab_tileset_id": "858c7340-4ccb-4ba3-bcda-54e9ed0c4f6c",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "101d3f23-33ed-40c5-a55b-a919a331c241",
+    "upper": "0e8c82f0-8914-4d4b-a33d-35b0c60e78f8"
+  },
+  "generation_prompt": {
+    "lower_description": "scattered small desert rocks and sun-bleached bone fragments on fully transparent background, pixel art, top-down view",
+    "upper_description": "different rock arrangement with dry twig pieces on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

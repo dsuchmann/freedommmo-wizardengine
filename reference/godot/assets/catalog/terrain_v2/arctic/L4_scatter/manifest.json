@@ -1,0 +1,24 @@
+{
+  "biome": "arctic",
+  "layer": "L4_scatter",
+  "pixellab_tileset_id": "31b73c8e-f817-4b5c-a53f-ac742508f2b0",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "8ceeaf74-040a-4fda-9080-0b9f01a81ee1",
+    "upper": "c4548189-e265-49c5-b0ec-f34674c675c5"
+  },
+  "generation_prompt": {
+    "lower_description": "scattered broken icicle fragments and hard-packed snow clumps on fully transparent background, pixel art, top-down view",
+    "upper_description": "different icicle fragment arrangement with frost-covered debris on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

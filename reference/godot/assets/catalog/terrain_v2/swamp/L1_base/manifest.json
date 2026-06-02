@@ -1,0 +1,24 @@
+{
+  "biome": "swamp",
+  "layer": "L1_base",
+  "pixellab_tileset_id": "3361f1e6-d15b-4eea-8203-dde9ec21c754",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "a77f6274-8626-4944-b90d-d376f0c5d1ff",
+    "upper": "9e24ece1-4426-40b2-bc0f-650f42bb3686"
+  },
+  "generation_prompt": {
+    "lower_description": "Murky dark swamp with muddy water, lily pads, and wet ground",
+    "upper_description": "Dark forest floor with rich brown dirt, moss, and fallen leaves"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

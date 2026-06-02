@@ -1,0 +1,24 @@
+{
+  "biome": "river",
+  "layer": "L5_atmospheric",
+  "pixellab_tileset_id": "50264ff7-c2d5-4219-b22f-9513b3d204f7",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "2e01feb1-ef0c-4c3c-8d29-9b579bc27884",
+    "upper": "d17b0445-8cc9-4c64-a343-2bce0830147e"
+  },
+  "generation_prompt": {
+    "lower_description": "water splash droplets and thin river mist on fully transparent background, pixel art, top-down view",
+    "upper_description": "different splash pattern with less mist on transparent background, sparse, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

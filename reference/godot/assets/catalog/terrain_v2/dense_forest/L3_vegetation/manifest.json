@@ -1,0 +1,24 @@
+{
+  "biome": "dense_forest",
+  "layer": "L3_vegetation",
+  "pixellab_tileset_id": "c7ea96fe-2c11-43c2-b984-3075ad549b57",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "659cfc82-1bf1-4c1b-9de7-e72697b6a738",
+    "upper": "acad65c3-ce31-4814-bbc1-abb7816e002f"
+  },
+  "generation_prompt": {
+    "lower_description": "dense fern fronds and large spotted mushrooms on fully transparent background, pixel art, top-down view",
+    "upper_description": "different fern arrangement with glowing bioluminescent mushrooms on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

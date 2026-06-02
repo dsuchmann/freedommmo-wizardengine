@@ -1,0 +1,24 @@
+{
+  "biome": "beach",
+  "layer": "L4_scatter",
+  "pixellab_tileset_id": "cec0031c-4b5b-4338-b085-04d32d6cc778",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "d8f6a1de-01f0-43f2-8a0a-a200a75c0ad9",
+    "upper": "34be0082-df6c-4c1c-8f53-9832c692e72f"
+  },
+  "generation_prompt": {
+    "lower_description": "scattered seashells and small pieces of driftwood on fully transparent background, pixel art, top-down view",
+    "upper_description": "different shell arrangement with smooth sea glass on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

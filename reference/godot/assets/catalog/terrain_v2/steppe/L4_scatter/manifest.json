@@ -1,0 +1,24 @@
+{
+  "biome": "steppe",
+  "layer": "L4_scatter",
+  "pixellab_tileset_id": "8cec8de7-a935-483e-a3bc-199fcd436c48",
+  "tile_size": {
+    "width": 32,
+    "height": 32
+  },
+  "base_tile_ids": {
+    "lower": "d117599e-ebe2-4187-8518-db2ac9882027",
+    "upper": "98450548-af31-47f5-8675-b5777a88d27e"
+  },
+  "generation_prompt": {
+    "lower_description": "scattered loose gravel and smooth wind-polished stones on fully transparent background, pixel art, top-down view",
+    "upper_description": "different gravel arrangement with larger polished rocks on transparent background, pixel art, top-down view"
+  },
+  "quality_status": "downloaded",
+  "states": {
+    "pristine": {
+      "frames": 1,
+      "downloaded": true
+    }
+  }
+}

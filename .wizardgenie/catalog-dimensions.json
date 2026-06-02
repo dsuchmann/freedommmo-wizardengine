@@ -1,0 +1,5006 @@
+{
+  "total": 15488,
+  "likelyStandalone": 15488,
+  "likely": [
+    {
+      "f": "assets/catalog/buildings/roofs/tile_0.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/roofs/tile_1.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/roofs/tile_10.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/roofs/tile_11.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/roofs/tile_12.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/roofs/tile_13.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/roofs/tile_14.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/roofs/tile_15.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/roofs/tile_2.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/roofs/tile_3.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/roofs/tile_4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/roofs/tile_5.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/roofs/tile_6.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/roofs/tile_7.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/roofs/tile_8.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/roofs/tile_9.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/tile_0.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/tile_1.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/tile_10.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/tile_11.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/tile_12.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/tile_13.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/tile_14.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/tile_15.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/tile_16.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/tile_17.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/tile_2.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/tile_3.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/tile_4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/tile_5.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/tile_6.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/tile_7.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/tile_8.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/buildings/tile_9.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/boulder_01.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/boulder_02.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/boulder_03.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/boulder_04.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/buildings/blacksmith_forge_6c31e290.png",
+      "w": 80,
+      "h": 80
+    },
+    {
+      "f": "assets/catalog/objects/buildings/building_architecture_tiles_072eb638.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/buildings/building_architecture_tiles_08e5bff9.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/buildings/building_architecture_tiles_0f5d6835.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/buildings/building_architecture_tiles_1a1914d5.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/buildings/building_architecture_tiles_1e46b691.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/buildings/building_architecture_tiles_22e1c48a.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/buildings/building_architecture_tiles_31cfc357.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/buildings/building_architecture_tiles_406290bf.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/buildings/building_architecture_tiles_4807d20d.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/buildings/building_architecture_tiles_4c77c228.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/buildings/building_architecture_tiles_573def64.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/buildings/building_architecture_tiles_5faa5c4b.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/buildings/building_architecture_tiles_68838642.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/buildings/building_architecture_tiles_7a9e7ade.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/buildings/building_architecture_tiles_87140ee8.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/buildings/building_architecture_tiles_8d63fca0.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/buildings/building_architecture_tiles_b4ff1024.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/buildings/building_architecture_tiles_cb2d3762.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/buildings/building_architecture_tiles_ce784e41.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/buildings/building_architecture_tiles_f557fa47.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/buildings/building_architecture_tiles_fee6a3d7.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/buildings/inn_building_0355ed83.png",
+      "w": 112,
+      "h": 96
+    },
+    {
+      "f": "assets/catalog/objects/buildings/market_stall_0fa19119.png",
+      "w": 80,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/buildings/medieval_church_28687555.png",
+      "w": 96,
+      "h": 112
+    },
+    {
+      "f": "assets/catalog/objects/buildings/medieval_tavern_fb9b7517.png",
+      "w": 128,
+      "h": 96
+    },
+    {
+      "f": "assets/catalog/objects/buildings/medieval_windmill_0576e4d1.png",
+      "w": 80,
+      "h": 96
+    },
+    {
+      "f": "assets/catalog/objects/buildings/mining_cave_f6e7440a.png",
+      "w": 72,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/buildings/outhouse_5e319c10.png",
+      "w": 40,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/buildings/small_cottage_08944349.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/buildings/small_cottage_0c46aa7b.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/buildings/small_cottage_1186ee51.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/buildings/small_cottage_24741902.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/buildings/small_cottage_5ed5320b.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/buildings/small_cottage_8e6d2419.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/buildings/small_cottage_929575a6.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/buildings/small_cottage_93a8b24f.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/buildings/small_cottage_9dfb505c.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/buildings/small_cottage_bba67458.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/buildings/small_cottage_c50839f7.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/buildings/small_cottage_ce32c19c.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/buildings/small_cottage_d2709394.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/buildings/small_cottage_d760ba36.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/buildings/small_cottage_dd1fdb41.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/buildings/small_cottage_e515c2a2.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/buildings/small_wooden_cottage_3d5ea9cd.png",
+      "w": 80,
+      "h": 80
+    },
+    {
+      "f": "assets/catalog/objects/buildings/stone_watchtower_754133aa.png",
+      "w": 64,
+      "h": 96
+    },
+    {
+      "f": "assets/catalog/objects/buildings/storage_shed_3c2f625c.png",
+      "w": 80,
+      "h": 72
+    },
+    {
+      "f": "assets/catalog/objects/buildings/village_house_2_2d72b1f5.png",
+      "w": 96,
+      "h": 96
+    },
+    {
+      "f": "assets/catalog/objects/buildings/village_house_3_f4dbec20.png",
+      "w": 96,
+      "h": 96
+    },
+    {
+      "f": "assets/catalog/objects/buildings/village_house_f8726270.png",
+      "w": 96,
+      "h": 96
+    },
+    {
+      "f": "assets/catalog/objects/buildings/windmill_1c86d068.png",
+      "w": 72,
+      "h": 88
+    },
+    {
+      "f": "assets/catalog/objects/bush_01.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/bush_02.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/bush_03.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/bush_04.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/cactus_01.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/cactus_02.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/cactus_03.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/cactus_04.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/dead_tree_01.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/dead_tree_02.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/dead_tree_03.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/dead_tree_04.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/decorations/barrel_stack_1b32bf64.png",
+      "w": 40,
+      "h": 40
+    },
+    {
+      "f": "assets/catalog/objects/decorations/boat_dock_de1792fe.png",
+      "w": 80,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/decorations/campfire_02a3880c.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/campfire_0b52deb0.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/campfire_16e7c672.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/campfire_366b297a.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/campfire_6f65e705.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/campfire_80a54fc4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/campfire_98cffdac.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/campfire_b7dd0a54.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/campfire_cb9e27a5.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/campfire_fed46306.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/campfire_logs_89396846.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/clothesline_40ca6245.png",
+      "w": 64,
+      "h": 40
+    },
+    {
+      "f": "assets/catalog/objects/decorations/covered_well_0c9e574c.png",
+      "w": 48,
+      "h": 56
+    },
+    {
+      "f": "assets/catalog/objects/decorations/farm_plot_e538fed8.png",
+      "w": 96,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/decorations/hanging_flower_pots_258da35a.png",
+      "w": 32,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/hay_cart_5a20f36c.png",
+      "w": 72,
+      "h": 56
+    },
+    {
+      "f": "assets/catalog/objects/decorations/log_pile_74bd05d6.png",
+      "w": 40,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/rain_barrel_9c2a1c19.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/stone_altar_8f9fbe90.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/stone_archway_bda4167f.png",
+      "w": 64,
+      "h": 80
+    },
+    {
+      "f": "assets/catalog/objects/decorations/stone_bench_383d3deb.png",
+      "w": 48,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/stone_bridge_99e081e6.png",
+      "w": 64,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/stone_fountain_68e6f6c8.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/decorations/stone_ruins_9d7ba728.png",
+      "w": 64,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/stone_stairs_7a6cf436.png",
+      "w": 48,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/decorations/stone_water_well_726fbe66.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/street_lamp_cb69807d.png",
+      "w": 32,
+      "h": 56
+    },
+    {
+      "f": "assets/catalog/objects/decorations/training_dummy_c79c11b4.png",
+      "w": 32,
+      "h": 40
+    },
+    {
+      "f": "assets/catalog/objects/decorations/vegetable_garden_0e4b9abd.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wagon_wheel_4226ee6b.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_barrel_19362997.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_barrel_37ab20ec.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_barrel_43554347.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_barrel_6254dad6.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_barrel_861af67b.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_barrel_86839c4e.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_barrel_a615d70c.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_barrel_aa55d4ed.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_barrel_aae25559.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_barrel_c1588ccd.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_barrel_d33c1a55.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_barrel_ffb7802c.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_bridge_f1039ad5.png",
+      "w": 96,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_cart_15651d44.png",
+      "w": 64,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_crates_6b4fd2ce.png",
+      "w": 48,
+      "h": 40
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_dock_735abc1f.png",
+      "w": 96,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_fence_03aa3cfe.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_fence_3c366c3a.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_fence_3d3ab454.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_fence_43854fae.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_fence_45e58731.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_fence_769ed938.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_fence_7c42cfa8.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_fence_84b378d7.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_fence_9cbed217.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_fence_9eae38ec.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_fence_b730576c.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_fence_c1333b28.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_fence_c19ef356.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_fence_cae7b575.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_fence_ef9f8c0b.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_fence_fabb06d3.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_fence_section_32d7fe49.png",
+      "w": 64,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_item_02d53dc0.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_item_20bd1ced.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_item_3b3d21a3.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_item_3fc97ba3.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_item_42a003ca.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_item_42e13ad0.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_item_4d4977f0.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_item_5f43b9ba.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_item_777f6169.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_item_87b2e1a6.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_item_8d8f4026.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_item_928e2650.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_item_b68d0ad5.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_item_ba91a3a4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_item_d80ad6be.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_item_da57d761.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_item_fffa63c5.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/decorations/wooden_signpost_c565c024.png",
+      "w": 32,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/flower_bush_01.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/flower_bush_02.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/flower_bush_03.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/flower_bush_04.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_003daeb1.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_0a7d6461.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_0ccc14ad.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_0d9b3b0b.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_0e50cf94.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_107c1c64.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_15f7c643.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_17205893.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_1eef8570.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_1f807e88.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_1fc223df.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_28de5a20.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_29b51292.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_2a30ea0e.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_2bd951dc.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_2c397cde.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_305e1e26.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_35105783.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_3713f1ff.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_460f9aa0.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_48aac2ba.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_4c83a414.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_4dc3e576.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_4ebf1ebc.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_4fbb0f83.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_55b3b4ec.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_583a214b.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_5909dc2e.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_5a7a6a8d.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_5d4c21df.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_5f8aefc7.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_6070f0b6.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_6188e89a.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_61e0d37d.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_64539c48.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_683b7acc.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_70f24ee4.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_712fe247.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_75d37889.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_7745f8c3.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_834f77de.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_846f0cd9.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_908cd13c.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_9143c7e2.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_92f50712.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_99b397b6.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_9c064970.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_a189a070.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_a56c8ab4.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_a6384790.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_a6f46d7b.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_c0dab129.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_c6c1b3a6.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_c904fd26.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_cfc721d9.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_d36df2b5.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_d4a07f95.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_d8de562a.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_d968bfee.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_e095b9cf.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_e4b4c342.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_f1eccb74.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_f7bc5929.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/furniture/medieval_fantasy_furniture_fd66ad62.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/grass_tuft_01.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/grass_tuft_02.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/grass_tuft_03.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/grass_tuft_04.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_09869d57.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_221c2e3f.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_399b8dcc.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_43380935.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_4757dc80.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_5cba7250.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_63ca952f.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_793b6fcf.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_8bb8d860.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_9afcb261.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_a03f96db.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_a085f9c8.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_a9803884.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_af61ec65.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_b843cc5b.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_c6875eb4.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_f076101c.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/armor/fantasy_armor_and_clothing_f14471a1.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/crafting/crafting_materials_03444863.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/crafting/crafting_materials_105cfe6d.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/crafting/crafting_materials_2cd059a4.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/crafting/crafting_materials_309a3066.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/crafting/crafting_materials_3c769e75.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/crafting/crafting_materials_73546ec5.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/crafting/crafting_materials_753ecb79.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/crafting/crafting_materials_7be50a87.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/crafting/crafting_materials_a564ee39.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/crafting/crafting_materials_aa73184f.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/crafting/crafting_materials_ccd9161d.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/crafting/crafting_materials_d51ff36f.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/crafting/crafting_materials_e14dc489.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/crafting/crafting_materials_ff7e8a2b.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/food/food_and_consumables_05008a4f.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/food/food_and_consumables_07735caf.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/food/food_and_consumables_0e2bbc2b.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/food/food_and_consumables_12b6bb01.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/food/food_and_consumables_1e865bf4.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/food/food_and_consumables_2df8c201.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/food/food_and_consumables_47e85e26.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/food/food_and_consumables_4aa340b4.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/food/food_and_consumables_55d298e7.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/food/food_and_consumables_62cb5d41.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/food/food_and_consumables_63a8e383.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/food/food_and_consumables_760fad9f.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/food/food_and_consumables_8e543faa.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/food/food_and_consumables_911a19a8.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/food/food_and_consumables_9be5d3a6.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/food/food_and_consumables_a20f2d0c.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/food/food_and_consumables_a53f3f8e.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/food/food_and_consumables_afa349fb.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/food/food_and_consumables_b0a14f9e.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/food/food_and_consumables_b9728e54.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/food/food_and_consumables_d9cb0c53.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/food/food_and_consumables_eccffe13.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/treasure/treasure_and_valuables_10ff1fb4.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/treasure/treasure_and_valuables_11aa8b8b.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/treasure/treasure_and_valuables_18e976d3.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/treasure/treasure_and_valuables_2f0b61d2.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/treasure/treasure_and_valuables_3b5dfdb9.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/treasure/treasure_and_valuables_48293d64.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/treasure/treasure_and_valuables_4caf9465.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/treasure/treasure_and_valuables_4f53e23a.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/treasure/treasure_and_valuables_5e3c33ca.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/treasure/treasure_and_valuables_6f9ae157.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/treasure/treasure_and_valuables_74ebb526.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/treasure/treasure_and_valuables_77104d44.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/treasure/treasure_and_valuables_8695def4.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/treasure/treasure_and_valuables_8e9881c2.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/treasure/treasure_and_valuables_9d43a2dc.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/treasure/treasure_and_valuables_a0c5c586.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/treasure/treasure_and_valuables_e003ef57.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/treasure/treasure_and_valuables_e25ff947.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/treasure/treasure_and_valuables_ea65f1f6.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/treasure/treasure_and_valuables_edeb2047.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/treasure/treasure_chest_28efa760.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_031780eb.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_07f749af.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_087b68a1.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_08a9eb5a.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_13156d34.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_13aa29c4.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_20b9fbcf.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_26f03c7a.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_28562e20.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_2bd53f5b.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_2cf7a7a6.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_2d396a11.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_2ed9f9a7.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_30e182c7.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_346dfa24.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_37997d4a.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_3972a993.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_39d55d4b.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_3b2d7095.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_4191ed14.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_4de29739.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_52073737.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_525ff202.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_5b9cff2b.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_5bbcf9bd.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_5c70eef4.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_6432389d.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_6f6393c7.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_73b4e9d5.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_73c37972.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_7c1d193b.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_7fa192ca.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_80da8179.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_81ad8c29.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_892b496a.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_927d7742.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_92f8f29f.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_986fb4ac.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_9df57929.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_a7860ca4.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_aad7dab4.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_af4ef23e.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_b6efe3de.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_b875d043.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_b88ff115.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_b8caa8b0.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_bf5abb3c.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_bf5db0dd.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_c18e31b7.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_c92c12db.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_c9aab6e2.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_d02025c0.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_d1257f64.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_d41d71f9.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_d5583ee7.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_d8b79a37.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_e3afa4af.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_ed160838.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_eebec7e0.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_f45a13f9.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_f49657d5.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_f6610246.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_fa517edc.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/items/weapons/fantasy_weapons_ff59404b.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/berry_bush_450ed479.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/green_bush_0f56044d.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/green_bush_2dcd8052.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/green_bush_4c2a7a1a.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/green_bush_5814e446.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/green_bush_79473a6d.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/green_bush_94d363a9.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/green_bush_a0fba398.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/green_bush_abc771c2.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/green_bush_afd1003a.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/green_bush_d44f9252.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/green_bush_ee09f9d4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/green_bush_ff389bd3.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/hedge_row_bd0c6750.png",
+      "w": 64,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_115bf2ac.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_24b81c92.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_4bba745a.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_502326bd.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_51ec4d1b.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_60d5f92d.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_6180a0c6.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_676985bc.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_6ec333e8.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_6fa112fd.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_73fe8619.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_7f0a34a0.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_8ec21549.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_93419ef3.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_97b81bde.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_9913cba8.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_9947bad4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_9ea2a44b.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_a0da5bb7.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_a1c46a71.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_a2b14654.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_b21ed0e2.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_b8b54e1e.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_c5d077af.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_d5a04b2d.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_d6051dd2.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_d7c7f6f3.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_e0098010.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_e4182cb8.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_e77db377.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_f7d3b573.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/bushes/small_bush_f92e5fa2.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/fallen_logs/fallen_log_068b2e75.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/fallen_logs/fallen_log_3775c91b.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/fallen_logs/fallen_log_513f7217.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/fallen_logs/fallen_log_725ab891.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/fallen_logs/fallen_log_77e81c9c.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/fallen_logs/fallen_log_79b48030.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/fallen_logs/fallen_log_8cb5f488.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/fallen_logs/fallen_log_aa33a7b0.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/fallen_logs/fallen_log_af36315f.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/fallen_logs/fallen_log_b17204f5.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/fallen_logs/fallen_log_bd1e8053.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/fallen_logs/fallen_log_d3a5097c.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/fallen_logs/fallen_log_e5d8ba1e.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/fallen_logs/fallen_log_f829cb1e.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/fallen_logs/fallen_log_f9616881.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/fallen_logs/fallen_log_fd4b21ac.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/fallen_logs/fallen_log_mossy_75defc57.png",
+      "w": 64,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/ferns/small_fern_bd0f40dc.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/flower_garden_bed_9d12950a.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/flower_patch_04c046c5.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/flower_patch_1884fab7.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/flower_patch_3fdca31a.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/flower_patch_44f04514.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/flower_patch_5e1ba4b8.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/flower_patch_5e6ef9f2.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/flower_patch_82da37ab.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/flower_patch_91253498.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/flower_patch_998acc65.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/flower_patch_d3450abc.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/flower_patch_efdac244.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/flower_patch_f04d09c9.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/purple_flower_garden_9975f179.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/wildflower_00822dd0.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/wildflower_156ae38b.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/wildflower_21839c2a.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/wildflower_3e8ce0f6.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/wildflower_51de36b4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/wildflower_91137adf.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/wildflower_c27a3ae7.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/wildflower_c32e98a6.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/wildflower_c954b50d.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/wildflower_e3e2de6c.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/wildflower_ed735193.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/wildflower_fa4dff77.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/flowers/wildflower_small_f577f135.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_0312bfbf.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_0bbfa043.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_11ae5982.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_13bb39fd.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_1540cd28.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_19e930ca.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_1a4c28e1.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_1ac4c255.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_1bd66bc8.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_2b538592.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_344375cb.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_47c5ee41.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_4cd6fc0e.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_4e2869f9.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_51b910c9.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_53d58652.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_541e58db.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_593b5a49.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_5ddeb0a4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_673f57e4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_6c82d212.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_7369a7b5.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_76886518.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_7a437693.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_7e0e77b6.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_7e469792.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_80070574.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_814e4f6d.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_831a0336.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_83b1d348.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_83cfcb7d.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_97afd952.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_9c0d1cb7.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_a7281618.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_bb4107dc.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_d1d96d1a.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_d7a60f67.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_da8375ff.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_e27d8241.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_e49a3cb7.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_ecf8a498.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_f5f358df.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/grass/tall_grass_tuft_501a6c1a.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/leaves/autumn_leaves_322838be.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/lily_pads/lily_pad_0a9259da.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/lily_pads/lily_pad_17003200.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/lily_pads/lily_pad_196698a5.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/lily_pads/lily_pad_2184639a.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/lily_pads/lily_pad_29c86c60.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/lily_pads/lily_pad_41cf962d.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/lily_pads/lily_pad_65c11dad.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/lily_pads/lily_pad_725bfe69.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/lily_pads/lily_pad_7651e9d7.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/lily_pads/lily_pad_921994aa.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/lily_pads/lily_pad_98122cc1.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/lily_pads/lily_pad_b2484697.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/lily_pads/lily_pad_bc0a1f97.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/lily_pads/lily_pad_bf47fe7f.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/lily_pads/lily_pad_f0630349.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/lily_pads/lily_pad_f89a91d4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/lily_pads/lily_pad_fed20437.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/mushrooms/mushroom_cluster_ae42ea7b.png",
+      "w": 40,
+      "h": 40
+    },
+    {
+      "f": "assets/catalog/objects/nature/mushrooms/red_mushroom_04134614.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/mushrooms/red_mushroom_1ca46694.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/mushrooms/red_mushroom_30fb3505.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/mushrooms/red_mushroom_3db1246d.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/mushrooms/red_mushroom_4175a41f.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/mushrooms/red_mushroom_44a3a079.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/mushrooms/red_mushroom_55ce1bca.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/mushrooms/red_mushroom_9c8678b5.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/mushrooms/red_mushroom_a9ba0341.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/mushrooms/red_mushroom_aac3cc60.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/mushrooms/red_mushroom_ca21bb7e.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/mushrooms/red_mushroom_cluster_752ba13e.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/mushrooms/red_mushroom_efc5d034.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/nature_terrain_details_28c79dfb.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/nature/nature_terrain_details_34d8396c.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/nature/nature_terrain_details_363debaf.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/nature/nature_terrain_details_47267cbd.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/nature/nature_terrain_details_5968b8a3.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/nature/nature_terrain_details_59dcc523.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/nature/nature_terrain_details_72b2959c.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/nature/nature_terrain_details_7949d49c.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/nature/nature_terrain_details_8cb6f943.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/nature/nature_terrain_details_8d859f6e.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/nature/nature_terrain_details_93120fb3.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/nature/nature_terrain_details_95c13dcf.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/nature/nature_terrain_details_9f37786d.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/nature/nature_terrain_details_c8463be9.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/nature/nature_terrain_details_e8dfe247.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/nature/nature_terrain_details_ee91084f.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/nature/nature_terrain_details_f93f8262.png",
+      "w": 42,
+      "h": 42
+    },
+    {
+      "f": "assets/catalog/objects/nature/pebbles/pebbles_pile_bc5afbbf.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/small_pond_4a6cba9f.png",
+      "w": 64,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/nature/stumps/ancient_tree_stump_cc32bdd3.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/nature/stumps/tree_stump_30d5de21.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/stumps/tree_stump_31d9e124.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/stumps/tree_stump_42f26dc6.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/stumps/tree_stump_6cdd6f66.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/stumps/tree_stump_a993e468.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/stumps/tree_stump_c470e067.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/stumps/tree_stump_d15b0b0e.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/stumps/tree_stump_f8f1df09.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/apple_tree_996f5c47.png",
+      "w": 64,
+      "h": 80
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/autumn_maple_tree_d871193c.png",
+      "w": 64,
+      "h": 88
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/birch_tree_35c0a34e.png",
+      "w": 56,
+      "h": 88
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/cactus_051d310a.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/cactus_2a7dce97.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/cactus_3074ba06.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/cactus_5defff02.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/cactus_63572c4c.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/cactus_78487393.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/cactus_84f1e1ac.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/cactus_8794991c.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/cactus_879b77a3.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/cactus_89304593.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/cactus_8f84ff0d.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/cactus_94faba25.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/cactus_aa405235.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/cactus_ed30290a.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/cactus_f805dc2b.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/cactus_fca6eca8.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/cactus_saguaro_78f0dca6.png",
+      "w": 40,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/cherry_blossom_02bac2a4.png",
+      "w": 56,
+      "h": 72
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/dead_leafless_tree_95657185.png",
+      "w": 56,
+      "h": 80
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/dead_tree_013ad96c.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/dead_tree_048c4927.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/dead_tree_0f0a0ec8.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/dead_tree_13ed9319.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/dead_tree_16765684.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/dead_tree_22becc0e.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/dead_tree_488303df.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/dead_tree_5f9ee1a8.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/dead_tree_74276bec.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/dead_tree_92cf22cb.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/dead_tree_b1567404.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/dead_tree_e587adad.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/decorative_tree_7efb99ba.png",
+      "w": 72,
+      "h": 96
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/large_lush_oak_9d02bbd8.png",
+      "w": 64,
+      "h": 80
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/large_maple_tree_ddd6a3d9.png",
+      "w": 72,
+      "h": 88
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/lush_oak_tree_f1d73bc8.png",
+      "w": 72,
+      "h": 88
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/oak_tree_01e5f2e8.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/oak_tree_0eb5bdd7.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/oak_tree_117979e1.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/oak_tree_21fa2efa.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/oak_tree_313d6df3.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/oak_tree_35db4968.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/oak_tree_3b3e1365.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/oak_tree_4f913847.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/oak_tree_699bf1e2.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/oak_tree_6d6929cf.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/oak_tree_78717b96.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/oak_tree_b5c36871.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/oak_tree_d290899e.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/oak_tree_e15c40c8.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/oak_tree_ed777b63.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/oak_tree_fbfa0049.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/old_growth_tree_e37d1e9c.png",
+      "w": 96,
+      "h": 112
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/palm_tree_07980bc6.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/palm_tree_0c04c141.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/palm_tree_15c6f4a0.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/palm_tree_30b924b0.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/palm_tree_63680737.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/palm_tree_98a6be8c.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/palm_tree_b07699f9.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/palm_tree_be5918f2.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/palm_tree_d0429804.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/palm_tree_d2053845.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/palm_tree_e1db5c33.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/palm_tree_e8a29d46.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/pine_tree_1068767b.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/pine_tree_19456cb0.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/pine_tree_21d3a3a5.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/pine_tree_2df4436e.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/pine_tree_2fb900e2.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/pine_tree_417535f3.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/pine_tree_55ae2521.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/pine_tree_5938e73f.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/pine_tree_59e6976f.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/pine_tree_626d72e5.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/pine_tree_7c84a6fe.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/pine_tree_98bf532f.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/pine_tree_c86ee5cb.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/pine_tree_d6cfa0b9.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/pine_tree_f46888c2.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/pine_tree_fd41ca85.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/snow_covered_011d14cb.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/snow_covered_12438c4e.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/snow_covered_2a6b6306.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/snow_covered_4ac048d9.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/snow_covered_4f67e161.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/snow_covered_63e6633f.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/snow_covered_64eb387f.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/snow_covered_7df8e67b.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/snow_covered_86f009b3.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/snow_covered_89ca975c.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/snow_covered_977efce2.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/snow_covered_9974244f.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/snow_covered_ac3e4257.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/snow_covered_c039af02.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/snow_covered_c3203b3a.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/snow_covered_f5862ebd.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/snow_pine_tree_24ba5c4c.png",
+      "w": 56,
+      "h": 80
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/tall_green_pine_e5ac299e.png",
+      "w": 48,
+      "h": 80
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/tall_palm_tree_3da9142a.png",
+      "w": 48,
+      "h": 80
+    },
+    {
+      "f": "assets/catalog/objects/nature/trees/willow_tree_9829328e.png",
+      "w": 80,
+      "h": 96
+    },
+    {
+      "f": "assets/catalog/objects/oak_tree_01.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/oak_tree_02.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/oak_tree_03.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/oak_tree_04.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/palm_tree_01.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/palm_tree_02.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/palm_tree_03.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/palm_tree_04.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/pine_tree_01.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/pine_tree_02.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/pine_tree_03.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/pine_tree_04.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/snow_pine_01.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/snow_pine_02.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/snow_pine_03.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/snow_pine_04.png",
+      "w": 64,
+      "h": 64
+    },
+    {
+      "f": "assets/catalog/objects/stone/large_boulder_1a736f9a.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/large_boulder_2065df20.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/large_boulder_222c2ada.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/large_boulder_419a7d00.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/large_boulder_48fdb083.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/large_boulder_6e6a5f9e.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/large_boulder_78bbafd3.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/large_boulder_9358e92c.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/large_boulder_9fc45654.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/large_boulder_a2d1317a.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/large_boulder_a6e8d9bb.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/large_boulder_b5559fc2.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/large_boulder_d25b8f70.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/large_boulder_d4fd051b.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/large_boulder_e9046bae.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/large_boulder_f2730910.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/small_rock_1f536357.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/stone/small_rock_2e5ca893.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/stone/small_rock_306af08a.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/stone/small_rock_311a5cb2.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/stone/small_rock_3cdc4298.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/stone/small_rock_41c2da54.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/stone/small_rock_5e290ae4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/stone/small_rock_6608dae8.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/stone/small_rock_74a96278.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/stone/small_rock_81f3ff0d.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/stone/small_rock_8cb99de1.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/stone/small_rock_990a65ea.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/stone/small_rock_a8fb0f63.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/stone/small_rock_ba6187b9.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/stone/small_rock_f90d7b72.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/objects/stone/stone_boulder_0a572aca.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/stone_boulder_0bc0969a.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/stone_boulder_1b43696a.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/stone_boulder_3fd58924.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/stone_boulder_5e03adfd.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/stone_boulder_6bf46ad3.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/stone_boulder_761de475.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/stone_boulder_87329267.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/stone_boulder_a8d58123.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/stone_boulder_a935db6d.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/stone_boulder_adf4340e.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/stone_boulder_b373254b.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/stone_boulder_c5a04273.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/stone_boulder_c77edeec.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/stone_boulder_d1304e62.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/objects/stone/stone_boulder_f5d09767.png",
+      "w": 48,
+      "h": 48
+    },
+    {
+      "f": "assets/catalog/terrain/beach_to_grass/tileset.png",
+      "w": 128,
+      "h": 128
+    },
+    {
+      "f": "assets/catalog/terrain/beach_to_grass/wang_0.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/beach_to_grass/wang_1.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/beach_to_grass/wang_10.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/beach_to_grass/wang_11.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/beach_to_grass/wang_12.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/beach_to_grass/wang_13.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/beach_to_grass/wang_14.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/beach_to_grass/wang_15.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/beach_to_grass/wang_2.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/beach_to_grass/wang_3.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/beach_to_grass/wang_4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/beach_to_grass/wang_5.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/beach_to_grass/wang_6.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/beach_to_grass/wang_7.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/beach_to_grass/wang_8.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/beach_to_grass/wang_9.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/cobblestone_road/tileset.png",
+      "w": 128,
+      "h": 128
+    },
+    {
+      "f": "assets/catalog/terrain/cobblestone_road/wang_0.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/cobblestone_road/wang_1.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/cobblestone_road/wang_10.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/cobblestone_road/wang_11.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/cobblestone_road/wang_12.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/cobblestone_road/wang_13.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/cobblestone_road/wang_14.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/cobblestone_road/wang_15.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/cobblestone_road/wang_2.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/cobblestone_road/wang_3.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/cobblestone_road/wang_4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/cobblestone_road/wang_5.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/cobblestone_road/wang_6.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/cobblestone_road/wang_7.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/cobblestone_road/wang_8.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/cobblestone_road/wang_9.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/crystal_cave/tileset.png",
+      "w": 128,
+      "h": 128
+    },
+    {
+      "f": "assets/catalog/terrain/crystal_cave/wang_0.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/crystal_cave/wang_1.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/crystal_cave/wang_10.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/crystal_cave/wang_11.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/crystal_cave/wang_12.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/crystal_cave/wang_13.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/crystal_cave/wang_14.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/crystal_cave/wang_15.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/crystal_cave/wang_2.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/crystal_cave/wang_3.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/crystal_cave/wang_4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/crystal_cave/wang_5.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/crystal_cave/wang_6.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/crystal_cave/wang_7.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/crystal_cave/wang_8.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/crystal_cave/wang_9.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert/tileset.png",
+      "w": 128,
+      "h": 128
+    },
+    {
+      "f": "assets/catalog/terrain/desert/wang_0.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert/wang_1.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert/wang_10.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert/wang_11.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert/wang_12.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert/wang_13.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert/wang_14.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert/wang_15.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert/wang_2.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert/wang_3.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert/wang_4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert/wang_5.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert/wang_6.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert/wang_7.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert/wang_8.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert/wang_9.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_old/tileset.png",
+      "w": 128,
+      "h": 128
+    },
+    {
+      "f": "assets/catalog/terrain/desert_old/wang_0.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_old/wang_1.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_old/wang_10.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_old/wang_11.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_old/wang_12.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_old/wang_13.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_old/wang_14.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_old/wang_15.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_old/wang_2.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_old/wang_3.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_old/wang_4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_old/wang_5.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_old/wang_6.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_old/wang_7.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_old/wang_8.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_old/wang_9.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_to_mountains/tileset.png",
+      "w": 128,
+      "h": 128
+    },
+    {
+      "f": "assets/catalog/terrain/desert_to_mountains/wang_0.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_to_mountains/wang_1.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_to_mountains/wang_10.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_to_mountains/wang_11.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_to_mountains/wang_12.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_to_mountains/wang_13.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_to_mountains/wang_14.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_to_mountains/wang_15.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_to_mountains/wang_2.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_to_mountains/wang_3.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_to_mountains/wang_4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_to_mountains/wang_5.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_to_mountains/wang_6.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_to_mountains/wang_7.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_to_mountains/wang_8.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/desert_to_mountains/wang_9.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/dirt_seamless_00.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/dungeon_stone/tileset.png",
+      "w": 128,
+      "h": 128
+    },
+    {
+      "f": "assets/catalog/terrain/dungeon_stone/wang_0.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/dungeon_stone/wang_1.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/dungeon_stone/wang_10.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/dungeon_stone/wang_11.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/dungeon_stone/wang_12.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/dungeon_stone/wang_13.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/dungeon_stone/wang_14.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/dungeon_stone/wang_15.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/dungeon_stone/wang_2.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/dungeon_stone/wang_3.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/dungeon_stone/wang_4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/dungeon_stone/wang_5.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/dungeon_stone/wang_6.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/dungeon_stone/wang_7.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/dungeon_stone/wang_8.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/dungeon_stone/wang_9.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/fertile_soil/tileset.png",
+      "w": 128,
+      "h": 128
+    },
+    {
+      "f": "assets/catalog/terrain/fertile_soil/wang_0.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/fertile_soil/wang_1.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/fertile_soil/wang_10.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/fertile_soil/wang_11.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/fertile_soil/wang_12.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/fertile_soil/wang_13.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/fertile_soil/wang_14.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/fertile_soil/wang_15.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/fertile_soil/wang_2.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/fertile_soil/wang_3.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/fertile_soil/wang_4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/fertile_soil/wang_5.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/fertile_soil/wang_6.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/fertile_soil/wang_7.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/fertile_soil/wang_8.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/fertile_soil/wang_9.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest/tileset.png",
+      "w": 128,
+      "h": 128
+    },
+    {
+      "f": "assets/catalog/terrain/forest/wang_0.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest/wang_1.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest/wang_10.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest/wang_11.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest/wang_12.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest/wang_13.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest/wang_14.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest/wang_15.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest/wang_2.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest/wang_3.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest/wang_4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest/wang_5.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest/wang_6.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest/wang_7.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest/wang_8.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest/wang_9.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_old/tileset.png",
+      "w": 128,
+      "h": 128
+    },
+    {
+      "f": "assets/catalog/terrain/forest_old/wang_0.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_old/wang_1.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_old/wang_10.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_old/wang_11.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_old/wang_12.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_old/wang_13.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_old/wang_14.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_old/wang_15.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_old/wang_2.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_old/wang_3.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_old/wang_4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_old/wang_5.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_old/wang_6.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_old/wang_7.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_old/wang_8.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_old/wang_9.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_to_mountains/tileset.png",
+      "w": 128,
+      "h": 128
+    },
+    {
+      "f": "assets/catalog/terrain/forest_to_mountains/wang_0.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_to_mountains/wang_1.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_to_mountains/wang_10.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_to_mountains/wang_11.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_to_mountains/wang_12.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_to_mountains/wang_13.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_to_mountains/wang_14.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_to_mountains/wang_15.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_to_mountains/wang_2.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_to_mountains/wang_3.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_to_mountains/wang_4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_to_mountains/wang_5.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_to_mountains/wang_6.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_to_mountains/wang_7.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_to_mountains/wang_8.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/forest_to_mountains/wang_9.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland/tileset.png",
+      "w": 128,
+      "h": 128
+    },
+    {
+      "f": "assets/catalog/terrain/grassland/wang_0.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland/wang_1.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland/wang_10.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland/wang_11.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland/wang_12.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland/wang_13.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland/wang_14.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland/wang_15.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland/wang_2.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland/wang_3.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland/wang_4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland/wang_5.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland/wang_6.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland/wang_7.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland/wang_8.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland/wang_9.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_clovers/tileset.png",
+      "w": 128,
+      "h": 128
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_clovers/wang_0.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_clovers/wang_1.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_clovers/wang_10.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_clovers/wang_11.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_clovers/wang_12.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_clovers/wang_13.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_clovers/wang_14.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_clovers/wang_15.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_clovers/wang_2.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_clovers/wang_3.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_clovers/wang_4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_clovers/wang_5.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_clovers/wang_6.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_clovers/wang_7.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_clovers/wang_8.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_clovers/wang_9.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_old/tileset.png",
+      "w": 128,
+      "h": 128
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_old/wang_0.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_old/wang_1.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_old/wang_10.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_old/wang_11.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_old/wang_12.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_old/wang_13.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_old/wang_14.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_old/wang_15.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_old/wang_2.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_old/wang_3.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_old/wang_4.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_old/wang_5.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_old/wang_6.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_old/wang_7.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_old/wang_8.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_old/wang_9.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_to_desert/tileset.png",
+      "w": 128,
+      "h": 128
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_to_desert/wang_0.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_to_desert/wang_1.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_to_desert/wang_10.png",
+      "w": 32,
+      "h": 32
+    },
+    {
+      "f": "assets/catalog/terrain/grassland_to_desert/wang_11.png",
+      "w": 32,
+      "h": 32
+    }
+  ]
+}
