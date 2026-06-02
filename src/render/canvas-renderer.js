@@ -74,7 +74,7 @@ export class CanvasRenderer {
         const chunk = chunkStore.getIfReady(cx, cy);
         if (!chunk) continue;
         const key = `${cx},${cy}`;
-        const cached = this.chunkRenderCache.get(chunk, sun);
+        const cached = this.chunkRenderCache.get(chunk, sun, chunkStore);
         const sx = baseSX + (cx - minCX) * chunkPx;
         const sy = baseSY + (cy - minCY) * chunkPx;
         if (!cached) continue;

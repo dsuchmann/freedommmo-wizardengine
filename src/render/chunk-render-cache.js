@@ -22,42 +22,54 @@ export class ChunkRenderCache {
     return `${Math.round(sun.ambient * 3)},${Math.round(sun.height * 3)}`;
   }
 
-  get(chunk, sun) {
-    const bucket = this.lightBucket(sun);
-    const key = this.key(chunk, bucket);
-    const hit = this.cache.get(key);
-    if (hit) {
-      hit.lastUsed = performance.now();
-      return hit.canvas;
-    }
-    const canvas = document.createElement('canvas');
+  get(chunk, sun, chunkStore = null) {
+    var bucket = this.lightBucket(sun);
+    var key = this.key(chunk, bucket);
+    var hit = this.cache.get(key);
+    if (hit) { hit.lastUsed = performance.now(); return hit.canvas; }
+    var canvas = document.createElement('canvas');
     canvas.width = WORLD.chunkSize * WORLD.tileSize;
     canvas.height = WORLD.chunkSize * WORLD.tileSize;
-    const ctx = canvas.getContext('2d', { alpha: true, willReadFrequently: false });
-    this.renderChunk(ctx, chunk, sun);
+    var ctx = canvas.getContext('2d', { alpha: true, willReadFrequently: false });
+    this.renderChunk(ctx, chunk, sun, chunkStore);
     this.cache.set(key, { canvas, lastUsed: performance.now() });
     this.evict();
     return canvas;
   }
 
-  renderChunk(ctx, chunk, sun) {
-    for (let y = 0; y < WORLD.chunkSize; y++) {
-      for (let x = 0; x < WORLD.chunkSize; x++) {
-        const index = y * WORLD.chunkSize + x;
-        const tile = chunk.tiles[index];
-        const sx = x * WORLD.tileSize;
-        const sy = y * WORLD.tileSize;
-        // compute Wang edge mask from tile neighbors
-        const nb = (dx, dy) => {
-          const nx = x + dx, ny = y + dy;
-          if (nx < 0 || nx >= WORLD.chunkSize || ny < 0 || ny >= WORLD.chunkSize) return tile.biome;
-          return chunk.tiles[ny * WORLD.chunkSize + nx]?.biome ?? tile.biome;
-        };
+  renderChunk(ctx, chunk, sun, chunkStore) {
+    var tileAt = function(wx, wy) {
+      var cx = Math.floor(wx / WORLD.chunkSize);
+      var cy = Math.floor(wy / WORLD.chunkSize);
+      var tx = ((wx % WORLD.chunkSize) + WORLD.chunkSize) % WORLD.chunkSize;
+      var ty = ((wy % WORLD.chunkSize) + WORLD.chunkSize) % WORLD.chunkSize;
+      if (cx === chunk.cx && cy === chunk.cy) {
+        return chunk.tiles[ty * WORLD.chunkSize + tx];
+      }
+      if (chunkStore) {
+        var nbChunk = chunkStore.get(cx, cy);
+        if (nbChunk && nbChunk.tiles) return nbChunk.tiles[ty * WORLD.chunkSize + tx];
+      }
+      return null;
+    };
+    for (var y = 0; y < WORLD.chunkSize; y++) {
+      for (var x = 0; x < WORLD.chunkSize; x++) {
+        var index = y * WORLD.chunkSize + x;
+        var tile = chunk.tiles[index];
+        var sx = x * WORLD.tileSize;
+        var sy = y * WORLD.tileSize;
+        // compute Wang edge mask with cross-chunk neighbor lookup
         var mask = 0;
-        if (nb(0, -1) !== tile.biome) mask |= 1;
-        if (nb(1, 0) !== tile.biome) mask |= 2;
-        if (nb(0, 1) !== tile.biome) mask |= 4;
-        if (nb(-1, 0) !== tile.biome) mask |= 8;
+        var wx = chunk.cx * WORLD.chunkSize + x;
+        var wy = chunk.cy * WORLD.chunkSize + y;
+        var nTile = tileAt(wx, wy - 1);
+        if (nTile && nTile.biome !== tile.biome) mask |= 1;
+        nTile = tileAt(wx + 1, wy);
+        if (nTile && nTile.biome !== tile.biome) mask |= 2;
+        nTile = tileAt(wx, wy + 1);
+        if (nTile && nTile.biome !== tile.biome) mask |= 4;
+        nTile = tileAt(wx - 1, wy);
+        if (nTile && nTile.biome !== tile.biome) mask |= 8;
         tile.wangEdgeMask = mask;
         paintTerrainTile(ctx, tile, sx, sy, WORLD.tileSize, sun, tile.climate.elevation, this.compositor, 0, this.atlas);
         paintTerrainFeatures(ctx, tile, sx, sy, WORLD.tileSize, sun);
