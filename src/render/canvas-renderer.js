@@ -128,10 +128,12 @@ export class CanvasRenderer {
     }
 
     if (player.interactPressed) performInteraction(player, chunkStore);
-    this.drawWorldActors(chunkStore, player, camX, camY, w, h, sun, camera, performance.now() / 1000);
+    // TODO: Re-enable drawWorldActors when proper object sprites are wired up.
+    // For now, draw only the player (no placeholder objects).
+    this.drawPlayerAt(w / 2, h / 2 - elevationLift(focusTile.climate.elevation) * camera.zoom, camera.zoom, player);
     drawElevationOverlay(ctx, chunkStore, camX, camY, w, h, sun, camera);
     this.drawContactOverlay(player, w, h, camera.zoom, performance.now() / 1000);
-    this.drawDepthBokeh(chunkStore, player, focusTile, camera, camX, camY, w, h);
+    // this.drawDepthBokeh(chunkStore, player, focusTile, camera, camX, camY, w, h);
     this.drawAtmosphere(sun, w, h);
   }
 

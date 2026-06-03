@@ -105,11 +105,25 @@ for (var bk in BIOME_CLIFF) {
   }
 }
 
+// Water biomes — excluded from cliff rendering, treated as flat level 0
+var WATER_BIOMES = { ocean: 1, deep_ocean: 1, shallow_water: 1, river: 1, lake: 1 };
+
 function getWangSrc(tile) {
   var mask = tile.wangEdgeMask;
   if (mask === undefined) mask = 0;
   if (tile.transitionPair) {
-    return TRANSITIONS_BASE + tile.transitionPair.dir + '/wang/' + tile.transitionPair.dir + '__wang_' + mask + WANG_SUFFIX;
+    // At cliff-water boundaries, suppress the biome transition tile on the land side.
+    // Water-pattern tiles at cliff elevation look like "elevated water shelves."
+    // The cliff overlay already provides the visual edge, so use solid land interior.
+    var pair = tile.transitionPair;
+    var otherBiome = tile.transitionSide === 'from' ? pair.to : pair.from;
+    var isLandWaterCliff = !WATER_BIOMES[tile.biome] && WATER_BIOMES[otherBiome] && cliffLevel(tile.climate.elevation) > 0;
+    var isWaterLandCliff = WATER_BIOMES[tile.biome] && !WATER_BIOMES[otherBiome];
+    if (isLandWaterCliff || isWaterLandCliff) {
+      var intMask = tile.transitionSide === 'from' ? 6 : 12;
+      return TRANSITIONS_BASE + pair.dir + '/wang/' + pair.dir + '__wang_' + intMask + WANG_SUFFIX;
+    }
+    return TRANSITIONS_BASE + pair.dir + '/wang/' + pair.dir + '__wang_' + mask + WANG_SUFFIX;
   }
   // Interior tile — use same tileset as nearest transition for consistency
   if (tile.nearestTransitionPair) {
@@ -141,8 +155,10 @@ export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation, c
   const palette = paletteFor(tile.biome);
   const patch = coherentPatch(tile.wx, tile.wy, tile.biome);
   const base = palette[Math.min(palette.length - 1, Math.floor(patch * palette.length))];
-  const elevationShade = (tile.climate.elevation - 0.5) * 0.22;
-  const depthFade = Math.max(0, focusElevation - tile.climate.elevation - 0.08) * 0.50;
+  // Water biomes render flat — no elevation shading or depth fade
+  const isWater = WATER_BIOMES[tile.biome];
+  const elevationShade = isWater ? 0 : (tile.climate.elevation - 0.5) * 0.22;
+  const depthFade = isWater ? 0 : Math.max(0, focusElevation - tile.climate.elevation - 0.08) * 0.50;
   const light = Math.max(0, 0.78 + sun.height * 0.22 - depthFade - elevationShade);
   const shaded = shade(base, light);
   ctx.fillStyle = shaded;
@@ -150,21 +166,39 @@ export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation, c
   paintWangBase(ctx, tile, sx, sy, size);
 }
 
-// Draw cliff face Wang tiles on the lower side of an elevation step.
-// Uses biome-specific cliff tilesets; falls back to generic cliff_overlay.
+// Get cliff level for a corner, treating water as flat level 0.
+function cornerCliffLevel(elevation, biome) {
+  if (WATER_BIOMES[biome]) return 0;
+  return cliffLevel(elevation);
+}
+
+// Draw cliff face Wang tiles at elevation transitions.
+// Uses dual-grid corners: NW=self, NE=E-neighbor, SW=S-neighbor, SE=SE-neighbor.
+// Bits set where the corner is at the LOWER elevation level ("from" = lower ground).
+// Water tiles never get cliff overlays. Water corners are treated as level 0,
+// so coastlines naturally become cliff faces on the land side.
 export function paintCliffOverlay(ctx, tile, sx, sy, size, sun) {
+  // Never draw cliff overlays on water tiles
+  if (WATER_BIOMES[tile.biome]) return;
+
   var myEl = tile.climate.elevation;
-  var myLevel = cliffLevel(myEl);
+  var nwLevel = cornerCliffLevel(myEl, tile.biome);
+  var neLevel = cornerCliffLevel(tile._elE != null ? tile._elE : myEl, tile.neighborE || tile.biome);
+  var swLevel = cornerCliffLevel(tile._elS != null ? tile._elS : myEl, tile.neighborS || tile.biome);
+  var seLevel = cornerCliffLevel(tile._elSE != null ? tile._elSE : myEl, tile.neighborSE || tile.biome);
 
-  // Corner mask: NW=tile(compare N elev), NE=E-neighbor, SW=S-neighbor, SE=SE-neighbor
-  // Bits set when corner neighbor is on a HIGHER cliff level
+  // Skip if all 4 corners are the same level (flat terrain)
+  if (nwLevel === neLevel && nwLevel === swLevel && nwLevel === seLevel) return;
+
+  // "from" = lower level. Bits set where corner matches the minimum (lower ground).
+  var minLevel = Math.min(nwLevel, neLevel, swLevel, seLevel);
   var cornerMask = 0;
-  if (myLevel < cliffLevel(tile._elN  || myEl)) cornerMask |= 8;
-  if (myLevel < cliffLevel(tile._elE  || myEl)) cornerMask |= 4;
-  if (myLevel < cliffLevel(tile._elS  || myEl)) cornerMask |= 2;
-  if (myLevel < cliffLevel(tile._elSE || myEl)) cornerMask |= 1;
+  if (nwLevel === minLevel) cornerMask |= 8;
+  if (neLevel === minLevel) cornerMask |= 4;
+  if (swLevel === minLevel) cornerMask |= 2;
+  if (seLevel === minLevel) cornerMask |= 1;
 
-  if (cornerMask === 0) return;
+  if (cornerMask === 0 || cornerMask === 15) return;
 
   var wangIndex = CLIFF_CORNER_TO_WANG[cornerMask];
   var cliffDir = BIOME_CLIFF[tile.biome] || 'cliff_overlay';
