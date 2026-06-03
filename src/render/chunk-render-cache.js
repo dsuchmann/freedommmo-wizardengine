@@ -2,7 +2,7 @@ import { WORLD } from '../core/constants.js';
 import { paintTerrainTile } from './tile-painter.js';
 import { paintTerrainFeatures } from './feature-painter.js';
 
-const TERRAIN_RENDER_VERSION = 'wang-lookup-v13';
+const TERRAIN_RENDER_VERSION = 'wang-lookup-v14';
 
 const TRANSITION_PAIRS = Object.freeze({
   'beach|desert': { from: 'beach', to: 'desert', dir: 'beach_to_desert' },
