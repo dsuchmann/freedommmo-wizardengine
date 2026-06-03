@@ -49,15 +49,17 @@ function getWangSrc(tile) {
   if (tile.transitionPair) {
     var transitionMask = mask;
     // For non-edge interior tiles (only corner diffs), use filler mask
-    var hasDirectEdge = (tile.neighborN && tile.neighborN !== tile.biome) ||
-                         (tile.neighborW && tile.neighborW !== tile.biome) ||
-                         (tile.neighborE && tile.neighborE !== tile.biome) ||
-                         (tile.neighborS && tile.neighborS !== tile.biome) ||
-                         (tile.neighborNW && tile.neighborNW !== tile.biome) ||
+    var hasCardinalEdge = (tile.neighborN && tile.neighborN !== tile.biome) ||
+                           (tile.neighborW && tile.neighborW !== tile.biome) ||
+                           (tile.neighborE && tile.neighborE !== tile.biome) ||
+                           (tile.neighborS && tile.neighborS !== tile.biome);
+    var hasCornerDiff = (tile.neighborNW && tile.neighborNW !== tile.biome) ||
                          (tile.neighborNE && tile.neighborNE !== tile.biome) ||
                          (tile.neighborSW && tile.neighborSW !== tile.biome) ||
                          (tile.neighborSE && tile.neighborSE !== tile.biome);
-    if (!hasDirectEdge) {
+    // From-side corner wraps count as edges; to-side corner-only = interior
+    var isEdge = hasCardinalEdge || (hasCornerDiff && tile.transitionSide === 'from');
+    if (!isEdge) {
       transitionMask = tile.transitionSide === 'to' ? 12 : 6;
     } else if (mask === 0 || mask === 6) {
       transitionMask = tile.transitionSide === 'to' ? 12 : 6;
