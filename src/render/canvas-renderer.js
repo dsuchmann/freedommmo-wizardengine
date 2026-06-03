@@ -269,8 +269,10 @@ export class CanvasRenderer {
     const audit = this.lastAudit;
     const topBiomes = audit.seen.slice(0, 6).map(entry => `${entry.id} ${(entry.pct * 100).toFixed(0)}%`).join(', ');
     if (!this.lastTransitionLine || now - this.lastTransitionLineAt > 3000) {
-      this.lastTransitionLine = transitionDiagnosticLine(chunkStore);
+      var diag = this.lastTransitionData = transitionDiagnosticData(chunkStore);
+      this.lastTransitionLine = diag.line;
       this.lastTransitionLineAt = now;
+      this.chunkRenderCache.preferredPairs = diag.neededPairs;
     }
     const transitionLine = this.lastTransitionLine;
     const nearby = findNearbyInteraction(player, chunkStore);
@@ -389,7 +391,7 @@ function drawModularPlayer(ctx, x, y, zoom, frame, animation) {
   ctx.restore();
 }
 
-function transitionDiagnosticLine(chunkStore) {
+function transitionDiagnosticData(chunkStore) {
   const available = new Set([
     'beach|desert','beach|grassland','deep_ocean|ocean','dense_forest|mystic','dense_forest|tropical_forest','desert|hills','desert|savanna','desert|volcanic','forest|dense_forest','forest|hills','forest|mystic','forest|taiga','forest|tropical_forest','grassland|forest','grassland|hills','grassland|mystic','grassland|savanna','grassland|steppe','hills|mountains','hills|volcanic','lake|forest','lake|grassland','lake|river','lake|shallow_water','lake|swamp','mountains|arctic','mountains|volcanic','ocean|beach','ocean|shallow_water','river|forest','river|grassland','river|hills','river|swamp','savanna|hills','savanna|steppe','shallow_water|beach','shallow_water|river','shallow_water|swamp','steppe|desert','steppe|hills','swamp|beach','swamp|dense_forest','swamp|forest','swamp|grassland','swamp|tropical_forest','taiga|hills','taiga|mountains','tropical_forest|mystic','tundra|hills','tundra|mountains','tundra|arctic','tundra|steppe','tundra|taiga'
   ]);
@@ -412,7 +414,7 @@ function transitionDiagnosticLine(chunkStore) {
     }
   }
   const missing = [...needed].filter(pair => !canonicalAvailable.has(pair));
-  return `<br>transitions loaded map: needed ${needed.size}, missing ${missing.length}${missing.length ? ' (' + missing.slice(0, 4).join(', ') + (missing.length > 4 ? '...' : '') + ')' : ''}`;
+  return { line: `<br>transitions loaded map: needed ${needed.size}, missing ${missing.length}${missing.length ? ' (' + missing.slice(0, 4).join(', ') + (missing.length > 4 ? '...' : '') + ')' : ''}`, neededPairs: [...needed], missingPairs: missing };
 }
 
 function drawObject(ctx, kind, sx, sy, zoom = 1, signature = null, anim = { frame: 0 }, sun = null, atlas = null, biome = null, wx = 0, wy = 0, reaction = null) {

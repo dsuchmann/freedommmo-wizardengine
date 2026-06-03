@@ -71,6 +71,7 @@ export class ChunkRenderCache {
     this.cache = new Map();
     this.lastCanvasByChunk = new Map();
     this.maxEntries = 160;
+    this.preferredPairs = null;
     this.renderedThisFrame = 0;
     this.fallbackThisFrame = 0;
     this.missThisFrame = 0;
@@ -189,16 +190,28 @@ export class ChunkRenderCache {
             }
           }
           if (!foundPair) {
-            // Generic fallback: prefer 'from' pair for this biome
-            var keys = Object.keys(TRANSITION_PAIRS).sort();
-            for (var k = 0; k < keys.length; k++) {
-              var p = TRANSITION_PAIRS[keys[k]];
-              if (p.from === tile.biome) { foundPair = p; break; }
+            // Use map-level adjacency data if available
+            if (!foundPair && this.preferredPairs) {
+              for (var pi = 0; pi < this.preferredPairs.length; pi++) {
+                var parts = this.preferredPairs[pi].split('|');
+                if (parts[0] === tile.biome || parts[1] === tile.biome) {
+                  var p = transitionPairFor(parts[0], parts[1]);
+                  if (p) { foundPair = p; break; }
+                }
+              }
             }
+            // Generic fallback
             if (!foundPair) {
+              var keys = Object.keys(TRANSITION_PAIRS).sort();
               for (var k = 0; k < keys.length; k++) {
                 var p = TRANSITION_PAIRS[keys[k]];
-                if (p.to === tile.biome) { foundPair = p; break; }
+                if (p.from === tile.biome) { foundPair = p; break; }
+              }
+              if (!foundPair) {
+                for (var k = 0; k < keys.length; k++) {
+                  var p = TRANSITION_PAIRS[keys[k]];
+                  if (p.to === tile.biome) { foundPair = p; break; }
+                }
               }
             }
           }
