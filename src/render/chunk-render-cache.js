@@ -2,7 +2,10 @@ import { WORLD } from '../core/constants.js';
 import { paintTerrainTile } from './tile-painter.js';
 import { paintTerrainFeatures } from './feature-painter.js';
 
-const TERRAIN_RENDER_VERSION = 'wang-lookup-v15';
+const TERRAIN_RENDER_VERSION = 'wang-corner-v18';
+
+// PixelLab 16-tile Wang corner lookup. Corner bits: NW=8, NE=4, SW=2, SE=1
+const CORNER_TO_WANG = [12,13,0,3,8,1,14,5,15,4,11,2,9,10,7,6];
 
 const TRANSITION_PAIRS = Object.freeze({
   'beach|desert': { from: 'beach', to: 'desert', dir: 'beach_to_desert' },
@@ -179,7 +182,7 @@ export class ChunkRenderCache {
           }
         }
         if (!tile.transitionPair) {
-          // Scan radius for transition-eligible neighbor (only if neighbors are loaded)
+          // Scan radius for transition-eligible neighbor
           var foundPair = null;
           for (var dy = -8; dy <= 8 && !foundPair; dy++) {
             for (var dx = -8; dx <= 8 && !foundPair; dx++) {
@@ -190,65 +193,22 @@ export class ChunkRenderCache {
               if (pair) { foundPair = pair; }
             }
           }
-          if (!foundPair) {
-            // Fall back to preferred transition pair for this biome
-            if (!foundPair) {
-              var pref = TRANSITION_PAIRS['swamp|beach'];
-              if (pref && (pref.from === tile.biome || pref.to === tile.biome)) foundPair = pref;
-            }
-            if (!foundPair) {
-              var keys = Object.keys(TRANSITION_PAIRS).sort();
-              for (var k = 0; k < keys.length; k++) {
-                var p = TRANSITION_PAIRS[keys[k]];
-                if (p.from === tile.biome) { foundPair = p; break; }
-              }
-            }
-          }
           if (foundPair) {
             tile.transitionPair = foundPair;
             tile.transitionSide = tile.biome === foundPair.from ? 'from' : 'to';
           }
         }
-        // Wang edge mask — pattern-based from tileset layout
-        // Use neighbor diff pattern to select mask
-        var nw = tile.neighborNW !== tile.biome ? 1 : 0;
-        var nn = tile.neighborN  !== tile.biome ? 1 : 0;
-        var ne = tile.neighborNE !== tile.biome ? 1 : 0;
-        var ww = tile.neighborW  !== tile.biome ? 1 : 0;
-        var ee = tile.neighborE  !== tile.biome ? 1 : 0;
-        var sw = tile.neighborSW !== tile.biome ? 1 : 0;
-        var ss = tile.neighborS  !== tile.biome ? 1 : 0;
-        var se = tile.neighborSE !== tile.biome ? 1 : 0;
-        // Pattern key: 8-bit diff concat
-        var key = '' + nw + nn + ne + ww + ee + sw + ss + se;
-        // Lookup table from user-provided examples (1=diff, 0=same)
-        var lookup = {
-          '00010110': 8,  // W,S,SW diff
-          '00000010': 10, // SW only
-          '00010100': 1,  // W,SW diff (S same)
-          '00010010': 10, // W,S diff (SW same)
-          '10010110': 8,  // NW,W,S,SW all diff
-          '00000000': 6,  // all same interior near transition
-          '00000100': 10, // SW-only according to tileset layout
-          '00101000': 12, // beach tile with NE/E swamp
-          '00000100': 10, // exact: only SW differs
-          '01100000': 12, // beach: NE/E swamp
-          '01101000': 12, // beach: N/NE/E swamp
-          '11100000': 12, // beach alternate N/NE/E swamp
-          '11110000': 12, // beach: N/NE/E/SE swamp alternate key
-          '01101001': 12, // beach: N/NE/E/SE swamp exact key
-        };
-        var mask = lookup[key];
-        if (mask === undefined) {
-          // Fallback: edge diff + corner overrides
-          mask = 0;
-          if (ww) mask |= 2;
-          if (ss) mask |= 8;
-          if (sw) mask |= 8;
-          if (nw && !nn) mask &= ~2;
+        // Wang corner mask — 4 corners: NW=tile, NE=E-neighbor, SW=S-neighbor, SE=SE-neighbor
+        // Bits set when corner matches "from" biome of the transition pair
+        var cornerMask = 0;
+        if (tile.transitionPair) {
+          var fb = tile.transitionPair.from;
+          if (tile.biome === fb) cornerMask |= 8;
+          if (tile.neighborE === fb) cornerMask |= 4;
+          if (tile.neighborS === fb) cornerMask |= 2;
+          if (tile.neighborSE === fb) cornerMask |= 1;
         }
-        tile.wangEdgeMask = mask;
-        tile.wangEdgeMask = mask;
+        tile.wangEdgeMask = tile.transitionPair ? CORNER_TO_WANG[cornerMask] : 0;
         paintTerrainTile(ctx, tile, sx, sy, WORLD.tileSize, sun, tile.climate.elevation, this.compositor, 0, this.atlas);
         paintTerrainFeatures(ctx, tile, sx, sy, WORLD.tileSize, sun);
       }

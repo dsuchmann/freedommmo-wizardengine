@@ -1,53 +1,82 @@
 import { rand2, smoothNoise } from '../core/random.js';
 import { paletteFor } from './palette.js';
 
-var SWAMP_WANG_SUFFIX = '__v000.png';
+var WANG_SUFFIX = '__v000.png';
 var TRANSITIONS_BASE = 'assets/pixelab/landscape_v2/transitions/';
 var wangImgCache = {};
-function preloadWangImage(src) {
+
+export function preloadWangImage(src) {
   var img = new Image();
   img.src = src;
   wangImgCache[src] = img;
 }
-var BASE_WANG_PREFIX = {
-  swamp: 'assets/pixelab/landscape_v2/base/swamp_wet_mud/wang/swamp_wet_mud__wang_',
-  beach: 'assets/pixelab/landscape_v2/base/beach/wang/beach__wang_',
-  forest: 'assets/pixelab/landscape_v2/base/forest/wang/forest__wang_',
-  dense_forest: 'assets/pixelab/landscape_v2/base/dense_forest/wang/dense_forest__wang_',
-  tropical_forest: 'assets/pixelab/landscape_v2/base/tropical_forest/wang/tropical_forest__wang_',
-  taiga: 'assets/pixelab/landscape_v2/base/taiga/wang/taiga__wang_',
-  grassland: 'assets/pixelab/landscape_v2/base/grassland/wang/grassland__wang_',
-  savanna: 'assets/pixelab/landscape_v2/base/savanna/wang/savanna__wang_',
-  steppe: 'assets/pixelab/landscape_v2/base/steppe/wang/steppe__wang_',
-  desert: 'assets/pixelab/landscape_v2/base/desert/wang/desert__wang_',
-  tundra: 'assets/pixelab/landscape_v2/base/tundra/wang/tundra__wang_',
-  arctic: 'assets/pixelab/landscape_v2/base/arctic/wang/arctic__wang_',
-  hills: 'assets/pixelab/landscape_v2/base/hills/wang/hills__wang_',
-  mountains: 'assets/pixelab/landscape_v2/base/mountains/wang/mountains__wang_',
-  volcanic: 'assets/pixelab/landscape_v2/base/volcanic/wang/volcanic__wang_',
-  mystic: 'assets/pixelab/landscape_v2/base/mystic/wang/mystic__wang_',
-  ocean: 'assets/pixelab/landscape_v2/base/ocean/wang/ocean__wang_',
-  deep_ocean: 'assets/pixelab/landscape_v2/base/deep_ocean/wang/deep_ocean__wang_',
-  shallow_water: 'assets/pixelab/landscape_v2/base/shallow_water/wang/shallow_water__wang_',
-  lake: 'assets/pixelab/landscape_v2/base/lake/wang/lake__wang_',
-  river: 'assets/pixelab/landscape_v2/base/river/wang/river__wang_'
+
+// Interior tiles source from transition directories.
+// wang 6 = left/first biome interior, wang 12 = right/second biome interior.
+var BIOME_INTERIOR = {
+  beach:         { dir: 'beach_to_desert',    mask: 6 },
+  desert:        { dir: 'beach_to_desert',    mask: 12 },
+  grassland:     { dir: 'beach_to_grassland', mask: 12 },
+  river:         { dir: 'beach_to_river',     mask: 12 },
+  swamp:         { dir: 'swamp_to_beach',     mask: 6 },
+  forest:        { dir: 'swamp_to_forest',    mask: 12 },
+  dense_forest:  { dir: 'swamp_to_dense_forest', mask: 12 },
+  tropical_forest:{ dir: 'swamp_to_tropical_forest', mask: 12 },
+  taiga:         { dir: 'swamp_to_taiga',     mask: 12 },
+  savanna:       { dir: 'desert_to_savanna',  mask: 12 },
+  steppe:        { dir: 'grassland_to_steppe',mask: 12 },
+  tundra:        { dir: 'tundra_to_hills',    mask: 6 },
+  arctic:        { dir: 'tundra_to_snow',     mask: 12 },
+  hills:         { dir: 'desert_to_hills',    mask: 12 },
+  mountains:     { dir: 'hills_to_mountains', mask: 12 },
+  volcanic:      { dir: 'desert_to_volcanic', mask: 12 },
+  mystic:        { dir: 'dense_forest_to_mystic', mask: 12 },
+  ocean:         { dir: 'deep_ocean_to_ocean',mask: 12 },
+  deep_ocean:    { dir: 'deep_ocean_to_ocean',mask: 6 },
+  shallow_water: { dir: 'lake_to_shallow_water', mask: 12 },
+  lake:          { dir: 'lake_to_swamp',      mask: 6 },
 };
-for (var preloadMask = 0; preloadMask < 16; preloadMask++) {
-  preloadWangImage(BASE_WANG_PREFIX.swamp + preloadMask + SWAMP_WANG_SUFFIX);
-  preloadWangImage(BASE_WANG_PREFIX.beach + preloadMask + SWAMP_WANG_SUFFIX);
-  preloadWangImage(TRANSITIONS_BASE + 'swamp_to_beach/wang/swamp_to_beach__wang_' + preloadMask + SWAMP_WANG_SUFFIX);
+
+// Preload interior tiles for all biomes
+for (var b in BIOME_INTERIOR) {
+  var ie = BIOME_INTERIOR[b];
+  for (var pm = 0; pm < 16; pm++) {
+    preloadWangImage(TRANSITIONS_BASE + ie.dir + '/wang/' + ie.dir + '__wang_' + pm + WANG_SUFFIX);
+  }
+}
+// Preload remaining transition dirs not covered by interior sources
+var EXTRA_TRANSITION_DIRS = [
+  'dense_forest_to_tropical_forest','forest_to_dense_forest','forest_to_hills',
+  'forest_to_mystic','forest_to_taiga','forest_to_tropical_forest',
+  'grassland_to_forest','grassland_to_hills','grassland_to_mystic',
+  'grassland_to_savanna','hills_to_volcanic','lake_to_forest',
+  'lake_to_grassland','lake_to_river','mountains_to_snow',
+  'mountains_to_volcanic','ocean_to_beach','ocean_to_shallow_water',
+  'river_to_forest','river_to_grassland','river_to_hills',
+  'river_to_swamp','savanna_to_hills','savanna_to_steppe',
+  'shallow_water_to_beach','shallow_water_to_river','shallow_water_to_swamp',
+  'steppe_to_desert','steppe_to_hills','swamp_to_grass',
+  'taiga_to_hills','taiga_to_mountains','tropical_forest_to_mystic',
+  'tundra_to_mountains','tundra_to_steppe','tundra_to_taiga'
+];
+for (var ei = 0; ei < EXTRA_TRANSITION_DIRS.length; ei++) {
+  var ed = EXTRA_TRANSITION_DIRS[ei];
+  for (var em = 0; em < 16; em++) {
+    preloadWangImage(TRANSITIONS_BASE + ed + '/wang/' + ed + '__wang_' + em + WANG_SUFFIX);
+  }
 }
 
 function getWangSrc(tile) {
   var mask = tile.wangEdgeMask;
   if (mask === undefined) mask = 0;
   if (tile.transitionPair) {
-    var transitionMask = mask;
-    if (mask === 0 || mask === 6) transitionMask = tile.transitionSide === 'to' ? 12 : 6;
-    return TRANSITIONS_BASE + tile.transitionPair.dir + '/wang/' + tile.transitionPair.dir + '__wang_' + transitionMask + SWAMP_WANG_SUFFIX;
+    return TRANSITIONS_BASE + tile.transitionPair.dir + '/wang/' + tile.transitionPair.dir + '__wang_' + mask + WANG_SUFFIX;
   }
-  var prefix = BASE_WANG_PREFIX[tile.biome];
-  return prefix ? prefix + mask + SWAMP_WANG_SUFFIX : null;
+  var interior = BIOME_INTERIOR[tile.biome];
+  if (interior) {
+    return TRANSITIONS_BASE + interior.dir + '/wang/' + interior.dir + '__wang_' + interior.mask + WANG_SUFFIX;
+  }
+  return null;
 }
 
 function paintWangBase(ctx, tile, sx, sy, size) {
@@ -59,42 +88,47 @@ function paintWangBase(ctx, tile, sx, sy, size) {
   ctx.drawImage(img, 0, 0, 32, 32, sx, sy, size, size);
 }
 
-export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation = tile.climate.elevation, compositor = null, timeSeconds = 0, atlas = null) {
+export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation, compositor, timeSeconds, atlas) {
+  if (focusElevation === undefined) focusElevation = tile.climate.elevation;
+  if (!compositor) compositor = null;
+  if (!timeSeconds) timeSeconds = 0;
+  if (!atlas) atlas = null;
   const palette = paletteFor(tile.biome);
   const patch = coherentPatch(tile.wx, tile.wy, tile.biome);
   const base = palette[Math.min(palette.length - 1, Math.floor(patch * palette.length))];
   const elevationShade = (tile.climate.elevation - 0.5) * 0.22;
   const depthFade = Math.max(0, focusElevation - tile.climate.elevation - 0.08) * 0.50;
-  ctx.fillStyle = tint(shade(base, elevationShade + depthFade), sun.tint, sun.ambient);
+  const light = Math.max(0, 0.78 + sun.height * 0.22 - depthFade - elevationShade);
+  const shaded = shade(base, light);
+  ctx.fillStyle = shaded;
   ctx.fillRect(sx, sy, size, size);
   paintWangBase(ctx, tile, sx, sy, size);
 }
 
 function coherentPatch(wx, wy, biome) {
-  const base = smoothNoise(wx, wy, 4, 1000 + biome.length);
-  const detail = smoothNoise(wx, wy, 8, 2000 + biome.length) * 0.3;
-  return Math.max(0, Math.min(1, (base + detail) * 0.5 + 0.5));
+  return Math.abs(smoothNoise(wx * 0.17 + biome.length * 0.3, wy * 0.17 + biome.length * 0.3));
 }
 
 export function shade(hex, amount) {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgb(${clamp(r + amount)},${clamp(g + amount)},${clamp(b + amount)})`;
+  if (!hex) return '#000';
+  var r = parseInt(hex.slice(1, 3), 16);
+  var g = parseInt(hex.slice(3, 5), 16);
+  var b = parseInt(hex.slice(5, 7), 16);
+  return '#' + [r, g, b].map(function(c) { return clamp(Math.floor(c * amount)).toString(16).padStart(2, '0'); }).join('');
 }
 
-export function tint(color, tintColor, ambient = 1) {
-  if (!tintColor) return color;
-  const [cr, cg, cb] = parseRgb(color);
-  return `rgb(${Math.floor(cr * ambient)},${Math.floor(cg * ambient)},${Math.floor(cb * ambient)})`;
+export function tint(color, tintColor, ambient) {
+  if (!color || !tintColor) return '#000';
+  if (ambient === undefined) ambient = 1;
+  var rgb = parseRgb(color);
+  var t = parseRgb(tintColor);
+  return '#' + [0, 1, 2].map(function(i) { return clamp(Math.floor(rgb[i] * ambient + t[i] * (1 - ambient))).toString(16).padStart(2, '0'); }).join('');
 }
 
 function parseRgb(color) {
-  const m = color.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
-  if (m) return [parseInt(m[1]), parseInt(m[2]), parseInt(m[3])];
-  return [128, 128, 128];
+  return [parseInt(color.slice(1, 3), 16), parseInt(color.slice(3, 5), 16), parseInt(color.slice(5, 7), 16)];
 }
 
 function clamp(value) {
-  return Math.max(0, Math.min(255, Math.floor(value)));
+  return value < 0 ? 0 : value > 255 ? 255 : value;
 }
