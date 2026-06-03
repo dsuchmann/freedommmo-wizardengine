@@ -1,8 +1,8 @@
 [
   {
-    "id": "1780247555506",
-    "name": "Im Migrating Into Sorceress Wizard Genie From",
-    "createdAt": "2026-05-31T17:12:35.506Z",
+    "id": "1780488474911",
+    "name": "Starting A New Chat With You Since",
+    "createdAt": "2026-06-03T12:07:54.911Z",
     "model": "deepseek-v4-pro",
     "executorModel": null,
     "thinking": true,
@@ -12,7 +12,21 @@
     "debugMode": false,
     "visualDebug": false,
     "iterativeMode": false,
-    "unbound": false,
-    "browserMode": true
+    "unbound": false
+  },
+  {
+    "id": "1780488472872",
+    "name": "General",
+    "createdAt": "2026-06-03T12:07:52.872Z",
+    "model": "deepseek-v4-pro",
+    "executorModel": null,
+    "thinking": true,
+    "enhanced": true,
+    "tokenSaver": false,
+    "workingKnowledge": true,
+    "debugMode": false,
+    "visualDebug": false,
+    "iterativeMode": false,
+    "unbound": false
   }
 ]

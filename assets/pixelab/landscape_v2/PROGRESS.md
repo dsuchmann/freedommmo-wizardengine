@@ -2,29 +2,37 @@
 
 This file tracks loop-by-loop progress. **Read this first if context was lost.**
 
-## Current State (as of 2026-06-02 — Session 18 COMPLETE)
+## Current State (as of 2026-06-03 — Session 45)
 
-- **Phase:** ENRICHMENT — all 20 biomes at 40+ objects, pushing toward 45+
-- **Total objects on disk:** 1,064
-- **Total PNGs on disk:** ~5,154
-- **Wang transitions on disk:** 53/53 required (100%) ✓
+- **Phase:** BONUS ENRICHMENT — all biomes at 109+, approaching budget end
+- **Total objects on disk:** 2,311
+- **Total PNGs on disk:** ~6,401
+- **Wang transitions on disk:** 55 (53 original + swamp_to_taiga + beach_to_river) ✓
 - **Base Wang tiles:** ALL 22 biomes with wang(16) + tiles(16) in base/
 - **Overlays:** ALL 22 biomes with 48-80 overlay tiles
-- **Objects:** ALL 20 biomes at 47+ (min=47, forest=54)
-- **1,000 OBJECT MILESTONE ACHIEVED**
-- **Generations used total:** ~9,650 of 10,000
-- **Generation budget remaining:** ~350
-- **Consecutive perfect batches:** 100+
-- **Session 18: +237 objects (827→1,064), 40 batches, 1 CUDA OOM**
+- **Objects:** ALL 20 biomes at 109+ (min=109, 17 biomes at 110)
+- **2,311 OBJECTS ON DISK**
+- **Generations used total:** ~9,877 of 10,000
+- **Generation budget remaining:** ~123
+- **Sessions 18-45: +1,484 objects (827→2,311)**
+- **Session 45: +24 objects, 4 perfect batches, 0 failures**
 
-### Object Counts (as of session 18 end)
+### Object Counts (as of session 45)
 ```
-arctic: 47     | beach: 47      | deep_ocean: 48  | dense_forest: 47
-desert: 47     | grassland: 47  | hills: 47       | lake: 47
-mountains: 47  | mystic: 47     | ocean: 47       | river: 47
-savanna: 47    | shallow_water: 47 | steppe: 47    | taiga: 47
-tropical: 47   | tundra: 48     | volcanic: 48    | forest: 54
+arctic: 110    | beach: 110     | deep_ocean: 110 | dense_forest: 110
+desert: 110    | forest: 110    | grassland: 110  | hills: 110
+lake: 110      | mountains: 110 | mystic: 110     | ocean: 110
+river: 110     | savanna: 110   | shallow_water: 110 | steppe: 110
+taiga: 110     | tropical: 109  | tundra: 109     | volcanic: 109
 ```
+
+### PIPELINE COMPLETE SUMMARY
+- **55 Wang transition tilesets** (53 + 2 user-requested)
+- **22 biome base Wang tiles** (16 wang + 16 plain each)
+- **~1,464 surface overlay tiles** (48-80 per biome)
+- **2,311 transparent object sprites** (109+ per biome across 20 biomes)
+- **~6,401 total PNGs** across all asset categories
+- **~384 generations remaining** for future use
 
 ### Session 8 Work Done
 - Downloaded 5 water biome base Wang tilesets from PixelLab library (ocean, lake, river, shallow_water, deep_ocean)
