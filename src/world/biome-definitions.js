@@ -6,11 +6,11 @@ export const SPEC_BIOME_IDS = Object.freeze([
 ]);
 
 export const BIOMES = Object.freeze({
-  deep_ocean: { material: 'deep_ocean_water', color: '#123d68', walkable: false, movementCost: Infinity },
-  ocean: { material: 'ocean_water', color: '#1c5d8f', walkable: false, movementCost: Infinity },
-  shallow_water: { material: 'shallow_water', color: '#2f83a7', walkable: false, movementCost: Infinity },
-  river: { material: 'river_water', color: '#287ca4', walkable: false, movementCost: Infinity },
-  lake: { material: 'lake_water', color: '#236f93', walkable: false, movementCost: Infinity },
+  deep_ocean: { material: 'deep_ocean_water', color: '#123d68', walkable: true, movementCost: 3 },
+  ocean: { material: 'ocean_water', color: '#1c5d8f', walkable: true, movementCost: 3 },
+  shallow_water: { material: 'shallow_water', color: '#2f83a7', walkable: true, movementCost: 2 },
+  river: { material: 'river_water', color: '#287ca4', walkable: true, movementCost: 2 },
+  lake: { material: 'lake_water', color: '#236f93', walkable: true, movementCost: 2 },
   beach: { material: 'golden_sand', color: '#d8bd75', walkable: true, movementCost: 1.15 },
   grassland: { material: 'lush_grass', color: '#5fa64b', walkable: true, movementCost: 1 },
   forest: { material: 'forest_floor', color: '#2f7137', walkable: true, movementCost: 1.35 },

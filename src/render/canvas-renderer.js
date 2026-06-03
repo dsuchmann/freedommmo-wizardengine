@@ -194,6 +194,10 @@ export class CanvasRenderer {
       }
       if (item.type === 'player') {
         this.drawPlayerAt(item.sx, item.sy, camera.zoom, item.player);
+      // Red marker dot
+      var ctx = this.ctx;
+      ctx.fillStyle = 'rgba(255,0,0,0.8)';
+      ctx.fillRect(item.sx - 2, item.sy - 2, 5, 5);
       } else {
         const anim = animationFrame(item.signature?.animations?.idle, timeSeconds, 'S');
         drawObject(ctx, item.object.kind, item.sx, item.sy, camera.zoom, item.signature, anim, sun, this.atlas, item.tile.biome, item.object.wx, item.object.wy, item.reaction);
