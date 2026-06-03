@@ -2,7 +2,7 @@ import { WORLD } from '../core/constants.js';
 import { paintTerrainTile } from './tile-painter.js';
 import { paintTerrainFeatures } from './feature-painter.js';
 
-const TERRAIN_RENDER_VERSION = 'wang-corner-v18';
+const TERRAIN_RENDER_VERSION = 'wang-corner-v19';
 
 // PixelLab 16-tile Wang corner lookup. Corner bits: NW=8, NE=4, SW=2, SE=1
 const CORNER_TO_WANG = [12,13,0,3,8,1,14,5,15,4,11,2,9,10,7,6];
@@ -166,10 +166,13 @@ export class ChunkRenderCache {
         tile.neighborW  = (tileAt(wx - 1, wy) || tile).biome;
         tile.neighborNW = (tileAt(wx - 1, wy - 1) || tile).biome;
 
-        // Generic transition context: if a transition folder exists for any
-        // nearby biome pair, use that transition set for both edges and filler.
+        // Transition context: find which transition tileset applies to this tile.
+        // transitionPair = set ONLY for tiles with immediate biome-differing neighbors (actual edges)
+        // nearestTransitionPair = set for ALL tiles near a boundary (for interior tile consistency)
         tile.transitionPair = null;
         tile.transitionSide = '';
+        tile.nearestTransitionPair = null;
+        tile.nearestTransitionSide = '';
         const immediate = [tile.neighborN, tile.neighborNE, tile.neighborE, tile.neighborSE, tile.neighborS, tile.neighborSW, tile.neighborW, tile.neighborNW];
         for (const nb of immediate) {
           if (nb && nb !== tile.biome) {
@@ -177,15 +180,17 @@ export class ChunkRenderCache {
             if (pair) {
               tile.transitionPair = pair;
               tile.transitionSide = tile.biome === pair.from ? 'from' : 'to';
+              tile.nearestTransitionPair = pair;
+              tile.nearestTransitionSide = tile.transitionSide;
               break;
             }
           }
         }
         if (!tile.transitionPair) {
-          // Scan radius for transition-eligible neighbor
+          // Scan wider radius for transition-eligible neighbor (interior consistency)
           var foundPair = null;
-          for (var dy = -8; dy <= 8 && !foundPair; dy++) {
-            for (var dx = -8; dx <= 8 && !foundPair; dx++) {
+          for (var dy = -16; dy <= 16 && !foundPair; dy++) {
+            for (var dx = -16; dx <= 16 && !foundPair; dx++) {
               if (dx === 0 && dy === 0) continue;
               var far = tileAt(wx + dx, wy + dy);
               if (!far || far.biome === tile.biome) continue;
@@ -193,10 +198,10 @@ export class ChunkRenderCache {
               if (pair) { foundPair = pair; }
             }
           }
-          if (foundPair) {
-            tile.transitionPair = foundPair;
-            tile.transitionSide = tile.biome === foundPair.from ? 'from' : 'to';
-          }
+          // DON'T set transitionPair — these tiles have no actual edge.
+          // Only set nearestTransitionPair so getWangSrc() uses the same tileset.
+          tile.nearestTransitionPair = foundPair;
+          tile.nearestTransitionSide = foundPair ? (tile.biome === foundPair.from ? 'from' : 'to') : '';
         }
         // Wang corner mask — 4 corners: NW=tile, NE=E-neighbor, SW=S-neighbor, SE=SE-neighbor
         // Bits set when corner matches "from" biome of the transition pair

@@ -1,0 +1,9 @@
+{
+  "name": "sorceress_list_tools",
+  "description": "List the Sorceress Tool API capabilities for the configured key, including — for image generation — every model with its per-image credit cost, supported resolutions/qualities, aspect ratios, and reference-image limits. Call this BEFORE generating when the user asks what models exist, what something costs, or which model to pick. Returns LIVE data — never guess model names or prices.",
+  "input_schema": {
+    "type": "object",
+    "properties": {},
+    "required": []
+  }
+}

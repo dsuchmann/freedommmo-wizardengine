@@ -72,6 +72,12 @@ function getWangSrc(tile) {
   if (tile.transitionPair) {
     return TRANSITIONS_BASE + tile.transitionPair.dir + '/wang/' + tile.transitionPair.dir + '__wang_' + mask + WANG_SUFFIX;
   }
+  // Interior tile — use same tileset as nearest transition for consistency
+  if (tile.nearestTransitionPair) {
+    var intMask = tile.nearestTransitionSide === 'from' ? 6 : 12;
+    return TRANSITIONS_BASE + tile.nearestTransitionPair.dir + '/wang/' + tile.nearestTransitionPair.dir + '__wang_' + intMask + WANG_SUFFIX;
+  }
+  // Deep interior with no nearby transition
   var interior = BIOME_INTERIOR[tile.biome];
   if (interior) {
     return TRANSITIONS_BASE + interior.dir + '/wang/' + interior.dir + '__wang_' + interior.mask + WANG_SUFFIX;

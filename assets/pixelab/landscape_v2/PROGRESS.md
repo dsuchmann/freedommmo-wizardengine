@@ -39,7 +39,7 @@ taiga: 112     | tropical: 112  | tundra: 112     | volcanic: 112
 - **BIOME_INTERIOR_TILES.md** — Sources interior tiles from transition tilesets (fixes base mismatch)
 - **ELEVATION_CLIFF_DESIGN.md** — Cliff/elevation system design for WizardGenie
 
-### Cliff Tilesets (generated session 56+)
+### Cliff/Elevation Tilesets (14 total)
 ```
 transitions/cliff_overlay/wang/  — Generic dark rock cliff (16 tiles)
 transitions/grass_cliff/wang/    — Grassy cliff with dirt face (16 tiles)
@@ -49,8 +49,15 @@ transitions/stone_cliff/wang/    — Stone/mountain cliff (16 tiles)
 transitions/forest_cliff/wang/   — Forest cliff with mossy rock/roots (16 tiles)
 transitions/volcanic_cliff/wang/ — Volcanic cliff with lava seeping (16 tiles)
 transitions/beach_cliff/wang/    — Beach cliff with eroded sandstone (16 tiles)
+transitions/swamp_cliff/wang/    — Swamp bank with muddy dirt/roots (16 tiles)
+transitions/savanna_cliff/wang/  — Savanna plateau with red earth (16 tiles)
+transitions/tundra_cliff/wang/   — Tundra ice shelf with permafrost (16 tiles)
+transitions/hills_cliff/wang/    — Rocky hillside with layered stone (16 tiles)
+transitions/steppe_cliff/wang/   — Steppe bluff with dry earth (16 tiles)
+transitions/mystic_cliff/wang/   — Mystic cliff with purple crystals (16 tiles)
 ```
 Uses same CORNER_TO_WANG dual-grid mapping — encode elevation instead of biome.
+WizardGenie selects cliff tileset based on biome at that location.
 
 ### Session 8 Work Done
 - Downloaded 5 water biome base Wang tilesets from PixelLab library (ocean, lake, river, shallow_water, deep_ocean)
