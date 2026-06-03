@@ -53,6 +53,7 @@ const TRANSITION_PAIRS = Object.freeze({
   'taiga|hills': { from: 'taiga', to: 'hills', dir: 'taiga_to_hills' },
   'taiga|mountains': { from: 'taiga', to: 'mountains', dir: 'taiga_to_mountains' },
   'tropical_forest|mystic': { from: 'tropical_forest', to: 'mystic', dir: 'tropical_forest_to_mystic' },
+  'swamp|taiga': { from: 'swamp', to: 'taiga', dir: 'swamp_to_taiga' },
   'tundra|hills': { from: 'tundra', to: 'hills', dir: 'tundra_to_hills' },
   'tundra|mountains': { from: 'tundra', to: 'mountains', dir: 'tundra_to_mountains' },
   'tundra|arctic': { from: 'tundra', to: 'arctic', dir: 'tundra_to_snow' },
