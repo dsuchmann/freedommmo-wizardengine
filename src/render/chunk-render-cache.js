@@ -230,34 +230,17 @@ export class ChunkRenderCache {
         var sw = tile.neighborSW !== tile.biome ? 1 : 0;
         var ss = tile.neighborS  !== tile.biome ? 1 : 0;
         var se = tile.neighborSE !== tile.biome ? 1 : 0;
-        // Pattern key: 8-bit diff concat
-        var key = '' + nw + nn + ne + ww + ee + sw + ss + se;
-        // Lookup table from user-provided examples (1=diff, 0=same)
-        var lookup = {
-          '00010110': 8,  // W,S,SW diff
-          '00000010': 10, // SW only
-          '00010100': 1,  // W,SW diff (S same)
-          '00010010': 10, // W,S diff (SW same)
-          '10010110': 8,  // NW,W,S,SW all diff
-          '00000000': 6,  // all same interior near transition
-          '00000100': 10, // SW-only according to tileset layout
-          '00101000': 12, // beach tile with NE/E swamp
-          '00000100': 10, // exact: only SW differs
-          '01100000': 12, // beach: NE/E swamp
-          '01101000': 12, // beach: N/NE/E swamp
-          '11100000': 12, // beach alternate N/NE/E swamp
-          '11110000': 12, // beach: N/NE/E/SE swamp alternate key
-          '01101001': 12, // beach: N/NE/E/SE swamp exact key
-        };
-        var mask = lookup[key];
-        if (mask === undefined) {
-          // Fallback: edge diff + corner overrides
-          mask = 0;
-          if (ww) mask |= 2;
-          if (ss) mask |= 8;
-          if (sw) mask |= 8;
-          if (nw && !nn) mask &= ~2;
-        }
+        // Wang edge mask — generic: diff edges (N=1,W=2,E=4,S=8)
+        // NW special: NW diff + N same → clear W (corner-wrap pattern)
+        var mask = 0;
+        if (nn) mask |= 1;
+        if (ww) mask |= 2;
+        if (ee) mask |= 4;
+        if (ss) mask |= 8;
+        if (sw) mask |= 8;
+        if (se) mask |= 8;
+        if (ne) mask |= 1;
+        if (nw && !nn) mask &= ~2;
         tile.wangEdgeMask = mask;
         tile.wangEdgeMask = mask;
         paintTerrainTile(ctx, tile, sx, sy, WORLD.tileSize, sun, tile.climate.elevation, this.compositor, 0, this.atlas);
