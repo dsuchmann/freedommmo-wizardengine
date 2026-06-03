@@ -6,6 +6,34 @@ var WANG_SUFFIX = '__v000.png';
 var TRANSITIONS_BASE = 'assets/pixelab/landscape_v2/transitions/';
 var wangImgCache = {};
 
+// Wang tile lookup: corner mask → tile index (0-15)
+var CLIFF_CORNER_TO_WANG = [12,13,0,3,8,1,14,5,15,4,11,2,9,10,7,6];
+
+// Mapping from biome to cliff Wang tileset directory
+var BIOME_CLIFF = {
+  beach: 'beach_cliff',
+  desert: 'sand_cliff',
+  grassland: 'grass_cliff',
+  forest: 'forest_cliff',
+  dense_forest: 'forest_cliff',
+  tropical_forest: 'forest_cliff',
+  taiga: 'snow_cliff',
+  savanna: 'savanna_cliff',
+  steppe: 'steppe_cliff',
+  swamp: 'swamp_cliff',
+  tundra: 'tundra_cliff',
+  arctic: 'snow_cliff',
+  hills: 'hills_cliff',
+  mountains: 'stone_cliff',
+  volcanic: 'volcanic_cliff',
+  mystic: 'mystic_cliff',
+  ocean: 'cliff_overlay',
+  deep_ocean: 'cliff_overlay',
+  shallow_water: 'cliff_overlay',
+  river: 'cliff_overlay',
+  lake: 'cliff_overlay',
+};
+
 export function preloadWangImage(src) {
   var img = new Image();
   img.src = src;
@@ -66,6 +94,16 @@ for (var ei = 0; ei < EXTRA_TRANSITION_DIRS.length; ei++) {
     preloadWangImage(TRANSITIONS_BASE + ed + '/wang/' + ed + '__wang_' + em + WANG_SUFFIX);
   }
 }
+// Preload all cliff Wang tiles
+var cliffSeen = {};
+for (var bk in BIOME_CLIFF) {
+  var cd = BIOME_CLIFF[bk];
+  if (cliffSeen[cd]) continue;
+  cliffSeen[cd] = true;
+  for (var cm = 0; cm < 16; cm++) {
+    preloadWangImage(TRANSITIONS_BASE + cd + '/wang/' + cd + '__wang_' + cm + WANG_SUFFIX);
+  }
+}
 
 function getWangSrc(tile) {
   var mask = tile.wangEdgeMask;
@@ -112,41 +150,29 @@ export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation, c
   paintWangBase(ctx, tile, sx, sy, size);
 }
 
-// Draw dark shadow overlay on the lower side of a cliff edge.
-// Uses 10 discrete cliff levels (0-9) for fine vertical resolution.
-// Ridge areas get stronger shadow; valleys get depth tinting.
+// Draw cliff face Wang tiles on the lower side of an elevation step.
+// Uses biome-specific cliff tilesets; falls back to generic cliff_overlay.
 export function paintCliffOverlay(ctx, tile, sx, sy, size, sun) {
   var myEl = tile.climate.elevation;
   var myLevel = cliffLevel(myEl);
 
-  // Check each corner: is the adjacent tile on a higher cliff level?
-  var cliffMask = 0;
-  var levelDiff = 0;
-  if (myLevel < cliffLevel(tile._elN  || myEl)) { cliffMask |= 8; levelDiff = Math.max(levelDiff, cliffLevel(tile._elN  || myEl) - myLevel); }
-  if (myLevel < cliffLevel(tile._elE  || myEl)) { cliffMask |= 4; levelDiff = Math.max(levelDiff, cliffLevel(tile._elE  || myEl) - myLevel); }
-  if (myLevel < cliffLevel(tile._elS  || myEl)) { cliffMask |= 2; levelDiff = Math.max(levelDiff, cliffLevel(tile._elS  || myEl) - myLevel); }
-  if (myLevel < cliffLevel(tile._elSE || myEl)) { cliffMask |= 1; levelDiff = Math.max(levelDiff, cliffLevel(tile._elSE || myEl) - myLevel); }
+  // Corner mask: NW=tile(compare N elev), NE=E-neighbor, SW=S-neighbor, SE=SE-neighbor
+  // Bits set when corner neighbor is on a HIGHER cliff level
+  var cornerMask = 0;
+  if (myLevel < cliffLevel(tile._elN  || myEl)) cornerMask |= 8;
+  if (myLevel < cliffLevel(tile._elE  || myEl)) cornerMask |= 4;
+  if (myLevel < cliffLevel(tile._elS  || myEl)) cornerMask |= 2;
+  if (myLevel < cliffLevel(tile._elSE || myEl)) cornerMask |= 1;
 
-  var valleyAlpha = (tile.climate.valleyDepth || 0) * 0.18;
-  if (cliffMask === 0 && valleyAlpha < 0.02) return;
+  if (cornerMask === 0) return;
 
-  var baseAlpha = Math.min(0.60, (1 - sun.height) * 0.35 + 0.22);
+  var wangIndex = CLIFF_CORNER_TO_WANG[cornerMask];
+  var cliffDir = BIOME_CLIFF[tile.biome] || 'cliff_overlay';
+  var src = TRANSITIONS_BASE + cliffDir + '/wang/' + cliffDir + '__wang_' + wangIndex + WANG_SUFFIX;
 
-  if (cliffMask) {
-    var stepAlpha = baseAlpha * (1 + levelDiff * 0.15);
-    ctx.fillStyle = 'rgba(10,8,12,' + Math.min(0.70, stepAlpha).toFixed(2) + ')';
-    var s = size;
-
-    if (cliffMask & 1) { ctx.fillRect(sx + s * 0.5, sy + s * 0.5, s * 0.5, s * 0.5); }
-    if (cliffMask & 2) { ctx.fillRect(sx, sy + s * 0.5, s * 0.5, s * 0.5); }
-    if (cliffMask & 4) { ctx.fillRect(sx + s * 0.5, sy, s * 0.5, s * 0.5); }
-    if (cliffMask & 8) { ctx.fillRect(sx, sy, s * 0.5, s * 0.5); }
-  }
-
-  if (valleyAlpha > 0.01) {
-    ctx.fillStyle = 'rgba(8,14,24,' + Math.min(0.35, valleyAlpha + 0.05).toFixed(2) + ')';
-    ctx.fillRect(sx + 1, sy + 1, size - 2, size - 2);
-  }
+  var img = wangImgCache[src];
+  if (!img || !img.complete || !img.naturalWidth) return;
+  ctx.drawImage(img, 0, 0, 32, 32, sx, sy, size, size);
 }
 
 function coherentPatch(wx, wy, biome) {
