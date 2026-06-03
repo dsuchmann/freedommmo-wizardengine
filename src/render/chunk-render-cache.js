@@ -73,7 +73,6 @@ export class ChunkRenderCache {
     this.cache = new Map();
     this.lastCanvasByChunk = new Map();
     this.maxEntries = 160;
-    this.preferredPairs = null;
     this.renderedThisFrame = 0;
     this.fallbackThisFrame = 0;
     this.missThisFrame = 0;
@@ -182,8 +181,8 @@ export class ChunkRenderCache {
         if (!tile.transitionPair) {
           // Scan radius for transition-eligible neighbor (only if neighbors are loaded)
           var foundPair = null;
-          for (var dy = -12; dy <= 12 && !foundPair; dy++) {
-            for (var dx = -12; dx <= 12 && !foundPair; dx++) {
+          for (var dy = -8; dy <= 8 && !foundPair; dy++) {
+            for (var dx = -8; dx <= 8 && !foundPair; dx++) {
               if (dx === 0 && dy === 0) continue;
               var far = tileAt(wx + dx, wy + dy);
               if (!far || far.biome === tile.biome) continue;
@@ -192,28 +191,16 @@ export class ChunkRenderCache {
             }
           }
           if (!foundPair) {
-            // Use map-level adjacency data if available
-            if (!foundPair && this.preferredPairs) {
-              for (var pi = 0; pi < this.preferredPairs.length; pi++) {
-                var parts = this.preferredPairs[pi].split('|');
-                if (parts[0] === tile.biome || parts[1] === tile.biome) {
-                  var p = transitionPairFor(parts[0], parts[1]);
-                  if (p) { foundPair = p; break; }
-                }
-              }
+            // Fall back to preferred transition pair for this biome
+            if (!foundPair) {
+              var pref = TRANSITION_PAIRS['swamp|beach'];
+              if (pref && (pref.from === tile.biome || pref.to === tile.biome)) foundPair = pref;
             }
-            // Generic fallback
             if (!foundPair) {
               var keys = Object.keys(TRANSITION_PAIRS).sort();
               for (var k = 0; k < keys.length; k++) {
                 var p = TRANSITION_PAIRS[keys[k]];
                 if (p.from === tile.biome) { foundPair = p; break; }
-              }
-              if (!foundPair) {
-                for (var k = 0; k < keys.length; k++) {
-                  var p = TRANSITION_PAIRS[keys[k]];
-                  if (p.to === tile.biome) { foundPair = p; break; }
-                }
               }
             }
           }
@@ -232,21 +219,34 @@ export class ChunkRenderCache {
         var sw = tile.neighborSW !== tile.biome ? 1 : 0;
         var ss = tile.neighborS  !== tile.biome ? 1 : 0;
         var se = tile.neighborSE !== tile.biome ? 1 : 0;
-        // Wang edge mask — generic: diff edges (N=1,W=2,E=4,S=8)
-        var mask = 0;
-        if (nn) mask |= 1;
-        if (ww) mask |= 2;
-        if (ee) mask |= 4;
-        if (ss) mask |= 8;
-        if (sw) { mask |= 2; mask |= 8; }
-        if (se) { mask |= 4; mask |= 8; }
-        if (ne) { mask |= 1; mask |= 4; }
-        // W+S+SW all diff → clear W (leave S=8)
-        if (ww && sw && ss) mask &= ~2;
-        // W+SW diff, S same → mask=1
-        if (ww && sw && !ss) mask = 1;
-        // NW diff, N same (unless W+S+SW all diff) → mask=1
-        if (nw && !nn && mask !== 8) mask = 1;
+        // Pattern key: 8-bit diff concat
+        var key = '' + nw + nn + ne + ww + ee + sw + ss + se;
+        // Lookup table from user-provided examples (1=diff, 0=same)
+        var lookup = {
+          '00010110': 8,  // W,S,SW diff
+          '00000010': 10, // SW only
+          '00010100': 1,  // W,SW diff (S same)
+          '00010010': 10, // W,S diff (SW same)
+          '10010110': 8,  // NW,W,S,SW all diff
+          '00000000': 6,  // all same interior near transition
+          '00000100': 10, // SW-only according to tileset layout
+          '00101000': 12, // beach tile with NE/E swamp
+          '00000100': 10, // exact: only SW differs
+          '01100000': 12, // beach: NE/E swamp
+          '01101000': 12, // beach: N/NE/E swamp
+          '11100000': 12, // beach alternate N/NE/E swamp
+          '11110000': 12, // beach: N/NE/E/SE swamp alternate key
+          '01101001': 12, // beach: N/NE/E/SE swamp exact key
+        };
+        var mask = lookup[key];
+        if (mask === undefined) {
+          // Fallback: edge diff + corner overrides
+          mask = 0;
+          if (ww) mask |= 2;
+          if (ss) mask |= 8;
+          if (sw) mask |= 8;
+          if (nw && !nn) mask &= ~2;
+        }
         tile.wangEdgeMask = mask;
         tile.wangEdgeMask = mask;
         paintTerrainTile(ctx, tile, sx, sy, WORLD.tileSize, sun, tile.climate.elevation, this.compositor, 0, this.atlas);

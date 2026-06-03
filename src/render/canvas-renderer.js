@@ -194,10 +194,6 @@ export class CanvasRenderer {
       }
       if (item.type === 'player') {
         this.drawPlayerAt(item.sx, item.sy, camera.zoom, item.player);
-      // Red marker dot
-      var ctx = this.ctx;
-      ctx.fillStyle = 'rgba(255,0,0,0.8)';
-      ctx.fillRect(item.sx - 2, item.sy - 2, 5, 5);
       } else {
         const anim = animationFrame(item.signature?.animations?.idle, timeSeconds, 'S');
         drawObject(ctx, item.object.kind, item.sx, item.sy, camera.zoom, item.signature, anim, sun, this.atlas, item.tile.biome, item.object.wx, item.object.wy, item.reaction);
@@ -273,10 +269,8 @@ export class CanvasRenderer {
     const audit = this.lastAudit;
     const topBiomes = audit.seen.slice(0, 6).map(entry => `${entry.id} ${(entry.pct * 100).toFixed(0)}%`).join(', ');
     if (!this.lastTransitionLine || now - this.lastTransitionLineAt > 3000) {
-      var diag = this.lastTransitionData = transitionDiagnosticData(chunkStore);
-      this.lastTransitionLine = diag.line;
+      this.lastTransitionLine = transitionDiagnosticLine(chunkStore);
       this.lastTransitionLineAt = now;
-      this.chunkRenderCache.preferredPairs = diag.neededPairs;
     }
     const transitionLine = this.lastTransitionLine;
     const nearby = findNearbyInteraction(player, chunkStore);
@@ -395,9 +389,9 @@ function drawModularPlayer(ctx, x, y, zoom, frame, animation) {
   ctx.restore();
 }
 
-function transitionDiagnosticData(chunkStore) {
+function transitionDiagnosticLine(chunkStore) {
   const available = new Set([
-    'beach|desert','beach|grassland','beach|river','deep_ocean|ocean','dense_forest|mystic','dense_forest|tropical_forest','desert|hills','desert|savanna','desert|volcanic','forest|dense_forest','forest|hills','forest|mystic','forest|taiga','forest|tropical_forest','grassland|forest','grassland|hills','grassland|mystic','grassland|savanna','grassland|steppe','hills|mountains','hills|volcanic','lake|forest','lake|grassland','lake|river','lake|shallow_water','lake|swamp','mountains|arctic','mountains|volcanic','ocean|beach','ocean|shallow_water','river|forest','river|grassland','river|hills','river|swamp','savanna|hills','savanna|steppe','shallow_water|beach','shallow_water|river','shallow_water|swamp','steppe|desert','steppe|hills','swamp|beach','swamp|dense_forest','swamp|forest','swamp|grassland','swamp|taiga','swamp|tropical_forest','taiga|hills','taiga|mountains','tropical_forest|mystic','tundra|hills','tundra|mountains','tundra|arctic','tundra|steppe','tundra|taiga'
+    'beach|desert','beach|grassland','deep_ocean|ocean','dense_forest|mystic','dense_forest|tropical_forest','desert|hills','desert|savanna','desert|volcanic','forest|dense_forest','forest|hills','forest|mystic','forest|taiga','forest|tropical_forest','grassland|forest','grassland|hills','grassland|mystic','grassland|savanna','grassland|steppe','hills|mountains','hills|volcanic','lake|forest','lake|grassland','lake|river','lake|shallow_water','lake|swamp','mountains|arctic','mountains|volcanic','ocean|beach','ocean|shallow_water','river|forest','river|grassland','river|hills','river|swamp','savanna|hills','savanna|steppe','shallow_water|beach','shallow_water|river','shallow_water|swamp','steppe|desert','steppe|hills','swamp|beach','swamp|dense_forest','swamp|forest','swamp|grassland','swamp|tropical_forest','taiga|hills','taiga|mountains','tropical_forest|mystic','tundra|hills','tundra|mountains','tundra|arctic','tundra|steppe','tundra|taiga'
   ]);
   const canonicalAvailable = new Set([...available].map(pair => pair.split('|').sort().join('|')));
   const needed = new Set();
@@ -418,7 +412,7 @@ function transitionDiagnosticData(chunkStore) {
     }
   }
   const missing = [...needed].filter(pair => !canonicalAvailable.has(pair));
-  return { line: `<br>transitions loaded map: needed ${needed.size}, missing ${missing.length}${missing.length ? ' (' + missing.slice(0, 4).join(', ') + (missing.length > 4 ? '...' : '') + ')' : ''}`, neededPairs: [...needed], missingPairs: missing };
+  return `<br>transitions loaded map: needed ${needed.size}, missing ${missing.length}${missing.length ? ' (' + missing.slice(0, 4).join(', ') + (missing.length > 4 ? '...' : '') + ')' : ''}`;
 }
 
 function drawObject(ctx, kind, sx, sy, zoom = 1, signature = null, anim = { frame: 0 }, sun = null, atlas = null, biome = null, wx = 0, wy = 0, reaction = null) {
