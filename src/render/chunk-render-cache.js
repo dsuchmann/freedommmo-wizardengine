@@ -2,7 +2,7 @@ import { WORLD } from '../core/constants.js';
 import { paintTerrainTile } from './tile-painter.js';
 import { paintTerrainFeatures } from './feature-painter.js';
 
-const TERRAIN_RENDER_VERSION = 'wang-lookup-v14';
+const TERRAIN_RENDER_VERSION = 'wang-lookup-v15';
 
 const TRANSITION_PAIRS = Object.freeze({
   'beach|desert': { from: 'beach', to: 'desert', dir: 'beach_to_desert' },
@@ -46,6 +46,7 @@ const TRANSITION_PAIRS = Object.freeze({
   'steppe|desert': { from: 'steppe', to: 'desert', dir: 'steppe_to_desert' },
   'steppe|hills': { from: 'steppe', to: 'hills', dir: 'steppe_to_hills' },
   'swamp|beach': { from: 'swamp', to: 'beach', dir: 'swamp_to_beach' },
+  'beach|river': { from: 'beach', to: 'river', dir: 'beach_to_river' },
   'swamp|dense_forest': { from: 'swamp', to: 'dense_forest', dir: 'swamp_to_dense_forest' },
   'swamp|forest': { from: 'swamp', to: 'forest', dir: 'swamp_to_forest' },
   'swamp|grassland': { from: 'swamp', to: 'grassland', dir: 'swamp_to_grass' },
