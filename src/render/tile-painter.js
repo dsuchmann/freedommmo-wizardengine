@@ -1,5 +1,6 @@
 import { rand2, smoothNoise } from '../core/random.js';
 import { paletteFor } from './palette.js';
+import { cliffLevel } from '../world/terrain-shaper.js';
 
 var WANG_SUFFIX = '__v000.png';
 var TRANSITIONS_BASE = 'assets/pixelab/landscape_v2/transitions/';
@@ -111,44 +112,40 @@ export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation, c
   paintWangBase(ctx, tile, sx, sy, size);
 }
 
-// Quantize continuous elevation into discrete cliff levels (0-4, 5 levels)
-function cliffLevel(elevation) {
-  return Math.min(4, Math.floor(elevation * 5));
-}
-
-// Draw dark shadow overlay on the lower side of a cliff edge
+// Draw dark shadow overlay on the lower side of a cliff edge.
+// Uses 10 discrete cliff levels (0-9) for fine vertical resolution.
+// Ridge areas get stronger shadow; valleys get depth tinting.
 export function paintCliffOverlay(ctx, tile, sx, sy, size, sun) {
   var myEl = tile.climate.elevation;
   var myLevel = cliffLevel(myEl);
 
   // Check each corner: is the adjacent tile on a higher cliff level?
   var cliffMask = 0;
-  if (myLevel < cliffLevel(tile._elN  || myEl)) cliffMask |= 8;   // NW
-  if (myLevel < cliffLevel(tile._elE  || myEl)) cliffMask |= 4;   // NE
-  if (myLevel < cliffLevel(tile._elS  || myEl)) cliffMask |= 2;   // SW
-  if (myLevel < cliffLevel(tile._elSE || myEl)) cliffMask |= 1;   // SE
+  var levelDiff = 0;
+  if (myLevel < cliffLevel(tile._elN  || myEl)) { cliffMask |= 8; levelDiff = Math.max(levelDiff, cliffLevel(tile._elN  || myEl) - myLevel); }
+  if (myLevel < cliffLevel(tile._elE  || myEl)) { cliffMask |= 4; levelDiff = Math.max(levelDiff, cliffLevel(tile._elE  || myEl) - myLevel); }
+  if (myLevel < cliffLevel(tile._elS  || myEl)) { cliffMask |= 2; levelDiff = Math.max(levelDiff, cliffLevel(tile._elS  || myEl) - myLevel); }
+  if (myLevel < cliffLevel(tile._elSE || myEl)) { cliffMask |= 1; levelDiff = Math.max(levelDiff, cliffLevel(tile._elSE || myEl) - myLevel); }
 
-  if (cliffMask === 0) return;
+  var valleyAlpha = (tile.climate.valleyDepth || 0) * 0.18;
+  if (cliffMask === 0 && valleyAlpha < 0.02) return;
 
-  var alpha = Math.min(0.55, (1 - sun.height) * 0.40 + 0.20);
-  ctx.fillStyle = 'rgba(10,8,12,' + alpha.toFixed(2) + ')';
-  var s = size;
+  var baseAlpha = Math.min(0.60, (1 - sun.height) * 0.35 + 0.22);
 
-  // SE corner cliff
-  if (cliffMask & 1) {
-    ctx.fillRect(sx + s * 0.5, sy + s * 0.5, s * 0.5, s * 0.5);
+  if (cliffMask) {
+    var stepAlpha = baseAlpha * (1 + levelDiff * 0.15);
+    ctx.fillStyle = 'rgba(10,8,12,' + Math.min(0.70, stepAlpha).toFixed(2) + ')';
+    var s = size;
+
+    if (cliffMask & 1) { ctx.fillRect(sx + s * 0.5, sy + s * 0.5, s * 0.5, s * 0.5); }
+    if (cliffMask & 2) { ctx.fillRect(sx, sy + s * 0.5, s * 0.5, s * 0.5); }
+    if (cliffMask & 4) { ctx.fillRect(sx + s * 0.5, sy, s * 0.5, s * 0.5); }
+    if (cliffMask & 8) { ctx.fillRect(sx, sy, s * 0.5, s * 0.5); }
   }
-  // SW corner cliff
-  if (cliffMask & 2) {
-    ctx.fillRect(sx, sy + s * 0.5, s * 0.5, s * 0.5);
-  }
-  // NE corner cliff
-  if (cliffMask & 4) {
-    ctx.fillRect(sx + s * 0.5, sy, s * 0.5, s * 0.5);
-  }
-  // NW corner cliff
-  if (cliffMask & 8) {
-    ctx.fillRect(sx, sy, s * 0.5, s * 0.5);
+
+  if (valleyAlpha > 0.01) {
+    ctx.fillStyle = 'rgba(8,14,24,' + Math.min(0.35, valleyAlpha + 0.05).toFixed(2) + ')';
+    ctx.fillRect(sx + 1, sy + 1, size - 2, size - 2);
   }
 }
 

@@ -2,7 +2,7 @@ import { WORLD } from '../core/constants.js';
 import { paintTerrainTile, paintCliffOverlay } from './tile-painter.js';
 import { paintTerrainFeatures } from './feature-painter.js';
 
-const TERRAIN_RENDER_VERSION = 'wang-corner-v20';
+const TERRAIN_RENDER_VERSION = 'wang-corner-v21';
 
 // PixelLab 16-tile Wang corner lookup. Corner bits: NW=8, NE=4, SW=2, SE=1
 const CORNER_TO_WANG = [12,13,0,3,8,1,14,5,15,4,11,2,9,10,7,6];

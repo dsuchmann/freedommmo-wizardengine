@@ -1,4 +1,5 @@
 import { fbm } from '../core/random.js';
+import { shapeTerrain } from './terrain-shaper.js';
 import { BIOMES, SPEC_BIOME_IDS } from './biome-definitions.js';
 import { sampleRegionalMapChunk } from './regional-map.js';
 import { areBiomeNeighbors, transitionBiome } from './biome-graph.js';
@@ -10,14 +11,17 @@ export function sampleClimate(wx, wy) {
   if (showcase) return showcase;
   const continental = fbm(wx, wy, 10);
   const detail = fbm(wx, wy, 99);
-  const elevation = clamp01(continental * 0.88 + detail * 0.30 - 0.06);
+  const rawElevation = clamp01(continental * 0.88 + detail * 0.30 - 0.06);
+  const terrain = shapeTerrain(wx, wy, rawElevation);
+  const elevation = terrain.elevation;
   const moisture = clamp01(fbm(wx + 9000, wy - 4000, 20) * 1.12);
   const latitudeCold = Math.min(0.55, Math.abs(wy) / 9000);
   const altitudeCold = Math.max(0, elevation - 0.58) * 0.55;
   const heat = clamp01(fbm(wx - 3000, wy + 7000, 30) * 1.12 - latitudeCold - altitudeCold + 0.08);
   const drainage = fbm(wx + 17000, wy - 11000, 40);
   const aether = fbm(wx - 52000, wy + 33000, 66, undefined, 1400, 4);
-  return { elevation, moisture, heat, drainage, aether };
+  return { elevation, moisture, heat, drainage, aether,
+    ridgeStrength: terrain.ridgeStrength, isPeak: terrain.isPeak, valleyDepth: terrain.valleyDepth };
 }
 
 export function classifyBiome(wx, wy) {
