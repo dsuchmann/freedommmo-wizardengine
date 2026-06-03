@@ -33,9 +33,14 @@ var BASE_WANG_PREFIX = {
   river: 'assets/pixelab/landscape_v2/base/river/wang/river__wang_'
 };
 for (var preloadMask = 0; preloadMask < 16; preloadMask++) {
-  preloadWangImage(BASE_WANG_PREFIX.swamp + preloadMask + SWAMP_WANG_SUFFIX);
-  preloadWangImage(BASE_WANG_PREFIX.beach + preloadMask + SWAMP_WANG_SUFFIX);
-  preloadWangImage(TRANSITIONS_BASE + 'swamp_to_beach/wang/swamp_to_beach__wang_' + preloadMask + SWAMP_WANG_SUFFIX);
+  for (var biomeKey in BASE_WANG_PREFIX) {
+    preloadWangImage(BASE_WANG_PREFIX[biomeKey] + preloadMask + SWAMP_WANG_SUFFIX);
+  }
+  // Preload all transition Wang tiles
+  var transKeys = ['beach_to_desert','beach_to_grassland','deep_ocean_to_ocean','dense_forest_to_mystic','dense_forest_to_tropical_forest','desert_to_hills','desert_to_savanna','desert_to_volcanic','forest_to_dense_forest','forest_to_hills','forest_to_mystic','forest_to_taiga','forest_to_tropical_forest','grassland_to_forest','grassland_to_hills','grassland_to_mystic','grassland_to_savanna','grassland_to_steppe','hills_to_mountains','hills_to_volcanic','lake_to_forest','lake_to_grassland','lake_to_river','lake_to_shallow_water','lake_to_swamp','mountains_to_snow','mountains_to_volcanic','ocean_to_beach','ocean_to_shallow_water','river_to_forest','river_to_grassland','river_to_hills','river_to_swamp','savanna_to_hills','savanna_to_steppe','shallow_water_to_beach','shallow_water_to_river','shallow_water_to_swamp','steppe_to_desert','steppe_to_hills','swamp_to_beach','swamp_to_dense_forest','swamp_to_forest','swamp_to_grass','swamp_to_tropical_forest','taiga_to_hills','taiga_to_mountains','tropical_forest_to_mystic','tundra_to_hills','tundra_to_mountains','tundra_to_snow','tundra_to_steppe','tundra_to_taiga'];
+  for (var t = 0; t < transKeys.length; t++) {
+    preloadWangImage(TRANSITIONS_BASE + transKeys[t] + '/wang/' + transKeys[t] + '__wang_' + preloadMask + SWAMP_WANG_SUFFIX);
+  }
 }
 
 function getWangSrc(tile) {
