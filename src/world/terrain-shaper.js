@@ -1,4 +1,5 @@
-import { smoothNoise, fbm, getWorldSeed } from '../core/random.js';
+import { smoothNoise, fbm } from '../core/random.js';
+import { getWorldSeed } from '../core/world-seed.js';
 
 // Domain-warped ridge noise — creates sharp ridge lines and valleys.
 // Returns value in [0,1] where 0.5 = flat, >0.5 = ridge, <0.5 = valley.
