@@ -189,16 +189,16 @@ export class ChunkRenderCache {
             }
           }
           if (!foundPair) {
-            // If no nearby biome found, fall back to any available pair (prefer 'from')
-            var keys = Object.keys(TRANSITION_PAIRS).sort();
-            for (var k = 0; k < keys.length; k++) {
-              var p = TRANSITION_PAIRS[keys[k]];
-              if (p.from === tile.biome) { foundPair = p; break; }
+            // Fall back to preferred transition pair for this biome
+            if (!foundPair) {
+              var pref = TRANSITION_PAIRS['swamp|beach'];
+              if (pref && (pref.from === tile.biome || pref.to === tile.biome)) foundPair = pref;
             }
             if (!foundPair) {
+              var keys = Object.keys(TRANSITION_PAIRS).sort();
               for (var k = 0; k < keys.length; k++) {
                 var p = TRANSITION_PAIRS[keys[k]];
-                if (p.to === tile.biome) { foundPair = p; break; }
+                if (p.from === tile.biome) { foundPair = p; break; }
               }
             }
           }
