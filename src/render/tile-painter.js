@@ -52,8 +52,12 @@ function getWangSrc(tile) {
     var hasDirectEdge = (tile.neighborN && tile.neighborN !== tile.biome) ||
                          (tile.neighborW && tile.neighborW !== tile.biome) ||
                          (tile.neighborE && tile.neighborE !== tile.biome) ||
-                         (tile.neighborS && tile.neighborS !== tile.biome);
-    if (!hasDirectEdge && (mask === 0 || mask === 5 || mask === 10 || mask === 1 || mask === 4 || mask === 6)) {
+                         (tile.neighborS && tile.neighborS !== tile.biome) ||
+                         (tile.neighborNW && tile.neighborNW !== tile.biome) ||
+                         (tile.neighborNE && tile.neighborNE !== tile.biome) ||
+                         (tile.neighborSW && tile.neighborSW !== tile.biome) ||
+                         (tile.neighborSE && tile.neighborSE !== tile.biome);
+    if (!hasDirectEdge) {
       transitionMask = tile.transitionSide === 'to' ? 12 : 6;
     } else if (mask === 0 || mask === 6) {
       transitionMask = tile.transitionSide === 'to' ? 12 : 6;
