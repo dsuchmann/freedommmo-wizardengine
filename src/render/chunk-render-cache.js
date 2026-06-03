@@ -231,16 +231,20 @@ export class ChunkRenderCache {
         var ss = tile.neighborS  !== tile.biome ? 1 : 0;
         var se = tile.neighborSE !== tile.biome ? 1 : 0;
         // Wang edge mask — generic: diff edges (N=1,W=2,E=4,S=8)
-        // NW special: NW diff + N same → clear W (corner-wrap pattern)
         var mask = 0;
         if (nn) mask |= 1;
         if (ww) mask |= 2;
         if (ee) mask |= 4;
         if (ss) mask |= 8;
-        if (sw) mask |= 8;
-        if (se) mask |= 8;
-        if (ne) mask |= 1;
-        if (nw && !nn) mask &= ~2;
+        if (sw) { mask |= 2; mask |= 8; }
+        if (se) { mask |= 4; mask |= 8; }
+        if (ne) { mask |= 1; mask |= 4; }
+        // W+S+SW all diff → clear W (leave S=8)
+        if (ww && sw && ss) mask &= ~2;
+        // W+SW diff, S same → mask=1
+        if (ww && sw && !ss) mask = 1;
+        // NW diff, N same (unless W+S+SW all diff) → mask=1
+        if (nw && !nn && mask !== 8) mask = 1;
         tile.wangEdgeMask = mask;
         tile.wangEdgeMask = mask;
         paintTerrainTile(ctx, tile, sx, sy, WORLD.tileSize, sun, tile.climate.elevation, this.compositor, 0, this.atlas);
