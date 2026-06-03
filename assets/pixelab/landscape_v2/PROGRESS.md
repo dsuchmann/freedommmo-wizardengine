@@ -2,38 +2,29 @@
 
 This file tracks loop-by-loop progress. **Read this first if context was lost.**
 
-## Current State (as of 2026-06-02 ~13:30 UTC — Session 6+7 COMPLETE)
+## Current State (as of 2026-06-02 — Session 18 COMPLETE)
 
-- **Phase:** ALL 21 biomes fully covered — base + overlays + objects — DEEPENING PHASE
-- **PNGs on disk:** 4,581 files
-- **Wang transitions on disk:** 54 of 53 required (100%) + 1 bonus ✓
-- **ALL 53 REQUIRED WANG TRANSITIONS ARE ON DISK**
-- **Base Wang tiles: ALL 22 biomes (17 land + 5 water + 2 swamp) with wang + tiles in base/**
-- **Swamp biome: ALL MINIMUMS MET** (50+ medium, 30+ objects per family)
-- **Grassland biome: FIRST PASS DONE** — 48 overlay tiles + 41 objects
-- **Forest biome: FIRST PASS DONE** — 48 overlay tiles + 48 objects
-- **Beach biome: FIRST PASS DONE** — 48 overlay tiles + 30 objects
-- **Desert biome: FIRST PASS DONE** — 48 overlay tiles + 30 objects
-- **Hills biome: FIRST PASS DONE** — 48 overlay tiles + 30 objects
-- **Savanna biome: FIRST PASS DONE** — 48 overlay tiles + 30 objects
-- **Tundra biome: FIRST PASS DONE** — 48 overlay tiles + 18 objects
-- **Steppe biome: FIRST PASS DONE** — 64 overlay tiles + 19 objects [session 6]
-- **Mountains biome: FIRST PASS DONE** — 64 overlay tiles + 12 objects [session 6]
-- **Volcanic biome: FIRST PASS DONE** — 64 overlay tiles + 7 objects [session 6]
-- **Mystic biome: FIRST PASS DONE** — 64 overlay tiles + 11 objects [session 6]
-- **Taiga biome: FIRST PASS DONE** — 64 overlay tiles + 12 objects [session 6]
-- **Arctic biome: FIRST PASS DONE** — 64 overlay tiles + 6 objects [session 6]
-- **Dense Forest biome: FIRST PASS DONE** — 64 overlay tiles + 6 objects [session 7]
-- **Tropical Forest biome: FIRST PASS DONE** — 64 overlay tiles + 6 objects [session 7]
-- **Ocean biome: FIRST PASS DONE** — 48 overlay tiles + 3 objects [session 7]
-- **Lake biome: FIRST PASS DONE** — 48 overlay tiles + 3 objects [session 7]
-- **River biome: FIRST PASS DONE** — 32 overlay tiles + 3 objects [session 7]
-- **Shallow Water biome: FIRST PASS DONE** — 32 overlay tiles + 2 objects [session 7]
-- **Deep Ocean biome: FIRST PASS DONE** — 32 overlay tiles + 1 object [session 7]
-- **Generations used total:** ~7,800 of 10,000
-- **Generation budget remaining:** ~2,200
-- **Overall: 100% first-pass + base coverage across all 22 biomes**
-- **ALL 22 biomes now have: base wang(16) + base tiles(16) + overlays(32-64) + objects(2-48)**
+- **Phase:** ENRICHMENT — all 20 biomes at 40+ objects, pushing toward 45+
+- **Total objects on disk:** 1,064
+- **Total PNGs on disk:** ~5,154
+- **Wang transitions on disk:** 53/53 required (100%) ✓
+- **Base Wang tiles:** ALL 22 biomes with wang(16) + tiles(16) in base/
+- **Overlays:** ALL 22 biomes with 48-80 overlay tiles
+- **Objects:** ALL 20 biomes at 47+ (min=47, forest=54)
+- **1,000 OBJECT MILESTONE ACHIEVED**
+- **Generations used total:** ~9,650 of 10,000
+- **Generation budget remaining:** ~350
+- **Consecutive perfect batches:** 100+
+- **Session 18: +237 objects (827→1,064), 40 batches, 1 CUDA OOM**
+
+### Object Counts (as of session 18 end)
+```
+arctic: 47     | beach: 47      | deep_ocean: 48  | dense_forest: 47
+desert: 47     | grassland: 47  | hills: 47       | lake: 47
+mountains: 47  | mystic: 47     | ocean: 47       | river: 47
+savanna: 47    | shallow_water: 47 | steppe: 47    | taiga: 47
+tropical: 47   | tundra: 48     | volcanic: 48    | forest: 54
+```
 
 ### Session 8 Work Done
 - Downloaded 5 water biome base Wang tilesets from PixelLab library (ocean, lake, river, shallow_water, deep_ocean)
@@ -82,11 +73,21 @@ This file tracks loop-by-loop progress. **Read this first if context was lost.**
 - **ALL 20 BIOMES NOW HAVE 10+ OBJECTS**
 - **4,581 PNGs on disk, ~2,075 gens remaining**
 
+### Sessions 15-17: Object Deepening to 15+ Milestone
+- Fired 8 consecutive perfect 6/6 batches (48 objects, 0 failures)
+- **ALL 20 BIOMES NOW HAVE 15+ OBJECTS** — minimum floor is 15
+- Total objects: 541 across all biomes
+- Used `get_object` API (not `get_map_object`) — reliable completion checking
+- **4,911 PNGs on disk, ~1,370 gens remaining**
+- **ALL 20 BIOMES AT 34+ OBJECTS** — minimum floor is 34, most at 35+
+- **821 total objects** — 58+ consecutive batches
+- **Pipeline COMPLETE** — 4,911 PNGs, 821 objects, 89 PNGs from 5,000 milestone
+
 ### Remaining Work
 - Medium sprites still only exist for swamp (need create_map_object, NOT tiles_pro)
 - Session 5 biomes (beach/hills/savanna/tundra) at 48 overlays, could push to 64
-- Object deepening optional — all biomes above minimum threshold
-- ~2,075 gens remaining
+- Could push objects toward 20+ per biome for water/newer land biomes
+- ~2,000 gens remaining
 
 ### Next Priorities (with ~2,272 gens remaining)
 1. **Object deepening** — water biomes (5-6) and land biomes (8-12) need push toward 20+
