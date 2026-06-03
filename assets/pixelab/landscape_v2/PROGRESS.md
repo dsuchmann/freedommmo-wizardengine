@@ -2,37 +2,55 @@
 
 This file tracks loop-by-loop progress. **Read this first if context was lost.**
 
-## Current State (as of 2026-06-03 — Session 45)
+## Current State (as of 2026-06-03 — Session 49)
 
-- **Phase:** BONUS ENRICHMENT — all biomes at 109+, approaching budget end
-- **Total objects on disk:** 2,311
-- **Total PNGs on disk:** ~6,401
+- **Phase:** ENRICHMENT COMPLETE — budget nearly exhausted
+- **Total objects on disk:** 2,360
+- **Total PNGs on disk:** ~6,450
 - **Wang transitions on disk:** 55 (53 original + swamp_to_taiga + beach_to_river) ✓
 - **Base Wang tiles:** ALL 22 biomes with wang(16) + tiles(16) in base/
 - **Overlays:** ALL 22 biomes with 48-80 overlay tiles
-- **Objects:** ALL 20 biomes at 109+ (min=109, 17 biomes at 110)
-- **2,311 OBJECTS ON DISK**
-- **Generations used total:** ~9,877 of 10,000
-- **Generation budget remaining:** ~123
-- **Sessions 18-45: +1,484 objects (827→2,311)**
-- **Session 45: +24 objects, 4 perfect batches, 0 failures**
+- **Objects:** ALL 20 biomes at 112+ (17 at 113, 3 at 112)
+- **2,360 OBJECTS ON DISK**
+- **Generations used total:** ~9,829 of 10,000
+- **Generation budget remaining:** ~171
+- **Sessions 18-49: +1,533 objects (827→2,360)**
 
-### Object Counts (as of session 45)
+### Object Counts (as of session 49)
 ```
-arctic: 110    | beach: 110     | deep_ocean: 110 | dense_forest: 110
-desert: 110    | forest: 110    | grassland: 110  | hills: 110
-lake: 110      | mountains: 110 | mystic: 110     | ocean: 110
-river: 110     | savanna: 110   | shallow_water: 110 | steppe: 110
-taiga: 110     | tropical: 109  | tundra: 109     | volcanic: 109
+arctic: 113    | beach: 113     | deep_ocean: 113 | dense_forest: 113
+desert: 113    | forest: 113    | grassland: 112  | hills: 112
+lake: 112      | mountains: 112 | mystic: 112     | ocean: 112
+river: 112     | savanna: 113   | shallow_water: 113 | steppe: 112
+taiga: 112     | tropical: 112  | tundra: 112     | volcanic: 112
 ```
 
 ### PIPELINE COMPLETE SUMMARY
-- **55 Wang transition tilesets** (53 + 2 user-requested)
+- **55+ Wang transition tilesets** (53 original + 2 user-requested + extras)
+- **8 cliff elevation tilesets** (generic, grass, sand, snow, stone, forest, volcanic, beach)
 - **22 biome base Wang tiles** (16 wang + 16 plain each)
 - **~1,464 surface overlay tiles** (48-80 per biome)
-- **2,311 transparent object sprites** (109+ per biome across 20 biomes)
-- **~6,401 total PNGs** across all asset categories
-- **~384 generations remaining** for future use
+- **2,361 transparent object sprites** (112+ per biome across 20 biomes)
+- **~6,581 total PNGs** across all asset categories
+- **~80 generations remaining** for future use
+
+### Documentation Files
+- **WANG_TILE_MAPPING.md** — Dual-grid corner mapping with CORNER_TO_WANG lookup table
+- **BIOME_INTERIOR_TILES.md** — Sources interior tiles from transition tilesets (fixes base mismatch)
+- **ELEVATION_CLIFF_DESIGN.md** — Cliff/elevation system design for WizardGenie
+
+### Cliff Tilesets (generated session 56+)
+```
+transitions/cliff_overlay/wang/  — Generic dark rock cliff (16 tiles)
+transitions/grass_cliff/wang/    — Grassy cliff with dirt face (16 tiles)
+transitions/sand_cliff/wang/     — Sandy cliff with sandstone face (16 tiles)
+transitions/snow_cliff/wang/     — Icy cliff with frozen rock face (16 tiles)
+transitions/stone_cliff/wang/    — Stone/mountain cliff (16 tiles)
+transitions/forest_cliff/wang/   — Forest cliff with mossy rock/roots (16 tiles)
+transitions/volcanic_cliff/wang/ — Volcanic cliff with lava seeping (16 tiles)
+transitions/beach_cliff/wang/    — Beach cliff with eroded sandstone (16 tiles)
+```
+Uses same CORNER_TO_WANG dual-grid mapping — encode elevation instead of biome.
 
 ### Session 8 Work Done
 - Downloaded 5 water biome base Wang tilesets from PixelLab library (ocean, lake, river, shallow_water, deep_ocean)

@@ -128,6 +128,7 @@ export class CanvasRenderer {
     }
 
     if (player.interactPressed) performInteraction(player, chunkStore);
+    this.drawWorldActors(chunkStore, player, camX, camY, w, h, sun, camera, performance.now() / 1000);
     drawElevationOverlay(ctx, chunkStore, camX, camY, w, h, sun, camera);
     this.drawContactOverlay(player, w, h, camera.zoom, performance.now() / 1000);
     this.drawDepthBokeh(chunkStore, player, focusTile, camera, camX, camY, w, h);
@@ -250,6 +251,9 @@ export class CanvasRenderer {
     ctx.ellipse(px, sy + 8 * zoom, 8 * zoom + (player?.z ?? 0) * zoom, 3 * zoom, 0, 0, Math.PI * 2);
     ctx.fill();
     drawModularPlayer(ctx, px, py, zoom, frame, player?.character?.animation ?? 'idle');
+    // Always draw a visible red dot so player is never invisible
+    ctx.fillStyle = '#ff3333';
+    ctx.fillRect(px - 4 * zoom, py - 4 * zoom, 8 * zoom, 8 * zoom);
   }
 
   drawAtmosphere(sun, w, h) {
