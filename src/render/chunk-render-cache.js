@@ -179,8 +179,8 @@ export class ChunkRenderCache {
         if (!tile.transitionPair) {
           // Scan radius for transition-eligible neighbor (only if neighbors are loaded)
           var foundPair = null;
-          for (var dy = -8; dy <= 8 && !foundPair; dy++) {
-            for (var dx = -8; dx <= 8 && !foundPair; dx++) {
+          for (var dy = -12; dy <= 12 && !foundPair; dy++) {
+            for (var dx = -12; dx <= 12 && !foundPair; dx++) {
               if (dx === 0 && dy === 0) continue;
               var far = tileAt(wx + dx, wy + dy);
               if (!far || far.biome === tile.biome) continue;
@@ -189,16 +189,16 @@ export class ChunkRenderCache {
             }
           }
           if (!foundPair) {
-            // Fall back to preferred transition pair for this biome
-            if (!foundPair) {
-              var pref = TRANSITION_PAIRS['swamp|beach'];
-              if (pref && (pref.from === tile.biome || pref.to === tile.biome)) foundPair = pref;
+            // Generic fallback: prefer 'from' pair for this biome
+            var keys = Object.keys(TRANSITION_PAIRS).sort();
+            for (var k = 0; k < keys.length; k++) {
+              var p = TRANSITION_PAIRS[keys[k]];
+              if (p.from === tile.biome) { foundPair = p; break; }
             }
             if (!foundPair) {
-              var keys = Object.keys(TRANSITION_PAIRS).sort();
               for (var k = 0; k < keys.length; k++) {
                 var p = TRANSITION_PAIRS[keys[k]];
-                if (p.from === tile.biome) { foundPair = p; break; }
+                if (p.to === tile.biome) { foundPair = p; break; }
               }
             }
           }
