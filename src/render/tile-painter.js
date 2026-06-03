@@ -49,10 +49,10 @@ function getWangSrc(tile) {
   if (tile.transitionPair) {
     var transitionMask = mask;
     // For non-edge interior tiles (only corner diffs), use filler mask
-    var hasDirectEdge = ((mask & 1) && tile.neighborN !== tile.biome) ||
-                         ((mask & 2) && tile.neighborW !== tile.biome) ||
-                         ((mask & 4) && tile.neighborE !== tile.biome) ||
-                         ((mask & 8) && tile.neighborS !== tile.biome);
+    var hasDirectEdge = (tile.neighborN && tile.neighborN !== tile.biome) ||
+                         (tile.neighborW && tile.neighborW !== tile.biome) ||
+                         (tile.neighborE && tile.neighborE !== tile.biome) ||
+                         (tile.neighborS && tile.neighborS !== tile.biome);
     if (!hasDirectEdge && (mask === 0 || mask === 5 || mask === 10 || mask === 1 || mask === 4 || mask === 6)) {
       transitionMask = tile.transitionSide === 'to' ? 12 : 6;
     } else if (mask === 0 || mask === 6) {
