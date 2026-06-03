@@ -1,8 +1,9 @@
 import { WORLD } from '../core/constants.js';
 import { paintTerrainTile, paintCliffOverlay } from './tile-painter.js';
+import { paintSurfaceDecals } from './decal-painter.js';
 import { paintTerrainFeatures } from './feature-painter.js';
 
-const TERRAIN_RENDER_VERSION = 'wang-corner-v28';
+const TERRAIN_RENDER_VERSION = 'wang-corner-v33';
 
 // PixelLab 16-tile Wang corner lookup. Corner bits: NW=8, NE=4, SW=2, SE=1
 const CORNER_TO_WANG = [12,13,0,3,8,1,14,5,15,4,11,2,9,10,7,6];
@@ -229,8 +230,19 @@ export class ChunkRenderCache {
           if (tile.neighborSE === fb) cornerMask |= 1;
         }
         tile.wangEdgeMask = tile.transitionPair ? CORNER_TO_WANG[cornerMask] : 0;
+        // Detect if tile is on a cliff edge (for decal suppression)
+        var myEl = tile.climate.elevation;
+        tile._isCliffEdge = false;
+        if (myEl > 0) {
+          if (myEl > (tile._elE || myEl) + 0.02 || myEl > (tile._elS || myEl) + 0.02 || myEl > (tile._elSE || myEl) + 0.02) {
+            tile._isCliffEdge = true;
+          }
+        }
         paintTerrainTile(ctx, tile, sx, sy, WORLD.tileSize, sun, tile.climate.elevation, this.compositor, 0, this.atlas);
         paintCliffOverlay(ctx, tile, sx, sy, WORLD.tileSize, sun);
+        // Decals disabled — opaque tiles can't be used as overlays (causes black on dark biomes).
+        // Use transparent object sprites instead for environment dressing.
+        // paintSurfaceDecals(ctx, tile, sx, sy, WORLD.tileSize, sun);
         paintTerrainFeatures(ctx, tile, sx, sy, WORLD.tileSize, sun);
       }
     }
