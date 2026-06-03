@@ -111,6 +111,47 @@ export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation, c
   paintWangBase(ctx, tile, sx, sy, size);
 }
 
+// Quantize continuous elevation into discrete cliff levels (0-4, 5 levels)
+function cliffLevel(elevation) {
+  return Math.min(4, Math.floor(elevation * 5));
+}
+
+// Draw dark shadow overlay on the lower side of a cliff edge
+export function paintCliffOverlay(ctx, tile, sx, sy, size, sun) {
+  var myEl = tile.climate.elevation;
+  var myLevel = cliffLevel(myEl);
+
+  // Check each corner: is the adjacent tile on a higher cliff level?
+  var cliffMask = 0;
+  if (myLevel < cliffLevel(tile._elN  || myEl)) cliffMask |= 8;   // NW
+  if (myLevel < cliffLevel(tile._elE  || myEl)) cliffMask |= 4;   // NE
+  if (myLevel < cliffLevel(tile._elS  || myEl)) cliffMask |= 2;   // SW
+  if (myLevel < cliffLevel(tile._elSE || myEl)) cliffMask |= 1;   // SE
+
+  if (cliffMask === 0) return;
+
+  var alpha = Math.min(0.55, (1 - sun.height) * 0.40 + 0.20);
+  ctx.fillStyle = 'rgba(10,8,12,' + alpha.toFixed(2) + ')';
+  var s = size;
+
+  // SE corner cliff
+  if (cliffMask & 1) {
+    ctx.fillRect(sx + s * 0.5, sy + s * 0.5, s * 0.5, s * 0.5);
+  }
+  // SW corner cliff
+  if (cliffMask & 2) {
+    ctx.fillRect(sx, sy + s * 0.5, s * 0.5, s * 0.5);
+  }
+  // NE corner cliff
+  if (cliffMask & 4) {
+    ctx.fillRect(sx + s * 0.5, sy, s * 0.5, s * 0.5);
+  }
+  // NW corner cliff
+  if (cliffMask & 8) {
+    ctx.fillRect(sx, sy, s * 0.5, s * 0.5);
+  }
+}
+
 function coherentPatch(wx, wy, biome) {
   return Math.abs(smoothNoise(wx * 0.17 + biome.length * 0.3, wy * 0.17 + biome.length * 0.3));
 }

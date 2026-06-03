@@ -1,8 +1,8 @@
 import { WORLD } from '../core/constants.js';
-import { paintTerrainTile } from './tile-painter.js';
+import { paintTerrainTile, paintCliffOverlay } from './tile-painter.js';
 import { paintTerrainFeatures } from './feature-painter.js';
 
-const TERRAIN_RENDER_VERSION = 'wang-corner-v19';
+const TERRAIN_RENDER_VERSION = 'wang-corner-v20';
 
 // PixelLab 16-tile Wang corner lookup. Corner bits: NW=8, NE=4, SW=2, SE=1
 const CORNER_TO_WANG = [12,13,0,3,8,1,14,5,15,4,11,2,9,10,7,6];
@@ -157,14 +157,29 @@ export class ChunkRenderCache {
         // Compute all 8 neighbor biomes for this tile
         var wx = chunk.cx * WORLD.chunkSize + x;
         var wy = chunk.cy * WORLD.chunkSize + y;
-        tile.neighborN  = (tileAt(wx, wy - 1) || tile).biome;
-        tile.neighborNE = (tileAt(wx + 1, wy - 1) || tile).biome;
-        tile.neighborE  = (tileAt(wx + 1, wy) || tile).biome;
-        tile.neighborSE = (tileAt(wx + 1, wy + 1) || tile).biome;
-        tile.neighborS  = (tileAt(wx, wy + 1) || tile).biome;
-        tile.neighborSW = (tileAt(wx - 1, wy + 1) || tile).biome;
-        tile.neighborW  = (tileAt(wx - 1, wy) || tile).biome;
-        tile.neighborNW = (tileAt(wx - 1, wy - 1) || tile).biome;
+        var nbN  = tileAt(wx, wy - 1) || tile;
+        var nbNE = tileAt(wx + 1, wy - 1) || tile;
+        var nbE  = tileAt(wx + 1, wy) || tile;
+        var nbSE = tileAt(wx + 1, wy + 1) || tile;
+        var nbS  = tileAt(wx, wy + 1) || tile;
+        var nbSW = tileAt(wx - 1, wy + 1) || tile;
+        var nbW  = tileAt(wx - 1, wy) || tile;
+        var nbNW = tileAt(wx - 1, wy - 1) || tile;
+        tile.neighborN  = nbN.biome;
+        tile.neighborNE = nbNE.biome;
+        tile.neighborE  = nbE.biome;
+        tile.neighborSE = nbSE.biome;
+        tile.neighborS  = nbS.biome;
+        tile.neighborSW = nbSW.biome;
+        tile.neighborW  = nbW.biome;
+        tile.neighborNW = nbNW.biome;
+        // Store elevations for cliff rendering
+        tile._elN  = nbN.climate ? nbN.climate.elevation : tile.climate.elevation;
+        tile._elNE = nbNE.climate ? nbNE.climate.elevation : tile.climate.elevation;
+        tile._elE  = nbE.climate ? nbE.climate.elevation : tile.climate.elevation;
+        tile._elSE = nbSE.climate ? nbSE.climate.elevation : tile.climate.elevation;
+        tile._elS  = nbS.climate ? nbS.climate.elevation : tile.climate.elevation;
+        tile._elSW = nbSW.climate ? nbSW.climate.elevation : tile.climate.elevation;
 
         // Transition context: find which transition tileset applies to this tile.
         // transitionPair = set ONLY for tiles with immediate biome-differing neighbors (actual edges)
@@ -215,6 +230,7 @@ export class ChunkRenderCache {
         }
         tile.wangEdgeMask = tile.transitionPair ? CORNER_TO_WANG[cornerMask] : 0;
         paintTerrainTile(ctx, tile, sx, sy, WORLD.tileSize, sun, tile.climate.elevation, this.compositor, 0, this.atlas);
+        paintCliffOverlay(ctx, tile, sx, sy, WORLD.tileSize, sun);
         paintTerrainFeatures(ctx, tile, sx, sy, WORLD.tileSize, sun);
       }
     }
