@@ -1,5 +1,20 @@
 [
   {
+    "id": "1780604602477",
+    "name": "Chat 4",
+    "createdAt": "2026-06-04T20:23:22.477Z",
+    "model": "deepseek-v4-pro",
+    "executorModel": null,
+    "thinking": false,
+    "enhanced": false,
+    "tokenSaver": false,
+    "workingKnowledge": false,
+    "debugMode": false,
+    "visualDebug": false,
+    "iterativeMode": false,
+    "unbound": false
+  },
+  {
     "id": "1780584068737",
     "name": "Claude Is Going To Be Working On",
     "createdAt": "2026-06-04T14:41:08.737Z",
