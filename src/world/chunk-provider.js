@@ -17,6 +17,7 @@ export class ChunkProvider {
     this.maxActive = Math.max(1, workerCount);
     this.maxAdoptPerFrame = 1;
     this.pumpScheduled = false;
+    this.wangDebug = new Map();
     this.workersReady = 0;
 
     if (this.workerSupported) {
@@ -53,6 +54,7 @@ export class ChunkProvider {
           const old = this.bitmaps.get(bitmapKey);
           if (old) old.close();
           this.bitmaps.set(bitmapKey, msg.bitmap);
+          if (msg.wangDebug) this.wangDebug.set(bitmapKey, msg.wangDebug);
           // chunkPainted replaces chunkDone — finalize assembly
           const partial = this.assembling.get(key);
           this.assembling.delete(key);
@@ -64,6 +66,7 @@ export class ChunkProvider {
           const old = this.bitmaps.get(bitmapKey);
           if (old) old.close();
           this.bitmaps.set(bitmapKey, msg.bitmap);
+          if (msg.wangDebug) this.wangDebug.set(bitmapKey, msg.wangDebug);
           if (this._repaintPending) this._repaintPending.delete(bitmapKey);
         } else if (msg.type === 'chunkDone') {
           // Legacy fallback — shouldn't fire with new worker but handle gracefully
@@ -154,6 +157,10 @@ export class ChunkProvider {
 
   getBitmap(cx, cy) {
     return this.bitmaps.get(cx + ',' + cy) ?? null;
+  }
+
+  getWangDebug(cx, cy) {
+    return this.wangDebug.get(cx + ',' + cy) ?? null;
   }
 
   getReady(cx, cy) {

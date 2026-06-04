@@ -2,7 +2,7 @@
 // paints to OffscreenCanvas, returns ImageBitmap.
 
 import { WORLD } from '../core/constants.js';
-import { paintTerrainTile, paintCliffOverlay } from './worker-tile-painter.js';
+import { paintTerrainTile, paintCliffOverlay, getWangSrc } from './worker-tile-painter.js';
 
 var CORNER_TO_WANG = [12,13,0,3,8,1,14,5,15,4,11,2,9,10,7,6];
 
@@ -78,6 +78,11 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
   var canvasSize = chunkSize * tileSize;
   var offscreen = new OffscreenCanvas(canvasSize, canvasSize);
   var ctx = offscreen.getContext('2d', { alpha: true });
+  var tileCount = chunkSize * chunkSize;
+  var debugMasks = new Array(tileCount);
+  var debugSuccesses = new Array(tileCount);
+  var debugSrcs = new Array(tileCount);
+  var debugBiomes = new Array(tileCount);
 
   var tileAt = function(wx, wy) {
     var cx = Math.floor(wx / chunkSize);
@@ -181,8 +186,20 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
 
       paintTerrainTile(ctx, tile, sx, sy, tileSize, sun, tile.climate.elevation, imageCache);
       paintCliffOverlay(ctx, tile, sx, sy, tileSize, sun, imageCache);
+
+      // Collect debug data
+      var wangSrc = getWangSrc(tile);
+      var wangOk = !!(wangSrc && imageCache.get(wangSrc));
+      debugMasks[y * chunkSize + x] = tile.wangEdgeMask;
+      debugSuccesses[y * chunkSize + x] = wangOk;
+      debugSrcs[y * chunkSize + x] = wangSrc || '';
+      debugBiomes[y * chunkSize + x] = tile.biome;
     }
   }
 
-  return offscreen.transferToImageBitmap();
+  var bitmap = offscreen.transferToImageBitmap();
+  return {
+    bitmap: bitmap,
+    debug: { masks: debugMasks, successes: debugSuccesses, srcs: debugSrcs, biomes: debugBiomes }
+  };
 }

@@ -76,10 +76,10 @@ self.onmessage = function(event) {
 
     // Paint the chunk
     var sun = { height: 0.5, ambient: 0.85 };
-    var bitmap = renderChunkToBitmap(chunk, neighborCache, sun, imageCache);
+    var result = renderChunkToBitmap(chunk, neighborCache, sun, imageCache);
 
     // Transfer bitmap to main thread (zero-copy)
-    self.postMessage({ type: 'chunkPainted', key: key, cx: cx, cy: cy, bitmap: bitmap }, [bitmap]);
+    self.postMessage({ type: 'chunkPainted', key: key, cx: cx, cy: cy, bitmap: result.bitmap, wangDebug: result.debug }, [result.bitmap]);
   } else if (data.type === 'repaintChunk') {
     if (!imagesReady) return;
     var key = data.key;
@@ -95,7 +95,7 @@ self.onmessage = function(event) {
     if (!tiles) return;
     var chunk = { cx: cx, cy: cy, tiles: tiles };
     var sun = { height: 0.5, ambient: 0.85 };
-    var bitmap = renderChunkToBitmap(chunk, neighborCache, sun, imageCache);
-    self.postMessage({ type: 'chunkRepainted', key: key, cx: cx, cy: cy, bitmap: bitmap }, [bitmap]);
+    var result = renderChunkToBitmap(chunk, neighborCache, sun, imageCache);
+    self.postMessage({ type: 'chunkRepainted', key: key, cx: cx, cy: cy, bitmap: result.bitmap, wangDebug: result.debug }, [result.bitmap]);
   }
 };

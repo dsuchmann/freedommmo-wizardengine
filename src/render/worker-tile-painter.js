@@ -34,6 +34,8 @@ function getWangSrc(tile) {
   return null;
 }
 
+export { getWangSrc };
+
 function paintWangBase(ctx, tile, sx, sy, size, imageCache) {
   var src = getWangSrc(tile);
   if (!src) return;

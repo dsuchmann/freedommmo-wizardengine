@@ -1,5 +1,21 @@
 [
   {
+    "id": "1780604870122",
+    "name": "Chat 5",
+    "createdAt": "2026-06-04T20:27:50.122Z",
+    "model": "deepseek-v4-pro",
+    "executorModel": null,
+    "thinking": false,
+    "enhanced": false,
+    "tokenSaver": false,
+    "workingKnowledge": false,
+    "debugMode": false,
+    "visualDebug": false,
+    "iterativeMode": false,
+    "unbound": false,
+    "pixellabMode": false
+  },
+  {
     "id": "1780604602477",
     "name": "Please? You Wrote Out A Plan Earlier",
     "createdAt": "2026-06-04T20:23:22.477Z",

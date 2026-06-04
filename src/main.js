@@ -23,6 +23,8 @@ const spawnY = params.has('y') ? parseFloat(params.get('y')) : null;
 const player = new Player(spawnX != null && spawnY != null ? { x: spawnX, y: spawnY } : (loadPlayerPosition() ?? { x: 0, y: 0 }));
 const provider = new ChunkProvider();
 const chunks = new ChunkStore(provider);
+window._debugProvider = provider;
+window._debugChunks = chunks;
 const compositor = new RuntimeCompositor(defaultAssetCatalog);
 const renderer = new CanvasRenderer(canvas, stats, compositor);
 preloadWangTiles();

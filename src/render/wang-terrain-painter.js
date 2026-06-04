@@ -11,6 +11,10 @@ export function getDebugWangData(chunkKey) {
   return debugMaskData.get(chunkKey);
 }
 
+export function setDebugWangData(chunkKey, data) {
+  debugMaskData.set(chunkKey, data);
+}
+
 export function clearDebugWangData() {
   debugMaskData.clear();
 }

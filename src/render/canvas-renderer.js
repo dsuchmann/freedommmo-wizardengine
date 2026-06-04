@@ -6,7 +6,7 @@ import { applyBlend } from './draw-order.js';
 import { animationFrame } from './animation-state.js';
 import { ChunkRenderCache } from './chunk-render-cache.js';
 import { AtlasManager } from '../assets/atlas-manager.js';
-import { setChunkStore, getDebugWangData } from './wang-terrain-painter.js';
+import { setChunkStore, getDebugWangData, setDebugWangData } from './wang-terrain-painter.js';
 import { biomeVariantFrameId } from '../assets/variant-selector.js';
 import { drawElevationOverlay } from './elevation-overlay.js';
 import { findNearbyInteraction, objectReaction, performInteraction } from '../world/interactions.js';
@@ -90,6 +90,9 @@ export class CanvasRenderer {
       const sy = baseSY + (cy - minCY) * chunkPx;
       if (!cached) continue;
       ctx.drawImage(cached, sx, sy, chunkPx, chunkPx);
+      // Feed worker wang debug data into the debug overlay system
+      const wd = provider.getWangDebug(cx, cy);
+      if (wd && !getDebugWangData(key)) setDebugWangData(key, wd);
       visibleChunks.push({ cx, cy, key, sx, sy, dw: chunkPx, dh: chunkPx });
     }
 
