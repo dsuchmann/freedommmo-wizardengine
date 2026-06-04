@@ -1,5 +1,21 @@
 [
   {
+    "id": "1780584068737",
+    "name": "Claude Is Going To Be Working On",
+    "createdAt": "2026-06-04T14:41:08.737Z",
+    "model": "deepseek-v4-pro",
+    "executorModel": null,
+    "thinking": true,
+    "enhanced": true,
+    "tokenSaver": false,
+    "workingKnowledge": false,
+    "debugMode": true,
+    "visualDebug": false,
+    "iterativeMode": false,
+    "unbound": false,
+    "pixellabMode": false
+  },
+  {
     "id": "1780488474911",
     "name": "Starting A New Chat With You Since",
     "createdAt": "2026-06-03T12:07:54.911Z",
@@ -11,8 +27,11 @@
     "workingKnowledge": true,
     "debugMode": false,
     "visualDebug": false,
-    "iterativeMode": false,
-    "unbound": false
+    "iterativeMode": true,
+    "unbound": false,
+    "pixellabMode": true,
+    "iterativeDirective": "",
+    "browserMode": true
   },
   {
     "id": "1780488472872",
