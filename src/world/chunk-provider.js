@@ -15,7 +15,7 @@ export class ChunkProvider {
     this.nextWorker = 0;
     this.workerSupported = typeof Worker !== 'undefined';
     this.maxActive = Math.max(1, workerCount);
-    this.maxAdoptPerFrame = 2;
+    this.maxAdoptPerFrame = 1;
     this.pumpScheduled = false;
     this.workersReady = 0;
 
@@ -64,6 +64,7 @@ export class ChunkProvider {
           const old = this.bitmaps.get(bitmapKey);
           if (old) old.close();
           this.bitmaps.set(bitmapKey, msg.bitmap);
+          if (this._repaintPending) this._repaintPending.delete(bitmapKey);
         } else if (msg.type === 'chunkDone') {
           // Legacy fallback — shouldn't fire with new worker but handle gracefully
           const partial = this.assembling.get(key);
@@ -133,6 +134,21 @@ export class ChunkProvider {
       }
     }
 
+    // Request repaints for ready chunks that have no bitmap yet
+    if (readyWorkers.length > 0) {
+      for (const [key, chunk] of this.ready.entries()) {
+        const bk = chunk.cx + ',' + chunk.cy;
+        if (!this.bitmaps.has(bk) && !this._repaintPending?.has(bk)) {
+          if (!this._repaintPending) this._repaintPending = new Set();
+          this._repaintPending.add(bk);
+          const neighbors = {};
+          neighbors[bk] = chunk.tiles;
+          const worker = readyWorkers[this.nextWorker++ % readyWorkers.length];
+          worker.postMessage({ type: 'repaintChunk', key, cx: chunk.cx, cy: chunk.cy, neighbors });
+        }
+      }
+    }
+
     if (this.completed.length > 0 || this.queued.size > 0) this.schedulePump();
   }
 
@@ -159,7 +175,18 @@ export class ChunkProvider {
         this.ready.set(key, this.compiler.compile(cx, cy));
       }
     }
-    return this.ready.get(key);
+    // If no bitmap yet, send to a worker for painting
+    const chunk = this.ready.get(key);
+    if (chunk && !this.bitmaps.has(cx + ',' + cy)) {
+      const readyWorkers = this.workers.filter(w => w._imagesReady);
+      if (readyWorkers.length > 0) {
+        const neighbors = {};
+        neighbors[cx + ',' + cy] = chunk.tiles;
+        const worker = readyWorkers[this.nextWorker++ % readyWorkers.length];
+        worker.postMessage({ type: 'repaintChunk', key, cx, cy, neighbors });
+      }
+    }
+    return chunk;
   }
 
   delete(cx, cy) {

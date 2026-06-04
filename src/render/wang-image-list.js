@@ -2,7 +2,7 @@
 // No DOM dependencies. Pure data.
 
 var WANG_SUFFIX = '__v000.png';
-var TRANSITIONS_BASE = 'assets/pixelab/landscape_v2/transitions/';
+var TRANSITIONS_BASE = '/assets/pixelab/landscape_v2/transitions/';
 
 var BIOME_INTERIOR = {
   beach:         { dir: 'beach_to_river',          mask: 6 },

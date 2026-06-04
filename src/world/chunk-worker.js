@@ -11,23 +11,27 @@ var imagesReady = false;
 var neighborCache = new Map();
 var MAX_NEIGHBOR_CACHE = 50;
 
-// Preload all wang tile images on worker init
+// Preload all wang tile images on worker init — batched to avoid resource exhaustion
 (async function preloadImages() {
   var urls = getAllWangImageURLs();
   var loaded = 0;
   var failed = 0;
-  await Promise.all(urls.map(async function(url) {
-    try {
-      var response = await fetch(url);
-      if (!response.ok) { failed++; return; }
-      var blob = await response.blob();
-      var bmp = await createImageBitmap(blob);
-      imageCache.set(url, bmp);
-      loaded++;
-    } catch (e) {
-      failed++;
-    }
-  }));
+  var BATCH = 30;
+  for (var i = 0; i < urls.length; i += BATCH) {
+    var batch = urls.slice(i, i + BATCH);
+    await Promise.all(batch.map(async function(url) {
+      try {
+        var response = await fetch(url);
+        if (!response.ok) { failed++; return; }
+        var blob = await response.blob();
+        var bmp = await createImageBitmap(blob);
+        imageCache.set(url, bmp);
+        loaded++;
+      } catch (e) {
+        failed++;
+      }
+    }));
+  }
   imagesReady = true;
   self.postMessage({ type: 'imagesReady', loaded: loaded, failed: failed, total: urls.length });
 })();

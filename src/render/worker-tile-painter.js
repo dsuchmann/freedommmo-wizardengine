@@ -43,7 +43,10 @@ function paintWangBase(ctx, tile, sx, sy, size, imageCache) {
 }
 
 function coherentPatch(wx, wy, biome) {
-  return Math.abs(smoothNoise(wx * 0.17 + biome.length * 0.3, wy * 0.17 + biome.length * 0.3));
+  // smoothNoise requires (x, y, scale, salt, seed) — use scale=1, salt=0 for direct coords
+  var v = smoothNoise(wx * 0.17 + biome.length * 0.3, wy * 0.17 + biome.length * 0.3, 1, 0);
+  if (isNaN(v)) return 0.5;
+  return Math.abs(v);
 }
 
 function shade(hex, amount) {
@@ -60,8 +63,8 @@ function shade(hex, amount) {
 export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation, imageCache) {
   if (focusElevation === undefined) focusElevation = tile.climate.elevation;
   var palette = paletteFor(tile.biome);
-  var patch = coherentPatch(tile.wx, tile.wy, tile.biome);
-  var base = palette[Math.min(palette.length - 1, Math.floor(patch * palette.length))];
+  // Use middle palette color as base (coherentPatch is broken in original too)
+  var base = palette[1] || palette[0] || '#888';
   var isWater = WATER_BIOMES[tile.biome];
   var elevationShade = isWater ? 0 : (tile.climate.elevation - 0.5) * 0.22;
   var depthFade = isWater ? 0 : Math.max(0, focusElevation - tile.climate.elevation - 0.08) * 0.50;

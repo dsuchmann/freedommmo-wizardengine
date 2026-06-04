@@ -1,0 +1,8 @@
+- generic [active] [ref=e1]:
+  - generic:
+    - generic:
+      - text: FreedomMMO — deterministic world slice
+      - button "📋" [ref=e3] [cursor=pointer]
+  - generic [ref=e6]:
+    - text: click chunk-pixel to teleport · M toggle
+    - text: yellow pixel = current chunk · white box = loaded chunks
