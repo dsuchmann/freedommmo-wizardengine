@@ -21,7 +21,8 @@ const params = new URLSearchParams(window.location.search);
 const spawnX = params.has('x') ? parseFloat(params.get('x')) : null;
 const spawnY = params.has('y') ? parseFloat(params.get('y')) : null;
 const player = new Player(spawnX != null && spawnY != null ? { x: spawnX, y: spawnY } : (loadPlayerPosition() ?? { x: 0, y: 0 }));
-const chunks = new ChunkStore(new ChunkProvider());
+const provider = new ChunkProvider();
+const chunks = new ChunkStore(provider);
 const compositor = new RuntimeCompositor(defaultAssetCatalog);
 const renderer = new CanvasRenderer(canvas, stats, compositor);
 preloadWangTiles();
@@ -62,7 +63,7 @@ function loop(now) {
   update(dt);
   perf.sampleUpdate(performance.now() - updateStart);
   const drawStart = performance.now();
-  renderer.draw(chunks, player, lighting, camera);
+  renderer.draw(chunks, player, lighting, camera, provider);
   perf.sampleDraw(performance.now() - drawStart);
   if ((frame++ & 15) === 0) {
     renderer.hud(chunks, player, lighting, camera, perf);
