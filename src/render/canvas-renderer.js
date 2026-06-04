@@ -20,7 +20,7 @@ export class CanvasRenderer {
     this.statsElement = statsElement;
     this.compositor = compositor;
     this.atlas = new AtlasManager();
-    this.chunkRenderCache = new ChunkRenderCache(compositor, this.atlas);
+    this.chunkRenderCache = new ChunkRenderCache();
     this.lastAudit = null;
     this.lastAuditAt = 0;
     this.lastTransitionLine = '';
@@ -43,7 +43,7 @@ export class CanvasRenderer {
     this.ctx.imageSmoothingEnabled = false;
   }
 
-  draw(chunkStore, player, lighting, camera) {
+  draw(chunkStore, player, lighting, camera, provider) {
     const ctx = this.ctx;
     ctx.imageSmoothingEnabled = false;
     const w = window.innerWidth;
@@ -85,7 +85,7 @@ export class CanvasRenderer {
     for (const job of chunkJobs) {
       const { cx, cy, chunk } = job;
       const key = `${cx},${cy}`;
-      const cached = this.chunkRenderCache.get(chunk, sun, chunkStore);
+      const cached = this.chunkRenderCache.get(chunk, provider);
       const sx = baseSX + (cx - minCX) * chunkPx;
       const sy = baseSY + (cy - minCY) * chunkPx;
       if (!cached) continue;
@@ -284,7 +284,7 @@ export class CanvasRenderer {
     const chunkStats = chunkStore.stats();
     const cacheStats = this.chunkRenderCache.stats();
     const atlasStats = this.atlas.stats().generated;
-    const workerLine = `workers ${chunkStats.workers} · pending ${chunkStats.pending} · ready ${chunkStats.ready} · terrain cache ${cacheStats.cachedTerrainChunks}/${cacheStats.maxTerrainChunks} · art sheets ${atlasStats.loaded}/${atlasStats.sheets}`;
+    const workerLine = `workers ${chunkStats.workers} (${chunkStats.workersReady ?? '?'} ready) · pending ${chunkStats.pending} · ready ${chunkStats.ready} · bitmaps ${chunkStats.bitmaps ?? 0} · art sheets ${atlasStats.loaded}/${atlasStats.sheets}`;
     const perfLine = perf ? `<br>fps ${perf.fps.toFixed(0)} · update ${perf.updateMs.toFixed(1)}ms · draw ${perf.drawMs.toFixed(1)}ms · ${workerLine}` : '';
     // ---- Wang debug info for the tile under the player ----
     let wangDebugLine = '';
