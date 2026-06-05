@@ -3,6 +3,7 @@
 
 import { WORLD } from '../core/constants.js';
 import { paintTerrainTile, paintCliffOverlay, getWangSrc } from './worker-tile-painter.js';
+import { cliffLevel } from '../world/terrain-shaper.js';
 
 var CORNER_TO_WANG = [12,13,0,3,8,1,14,5,15,4,11,2,9,10,7,6];
 
@@ -66,6 +67,25 @@ var TRANSITION_PAIRS = {
 
 function transitionPairFor(a, b) {
   return TRANSITION_PAIRS[a + '|' + b] || TRANSITION_PAIRS[b + '|' + a] || null;
+}
+
+function elevationVariant(tile) {
+  var myLevel = cliffLevel(tile.climate.elevation);
+  var eLevel = cliffLevel(tile._elE != null ? tile._elE : tile.climate.elevation);
+  var sLevel = cliffLevel(tile._elS != null ? tile._elS : tile.climate.elevation);
+  var seLevel = cliffLevel(tile._elSE != null ? tile._elSE : tile.climate.elevation);
+  var maxDelta = Math.max(
+    Math.abs(myLevel - eLevel),
+    Math.abs(myLevel - sLevel),
+    Math.abs(myLevel - seLevel),
+    Math.abs(eLevel - sLevel),
+    Math.abs(eLevel - seLevel),
+    Math.abs(sLevel - seLevel)
+  );
+  if (maxDelta <= 0) return 'wang';
+  if (maxDelta === 1) return 'wang_25';
+  if (maxDelta === 2) return 'wang_50';
+  return 'wang_100';
 }
 
 // Render a chunk to an OffscreenCanvas and return an ImageBitmap.
@@ -184,11 +204,12 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
         }
       }
 
-      paintTerrainTile(ctx, tile, sx, sy, tileSize, sun, tile.climate.elevation, imageCache);
+      var variant = elevationVariant(tile);
+      paintTerrainTile(ctx, tile, sx, sy, tileSize, sun, tile.climate.elevation, imageCache, variant);
       paintCliffOverlay(ctx, tile, sx, sy, tileSize, sun, imageCache);
 
       // Collect debug data
-      var wangSrc = getWangSrc(tile);
+      var wangSrc = getWangSrc(tile, variant);
       var wangOk = !!(wangSrc && imageCache.get(wangSrc));
       debugMasks[y * chunkSize + x] = tile.wangEdgeMask;
       debugSuccesses[y * chunkSize + x] = wangOk;
