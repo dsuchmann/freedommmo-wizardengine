@@ -15,22 +15,31 @@ function getWangSrc(tile, variant) {
   if (mask === undefined) mask = 0;
   if (tile.transitionPair) {
     var pair = tile.transitionPair;
+    // For s0.0 (flat/symmetric), use alphabetical dir since only one direction exists on disk
+    var dir = pair.dir;
+    if (variant === 'wang') {
+      var sorted = [pair.from, pair.to].sort();
+      dir = sorted[0] + '_to_' + sorted[1];
+    }
     var otherBiome = tile.transitionSide === 'from' ? pair.to : pair.from;
     var isLandWaterCliff = !WATER_BIOMES[tile.biome] && WATER_BIOMES[otherBiome] && cliffLevel(tile.climate.elevation) > 0;
     var isWaterLandCliff = WATER_BIOMES[tile.biome] && !WATER_BIOMES[otherBiome];
     if (isLandWaterCliff || isWaterLandCliff) {
       var intMask = tile.transitionSide === 'from' ? 6 : 12;
-      return TRANSITIONS_BASE + pair.dir + '/' + variant + '/' + pair.dir + '__wang_' + intMask + WANG_SUFFIX;
+      return TRANSITIONS_BASE + dir + '/' + variant + '/' + dir + '__wang_' + intMask + WANG_SUFFIX;
     }
-    return TRANSITIONS_BASE + pair.dir + '/' + variant + '/' + pair.dir + '__wang_' + mask + WANG_SUFFIX;
+    return TRANSITIONS_BASE + dir + '/' + variant + '/' + dir + '__wang_' + mask + WANG_SUFFIX;
   }
   if (tile.nearestTransitionPair) {
+    var np = tile.nearestTransitionPair;
+    var npDir = [np.from, np.to].sort();
+    var nearDir = npDir[0] + '_to_' + npDir[1];
     var intMask2 = tile.nearestTransitionSide === 'from' ? 6 : 12;
-    return TRANSITIONS_BASE + tile.nearestTransitionPair.dir + '/' + variant + '/' + tile.nearestTransitionPair.dir + '__wang_' + intMask2 + WANG_SUFFIX;
+    return TRANSITIONS_BASE + nearDir + '/wang/' + nearDir + '__wang_' + intMask2 + WANG_SUFFIX;
   }
   var interior = BIOME_INTERIOR[tile.biome];
   if (interior) {
-    return TRANSITIONS_BASE + interior.dir + '/' + variant + '/' + interior.dir + '__wang_' + interior.mask + WANG_SUFFIX;
+    return TRANSITIONS_BASE + interior.dir + '/wang/' + interior.dir + '__wang_' + interior.mask + WANG_SUFFIX;
   }
   return null;
 }

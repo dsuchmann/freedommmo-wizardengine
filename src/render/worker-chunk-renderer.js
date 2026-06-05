@@ -7,66 +7,23 @@ import { cliffLevel } from '../world/terrain-shaper.js';
 
 var CORNER_TO_WANG = [12,13,0,3,8,1,14,5,15,4,11,2,9,10,7,6];
 
-var TRANSITION_PAIRS = {
-  'beach|desert': { from: 'beach', to: 'desert', dir: 'beach_to_desert' },
-  'beach|grassland': { from: 'beach', to: 'grassland', dir: 'beach_to_grassland' },
-  'deep_ocean|ocean': { from: 'deep_ocean', to: 'ocean', dir: 'deep_ocean_to_ocean' },
-  'dense_forest|mystic': { from: 'dense_forest', to: 'mystic', dir: 'dense_forest_to_mystic' },
-  'dense_forest|tropical_forest': { from: 'dense_forest', to: 'tropical_forest', dir: 'dense_forest_to_tropical_forest' },
-  'desert|hills': { from: 'desert', to: 'hills', dir: 'desert_to_hills' },
-  'desert|savanna': { from: 'desert', to: 'savanna', dir: 'desert_to_savanna' },
-  'desert|volcanic': { from: 'desert', to: 'volcanic', dir: 'desert_to_volcanic' },
-  'forest|dense_forest': { from: 'forest', to: 'dense_forest', dir: 'forest_to_dense_forest' },
-  'forest|hills': { from: 'forest', to: 'hills', dir: 'forest_to_hills' },
-  'forest|mystic': { from: 'forest', to: 'mystic', dir: 'forest_to_mystic' },
-  'forest|taiga': { from: 'forest', to: 'taiga', dir: 'forest_to_taiga' },
-  'forest|tropical_forest': { from: 'forest', to: 'tropical_forest', dir: 'forest_to_tropical_forest' },
-  'grassland|forest': { from: 'grassland', to: 'forest', dir: 'grassland_to_forest' },
-  'grassland|hills': { from: 'grassland', to: 'hills', dir: 'grassland_to_hills' },
-  'grassland|mystic': { from: 'grassland', to: 'mystic', dir: 'grassland_to_mystic' },
-  'grassland|savanna': { from: 'grassland', to: 'savanna', dir: 'grassland_to_savanna' },
-  'grassland|steppe': { from: 'grassland', to: 'steppe', dir: 'grassland_to_steppe' },
-  'hills|mountains': { from: 'hills', to: 'mountains', dir: 'hills_to_mountains' },
-  'hills|volcanic': { from: 'hills', to: 'volcanic', dir: 'hills_to_volcanic' },
-  'lake|forest': { from: 'lake', to: 'forest', dir: 'lake_to_forest' },
-  'lake|grassland': { from: 'lake', to: 'grassland', dir: 'lake_to_grassland' },
-  'lake|river': { from: 'lake', to: 'river', dir: 'lake_to_river' },
-  'lake|shallow_water': { from: 'lake', to: 'shallow_water', dir: 'lake_to_shallow_water' },
-  'lake|swamp': { from: 'lake', to: 'swamp', dir: 'lake_to_swamp' },
-  'mountains|arctic': { from: 'mountains', to: 'arctic', dir: 'mountains_to_snow' },
-  'mountains|volcanic': { from: 'mountains', to: 'volcanic', dir: 'mountains_to_volcanic' },
-  'ocean|beach': { from: 'ocean', to: 'beach', dir: 'ocean_to_beach' },
-  'ocean|shallow_water': { from: 'ocean', to: 'shallow_water', dir: 'ocean_to_shallow_water' },
-  'river|forest': { from: 'river', to: 'forest', dir: 'river_to_forest' },
-  'river|grassland': { from: 'river', to: 'grassland', dir: 'river_to_grassland' },
-  'river|hills': { from: 'river', to: 'hills', dir: 'river_to_hills' },
-  'river|swamp': { from: 'river', to: 'swamp', dir: 'river_to_swamp' },
-  'savanna|hills': { from: 'savanna', to: 'hills', dir: 'savanna_to_hills' },
-  'savanna|steppe': { from: 'savanna', to: 'steppe', dir: 'savanna_to_steppe' },
-  'shallow_water|beach': { from: 'shallow_water', to: 'beach', dir: 'shallow_water_to_beach' },
-  'shallow_water|river': { from: 'shallow_water', to: 'river', dir: 'shallow_water_to_river' },
-  'shallow_water|swamp': { from: 'shallow_water', to: 'swamp', dir: 'shallow_water_to_swamp' },
-  'steppe|desert': { from: 'steppe', to: 'desert', dir: 'steppe_to_desert' },
-  'steppe|hills': { from: 'steppe', to: 'hills', dir: 'steppe_to_hills' },
-  'swamp|beach': { from: 'swamp', to: 'beach', dir: 'swamp_to_beach' },
-  'beach|river': { from: 'beach', to: 'river', dir: 'beach_to_river' },
-  'swamp|dense_forest': { from: 'swamp', to: 'dense_forest', dir: 'swamp_to_dense_forest' },
-  'swamp|forest': { from: 'swamp', to: 'forest', dir: 'swamp_to_forest' },
-  'swamp|grassland': { from: 'swamp', to: 'grassland', dir: 'swamp_to_grass' },
-  'swamp|tropical_forest': { from: 'swamp', to: 'tropical_forest', dir: 'swamp_to_tropical_forest' },
-  'taiga|hills': { from: 'taiga', to: 'hills', dir: 'taiga_to_hills' },
-  'taiga|mountains': { from: 'taiga', to: 'mountains', dir: 'taiga_to_mountains' },
-  'tropical_forest|mystic': { from: 'tropical_forest', to: 'mystic', dir: 'tropical_forest_to_mystic' },
-  'swamp|taiga': { from: 'swamp', to: 'taiga', dir: 'swamp_to_taiga' },
-  'tundra|hills': { from: 'tundra', to: 'hills', dir: 'tundra_to_hills' },
-  'tundra|mountains': { from: 'tundra', to: 'mountains', dir: 'tundra_to_mountains' },
-  'tundra|arctic': { from: 'tundra', to: 'arctic', dir: 'tundra_to_snow' },
-  'tundra|steppe': { from: 'tundra', to: 'steppe', dir: 'tundra_to_steppe' },
-  'tundra|taiga': { from: 'tundra', to: 'taiga', dir: 'tundra_to_taiga' },
-};
-
-function transitionPairFor(a, b) {
-  return TRANSITION_PAIRS[a + '|' + b] || TRANSITION_PAIRS[b + '|' + a] || null;
+// Dynamic transition pair — direction determined by elevation.
+// For s0.0 (flat/symmetric), uses alphabetical order.
+// For s0.25/s0.5/s1.0, lower-elevation biome is 'from', higher is 'to'.
+function transitionPairFor(a, b, elevA, elevB) {
+  if (a === b) return null;
+  var lower, upper;
+  if (elevA !== undefined && elevB !== undefined && elevA !== elevB) {
+    // Elevation-aware: lower elevation biome is 'from'
+    if (elevA <= elevB) { lower = a; upper = b; }
+    else { lower = b; upper = a; }
+  } else {
+    // No elevation difference or not provided: alphabetical (for s0.0 symmetric lookup)
+    var sorted = [a, b].sort();
+    lower = sorted[0];
+    upper = sorted[1];
+  }
+  return { from: lower, to: upper, dir: lower + '_to_' + upper };
 }
 
 function elevationVariant(tile) {
@@ -150,16 +107,26 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
       tile._elS  = nbS.climate ? nbS.climate.elevation : tile.climate.elevation;
       tile._elSW = nbSW.climate ? nbSW.climate.elevation : tile.climate.elevation;
 
-      // Transition pair detection
+      // Transition pair detection — direction-aware based on elevation
       tile.transitionPair = null;
       tile.transitionSide = '';
       tile.nearestTransitionPair = null;
       tile.nearestTransitionSide = '';
-      var immediate = [tile.neighborN, tile.neighborNE, tile.neighborE, tile.neighborSE, tile.neighborS, tile.neighborSW, tile.neighborW, tile.neighborNW];
-      for (var ni = 0; ni < immediate.length; ni++) {
-        var nb = immediate[ni];
-        if (nb && nb !== tile.biome) {
-          var pair = transitionPairFor(tile.biome, nb);
+      var myEl = tile.climate.elevation;
+      var immediateNbs = [
+        { biome: tile.neighborN, el: tile._elN },
+        { biome: tile.neighborNE, el: tile._elNE },
+        { biome: tile.neighborE, el: tile._elE },
+        { biome: tile.neighborSE, el: tile._elSE },
+        { biome: tile.neighborS, el: tile._elS },
+        { biome: tile.neighborSW, el: tile._elSW },
+        { biome: tile.neighborW, el: nbW.climate ? nbW.climate.elevation : myEl },
+        { biome: tile.neighborNW, el: nbNW.climate ? nbNW.climate.elevation : myEl }
+      ];
+      for (var ni = 0; ni < immediateNbs.length; ni++) {
+        var nbInfo = immediateNbs[ni];
+        if (nbInfo.biome && nbInfo.biome !== tile.biome) {
+          var pair = transitionPairFor(tile.biome, nbInfo.biome, myEl, nbInfo.el);
           if (pair) {
             tile.transitionPair = pair;
             tile.transitionSide = tile.biome === pair.from ? 'from' : 'to';
@@ -176,7 +143,8 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
             if (dx === 0 && dy === 0) continue;
             var far = tileAt(wx + dx, wy + dy);
             if (!far || far.biome === tile.biome) continue;
-            var farPair = transitionPairFor(tile.biome, far.biome);
+            var farEl = far.climate ? far.climate.elevation : myEl;
+            var farPair = transitionPairFor(tile.biome, far.biome, myEl, farEl);
             if (farPair) { foundPair = farPair; }
           }
         }
