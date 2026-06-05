@@ -9,7 +9,8 @@ import { WANG_SUFFIX, TRANSITIONS_BASE, BIOME_INTERIOR, BIOME_CLIFF } from './wa
 var CLIFF_CORNER_TO_WANG = [12,13,0,3,8,1,14,5,15,4,11,2,9,10,7,6];
 var WATER_BIOMES = { ocean: 1, deep_ocean: 1, shallow_water: 1, river: 1, lake: 1 };
 
-function getWangSrc(tile) {
+function getWangSrc(tile, variant) {
+  if (!variant) variant = 'wang';
   var mask = tile.wangEdgeMask;
   if (mask === undefined) mask = 0;
   if (tile.transitionPair) {
@@ -19,28 +20,35 @@ function getWangSrc(tile) {
     var isWaterLandCliff = WATER_BIOMES[tile.biome] && !WATER_BIOMES[otherBiome];
     if (isLandWaterCliff || isWaterLandCliff) {
       var intMask = tile.transitionSide === 'from' ? 6 : 12;
-      return TRANSITIONS_BASE + pair.dir + '/wang/' + pair.dir + '__wang_' + intMask + WANG_SUFFIX;
+      return TRANSITIONS_BASE + pair.dir + '/' + variant + '/' + pair.dir + '__wang_' + intMask + WANG_SUFFIX;
     }
-    return TRANSITIONS_BASE + pair.dir + '/wang/' + pair.dir + '__wang_' + mask + WANG_SUFFIX;
+    return TRANSITIONS_BASE + pair.dir + '/' + variant + '/' + pair.dir + '__wang_' + mask + WANG_SUFFIX;
   }
   if (tile.nearestTransitionPair) {
     var intMask2 = tile.nearestTransitionSide === 'from' ? 6 : 12;
-    return TRANSITIONS_BASE + tile.nearestTransitionPair.dir + '/wang/' + tile.nearestTransitionPair.dir + '__wang_' + intMask2 + WANG_SUFFIX;
+    return TRANSITIONS_BASE + tile.nearestTransitionPair.dir + '/' + variant + '/' + tile.nearestTransitionPair.dir + '__wang_' + intMask2 + WANG_SUFFIX;
   }
   var interior = BIOME_INTERIOR[tile.biome];
   if (interior) {
-    return TRANSITIONS_BASE + interior.dir + '/wang/' + interior.dir + '__wang_' + interior.mask + WANG_SUFFIX;
+    return TRANSITIONS_BASE + interior.dir + '/' + variant + '/' + interior.dir + '__wang_' + interior.mask + WANG_SUFFIX;
   }
   return null;
 }
 
 export { getWangSrc };
 
-function paintWangBase(ctx, tile, sx, sy, size, imageCache) {
-  var src = getWangSrc(tile);
+function paintWangBase(ctx, tile, sx, sy, size, imageCache, variant) {
+  var src = getWangSrc(tile, variant);
   if (!src) return;
   var bmp = imageCache.get(src);
-  if (!bmp) return;
+  if (!bmp) {
+    // Fallback: if the elevation variant isn't available, try flat
+    if (variant !== 'wang') {
+      src = getWangSrc(tile, 'wang');
+      bmp = imageCache.get(src);
+    }
+    if (!bmp) return;
+  }
   ctx.drawImage(bmp, 0, 0, 32, 32, sx, sy, size, size);
 }
 
@@ -62,10 +70,9 @@ function shade(hex, amount) {
   }).join('');
 }
 
-export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation, imageCache) {
+export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation, imageCache, variant) {
   if (focusElevation === undefined) focusElevation = tile.climate.elevation;
   var palette = paletteFor(tile.biome);
-  // Use middle palette color as base (coherentPatch is broken in original too)
   var base = palette[1] || palette[0] || '#888';
   var isWater = WATER_BIOMES[tile.biome];
   var elevationShade = isWater ? 0 : (tile.climate.elevation - 0.5) * 0.22;
@@ -74,7 +81,7 @@ export function paintTerrainTile(ctx, tile, sx, sy, size, sun, focusElevation, i
   var shaded = shade(base, light);
   ctx.fillStyle = shaded;
   ctx.fillRect(sx, sy, size, size);
-  paintWangBase(ctx, tile, sx, sy, size, imageCache);
+  paintWangBase(ctx, tile, sx, sy, size, imageCache, variant);
 }
 
 function cornerCliffLevel(elevation, biome) {
