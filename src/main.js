@@ -41,8 +41,10 @@ function update(dt) {
     renderer.chunkRenderCache.clear();
   }
   if (input.wasPressed('m')) overmap.toggle();
+  if (input.wasPressed('f')) overmap.toggleExpand();
+  if (input.wasPressed('escape') && overmap.expanded) overmap.toggleExpand();
   if (input.wasPressed('l')) lighting.togglePause();
-  if (input.wasPressed('d')) renderer.debugWang = !renderer.debugWang;
+  if (input.wasPressed('0')) renderer.debugWang = !renderer.debugWang;
   if (input.wasPressed('t')) {
     player.x = 208;
     player.y = 212;

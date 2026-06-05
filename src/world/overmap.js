@@ -7,9 +7,18 @@ export class OvermapController {
     this.player = player;
     this.chunkStore = chunkStore;
     this.visible = true;
+    this.expanded = false;
+    this.wrap = element.parentElement;
     // Render the overmap at half display resolution; CSS scales it to 304px.
     // This avoids a 300k+ sample burst every time the player enters a chunk.
-    this.size = 152;
+    this.smallSize = 152;
+    this.expandedSize = 600;
+    this.size = this.smallSize;
+    // chunkScale: chunks per pixel. 2 = every pixel covers 2 chunks (zoomed out).
+    // 1 = one pixel per chunk (full detail).
+    this.smallScale = 2;
+    this.expandedScale = 1;
+    this.chunkScale = this.smallScale;
     this.sampleChunks = this.size;
     this.lastCenter = '';
     this.redrawNeeded = true;
@@ -26,6 +35,23 @@ export class OvermapController {
   toggle() {
     this.visible = !this.visible;
     this.element.style.display = this.visible ? 'block' : 'none';
+    if (!this.visible && this.expanded) this.toggleExpand();
+  }
+
+  toggleExpand() {
+    if (!this.visible) return;
+    this.expanded = !this.expanded;
+    this.wrap.classList.toggle('expanded', this.expanded);
+    this.size = this.expanded ? this.expandedSize : this.smallSize;
+    this.chunkScale = this.expanded ? this.expandedScale : this.smallScale;
+    this.sampleChunks = this.size;
+    this.element.width = this.size;
+    this.element.height = this.size;
+    this.baseCanvas.width = this.size;
+    this.baseCanvas.height = this.size;
+    this.lastCenter = '';
+    this.redrawNeeded = true;
+    this.draw(true);
   }
 
   teleportFromClick(event) {
@@ -33,8 +59,8 @@ export class OvermapController {
     const px = Math.floor((event.clientX - rect.left) / rect.width * this.size);
     const py = Math.floor((event.clientY - rect.top) / rect.height * this.size);
     const { pcx, pcy } = this.playerChunk();
-    const targetCx = pcx + (px - Math.floor(this.size / 2)) * 2;
-    const targetCy = pcy + (py - Math.floor(this.size / 2)) * 2;
+    const targetCx = pcx + (px - Math.floor(this.size / 2)) * this.chunkScale;
+    const targetCy = pcy + (py - Math.floor(this.size / 2)) * this.chunkScale;
     this.player.x = targetCx * WORLD.chunkSize + WORLD.chunkSize / 2;
     this.player.y = targetCy * WORLD.chunkSize + WORLD.chunkSize / 2;
     this.redrawNeeded = true;
@@ -65,12 +91,12 @@ export class OvermapController {
 
     for (let py = 0; py < this.size; py++) {
       for (let px = 0; px < this.size; px++) {
-        const cx = pcx + (px - half) * 2;
-        const cy = pcy + (py - half) * 2;
+        const cx = pcx + (px - half) * this.chunkScale;
+        const cy = pcy + (py - half) * this.chunkScale;
         const sample = sampleRegionalMapChunk(cx, cy);
         const rgb = hexToRgb(sample.definition.color);
-        const east = sampleRegionalMapChunk(cx + 1, cy).climate.elevation;
-        const south = sampleRegionalMapChunk(cx, cy + 1).climate.elevation;
+        const east = sampleRegionalMapChunk(cx + this.chunkScale, cy).climate.elevation;
+        const south = sampleRegionalMapChunk(cx, cy + this.chunkScale).climate.elevation;
         const hill = Math.max(-35, Math.min(45, (sample.climate.elevation - 0.5) * 80 + (sample.climate.elevation - east) * 180 + (sample.climate.elevation - south) * 140));
         const index = (py * this.size + px) * 4;
         image.data[index] = clamp(rgb.r + hill);
@@ -95,19 +121,22 @@ export class OvermapController {
   drawOverlay(ctx, pcx, pcy) {
     if (this.baseCanvas) ctx.drawImage(this.baseCanvas, 0, 0);
     const c = Math.floor(this.size / 2);
-    const loadedRadius = Math.max(1, Math.ceil(WORLD.loadRadius / 2));
+    const scale = this.chunkScale;
+    const loadedRadius = Math.max(1, Math.ceil(WORLD.loadRadius / scale));
     const loadedSize = loadedRadius * 2 + 1;
 
-    // Distance rings are approximate because one overmap pixel is two chunks.
+    // Distance rings in chunk units, scaled to pixels.
     ctx.strokeStyle = 'rgba(255,255,255,.18)';
     ctx.lineWidth = 1;
-    for (const chunks of [16, 32, 64, 128]) {
+    for (const chunkDist of [16, 32, 64, 128, 256]) {
+      const r = chunkDist / scale;
+      if (r > this.size) continue;
       ctx.beginPath();
-      ctx.arc(c, c, chunks, 0, Math.PI * 2);
+      ctx.arc(c, c, r, 0, Math.PI * 2);
       ctx.stroke();
     }
 
-    // Current loaded chunk window: exactly the chunk radius currently streamed around the player.
+    // Current loaded chunk window.
     ctx.fillStyle = 'rgba(255,255,255,.12)';
     ctx.fillRect(c - loadedRadius, c - loadedRadius, loadedSize, loadedSize);
     ctx.strokeStyle = '#ffffff';
