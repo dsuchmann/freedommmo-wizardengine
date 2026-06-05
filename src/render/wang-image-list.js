@@ -3,6 +3,8 @@
 
 var WANG_SUFFIX = '__v000.png';
 var TRANSITIONS_BASE = '/assets/pixelab/landscape_v2/transitions/';
+var WANG_VARIANTS = ['wang', 'wang_25', 'wang_50', 'wang_100'];
+var WANG_VARIANT_TILE_COUNTS = { wang: 16, wang_25: 16, wang_50: 16, wang_100: 25 };
 
 var BIOME_INTERIOR = {
   beach:         { dir: 'beach_to_river',          mask: 6 },
@@ -61,28 +63,34 @@ var EXTRA_TRANSITION_DIRS = [
   'tundra_to_hills','tundra_to_mountains','tundra_to_snow','tundra_to_steppe','tundra_to_taiga'
 ];
 
-export { WANG_SUFFIX, TRANSITIONS_BASE, BIOME_INTERIOR, BIOME_CLIFF, EXTRA_TRANSITION_DIRS };
+export { WANG_SUFFIX, TRANSITIONS_BASE, BIOME_INTERIOR, BIOME_CLIFF, EXTRA_TRANSITION_DIRS, WANG_VARIANTS, WANG_VARIANT_TILE_COUNTS };
 
 // Build the complete URL list for all wang tile images
 export function getAllWangImageURLs() {
   var urls = [];
   var seenDirs = new Set();
+
+  // Collect all transition directories
   for (var b in BIOME_INTERIOR) {
     var ie = BIOME_INTERIOR[b];
-    if (seenDirs.has(ie.dir)) continue;
     seenDirs.add(ie.dir);
-    for (var pm = 0; pm < 16; pm++) {
-      urls.push(TRANSITIONS_BASE + ie.dir + '/wang/' + ie.dir + '__wang_' + pm + WANG_SUFFIX);
-    }
   }
   for (var ei = 0; ei < EXTRA_TRANSITION_DIRS.length; ei++) {
-    var ed = EXTRA_TRANSITION_DIRS[ei];
-    if (seenDirs.has(ed)) continue;
-    seenDirs.add(ed);
-    for (var em = 0; em < 16; em++) {
-      urls.push(TRANSITIONS_BASE + ed + '/wang/' + ed + '__wang_' + em + WANG_SUFFIX);
-    }
+    seenDirs.add(EXTRA_TRANSITION_DIRS[ei]);
   }
+
+  // For each transition dir, generate URLs for all variants that exist on disk
+  seenDirs.forEach(function(dir) {
+    for (var vi = 0; vi < WANG_VARIANTS.length; vi++) {
+      var variant = WANG_VARIANTS[vi];
+      var tileCount = WANG_VARIANT_TILE_COUNTS[variant];
+      for (var m = 0; m < tileCount; m++) {
+        urls.push(TRANSITIONS_BASE + dir + '/' + variant + '/' + dir + '__wang_' + m + WANG_SUFFIX);
+      }
+    }
+  });
+
+  // Cliff overlays (only wang/ — cliffs don't have elevation variants)
   var cliffSeen = {};
   for (var bk in BIOME_CLIFF) {
     var cd = BIOME_CLIFF[bk];
