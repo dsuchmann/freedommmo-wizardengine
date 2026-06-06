@@ -5,7 +5,10 @@ import { WORLD } from '../core/constants.js';
 import { paintTerrainTile, paintCliffOverlay, getWangSrc } from './worker-tile-painter.js';
 import { cliffLevel } from '../world/terrain-shaper.js';
 
-var CORNER_TO_WANG = [12,13,0,3,8,1,14,5,15,4,11,2,9,10,7,6];
+// PixelLab wang tile index = NW*8 + NE*4 + SW*2 + SE*1 where 1=upper biome.
+// Game cornerMask uses same bit positions but 1=lower biome.
+// So wang_index = cornerMask XOR 15 (complement all bits).
+var CORNER_TO_WANG = [15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0];
 
 // Dynamic transition pair — direction determined by elevation.
 // For s0.0 (flat/symmetric), uses alphabetical order.
@@ -60,6 +63,15 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
   var debugSuccesses = new Array(tileCount);
   var debugSrcs = new Array(tileCount);
   var debugBiomes = new Array(tileCount);
+  // 8-layer diagnostic arrays
+  var debugNeighbors = new Array(tileCount);
+  var debugTransitionDirs = new Array(tileCount);
+  var debugTransitionSides = new Array(tileCount);
+  var debugCornerMasks = new Array(tileCount);
+  var debugVariants = new Array(tileCount);
+  var debugCliffLevels = new Array(tileCount);
+  var debugInteriorUsed = new Array(tileCount);
+  var debugCliffOverlay = new Array(tileCount);
 
   var tileAt = function(wx, wy) {
     var cx = Math.floor(wx / chunkSize);
@@ -177,18 +189,37 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
       paintCliffOverlay(ctx, tile, sx, sy, tileSize, sun, imageCache);
 
       // Collect debug data
+      var idx = y * chunkSize + x;
       var wangSrc = getWangSrc(tile, variant);
       var wangOk = !!(wangSrc && imageCache.get(wangSrc));
-      debugMasks[y * chunkSize + x] = tile.wangEdgeMask;
-      debugSuccesses[y * chunkSize + x] = wangOk;
-      debugSrcs[y * chunkSize + x] = wangSrc || '';
-      debugBiomes[y * chunkSize + x] = tile.biome;
+      debugMasks[idx] = tile.wangEdgeMask;
+      debugSuccesses[idx] = wangOk;
+      debugSrcs[idx] = wangSrc || '';
+      debugBiomes[idx] = tile.biome;
+      // 8-layer diagnostics
+      debugNeighbors[idx] = tile.neighborN + ',' + tile.neighborNE + ',' + tile.neighborE + ',' + tile.neighborSE + ',' + tile.neighborS + ',' + tile.neighborSW + ',' + tile.neighborW + ',' + tile.neighborNW;
+      debugTransitionDirs[idx] = tile.transitionPair ? tile.transitionPair.dir : (tile.nearestTransitionPair ? '~' + tile.nearestTransitionPair.dir : '');
+      debugTransitionSides[idx] = tile.transitionPair ? tile.transitionSide : (tile.nearestTransitionPair ? '~' + tile.nearestTransitionSide : '');
+      debugCornerMasks[idx] = cornerMask;
+      debugVariants[idx] = variant;
+      var myCliff = cliffLevel(tile.climate.elevation);
+      var eCliff = cliffLevel(tile._elE != null ? tile._elE : tile.climate.elevation);
+      var sCliff = cliffLevel(tile._elS != null ? tile._elS : tile.climate.elevation);
+      var seCliff = cliffLevel(tile._elSE != null ? tile._elSE : tile.climate.elevation);
+      debugCliffLevels[idx] = myCliff + ',' + eCliff + ',' + sCliff + ',' + seCliff;
+      debugInteriorUsed[idx] = !tile.transitionPair && !tile.nearestTransitionPair;
+      debugCliffOverlay[idx] = tile._isCliffEdge;
     }
   }
 
   var bitmap = offscreen.transferToImageBitmap();
   return {
     bitmap: bitmap,
-    debug: { masks: debugMasks, successes: debugSuccesses, srcs: debugSrcs, biomes: debugBiomes }
+    debug: {
+      masks: debugMasks, successes: debugSuccesses, srcs: debugSrcs, biomes: debugBiomes,
+      neighbors: debugNeighbors, transitionDirs: debugTransitionDirs, transitionSides: debugTransitionSides,
+      cornerMasks: debugCornerMasks, variants: debugVariants, cliffLevels: debugCliffLevels,
+      interiorUsed: debugInteriorUsed, cliffOverlay: debugCliffOverlay
+    }
   };
 }

@@ -289,7 +289,7 @@ export class CanvasRenderer {
     const atlasStats = this.atlas.stats().generated;
     const workerLine = `workers ${chunkStats.workers} (${chunkStats.workersReady ?? '?'} ready) · pending ${chunkStats.pending} · ready ${chunkStats.ready} · bitmaps ${chunkStats.bitmaps ?? 0} · art sheets ${atlasStats.loaded}/${atlasStats.sheets}`;
     const perfLine = perf ? `<br>fps ${perf.fps.toFixed(0)} · update ${perf.updateMs.toFixed(1)}ms · draw ${perf.drawMs.toFixed(1)}ms · ${workerLine}` : '';
-    // ---- Wang debug info for the tile under the player ----
+    // ---- 8-layer Wang diagnostic for the tile under the player ----
     let wangDebugLine = '';
     let rawDebugJson = '';
     const tileX = Math.floor(player.x);
@@ -301,30 +301,75 @@ export class CanvasRenderer {
     const localIdx = localY * WORLD.chunkSize + localX;
     const wangKey = `${chunkCX},${chunkCY}`;
     const wangData = getDebugWangData(wangKey);
+    let neighborLine = '';
     if (wangData && wangData.masks[localIdx] !== undefined) {
       const m = wangData.masks[localIdx];
       const ok = wangData.successes[localIdx];
       const src = wangData.srcs[localIdx];
       const b = wangData.biomes[localIdx];
-      const loadedStr = ok ? 'LOADED' : 'FALLBACK';
-      wangDebugLine = `<br><b style="color:${ok?'#8f8':'#f88'}">wang mask=${m} ${loadedStr}</b> · ${src} · biome=${b}`;
-      let failed = 0, total = 0;
+      const loadedStr = ok ? 'LOADED' : '<span style="color:#f88">MISSING</span>';
+      // Layer 1: Neighbors
+      const nb = wangData.neighbors ? wangData.neighbors[localIdx] : '';
+      const nbParts = nb ? nb.split(',') : [];
+      const nbLabels = ['N','NE','E','SE','S','SW','W','NW'];
+      let nbStr = '';
+      if (nbParts.length === 8) {
+        nbStr = nbLabels.map((l, i) => {
+          const same = nbParts[i] === b;
+          return `<span style="color:${same ? '#8f8' : '#ff8'}">${l}=${nbParts[i]}</span>`;
+        }).join(' ');
+      }
+      neighborLine = nb ? `<br><b>L1 Neighbors:</b> ${nbStr}` : '';
+      // Layer 2: Transition
+      const tDir = wangData.transitionDirs ? wangData.transitionDirs[localIdx] : '';
+      const tSide = wangData.transitionSides ? wangData.transitionSides[localIdx] : '';
+      const isNearest = tDir.startsWith('~');
+      const tDirClean = isNearest ? tDir.slice(1) : tDir;
+      const tSideClean = isNearest ? tSide.slice(1) : tSide;
+      const tLabel = tDir ? (isNearest ? 'nearest' : 'direct') : 'none';
+      const tColor = tDir ? (isNearest ? '#aaf' : '#8f8') : '#888';
+      const l2Line = `<br><b>L2 Transition:</b> <span style="color:${tColor}">${tLabel}</span> ${tDirClean ? `dir=${tDirClean} side=${tSideClean}` : ''}`;
+      // Layer 3: Dir (shown in URL)
+      // Layer 4: Wang Mask
+      const rawCorner = wangData.cornerMasks ? wangData.cornerMasks[localIdx] : 0;
+      const cornerBin = rawCorner.toString(2).padStart(4, '0');
+      const cornerLabels = ['NW','NE','SW','SE'];
+      const cornerDesc = cornerLabels.map((l, i) => `${l}=${(rawCorner >> (3-i)) & 1 ? 'from' : 'to'}`).join(' ');
+      const l4Line = `<br><b>L4 Mask:</b> corner=0b${cornerBin}(${rawCorner}) → wang=${m} | ${cornerDesc}`;
+      // Layer 5: Elevation
+      const variant = wangData.variants ? wangData.variants[localIdx] : 'wang';
+      const cliffs = wangData.cliffLevels ? wangData.cliffLevels[localIdx] : '0,0,0,0';
+      const cliffParts = cliffs.split(',');
+      const cliffLabels = ['NW','NE','SW','SE'];
+      const cliffStr = cliffLabels.map((l, i) => `${l}=${cliffParts[i]}`).join(' ');
+      const l5Line = `<br><b>L5 Elev:</b> cliff: ${cliffStr} → <span style="color:#ff8">${variant}</span>`;
+      // Layer 6: URL + status
+      const l6Line = `<br><b>L6 URL:</b> <span style="color:${ok?'#8f8':'#f88'}">${loadedStr}</span> ${src}`;
+      // Layer 7: Interior
+      const isInterior = wangData.interiorUsed ? wangData.interiorUsed[localIdx] : false;
+      const l7Line = `<br><b>L7 Interior:</b> ${isInterior ? '<span style="color:#aaf">yes (no transition detected)</span>' : 'no (transition or nearest)'}`;
+      // Layer 8: Cliff overlay
+      const hasCliff = wangData.cliffOverlay ? wangData.cliffOverlay[localIdx] : false;
+      const l8Line = `<br><b>L8 Cliff:</b> ${hasCliff ? '<span style="color:#ff8">overlay applied</span>' : 'none'}`;
+      // Chunk summary
+      let failed = 0, total = 0, transitions = 0, interiors = 0;
       for (let i = 0; i < wangData.successes.length; i++) {
         if (!wangData.successes[i]) failed++;
+        if (wangData.transitionDirs && wangData.transitionDirs[i] && !wangData.transitionDirs[i].startsWith('~')) transitions++;
+        if (wangData.interiorUsed && wangData.interiorUsed[i]) interiors++;
         total++;
       }
-      if (failed > 0) wangDebugLine += `<br><span style="color:#f88">⚠ ${failed}/${total} tiles using flat fallback</span>`;
-      else wangDebugLine += `<br><span style="color:#8f8">✓ ${total}/${total} Wang tiles loaded</span>`;
-      rawDebugJson = `chunk=${wangKey} playerTile=(${tileX},${tileY}) local=(${localX},${localY}) idx=${localIdx}\nmask=${m} success=${ok} src=${src} biome=${b}\nchunkSummary: ${ok?'OK':'MISS'}/${total} tiles`;
+      const summaryLine = `<br><span style="color:${failed?'#f88':'#8f8'}">${failed ? '⚠ ' + failed + '/' + total + ' missing' : '✓ ' + total + '/' + total + ' loaded'}</span> · transitions=${transitions} interior=${interiors}`;
+      wangDebugLine = l2Line + l4Line + l5Line + l6Line + l7Line + l8Line + summaryLine;
+      rawDebugJson = `chunk=${wangKey} playerTile=(${tileX},${tileY}) local=(${localX},${localY}) idx=${localIdx}\nmask=${m} success=${ok} src=${src} biome=${b}\ncornerMask=${rawCorner} variant=${variant} transition=${tDirClean||'none'} side=${tSideClean||'none'}\ncliffLevels=${cliffs} interior=${isInterior} cliffOverlay=${hasCliff}`;
     } else {
       wangDebugLine = '<br><span style="color:#888">Wang data: no chunk data yet (press R to re-render)</span>';
     }
     this._lastDebugRaw = rawDebugJson;
-    const debugToggleStr = this.debugWang ? '<b style="color:#ff8">DEBUG ON</b> (D to toggle, overlay shows mask numbers)' : 'debug off (D toggle)';
+    const debugToggleStr = this.debugWang ? '<b style="color:#ff8">DEBUG ON</b> (0 to toggle)' : 'debug off (0 toggle)';
 
       let pixelLabLine = tile.pixelLabBaseSrc ? `<br>pixelLab base ${tile.pixelLabBaseFamily || 'unknown'} mask=${tile.pixelLabBaseMask ?? 15} · ${tile.pixelLabBaseSrc}${tile.pixelLabBaseVariantSrc ? ' · var ' + tile.pixelLabBaseVariantSrc : ''}${tile.swampDetailLayer ? ' · detail ' + tile.swampDetailLayer : ''}` : '';
-      const wangEdgeLine = tile.wangEdgeMask !== undefined ? `<br><b>wangEdgeMask=${tile.wangEdgeMask}</b>${tile.wangSelectedSrc ? ' · ' + tile.wangSelectedSrc : ''}` : ''; 
-      const neighborLine = tile.neighborN !== undefined ? `<br>neighbors: N=${tile.neighborN||'?'} NE=${tile.neighborNE||'?'} E=${tile.neighborE||'?'} SE=${tile.neighborSE||'?'} S=${tile.neighborS||'?'} SW=${tile.neighborSW||'?'} W=${tile.neighborW||'?'} NW=${tile.neighborNW||'?'}` : '';
+      const wangEdgeLine = '';
     if (tile.pixelLabSkipBase) {
       pixelLabLine = `<br>pixelLab base skipped at external boundary · missing transition ${tile.pixelLabMissingTransition || 'unknown'}`;
     } else if (tile.pixelLabTransitionSrc && pixelLabLine) {
