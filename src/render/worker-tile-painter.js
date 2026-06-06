@@ -28,11 +28,13 @@ function getWangSrc(tile, variant) {
         mask = 15 - mask;
       }
     }
+    // Only suppress water transitions at actual cliff edges (significant elevation difference)
     var otherBiome = tile.transitionSide === 'from' ? pair.to : pair.from;
-    var isLandWaterCliff = !WATER_BIOMES[tile.biome] && WATER_BIOMES[otherBiome] && cliffLevel(tile.climate.elevation) > 0;
-    var isWaterLandCliff = WATER_BIOMES[tile.biome] && !WATER_BIOMES[otherBiome];
-    if (isLandWaterCliff || isWaterLandCliff) {
-      // For interior fill at water/cliff edges, use tile's position in the dir
+    var myCliffLvl = cliffLevel(tile.climate.elevation);
+    var neighborCliffLvl = WATER_BIOMES[otherBiome] ? 0 : myCliffLvl;
+    var hasCliffDrop = Math.abs(myCliffLvl - neighborCliffLvl) >= 2;
+    var isLandWaterCliff = !WATER_BIOMES[tile.biome] && WATER_BIOMES[otherBiome] && hasCliffDrop;
+    if (isLandWaterCliff) {
       var intMask = (variant === 'wang')
         ? (tile.biome === dir.split('_to_')[0] ? 0 : 15)
         : (tile.transitionSide === 'from' ? 0 : 15);
