@@ -119,38 +119,50 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
       tile._elS  = nbS.climate ? nbS.climate.elevation : tile.climate.elevation;
       tile._elSW = nbSW.climate ? nbSW.climate.elevation : tile.climate.elevation;
 
-      // Transition pair detection — direction-aware based on elevation
+      // Transition pair detection — based on the 2×2 wang cell (tile, E, S, SE).
+      // The wang mask uses these 4 corners, so the transition pair must match.
       tile.transitionPair = null;
       tile.transitionSide = '';
       tile.nearestTransitionPair = null;
       tile.nearestTransitionSide = '';
       var myEl = tile.climate.elevation;
-      var immediateNbs = [
-        { biome: tile.neighborN, el: tile._elN },
-        { biome: tile.neighborNE, el: tile._elNE },
+      // Check the 2×2 cell corners FIRST (these determine the wang mask)
+      var cellNbs = [
         { biome: tile.neighborE, el: tile._elE },
-        { biome: tile.neighborSE, el: tile._elSE },
         { biome: tile.neighborS, el: tile._elS },
-        { biome: tile.neighborSW, el: tile._elSW },
-        { biome: tile.neighborW, el: nbW.climate ? nbW.climate.elevation : myEl },
-        { biome: tile.neighborNW, el: nbNW.climate ? nbNW.climate.elevation : myEl }
+        { biome: tile.neighborSE, el: tile._elSE }
       ];
-      for (var ni = 0; ni < immediateNbs.length; ni++) {
-        var nbInfo = immediateNbs[ni];
-        if (nbInfo.biome && nbInfo.biome !== tile.biome) {
-          var pair = transitionPairFor(tile.biome, nbInfo.biome, myEl, nbInfo.el);
+      for (var ci = 0; ci < cellNbs.length; ci++) {
+        if (cellNbs[ci].biome && cellNbs[ci].biome !== tile.biome) {
+          var pair = transitionPairFor(tile.biome, cellNbs[ci].biome, myEl, cellNbs[ci].el);
           if (pair) {
             tile.transitionPair = pair;
             tile.transitionSide = tile.biome === pair.from ? 'from' : 'to';
-            tile.nearestTransitionPair = pair;
-            tile.nearestTransitionSide = tile.transitionSide;
             break;
           }
         }
       }
-      // No nearest-transition scan — interior tiles use BIOME_INTERIOR table
-      // for consistent appearance. The old 16-tile-radius scan caused patchwork
-      // because adjacent interior tiles would pick different nearby biomes.
+      // If the 2×2 cell is uniform, check remaining neighbors for transition context
+      // (used for visual context but won't affect the wang mask)
+      if (!tile.transitionPair) {
+        var otherNbs = [
+          { biome: tile.neighborN, el: tile._elN },
+          { biome: tile.neighborNE, el: tile._elNE },
+          { biome: tile.neighborSW, el: tile._elSW },
+          { biome: tile.neighborW, el: nbW.climate ? nbW.climate.elevation : myEl },
+          { biome: tile.neighborNW, el: nbNW.climate ? nbNW.climate.elevation : myEl }
+        ];
+        for (var oi = 0; oi < otherNbs.length; oi++) {
+          if (otherNbs[oi].biome && otherNbs[oi].biome !== tile.biome) {
+            var opair = transitionPairFor(tile.biome, otherNbs[oi].biome, myEl, otherNbs[oi].el);
+            if (opair) {
+              tile.transitionPair = opair;
+              tile.transitionSide = tile.biome === opair.from ? 'from' : 'to';
+              break;
+            }
+          }
+        }
+      }
 
       // Wang corner mask
       var cornerMask = 0;
