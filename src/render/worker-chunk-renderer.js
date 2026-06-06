@@ -42,9 +42,9 @@ function elevationVariant(tile) {
     Math.abs(eLevel - seLevel),
     Math.abs(sLevel - seLevel)
   );
-  if (maxDelta <= 0) return 'wang';
-  if (maxDelta === 1) return 'wang_25';
-  if (maxDelta === 2) return 'wang_50';
+  if (maxDelta <= 1) return 'wang';
+  if (maxDelta <= 3) return 'wang_25';
+  if (maxDelta <= 5) return 'wang_50';
   return 'wang_100';
 }
 
