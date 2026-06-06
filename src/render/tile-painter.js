@@ -131,15 +131,7 @@ function getWangSrc(tile) {
     if (pair.from !== sorted[0]) {
       mask = 15 - mask;
     }
-    var otherBiome = tile.transitionSide === 'from' ? pair.to : pair.from;
-    var myCliffLvl = cliffLevel(tile.climate.elevation);
-    var neighborCliffLvl = WATER_BIOMES[otherBiome] ? 0 : myCliffLvl;
-    var hasCliffDrop = Math.abs(myCliffLvl - neighborCliffLvl) >= 2;
-    var isLandWaterCliff = !WATER_BIOMES[tile.biome] && WATER_BIOMES[otherBiome] && hasCliffDrop;
-    if (isLandWaterCliff) {
-      var intMask = tile.biome === sorted[0] ? 0 : 15;
-      return TRANSITIONS_BASE + dir + '/wang/' + dir + '__wang_' + intMask + WANG_SUFFIX;
-    }
+    // No water/cliff suppression — let wang transition tiles render naturally.
     return TRANSITIONS_BASE + dir + '/wang/' + dir + '__wang_' + mask + WANG_SUFFIX;
   }
   // Interior tile — use same tileset as nearest transition for consistency

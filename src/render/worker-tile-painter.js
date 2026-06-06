@@ -28,18 +28,8 @@ function getWangSrc(tile, variant) {
         mask = 15 - mask;
       }
     }
-    // Only suppress water transitions at actual cliff edges (significant elevation difference)
-    var otherBiome = tile.transitionSide === 'from' ? pair.to : pair.from;
-    var myCliffLvl = cliffLevel(tile.climate.elevation);
-    var neighborCliffLvl = WATER_BIOMES[otherBiome] ? 0 : myCliffLvl;
-    var hasCliffDrop = Math.abs(myCliffLvl - neighborCliffLvl) >= 2;
-    var isLandWaterCliff = !WATER_BIOMES[tile.biome] && WATER_BIOMES[otherBiome] && hasCliffDrop;
-    if (isLandWaterCliff) {
-      var intMask = (variant === 'wang')
-        ? (tile.biome === dir.split('_to_')[0] ? 0 : 15)
-        : (tile.transitionSide === 'from' ? 0 : 15);
-      return TRANSITIONS_BASE + dir + '/' + variant + '/' + dir + '__wang_' + intMask + WANG_SUFFIX;
-    }
+    // No water/cliff suppression — let wang transition tiles render naturally.
+    // The cliff overlay system handles cliff face rendering separately.
     return TRANSITIONS_BASE + dir + '/' + variant + '/' + dir + '__wang_' + mask + WANG_SUFFIX;
   }
   if (tile.nearestTransitionPair) {
