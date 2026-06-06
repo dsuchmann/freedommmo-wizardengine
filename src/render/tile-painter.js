@@ -7,7 +7,7 @@ var TRANSITIONS_BASE = 'assets/pixelab/landscape_v2/transitions/';
 var wangImgCache = {};
 
 // Wang tile lookup: corner mask → tile index (0-15)
-var CLIFF_CORNER_TO_WANG = [12,13,0,3,8,1,14,5,15,4,11,2,9,10,7,6];
+var CLIFF_CORNER_TO_WANG = [15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0];
 
 // Mapping from biome to cliff Wang tileset directory
 var BIOME_CLIFF = {
@@ -43,29 +43,29 @@ export function preloadWangImage(src) {
 // Interior tiles source from transition directories.
 // wang 6 = left/first biome interior, wang 12 = right/second biome interior.
 // Interior tile sources — chosen to match the most natural look for each biome.
-// wang_6 = all corners "from" (biome A interior), wang_12 = all corners "to" (biome B interior).
+// PixelLab: wang_0 = all lower biome, wang_15 = all upper biome.
 var BIOME_INTERIOR = {
-  beach:         { dir: 'beach_to_river',          mask: 6 },
-  desert:        { dir: 'beach_to_desert',         mask: 12 },
-  grassland:     { dir: 'grassland_to_forest',     mask: 6 },
-  river:         { dir: 'beach_to_river',          mask: 12 },
-  swamp:         { dir: 'swamp_to_forest',         mask: 6 },
-  forest:        { dir: 'grassland_to_forest',     mask: 12 },
-  dense_forest:  { dir: 'forest_to_dense_forest',  mask: 12 },
-  tropical_forest:{ dir: 'forest_to_tropical_forest', mask: 12 },
-  taiga:         { dir: 'forest_to_taiga',         mask: 12 },
-  savanna:       { dir: 'grassland_to_savanna',    mask: 12 },
-  steppe:        { dir: 'grassland_to_steppe',     mask: 12 },
-  tundra:        { dir: 'tundra_to_snow',          mask: 6 },
-  arctic:        { dir: 'tundra_to_snow',          mask: 12 },
-  hills:         { dir: 'grassland_to_hills',      mask: 12 },
-  mountains:     { dir: 'hills_to_mountains',      mask: 12 },
-  volcanic:      { dir: 'desert_to_volcanic',      mask: 12 },
-  mystic:        { dir: 'grassland_to_mystic',     mask: 12 },
-  ocean:         { dir: 'deep_ocean_to_ocean',     mask: 12 },
-  deep_ocean:    { dir: 'deep_ocean_to_ocean',     mask: 6 },
-  shallow_water: { dir: 'ocean_to_shallow_water',  mask: 12 },
-  lake:          { dir: 'lake_to_river',           mask: 6 },
+  beach:         { dir: 'beach_to_river',          mask: 0 },
+  desert:        { dir: 'beach_to_desert',         mask: 15 },
+  grassland:     { dir: 'forest_to_grassland',     mask: 15 },
+  river:         { dir: 'beach_to_river',          mask: 15 },
+  swamp:         { dir: 'forest_to_swamp',         mask: 15 },
+  forest:        { dir: 'forest_to_grassland',     mask: 0 },
+  dense_forest:  { dir: 'dense_forest_to_forest',  mask: 0 },
+  tropical_forest:{ dir: 'forest_to_tropical_forest', mask: 15 },
+  taiga:         { dir: 'forest_to_taiga',         mask: 15 },
+  savanna:       { dir: 'grassland_to_savanna',    mask: 15 },
+  steppe:        { dir: 'grassland_to_steppe',     mask: 15 },
+  tundra:        { dir: 'arctic_to_tundra',         mask: 15 },
+  arctic:        { dir: 'arctic_to_tundra',         mask: 0 },
+  hills:         { dir: 'grassland_to_hills',      mask: 15 },
+  mountains:     { dir: 'hills_to_mountains',      mask: 15 },
+  volcanic:      { dir: 'desert_to_volcanic',      mask: 15 },
+  mystic:        { dir: 'grassland_to_mystic',     mask: 15 },
+  ocean:         { dir: 'deep_ocean_to_ocean',     mask: 15 },
+  deep_ocean:    { dir: 'deep_ocean_to_ocean',     mask: 0 },
+  shallow_water: { dir: 'ocean_to_shallow_water',  mask: 15 },
+  lake:          { dir: 'lake_to_river',           mask: 0 },
 };
 
 // Preload interior tiles for all biomes
@@ -130,14 +130,14 @@ function getWangSrc(tile) {
     var isLandWaterCliff = !WATER_BIOMES[tile.biome] && WATER_BIOMES[otherBiome] && cliffLevel(tile.climate.elevation) > 0;
     var isWaterLandCliff = WATER_BIOMES[tile.biome] && !WATER_BIOMES[otherBiome];
     if (isLandWaterCliff || isWaterLandCliff) {
-      var intMask = tile.transitionSide === 'from' ? 6 : 12;
+      var intMask = tile.transitionSide === 'from' ? 0 : 15;
       return TRANSITIONS_BASE + pair.dir + '/wang/' + pair.dir + '__wang_' + intMask + WANG_SUFFIX;
     }
     return TRANSITIONS_BASE + pair.dir + '/wang/' + pair.dir + '__wang_' + mask + WANG_SUFFIX;
   }
   // Interior tile — use same tileset as nearest transition for consistency
   if (tile.nearestTransitionPair) {
-    var intMask = tile.nearestTransitionSide === 'from' ? 6 : 12;
+    var intMask = tile.nearestTransitionSide === 'from' ? 0 : 15;
     return TRANSITIONS_BASE + tile.nearestTransitionPair.dir + '/wang/' + tile.nearestTransitionPair.dir + '__wang_' + intMask + WANG_SUFFIX;
   }
   // Deep interior with no nearby transition

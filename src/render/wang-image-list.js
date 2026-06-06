@@ -6,28 +6,31 @@ var TRANSITIONS_BASE = '/assets/pixelab/landscape_v2/transitions/';
 var WANG_VARIANTS = ['wang', 'wang_25', 'wang_50', 'wang_100'];
 var WANG_VARIANT_TILE_COUNTS = { wang: 16, wang_25: 16, wang_50: 16, wang_100: 25 };
 
+// PixelLab wang index: 0 = all lower biome, 15 = all upper biome.
+// mask: 0 means this biome IS the lower terrain in the pair dir.
+// mask: 15 means this biome IS the upper terrain in the pair dir.
 var BIOME_INTERIOR = {
-  beach:         { dir: 'beach_to_river',          mask: 6 },
-  desert:        { dir: 'beach_to_desert',         mask: 12 },
-  grassland:     { dir: 'grassland_to_forest',     mask: 6 },
-  river:         { dir: 'beach_to_river',          mask: 12 },
-  swamp:         { dir: 'swamp_to_forest',         mask: 6 },
-  forest:        { dir: 'grassland_to_forest',     mask: 12 },
-  dense_forest:  { dir: 'forest_to_dense_forest',  mask: 12 },
-  tropical_forest:{ dir: 'forest_to_tropical_forest', mask: 12 },
-  taiga:         { dir: 'forest_to_taiga',         mask: 12 },
-  savanna:       { dir: 'grassland_to_savanna',    mask: 12 },
-  steppe:        { dir: 'grassland_to_steppe',     mask: 12 },
-  tundra:        { dir: 'tundra_to_snow',          mask: 6 },
-  arctic:        { dir: 'tundra_to_snow',          mask: 12 },
-  hills:         { dir: 'grassland_to_hills',      mask: 12 },
-  mountains:     { dir: 'hills_to_mountains',      mask: 12 },
-  volcanic:      { dir: 'desert_to_volcanic',      mask: 12 },
-  mystic:        { dir: 'grassland_to_mystic',     mask: 12 },
-  ocean:         { dir: 'deep_ocean_to_ocean',     mask: 12 },
-  deep_ocean:    { dir: 'deep_ocean_to_ocean',     mask: 6 },
-  shallow_water: { dir: 'ocean_to_shallow_water',  mask: 12 },
-  lake:          { dir: 'lake_to_river',           mask: 6 },
+  beach:         { dir: 'beach_to_river',          mask: 0 },
+  desert:        { dir: 'beach_to_desert',         mask: 15 },
+  grassland:     { dir: 'forest_to_grassland',     mask: 15 },
+  river:         { dir: 'beach_to_river',          mask: 15 },
+  swamp:         { dir: 'forest_to_swamp',         mask: 15 },
+  forest:        { dir: 'forest_to_grassland',     mask: 0 },
+  dense_forest:  { dir: 'dense_forest_to_forest',  mask: 0 },
+  tropical_forest:{ dir: 'forest_to_tropical_forest', mask: 15 },
+  taiga:         { dir: 'forest_to_taiga',         mask: 15 },
+  savanna:       { dir: 'grassland_to_savanna',    mask: 15 },
+  steppe:        { dir: 'grassland_to_steppe',     mask: 15 },
+  tundra:        { dir: 'arctic_to_tundra',         mask: 15 },
+  arctic:        { dir: 'arctic_to_tundra',         mask: 0 },
+  hills:         { dir: 'grassland_to_hills',      mask: 15 },
+  mountains:     { dir: 'hills_to_mountains',      mask: 15 },
+  volcanic:      { dir: 'desert_to_volcanic',      mask: 15 },
+  mystic:        { dir: 'grassland_to_mystic',     mask: 15 },
+  ocean:         { dir: 'deep_ocean_to_ocean',     mask: 15 },
+  deep_ocean:    { dir: 'deep_ocean_to_ocean',     mask: 0 },
+  shallow_water: { dir: 'ocean_to_shallow_water',  mask: 15 },
+  lake:          { dir: 'lake_to_river',           mask: 0 },
 };
 
 var BIOME_CLIFF = {
@@ -48,6 +51,69 @@ var ALL_BIOMES = [
 ];
 
 export { WANG_SUFFIX, TRANSITIONS_BASE, BIOME_INTERIOR, BIOME_CLIFF, ALL_BIOMES, WANG_VARIANTS, WANG_VARIANT_TILE_COUNTS };
+
+// Build URLs for a specific set of biomes only (for prioritized preloading).
+// biomes: array of biome IDs present nearby.
+export function getWangImageURLsForBiomes(biomes) {
+  var urls = [];
+  var biomeSet = new Set(biomes);
+  var seenDirs = new Set();
+
+  // Interior tiles for each biome
+  for (var b = 0; b < biomes.length; b++) {
+    var info = BIOME_INTERIOR[biomes[b]];
+    if (info && !seenDirs.has(info.dir)) {
+      seenDirs.add(info.dir);
+      for (var m = 0; m < 16; m++) {
+        urls.push(TRANSITIONS_BASE + info.dir + '/wang/' + info.dir + '__wang_' + m + WANG_SUFFIX);
+      }
+      // Elevation variants
+      var elevVariants = ['wang_25', 'wang_50', 'wang_100'];
+      for (var vi = 0; vi < elevVariants.length; vi++) {
+        var variant = elevVariants[vi];
+        var tileCount = WANG_VARIANT_TILE_COUNTS[variant];
+        for (var em = 0; em < tileCount; em++) {
+          urls.push(TRANSITIONS_BASE + info.dir + '/' + variant + '/' + info.dir + '__wang_' + em + WANG_SUFFIX);
+        }
+      }
+    }
+  }
+
+  // Transition pairs between nearby biomes (both directions)
+  for (var i = 0; i < biomes.length; i++) {
+    for (var j = i + 1; j < biomes.length; j++) {
+      var a = biomes[i], bm = biomes[j];
+      var dirs = [a < bm ? a + '_to_' + bm : bm + '_to_' + a];
+      // Also add directed pairs for elevation variants
+      dirs.push(a + '_to_' + bm, bm + '_to_' + a);
+      for (var di = 0; di < dirs.length; di++) {
+        var dir = dirs[di];
+        if (seenDirs.has(dir)) continue;
+        seenDirs.add(dir);
+        var variants = di === 0 ? ['wang'] : ['wang_25', 'wang_50', 'wang_100'];
+        for (var vk = 0; vk < variants.length; vk++) {
+          var vr = variants[vk];
+          var tc = WANG_VARIANT_TILE_COUNTS[vr];
+          for (var mk = 0; mk < tc; mk++) {
+            urls.push(TRANSITIONS_BASE + dir + '/' + vr + '/' + dir + '__wang_' + mk + WANG_SUFFIX);
+          }
+        }
+      }
+    }
+  }
+
+  // Cliff overlays for nearby biomes
+  var cliffSeen = {};
+  for (var bk = 0; bk < biomes.length; bk++) {
+    var cd = BIOME_CLIFF[biomes[bk]];
+    if (!cd || cliffSeen[cd]) continue;
+    cliffSeen[cd] = true;
+    for (var cm = 0; cm < 16; cm++) {
+      urls.push(TRANSITIONS_BASE + cd + '/wang/' + cd + '__wang_' + cm + WANG_SUFFIX);
+    }
+  }
+  return urls;
+}
 
 // Build the complete URL list for all wang tile images.
 // Generates URLs for all 21×20 directed pairs × all variants.

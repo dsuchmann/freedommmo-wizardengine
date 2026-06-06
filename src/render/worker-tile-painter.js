@@ -6,7 +6,7 @@ import { paletteFor } from './palette.js';
 import { cliffLevel } from '../world/terrain-shaper.js';
 import { WANG_SUFFIX, TRANSITIONS_BASE, BIOME_INTERIOR, BIOME_CLIFF } from './wang-image-list.js';
 
-var CLIFF_CORNER_TO_WANG = [12,13,0,3,8,1,14,5,15,4,11,2,9,10,7,6];
+var CLIFF_CORNER_TO_WANG = [15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0];
 var WATER_BIOMES = { ocean: 1, deep_ocean: 1, shallow_water: 1, river: 1, lake: 1 };
 
 function getWangSrc(tile, variant) {
@@ -25,7 +25,7 @@ function getWangSrc(tile, variant) {
     var isLandWaterCliff = !WATER_BIOMES[tile.biome] && WATER_BIOMES[otherBiome] && cliffLevel(tile.climate.elevation) > 0;
     var isWaterLandCliff = WATER_BIOMES[tile.biome] && !WATER_BIOMES[otherBiome];
     if (isLandWaterCliff || isWaterLandCliff) {
-      var intMask = tile.transitionSide === 'from' ? 6 : 12;
+      var intMask = tile.transitionSide === 'from' ? 0 : 15;
       return TRANSITIONS_BASE + dir + '/' + variant + '/' + dir + '__wang_' + intMask + WANG_SUFFIX;
     }
     return TRANSITIONS_BASE + dir + '/' + variant + '/' + dir + '__wang_' + mask + WANG_SUFFIX;
@@ -34,7 +34,7 @@ function getWangSrc(tile, variant) {
     var np = tile.nearestTransitionPair;
     var npDir = [np.from, np.to].sort();
     var nearDir = npDir[0] + '_to_' + npDir[1];
-    var intMask2 = tile.nearestTransitionSide === 'from' ? 6 : 12;
+    var intMask2 = tile.nearestTransitionSide === 'from' ? 0 : 15;
     return TRANSITIONS_BASE + nearDir + '/wang/' + nearDir + '__wang_' + intMask2 + WANG_SUFFIX;
   }
   var interior = BIOME_INTERIOR[tile.biome];
