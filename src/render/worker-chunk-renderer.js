@@ -164,14 +164,39 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
         }
       }
 
+      // Same-biome elevation transition: if no cross-biome transition was found
+      // but there's an elevation difference in the 2×2 cell, use a self-transition
+      // (e.g. grassland_to_grassland) to show the elevation change.
+      if (!tile.transitionPair) {
+        var variant = elevationVariant(tile);
+        if (variant !== 'wang') {
+          // There's an elevation change — create a self-transition pair
+          var selfDir = tile.biome + '_to_' + tile.biome;
+          tile.transitionPair = { from: tile.biome, to: tile.biome, dir: selfDir };
+          // Determine side based on whether this tile is at the lower or higher elevation
+          var avgNeighborEl = ((tile._elE || myEl) + (tile._elS || myEl) + (tile._elSE || myEl)) / 3;
+          tile.transitionSide = myEl <= avgNeighborEl ? 'from' : 'to';
+        }
+      }
+
       // Wang corner mask
       var cornerMask = 0;
       if (tile.transitionPair) {
-        var fb = tile.transitionPair.from;
-        if (tile.biome === fb) cornerMask |= 8;
-        if (tile.neighborE === fb) cornerMask |= 4;
-        if (tile.neighborS === fb) cornerMask |= 2;
-        if (tile.neighborSE === fb) cornerMask |= 1;
+        var isSelfTransition = tile.transitionPair.from === tile.transitionPair.to;
+        if (isSelfTransition) {
+          // Same-biome elevation: corners at lower elevation = 'from' (lower)
+          var midEl = (myEl + (tile._elE || myEl) + (tile._elS || myEl) + (tile._elSE || myEl)) / 4;
+          if (myEl < midEl) cornerMask |= 8;
+          if ((tile._elE || myEl) < midEl) cornerMask |= 4;
+          if ((tile._elS || myEl) < midEl) cornerMask |= 2;
+          if ((tile._elSE || myEl) < midEl) cornerMask |= 1;
+        } else {
+          var fb = tile.transitionPair.from;
+          if (tile.biome === fb) cornerMask |= 8;
+          if (tile.neighborE === fb) cornerMask |= 4;
+          if (tile.neighborS === fb) cornerMask |= 2;
+          if (tile.neighborSE === fb) cornerMask |= 1;
+        }
       }
       tile.wangEdgeMask = tile.transitionPair ? CORNER_TO_WANG[cornerMask] : 0;
 
