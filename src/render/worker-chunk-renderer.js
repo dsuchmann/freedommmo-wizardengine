@@ -148,21 +148,9 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
           }
         }
       }
-      if (!tile.transitionPair) {
-        var foundPair = null;
-        for (var dy = -16; dy <= 16 && !foundPair; dy++) {
-          for (var dx = -16; dx <= 16 && !foundPair; dx++) {
-            if (dx === 0 && dy === 0) continue;
-            var far = tileAt(wx + dx, wy + dy);
-            if (!far || far.biome === tile.biome) continue;
-            var farEl = far.climate ? far.climate.elevation : myEl;
-            var farPair = transitionPairFor(tile.biome, far.biome, myEl, farEl);
-            if (farPair) { foundPair = farPair; }
-          }
-        }
-        tile.nearestTransitionPair = foundPair;
-        tile.nearestTransitionSide = foundPair ? (tile.biome === foundPair.from ? 'from' : 'to') : '';
-      }
+      // No nearest-transition scan — interior tiles use BIOME_INTERIOR table
+      // for consistent appearance. The old 16-tile-radius scan caused patchwork
+      // because adjacent interior tiles would pick different nearby biomes.
 
       // Wang corner mask
       var cornerMask = 0;
