@@ -122,23 +122,30 @@ function getWangSrc(tile) {
   var mask = tile.wangEdgeMask;
   if (mask === undefined) mask = 0;
   if (tile.transitionPair) {
-    // At cliff-water boundaries, suppress the biome transition tile on the land side.
-    // Water-pattern tiles at cliff elevation look like "elevated water shelves."
-    // The cliff overlay already provides the visual edge, so use solid land interior.
     var pair = tile.transitionPair;
+    // For flat wang, use alphabetical dir and adjust mask if needed
+    var sorted = [pair.from, pair.to].sort();
+    var dir = sorted[0] + '_to_' + sorted[1];
+    // wangEdgeMask: 1=upper-elevation. If from is alphabetically second,
+    // the mask is inverted relative to the alphabetical dir.
+    if (pair.from !== sorted[0]) {
+      mask = 15 - mask;
+    }
     var otherBiome = tile.transitionSide === 'from' ? pair.to : pair.from;
     var isLandWaterCliff = !WATER_BIOMES[tile.biome] && WATER_BIOMES[otherBiome] && cliffLevel(tile.climate.elevation) > 0;
     var isWaterLandCliff = WATER_BIOMES[tile.biome] && !WATER_BIOMES[otherBiome];
     if (isLandWaterCliff || isWaterLandCliff) {
-      var intMask = tile.transitionSide === 'from' ? 0 : 15;
-      return TRANSITIONS_BASE + pair.dir + '/wang/' + pair.dir + '__wang_' + intMask + WANG_SUFFIX;
+      var intMask = tile.biome === sorted[0] ? 0 : 15;
+      return TRANSITIONS_BASE + dir + '/wang/' + dir + '__wang_' + intMask + WANG_SUFFIX;
     }
-    return TRANSITIONS_BASE + pair.dir + '/wang/' + pair.dir + '__wang_' + mask + WANG_SUFFIX;
+    return TRANSITIONS_BASE + dir + '/wang/' + dir + '__wang_' + mask + WANG_SUFFIX;
   }
   // Interior tile — use same tileset as nearest transition for consistency
   if (tile.nearestTransitionPair) {
-    var intMask = tile.nearestTransitionSide === 'from' ? 0 : 15;
-    return TRANSITIONS_BASE + tile.nearestTransitionPair.dir + '/wang/' + tile.nearestTransitionPair.dir + '__wang_' + intMask + WANG_SUFFIX;
+    var npDir = [tile.nearestTransitionPair.from, tile.nearestTransitionPair.to].sort();
+    var nearDir = npDir[0] + '_to_' + npDir[1];
+    var intMask = tile.biome === npDir[0] ? 0 : 15;
+    return TRANSITIONS_BASE + nearDir + '/wang/' + nearDir + '__wang_' + intMask + WANG_SUFFIX;
   }
   // Deep interior with no nearby transition
   var interior = BIOME_INTERIOR[tile.biome];

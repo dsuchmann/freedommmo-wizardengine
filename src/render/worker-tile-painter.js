@@ -15,17 +15,27 @@ function getWangSrc(tile, variant) {
   if (mask === undefined) mask = 0;
   if (tile.transitionPair) {
     var pair = tile.transitionPair;
-    // For s0.0 (flat/symmetric), use alphabetical dir since only one direction exists on disk
     var dir = pair.dir;
+    // For flat wang, use alphabetical dir (only one direction on disk for s0.0)
+    // and adjust mask if from biome is alphabetically second
     if (variant === 'wang') {
       var sorted = [pair.from, pair.to].sort();
       dir = sorted[0] + '_to_' + sorted[1];
+      // wangEdgeMask was computed with 1=upper-elevation biome.
+      // If from(lower-elev) is alphabetically second, the mask is inverted
+      // relative to the alphabetical dir where 1=upper=second biome.
+      if (pair.from !== sorted[0]) {
+        mask = 15 - mask;
+      }
     }
     var otherBiome = tile.transitionSide === 'from' ? pair.to : pair.from;
     var isLandWaterCliff = !WATER_BIOMES[tile.biome] && WATER_BIOMES[otherBiome] && cliffLevel(tile.climate.elevation) > 0;
     var isWaterLandCliff = WATER_BIOMES[tile.biome] && !WATER_BIOMES[otherBiome];
     if (isLandWaterCliff || isWaterLandCliff) {
-      var intMask = tile.transitionSide === 'from' ? 0 : 15;
+      // For interior fill at water/cliff edges, use tile's position in the dir
+      var intMask = (variant === 'wang')
+        ? (tile.biome === dir.split('_to_')[0] ? 0 : 15)
+        : (tile.transitionSide === 'from' ? 0 : 15);
       return TRANSITIONS_BASE + dir + '/' + variant + '/' + dir + '__wang_' + intMask + WANG_SUFFIX;
     }
     return TRANSITIONS_BASE + dir + '/' + variant + '/' + dir + '__wang_' + mask + WANG_SUFFIX;
@@ -34,7 +44,8 @@ function getWangSrc(tile, variant) {
     var np = tile.nearestTransitionPair;
     var npDir = [np.from, np.to].sort();
     var nearDir = npDir[0] + '_to_' + npDir[1];
-    var intMask2 = tile.nearestTransitionSide === 'from' ? 0 : 15;
+    // Use tile's biome position in the alphabetical pair
+    var intMask2 = tile.biome === npDir[0] ? 0 : 15;
     return TRANSITIONS_BASE + nearDir + '/wang/' + nearDir + '__wang_' + intMask2 + WANG_SUFFIX;
   }
   var interior = BIOME_INTERIOR[tile.biome];
