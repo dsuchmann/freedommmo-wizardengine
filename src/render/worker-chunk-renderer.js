@@ -185,8 +185,8 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
         if (selfMaxDelta >= 1) {
           var selfDir = tile.biome + '_to_' + tile.biome;
           tile.transitionPair = { from: tile.biome, to: tile.biome, dir: selfDir };
-          var avgNeighborEl = ((tile._elE || myEl) + (tile._elS || myEl) + (tile._elSE || myEl)) / 3;
-          tile.transitionSide = myEl <= avgNeighborEl ? 'from' : 'to';
+          var selfMinLevel = Math.min(selfMyLevel, selfELevel, selfSLevel, selfSELevel);
+          tile.transitionSide = selfMyLevel === selfMinLevel ? 'from' : 'to';
         }
       }
 
@@ -195,12 +195,17 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
       if (tile.transitionPair) {
         var isSelfTransition = tile.transitionPair.from === tile.transitionPair.to;
         if (isSelfTransition) {
-          // Same-biome elevation: corners at lower elevation = 'from' (lower)
-          var midEl = (myEl + (tile._elE || myEl) + (tile._elS || myEl) + (tile._elSE || myEl)) / 4;
-          if (myEl < midEl) cornerMask |= 8;
-          if ((tile._elE || myEl) < midEl) cornerMask |= 4;
-          if ((tile._elS || myEl) < midEl) cornerMask |= 2;
-          if ((tile._elSE || myEl) < midEl) cornerMask |= 1;
+          // Same-biome elevation: corners at the MINIMUM cliff level = 'from' (lower)
+          // Using cliff levels ensures corners at the same level are treated consistently
+          var cNW = cliffLevel(tile.climate.elevation);
+          var cNE = cliffLevel(tile._elE != null ? tile._elE : tile.climate.elevation);
+          var cSW = cliffLevel(tile._elS != null ? tile._elS : tile.climate.elevation);
+          var cSE = cliffLevel(tile._elSE != null ? tile._elSE : tile.climate.elevation);
+          var cMin = Math.min(cNW, cNE, cSW, cSE);
+          if (cNW === cMin) cornerMask |= 8;
+          if (cNE === cMin) cornerMask |= 4;
+          if (cSW === cMin) cornerMask |= 2;
+          if (cSE === cMin) cornerMask |= 1;
         } else {
           var fb = tile.transitionPair.from;
           if (tile.biome === fb) cornerMask |= 8;
