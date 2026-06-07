@@ -305,14 +305,79 @@ var GC_BIOME_OBJECTS = {
     { name: 'tide_line', mode: 'sprite', minShoreDist: 8, maxShoreDist: 11, sparsity: 0.94 }
   ],
   forest: [
-    { name: 'fallen_leaves', mode: 'luminance', strength: 0.25, density: 0.80, maxShoreDist: null },
-    { name: 'moss_patch', mode: 'luminance', strength: 0.20, density: 0.60, maxShoreDist: null },
-    { name: 'pine_needles', mode: 'luminance', strength: 0.18, density: 0.55, maxShoreDist: null }
+    { name: 'fallen_leaves', mode: 'sprite', sparsity: 0.88, scale: 0.45 },
+    { name: 'moss_patch', mode: 'sprite', sparsity: 0.92, scale: 0.40 },
+    { name: 'pine_needles', mode: 'luminance', strength: 0.15, density: 0.50, maxShoreDist: null }
   ],
   dense_forest: [
     { name: 'dark_leaf_mat', mode: 'luminance', strength: 0.28, density: 0.85, maxShoreDist: null },
-    { name: 'dark_wet_moss', mode: 'luminance', strength: 0.22, density: 0.70, maxShoreDist: null },
-    { name: 'fungal_film', mode: 'luminance', strength: 0.15, density: 0.45, maxShoreDist: null }
+    { name: 'dark_wet_moss', mode: 'sprite', sparsity: 0.90, scale: 0.40 },
+    { name: 'fungal_film', mode: 'sprite', sparsity: 0.95, scale: 0.35 }
+  ],
+  tropical_forest: [
+    { name: 'tropical_leaves', mode: 'sprite', sparsity: 0.88, scale: 0.50 },
+    { name: 'bright_green_moss', mode: 'sprite', sparsity: 0.92, scale: 0.40 },
+    { name: 'fern_fronds', mode: 'sprite', sparsity: 0.90, scale: 0.45 }
+  ],
+  taiga: [
+    { name: 'frost_pine_needles', mode: 'luminance', strength: 0.20, density: 0.70, maxShoreDist: null },
+    { name: 'frost_lichen', mode: 'sprite', sparsity: 0.92, scale: 0.35 },
+    { name: 'bark_chips', mode: 'sprite', sparsity: 0.93, scale: 0.30 }
+  ],
+  grassland: [
+    { name: 'grass_mat', mode: 'sprite', sparsity: 0.85, scale: 0.45 },
+    { name: 'clover_patch', mode: 'sprite', sparsity: 0.92, scale: 0.35 },
+    { name: 'golden_thatch', mode: 'sprite', sparsity: 0.93, scale: 0.35 }
+  ],
+  savanna: [
+    { name: 'golden_grass_tuft', mode: 'sprite', sparsity: 0.88, scale: 0.40 },
+    { name: 'cracked_earth', mode: 'luminance', strength: 0.18, density: 0.65, maxShoreDist: null },
+    { name: 'seed_husks', mode: 'sprite', sparsity: 0.95, scale: 0.25 }
+  ],
+  steppe: [
+    { name: 'pale_grass_wisps', mode: 'sprite', sparsity: 0.90, scale: 0.35 },
+    { name: 'dust_patch', mode: 'luminance', strength: 0.12, density: 0.50, maxShoreDist: null },
+    { name: 'dried_stems', mode: 'sprite', sparsity: 0.92, scale: 0.30 }
+  ],
+  desert: [
+    { name: 'sand_ripple', mode: 'luminance', strength: 0.18, density: 0.75, maxShoreDist: null },
+    { name: 'dust_drift', mode: 'sprite', sparsity: 0.94, scale: 0.30 },
+    { name: 'cracked_clay', mode: 'luminance', strength: 0.15, density: 0.55, maxShoreDist: null }
+  ],
+  swamp: [
+    { name: 'algae_film', mode: 'sprite', sparsity: 0.88, scale: 0.45 },
+    { name: 'sphagnum_moss', mode: 'sprite', sparsity: 0.90, scale: 0.40 },
+    { name: 'waterlogged_leaf', mode: 'sprite', sparsity: 0.95, scale: 0.30 }
+  ],
+  hills: [
+    { name: 'hillside_grass', mode: 'sprite', sparsity: 0.87, scale: 0.45 },
+    { name: 'flat_stone', mode: 'sprite', sparsity: 0.94, scale: 0.35 },
+    { name: 'brown_moss', mode: 'sprite', sparsity: 0.92, scale: 0.35 }
+  ],
+  mountains: [
+    { name: 'lichen_crust', mode: 'luminance', strength: 0.18, density: 0.60, maxShoreDist: null },
+    { name: 'frost_crystals', mode: 'luminance', strength: 0.15, density: 0.50, maxShoreDist: null },
+    { name: 'gravel_scatter', mode: 'luminance', strength: 0.20, density: 0.70, maxShoreDist: null }
+  ],
+  volcanic: [
+    { name: 'ash_film', mode: 'sprite', sparsity: 0.92, scale: 0.35 },
+    { name: 'char_crust', mode: 'luminance', strength: 0.22, density: 0.75, maxShoreDist: null },
+    { name: 'pumice_dust', mode: 'sprite', sparsity: 0.95, scale: 0.25 }
+  ],
+  tundra: [
+    { name: 'frozen_moss', mode: 'sprite', sparsity: 0.92, scale: 0.35 },
+    { name: 'ice_crust', mode: 'luminance', strength: 0.15, density: 0.55, maxShoreDist: null },
+    { name: 'dead_lichen', mode: 'sprite', sparsity: 0.94, scale: 0.30 }
+  ],
+  arctic: [
+    { name: 'snow_crust', mode: 'sprite', sparsity: 0.88, scale: 0.40 },
+    { name: 'ice_crystals', mode: 'sprite', sparsity: 0.92, scale: 0.35 },
+    { name: 'frost_pattern', mode: 'luminance', strength: 0.18, density: 0.65, maxShoreDist: null }
+  ],
+  mystic: [
+    { name: 'glowing_moss', mode: 'sprite', sparsity: 0.90, scale: 0.40 },
+    { name: 'aether_tendril', mode: 'luminance', strength: 0.18, density: 0.55, maxShoreDist: null },
+    { name: 'crystal_dust', mode: 'luminance', strength: 0.15, density: 0.50, maxShoreDist: null }
   ],
   shallow_water: [
     { name: 'ripple_pattern', mode: 'luminance', strength: 0.15, density: 0.75, maxShoreDist: null },
