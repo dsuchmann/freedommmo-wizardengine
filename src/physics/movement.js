@@ -1,9 +1,5 @@
 export function canEnterTile(tile) {
   if (!tile?.walkable) return false;
-  if (tile.terrainForm === 'cliff' && !tile.features.includes('natural_bridge')) return false;
-  if (tile.terrainForm === 'step' && !tile.features.includes('natural_bridge')) return true;
-  if (tile.layers?.[7]?.localStep > 0.10 && !tile.features.includes('natural_bridge')) return false;
-  if (tile.layers?.[7]?.slope > 0.16 && !tile.features.includes('natural_bridge')) return false;
   return true;
 }
 
