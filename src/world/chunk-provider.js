@@ -1,6 +1,7 @@
 import { getWorldSeed } from '../core/world-seed.js';
 import { chunkKey } from './chunk.js';
 import { ChunkCompiler } from './chunk-compiler.js';
+import { sampleRegionalMapChunk } from './regional-map.js';
 
 export class ChunkProvider {
   constructor({ workerCount = Math.max(2, Math.min(6, (navigator.hardwareConcurrency ?? 8) - 2)) } = {}) {
@@ -22,6 +23,26 @@ export class ChunkProvider {
 
     if (this.workerSupported) {
       for (let i = 0; i < workerCount; i++) this.createWorker();
+    }
+  }
+
+  // Sample biomes in a radius around a world position and tell workers to preload those tiles.
+  initPreload(wx, wy) {
+    const pcx = Math.floor(wx / 64);
+    const pcy = Math.floor(wy / 64);
+    const biomeSet = new Set();
+    // Sample a grid around the player — sparse sampling is fine, just need biome variety
+    const sampleRadius = 30;
+    const step = 3;
+    for (let dy = -sampleRadius; dy <= sampleRadius; dy += step) {
+      for (let dx = -sampleRadius; dx <= sampleRadius; dx += step) {
+        const sample = sampleRegionalMapChunk(pcx + dx, pcy + dy);
+        biomeSet.add(sample.id);
+      }
+    }
+    const biomes = [...biomeSet];
+    for (const worker of this.workers) {
+      worker.postMessage({ type: 'preloadBiomes', biomes });
     }
   }
 

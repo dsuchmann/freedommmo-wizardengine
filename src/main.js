@@ -28,6 +28,7 @@ window._debugChunks = chunks;
 const compositor = new RuntimeCompositor(defaultAssetCatalog);
 const renderer = new CanvasRenderer(canvas, stats, compositor);
 preloadWangTiles();
+provider.initPreload(player.x, player.y);
 const lighting = new DayNightCycle();
 const overmap = new OvermapController(overmapCanvas, player, chunks);
 const camera = new Camera();

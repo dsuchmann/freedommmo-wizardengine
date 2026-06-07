@@ -53,16 +53,16 @@ function classifyRegionalBiome(elevation, moisture, heat, mountains, river, aeth
   if (elevation < 0.39) return 'ocean';
   if (elevation < 0.43) return 'shallow_water';
   if (river < 0.030) return 'river';
-  if (moisture > 0.86 && elevation < 0.60) return 'lake';
+  if (moisture > 0.80 && elevation < 0.60) return 'lake';
   if (elevation < 0.47) return moisture > 0.64 ? 'swamp' : 'beach';
   if (elevation > 0.78) return heat < 0.25 ? 'arctic' : 'mountains';
-  if (elevation > 0.68 || mountains > 0.72) return heat > 0.60 && moisture < 0.42 ? 'volcanic' : 'hills';
+  if (elevation > 0.68 || mountains > 0.72) return heat > 0.50 && moisture < 0.48 ? 'volcanic' : 'hills';
   if (heat < 0.18) return moisture > 0.52 ? 'tundra' : 'arctic';
   if (heat < 0.30) return moisture > 0.48 ? 'taiga' : 'steppe';
-  if (moisture > 0.78) return heat > 0.66 ? 'tropical_forest' : 'dense_forest';
-  if (moisture > 0.58) return heat > 0.62 ? 'tropical_forest' : 'forest';
-  if (heat > 0.72 && moisture < 0.34) return 'desert';
-  if (heat > 0.58 && moisture < 0.48) return 'savanna';
+  if (moisture > 0.72) return heat > 0.58 ? 'tropical_forest' : 'dense_forest';
+  if (moisture > 0.58) return heat > 0.58 ? 'tropical_forest' : 'forest';
+  if (heat > 0.62 && moisture < 0.42) return 'desert';
+  if (heat > 0.55 && moisture < 0.48) return 'savanna';
   if (moisture < 0.36) return 'steppe';
   return 'grassland';
 }

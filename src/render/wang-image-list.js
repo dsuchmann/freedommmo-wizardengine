@@ -131,6 +131,53 @@ export function getWangImageURLsForBiomes(biomes) {
   return urls;
 }
 
+// Soil material → directory mapping. Each biome gets its own unique substrate.
+var SOIL_MATERIALS = {
+  forest: 'loam',
+  dense_forest: 'dark_humus',
+  tropical_forest: 'tropical_humus',
+  taiga: 'needle_duff',
+  grassland: 'dry_loam',
+  savanna: 'sun_baked_earth',
+  steppe: 'dusty_earth',
+  desert: 'hot_sand',
+  beach: 'wet_sand',
+  swamp: 'peat_mud',
+  hills: 'rocky_soil',
+  mountains: 'grey_gravel',
+  volcanic: 'basalt_ash',
+  tundra: 'frozen_earth',
+  arctic: 'glacial_crust',
+  mystic: 'aether_loam',
+  ocean: 'ocean_surface',
+  deep_ocean: 'deep_water',
+  shallow_water: 'shallow_water',
+  river: 'flowing_water',
+  lake: 'still_water'
+};
+var SOIL_BASE_PATH = '/assets/pixelab/landscape_v2/micro/soil/';
+var SOIL_VARIANT_COUNT = 64;
+
+export function getSoilImageURLs() {
+  var urls = [];
+  var seenMaterials = new Set();
+  // Generate URLs for all 21 biome substrate materials
+  for (var biome in SOIL_MATERIALS) {
+    var mat = SOIL_MATERIALS[biome];
+    if (seenMaterials.has(mat)) continue;
+    seenMaterials.add(mat);
+    for (var v = 0; v < SOIL_VARIANT_COUNT; v++) {
+      var idx = v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v);
+      urls.push(SOIL_BASE_PATH + mat + '/soil__' + mat + '__v' + idx + '.png');
+    }
+  }
+  return urls;
+}
+
+export function soilMaterialForBiome(biome) {
+  return SOIL_MATERIALS[biome] || 'loam';
+}
+
 // Build the complete URL list for all wang tile images.
 // Generates URLs for all 21×20 directed pairs × all variants.
 // Workers preload these — missing files just 404 silently.

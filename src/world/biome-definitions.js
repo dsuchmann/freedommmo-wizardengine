@@ -22,7 +22,7 @@ export const BIOMES = Object.freeze({
   desert: { material: 'hot_sand', color: '#d7a94f', walkable: true, movementCost: 1.25 },
   hills: { material: 'stony_grass', color: '#827d55', walkable: true, movementCost: 1.6 },
   mountains: { material: 'grey_rock', color: '#777b82', walkable: true, movementCost: 2.2 },
-  volcanic: { material: 'basalt', color: '#4a3f3c', walkable: true, movementCost: 2.4 },
+  volcanic: { material: 'basalt', color: '#6b3328', walkable: true, movementCost: 2.4 },
   mystic: { material: 'aether_moss', color: '#8a5bd6', walkable: true, movementCost: 1.25 },
   tundra: { material: 'frozen_earth', color: '#9fb0aa', walkable: true, movementCost: 1.7 },
   arctic: { material: 'glacial_ice', color: '#c9e5ee', walkable: true, movementCost: 2.1 },

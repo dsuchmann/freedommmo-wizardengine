@@ -1,25 +1,25 @@
 import { setWorldSeed } from '../core/world-seed.js';
 import { WORLD } from '../core/constants.js';
 import { ChunkCompiler } from './chunk-compiler.js';
-import { getAllWangImageURLs } from '../render/wang-image-list.js';
+import { getAllWangImageURLs, getWangImageURLsForBiomes, getSoilImageURLs } from '../render/wang-image-list.js';
 import { renderChunkToBitmap } from '../render/worker-chunk-renderer.js';
 
 var compiler = new ChunkCompiler();
 var SLICE_ROWS = 8;
 var imageCache = new Map();
 var imagesReady = false;
+var backgroundLoadingDone = false;
 var neighborCache = new Map();
 var MAX_NEIGHBOR_CACHE = 50;
 
-// Preload all wang tile images on worker init — batched to avoid resource exhaustion
-(async function preloadImages() {
-  var urls = getAllWangImageURLs();
+// Load a batch of image URLs into the cache. Returns {loaded, failed}.
+async function loadImageBatch(urls, batchSize) {
   var loaded = 0;
   var failed = 0;
-  var BATCH = 30;
-  for (var i = 0; i < urls.length; i += BATCH) {
-    var batch = urls.slice(i, i + BATCH);
+  for (var i = 0; i < urls.length; i += batchSize) {
+    var batch = urls.slice(i, i + batchSize);
     await Promise.all(batch.map(async function(url) {
+      if (imageCache.has(url)) { loaded++; return; }
       try {
         var response = await fetch(url);
         if (!response.ok) { failed++; return; }
@@ -32,9 +32,23 @@ var MAX_NEIGHBOR_CACHE = 50;
       }
     }));
   }
-  imagesReady = true;
-  self.postMessage({ type: 'imagesReady', loaded: loaded, failed: failed, total: urls.length });
-})();
+  return { loaded: loaded, failed: failed };
+}
+
+// Phase 2: Background-load remaining wang tiles after worker is already active.
+async function backgroundLoadRemaining() {
+  var allUrls = getAllWangImageURLs();
+  // Filter to only URLs not yet cached
+  var remaining = allUrls.filter(function(url) { return !imageCache.has(url); });
+  if (remaining.length === 0) {
+    backgroundLoadingDone = true;
+    self.postMessage({ type: 'backgroundLoadDone', total: allUrls.length, cached: imageCache.size });
+    return;
+  }
+  await loadImageBatch(remaining, 40);
+  backgroundLoadingDone = true;
+  self.postMessage({ type: 'backgroundLoadDone', total: allUrls.length, cached: imageCache.size });
+}
 
 function evictNeighborCache() {
   if (neighborCache.size <= MAX_NEIGHBOR_CACHE) return;
@@ -46,6 +60,21 @@ function evictNeighborCache() {
 
 self.onmessage = function(event) {
   var data = event.data;
+
+  if (data.type === 'preloadBiomes') {
+    // Phase 1: Preload tiles for specified biomes + soil sprites, then signal ready.
+    var biomeUrls = getWangImageURLsForBiomes(data.biomes);
+    var soilUrls = getSoilImageURLs();
+    var priorityUrls = biomeUrls.concat(soilUrls);
+    loadImageBatch(priorityUrls, 40).then(function(result) {
+      imagesReady = true;
+      self.postMessage({ type: 'imagesReady', loaded: result.loaded, failed: result.failed, total: biomeUrls.length });
+      // Phase 2: Load everything else in the background
+      backgroundLoadRemaining();
+    });
+    return;
+  }
+
   if (data.type === 'compileChunk') {
     if (!imagesReady) return;
     var key = data.key;
