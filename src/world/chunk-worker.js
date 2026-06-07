@@ -1,7 +1,7 @@
 import { setWorldSeed } from '../core/world-seed.js';
 import { WORLD } from '../core/constants.js';
 import { ChunkCompiler } from './chunk-compiler.js';
-import { getAllWangImageURLs, getWangImageURLsForBiomes, getSoilImageURLs } from '../render/wang-image-list.js';
+import { getAllWangImageURLs, getWangImageURLsForBiomes, getSoilImageURLs, getGroundCoverImageURLs } from '../render/wang-image-list.js';
 import { renderChunkToBitmap } from '../render/worker-chunk-renderer.js';
 
 var compiler = new ChunkCompiler();
@@ -50,6 +50,62 @@ async function backgroundLoadRemaining() {
   self.postMessage({ type: 'backgroundLoadDone', total: allUrls.length, cached: imageCache.size });
 }
 
+// Compute shore distance and shore angle for every tile in a chunk.
+// Sets tile.shoreDistance (float, 0=water, higher=further inland)
+// and tile.shoreAngle (radians, direction the shoreline runs at this point).
+function computeShoreDataForChunk(chunk, chunkSize) {
+  var size = chunkSize * chunkSize;
+  var dist = new Float32Array(size);
+  dist.fill(255);
+
+  // Pass 1: mark water tiles as 0
+  for (var i = 0; i < size; i++) {
+    var b = chunk.tiles[i].biome;
+    if (b.includes('ocean') || b === 'shallow_water' || b === 'river' || b === 'lake') dist[i] = 0;
+  }
+
+  // Pass 2: forward sweep
+  for (var y = 0; y < chunkSize; y++) {
+    for (var x = 0; x < chunkSize; x++) {
+      var idx = y * chunkSize + x;
+      if (x > 0 && dist[idx - 1] + 1 < dist[idx]) dist[idx] = dist[idx - 1] + 1;
+      if (y > 0 && dist[idx - chunkSize] + 1 < dist[idx]) dist[idx] = dist[idx - chunkSize] + 1;
+      if (x > 0 && y > 0 && dist[idx - chunkSize - 1] + 1.41 < dist[idx]) dist[idx] = dist[idx - chunkSize - 1] + 1.41;
+      if (x < chunkSize - 1 && y > 0 && dist[idx - chunkSize + 1] + 1.41 < dist[idx]) dist[idx] = dist[idx - chunkSize + 1] + 1.41;
+    }
+  }
+
+  // Pass 3: backward sweep
+  for (var y = chunkSize - 1; y >= 0; y--) {
+    for (var x = chunkSize - 1; x >= 0; x--) {
+      var idx = y * chunkSize + x;
+      if (x < chunkSize - 1 && dist[idx + 1] + 1 < dist[idx]) dist[idx] = dist[idx + 1] + 1;
+      if (y < chunkSize - 1 && dist[idx + chunkSize] + 1 < dist[idx]) dist[idx] = dist[idx + chunkSize] + 1;
+      if (x < chunkSize - 1 && y < chunkSize - 1 && dist[idx + chunkSize + 1] + 1.41 < dist[idx]) dist[idx] = dist[idx + chunkSize + 1] + 1.41;
+      if (x > 0 && y < chunkSize - 1 && dist[idx + chunkSize - 1] + 1.41 < dist[idx]) dist[idx] = dist[idx + chunkSize - 1] + 1.41;
+    }
+  }
+
+  // Pass 4: compute gradient (shore direction) and store on tiles
+  for (var y = 0; y < chunkSize; y++) {
+    for (var x = 0; x < chunkSize; x++) {
+      var idx = y * chunkSize + x;
+      var tile = chunk.tiles[idx];
+      tile.shoreDistance = dist[idx];
+
+      // Gradient of distance field → points away from water
+      var dL = x > 0 ? dist[idx - 1] : dist[idx];
+      var dR = x < chunkSize - 1 ? dist[idx + 1] : dist[idx];
+      var dU = y > 0 ? dist[idx - chunkSize] : dist[idx];
+      var dD = y < chunkSize - 1 ? dist[idx + chunkSize] : dist[idx];
+      var gradX = dR - dL;
+      var gradY = dD - dU;
+      // Shore angle = perpendicular to gradient (the direction the coastline runs)
+      tile.shoreAngle = Math.atan2(-gradX, gradY);
+    }
+  }
+}
+
 function evictNeighborCache() {
   if (neighborCache.size <= MAX_NEIGHBOR_CACHE) return;
   var keys = [...neighborCache.keys()];
@@ -65,7 +121,8 @@ self.onmessage = function(event) {
     // Phase 1: Preload tiles for specified biomes + soil sprites, then signal ready.
     var biomeUrls = getWangImageURLsForBiomes(data.biomes);
     var soilUrls = getSoilImageURLs();
-    var priorityUrls = biomeUrls.concat(soilUrls);
+    var gcUrls = getGroundCoverImageURLs();
+    var priorityUrls = biomeUrls.concat(soilUrls).concat(gcUrls);
     loadImageBatch(priorityUrls, 40).then(function(result) {
       imagesReady = true;
       self.postMessage({ type: 'imagesReady', loaded: result.loaded, failed: result.failed, total: biomeUrls.length });
@@ -82,6 +139,10 @@ self.onmessage = function(event) {
     var cy = data.cy;
     setWorldSeed(data.seed);
     var chunk = compiler.compile(cx, cy);
+
+    // Compute shore distance + direction for every tile in this chunk.
+    // Stored on each tile so main thread can use it for wave animation direction.
+    computeShoreDataForChunk(chunk, WORLD.chunkSize);
 
     // Send tile data in slices (same as before, for main thread to store)
     self.postMessage({ type: 'chunkStart', key: key, cx: cx, cy: cy, totalRows: WORLD.chunkSize });

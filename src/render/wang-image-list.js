@@ -178,6 +178,34 @@ export function soilMaterialForBiome(biome) {
   return SOIL_MATERIALS[biome] || 'loam';
 }
 
+// Ground cover objects per biome — must match GC_BIOME_OBJECTS in worker-chunk-renderer.js
+var GC_BIOME_OBJECTS_LIST = {
+  beach: ['wet_sand', 'sea_foam', 'tide_line'],
+  forest: ['fallen_leaves', 'moss_patch', 'pine_needles'],
+  dense_forest: ['dark_leaf_mat', 'dark_wet_moss', 'fungal_film'],
+  shallow_water: ['ripple_pattern', 'sand_shimmer', 'seaweed_strand'],
+  ocean: ['wave_foam', 'light_caustic', 'floating_debris'],
+  deep_ocean: ['dark_current', 'bioluminescence'],
+  river: ['flow_streaks', 'bubble_trail', 'river_foam'],
+  lake: ['soft_ripple', 'light_dapple', 'lily_pad'],
+};
+var GC_BASE_PATH = '/assets/pixelab/landscape_v2/micro/ground_cover/';
+var GC_VARIANT_COUNT = 64;
+
+export function getGroundCoverImageURLs() {
+  var urls = [];
+  for (var biome in GC_BIOME_OBJECTS_LIST) {
+    var objects = GC_BIOME_OBJECTS_LIST[biome];
+    for (var oi = 0; oi < objects.length; oi++) {
+      for (var v = 0; v < GC_VARIANT_COUNT; v++) {
+        var idx = v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v);
+        urls.push(GC_BASE_PATH + biome + '/' + objects[oi] + '/gc__' + biome + '__' + objects[oi] + '__v' + idx + '.png');
+      }
+    }
+  }
+  return urls;
+}
+
 // Build the complete URL list for all wang tile images.
 // Generates URLs for all 21×20 directed pairs × all variants.
 // Workers preload these — missing files just 404 silently.

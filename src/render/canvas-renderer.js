@@ -9,6 +9,7 @@ import { AtlasManager } from '../assets/atlas-manager.js';
 import { setChunkStore, getDebugWangData, setDebugWangData } from './wang-terrain-painter.js';
 import { biomeVariantFrameId } from '../assets/variant-selector.js';
 import { drawElevationOverlay } from './elevation-overlay.js';
+import { drawWaterWaveOverlay, preloadSeaweedAnimations } from './water-wave-overlay.js';
 import { findNearbyInteraction, objectReaction, performInteraction } from '../world/interactions.js';
 
 export class CanvasRenderer {
@@ -18,6 +19,7 @@ export class CanvasRenderer {
     installBlackFillWarning(this.ctx);
     this.ctx.imageSmoothingEnabled = false;
     this.statsElement = statsElement;
+    preloadSeaweedAnimations();
     this.compositor = compositor;
     this.atlas = new AtlasManager();
     this.chunkRenderCache = new ChunkRenderCache();
@@ -95,6 +97,10 @@ export class CanvasRenderer {
       if (wd && !getDebugWangData(key)) setDebugWangData(key, wd);
       visibleChunks.push({ cx, cy, key, sx, sy, dw: chunkPx, dh: chunkPx });
     }
+
+    // === FIELD 1 ANIMATED WATER OVERLAY ===
+    // Per-pixel wave modulation + animated seaweed sprites
+    drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, h, performance.now() / 1000);
 
     // Wang debug overlay (toggle with D key)
     if (this.debugWang) {
