@@ -79,6 +79,22 @@ export function getWangImageURLsForBiomes(biomes) {
     }
   }
 
+  // Self-transition elevation variants for each biome
+  for (var sb = 0; sb < biomes.length; sb++) {
+    var selfDir = biomes[sb] + '_to_' + biomes[sb];
+    if (!seenDirs.has(selfDir)) {
+      seenDirs.add(selfDir);
+      var selfVariants = ['wang_25', 'wang_50', 'wang_100'];
+      for (var svi = 0; svi < selfVariants.length; svi++) {
+        var sv = selfVariants[svi];
+        var stc = WANG_VARIANT_TILE_COUNTS[sv];
+        for (var sm = 0; sm < stc; sm++) {
+          urls.push(TRANSITIONS_BASE + selfDir + '/' + sv + '/' + selfDir + '__wang_' + sm + WANG_SUFFIX);
+        }
+      }
+    }
+  }
+
   // Transition pairs between nearby biomes (both directions)
   for (var i = 0; i < biomes.length; i++) {
     for (var j = i + 1; j < biomes.length; j++) {
@@ -133,10 +149,9 @@ export function getAllWangImageURLs() {
     }
   }
 
-  // All 420 directed pairs for s0.25, s0.5, s1.0
+  // All 441 directed pairs (including self-transitions) for s0.25, s0.5, s1.0
   for (var ai = 0; ai < ALL_BIOMES.length; ai++) {
     for (var bi = 0; bi < ALL_BIOMES.length; bi++) {
-      if (ai === bi) continue;
       var ddir = ALL_BIOMES[ai] + '_to_' + ALL_BIOMES[bi];
       var elevVariants = ['wang_25', 'wang_50', 'wang_100'];
       for (var vi = 0; vi < elevVariants.length; vi++) {
