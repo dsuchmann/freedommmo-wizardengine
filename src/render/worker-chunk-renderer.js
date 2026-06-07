@@ -167,13 +167,24 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
       // Same-biome elevation transition: if no cross-biome transition was found
       // but there's an elevation difference in the 2×2 cell, use a self-transition
       // (e.g. grassland_to_grassland) to show the elevation change.
+      // Uses a lower threshold (delta >= 1) than cross-biome variants (delta >= 2)
+      // because same-biome elevation changes are always real terrain steps.
       if (!tile.transitionPair) {
-        var variant = elevationVariant(tile);
-        if (variant !== 'wang') {
-          // There's an elevation change — create a self-transition pair
+        var selfMyLevel = cliffLevel(tile.climate.elevation);
+        var selfELevel = cliffLevel(tile._elE != null ? tile._elE : tile.climate.elevation);
+        var selfSLevel = cliffLevel(tile._elS != null ? tile._elS : tile.climate.elevation);
+        var selfSELevel = cliffLevel(tile._elSE != null ? tile._elSE : tile.climate.elevation);
+        var selfMaxDelta = Math.max(
+          Math.abs(selfMyLevel - selfELevel),
+          Math.abs(selfMyLevel - selfSLevel),
+          Math.abs(selfMyLevel - selfSELevel),
+          Math.abs(selfELevel - selfSLevel),
+          Math.abs(selfELevel - selfSELevel),
+          Math.abs(selfSLevel - selfSELevel)
+        );
+        if (selfMaxDelta >= 1) {
           var selfDir = tile.biome + '_to_' + tile.biome;
           tile.transitionPair = { from: tile.biome, to: tile.biome, dir: selfDir };
-          // Determine side based on whether this tile is at the lower or higher elevation
           var avgNeighborEl = ((tile._elE || myEl) + (tile._elS || myEl) + (tile._elSE || myEl)) / 3;
           tile.transitionSide = myEl <= avgNeighborEl ? 'from' : 'to';
         }
@@ -210,6 +221,12 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
       }
 
       var variant = elevationVariant(tile);
+      // For self-transitions, use lower thresholds since these ARE real elevation steps
+      if (tile.transitionPair && tile.transitionPair.from === tile.transitionPair.to && variant === 'wang') {
+        // elevationVariant returned 'wang' but we detected a self-transition (delta >= 1)
+        // Force wang_25 so the elevation tiles render
+        variant = 'wang_25';
+      }
       paintTerrainTile(ctx, tile, sx, sy, tileSize, sun, tile.climate.elevation, imageCache, variant);
       paintCliffOverlay(ctx, tile, sx, sy, tileSize, sun, imageCache);
 
