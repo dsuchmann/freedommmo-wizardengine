@@ -335,7 +335,7 @@ export function preloadField2Animations(biomes) {
 
 // Draw animated Field 2 sprites near the player.
 // Called per-frame from canvas-renderer after chunk drawing.
-export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, weather) {
+export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, weather, sun) {
   var tilePx = WORLD.tileSize * camera.zoom;
   var chunkPx = chunkGrid.chunkPx;
   var baseSX = chunkGrid.baseSX;
@@ -636,18 +636,13 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         var swayDir = currentEffect.rot;
         var sway = isRigid ? 0 : swayDir * 1.2 * animBlend * lifeSway;
 
-        // PERFORMANCE: worker bakes the static carpet. Main thread only overlays
-        // sprites very close to the player (for player-walk interaction).
-        // Wind sway is purely visual on the baked sprites — no overlay needed.
-        var playerDist = Math.abs(wx - player.x) + Math.abs(wy - player.y);
-        if (playerDist > 4) continue; // only draw within 4 tiles of player
-
         // Buffer for Y-sorted drawing
         var halfDraw = drawSize * 0.5;
+        var hasSway = Math.abs(sway) > 0.001 || Math.abs(baseAngle) > 0.001;
         drawBuffer.push({
           sortY: wy + 0.5 + (rand2(wx, wy, 7031 + bi) - 0.5) * 0.5,
           sx: sx, sy: sy, halfDraw: halfDraw, drawSize: drawSize,
-          baseAngle: baseAngle, sway: sway,
+          baseAngle: baseAngle, sway: sway, hasSway: hasSway,
           alpha: finalAlpha * lifeAlpha, img: img
         });
       }
@@ -657,24 +652,30 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
   // Sort by world Y (top-to-bottom = far-to-near)
   drawBuffer.sort(function(a, b) { return a.sortY - b.sortY; });
 
-  // Find where to insert the player
+  // Draw all visible sprites — fast path for static, slow path only for swaying
   var playerInserted = false;
   for (var di = 0; di < drawBuffer.length; di++) {
-    // Draw player when we reach sprites at or below player's Y
     if (!playerInserted && drawBuffer[di].sortY > player.y + 0.4) {
       if (_playerDrawFn) _playerDrawFn(ctx);
       playerInserted = true;
     }
     var d = drawBuffer[di];
-    ctx.save();
-    ctx.translate(d.sx, d.sy + d.halfDraw);
-    ctx.rotate(d.baseAngle + d.sway);
-    ctx.globalAlpha = d.alpha;
-    ctx.drawImage(d.img, -d.halfDraw, -d.drawSize, d.drawSize, d.drawSize);
-    ctx.restore();
+    if (d.hasSway) {
+      // Slow path: transform pipeline for actively swaying sprites
+      ctx.save();
+      ctx.translate(d.sx, d.sy + d.halfDraw);
+      ctx.rotate(d.baseAngle + d.sway);
+      ctx.globalAlpha = d.alpha;
+      ctx.drawImage(d.img, -d.halfDraw, -d.drawSize, d.drawSize, d.drawSize);
+      ctx.restore();
+    } else {
+      // Fast path: simple drawImage, no save/translate/rotate/restore
+      if (d.alpha < 0.99) ctx.globalAlpha = d.alpha;
+      ctx.drawImage(d.img, d.sx - d.halfDraw, d.sy - d.halfDraw, d.drawSize, d.drawSize);
+    }
   }
-  // If player is below all sprites, draw last
   if (!playerInserted && _playerDrawFn) _playerDrawFn(ctx);
+  ctx.globalAlpha = 1.0;
 
   ctx.restore();
 }

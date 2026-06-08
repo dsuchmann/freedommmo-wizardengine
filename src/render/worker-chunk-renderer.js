@@ -1051,9 +1051,9 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
   // Apply decoration fields in order — each field reads+writes the occupancy grid
   applySoilFieldToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache);
   applyGroundCoverToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache, occupancy, cellsPerTile, cellPx, gridW);
-  // Field 2 static carpet — baked into chunk for zero render cost.
-  // Main thread overlays only the few sprites actively animating.
-  applySmallFloraToChunk(ctx, chunk, tileSize, chunkSize, imageCache);
+  // Field 2 handled entirely by main thread field2-animator.js
+  // (fast path for static sprites, transform path only for swaying ones)
+  // applySmallFloraToChunk(ctx, chunk, tileSize, chunkSize, imageCache);
 
   var bitmap = offscreen.transferToImageBitmap();
   return {
