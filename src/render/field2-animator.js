@@ -13,9 +13,10 @@ var FRAME_COUNT = 9;
 var FRAME_DURATION = 120; // ms per frame
 var CYCLE_DURATION = FRAME_COUNT * FRAME_DURATION; // ms per full cycle
 
-// Track per-sprite trigger times: key → triggerTimeMs
+// Track per-sprite trigger times and extension count
+// key → { time: triggerTimeMs, extensions: count }
 var triggerTimes = new Map();
-var TRIGGER_KEY_SALT = 90000;
+var MAX_EXTENSIONS = 3; // hard cap on neighbor extensions to prevent infinite loops
 
 // ---- Wind Currents ----
 // Visible wavefronts that sweep across the map, bending sprites as they pass.
@@ -248,7 +249,8 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         // Track trigger per sprite
         var triggerKey = wx * 10000 + wy * 100 + bi;
         if (impulse > 0.08) {
-          triggerTimes.set(triggerKey, timeMs);
+          // Fresh trigger resets extensions
+          triggerTimes.set(triggerKey, { time: timeMs, ext: 0 });
         }
 
         // Per-sprite loop count: 100%→4, 70%→5, 40%→6, 10%→7, 5%→8
@@ -256,27 +258,31 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         var loopCount = loopRoll < 0.05 ? 8 : loopRoll < 0.10 ? 7 : loopRoll < 0.40 ? 6 : loopRoll < 0.70 ? 5 : 4;
         var triggerDuration = CYCLE_DURATION * loopCount;
 
-        var triggerTime = triggerTimes.get(triggerKey) || -99999;
+        var triggerData = triggerTimes.get(triggerKey);
+        var triggerTime = triggerData ? triggerData.time : -99999;
+        var extensions = triggerData ? triggerData.ext : 0;
         var elapsed = timeMs - triggerTime;
 
         // Neighbor contagion: if nearby sprites are still animating,
-        // extend this sprite's animation so they don't snap-stop together.
-        if (elapsed > triggerDuration * 0.8) {
-          // Check a few neighbors for active triggers
-          for (var nd = -1; nd <= 1; nd++) {
-            for (var ne = -1; ne <= 1; ne++) {
+        // extend by one cycle — but only up to MAX_EXTENSIONS times.
+        if (elapsed > triggerDuration * 0.8 && extensions < MAX_EXTENSIONS) {
+          var shouldExtend = false;
+          for (var nd = -1; nd <= 1 && !shouldExtend; nd++) {
+            for (var ne = -1; ne <= 1 && !shouldExtend; ne++) {
               if (nd === 0 && ne === 0) continue;
               var nKey = (wx + ne) * 10000 + (wy + nd) * 100;
-              var nTrigger = triggerTimes.get(nKey) || -99999;
-              var nElapsed = timeMs - nTrigger;
-              if (nElapsed < triggerDuration * 0.6) {
-                // Neighbor is still going strong — extend our animation
-                triggerTimes.set(triggerKey, triggerTime + CYCLE_DURATION);
-                elapsed = timeMs - triggerTime - CYCLE_DURATION;
-                break;
+              var nData = triggerTimes.get(nKey);
+              if (!nData) continue;
+              var nElapsed = timeMs - nData.time;
+              // Only extend if neighbor is still going AND hasn't maxed out extensions
+              if (nElapsed < triggerDuration * 0.6 && nData.ext < MAX_EXTENSIONS) {
+                shouldExtend = true;
               }
             }
-            if (elapsed < triggerDuration * 0.8) break;
+          }
+          if (shouldExtend) {
+            triggerTimes.set(triggerKey, { time: triggerTime + CYCLE_DURATION, ext: extensions + 1 });
+            elapsed = timeMs - triggerTime - CYCLE_DURATION;
           }
         }
 
