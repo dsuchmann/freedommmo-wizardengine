@@ -11,6 +11,13 @@ var ANIM_RADIUS = 40; // tiles around player — large enough to cover full scre
 var FADE_INNER = 34; // fully opaque inside this radius
 var FRAME_COUNT = 9;
 var FRAME_DURATION = 120; // ms per frame
+var LOOP_COUNT = 3; // cycles before settling back to still
+var CYCLE_DURATION = FRAME_COUNT * FRAME_DURATION; // ms per full cycle
+var TRIGGER_DURATION = CYCLE_DURATION * LOOP_COUNT; // total animation time after trigger
+
+// Track per-sprite trigger times: key → triggerTimeMs
+var triggerTimes = new Map();
+var TRIGGER_KEY_SALT = 90000;
 
 // ---- Wind Currents ----
 // Visible wavefronts that sweep across the map, bending sprites as they pass.
@@ -224,22 +231,45 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
 
         var objName = objects[oi];
 
-        // Excitation: 0 = still, 1 = fully animated. Driven by wind + player.
+        // Wind/player impulse triggers animation for a few cycles then settles.
         var currentEffect = sampleCurrents(wx, wy, timeSec);
         var playerEffect = samplePlayerPush(wx, wy, player.x, player.y, playerVX, playerVY);
-        var excitation = Math.min(1, Math.abs(currentEffect.rot) * 12 + Math.abs(playerEffect.rot) * 8);
+        var impulse = Math.abs(currentEffect.rot) * 12 + Math.abs(playerEffect.rot) * 8;
 
-        // Animation: fixed speed cycle, but only plays when excited.
-        // When calm → frame 0 (still). When triggered → plays through
-        // the cycle at normal speed, then stops when excitation fades.
-        var tilePhase = rand2(wx, wy, 7060 + bi) * FRAME_COUNT;
-        var frameIdx;
-        if (excitation < 0.05) {
-          frameIdx = 0; // Still
-        } else {
-          // Normal fixed-speed animation — same rate always
-          frameIdx = Math.floor((timeMs / FRAME_DURATION + tilePhase) % FRAME_COUNT);
+        // ~7% of sprites randomly animate on their own (ambient life)
+        var ambientRoll = rand2(wx, wy, 7080 + bi);
+        if (ambientRoll < 0.07) {
+          // Random self-trigger every few seconds
+          var ambientPeriod = 4000 + rand2(wx, wy, 7081 + bi) * 8000; // 4-12 sec
+          var ambientPhase = rand2(wx, wy, 7082 + bi) * ambientPeriod;
+          if ((timeMs + ambientPhase) % ambientPeriod < TRIGGER_DURATION) {
+            impulse = 0.2; // gentle ambient trigger
+          }
         }
+
+        // Track trigger per sprite
+        var triggerKey = wx * 10000 + wy * 100 + bi;
+        if (impulse > 0.08) {
+          triggerTimes.set(triggerKey, timeMs);
+        }
+
+        var triggerTime = triggerTimes.get(triggerKey) || -99999;
+        var elapsed = timeMs - triggerTime;
+        var frameIdx;
+        if (elapsed > TRIGGER_DURATION) {
+          frameIdx = 0; // Settled — show still frame
+        } else {
+          // Playing: fixed speed, loops for LOOP_COUNT cycles then stops
+          // Ease out on the last cycle
+          var cycleProgress = elapsed / CYCLE_DURATION;
+          frameIdx = Math.floor((elapsed / FRAME_DURATION) % FRAME_COUNT);
+          // On the last cycle, slow to a stop at frame 0
+          if (cycleProgress > LOOP_COUNT - 1) {
+            var lastCycleT = (cycleProgress - (LOOP_COUNT - 1));
+            if (lastCycleT > 0.7) frameIdx = 0; // settle early in last cycle
+          }
+        }
+        var isAnimating = elapsed <= TRIGGER_DURATION;
 
         // Build animation frame URL
         var url = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/frame_' + String(frameIdx).padStart(3, '0') + '.png';
@@ -252,9 +282,10 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         var drawSize = tilePxSnapped;
         var baseAngle = (rand2(wx, wy, 7040 + bi) - 0.5) * 0.35;
 
-        // Sway: gentle lean driven by wind/player. Anchored at bottom (root).
+        // Sway: gentle lean driven by wind/player, fades as animation settles.
+        var swayFade = isAnimating ? Math.max(0, 1 - elapsed / TRIGGER_DURATION) : 0;
         var swayDir = currentEffect.rot + playerEffect.rot;
-        var sway = swayDir * 1.2; // gentle lean
+        var sway = swayDir * 1.2 * swayFade;
 
         var sx = chunkOriginX + tx * tilePxSnapped + halfTile + offX;
         var sy = chunkOriginY + ty * tilePxSnapped + halfTile + offY;
