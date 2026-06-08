@@ -636,10 +636,11 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         var swayDir = currentEffect.rot;
         var sway = isRigid ? 0 : swayDir * 1.2 * animBlend * lifeSway;
 
-        // PERFORMANCE: only draw sprites that are actively animating.
-        // Static sprites are already baked into the chunk bitmap by the worker.
-        // Only overlay when wind/player has triggered animation (sway !== 0).
-        if (!isAnimating && Math.abs(sway) < 0.001) continue;
+        // PERFORMANCE: worker bakes the static carpet. Main thread only overlays
+        // sprites very close to the player (for player-walk interaction).
+        // Wind sway is purely visual on the baked sprites — no overlay needed.
+        var playerDist = Math.abs(wx - player.x) + Math.abs(wy - player.y);
+        if (playerDist > 4) continue; // only draw within 4 tiles of player
 
         // Buffer for Y-sorted drawing
         var halfDraw = drawSize * 0.5;
