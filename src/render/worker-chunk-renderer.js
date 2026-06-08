@@ -827,6 +827,188 @@ function applySmallFloraToChunk(ctx, chunk, tileSize, chunkSize, imageCache) {
   }
 }
 
+// === FIELD 3: SMALL SCATTER ===
+// Sparse placement of small objects (pebbles, shells, bones, mushrooms, etc).
+// Very low density (5-10%), sprite-only, no luminance modulation.
+// Objects are static — no animation. Uses occupancy grid to avoid overlaps.
+var SS_BIOME_OBJECTS = {
+  arctic: [
+    { name: 'blue_ice_crystal_scatter', sparsity: 0.93, scale: 0.35 },
+    { name: 'frost_crystal_scatter', sparsity: 0.95, scale: 0.30 },
+    { name: 'sparkling_crystal_dust_hyperdetailed_rich', sparsity: 0.94, scale: 0.28 },
+    { name: 'thin_ice_crust_hyperdetailed_rich', sparsity: 0.96, scale: 0.32 },
+  ],
+  beach: [
+    { name: 'shell_scatter_scattered_seashells_on', sparsity: 0.90, scale: 0.35 },
+    { name: 'small_crab_burrow_hole_in', sparsity: 0.95, scale: 0.30 },
+    { name: 'wet_sand_grain_texture', sparsity: 0.94, scale: 0.28 },
+    { name: 'dark_tide_line_mark', sparsity: 0.96, scale: 0.32 },
+  ],
+  dense_forest: [
+    { name: 'fallen_pinecone', sparsity: 0.92, scale: 0.30 },
+    { name: 'moss_covered_small_stone', sparsity: 0.93, scale: 0.35 },
+    { name: 'mushroom_cluster', sparsity: 0.94, scale: 0.32 },
+    { name: 'rotting_branch_piece', sparsity: 0.91, scale: 0.38 },
+  ],
+  desert: [
+    { name: 'animal_skull_bleached_white_bone', sparsity: 0.97, scale: 0.35 },
+    { name: 'cracked_dry_clay_hyperdetailed_rich', sparsity: 0.93, scale: 0.32 },
+    { name: 'sunbaked_earth_patch_tan_ochre', sparsity: 0.95, scale: 0.30 },
+    { name: 'hot_sand_patch_goldentan_fine', sparsity: 0.94, scale: 0.28 },
+  ],
+  forest: [
+    { name: 'acorn_cluster', sparsity: 0.92, scale: 0.30 },
+    { name: 'brown_mushroom_morel_growing_from', sparsity: 0.94, scale: 0.32 },
+    { name: 'small_forest_stone', sparsity: 0.93, scale: 0.35 },
+    { name: 'small_twig_bundle', sparsity: 0.91, scale: 0.35 },
+    { name: 'puffball_mushroom_round_white_puffy', sparsity: 0.95, scale: 0.28 },
+    { name: 'bark_shard_piece', sparsity: 0.94, scale: 0.30 },
+  ],
+  grassland: [
+    { name: 'dried_wildflower', sparsity: 0.92, scale: 0.32 },
+    { name: 'exposed_flat_stone_in_grass', sparsity: 0.94, scale: 0.35 },
+    { name: 'seed_head_cluster', sparsity: 0.93, scale: 0.30 },
+    { name: 'small_field_stone', sparsity: 0.95, scale: 0.32 },
+  ],
+  hills: [
+    { name: 'rocky_soil_patch_brown_earth', sparsity: 0.92, scale: 0.35 },
+    { name: 'slate_slab_flat_dark_grey_layered_rock', sparsity: 0.94, scale: 0.38 },
+    { name: 'natural_quartz_crystal_formation_white', sparsity: 0.96, scale: 0.30 },
+    { name: 'gem_deposit_colorful_crystals_embedded', sparsity: 0.97, scale: 0.28 },
+  ],
+  mountains: [
+    { name: 'fine_gravel_scatter_hyperdetailed_rich', sparsity: 0.91, scale: 0.32 },
+    { name: 'grey_mountain_gravel_patch_stone', sparsity: 0.93, scale: 0.35 },
+    { name: 'iron_ore_deposit', sparsity: 0.96, scale: 0.30 },
+    { name: 'scree_loose_grey_angular_rock', sparsity: 0.92, scale: 0.38 },
+  ],
+  mystic: [
+    { name: 'glowing_arcane_flower_with_purple', sparsity: 0.93, scale: 0.32 },
+    { name: 'mystic_crystal_glowing_purple_magical', sparsity: 0.94, scale: 0.30 },
+    { name: 'runic_stone_ancient_carved_stone', sparsity: 0.95, scale: 0.35 },
+    { name: 'spirit_wisp', sparsity: 0.96, scale: 0.28 },
+  ],
+  savanna: [
+    { name: 'bone_fragment', sparsity: 0.94, scale: 0.30 },
+    { name: 'dried_seed_pod', sparsity: 0.93, scale: 0.28 },
+    { name: 'dry_golden_thatch_hyperdetailed_rich', sparsity: 0.92, scale: 0.35 },
+    { name: 'termite_mound_piece', sparsity: 0.95, scale: 0.32 },
+  ],
+  steppe: [
+    { name: 'dried_brown_stem_scatter_hyperdetailed', sparsity: 0.93, scale: 0.30 },
+    { name: 'dusty_earth_patch_pale_browngray', sparsity: 0.94, scale: 0.32 },
+    { name: 'scattered_seed_husks_hyperdetailed_rich', sparsity: 0.95, scale: 0.28 },
+    { name: 'windblown_dust_patch_hyperdetailed_rich', sparsity: 0.92, scale: 0.35 },
+  ],
+  swamp: [
+    { name: 'algae_film_green_slimy_algae', sparsity: 0.91, scale: 0.35 },
+    { name: 'thin_fungal_film_on_ground', sparsity: 0.93, scale: 0.32 },
+    { name: 'waterlogged_dark_leaf', sparsity: 0.92, scale: 0.30 },
+  ],
+  taiga: [
+    { name: 'frozen_twig', sparsity: 0.92, scale: 0.32 },
+    { name: 'ice_covered_pebble', sparsity: 0.94, scale: 0.28 },
+    { name: 'pine_cone', sparsity: 0.93, scale: 0.30 },
+    { name: 'pine_needle_duff_soil_patch', sparsity: 0.91, scale: 0.35 },
+  ],
+  tropical_forest: [
+    { name: 'bright_beetle_shell', sparsity: 0.94, scale: 0.28 },
+    { name: 'exotic_seed_pod', sparsity: 0.93, scale: 0.30 },
+    { name: 'small_palm_nut', sparsity: 0.92, scale: 0.32 },
+    { name: 'vine_cutting_piece', sparsity: 0.91, scale: 0.35 },
+  ],
+  tundra: [
+    { name: 'antler_shard', sparsity: 0.95, scale: 0.32 },
+    { name: 'frozen_pebble_cluster', sparsity: 0.93, scale: 0.30 },
+    { name: 'frozen_permafrost_earth_patch_graybrown', sparsity: 0.92, scale: 0.35 },
+  ],
+  volcanic: [
+    { name: 'dark_ash_film', sparsity: 0.92, scale: 0.32 },
+    { name: 'grey_pumice_stone_lightweight_porous', sparsity: 0.94, scale: 0.30 },
+    { name: 'lava_rock_glowing_redhot_rock', sparsity: 0.95, scale: 0.35 },
+    { name: 'yellow_sulfur_deposit_on_rock', sparsity: 0.96, scale: 0.28 },
+    { name: 'volcanic_rock_dark_black_ignite', sparsity: 0.93, scale: 0.32 },
+  ],
+};
+var SS_BASE_PATH = '/assets/pixelab/landscape_v2/micro/small_scatter/';
+var SS_VARIANT_COUNT = 64;
+
+function applySmallScatterToChunk(ctx, chunk, tileSize, chunkSize, imageCache, occupancy, cellsPerTile, cellPx, gridW) {
+  // Quick check: does any tile in this chunk have small scatter defined?
+  var hasSS = false;
+  for (var i = 0; i < chunk.tiles.length; i++) {
+    if (SS_BIOME_OBJECTS[chunk.tiles[i].biome]) { hasSS = true; break; }
+  }
+  if (!hasSS) return;
+
+  for (var ty = 0; ty < chunkSize; ty++) {
+    for (var tx = 0; tx < chunkSize; tx++) {
+      var tile = chunk.tiles[ty * chunkSize + tx];
+      var biomeObjs = SS_BIOME_OBJECTS[tile.biome];
+      if (!biomeObjs) continue;
+      // Skip transition tiles — scatter only on interior tiles
+      if (tile.transitionPair) continue;
+
+      var wx = chunk.cx * chunkSize + tx;
+      var wy = chunk.cy * chunkSize + ty;
+
+      for (var oi = 0; oi < biomeObjs.length; oi++) {
+        var obj = biomeObjs[oi];
+        var sparsity = obj.sparsity || 0.93;
+        if (rand2(wx, wy, 9500 + oi) > (1.0 - sparsity)) continue;
+
+        // Pick variant
+        var v = Math.floor(rand2(wx, wy, 9510 + oi) * SS_VARIANT_COUNT);
+        var url = SS_BASE_PATH + tile.biome + '/' + obj.name + '/ss__' + tile.biome + '__' + obj.name + '__v' + formatIdx(v) + '.png';
+        var bmp = imageCache.get(url);
+        if (!bmp) continue;
+
+        // Compute draw position with jitter
+        var jitterX = (rand2(wx, wy, 9520 + oi) - 0.5) * tileSize * 0.6;
+        var jitterY = (rand2(wx, wy, 9530 + oi) - 0.5) * tileSize * 0.6;
+        var drawSize = tileSize * (obj.scale || 0.32);
+
+        // Check occupancy grid
+        var drawCenterX = tx * tileSize + tileSize * 0.5 + jitterX;
+        var drawCenterY = ty * tileSize + tileSize * 0.5 + jitterY;
+        var halfDraw = drawSize * 0.5;
+        var cellMinX = Math.max(0, Math.floor((drawCenterX - halfDraw) / cellPx));
+        var cellMinY = Math.max(0, Math.floor((drawCenterY - halfDraw) / cellPx));
+        var cellMaxX = Math.min(gridW - 1, Math.floor((drawCenterX + halfDraw) / cellPx));
+        var cellMaxY = Math.min(gridW - 1, Math.floor((drawCenterY + halfDraw) / cellPx));
+
+        var totalCells = 0;
+        var occupiedCells = 0;
+        for (var cy2 = cellMinY; cy2 <= cellMaxY; cy2++) {
+          for (var cx2 = cellMinX; cx2 <= cellMaxX; cx2++) {
+            totalCells++;
+            if (occupancy[cy2 * gridW + cx2]) occupiedCells++;
+          }
+        }
+        if (totalCells > 0 && occupiedCells / totalCells > 0.40) continue;
+
+        // Draw sprite with slight random rotation
+        var angle = (rand2(wx, wy, 9540 + oi) - 0.5) * 0.5;
+        ctx.save();
+        ctx.translate(drawCenterX, drawCenterY);
+        ctx.rotate(angle);
+        ctx.globalAlpha = 0.85 + rand2(wx, wy, 9550 + oi) * 0.15;
+        ctx.drawImage(bmp, -halfDraw, -halfDraw, drawSize, drawSize);
+        ctx.globalAlpha = 1.0;
+        ctx.restore();
+
+        // Mark occupancy cells
+        for (var cy3 = cellMinY; cy3 <= cellMaxY; cy3++) {
+          for (var cx3 = cellMinX; cx3 <= cellMaxX; cx3++) {
+            occupancy[cy3 * gridW + cx3] = 1;
+          }
+        }
+        break; // One object per tile max
+      }
+    }
+  }
+}
+
 // Render a chunk to an OffscreenCanvas and return an ImageBitmap.
 // neighbors: Map<"cx,cy", tileArray> — cached tiles from adjacent chunks
 // imageCache: Map<url, ImageBitmap> — preloaded wang tile bitmaps
@@ -1051,9 +1233,10 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
   // Apply decoration fields in order — each field reads+writes the occupancy grid
   applySoilFieldToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache);
   applyGroundCoverToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache, occupancy, cellsPerTile, cellPx, gridW);
-  // Field 2 handled entirely by main thread field2-animator.js
-  // (fast path for static sprites, transform path only for swaying ones)
-  // applySmallFloraToChunk(ctx, chunk, tileSize, chunkSize, imageCache);
+  // Field 2: worker bakes resting-frame sprites into chunk for zero render cost.
+  // Main thread only overlays the few sprites actively animating (wind/player).
+  applySmallFloraToChunk(ctx, chunk, tileSize, chunkSize, imageCache);
+  applySmallScatterToChunk(ctx, chunk, tileSize, chunkSize, imageCache, occupancy, cellsPerTile, cellPx, gridW);
 
   var bitmap = offscreen.transferToImageBitmap();
   return {
