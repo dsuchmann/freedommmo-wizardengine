@@ -113,17 +113,12 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
 
         // Per-tile + per-blade phase offset so animations desync naturally
         var tilePhase = rand2(wx, wy, 7060 + bi) * FRAME_COUNT;
-        var rawFrame = (timeMs / FRAME_DURATION + tilePhase) % FRAME_COUNT;
-        var frameIdx = Math.floor(rawFrame);
-        var frameFrac = rawFrame - frameIdx; // 0-1 fractional progress between frames
-        var nextFrameIdx = (frameIdx + 1) % FRAME_COUNT;
+        var frameIdx = Math.floor((timeMs / FRAME_DURATION + tilePhase) % FRAME_COUNT);
 
-        // Build animation frame URLs
+        // Build animation frame URL
         var url = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/frame_' + String(frameIdx).padStart(3, '0') + '.png';
-        var nextUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/frame_' + String(nextFrameIdx).padStart(3, '0') + '.png';
         var img = loadFrame(url);
         if (!img) continue;
-        var nextImg = loadFrame(nextUrl);
 
         // Position — same as static renderer
         var offX = (rand2(wx, wy, 7030 + bi) - 0.5) * tilePxSnapped * 0.8;
@@ -156,20 +151,8 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         ctx.save();
         ctx.translate(sx, sy);
         ctx.rotate(baseAngle + sway);
-
-        // Cross-fade: draw current frame, then blend next frame on top
-        if (nextImg && frameFrac > 0.15) {
-          // Draw current frame fading out
-          ctx.globalAlpha = finalAlpha * (1 - frameFrac);
-          ctx.drawImage(img, -halfScaled, -halfScaled, scaledSize, scaledSize);
-          // Draw next frame fading in
-          ctx.globalAlpha = finalAlpha * frameFrac;
-          ctx.drawImage(nextImg, -halfScaled, -halfScaled, scaledSize, scaledSize);
-        } else {
-          // Below 15% progress, just show current frame (avoid double-draw cost)
-          ctx.globalAlpha = finalAlpha;
-          ctx.drawImage(img, -halfScaled, -halfScaled, scaledSize, scaledSize);
-        }
+        ctx.globalAlpha = finalAlpha;
+        ctx.drawImage(img, -halfScaled, -halfScaled, scaledSize, scaledSize);
         ctx.restore();
       }
     }
