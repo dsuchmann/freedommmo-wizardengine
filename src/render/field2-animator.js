@@ -142,7 +142,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         var maxR = Math.max(radiusX, radiusY);
         var fadeStart = maxR - 6;
         var edgeFade = dist <= fadeStart ? 1.0 : Math.max(0, 1.0 - (dist - fadeStart) / (maxR - fadeStart));
-        var baseAlpha = 0.85 + rand2(wx, wy, 7050 + bi) * 0.15;
+        var baseAlpha = 1.0;
         var finalAlpha = baseAlpha * edgeFade;
 
         var scaledSize = drawSize * breathe;
