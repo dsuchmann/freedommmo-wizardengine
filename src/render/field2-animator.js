@@ -378,7 +378,7 @@ function drawWindWisps(ctx, w, h, timeSec, player, tilePx, chunkGrid) {
     var wavefront = c.speed * age;
 
     // Draw 3-5 wispy streaks per current
-    var wispCount = 3 + Math.floor(c.width * 0.3);
+    var wispCount = 5 + Math.floor(c.width * 0.5);
     for (var wi = 0; wi < wispCount; wi++) {
       var perpOffset = (wi - wispCount * 0.5) * tilePx * 1.5;
       var seed = ci * 1000 + wi;
@@ -396,12 +396,11 @@ function drawWindWisps(ctx, w, h, timeSec, player, tilePx, chunkGrid) {
       if (screenX < -100 || screenX > w + 100 || screenY < -100 || screenY > h + 100) continue;
 
       // Draw a gentle curved wisp
-      var wispLen = tilePx * (2 + (seed % 3));
-      var alpha = 0.06 * lifeFade * c.strength * 8;
-      alpha = Math.min(0.12, alpha);
+      var wispLen = tilePx * (4 + (seed % 5));
+      var alpha = 0.08 + lifeFade * 0.10;
 
       ctx.strokeStyle = 'rgba(255,255,255,' + alpha.toFixed(3) + ')';
-      ctx.lineWidth = 0.5 + (seed % 3) * 0.3;
+      ctx.lineWidth = 1.0 + (seed % 3) * 0.5;
       ctx.beginPath();
 
       // Curved path: slight sine wave along the direction
