@@ -158,28 +158,28 @@ function denoiseImage(img) {
           }
         }
       }
-      // Remove isolated pixels (fewer than 3 opaque neighbors)
-      if (opaque < 3) { data[idx + 3] = 0; changed = true; continue; }
-      if (opaque >= 7) continue;
+      // Remove isolated pixels (fewer than 2 opaque neighbors)
+      if (opaque < 2) { data[idx + 3] = 0; changed = true; continue; }
+      if (opaque >= 6) continue;
       if (nCount === 0) continue;
       var avgR = totalR / nCount, avgG = totalG / nCount, avgB = totalB / nCount;
-      // Remove bright confetti
       var brightness = data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114;
       var avgBright = avgR * 0.299 + avgG * 0.587 + avgB * 0.114;
-      if (brightness > 200 && brightness - avgBright > 40 && opaque < 6) {
+      // Remove bright confetti
+      if (brightness > 220 && brightness - avgBright > 60 && opaque < 5) {
         data[idx + 3] = 0; changed = true; continue;
       }
-      // Remove dark confetti (dark specks near brighter content)
-      if (brightness < 40 && avgBright - brightness > 40 && opaque < 5) {
+      // Remove dark specks — only truly isolated dark dots
+      if (brightness < 30 && avgBright - brightness > 60 && opaque < 3) {
         data[idx + 3] = 0; changed = true; continue;
       }
-      // Remove color confetti (lower threshold = more aggressive)
+      // Remove color confetti
       var colorDiff = Math.abs(data[idx] - avgR) + Math.abs(data[idx + 1] - avgG) + Math.abs(data[idx + 2] - avgB);
-      if (colorDiff > 90 && opaque < 5) {
+      if (colorDiff > 120 && opaque < 4) {
         data[idx + 3] = 0; changed = true; continue;
       }
-      // Remove fringe — semi-transparent edge pixels
-      if (data[idx + 3] < 100 && opaque < 5 && colorDiff > 60) {
+      // Remove fringe
+      if (data[idx + 3] < 80 && opaque < 4 && colorDiff > 80) {
         data[idx + 3] = 0; changed = true;
       }
     }
