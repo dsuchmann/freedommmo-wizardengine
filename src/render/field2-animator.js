@@ -614,19 +614,19 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           if (!img) continue;
           isStatic = true;
         } else {
-          // Use variant-specific static sprite for visual diversity (64 variants).
-          // Animation comes from sway transforms, not shared v000 frames.
-          // When per-variant animation frames exist on disk, they'll be used instead.
-          var staticUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/sf__' + tile.biome + '__' + objName + '__v' + vStr + '.png';
-          img = loadFrame(staticUrl);
-          if (img) {
-            isStatic = true;
-          } else {
-            // No static sprite — fall back to v000 animation frames
+          // When actively animating: use v000 animation frames for real frame cycling.
+          // When at rest: use variant-specific static sprite for visual diversity.
+          if (isAnimating) {
             var animBase = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/';
             var frameStr = 'frame_' + String(frameIdx).padStart(3, '0') + '.png';
             img = loadFrame(animBase + frameStr);
+          }
+          if (!img) {
+            // At rest or no animation frames — use static variant sprite
+            var staticUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/sf__' + tile.biome + '__' + objName + '__v' + vStr + '.png';
+            img = loadFrame(staticUrl);
             if (!img) continue;
+            isStatic = true;
           }
         }
 
