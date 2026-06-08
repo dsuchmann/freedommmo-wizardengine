@@ -307,16 +307,14 @@ export function preloadField2Animations(biomes) {
     var objects = SF_BIOME_OBJECTS_LIST[biomes[b]];
     if (!objects) continue;
     for (var oi = 0; oi < objects.length; oi++) {
-      // Preload wind_sway and player_walk animation frames
+      // Preload v000 animation frames (guaranteed fallback) and static sprites
       for (var f = 0; f < FRAME_COUNT; f++) {
         loadFrame(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/anim/wind_sway/v000/frame_' + String(f).padStart(3, '0') + '.png');
         loadFrame(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/anim/player_walk/v000/frame_' + String(f).padStart(3, '0') + '.png');
       }
-      // Preload static sprites as fallback (first 16 variants)
       for (var v = 0; v < 16; v++) {
-        var vStr = v < 10 ? '00' + v : '0' + v;
-        var staticUrl = SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/sf__' + biomes[b] + '__' + objects[oi] + '__v' + vStr + '.png';
-        loadFrame(staticUrl);
+        var pvStr = v < 10 ? '00' + v : '0' + v;
+        loadFrame(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/sf__' + biomes[b] + '__' + objects[oi] + '__v' + pvStr + '.png');
       }
     }
   }
@@ -373,16 +371,16 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
       if (!objects || objects.length === 0) continue;
       if (tile.transitionPair) continue;
 
-      // Skip tiles at biome edges — no field 2 objects on transitions
-      var isEdge = false;
-      for (var edy = -1; edy <= 1 && !isEdge; edy++) {
-        for (var edx = -1; edx <= 1 && !isEdge; edx++) {
+      // Skip tiles near biome edges — 2-tile buffer keeps transitions clean
+      var isNearEdge = false;
+      for (var edy = -2; edy <= 2 && !isNearEdge; edy++) {
+        for (var edx = -2; edx <= 2 && !isNearEdge; edx++) {
           if (edx === 0 && edy === 0) continue;
           var nbTile = chunkStore.tileAt(wx + edx, wy + edy);
-          if (nbTile && nbTile.biome !== tile.biome) isEdge = true;
+          if (nbTile && nbTile.biome !== tile.biome) isNearEdge = true;
         }
       }
-      if (isEdge) continue;
+      if (isNearEdge) continue;
 
       // Same placement logic as the static renderer — must match exactly
       var vegDensity = tile.layers && tile.layers[6] ? tile.layers[6].vegetationDensity : 0.5;
@@ -403,10 +401,14 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         var speciesRoll = rand2(wx, wy, 7010 + bi * 100);
         var oi;
         if (objects.length === 1) oi = 0;
-        else if (objects.length === 2) oi = speciesRoll < 0.90 ? 0 : 1;
-        else { if (speciesRoll < 0.90) oi = 0; else if (speciesRoll < 0.97) oi = 1; else oi = 2; }
+        else if (objects.length === 2) oi = speciesRoll < 0.80 ? 0 : 1;
+        else { if (speciesRoll < 0.75) oi = 0; else if (speciesRoll < 0.93) oi = 1; else oi = 2; }
 
         var objName = objects[oi];
+
+        // Per-blade variant index — deterministic, used for both animation paths and static fallback
+        var variantIdx = Math.floor(rand2(wx, wy, 7035 + bi) * SF_VARIANT_COUNT);
+        var vStr = variantIdx < 10 ? '00' + variantIdx : (variantIdx < 100 ? '0' + variantIdx : '' + variantIdx);
 
         // === PRIORITY 1: Player walk — checked BEFORE wind/sway ===
         // Position must be computed first
@@ -466,8 +468,10 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           }
 
           if (showFrame >= 0) {
-            var walkUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/player_walk/v000/frame_' + String(showFrame).padStart(3, '0') + '.png';
-            var walkImg = loadFrame(walkUrl);
+            // Try per-variant player_walk animation first
+            var walkFrameStr = '/frame_' + String(showFrame).padStart(3, '0') + '.png';
+            var walkBase = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/player_walk/';
+            var walkImg = loadFrame(walkBase + 'v' + vStr + walkFrameStr);
             if (walkImg) {
               var halfDraw = drawSize * 0.5;
               ctx.save();
@@ -476,7 +480,44 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
               ctx.globalAlpha = finalAlpha;
               ctx.drawImage(walkImg, -halfDraw, -drawSize, drawSize, drawSize);
               ctx.restore();
-              continue; // SKIP wind_sway entirely — player walk takes priority
+              continue;
+            }
+            // No per-variant animation — simulate bend with transforms on static sprite
+            var staticUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/sf__' + tile.biome + '__' + objName + '__v' + vStr + '.png';
+            var staticImg = loadFrame(staticUrl);
+            if (staticImg) {
+              // Bend direction: away from player's movement direction
+              // Use player velocity if moving, otherwise push away from player center
+              var pushDirX, pushDirY;
+              var speed = Math.sqrt(playerVX * playerVX + playerVY * playerVY);
+              if (speed > 0.5) {
+                // Moving — bend in movement direction
+                pushDirX = playerVX / speed;
+                pushDirY = playerVY / speed;
+              } else {
+                // Standing still — bend away from player center
+                var awayDist = Math.max(0.01, pDist);
+                pushDirX = pDistX / awayDist;
+                pushDirY = pDistY / awayDist;
+              }
+              // Convert push direction to rotation: positive X = lean right, negative = lean left
+              // Mix in some away-from-player for natural spread
+              var bendSign = pushDirX > 0 ? 1 : -1;
+              // Bend amount: 0 at frame 0, max at BENT_FRAME, back to 0 at end
+              var bendProgress = showFrame <= BENT_FRAME
+                ? showFrame / BENT_FRAME
+                : 1 - (showFrame - BENT_FRAME) / (FRAME_COUNT - BENT_FRAME);
+              var bendAngle = bendProgress * 0.6 * bendSign;
+              var bendSquash = 1 - bendProgress * 0.15;
+              var halfDraw = drawSize * 0.5;
+              ctx.save();
+              ctx.translate(sx, sy + halfDraw);
+              ctx.rotate(baseAngle + bendAngle);
+              ctx.scale(1, bendSquash);
+              ctx.globalAlpha = finalAlpha;
+              ctx.drawImage(staticImg, -halfDraw, -drawSize, drawSize, drawSize);
+              ctx.restore();
+              continue;
             }
           }
         }
@@ -574,23 +615,22 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           }
         }
 
-        // Build animation frame URL
-        var url = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/frame_' + String(frameIdx).padStart(3, '0') + '.png';
-        var img = loadFrame(url);
+        // Build animation frame URL — try variant-specific first, then static sprite with motion
+        var animBase = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/';
+        var frameStr = '/frame_' + String(frameIdx).padStart(3, '0') + '.png';
+        var img = loadFrame(animBase + 'v' + vStr + frameStr);      // try per-variant animation
         var isStatic = false;
         if (!img) {
-          // No animation frames — fall back to static base sprite
-          var variantIdx = Math.floor(rand2(wx, wy, 7035 + bi) * SF_VARIANT_COUNT);
-          var vStr = variantIdx < 10 ? '00' + variantIdx : (variantIdx < 100 ? '0' + variantIdx : '' + variantIdx);
+          // No per-variant animation — use static sprite WITH sway transforms (preserves visual diversity)
           var staticUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/sf__' + tile.biome + '__' + objName + '__v' + vStr + '.png';
           img = loadFrame(staticUrl);
           if (!img) continue;
           isStatic = true;
         }
 
-        // Sway: gentle lean smoothly eased by animBlend (static objects don't sway)
+        // Sway: all plant objects get sway (static sprites use transforms for motion)
         var swayDir = currentEffect.rot + playerEffect.rot;
-        var sway = isStatic ? 0 : swayDir * 1.2 * animBlend;
+        var sway = swayDir * 1.2 * animBlend;
 
         // Draw anchored at bottom center — rotate around the base so top sways
         var halfDraw = drawSize * 0.5;
