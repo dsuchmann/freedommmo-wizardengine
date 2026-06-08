@@ -358,5 +358,66 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
     }
   }
 
+  // Draw wind wisps — faint curved streaks along active wind currents
+  drawWindWisps(ctx, w, h, timeSec, player, tilePxSnapped, chunkGrid);
+
+  ctx.restore();
+}
+
+function drawWindWisps(ctx, w, h, timeSec, player, tilePx, chunkGrid) {
+  if (windCurrents.length === 0) return;
+  ctx.save();
+
+  for (var ci = 0; ci < windCurrents.length; ci++) {
+    var c = windCurrents[ci];
+    var age = timeSec - c.born;
+    var lifeFade = age < 0.8 ? age / 0.8 : (age > c.lifespan - 1 ? (c.lifespan - age) : 1);
+    lifeFade = Math.max(0, Math.min(1, lifeFade));
+    if (lifeFade < 0.01) continue;
+
+    var wavefront = c.speed * age;
+
+    // Draw 3-5 wispy streaks per current
+    var wispCount = 3 + Math.floor(c.width * 0.3);
+    for (var wi = 0; wi < wispCount; wi++) {
+      var perpOffset = (wi - wispCount * 0.5) * tilePx * 1.5;
+      var seed = ci * 1000 + wi;
+
+      // Wisp origin in world coords relative to current
+      var wispAlong = wavefront - 2 + (seed % 7) * 0.8;
+      var worldX = c.originX + c.dirX * wispAlong + (-c.dirY) * perpOffset / tilePx;
+      var worldY = c.originY + c.dirY * wispAlong + c.dirX * perpOffset / tilePx;
+
+      // Convert to screen coords
+      var screenX = (worldX - player.x) * tilePx + w * 0.5;
+      var screenY = (worldY - player.y) * tilePx + h * 0.5;
+
+      // Skip if off screen
+      if (screenX < -100 || screenX > w + 100 || screenY < -100 || screenY > h + 100) continue;
+
+      // Draw a gentle curved wisp
+      var wispLen = tilePx * (2 + (seed % 3));
+      var alpha = 0.06 * lifeFade * c.strength * 8;
+      alpha = Math.min(0.12, alpha);
+
+      ctx.strokeStyle = 'rgba(255,255,255,' + alpha.toFixed(3) + ')';
+      ctx.lineWidth = 0.5 + (seed % 3) * 0.3;
+      ctx.beginPath();
+
+      // Curved path: slight sine wave along the direction
+      var steps = 8;
+      for (var s = 0; s <= steps; s++) {
+        var t = s / steps;
+        var along = t * wispLen;
+        // Slight perpendicular wave for organic curve
+        var wave = Math.sin(t * 3.14 + timeSec * 2 + seed) * tilePx * 0.3;
+        var px = screenX + c.dirX * along + (-c.dirY) * wave;
+        var py = screenY + c.dirY * along + c.dirX * wave;
+        if (s === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+  }
   ctx.restore();
 }
