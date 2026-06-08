@@ -4,7 +4,7 @@
 
 import { WORLD } from '../core/constants.js';
 import { rand2 } from '../core/random.js';
-import { SF_BIOME_OBJECTS_LIST, SF_BASE_PATH } from './wang-image-list.js';
+import { SF_BIOME_OBJECTS_LIST, SF_BASE_PATH, SF_VARIANT_COUNT } from './wang-image-list.js';
 import { floorDiv } from '../world/chunk.js';
 
 var ANIM_RADIUS = 40; // tiles around player — large enough to cover full screen at any zoom
@@ -122,9 +122,69 @@ function samplePlayerPush(wx, wy, playerX, playerY, playerVX, playerVY) {
   return { rot: rot, px: 0, py: 0 };
 }
 
-// Cache: url → Image
+// Cache: url → Image (denoised)
 var frameCache = new Map();
 var loadingSet = new Set();
+var _denoiseCanvas = null;
+
+function denoiseImage(img) {
+  var w = img.naturalWidth || img.width;
+  var h = img.naturalHeight || img.height;
+  if (w < 3 || h < 3) return img;
+  if (!_denoiseCanvas) _denoiseCanvas = document.createElement('canvas');
+  _denoiseCanvas.width = w;
+  _denoiseCanvas.height = h;
+  var ctx = _denoiseCanvas.getContext('2d');
+  ctx.clearRect(0, 0, w, h);
+  ctx.drawImage(img, 0, 0);
+  var imageData = ctx.getImageData(0, 0, w, h);
+  var data = imageData.data;
+  var changed = false;
+  for (var y = 1; y < h - 1; y++) {
+    for (var x = 1; x < w - 1; x++) {
+      var idx = (y * w + x) * 4;
+      if (data[idx + 3] < 8) continue;
+      // Count opaque neighbors
+      var opaque = 0;
+      var totalR = 0, totalG = 0, totalB = 0, nCount = 0;
+      for (var dy = -1; dy <= 1; dy++) {
+        for (var dx = -1; dx <= 1; dx++) {
+          if (dx === 0 && dy === 0) continue;
+          var ni = ((y + dy) * w + (x + dx)) * 4;
+          if (data[ni + 3] > 32) {
+            opaque++;
+            totalR += data[ni]; totalG += data[ni + 1]; totalB += data[ni + 2];
+            nCount++;
+          }
+        }
+      }
+      // Remove isolated pixels
+      if (opaque < 2) { data[idx + 3] = 0; changed = true; continue; }
+      if (opaque >= 6) continue;
+      if (nCount === 0) continue;
+      // Remove bright confetti
+      var brightness = data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114;
+      var avgBright = (totalR / nCount) * 0.299 + (totalG / nCount) * 0.587 + (totalB / nCount) * 0.114;
+      if (brightness > 220 && brightness - avgBright > 60 && opaque < 5) {
+        data[idx + 3] = 0; changed = true; continue;
+      }
+      // Remove color confetti
+      var colorDiff = Math.abs(data[idx] - totalR / nCount) + Math.abs(data[idx + 1] - totalG / nCount) + Math.abs(data[idx + 2] - totalB / nCount);
+      if (colorDiff > 120 && opaque < 4) {
+        data[idx + 3] = 0; changed = true; continue;
+      }
+      // Remove fringe
+      if (data[idx + 3] < 80 && opaque < 4 && colorDiff > 80) {
+        data[idx + 3] = 0; changed = true;
+      }
+    }
+  }
+  if (!changed) return img;
+  ctx.putImageData(imageData, 0, 0);
+  var cleaned = new Image();
+  cleaned.src = _denoiseCanvas.toDataURL();
+  return cleaned;
+}
 
 function loadFrame(url) {
   if (frameCache.has(url)) return frameCache.get(url);
@@ -132,12 +192,20 @@ function loadFrame(url) {
   loadingSet.add(url);
   var img = new Image();
   img.src = url;
-  img.onload = function() { frameCache.set(url, img); loadingSet.delete(url); };
+  img.onload = function() {
+    var clean = denoiseImage(img);
+    if (clean !== img && !clean.complete) {
+      clean.onload = function() { frameCache.set(url, clean); loadingSet.delete(url); };
+    } else {
+      frameCache.set(url, clean);
+      loadingSet.delete(url);
+    }
+  };
   img.onerror = function() { frameCache.set(url, null); loadingSet.delete(url); };
   return null;
 }
 
-// Preload wind sway frames for nearby biomes
+// Preload wind sway frames AND static sprites for nearby biomes
 var lastPreloadKey = '';
 export function preloadField2Animations(biomes) {
   var key = biomes.sort().join(',');
@@ -147,9 +215,16 @@ export function preloadField2Animations(biomes) {
     var objects = SF_BIOME_OBJECTS_LIST[biomes[b]];
     if (!objects) continue;
     for (var oi = 0; oi < objects.length; oi++) {
+      // Preload wind_sway and player_walk animation frames
       for (var f = 0; f < FRAME_COUNT; f++) {
-        var url = SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/anim/wind_sway/v000/frame_' + String(f).padStart(3, '0') + '.png';
-        loadFrame(url);
+        loadFrame(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/anim/wind_sway/v000/frame_' + String(f).padStart(3, '0') + '.png');
+        loadFrame(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/anim/player_walk/v000/frame_' + String(f).padStart(3, '0') + '.png');
+      }
+      // Preload static sprites as fallback (first 16 variants)
+      for (var v = 0; v < 16; v++) {
+        var vStr = v < 10 ? '00' + v : '0' + v;
+        var staticUrl = SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/sf__' + biomes[b] + '__' + objects[oi] + '__v' + vStr + '.png';
+        loadFrame(staticUrl);
       }
     }
   }
@@ -324,17 +399,22 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         // Build animation frame URL
         var url = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/frame_' + String(frameIdx).padStart(3, '0') + '.png';
         var img = loadFrame(url);
-        if (!img) continue;
+        var isStatic = false;
+        if (!img) {
+          // No animation frames — fall back to static base sprite
+          var variantIdx = Math.floor(rand2(wx, wy, 7035 + bi) * SF_VARIANT_COUNT);
+          var vStr = variantIdx < 10 ? '00' + variantIdx : (variantIdx < 100 ? '0' + variantIdx : '' + variantIdx);
+          var staticUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/sf__' + tile.biome + '__' + objName + '__v' + vStr + '.png';
+          img = loadFrame(staticUrl);
+          if (!img) continue;
+          isStatic = true;
+        }
 
         // Position — same as static renderer
         var offX = (rand2(wx, wy, 7030 + bi) - 0.5) * tilePxSnapped * 0.8;
         var offY = (rand2(wx, wy, 7031 + bi) - 0.5) * tilePxSnapped * 0.8;
         var drawSize = tilePxSnapped;
         var baseAngle = (rand2(wx, wy, 7040 + bi) - 0.5) * 0.35;
-
-        // Sway: gentle lean smoothly eased by animBlend
-        var swayDir = currentEffect.rot + playerEffect.rot;
-        var sway = swayDir * 1.2 * animBlend;
 
         var sx = chunkOriginX + tx * tilePxSnapped + halfTile + offX;
         var sy = chunkOriginY + ty * tilePxSnapped + halfTile + offY;
@@ -345,6 +425,85 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         var fadeStart = maxR - 6;
         var edgeFade = dist <= fadeStart ? 1.0 : Math.max(0, 1.0 - (dist - fadeStart) / (maxR - fadeStart));
         var finalAlpha = edgeFade;
+
+        // --- Player walk: check if player is standing on this blade ---
+        var bladeWorldX = wx + 0.5 + (rand2(wx, wy, 7030 + bi) - 0.5) * 0.8;
+        var bladeWorldY = wy + 0.5 + (rand2(wx, wy, 7031 + bi) - 0.5) * 0.8;
+        var pDistX = player.x - bladeWorldX;
+        var pDistY = player.y - bladeWorldY;
+        var pDist = Math.sqrt(pDistX * pDistX + pDistY * pDistY);
+        var WALK_DIST = 0.4;
+        var WALK_HOLD_EXTRA = 400; // ms to stay bent after player leaves
+        var WALK_SPRING_DURATION = FRAME_COUNT * FRAME_DURATION; // time for spring-back anim
+        var BENT_FRAME = Math.floor(FRAME_COUNT * 0.5); // middle frame = most bent
+
+        var walkKey = wx * 100000 + wy * 1000 + bi * 10 + 1;
+        var playerOnBlade = pDist < WALK_DIST;
+
+        if (playerOnBlade) {
+          // Player is on this blade — record/update the "stepped on" timestamp
+          triggerTimes.set(walkKey, { time: timeMs, ext: 1 }); // ext=1 means "currently held"
+        }
+
+        var walkData = triggerTimes.get(walkKey);
+        if (walkData && walkData.ext === 1 && !isStatic) {
+          var timeSinceStep = timeMs - walkData.time;
+
+          if (playerOnBlade) {
+            // Player still on blade — hold at bent frame
+            var walkUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/player_walk/v000/frame_' + String(BENT_FRAME).padStart(3, '0') + '.png';
+            var walkImg = loadFrame(walkUrl);
+            if (walkImg) {
+              var halfDraw = drawSize * 0.5;
+              ctx.save();
+              ctx.translate(sx, sy + halfDraw);
+              ctx.rotate(baseAngle);
+              ctx.globalAlpha = finalAlpha;
+              ctx.drawImage(walkImg, -halfDraw, -drawSize, drawSize, drawSize);
+              ctx.restore();
+              continue;
+            }
+          } else if (timeSinceStep < WALK_HOLD_EXTRA) {
+            // Player just left — hold bent a bit longer
+            var walkUrl2 = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/player_walk/v000/frame_' + String(BENT_FRAME).padStart(3, '0') + '.png';
+            var walkImg2 = loadFrame(walkUrl2);
+            if (walkImg2) {
+              var halfDraw2 = drawSize * 0.5;
+              ctx.save();
+              ctx.translate(sx, sy + halfDraw2);
+              ctx.rotate(baseAngle);
+              ctx.globalAlpha = finalAlpha;
+              ctx.drawImage(walkImg2, -halfDraw2, -drawSize, drawSize, drawSize);
+              ctx.restore();
+              continue;
+            }
+          } else if (timeSinceStep < WALK_HOLD_EXTRA + WALK_SPRING_DURATION) {
+            // Spring back — play from bent frame to end
+            var springElapsed = timeSinceStep - WALK_HOLD_EXTRA;
+            var springFrame = BENT_FRAME + Math.floor((springElapsed / WALK_SPRING_DURATION) * (FRAME_COUNT - BENT_FRAME));
+            springFrame = Math.min(springFrame, FRAME_COUNT - 1);
+            var walkUrl3 = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/player_walk/v000/frame_' + String(springFrame).padStart(3, '0') + '.png';
+            var walkImg3 = loadFrame(walkUrl3);
+            if (walkImg3) {
+              var halfDraw3 = drawSize * 0.5;
+              ctx.save();
+              ctx.translate(sx, sy + halfDraw3);
+              ctx.rotate(baseAngle);
+              ctx.globalAlpha = finalAlpha;
+              ctx.drawImage(walkImg3, -halfDraw3, -drawSize, drawSize, drawSize);
+              ctx.restore();
+              continue;
+            }
+          } else {
+            // Spring-back done — clear the walk state
+            triggerTimes.delete(walkKey);
+          }
+        }
+
+        // --- Normal wind_sway / static rendering ---
+        // Sway: gentle lean smoothly eased by animBlend (static objects don't sway)
+        var swayDir = currentEffect.rot + playerEffect.rot;
+        var sway = isStatic ? 0 : swayDir * 1.2 * animBlend;
 
         // Draw anchored at bottom center — rotate around the base so top sways
         var halfDraw = drawSize * 0.5;
