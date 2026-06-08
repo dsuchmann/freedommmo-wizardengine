@@ -7,6 +7,7 @@ import { Player } from './player.js';
 import { clearPlayerPosition, loadPlayerPosition, savePlayerPosition } from './core/save.js';
 import { OvermapController } from './world/overmap.js';
 import { DayNightCycle } from './world/lighting.js';
+import { WeatherSystem } from './world/weather.js';
 import { Camera } from './camera.js';
 import { PerformanceMonitor } from './core/performance.js';
 import { defaultAssetCatalog } from './assets/default-catalog.js';
@@ -30,6 +31,7 @@ const renderer = new CanvasRenderer(canvas, stats, compositor);
 preloadWangTiles();
 provider.initPreload(player.x, player.y);
 const lighting = new DayNightCycle();
+const weather = new WeatherSystem(lighting);
 const overmap = new OvermapController(overmapCanvas, player, chunks);
 const camera = new Camera();
 const perf = new PerformanceMonitor();
@@ -53,7 +55,12 @@ function update(dt) {
     player.vz = 0;
     chunks.streamAround(player.x, player.y);
   }
+  if (input.wasPressed('p')) {
+    var preset = weather.cyclePreset();
+    console.log('Weather:', preset);
+  }
   lighting.update(dt);
+  weather.update(dt, chunks.tileAt(player.x, player.y));
   player.update(input, dt, chunks, { movementCost, resolveMovement });
   chunks.streamAround(player.x, player.y);
   camera.update(dt, chunks.tileAt(player.x, player.y));
@@ -68,10 +75,10 @@ function loop(now) {
   update(dt);
   perf.sampleUpdate(performance.now() - updateStart);
   const drawStart = performance.now();
-  renderer.draw(chunks, player, lighting, camera, provider);
+  renderer.draw(chunks, player, lighting, camera, provider, weather);
   perf.sampleDraw(performance.now() - drawStart);
   if ((frame++ & 15) === 0) {
-    renderer.hud(chunks, player, lighting, camera, perf);
+    renderer.hud(chunks, player, lighting, camera, perf, weather);
     overmap.draw();
   }
   input.endFrame();
