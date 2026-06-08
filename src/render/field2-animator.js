@@ -290,31 +290,36 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           }
         }
 
+        // Each sprite has a random resting frame — no "home" position.
+        // When triggered, it cycles from wherever it is.
+        // When it stops, it freezes wherever it lands.
+        var restFrame = Math.floor(rand2(wx, wy, 7096 + bi) * FRAME_COUNT);
+        var isAnimating = elapsed >= 0 && elapsed <= triggerDuration;
         var frameIdx;
-        var animBlend = 0; // 0 = fully still, 1 = fully animated
-        if (elapsed < 0 || elapsed > triggerDuration) {
-          frameIdx = 0; // Not started yet or settled
-        } else {
-          var cycleProgress = elapsed / CYCLE_DURATION;
-          frameIdx = Math.floor((elapsed / FRAME_DURATION) % FRAME_COUNT);
-          // Ease in over first cycle: 0→1
-          if (cycleProgress < 1) {
-            animBlend = cycleProgress;
+        var animBlend = 0;
+        if (!isAnimating) {
+          // Frozen at wherever the last animation left off, or resting frame
+          var lastTriggerData = triggerTimes.get(triggerKey);
+          if (lastTriggerData && lastTriggerData.time > -99999) {
+            // Freeze at whatever frame we were on when animation ended
+            var finalElapsed = triggerDuration;
+            frameIdx = Math.floor((finalElapsed / FRAME_DURATION + restFrame) % FRAME_COUNT);
+          } else {
+            frameIdx = restFrame;
           }
-          // Full animation in middle cycles
-          else if (cycleProgress < loopCount - 1) {
+        } else {
+          // Animating: cycle from the rest frame position
+          frameIdx = Math.floor((elapsed / FRAME_DURATION + restFrame) % FRAME_COUNT);
+          // Smooth blend for sway: ease in first cycle, ease out last cycle
+          var cycleProgress = elapsed / CYCLE_DURATION;
+          if (cycleProgress < 1) {
+            animBlend = Math.min(1, cycleProgress * 2); // ease in over half a cycle
+          } else if (cycleProgress > loopCount - 1) {
+            animBlend = Math.max(0, (loopCount - cycleProgress) * 2); // ease out
+          } else {
             animBlend = 1;
           }
-          // Ease out over last cycle: 1→0
-          else {
-            animBlend = Math.max(0, 1 - (cycleProgress - (loopCount - 1)));
-            // Decelerate frame progression — slow down toward frame 0
-            var lastT = cycleProgress - (loopCount - 1);
-            var slowedElapsed = elapsed - lastT * CYCLE_DURATION * lastT * 0.5;
-            frameIdx = Math.floor((slowedElapsed / FRAME_DURATION) % FRAME_COUNT);
-          }
         }
-        var isAnimating = elapsed >= 0 && elapsed <= triggerDuration;
 
         // Build animation frame URL
         var url = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/frame_' + String(frameIdx).padStart(3, '0') + '.png';
