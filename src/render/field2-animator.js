@@ -348,6 +348,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
   var px = Math.floor(player.x);
   var py = Math.floor(player.y);
   var timeSec = timeMs * 0.001;
+  var drawBuffer = [];
 
   // Compute player velocity for interaction push
   var playerVX = (player.x - _prevPlayerX) / Math.max(0.001, 1 / 60);
