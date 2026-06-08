@@ -152,6 +152,8 @@ function drawPrecipitation(ctx, w, h, precip, wind, time) {
   ctx.restore();
 }
 
+function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+
 function drawFog(ctx, w, h, fog) {
   if (fog < 0.05) return;
   var cx = w / 2;
@@ -206,7 +208,7 @@ export class CanvasRenderer {
     const sun = lighting.sun();
     const tilePx = WORLD.tileSize * camera.zoom;
     const focusTile = chunkStore.tileAt(player.x, player.y);
-    ctx.fillStyle = '#18262b';
+    ctx.fillStyle = sun.skyColor || '#18262b';
     ctx.fillRect(0, 0, w, h);
 
     const camX = player.x * tilePx - w / 2;
@@ -258,6 +260,32 @@ export class CanvasRenderer {
     if (weather) {
       drawPrecipitation(ctx, w, h, weather.precipitation(), weather.wind(), performance.now() / 1000);
       drawFog(ctx, w, h, weather.atmosphere().fog);
+    }
+
+    // Atmospheric color grading from day/night cycle
+    if (sun) {
+      // Color tint overlay (golden hour amber, night blue, etc.)
+      var tr = Math.round(clamp01(sun.tint.r) * 255);
+      var tg = Math.round(clamp01(sun.tint.g) * 255);
+      var tb = Math.round(clamp01(sun.tint.b) * 255);
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.fillStyle = 'rgb(' + tr + ',' + tg + ',' + tb + ')';
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalCompositeOperation = 'source-over';
+
+      // Night darkening — deep navy blanket
+      if (sun.ambient < 0.5) {
+        var darkness = (0.5 - sun.ambient) * 1.4;
+        ctx.fillStyle = 'rgba(8,12,28,' + clamp01(darkness) + ')';
+        ctx.fillRect(0, 0, w, h);
+      }
+
+      // Cloud cover dimming
+      if (weather && weather.clouds().cover > 0.1) {
+        var cloudDim = weather.clouds().cover * 0.20;
+        ctx.fillStyle = 'rgba(40,45,55,' + clamp01(cloudDim) + ')';
+        ctx.fillRect(0, 0, w, h);
+      }
     }
 
     // Wang debug overlay (toggle with D key)
