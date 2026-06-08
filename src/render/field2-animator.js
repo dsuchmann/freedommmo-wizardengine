@@ -224,9 +224,22 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
 
         var objName = objects[oi];
 
-        // Per-tile + per-blade phase offset so animations desync naturally
+        // Excitation: 0 = still, 1 = fully animated. Driven by wind + player.
+        var currentEffect = sampleCurrents(wx, wy, timeSec);
+        var playerEffect = samplePlayerPush(wx, wy, player.x, player.y, playerVX, playerVY);
+        var excitation = Math.min(1, Math.abs(currentEffect.rot) * 12 + Math.abs(playerEffect.rot) * 8);
+
+        // Animation frame driven by excitation:
+        // Still (frame 0) when calm, cycles through frames when excited
         var tilePhase = rand2(wx, wy, 7060 + bi) * FRAME_COUNT;
-        var frameIdx = Math.floor((timeMs / FRAME_DURATION + tilePhase) % FRAME_COUNT);
+        var frameIdx;
+        if (excitation < 0.05) {
+          frameIdx = 0; // Still
+        } else {
+          // Cycle speed proportional to excitation
+          var cycleSpeed = excitation * 1.5; // faster when more excited
+          frameIdx = Math.floor((timeSec * cycleSpeed * FRAME_COUNT / (FRAME_DURATION * 0.001) * 0.15 + tilePhase) % FRAME_COUNT);
+        }
 
         // Build animation frame URL
         var url = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/frame_' + String(frameIdx).padStart(3, '0') + '.png';
@@ -239,20 +252,10 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         var drawSize = tilePxSnapped;
         var baseAngle = (rand2(wx, wy, 7040 + bi) - 0.5) * 0.35;
 
-        // Continuous micro-transforms — smooth sine-wave sway independent of frame rate
+        // Sway rotation scaled by excitation — still when calm
         var swayPhase = rand2(wx, wy, 7070 + bi) * 6.28;
-        var swaySpeed = 0.8 + rand2(wx, wy, 7071 + bi) * 0.6; // 0.8-1.4 Hz
-        var swayAmount = 0.04 + rand2(wx, wy, 7072 + bi) * 0.03; // subtle rotation
-        var baseSway = Math.sin(timeSec * swaySpeed + swayPhase) * swayAmount;
-        var breathe = 1.0 + Math.sin(timeSec * 0.6 + swayPhase * 0.7) * 0.015; // 1.5% scale pulse
-
-        // Wind currents — wavefronts sweeping across the map
-        var currentEffect = sampleCurrents(wx, wy, timeSec);
-        // Player interaction — sprites pushed when player walks through
-        var playerEffect = samplePlayerPush(wx, wy, player.x, player.y, playerVX, playerVY);
-
-        // Wind and player only affect sway rotation — sprites stay in place
-        var sway = baseSway + currentEffect.rot + playerEffect.rot;
+        var swayDir = currentEffect.rot + playerEffect.rot; // direction of the impulse
+        var sway = swayDir * 2.5; // amplify the directional lean
 
         var sx = chunkOriginX + tx * tilePxSnapped + halfTile + offX;
         var sy = chunkOriginY + ty * tilePxSnapped + halfTile + offY;
@@ -262,17 +265,13 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         var maxR = Math.max(radiusX, radiusY);
         var fadeStart = maxR - 6;
         var edgeFade = dist <= fadeStart ? 1.0 : Math.max(0, 1.0 - (dist - fadeStart) / (maxR - fadeStart));
-        var baseAlpha = 1.0;
-        var finalAlpha = baseAlpha * edgeFade;
-
-        var scaledSize = drawSize * breathe;
-        var halfScaled = scaledSize * 0.5;
+        var finalAlpha = edgeFade;
 
         ctx.save();
         ctx.translate(sx, sy);
         ctx.rotate(baseAngle + sway);
         ctx.globalAlpha = finalAlpha;
-        ctx.drawImage(img, -halfScaled, -halfScaled, scaledSize, scaledSize);
+        ctx.drawImage(img, -drawSize * 0.5, -drawSize * 0.5, drawSize, drawSize);
         ctx.restore();
       }
     }
