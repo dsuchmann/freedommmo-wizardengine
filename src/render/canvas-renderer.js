@@ -15,42 +15,138 @@ import { findNearbyInteraction, objectReaction, performInteraction } from '../wo
 
 function drawPrecipitation(ctx, w, h, precip, wind, time) {
   if (precip.type === 'none' || precip.intensity < 0.01) return;
-  var count = Math.floor(precip.intensity * 200);
-  var windX = Math.cos(wind.direction) * wind.intensity;
-  var windY = Math.sin(wind.direction) * wind.intensity;
+  var count = Math.floor(precip.intensity * 300);
+  var windX = Math.cos(wind.direction) * wind.intensity * 0.6;
 
   ctx.save();
   if (precip.type === 'rain') {
-    ctx.strokeStyle = 'rgba(180,200,220,' + (0.15 + precip.intensity * 0.25) + ')';
-    ctx.lineWidth = 1;
+    // Layer 1: Fine background drizzle
+    ctx.lineWidth = 0.5;
+    ctx.strokeStyle = 'rgba(160,185,210,' + (0.08 + precip.intensity * 0.10) + ')';
+    for (var i = 0; i < count * 0.3; i++) {
+      var seed = (i * 4919 + Math.floor(time * 10)) % 10007;
+      var rx = ((seed * 2.7 + time * 100 * (1 + windX)) % (w + 60)) - 30;
+      var ry = ((seed * 6.1 + time * 350) % (h + 40)) - 20;
+      ctx.beginPath();
+      ctx.moveTo(rx, ry);
+      ctx.lineTo(rx + windX * 6, ry + 6);
+      ctx.stroke();
+    }
+    // Layer 2: Main rain drops — tapered streaks with bright head
     for (var i = 0; i < count; i++) {
       var seed = (i * 7919 + Math.floor(time * 8)) % 10007;
-      var rx = (seed * 3.1 + time * 80 * (1 + windX)) % w;
-      var ry = (seed * 7.3 + time * 300) % h;
-      var len = 8 + precip.intensity * 12;
+      var rx = ((seed * 3.1 + time * 90 * (1 + windX)) % (w + 80)) - 40;
+      var ry = ((seed * 7.3 + time * 320) % (h + 60)) - 30;
+      var len = 12 + precip.intensity * 16;
+      var thick = 1.0 + (seed % 3) * 0.4;
+      // Bright raindrop head
+      ctx.fillStyle = 'rgba(200,220,240,' + (0.25 + precip.intensity * 0.20) + ')';
+      ctx.beginPath();
+      ctx.arc(rx + windX * len, ry + len, thick, 0, 6.28);
+      ctx.fill();
+      // Tapered streak tail
+      ctx.strokeStyle = 'rgba(180,200,225,' + (0.10 + precip.intensity * 0.15) + ')';
+      ctx.lineWidth = thick * 0.6;
       ctx.beginPath();
       ctx.moveTo(rx, ry);
       ctx.lineTo(rx + windX * len, ry + len);
       ctx.stroke();
     }
+    // Layer 3: Splash circles on ground (heavy rain)
+    if (precip.intensity > 0.4) {
+      var splashCount = Math.floor((precip.intensity - 0.4) * 60);
+      ctx.strokeStyle = 'rgba(180,200,220,' + (0.06 + precip.intensity * 0.06) + ')';
+      ctx.lineWidth = 0.5;
+      for (var s = 0; s < splashCount; s++) {
+        var seed = (s * 4271 + Math.floor(time * 18)) % 10007;
+        var sx = (seed * 5.3) % w;
+        var sy = (seed * 2.7) % h;
+        var radius = 2 + (seed % 4);
+        ctx.beginPath();
+        ctx.arc(sx, sy, radius, 0, 6.28);
+        ctx.stroke();
+      }
+    }
   } else if (precip.type === 'snow') {
-    ctx.fillStyle = 'rgba(240,245,255,' + (0.3 + precip.intensity * 0.4) + ')';
+    // Layer 1: Distant tiny flakes (slow, many)
     for (var i = 0; i < count * 0.4; i++) {
-      var seed = (i * 6271 + Math.floor(time * 2)) % 10007;
-      var sx = (seed * 4.7 + time * 15 * (1 + windX * 0.5) + Math.sin(time * 0.5 + i) * 10) % w;
-      var sy = (seed * 2.3 + time * 40) % h;
-      var size = 1.5 + (seed % 3);
-      ctx.beginPath();
-      ctx.arc(sx, sy, size, 0, 6.28);
-      ctx.fill();
+      var seed = (i * 6271 + Math.floor(time * 1.2)) % 10007;
+      var sx = ((seed * 4.7 + time * 10 * (1 + windX * 0.3)) % (w + 40)) - 20;
+      var sy = ((seed * 2.3 + time * 22) % (h + 40)) - 20;
+      sx += Math.sin(time * 0.6 + i * 0.7) * 8;
+      ctx.fillStyle = 'rgba(220,228,240,' + (0.15 + precip.intensity * 0.12) + ')';
+      ctx.fillRect(sx, sy, 1.5, 1.5);
+    }
+    // Layer 2: Near snowflakes — 6-pointed star shapes
+    var nearCount = Math.floor(count * 0.15);
+    for (var i = 0; i < nearCount; i++) {
+      var seed = (i * 3571 + Math.floor(time * 0.7)) % 10007;
+      var sx = ((seed * 3.2 + time * 14 * (1 + windX * 0.5)) % (w + 80)) - 40;
+      var sy = ((seed * 5.1 + time * 28) % (h + 80)) - 40;
+      sx += Math.sin(time * 0.35 + i * 1.3) * 18;
+      sy += Math.cos(time * 0.25 + i * 0.9) * 6;
+      var size = 2.5 + (seed % 4);
+      var rot = time * 0.3 + i;
+      var alpha = 0.35 + precip.intensity * 0.30;
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.rotate(rot);
+      ctx.strokeStyle = 'rgba(240,245,255,' + alpha + ')';
+      ctx.lineWidth = 0.8;
+      // Draw 6-pointed snowflake
+      for (var arm = 0; arm < 6; arm++) {
+        var a = arm * 1.047; // 60 degrees
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(a) * size, Math.sin(a) * size);
+        ctx.stroke();
+        // Small branches on each arm
+        if (size > 3) {
+          var bx = Math.cos(a) * size * 0.6;
+          var by = Math.sin(a) * size * 0.6;
+          ctx.beginPath();
+          ctx.moveTo(bx, by);
+          ctx.lineTo(bx + Math.cos(a + 0.5) * size * 0.3, by + Math.sin(a + 0.5) * size * 0.3);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
     }
   } else if (precip.type === 'sandstorm') {
-    ctx.fillStyle = 'rgba(194,170,120,' + (0.08 + precip.intensity * 0.15) + ')';
+    // Amber particle cloud with varying sizes
     for (var i = 0; i < count * 0.6; i++) {
       var seed = (i * 5381 + Math.floor(time * 6)) % 10007;
-      var sx = (seed * 3.9 + time * 200 * windX) % w;
-      var sy = (seed * 8.1 + time * 30) % h;
-      ctx.fillRect(sx, sy, 2 + (seed % 4), 1);
+      var sx = ((seed * 3.9 + time * 250 * Math.abs(windX)) % (w + 80)) - 40;
+      var sy = ((seed * 8.1 + time * 35 + Math.sin(time * 2 + i) * 15) % (h + 40)) - 20;
+      var size = 1 + (seed % 5);
+      var alpha = 0.05 + (seed % 10) * 0.012;
+      ctx.fillStyle = 'rgba(194,170,120,' + alpha + ')';
+      ctx.fillRect(sx, sy, size, 1 + (seed % 2));
+    }
+    // Amber haze overlay
+    if (precip.intensity > 0.3) {
+      ctx.fillStyle = 'rgba(180,155,100,' + (precip.intensity * 0.18) + ')';
+      ctx.fillRect(0, 0, w, h);
+    }
+  } else if (precip.type === 'sleet') {
+    // Mix of rain streaks and small ice pellets
+    for (var i = 0; i < count * 0.5; i++) {
+      var seed = (i * 7127 + Math.floor(time * 9)) % 10007;
+      var rx = ((seed * 3.5 + time * 95 * (1 + windX)) % (w + 60)) - 30;
+      var ry = ((seed * 6.7 + time * 340) % (h + 40)) - 20;
+      if (seed % 3 === 0) {
+        // Ice pellet
+        ctx.fillStyle = 'rgba(200,210,230,' + (0.3 + precip.intensity * 0.2) + ')';
+        ctx.fillRect(rx, ry, 2, 2);
+      } else {
+        // Rain streak
+        ctx.strokeStyle = 'rgba(170,190,215,' + (0.10 + precip.intensity * 0.12) + ')';
+        ctx.lineWidth = 0.7;
+        ctx.beginPath();
+        ctx.moveTo(rx, ry);
+        ctx.lineTo(rx + windX * 10, ry + 10);
+        ctx.stroke();
+      }
     }
   }
   ctx.restore();
