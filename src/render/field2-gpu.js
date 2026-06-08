@@ -1,7 +1,6 @@
 // GPU-instanced sprite renderer for Field 2 vegetation.
-// Uses WebGL2 instanced rendering to draw thousands of sprites in 1-2 draw calls.
-// CPU prepares per-instance data (position, rotation, frame, scale, alpha).
-// GPU does all the actual drawing in parallel.
+// Renders thousands of sprites in 1-2 draw calls using WebGL2 instancing.
+// Output is composited onto the main 2D canvas via drawImage.
 
 var gl = null;
 var program = null;
@@ -10,257 +9,166 @@ var instanceBuffer = null;
 var textureAtlas = null;
 var atlasWidth = 0;
 var atlasHeight = 0;
-var atlasFrameWidth = 32;
-var atlasFrameHeight = 32;
+var atlasFrameW = 0;
+var atlasFrameH = 0;
 var atlasColumns = 0;
-var atlasRows = 0;
-var maxInstances = 16000;
-var instanceData = null; // Float32Array
-var canvas = null;
+var maxInstances = 20000;
+var instanceData = null;
+var glCanvas = null;
 var initialized = false;
+var FLOATS_PER_INSTANCE = 8; // x, y, rot, scaleX, scaleY, alpha, uvX, uvY
 
-// Per-instance attributes: x, y, rotation, scaleX, scaleY, alpha, frameU, frameV
-var FLOATS_PER_INSTANCE = 8;
-
-var VERT_SRC = `#version 300 es
+var VERT = `#version 300 es
 precision highp float;
-
-// Quad vertex (2D position + UV)
 in vec2 a_pos;
 in vec2 a_uv;
-
-// Per-instance data
-in vec2 i_pos;       // screen position
-in float i_rot;      // rotation in radians
-in vec2 i_scale;     // scale x, y
-in float i_alpha;    // opacity
-in vec2 i_frameUV;   // UV offset into atlas for this frame
-
-uniform vec2 u_resolution;
-uniform vec2 u_frameSize; // normalized frame size in atlas
-
+in vec2 i_pos;
+in float i_rot;
+in vec2 i_scale;
+in float i_alpha;
+in vec2 i_uv;
+uniform vec2 u_res;
+uniform vec2 u_frameSz;
 out vec2 v_uv;
 out float v_alpha;
-
 void main() {
-  // Rotate around bottom-center anchor
-  float c = cos(i_rot);
-  float s = sin(i_rot);
-  vec2 scaled = a_pos * i_scale;
-  // Anchor at bottom center: shift so (0,0) is at bottom-center
-  vec2 anchored = vec2(scaled.x, scaled.y - i_scale.y * 0.5);
-  vec2 rotated = vec2(
-    anchored.x * c - anchored.y * s,
-    anchored.x * s + anchored.y * c
-  );
-  vec2 screen = i_pos + rotated;
-
-  // Convert to clip space (-1 to 1)
-  vec2 clip = (screen / u_resolution) * 2.0 - 1.0;
-  clip.y = -clip.y; // flip Y for canvas coordinates
-  gl_Position = vec4(clip, 0.0, 1.0);
-
-  // UV: map into atlas frame
-  v_uv = i_frameUV + a_uv * u_frameSize;
+  vec2 s = a_pos * i_scale;
+  vec2 a = vec2(s.x, s.y - i_scale.y * 0.5);
+  float c = cos(i_rot), sn = sin(i_rot);
+  vec2 r = vec2(a.x*c - a.y*sn, a.x*sn + a.y*c);
+  vec2 p = (i_pos + r) / u_res * 2.0 - 1.0;
+  gl_Position = vec4(p.x, -p.y, 0, 1);
+  v_uv = i_uv + a_uv * u_frameSz;
   v_alpha = i_alpha;
-}
-`;
+}`;
 
-var FRAG_SRC = `#version 300 es
+var FRAG = `#version 300 es
 precision highp float;
-
 in vec2 v_uv;
 in float v_alpha;
-
-uniform sampler2D u_atlas;
-
-out vec4 fragColor;
-
+uniform sampler2D u_tex;
+out vec4 fc;
 void main() {
-  vec4 tex = texture(u_atlas, v_uv);
-  if (tex.a < 0.02) discard;
-  fragColor = vec4(tex.rgb, tex.a * v_alpha);
-}
-`;
+  vec4 t = texture(u_tex, v_uv);
+  if (t.a < 0.02) discard;
+  fc = vec4(t.rgb, t.a * v_alpha);
+}`;
 
-function compileShader(gl, type, src) {
-  var shader = gl.createShader(type);
-  gl.shaderSource(shader, src);
-  gl.compileShader(shader);
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    console.error('Shader error:', gl.getShaderInfoLog(shader));
-    gl.deleteShader(shader);
+function makeShader(type, src) {
+  var s = gl.createShader(type);
+  gl.shaderSource(s, src);
+  gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+    console.error('[F2GPU] shader:', gl.getShaderInfoLog(s));
     return null;
   }
-  return shader;
+  return s;
 }
 
-export function initField2GPU(existingCanvas) {
+export function initField2GPU() {
   if (initialized) return true;
+  glCanvas = document.createElement('canvas');
+  gl = glCanvas.getContext('webgl2', { alpha: true, premultipliedAlpha: true, antialias: false });
+  if (!gl) { console.warn('[F2GPU] No WebGL2'); return false; }
 
-  // Create an overlay canvas for WebGL on top of the main 2D canvas
-  canvas = document.createElement('canvas');
-  canvas.style.position = 'absolute';
-  canvas.style.left = '0';
-  canvas.style.top = '0';
-  canvas.style.pointerEvents = 'none';
-  canvas.style.imageRendering = 'pixelated';
-  existingCanvas.parentElement.appendChild(canvas);
-
-  gl = canvas.getContext('webgl2', { alpha: true, premultipliedAlpha: false, antialias: false });
-  if (!gl) {
-    console.warn('[Field2GPU] WebGL2 not available, falling back to Canvas2D');
-    return false;
-  }
-
-  // Compile shaders
-  var vert = compileShader(gl, gl.VERTEX_SHADER, VERT_SRC);
-  var frag = compileShader(gl, gl.FRAGMENT_SHADER, FRAG_SRC);
-  if (!vert || !frag) return false;
-
+  var vs = makeShader(gl.VERTEX_SHADER, VERT);
+  var fs = makeShader(gl.FRAGMENT_SHADER, FRAG);
+  if (!vs || !fs) return false;
   program = gl.createProgram();
-  gl.attachShader(program, vert);
-  gl.attachShader(program, frag);
+  gl.attachShader(program, vs);
+  gl.attachShader(program, fs);
   gl.linkProgram(program);
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    console.error('Program link error:', gl.getProgramInfoLog(program));
+    console.error('[F2GPU] link:', gl.getProgramInfoLog(program));
     return false;
   }
 
-  // Unit quad: two triangles covering (-0.5, -0.5) to (0.5, 0.5)
-  var quadVerts = new Float32Array([
-    // pos x, y, uv u, v
-    -0.5, 0.0, 0, 1,
-     0.5, 0.0, 1, 1,
-     0.5, 1.0, 1, 0,
-    -0.5, 0.0, 0, 1,
-     0.5, 1.0, 1, 0,
-    -0.5, 1.0, 0, 0,
+  // Unit quad (bottom-center anchor)
+  var q = new Float32Array([
+    -0.5,0, 0,1,  0.5,0, 1,1,  0.5,1, 1,0,
+    -0.5,0, 0,1,  0.5,1, 1,0, -0.5,1, 0,0,
   ]);
-
   quadVAO = gl.createVertexArray();
   gl.bindVertexArray(quadVAO);
+  var qb = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, qb);
+  gl.bufferData(gl.ARRAY_BUFFER, q, gl.STATIC_DRAW);
+  var aPos = gl.getAttribLocation(program, 'a_pos');
+  var aUv = gl.getAttribLocation(program, 'a_uv');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 16, 0);
+  gl.enableVertexAttribArray(aUv);
+  gl.vertexAttribPointer(aUv, 2, gl.FLOAT, false, 16, 8);
 
-  // Quad vertex buffer
-  var quadBuf = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
-  gl.bufferData(gl.ARRAY_BUFFER, quadVerts, gl.STATIC_DRAW);
-
-  var a_pos = gl.getAttribLocation(program, 'a_pos');
-  var a_uv = gl.getAttribLocation(program, 'a_uv');
-  gl.enableVertexAttribArray(a_pos);
-  gl.vertexAttribPointer(a_pos, 2, gl.FLOAT, false, 16, 0);
-  gl.enableVertexAttribArray(a_uv);
-  gl.vertexAttribPointer(a_uv, 2, gl.FLOAT, false, 16, 8);
-
-  // Instance buffer
   instanceBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, instanceBuffer);
   instanceData = new Float32Array(maxInstances * FLOATS_PER_INSTANCE);
   gl.bufferData(gl.ARRAY_BUFFER, instanceData.byteLength, gl.DYNAMIC_DRAW);
 
-  var i_pos = gl.getAttribLocation(program, 'i_pos');
-  var i_rot = gl.getAttribLocation(program, 'i_rot');
-  var i_scale = gl.getAttribLocation(program, 'i_scale');
-  var i_alpha = gl.getAttribLocation(program, 'i_alpha');
-  var i_frameUV = gl.getAttribLocation(program, 'i_frameUV');
-
-  gl.enableVertexAttribArray(i_pos);
-  gl.vertexAttribPointer(i_pos, 2, gl.FLOAT, false, FLOATS_PER_INSTANCE * 4, 0);
-  gl.vertexAttribDivisor(i_pos, 1);
-
-  gl.enableVertexAttribArray(i_rot);
-  gl.vertexAttribPointer(i_rot, 1, gl.FLOAT, false, FLOATS_PER_INSTANCE * 4, 8);
-  gl.vertexAttribDivisor(i_rot, 1);
-
-  gl.enableVertexAttribArray(i_scale);
-  gl.vertexAttribPointer(i_scale, 2, gl.FLOAT, false, FLOATS_PER_INSTANCE * 4, 12);
-  gl.vertexAttribDivisor(i_scale, 1);
-
-  gl.enableVertexAttribArray(i_alpha);
-  gl.vertexAttribPointer(i_alpha, 1, gl.FLOAT, false, FLOATS_PER_INSTANCE * 4, 20);
-  gl.vertexAttribDivisor(i_alpha, 1);
-
-  gl.enableVertexAttribArray(i_frameUV);
-  gl.vertexAttribPointer(i_frameUV, 2, gl.FLOAT, false, FLOATS_PER_INSTANCE * 4, 24);
-  gl.vertexAttribDivisor(i_frameUV, 1);
-
+  var attrs = ['i_pos','i_rot','i_scale','i_alpha','i_uv'];
+  var sizes = [2,1,2,1,2];
+  var offsets = [0,8,12,20,24];
+  for (var i = 0; i < attrs.length; i++) {
+    var loc = gl.getAttribLocation(program, attrs[i]);
+    if (loc < 0) continue;
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, sizes[i], gl.FLOAT, false, FLOATS_PER_INSTANCE * 4, offsets[i]);
+    gl.vertexAttribDivisor(loc, 1);
+  }
   gl.bindVertexArray(null);
 
-  // Blending for transparency
   gl.enable(gl.BLEND);
-  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
+  gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); // premultiplied alpha
   initialized = true;
-  console.log('[Field2GPU] WebGL2 instanced renderer initialized');
+  console.log('[F2GPU] Ready');
   return true;
 }
 
-// Build a texture atlas from loaded sprite images.
-// Takes a Map of url → Image and packs them into a single GPU texture.
-// Returns a mapping of url → {u, v} in the atlas.
+// Atlas: pack loaded images into one GPU texture
 var atlasMap = new Map(); // url → { u, v }
-var atlasDirty = true;
-var lastAtlasSize = 0;
+var lastAtlasCount = 0;
 
 export function buildAtlas(frameCache) {
   if (!gl) return;
-  // Only rebuild if cache grew
-  var cacheSize = 0;
-  frameCache.forEach(function(v) { if (v) cacheSize++; });
-  if (cacheSize === lastAtlasSize && !atlasDirty) return;
-  lastAtlasSize = cacheSize;
-  atlasDirty = false;
+  var count = 0;
+  frameCache.forEach(function(v) { if (v && v.complete && (v.naturalWidth || v.width)) count++; });
+  if (count === lastAtlasCount || count === 0) return;
+  lastAtlasCount = count;
 
-  // Collect all valid images
-  var images = [];
+  var imgs = [];
   frameCache.forEach(function(img, url) {
-    if (img && img.complete && img.naturalWidth) {
-      images.push({ url: url, img: img });
-    }
+    if (img && img.complete && (img.naturalWidth || img.width)) imgs.push({ url: url, img: img });
   });
-  if (images.length === 0) return;
 
-  // Determine atlas layout
-  atlasFrameWidth = images[0].img.naturalWidth || 32;
-  atlasFrameHeight = images[0].img.naturalHeight || 32;
-  atlasColumns = Math.ceil(Math.sqrt(images.length));
-  atlasRows = Math.ceil(images.length / atlasColumns);
-  atlasWidth = atlasColumns * atlasFrameWidth;
-  atlasHeight = atlasRows * atlasFrameHeight;
+  atlasFrameW = imgs[0].img.naturalWidth || imgs[0].img.width || 32;
+  atlasFrameH = imgs[0].img.naturalHeight || imgs[0].img.height || 32;
+  atlasColumns = Math.ceil(Math.sqrt(imgs.length));
+  var rows = Math.ceil(imgs.length / atlasColumns);
+  atlasWidth = atlasColumns * atlasFrameW;
+  atlasHeight = rows * atlasFrameH;
 
-  // Cap at max texture size
-  var maxSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
-  if (atlasWidth > maxSize || atlasHeight > maxSize) {
-    // Truncate to fit
-    var maxFrames = Math.floor(maxSize / atlasFrameWidth) * Math.floor(maxSize / atlasFrameHeight);
-    images = images.slice(0, maxFrames);
-    atlasColumns = Math.ceil(Math.sqrt(images.length));
-    atlasRows = Math.ceil(images.length / atlasColumns);
-    atlasWidth = atlasColumns * atlasFrameWidth;
-    atlasHeight = atlasRows * atlasFrameHeight;
+  var maxSz = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+  if (atlasWidth > maxSz || atlasHeight > maxSz) {
+    var maxFrames = Math.floor(maxSz / atlasFrameW) * Math.floor(maxSz / atlasFrameH);
+    imgs = imgs.slice(0, maxFrames);
+    atlasColumns = Math.ceil(Math.sqrt(imgs.length));
+    rows = Math.ceil(imgs.length / atlasColumns);
+    atlasWidth = atlasColumns * atlasFrameW;
+    atlasHeight = rows * atlasFrameH;
   }
 
-  // Draw all frames into an offscreen canvas
   var oc = document.createElement('canvas');
   oc.width = atlasWidth;
   oc.height = atlasHeight;
   var octx = oc.getContext('2d');
-
   atlasMap.clear();
-  for (var i = 0; i < images.length; i++) {
+  for (var i = 0; i < imgs.length; i++) {
     var col = i % atlasColumns;
     var row = Math.floor(i / atlasColumns);
-    var x = col * atlasFrameWidth;
-    var y = row * atlasFrameHeight;
-    octx.drawImage(images[i].img, x, y);
-    atlasMap.set(images[i].url, {
-      u: x / atlasWidth,
-      v: y / atlasHeight
-    });
+    octx.drawImage(imgs[i].img, col * atlasFrameW, row * atlasFrameH);
+    atlasMap.set(imgs[i].url, { u: col * atlasFrameW / atlasWidth, v: row * atlasFrameH / atlasHeight });
   }
 
-  // Upload to GPU
   if (!textureAtlas) textureAtlas = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, textureAtlas);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, oc);
@@ -268,61 +176,54 @@ export function buildAtlas(frameCache) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-  console.log('[Field2GPU] Atlas built:', atlasWidth, 'x', atlasHeight, images.length, 'frames');
+  console.log('[F2GPU] Atlas:', atlasWidth, 'x', atlasHeight, imgs.length, 'frames');
 }
 
-// Render all sprites in one instanced draw call.
-// sprites: array of { sx, sy, rotation, scaleX, scaleY, alpha, frameUrl }
+// Render sprites. Returns the canvas to composite onto the main 2D canvas.
+// sprites: [{ sx, sy, rot, w, h, alpha, url }]
 export function renderField2GPU(w, h, sprites) {
-  if (!gl || !textureAtlas || sprites.length === 0) return;
-
-  // Resize canvas to match viewport
-  if (canvas.width !== w || canvas.height !== h) {
-    canvas.width = w;
-    canvas.height = h;
-    canvas.style.width = w + 'px';
-    canvas.style.height = h + 'px';
+  if (!gl || !textureAtlas || sprites.length === 0) return null;
+  if (glCanvas.width !== w || glCanvas.height !== h) {
+    glCanvas.width = w;
+    glCanvas.height = h;
   }
-
   gl.viewport(0, 0, w, h);
+  gl.clearColor(0, 0, 0, 0);
   gl.clear(gl.COLOR_BUFFER_BIT);
-
   gl.useProgram(program);
-  gl.uniform2f(gl.getUniformLocation(program, 'u_resolution'), w, h);
-  gl.uniform2f(gl.getUniformLocation(program, 'u_frameSize'),
-    atlasFrameWidth / atlasWidth,
-    atlasFrameHeight / atlasHeight
-  );
-
+  gl.uniform2f(gl.getUniformLocation(program, 'u_res'), w, h);
+  gl.uniform2f(gl.getUniformLocation(program, 'u_frameSz'), atlasFrameW / atlasWidth, atlasFrameH / atlasHeight);
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, textureAtlas);
-  gl.uniform1i(gl.getUniformLocation(program, 'u_atlas'), 0);
+  gl.uniform1i(gl.getUniformLocation(program, 'u_tex'), 0);
 
-  // Fill instance buffer
   var count = Math.min(sprites.length, maxInstances);
+  var written = 0;
   for (var i = 0; i < count; i++) {
     var s = sprites[i];
-    var uv = atlasMap.get(s.frameUrl);
+    var uv = atlasMap.get(s.url);
     if (!uv) continue;
-    var off = i * FLOATS_PER_INSTANCE;
-    instanceData[off + 0] = s.sx;
-    instanceData[off + 1] = s.sy;
-    instanceData[off + 2] = s.rotation;
-    instanceData[off + 3] = s.scaleX;
-    instanceData[off + 4] = s.scaleY;
-    instanceData[off + 5] = s.alpha;
-    instanceData[off + 6] = uv.u;
-    instanceData[off + 7] = uv.v;
+    var off = written * FLOATS_PER_INSTANCE;
+    instanceData[off] = s.sx;
+    instanceData[off+1] = s.sy;
+    instanceData[off+2] = s.rot;
+    instanceData[off+3] = s.w;
+    instanceData[off+4] = s.h;
+    instanceData[off+5] = s.alpha;
+    instanceData[off+6] = uv.u;
+    instanceData[off+7] = uv.v;
+    written++;
   }
+  if (written === 0) return null;
 
   gl.bindVertexArray(quadVAO);
   gl.bindBuffer(gl.ARRAY_BUFFER, instanceBuffer);
-  gl.bufferSubData(gl.ARRAY_BUFFER, 0, instanceData.subarray(0, count * FLOATS_PER_INSTANCE));
-
-  gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, count);
+  gl.bufferSubData(gl.ARRAY_BUFFER, 0, instanceData.subarray(0, written * FLOATS_PER_INSTANCE));
+  gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, written);
   gl.bindVertexArray(null);
+  return glCanvas;
 }
 
-export function isGPUReady() { return initialized && textureAtlas !== null; }
 export function getAtlasMap() { return atlasMap; }
+export function isGPUReady() { return initialized && textureAtlas !== null; }
+export { glCanvas as gpuCanvas };

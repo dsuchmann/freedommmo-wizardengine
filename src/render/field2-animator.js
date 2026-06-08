@@ -27,9 +27,11 @@ var RIGID_OBJECTS = {
 };
 
 // Track per-sprite trigger times and extension count
-// key → { time: triggerTimeMs, extensions: count }
 var triggerTimes = new Map();
-var MAX_EXTENSIONS = 3; // hard cap on neighbor extensions to prevent infinite loops
+var MAX_EXTENSIONS = 3;
+
+// Track animation variant dirs that 404'd — skip all frames for dead dirs
+var _deadAnimDirs = new Set();
 
 // ---- Wind Currents ----
 // Visible wavefronts that sweep across the map, bending sprites as they pass.
@@ -614,12 +616,18 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           if (!img) continue;
           isStatic = true;
         } else {
-          // Load this variant's animation frame. Each of 64 variants has its own animation.
-          // If this variant's animation doesn't exist (404 cached as null), use static sprite.
-          var animUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v' + vStr + '/frame_' + String(frameIdx).padStart(3, '0') + '.png';
-          img = loadFrame(animUrl);
+          // Load this variant's animation frame.
+          // Track which variant dirs have 404'd so we don't try all 9 frames.
+          var animDir = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v' + vStr + '/';
+          if (!_deadAnimDirs.has(animDir)) {
+            var animUrl = animDir + 'frame_' + String(frameIdx).padStart(3, '0') + '.png';
+            img = loadFrame(animUrl);
+            // If frame_000 fails, mark the whole dir as dead
+            if (img === null && frameIdx === 0) {
+              _deadAnimDirs.add(animDir);
+            }
+          }
           if (!img) {
-            // This variant has no animation — use static sprite with sway transforms
             var staticUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/sf__' + tile.biome + '__' + objName + '__v' + vStr + '.png';
             img = loadFrame(staticUrl);
             if (!img) continue;
