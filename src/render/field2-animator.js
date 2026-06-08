@@ -12,6 +12,110 @@ var FADE_INNER = 34; // fully opaque inside this radius
 var FRAME_COUNT = 9;
 var FRAME_DURATION = 120; // ms per frame
 
+// ---- Wind Currents ----
+// Visible wavefronts that sweep across the map, bending sprites as they pass.
+var MAX_CURRENTS = 4;
+var windCurrents = [];
+var _lastCurrentSpawn = 0;
+var _prevPlayerX = 0;
+var _prevPlayerY = 0;
+
+function spawnCurrent(time, windDir, windIntensity, playerX, playerY) {
+  // Random direction: mostly aligned with wind, with some variation
+  var angle = windDir + (Math.random() - 0.5) * 1.2;
+  var dirX = Math.cos(angle);
+  var dirY = Math.sin(angle);
+  // Spawn behind the player relative to wind direction
+  var spawnDist = 50 + Math.random() * 30;
+  var originX = playerX - dirX * spawnDist;
+  var originY = playerY - dirY * spawnDist;
+  windCurrents.push({
+    originX: originX,
+    originY: originY,
+    dirX: dirX,
+    dirY: dirY,
+    speed: 15 + windIntensity * 25 + Math.random() * 10, // tiles per second
+    width: 3 + Math.random() * 5, // wavefront width in tiles
+    strength: 0.08 + windIntensity * 0.18 + Math.random() * 0.06, // rotation radians
+    pushX: dirX * (0.3 + windIntensity * 0.5), // position offset in tile fractions
+    pushY: dirY * (0.15 + windIntensity * 0.25),
+    born: time,
+    lifespan: 3 + Math.random() * 4, // seconds
+  });
+}
+
+function updateCurrents(timeSec, windDir, windIntensity, playerX, playerY) {
+  // Remove expired
+  for (var i = windCurrents.length - 1; i >= 0; i--) {
+    if (timeSec - windCurrents[i].born > windCurrents[i].lifespan) {
+      windCurrents.splice(i, 1);
+    }
+  }
+  // Spawn new ones based on wind intensity
+  var spawnRate = 0.3 + windIntensity * 1.5; // currents per second
+  if (timeSec - _lastCurrentSpawn > 1 / spawnRate && windCurrents.length < MAX_CURRENTS) {
+    spawnCurrent(timeSec, windDir, windIntensity, playerX, playerY);
+    _lastCurrentSpawn = timeSec;
+  }
+}
+
+function sampleCurrents(wx, wy, timeSec) {
+  var totalRot = 0;
+  var totalPushX = 0;
+  var totalPushY = 0;
+  for (var i = 0; i < windCurrents.length; i++) {
+    var c = windCurrents[i];
+    var age = timeSec - c.born;
+    // Project tile position onto current's travel direction
+    var relX = wx - c.originX;
+    var relY = wy - c.originY;
+    var along = relX * c.dirX + relY * c.dirY; // distance along current direction
+    var perp = Math.abs(relX * (-c.dirY) + relY * c.dirX); // perpendicular distance
+    // Wavefront position
+    var wavefront = c.speed * age;
+    var dist = along - wavefront;
+    // Gaussian impulse: strongest at wavefront, fades ahead/behind
+    var halfWidth = c.width;
+    if (dist > halfWidth * 3 || dist < -halfWidth * 6) continue;
+    var impulse = Math.exp(-(dist * dist) / (2 * halfWidth * halfWidth));
+    // Perpendicular falloff — current has a width
+    var perpFalloff = Math.exp(-(perp * perp) / (2 * (halfWidth * 2) * (halfWidth * 2)));
+    // Fade in/out over lifespan
+    var lifeFade = age < 0.5 ? age / 0.5 : (age > c.lifespan - 0.5 ? (c.lifespan - age) / 0.5 : 1);
+    lifeFade = Math.max(0, Math.min(1, lifeFade));
+    var effect = impulse * perpFalloff * lifeFade;
+    totalRot += c.strength * effect;
+    totalPushX += c.pushX * effect;
+    totalPushY += c.pushY * effect;
+  }
+  return { rot: totalRot, px: totalPushX, py: totalPushY };
+}
+
+function samplePlayerPush(wx, wy, playerX, playerY, playerVX, playerVY) {
+  var dx = wx - playerX;
+  var dy = wy - playerY;
+  var dist = Math.sqrt(dx * dx + dy * dy);
+  if (dist > 3 || dist < 0.3) return { rot: 0, px: 0, py: 0 };
+  // Player push: radial from player position, strength based on distance and speed
+  var speed = Math.sqrt(playerVX * playerVX + playerVY * playerVY);
+  if (speed < 0.5) return { rot: 0, px: 0, py: 0 };
+  var falloff = Math.max(0, 1 - dist / 3);
+  falloff = falloff * falloff; // quadratic
+  var pushStrength = Math.min(speed * 0.08, 0.4) * falloff;
+  // Push away from player
+  var nx = dx / dist;
+  var ny = dy / dist;
+  // Also add component in player's movement direction
+  var mvLen = speed;
+  var mvX = playerVX / mvLen;
+  var mvY = playerVY / mvLen;
+  var combinedX = (nx * 0.4 + mvX * 0.6);
+  var combinedY = (ny * 0.4 + mvY * 0.6);
+  // Rotation: tilt away from player
+  var rot = pushStrength * 0.6 * (nx > 0 ? 1 : -1);
+  return { rot: rot, px: combinedX * pushStrength * 2, py: combinedY * pushStrength * 1 };
+}
+
 // Cache: url → Image
 var frameCache = new Map();
 var loadingSet = new Set();
@@ -47,7 +151,7 @@ export function preloadField2Animations(biomes) {
 
 // Draw animated Field 2 sprites near the player.
 // Called per-frame from canvas-renderer after chunk drawing.
-export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs) {
+export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, weather) {
   var tilePx = WORLD.tileSize * camera.zoom;
   var chunkPx = chunkGrid.chunkPx;
   var baseSX = chunkGrid.baseSX;
@@ -59,8 +163,17 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
 
   var px = Math.floor(player.x);
   var py = Math.floor(player.y);
+  var timeSec = timeMs * 0.001;
 
-  // Base time for animation — per-tile offset added below for desync
+  // Compute player velocity for interaction push
+  var playerVX = (player.x - _prevPlayerX) / Math.max(0.001, 1 / 60);
+  var playerVY = (player.y - _prevPlayerY) / Math.max(0.001, 1 / 60);
+  _prevPlayerX = player.x;
+  _prevPlayerY = player.y;
+
+  // Update wind currents
+  var wind = weather ? weather.wind() : { direction: 0.3, intensity: 0.3 };
+  updateCurrents(timeSec, wind.direction, wind.intensity, player.x, player.y);
 
   ctx.save();
   ctx.imageSmoothingEnabled = false;
@@ -127,15 +240,23 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         var baseAngle = (rand2(wx, wy, 7040 + bi) - 0.5) * 0.35;
 
         // Continuous micro-transforms — smooth sine-wave sway independent of frame rate
-        var timeSec = timeMs * 0.001;
         var swayPhase = rand2(wx, wy, 7070 + bi) * 6.28;
         var swaySpeed = 0.8 + rand2(wx, wy, 7071 + bi) * 0.6; // 0.8-1.4 Hz
         var swayAmount = 0.04 + rand2(wx, wy, 7072 + bi) * 0.03; // subtle rotation
-        var sway = Math.sin(timeSec * swaySpeed + swayPhase) * swayAmount;
+        var baseSway = Math.sin(timeSec * swaySpeed + swayPhase) * swayAmount;
         var breathe = 1.0 + Math.sin(timeSec * 0.6 + swayPhase * 0.7) * 0.015; // 1.5% scale pulse
 
-        var sx = chunkOriginX + tx * tilePxSnapped + halfTile + offX;
-        var sy = chunkOriginY + ty * tilePxSnapped + halfTile + offY;
+        // Wind currents — wavefronts sweeping across the map
+        var currentEffect = sampleCurrents(wx, wy, timeSec);
+        // Player interaction — sprites pushed when player walks through
+        var playerEffect = samplePlayerPush(wx, wy, player.x, player.y, playerVX, playerVY);
+
+        var sway = baseSway + currentEffect.rot + playerEffect.rot;
+        var pushOffsetX = (currentEffect.px + playerEffect.px) * tilePxSnapped;
+        var pushOffsetY = (currentEffect.py + playerEffect.py) * tilePxSnapped;
+
+        var sx = chunkOriginX + tx * tilePxSnapped + halfTile + offX + pushOffsetX;
+        var sy = chunkOriginY + ty * tilePxSnapped + halfTile + offY + pushOffsetY;
 
         // Distance-based fade at edge to prevent pop-in
         var dist = Math.max(Math.abs(wx - px), Math.abs(wy - py));

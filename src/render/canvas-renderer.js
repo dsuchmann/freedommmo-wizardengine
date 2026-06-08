@@ -11,6 +11,7 @@ import { biomeVariantFrameId } from '../assets/variant-selector.js';
 import { drawElevationOverlay } from './elevation-overlay.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations } from './water-wave-overlay.js';
 import { drawLargeObjects, preloadLargeObjectSprites, setPlayerDrawFn } from './large-object-renderer.js';
+import { drawField2Animations, preloadField2Animations } from './field2-animator.js';
 import { findNearbyInteraction, objectReaction, performInteraction } from '../world/interactions.js';
 
 function drawPrecipitation(ctx, w, h, precip, wind, time) {
@@ -329,6 +330,10 @@ export class CanvasRenderer {
     }
 
     if (player.interactPressed) performInteraction(player, chunkStore);
+
+    // === FIELD 2: ANIMATED WIND SWAY ===
+    // Draws animated sprites over the static baked ones for tiles near the player
+    drawField2Animations(ctx, chunkStore, player, camera, w, h, { baseSX, baseSY, minCX, minCY, chunkPx }, performance.now(), weather);
 
     // === FIELD 6: LARGE OBJECTS — DISABLED while focusing on Fields 0-2 ===
     // TODO: Re-enable once tree art quality and sizing are resolved.
