@@ -91,9 +91,10 @@ function computeLandDistanceMap(chunk, cs) {
 var _smoothedWindAngle = 0.3;
 
 export function drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, h, timeSeconds, wind) {
-  // Smooth the wind direction slowly so waves don't jitter
+  // Very slowly drift ocean current toward wind direction
+  // Rate: ~0.00005 per frame = ~0.003/sec = takes ~5 minutes to shift 1 radian
   if (wind) {
-    _smoothedWindAngle += (wind.direction - _smoothedWindAngle) * 0.002;
+    _smoothedWindAngle += (wind.direction - _smoothedWindAngle) * 0.00005;
   }
   const cs = WORLD.chunkSize;
 
