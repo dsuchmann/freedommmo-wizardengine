@@ -10,6 +10,7 @@ import { setChunkStore, getDebugWangData, setDebugWangData } from './wang-terrai
 import { biomeVariantFrameId } from '../assets/variant-selector.js';
 import { drawElevationOverlay } from './elevation-overlay.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations } from './water-wave-overlay.js';
+import { drawLargeObjects, preloadLargeObjectSprites, setPlayerDrawFn } from './large-object-renderer.js';
 import { findNearbyInteraction, objectReaction, performInteraction } from '../world/interactions.js';
 
 export class CanvasRenderer {
@@ -45,7 +46,7 @@ export class CanvasRenderer {
     this.ctx.imageSmoothingEnabled = false;
   }
 
-  draw(chunkStore, player, lighting, camera, provider) {
+  draw(chunkStore, player, lighting, camera, provider, weather) {
     const ctx = this.ctx;
     ctx.imageSmoothingEnabled = false;
     const w = window.innerWidth;
@@ -100,7 +101,7 @@ export class CanvasRenderer {
 
     // === FIELD 1 ANIMATED WATER OVERLAY ===
     // Per-pixel wave modulation + animated seaweed sprites
-    drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, h, performance.now() / 1000);
+    drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, h, performance.now() / 1000, weather ? weather.wind() : null);
 
     // Wang debug overlay (toggle with D key)
     if (this.debugWang) {
@@ -137,9 +138,15 @@ export class CanvasRenderer {
     }
 
     if (player.interactPressed) performInteraction(player, chunkStore);
-    // TODO: Re-enable drawWorldActors when proper object sprites are wired up.
-    // For now, draw only the player (no placeholder objects).
+
+    // === FIELD 6: LARGE OBJECTS — DISABLED while focusing on Fields 0-2 ===
+    // TODO: Re-enable once tree art quality and sizing are resolved.
+    // setPlayerDrawFn((ctx2, pl, cam, vw, vh) => {
+    //   this.drawPlayerAt(vw / 2, vh / 2 - elevationLift(chunkStore.tileAt(pl.x, pl.y).climate.elevation) * cam.zoom, cam.zoom, pl);
+    // });
+    // drawLargeObjects(ctx, chunkStore, player, camera, w, h, { baseSX, baseSY, minCX, minCY, chunkPx });
     this.drawPlayerAt(w / 2, h / 2 - elevationLift(focusTile.climate.elevation) * camera.zoom, camera.zoom, player);
+
     drawElevationOverlay(ctx, chunkStore, camX, camY, w, h, sun, camera);
     this.drawContactOverlay(player, w, h, camera.zoom, performance.now() / 1000);
     // this.drawDepthBokeh(chunkStore, player, focusTile, camera, camX, camY, w, h);
@@ -273,7 +280,7 @@ export class CanvasRenderer {
     ctx.fillRect(0, 0, w, h);
   }
 
-  hud(chunkStore, player, lighting, camera, perf) {
+  hud(chunkStore, player, lighting, camera, perf, weather) {
     const tile = chunkStore.tileAt(player.x, player.y);
     const sun = lighting.sun();
     const now = performance.now();
