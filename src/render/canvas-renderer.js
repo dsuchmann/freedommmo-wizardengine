@@ -264,26 +264,32 @@ export class CanvasRenderer {
 
     // Atmospheric color grading from day/night cycle
     if (sun) {
-      // Color tint overlay (golden hour amber, night blue, etc.)
-      var tr = Math.round(clamp01(sun.tint.r) * 255);
-      var tg = Math.round(clamp01(sun.tint.g) * 255);
-      var tb = Math.round(clamp01(sun.tint.b) * 255);
-      ctx.globalCompositeOperation = 'multiply';
-      ctx.fillStyle = 'rgb(' + tr + ',' + tg + ',' + tb + ')';
-      ctx.fillRect(0, 0, w, h);
-      ctx.globalCompositeOperation = 'source-over';
+      // Subtle color tint — only visible when tint deviates from neutral white
+      var tintR = sun.tint.r, tintG = sun.tint.g, tintB = sun.tint.b;
+      // How far from neutral (1,1,1) is the tint?
+      var tintStrength = Math.abs(tintR - 1) + Math.abs(tintG - 1) + Math.abs(tintB - 1);
+      if (tintStrength > 0.05) {
+        // Map tint to an overlay color: values < 1 darken, > 1 brighten
+        // Use the tint as a color wash at low opacity
+        var tr = Math.round(clamp01(tintR) * 255);
+        var tg = Math.round(clamp01(tintG) * 255);
+        var tb = Math.round(clamp01(tintB) * 255);
+        var alpha = Math.min(0.25, tintStrength * 0.15);
+        ctx.fillStyle = 'rgba(' + tr + ',' + tg + ',' + tb + ',' + alpha.toFixed(3) + ')';
+        ctx.fillRect(0, 0, w, h);
+      }
 
       // Night darkening — deep navy blanket
       if (sun.ambient < 0.5) {
-        var darkness = (0.5 - sun.ambient) * 1.4;
-        ctx.fillStyle = 'rgba(8,12,28,' + clamp01(darkness) + ')';
+        var darkness = (0.5 - sun.ambient) * 1.2;
+        ctx.fillStyle = 'rgba(8,12,28,' + clamp01(darkness).toFixed(3) + ')';
         ctx.fillRect(0, 0, w, h);
       }
 
       // Cloud cover dimming
-      if (weather && weather.clouds().cover > 0.1) {
-        var cloudDim = weather.clouds().cover * 0.20;
-        ctx.fillStyle = 'rgba(40,45,55,' + clamp01(cloudDim) + ')';
+      if (weather && weather.clouds().cover > 0.15) {
+        var cloudDim = (weather.clouds().cover - 0.15) * 0.15;
+        ctx.fillStyle = 'rgba(40,45,55,' + clamp01(cloudDim).toFixed(3) + ')';
         ctx.fillRect(0, 0, w, h);
       }
     }
