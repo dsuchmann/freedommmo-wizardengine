@@ -614,16 +614,19 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           if (!img) continue;
           isStatic = true;
         } else {
-          // Use v000 animation frames (shared across all variants — no per-variant 404 flood)
-          var animBase = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/';
-          var frameStr = 'frame_' + String(frameIdx).padStart(3, '0') + '.png';
-          img = loadFrame(animBase + frameStr);
-          if (!img) {
-            // Fall back to static sprite with sway transforms
-            var staticUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/sf__' + tile.biome + '__' + objName + '__v' + vStr + '.png';
-            img = loadFrame(staticUrl);
-            if (!img) continue;
+          // Use variant-specific static sprite for visual diversity (64 variants).
+          // Animation comes from sway transforms, not shared v000 frames.
+          // When per-variant animation frames exist on disk, they'll be used instead.
+          var staticUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/sf__' + tile.biome + '__' + objName + '__v' + vStr + '.png';
+          img = loadFrame(staticUrl);
+          if (img) {
             isStatic = true;
+          } else {
+            // No static sprite — fall back to v000 animation frames
+            var animBase = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/';
+            var frameStr = 'frame_' + String(frameIdx).padStart(3, '0') + '.png';
+            img = loadFrame(animBase + frameStr);
+            if (!img) continue;
           }
         }
 
