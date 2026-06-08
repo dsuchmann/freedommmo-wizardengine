@@ -13,6 +13,19 @@ var FRAME_COUNT = 9;
 var FRAME_DURATION = 120; // ms per frame
 var CYCLE_DURATION = FRAME_COUNT * FRAME_DURATION; // ms per full cycle
 
+// Objects that should NEVER sway — rigid/mineral/crystal types
+var RIGID_OBJECTS = {
+  'ice_needle': true,
+  'crystal_sprout': true,
+  'hardy_lichen': true,
+  'rock_cress': true,
+  'low_berry_bush': true,
+  'bracket_fungus': true,
+  'dry_tuft': true,
+  'cold_moss_tuft': true,
+  'ice_moss': true,
+};
+
 // Track per-sprite trigger times and extension count
 // key → { time: triggerTimeMs, extensions: count }
 var triggerTimes = new Map();
@@ -371,13 +384,19 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
       if (!objects || objects.length === 0) continue;
       if (tile.transitionPair) continue;
 
-      // Skip tiles near biome edges — 2-tile buffer keeps transitions clean
+      // Skip tiles near any edge — biome transitions OR elevation changes
+      var myElev = tile.climate ? tile.climate.elevation : 0.5;
       var isNearEdge = false;
       for (var edy = -2; edy <= 2 && !isNearEdge; edy++) {
         for (var edx = -2; edx <= 2 && !isNearEdge; edx++) {
           if (edx === 0 && edy === 0) continue;
           var nbTile = chunkStore.tileAt(wx + edx, wy + edy);
-          if (nbTile && nbTile.biome !== tile.biome) isNearEdge = true;
+          if (!nbTile) continue;
+          // Different biome = edge
+          if (nbTile.biome !== tile.biome) { isNearEdge = true; break; }
+          // Significant elevation change = edge (cliff level differs)
+          var nbElev = nbTile.climate ? nbTile.climate.elevation : 0.5;
+          if (Math.abs(Math.floor(myElev * 10) - Math.floor(nbElev * 10)) >= 1) { isNearEdge = true; break; }
         }
       }
       if (isNearEdge) continue;
@@ -410,12 +429,50 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         var variantIdx = Math.floor(rand2(wx, wy, 7035 + bi) * SF_VARIANT_COUNT);
         var vStr = variantIdx < 10 ? '00' + variantIdx : (variantIdx < 100 ? '0' + variantIdx : '' + variantIdx);
 
+        // Lifecycle state — deterministic per blade, affects sprite and transforms
+        // seedling 15%, normal 55%, wilting 20%, dead 10%
+        var stateRoll = rand2(wx, wy, 7100 + bi);
+        var lifecycleState = 'normal';
+        if (stateRoll < 0.15) lifecycleState = 'seedling';
+        else if (stateRoll < 0.70) lifecycleState = 'normal';
+        else if (stateRoll < 0.90) lifecycleState = 'wilting';
+        else lifecycleState = 'dead';
+
+        // Lifecycle modifiers
+        var lifeScale = 1.0;    // size multiplier
+        var lifeAngle = 0;      // additional rotation
+        var lifeAlpha = 1.0;    // opacity
+        var lifeSway = 1.0;     // sway intensity multiplier
+        var lifeStaticOverride = null; // state sprite URL if available
+
+        if (lifecycleState === 'seedling') {
+          lifeScale = 0.45 + rand2(wx, wy, 7101 + bi) * 0.15; // 45-60% size
+          lifeSway = 0.3; // tiny sway
+        } else if (lifecycleState === 'wilting') {
+          lifeScale = 0.85 + rand2(wx, wy, 7102 + bi) * 0.1;
+          lifeAngle = (0.2 + rand2(wx, wy, 7103 + bi) * 0.3) * (rand2(wx, wy, 7104 + bi) > 0.5 ? 1 : -1); // droop
+          lifeAlpha = 0.7 + rand2(wx, wy, 7105 + bi) * 0.2;
+          lifeSway = 0.5; // weak sway
+        } else if (lifecycleState === 'dead') {
+          lifeScale = 0.6 + rand2(wx, wy, 7106 + bi) * 0.2;
+          lifeAngle = (0.4 + rand2(wx, wy, 7107 + bi) * 0.4) * (rand2(wx, wy, 7108 + bi) > 0.5 ? 1 : -1); // fallen over
+          lifeAlpha = 0.5 + rand2(wx, wy, 7109 + bi) * 0.15;
+          lifeSway = 0; // no sway — stiff/dead
+        }
+
+        // Try loading actual state sprite (if not normal)
+        if (lifecycleState !== 'normal') {
+          var stateUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/states/' + lifecycleState + '/v000.png';
+          var stateImg = loadFrame(stateUrl);
+          if (stateImg) lifeStaticOverride = stateImg;
+        }
+
         // === PRIORITY 1: Player walk — checked BEFORE wind/sway ===
         // Position must be computed first
         var offX = (rand2(wx, wy, 7030 + bi) - 0.5) * tilePxSnapped * 0.8;
         var offY = (rand2(wx, wy, 7031 + bi) - 0.5) * tilePxSnapped * 0.8;
-        var drawSize = tilePxSnapped;
-        var baseAngle = (rand2(wx, wy, 7040 + bi) - 0.5) * 0.35;
+        var drawSize = tilePxSnapped * lifeScale;
+        var baseAngle = (rand2(wx, wy, 7040 + bi) - 0.5) * 0.35 + lifeAngle;
         var sx = chunkOriginX + tx * tilePxSnapped + halfTile + offX;
         var sy = chunkOriginY + ty * tilePxSnapped + halfTile + offY;
         var dist = Math.max(Math.abs(wx - px), Math.abs(wy - py));
@@ -615,29 +672,46 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           }
         }
 
-        // Build animation frame URL — try variant-specific first, then static sprite with motion
-        var animBase = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/';
-        var frameStr = '/frame_' + String(frameIdx).padStart(3, '0') + '.png';
-        var img = loadFrame(animBase + 'v' + vStr + frameStr);      // try per-variant animation
+        // Choose sprite: state override > per-variant animation > static with motion
+        // Rigid objects always use static sprite — no animation frames
+        var img;
         var isStatic = false;
-        if (!img) {
-          // No per-variant animation — use static sprite WITH sway transforms (preserves visual diversity)
+
+        if (lifeStaticOverride) {
+          img = lifeStaticOverride;
+          isStatic = true;
+        } else if (isRigid) {
+          // Rigid objects: static sprite only, no wind_sway frames
           var staticUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/sf__' + tile.biome + '__' + objName + '__v' + vStr + '.png';
           img = loadFrame(staticUrl);
           if (!img) continue;
           isStatic = true;
+        } else {
+          // Try per-variant animation
+          var animBase = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/';
+          var frameStr = '/frame_' + String(frameIdx).padStart(3, '0') + '.png';
+          img = loadFrame(animBase + 'v' + vStr + frameStr);
+          if (!img) {
+            // Fall back to static sprite with sway transforms
+            var staticUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/sf__' + tile.biome + '__' + objName + '__v' + vStr + '.png';
+            img = loadFrame(staticUrl);
+            if (!img) continue;
+            isStatic = true;
+          }
         }
 
-        // Sway: all plant objects get sway (static sprites use transforms for motion)
+        // Sway: scaled by lifecycle state (dead=0, seedling=weak, normal=full)
+        // Rigid objects never sway regardless of state
+        var isRigid = RIGID_OBJECTS[objName] || false;
         var swayDir = currentEffect.rot + playerEffect.rot;
-        var sway = swayDir * 1.2 * animBlend;
+        var sway = isRigid ? 0 : swayDir * 1.2 * animBlend * lifeSway;
 
         // Draw anchored at bottom center — rotate around the base so top sways
         var halfDraw = drawSize * 0.5;
         ctx.save();
         ctx.translate(sx, sy + halfDraw); // anchor at bottom of sprite
         ctx.rotate(baseAngle + sway);
-        ctx.globalAlpha = finalAlpha;
+        ctx.globalAlpha = finalAlpha * lifeAlpha;
         ctx.drawImage(img, -halfDraw, -drawSize, drawSize, drawSize); // draw upward from anchor
         ctx.restore();
       }
