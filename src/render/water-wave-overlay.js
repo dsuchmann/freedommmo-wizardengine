@@ -88,7 +88,13 @@ function computeLandDistanceMap(chunk, cs) {
   return dist;
 }
 
+var _smoothedWindAngle = 0.3;
+
 export function drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, h, timeSeconds, wind) {
+  // Smooth the wind direction slowly so waves don't jitter
+  if (wind) {
+    _smoothedWindAngle += (wind.direction - _smoothedWindAngle) * 0.002;
+  }
   const cs = WORLD.chunkSize;
 
   for (const vc of visibleChunks) {
@@ -148,7 +154,7 @@ export function drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, 
         // Blend between shore-directed angle (near coast) and global current (open water)
         // shoreInfluence: 1.0 at shore, fading to 0 at 15+ tiles out
         const SHORE_BLEND_DIST = 15;
-        const CURRENT_ANGLE = wind ? wind.direction : 0.3; // global ocean current direction (radians)
+        const CURRENT_ANGLE = _smoothedWindAngle;
         const shoreInfluence = Math.max(0, 1.0 - shoreDist / SHORE_BLEND_DIST);
         const effectiveAngle = shoreAngle * shoreInfluence + CURRENT_ANGLE * (1 - shoreInfluence);
 

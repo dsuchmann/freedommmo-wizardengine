@@ -57,7 +57,7 @@ function update(dt) {
   }
   if (input.wasPressed('p')) {
     var preset = weather.cyclePreset();
-    console.log('Weather:', preset);
+    document.title = 'Weather: ' + preset;
   }
   lighting.update(dt);
   weather.update(dt, chunks.tileAt(player.x, player.y));

@@ -70,13 +70,16 @@ export class WeatherSystem {
       var moisture = playerTile.climate ? playerTile.climate.moisture : 0.5;
       var biome = playerTile.biome;
       var season = this.state.season.current;
+      // Use season-adjusted temperature for precipitation type
+      var seasonTempMod = { spring: 0.1, summer: 0.25, autumn: 0, winter: -0.15 };
+      var effectiveHeat = heat + (seasonTempMod[season] || 0);
       if ((biome === 'desert' || biome === 'steppe') && this.state.wind.intensity > 0.7) {
         type = 'sandstorm';
-      } else if (heat < 0.2 || biome === 'arctic' || biome === 'tundra' || (season === 'winter' && heat < 0.4)) {
+      } else if (effectiveHeat < 0.15 || (biome === 'arctic' && season === 'winter') || (biome === 'tundra' && season === 'winter')) {
         type = 'snow';
-      } else if (moisture > 0.4 && heat > 0.15) {
+      } else if (moisture > 0.4 && effectiveHeat > 0.1) {
         type = 'rain';
-      } else if (heat < 0.3 && moisture > 0.3) {
+      } else if (effectiveHeat < 0.25 && moisture > 0.3) {
         type = 'sleet';
       }
     }
