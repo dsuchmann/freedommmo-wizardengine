@@ -373,6 +373,17 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
       if (!objects || objects.length === 0) continue;
       if (tile.transitionPair) continue;
 
+      // Skip tiles at biome edges — no field 2 objects on transitions
+      var isEdge = false;
+      for (var edy = -1; edy <= 1 && !isEdge; edy++) {
+        for (var edx = -1; edx <= 1 && !isEdge; edx++) {
+          if (edx === 0 && edy === 0) continue;
+          var nbTile = chunkStore.tileAt(wx + edx, wy + edy);
+          if (nbTile && nbTile.biome !== tile.biome) isEdge = true;
+        }
+      }
+      if (isEdge) continue;
+
       // Same placement logic as the static renderer — must match exactly
       var vegDensity = tile.layers && tile.layers[6] ? tile.layers[6].vegetationDensity : 0.5;
       var fertility = tile.layers && tile.layers[6] ? tile.layers[6].fertility : 0.5;
