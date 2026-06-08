@@ -1,8 +1,9 @@
 import { setWorldSeed } from '../core/world-seed.js';
 import { WORLD } from '../core/constants.js';
 import { ChunkCompiler } from './chunk-compiler.js';
-import { getAllWangImageURLs, getWangImageURLsForBiomes, getSoilImageURLs, getGroundCoverImageURLs } from '../render/wang-image-list.js';
+import { getAllWangImageURLs, getWangImageURLsForBiomes, getSoilImageURLs, getGroundCoverImageURLs, getSmallFloraImageURLs } from '../render/wang-image-list.js';
 import { renderChunkToBitmap } from '../render/worker-chunk-renderer.js';
+import { denoiseBitmap } from '../render/sprite-denoise.js';
 
 var compiler = new ChunkCompiler();
 var SLICE_ROWS = 8;
@@ -11,6 +12,11 @@ var imagesReady = false;
 var backgroundLoadingDone = false;
 var neighborCache = new Map();
 var MAX_NEIGHBOR_CACHE = 50;
+
+// URLs matching these patterns get denoised at load time
+function shouldDenoise(url) {
+  return url.includes('/small_flora/') || url.includes('/micro/soil/');
+}
 
 // Load a batch of image URLs into the cache. Returns {loaded, failed}.
 async function loadImageBatch(urls, batchSize) {
@@ -25,6 +31,9 @@ async function loadImageBatch(urls, batchSize) {
         if (!response.ok) { failed++; return; }
         var blob = await response.blob();
         var bmp = await createImageBitmap(blob);
+        if (shouldDenoise(url)) {
+          bmp = await denoiseBitmap(bmp);
+        }
         imageCache.set(url, bmp);
         loaded++;
       } catch (e) {
@@ -122,7 +131,8 @@ self.onmessage = function(event) {
     var biomeUrls = getWangImageURLsForBiomes(data.biomes);
     var soilUrls = getSoilImageURLs();
     var gcUrls = getGroundCoverImageURLs();
-    var priorityUrls = biomeUrls.concat(soilUrls).concat(gcUrls);
+    var sfUrls = getSmallFloraImageURLs();
+    var priorityUrls = biomeUrls.concat(soilUrls).concat(gcUrls).concat(sfUrls);
     loadImageBatch(priorityUrls, 40).then(function(result) {
       imagesReady = true;
       self.postMessage({ type: 'imagesReady', loaded: result.loaded, failed: result.failed, total: biomeUrls.length });
