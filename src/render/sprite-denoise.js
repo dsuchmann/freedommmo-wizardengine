@@ -84,8 +84,8 @@ export async function denoiseBitmap(bmp, opts) {
         continue;
       }
 
-      // 2b. Dark specks — only truly isolated dark dots
-      if (brightness < 30 && neighborBrightness - brightness > 60 && opaqueNeighbors < 3) {
+      // 2b. Dark specks — only completely isolated single dark pixels
+      if (brightness < 20 && neighborBrightness - brightness > 80 && opaqueNeighbors < 2) {
         remove[idx] = 1;
         changed++;
         continue;

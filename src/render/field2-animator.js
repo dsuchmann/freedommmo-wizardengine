@@ -182,8 +182,8 @@ function denoiseImage(img) {
       if (brightness > 220 && brightness - avgBright > 60 && opaque < 5) {
         data[idx + 3] = 0; changed = true; continue;
       }
-      // Remove dark specks — only truly isolated dark dots
-      if (brightness < 30 && avgBright - brightness > 60 && opaque < 3) {
+      // Remove dark specks — only completely isolated single dark pixels
+      if (brightness < 20 && avgBright - brightness > 80 && opaque < 2) {
         data[idx + 3] = 0; changed = true; continue;
       }
       // Remove color confetti
@@ -636,10 +636,15 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         var swayDir = currentEffect.rot;
         var sway = isRigid ? 0 : swayDir * 1.2 * animBlend * lifeSway;
 
+        // PERFORMANCE: only draw sprites that are actively animating.
+        // Static sprites are already baked into the chunk bitmap by the worker.
+        // Only overlay when wind/player has triggered animation (sway !== 0).
+        if (!isAnimating && Math.abs(sway) < 0.001) continue;
+
         // Buffer for Y-sorted drawing
         var halfDraw = drawSize * 0.5;
         drawBuffer.push({
-          sortY: wy + 0.5 + (rand2(wx, wy, 7031 + bi) - 0.5) * 0.5, // world Y for depth sort
+          sortY: wy + 0.5 + (rand2(wx, wy, 7031 + bi) - 0.5) * 0.5,
           sx: sx, sy: sy, halfDraw: halfDraw, drawSize: drawSize,
           baseAngle: baseAngle, sway: sway,
           alpha: finalAlpha * lifeAlpha, img: img
