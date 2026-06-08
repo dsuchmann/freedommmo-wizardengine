@@ -127,10 +127,12 @@ self.onmessage = function(event) {
   var data = event.data;
 
   if (data.type === 'preloadBiomes') {
-    // Phase 1: Preload ONLY wang tiles (essential for terrain rendering).
-    // Soil, ground cover, flora, scatter all load in phase 2 background.
+    // Phase 1: wang tiles + soil + ground cover (essential for chunk bitmap rendering).
+    // Flora and scatter load in phase 2 (rendered on main thread, not baked into chunks).
     var biomeUrls = getWangImageURLsForBiomes(data.biomes);
-    var priorityUrls = biomeUrls;
+    var soilUrls = getSoilImageURLs();
+    var gcUrls = getGroundCoverImageURLs();
+    var priorityUrls = biomeUrls.concat(soilUrls).concat(gcUrls);
     loadImageBatch(priorityUrls, 40).then(function(result) {
       imagesReady = true;
       self.postMessage({ type: 'imagesReady', loaded: result.loaded, failed: result.failed, total: priorityUrls.length });
