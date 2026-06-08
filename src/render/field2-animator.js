@@ -46,7 +46,7 @@ function spawnCurrent(time, windDir, windIntensity, playerX, playerY) {
     pushX: 0, // no position shift — wind only triggers sway rotation
     pushY: 0,
     born: time,
-    lifespan: 3 + Math.random() * 4, // seconds
+    lifespan: 5 + Math.random() * 6, // seconds — long enough to drift across screen
   });
 }
 
@@ -367,6 +367,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
 function drawWindWisps(ctx, w, h, timeSec, player, tilePx, chunkGrid) {
   if (windCurrents.length === 0) return;
   ctx.save();
+  ctx.lineCap = 'round';
 
   for (var ci = 0; ci < windCurrents.length; ci++) {
     var c = windCurrents[ci];
@@ -376,45 +377,62 @@ function drawWindWisps(ctx, w, h, timeSec, player, tilePx, chunkGrid) {
     if (lifeFade < 0.01) continue;
 
     var wavefront = c.speed * age;
-
-    // Draw 3-5 wispy streaks per current
     var wispCount = 5 + Math.floor(c.width * 0.5);
+
     for (var wi = 0; wi < wispCount; wi++) {
-      var perpOffset = (wi - wispCount * 0.5) * tilePx * 1.5;
       var seed = ci * 1000 + wi;
+      var perpOffset = (wi - wispCount * 0.5) * tilePx * 1.8;
 
-      // Wisp origin in world coords relative to current
-      var wispAlong = wavefront - 2 + (seed % 7) * 0.8;
-      var worldX = c.originX + c.dirX * wispAlong + (-c.dirY) * perpOffset / tilePx;
-      var worldY = c.originY + c.dirY * wispAlong + c.dirX * perpOffset / tilePx;
+      // Each wisp is a flowing brushstroke that stretches out from nothing,
+      // drifts and swirls, then dissolves — like visible air currents
+      var wispSpeed = c.speed * (0.6 + (seed % 5) * 0.1);
+      var wispDelay = (seed % 13) * 0.4; // stagger starts
+      var wispAge = age - wispDelay;
+      if (wispAge < 0) continue;
 
-      // Convert to screen coords
-      var screenX = (worldX - player.x) * tilePx + w * 0.5;
-      var screenY = (worldY - player.y) * tilePx + h * 0.5;
+      // Longer lifecycle: grow (0-1s), drift (1-4s), dissolve (4-5.5s)
+      var maxLen = tilePx * (5 + (seed % 6));
+      var headPos = wispSpeed * wispAge * tilePx;
+      var tailGrow = Math.min(1, wispAge / 1.0);
+      var tailShrink = Math.max(0, wispAge - 4.0) / 1.5;
+      var tailPos = headPos * tailShrink + headPos * (1 - tailGrow) * 0.7;
+      var visibleLen = Math.min(maxLen, headPos - tailPos);
+      if (visibleLen < 2) continue;
 
-      // Skip if off screen
-      if (screenX < -100 || screenX > w + 100 || screenY < -100 || screenY > h + 100) continue;
+      // Smooth fade in and long dissolve
+      var wispFade = wispAge < 0.6 ? wispAge / 0.6 : (wispAge > 4.0 ? Math.max(0, 1 - (wispAge - 4.0) / 1.5) : 1);
+      var alpha = 0.03 + wispFade * lifeFade * 0.05;
 
-      // Draw a gentle curved wisp
-      var wispLen = tilePx * (4 + (seed % 5));
-      var alpha = 0.08 + lifeFade * 0.10;
+      // World position of wisp head
+      var headAlong = wavefront + (seed % 7) - 3;
+      var worldHX = c.originX + c.dirX * (headAlong + headPos / tilePx) + (-c.dirY) * perpOffset / tilePx;
+      var worldHY = c.originY + c.dirY * (headAlong + headPos / tilePx) + c.dirX * perpOffset / tilePx;
 
-      ctx.strokeStyle = 'rgba(255,255,255,' + alpha.toFixed(3) + ')';
-      ctx.lineWidth = 1.0 + (seed % 3) * 0.5;
+      // Screen coords
+      var screenHX = (worldHX - player.x) * tilePx + w * 0.5;
+      var screenHY = (worldHY - player.y) * tilePx + h * 0.5;
+      if (screenHX < -200 || screenHX > w + 200 || screenHY < -200 || screenHY > h + 200) continue;
+
+      // Draw as a flowing swirly curve — two overlapping sine waves
+      // create an organic, almost calligraphic wind trail
+      var steps = 14;
       ctx.beginPath();
-
-      // Curved path: slight sine wave along the direction
-      var steps = 8;
       for (var s = 0; s <= steps; s++) {
-        var t = s / steps;
-        var along = t * wispLen;
-        // Slight perpendicular wave for organic curve
-        var wave = Math.sin(t * 3.14 + timeSec * 2 + seed) * tilePx * 0.3;
-        var px = screenX + c.dirX * along + (-c.dirY) * wave;
-        var py = screenY + c.dirY * along + c.dirX * wave;
+        var t = s / steps; // 0=tail, 1=head
+        var along = -visibleLen * (1 - t);
+        // Two sine waves at different frequencies for organic swirl
+        var wave1 = Math.sin(t * 3.0 + timeSec * 1.5 + seed * 0.7) * tilePx * 0.35;
+        var wave2 = Math.sin(t * 5.0 + timeSec * 2.2 + seed * 1.3) * tilePx * 0.15;
+        // Taper the wave amplitude: widest in middle, narrow at ends
+        var envelope = Math.sin(t * 3.14) * 0.8 + 0.2;
+        var wave = (wave1 + wave2) * envelope;
+        var px = screenHX + c.dirX * along + (-c.dirY) * wave;
+        var py = screenHY + c.dirY * along + c.dirX * wave;
         if (s === 0) ctx.moveTo(px, py);
         else ctx.lineTo(px, py);
       }
+      ctx.lineWidth = 0.6;
+      ctx.strokeStyle = 'rgba(255,255,255,' + alpha.toFixed(3) + ')';
       ctx.stroke();
     }
   }
