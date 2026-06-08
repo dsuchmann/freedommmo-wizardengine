@@ -401,27 +401,53 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
       }
       if (isNearEdge) continue;
 
-      // Same placement logic as the static renderer — must match exactly
+      // Density driven by biome + tile fertility/vegetation
       var vegDensity = tile.layers && tile.layers[6] ? tile.layers[6].vegetationDensity : 0.5;
       var fertility = tile.layers && tile.layers[6] ? tile.layers[6].fertility : 0.5;
       if (vegDensity < 0.08 && fertility < 0.10) continue;
 
-      var bladeCount = 2 + Math.floor(fertility * 2.5);
+      // Dense carpet: grass is ground cover, not decoration.
+      // High blade count creates continuous coverage.
+      var biome = tile.biome;
+      var baseDensity = 4; // default
+      if (biome === 'grassland') baseDensity = 7;
+      else if (biome === 'forest' || biome === 'tropical_forest') baseDensity = 6;
+      else if (biome === 'dense_forest') baseDensity = 8;
+      else if (biome === 'savanna' || biome === 'steppe') baseDensity = 5;
+      else if (biome === 'swamp') baseDensity = 5;
+      else if (biome === 'taiga') baseDensity = 5;
+      else if (biome === 'desert' || biome === 'volcanic' || biome === 'arctic' || biome === 'tundra') baseDensity = 3;
+
+      var bladeCount = baseDensity + Math.floor(fertility * 3);
 
       // Chunk screen origin
       var chunkOriginX = baseSX + (cx - gridMinCX) * chunkPx;
       var chunkOriginY = baseSY + (cy - gridMinCY) * chunkPx;
 
       for (var bi = 0; bi < bladeCount; bi++) {
-        var bladeCoverage = 0.50 + vegDensity * 0.35 + fertility * 0.15;
-        if (rand2(wx, wy, 7000 + bi) > bladeCoverage) continue;
+        // Primary grass (oi=0) always placed — it's the carpet.
+        // Secondary/tertiary objects (flowers, herbs) are sparser accents.
+        var isAccent = bi >= baseDensity; // extra blades from fertility are accent slots
+        if (isAccent) {
+          var accentCoverage = 0.30 + fertility * 0.40;
+          if (rand2(wx, wy, 7000 + bi) > accentCoverage) continue;
+        }
 
-        // Species selection — same as static
+        // Species selection: primary grass (carpet) vs accent vegetation
+        // Carpet blades (bi < baseDensity) are almost always the primary grass species.
+        // Accent blades (bi >= baseDensity) can be flowers, herbs, etc.
         var speciesRoll = rand2(wx, wy, 7010 + bi * 100);
         var oi;
-        if (objects.length === 1) oi = 0;
-        else if (objects.length === 2) oi = speciesRoll < 0.80 ? 0 : 1;
-        else { if (speciesRoll < 0.75) oi = 0; else if (speciesRoll < 0.93) oi = 1; else oi = 2; }
+        if (objects.length === 1) {
+          oi = 0;
+        } else if (!isAccent) {
+          // Carpet: overwhelmingly primary grass, rare accent
+          oi = speciesRoll < 0.95 ? 0 : (objects.length > 2 && speciesRoll > 0.98 ? 2 : 1);
+        } else {
+          // Accent slots: flowers and herbs emerge from the carpet
+          if (objects.length === 2) oi = speciesRoll < 0.40 ? 0 : 1;
+          else { if (speciesRoll < 0.25) oi = 0; else if (speciesRoll < 0.65) oi = 1; else oi = 2; }
+        }
 
         var objName = objects[oi];
 
@@ -469,8 +495,9 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
 
         // === PRIORITY 1: Player walk — checked BEFORE wind/sway ===
         // Position must be computed first
-        var offX = (rand2(wx, wy, 7030 + bi) - 0.5) * tilePxSnapped * 0.8;
-        var offY = (rand2(wx, wy, 7031 + bi) - 0.5) * tilePxSnapped * 0.8;
+        // Spread blades across full tile and slightly into neighbors for seamless coverage
+        var offX = (rand2(wx, wy, 7030 + bi) - 0.5) * tilePxSnapped * 1.1;
+        var offY = (rand2(wx, wy, 7031 + bi) - 0.5) * tilePxSnapped * 1.1;
         var drawSize = tilePxSnapped * lifeScale;
         var baseAngle = (rand2(wx, wy, 7040 + bi) - 0.5) * 0.35 + lifeAngle;
         var sx = chunkOriginX + tx * tilePxSnapped + halfTile + offX;
@@ -481,110 +508,11 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         var edgeFade = dist <= fadeStart ? 1.0 : Math.max(0, 1.0 - (dist - fadeStart) / (maxR - fadeStart));
         var finalAlpha = edgeFade;
 
-        var bladeWorldX = wx + 0.5 + (rand2(wx, wy, 7030 + bi) - 0.5) * 0.8;
-        var bladeWorldY = wy + 0.5 + (rand2(wx, wy, 7031 + bi) - 0.5) * 0.8;
-        var pDistX = player.x - bladeWorldX;
-        var pDistY = player.y - bladeWorldY;
-        var pDist = Math.sqrt(pDistX * pDistX + pDistY * pDistY);
-        var WALK_DIST = 0.65;
-        var WALK_HOLD_EXTRA = 600;
-        var WALK_SPRING_DURATION = FRAME_COUNT * FRAME_DURATION * 1.5;
-        var BENT_FRAME = Math.floor(FRAME_COUNT * 0.55);
-        var BEND_DOWN_DURATION = 250;
+        // === Wind sway / static rendering ===
 
-        var walkKey = wx * 100000 + wy * 1000 + bi * 10 + 1;
-        var playerOnBlade = pDist < WALK_DIST;
-
-        if (playerOnBlade) {
-          var existingWalk = triggerTimes.get(walkKey);
-          if (!existingWalk || existingWalk.ext !== 1) {
-            triggerTimes.set(walkKey, { time: timeMs, ext: 1, bendStart: timeMs });
-          } else {
-            triggerTimes.set(walkKey, { time: timeMs, ext: 1, bendStart: existingWalk.bendStart });
-          }
-        }
-
-        var walkData = triggerTimes.get(walkKey);
-        if (walkData && walkData.ext === 1) {
-          var timeSinceLeave = timeMs - walkData.time;
-          var showFrame = -1;
-
-          if (playerOnBlade) {
-            var bendElapsed = timeMs - walkData.bendStart;
-            showFrame = bendElapsed < BEND_DOWN_DURATION
-              ? Math.floor((bendElapsed / BEND_DOWN_DURATION) * BENT_FRAME)
-              : BENT_FRAME;
-          } else if (timeSinceLeave < WALK_HOLD_EXTRA) {
-            showFrame = BENT_FRAME;
-          } else if (timeSinceLeave < WALK_HOLD_EXTRA + WALK_SPRING_DURATION) {
-            var springElapsed = timeSinceLeave - WALK_HOLD_EXTRA;
-            showFrame = BENT_FRAME + Math.floor((springElapsed / WALK_SPRING_DURATION) * (FRAME_COUNT - BENT_FRAME));
-            showFrame = Math.min(showFrame, FRAME_COUNT - 1);
-          } else {
-            triggerTimes.delete(walkKey);
-          }
-
-          if (showFrame >= 0) {
-            // Try per-variant player_walk animation first
-            var walkFrameStr = '/frame_' + String(showFrame).padStart(3, '0') + '.png';
-            var walkBase = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/player_walk/';
-            var walkImg = loadFrame(walkBase + 'v' + vStr + walkFrameStr);
-            if (walkImg) {
-              var halfDraw = drawSize * 0.5;
-              ctx.save();
-              ctx.translate(sx, sy + halfDraw);
-              ctx.rotate(baseAngle);
-              ctx.globalAlpha = finalAlpha;
-              ctx.drawImage(walkImg, -halfDraw, -drawSize, drawSize, drawSize);
-              ctx.restore();
-              continue;
-            }
-            // No per-variant animation — simulate bend with transforms on static sprite
-            var staticUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/sf__' + tile.biome + '__' + objName + '__v' + vStr + '.png';
-            var staticImg = loadFrame(staticUrl);
-            if (staticImg) {
-              // Bend direction: away from player's movement direction
-              // Use player velocity if moving, otherwise push away from player center
-              var pushDirX, pushDirY;
-              var speed = Math.sqrt(playerVX * playerVX + playerVY * playerVY);
-              if (speed > 0.5) {
-                // Moving — bend in movement direction
-                pushDirX = playerVX / speed;
-                pushDirY = playerVY / speed;
-              } else {
-                // Standing still — bend away from player center
-                var awayDist = Math.max(0.01, pDist);
-                pushDirX = pDistX / awayDist;
-                pushDirY = pDistY / awayDist;
-              }
-              // Convert push direction to rotation: positive X = lean right, negative = lean left
-              // Mix in some away-from-player for natural spread
-              var bendSign = pushDirX > 0 ? 1 : -1;
-              // Bend amount: 0 at frame 0, max at BENT_FRAME, back to 0 at end
-              var bendProgress = showFrame <= BENT_FRAME
-                ? showFrame / BENT_FRAME
-                : 1 - (showFrame - BENT_FRAME) / (FRAME_COUNT - BENT_FRAME);
-              var bendAngle = bendProgress * 0.6 * bendSign;
-              var bendSquash = 1 - bendProgress * 0.15;
-              var halfDraw = drawSize * 0.5;
-              ctx.save();
-              ctx.translate(sx, sy + halfDraw);
-              ctx.rotate(baseAngle + bendAngle);
-              ctx.scale(1, bendSquash);
-              ctx.globalAlpha = finalAlpha;
-              ctx.drawImage(staticImg, -halfDraw, -drawSize, drawSize, drawSize);
-              ctx.restore();
-              continue;
-            }
-          }
-        }
-
-        // === PRIORITY 2: Wind sway / static (only if NOT being walked on) ===
-
-        // Wind/player impulse triggers animation for a few cycles then settles.
+        // Wind impulse triggers animation for a few cycles then settles.
         var currentEffect = sampleCurrents(wx, wy, timeSec);
-        var playerEffect = samplePlayerPush(wx, wy, player.x, player.y, playerVX, playerVY);
-        var impulse = Math.abs(currentEffect.rot) * 12 + Math.abs(playerEffect.rot) * 8;
+        var impulse = Math.abs(currentEffect.rot) * 12;
 
         // ~7% of sprites randomly animate on their own (ambient life)
         var ambientRoll = rand2(wx, wy, 7080 + bi);
@@ -703,7 +631,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         // Sway: scaled by lifecycle state (dead=0, seedling=weak, normal=full)
         // Rigid objects never sway regardless of state
         var isRigid = RIGID_OBJECTS[objName] || false;
-        var swayDir = currentEffect.rot + playerEffect.rot;
+        var swayDir = currentEffect.rot;
         var sway = isRigid ? 0 : swayDir * 1.2 * animBlend * lifeSway;
 
         // Draw anchored at bottom center — rotate around the base so top sways
