@@ -11,7 +11,7 @@ import { biomeVariantFrameId } from '../assets/variant-selector.js';
 import { drawElevationOverlay } from './elevation-overlay.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations } from './water-wave-overlay.js';
 import { drawLargeObjects, preloadLargeObjectSprites, setPlayerDrawFn } from './large-object-renderer.js';
-import { drawField2Animations, preloadField2Animations, drawWindWispOverlay } from './field2-animator.js';
+import { drawField2Animations, preloadField2Animations, drawWindWispOverlay, setField2PlayerDraw } from './field2-animator.js';
 import { findNearbyInteraction, objectReaction, performInteraction } from '../world/interactions.js';
 
 function drawPrecipitation(ctx, w, h, precip, wind, time) {
@@ -303,13 +303,12 @@ export class CanvasRenderer {
     // Draws animated sprites over the static baked ones for tiles near the player
     drawField2Animations(ctx, chunkStore, player, camera, w, h, { baseSX, baseSY, minCX, minCY, chunkPx }, performance.now(), weather);
 
-    // === FIELD 6: LARGE OBJECTS — DISABLED while focusing on Fields 0-2 ===
-    // TODO: Re-enable once tree art quality and sizing are resolved.
-    // setPlayerDrawFn((ctx2, pl, cam, vw, vh) => {
-    //   this.drawPlayerAt(vw / 2, vh / 2 - elevationLift(chunkStore.tileAt(pl.x, pl.y).climate.elevation) * cam.zoom, cam.zoom, pl);
-    // });
-    // drawLargeObjects(ctx, chunkStore, player, camera, w, h, { baseSX, baseSY, minCX, minCY, chunkPx });
-    this.drawPlayerAt(w / 2, h / 2 - elevationLift(focusTile.climate.elevation) * camera.zoom, camera.zoom, player);
+    // Register player draw into field2's depth-sorted buffer
+    var _self = this;
+    var _playerScreenY = h / 2 - elevationLift(focusTile.climate.elevation) * camera.zoom;
+    setField2PlayerDraw(function(drawCtx) {
+      _self.drawPlayerAt(w / 2, _playerScreenY, camera.zoom, player);
+    });
 
     // Atmospheric color grading — applied AFTER all objects/sprites so everything gets affected
     if (sun) {

@@ -477,12 +477,10 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         } else if (lifecycleState === 'wilting') {
           lifeScale = 0.85 + rand2(wx, wy, 7102 + bi) * 0.1;
           lifeAngle = (0.2 + rand2(wx, wy, 7103 + bi) * 0.3) * (rand2(wx, wy, 7104 + bi) > 0.5 ? 1 : -1); // droop
-          lifeAlpha = 0.7 + rand2(wx, wy, 7105 + bi) * 0.2;
           lifeSway = 0.5; // weak sway
         } else if (lifecycleState === 'dead') {
           lifeScale = 0.6 + rand2(wx, wy, 7106 + bi) * 0.2;
           lifeAngle = (0.4 + rand2(wx, wy, 7107 + bi) * 0.4) * (rand2(wx, wy, 7108 + bi) > 0.5 ? 1 : -1); // fallen over
-          lifeAlpha = 0.5 + rand2(wx, wy, 7109 + bi) * 0.15;
           lifeSway = 0; // no sway — stiff/dead
         }
 
@@ -634,20 +632,46 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         var swayDir = currentEffect.rot;
         var sway = isRigid ? 0 : swayDir * 1.2 * animBlend * lifeSway;
 
-        // Draw anchored at bottom center — rotate around the base so top sways
+        // Buffer for Y-sorted drawing
         var halfDraw = drawSize * 0.5;
-        ctx.save();
-        ctx.translate(sx, sy + halfDraw); // anchor at bottom of sprite
-        ctx.rotate(baseAngle + sway);
-        ctx.globalAlpha = finalAlpha * lifeAlpha;
-        ctx.drawImage(img, -halfDraw, -drawSize, drawSize, drawSize); // draw upward from anchor
-        ctx.restore();
+        drawBuffer.push({
+          sortY: wy + 0.5 + (rand2(wx, wy, 7031 + bi) - 0.5) * 0.5, // world Y for depth sort
+          sx: sx, sy: sy, halfDraw: halfDraw, drawSize: drawSize,
+          baseAngle: baseAngle, sway: sway,
+          alpha: finalAlpha * lifeAlpha, img: img
+        });
       }
     }
   }
 
+  // Sort by world Y (top-to-bottom = far-to-near)
+  drawBuffer.sort(function(a, b) { return a.sortY - b.sortY; });
+
+  // Find where to insert the player
+  var playerInserted = false;
+  for (var di = 0; di < drawBuffer.length; di++) {
+    // Draw player when we reach sprites at or below player's Y
+    if (!playerInserted && drawBuffer[di].sortY > player.y + 0.4) {
+      if (_playerDrawFn) _playerDrawFn(ctx);
+      playerInserted = true;
+    }
+    var d = drawBuffer[di];
+    ctx.save();
+    ctx.translate(d.sx, d.sy + d.halfDraw);
+    ctx.rotate(d.baseAngle + d.sway);
+    ctx.globalAlpha = d.alpha;
+    ctx.drawImage(d.img, -d.halfDraw, -d.drawSize, d.drawSize, d.drawSize);
+    ctx.restore();
+  }
+  // If player is below all sprites, draw last
+  if (!playerInserted && _playerDrawFn) _playerDrawFn(ctx);
+
   ctx.restore();
 }
+
+// Allow canvas-renderer to register the player draw function for depth sorting
+var _playerDrawFn = null;
+export function setField2PlayerDraw(fn) { _playerDrawFn = fn; }
 
 // Exported so canvas-renderer can call AFTER atmospheric overlays
 export function drawWindWispOverlay(ctx, w, h, player, tilePx) {
