@@ -2,6 +2,8 @@ import { getWorldSeed } from '../core/world-seed.js';
 import { chunkKey } from './chunk.js';
 import { ChunkCompiler } from './chunk-compiler.js';
 import { sampleRegionalMapChunk } from './regional-map.js';
+import { preloadLargeObjectSprites } from '../render/large-object-renderer.js';
+import { preloadField2Animations } from '../render/field2-animator.js';
 
 export class ChunkProvider {
   constructor({ workerCount = Math.max(2, Math.min(6, (navigator.hardwareConcurrency ?? 8) - 2)) } = {}) {
@@ -41,6 +43,10 @@ export class ChunkProvider {
       }
     }
     const biomes = [...biomeSet];
+    // Field 6 DISABLED — skip large object preloading to avoid 404 noise
+    // preloadLargeObjectSprites(biomes);
+    // Preload Field 2 wind sway animation frames on main thread
+    preloadField2Animations(biomes);
     for (const worker of this.workers) {
       worker.postMessage({ type: 'preloadBiomes', biomes });
     }

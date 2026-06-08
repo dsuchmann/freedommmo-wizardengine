@@ -219,6 +219,112 @@ export function getGroundCoverImageURLs() {
   return urls;
 }
 
+// Small flora objects per biome (Field 2) — grass, ferns, small flowers
+var SF_BIOME_OBJECTS_LIST = {
+  arctic: ['frost_flower', 'frozen_grass', 'ice_needle'],
+  beach: ['beach_weed', 'dune_grass', 'sea_oat'],
+  dense_forest: ['shade_fern', 'dark_herb', 'bracket_fungus'],
+  desert: ['sand_grass', 'desert_thorn'],
+  forest: ['grass_blade_cluster', 'small_fern', 'clover_bloom'],
+  grassland: ['tall_grass_blade', 'dandelion_stem', 'wild_herb'],
+  hills: ['hillside_grass', 'rock_flower_bud', 'heather_sprig'],
+  mountains: ['alpine_tuft', 'rock_cress', 'hardy_lichen'],
+  mystic: ['glow_grass_blade', 'aether_fern', 'crystal_sprout'],
+  savanna: ['dry_grass_spike', 'thorn_sprout', 'acacia_seedling'],
+  steppe: ['wind_grass', 'sparse_weed', 'dry_tuft'],
+  swamp: ['bog_grass', 'cattail_base', 'swamp_herb'],
+  taiga: ['frost_grass', 'low_juniper', 'cold_moss_tuft'],
+  tropical_forest: ['broad_fern', 'orchid_sprout', 'vine_tendril'],
+  tundra: ['tundra_grass', 'low_berry_bush', 'ice_moss'],
+  volcanic: ['ash_grass', 'heat_sprout', 'lava_fern'],
+};
+var SF_BASE_PATH = '/assets/pixelab/landscape_v2/micro/small_flora/';
+var SF_VARIANT_COUNT = 64;
+
+export { SF_BIOME_OBJECTS_LIST, SF_BASE_PATH, SF_VARIANT_COUNT };
+
+export function getSmallFloraImageURLs() {
+  var urls = [];
+  for (var biome in SF_BIOME_OBJECTS_LIST) {
+    var objects = SF_BIOME_OBJECTS_LIST[biome];
+    for (var oi = 0; oi < objects.length; oi++) {
+      for (var v = 0; v < SF_VARIANT_COUNT; v++) {
+        var idx = v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v);
+        urls.push(SF_BASE_PATH + biome + '/' + objects[oi] + '/sf__' + biome + '__' + objects[oi] + '__v' + idx + '.png');
+      }
+    }
+  }
+  return urls;
+}
+
+export function getSmallFloraImageURLsForBiomes(biomes) {
+  var urls = [];
+  for (var b = 0; b < biomes.length; b++) {
+    var objects = SF_BIOME_OBJECTS_LIST[biomes[b]];
+    if (!objects) continue;
+    for (var oi = 0; oi < objects.length; oi++) {
+      for (var v = 0; v < SF_VARIANT_COUNT; v++) {
+        var idx = v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v);
+        urls.push(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/sf__' + biomes[b] + '__' + objects[oi] + '__v' + idx + '.png');
+      }
+    }
+  }
+  return urls;
+}
+
+// Large object types per biome (Field 6) — trees, boulders, structures
+var LG_BIOME_OBJECTS_LIST = {
+  arctic: ['frozen_tree', 'ice_crystal_spire', 'crystal_ice_tower'],
+  beach: ['beach_palm', 'coastal_pine', 'driftwood'],
+  dense_forest: ['ancient_oak', 'gnarled_elm', 'strangler_fig'],
+  desert: ['date_palm', 'saguaro', 'sandstone_arch'],
+  forest: ['birch', 'maple', 'oak'],
+  grassland: ['apple_tree', 'cherry_blossom', 'meadow_oak'],
+  hills: ['rowan', 'scots_pine', 'standing_stone'],
+  mountains: ['cliff_pine', 'mountain_ash', 'rock_spire'],
+  mystic: ['aether_pillar', 'crystal_tree', 'spirit_tree'],
+  savanna: ['acacia', 'baobab', 'thorny_acacia'],
+  steppe: ['dead_tree', 'stone_monolith', 'twisted_shrub'],
+  swamp: ['cypress', 'dead_willow', 'mangrove'],
+  taiga: ['frost_cedar', 'snow_pine', 'spruce'],
+  tropical_forest: ['banyan', 'coconut_palm', 'jungle_tree'],
+  tundra: ['frost_willow', 'ice_pillar', 'stunted_pine'],
+  volcanic: ['charred_tree', 'magma_vent', 'obsidian_spike'],
+};
+var LG_BASE_PATH = '/assets/pixelab/landscape_v2/micro/large_objects/';
+var LG_VARIANT_COUNT = 48; // PixelLab size=32 generates 48 candidates
+
+export { LG_BIOME_OBJECTS_LIST, LG_BASE_PATH, LG_VARIANT_COUNT };
+
+export function getLargeObjectImageURLs() {
+  var urls = [];
+  for (var biome in LG_BIOME_OBJECTS_LIST) {
+    var objects = LG_BIOME_OBJECTS_LIST[biome];
+    for (var oi = 0; oi < objects.length; oi++) {
+      for (var v = 0; v < LG_VARIANT_COUNT; v++) {
+        var idx = v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v);
+        urls.push(LG_BASE_PATH + biome + '/' + objects[oi] + '/lg__' + biome + '__' + objects[oi] + '__v' + idx + '.png');
+      }
+    }
+  }
+  return urls;
+}
+
+export function getLargeObjectImageURLsForBiomes(biomes) {
+  var urls = [];
+  for (var b = 0; b < biomes.length; b++) {
+    var objects = LG_BIOME_OBJECTS_LIST[biomes[b]];
+    if (!objects) continue;
+    for (var oi = 0; oi < objects.length; oi++) {
+      for (var v = 0; v < LG_VARIANT_COUNT; v++) {
+        var idx = v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v);
+        urls.push(LG_BASE_PATH + biomes[b] + '/' + objects[oi] + '/lg__' + biomes[b] + '__' + objects[oi] + '__v' + idx + '.png');
+      }
+    }
+  }
+  return urls;
+}
+
 // Build the complete URL list for all wang tile images.
 // Generates URLs for all 21×20 directed pairs × all variants.
 // Workers preload these — missing files just 404 silently.

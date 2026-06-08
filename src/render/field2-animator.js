@@ -397,6 +397,81 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
 
         var objName = objects[oi];
 
+        // === PRIORITY 1: Player walk — checked BEFORE wind/sway ===
+        // Position must be computed first
+        var offX = (rand2(wx, wy, 7030 + bi) - 0.5) * tilePxSnapped * 0.8;
+        var offY = (rand2(wx, wy, 7031 + bi) - 0.5) * tilePxSnapped * 0.8;
+        var drawSize = tilePxSnapped;
+        var baseAngle = (rand2(wx, wy, 7040 + bi) - 0.5) * 0.35;
+        var sx = chunkOriginX + tx * tilePxSnapped + halfTile + offX;
+        var sy = chunkOriginY + ty * tilePxSnapped + halfTile + offY;
+        var dist = Math.max(Math.abs(wx - px), Math.abs(wy - py));
+        var maxR = Math.max(radiusX, radiusY);
+        var fadeStart = maxR - 6;
+        var edgeFade = dist <= fadeStart ? 1.0 : Math.max(0, 1.0 - (dist - fadeStart) / (maxR - fadeStart));
+        var finalAlpha = edgeFade;
+
+        var bladeWorldX = wx + 0.5 + (rand2(wx, wy, 7030 + bi) - 0.5) * 0.8;
+        var bladeWorldY = wy + 0.5 + (rand2(wx, wy, 7031 + bi) - 0.5) * 0.8;
+        var pDistX = player.x - bladeWorldX;
+        var pDistY = player.y - bladeWorldY;
+        var pDist = Math.sqrt(pDistX * pDistX + pDistY * pDistY);
+        var WALK_DIST = 0.65;
+        var WALK_HOLD_EXTRA = 600;
+        var WALK_SPRING_DURATION = FRAME_COUNT * FRAME_DURATION * 1.5;
+        var BENT_FRAME = Math.floor(FRAME_COUNT * 0.55);
+        var BEND_DOWN_DURATION = 250;
+
+        var walkKey = wx * 100000 + wy * 1000 + bi * 10 + 1;
+        var playerOnBlade = pDist < WALK_DIST;
+
+        if (playerOnBlade) {
+          var existingWalk = triggerTimes.get(walkKey);
+          if (!existingWalk || existingWalk.ext !== 1) {
+            triggerTimes.set(walkKey, { time: timeMs, ext: 1, bendStart: timeMs });
+          } else {
+            triggerTimes.set(walkKey, { time: timeMs, ext: 1, bendStart: existingWalk.bendStart });
+          }
+        }
+
+        var walkData = triggerTimes.get(walkKey);
+        if (walkData && walkData.ext === 1) {
+          var timeSinceLeave = timeMs - walkData.time;
+          var showFrame = -1;
+
+          if (playerOnBlade) {
+            var bendElapsed = timeMs - walkData.bendStart;
+            showFrame = bendElapsed < BEND_DOWN_DURATION
+              ? Math.floor((bendElapsed / BEND_DOWN_DURATION) * BENT_FRAME)
+              : BENT_FRAME;
+          } else if (timeSinceLeave < WALK_HOLD_EXTRA) {
+            showFrame = BENT_FRAME;
+          } else if (timeSinceLeave < WALK_HOLD_EXTRA + WALK_SPRING_DURATION) {
+            var springElapsed = timeSinceLeave - WALK_HOLD_EXTRA;
+            showFrame = BENT_FRAME + Math.floor((springElapsed / WALK_SPRING_DURATION) * (FRAME_COUNT - BENT_FRAME));
+            showFrame = Math.min(showFrame, FRAME_COUNT - 1);
+          } else {
+            triggerTimes.delete(walkKey);
+          }
+
+          if (showFrame >= 0) {
+            var walkUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/player_walk/v000/frame_' + String(showFrame).padStart(3, '0') + '.png';
+            var walkImg = loadFrame(walkUrl);
+            if (walkImg) {
+              var halfDraw = drawSize * 0.5;
+              ctx.save();
+              ctx.translate(sx, sy + halfDraw);
+              ctx.rotate(baseAngle);
+              ctx.globalAlpha = finalAlpha;
+              ctx.drawImage(walkImg, -halfDraw, -drawSize, drawSize, drawSize);
+              ctx.restore();
+              continue; // SKIP wind_sway entirely — player walk takes priority
+            }
+          }
+        }
+
+        // === PRIORITY 2: Wind sway / static (only if NOT being walked on) ===
+
         // Wind/player impulse triggers animation for a few cycles then settles.
         var currentEffect = sampleCurrents(wx, wy, timeSec);
         var playerEffect = samplePlayerPush(wx, wy, player.x, player.y, playerVX, playerVY);
@@ -502,97 +577,6 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           isStatic = true;
         }
 
-        // Position — same as static renderer
-        var offX = (rand2(wx, wy, 7030 + bi) - 0.5) * tilePxSnapped * 0.8;
-        var offY = (rand2(wx, wy, 7031 + bi) - 0.5) * tilePxSnapped * 0.8;
-        var drawSize = tilePxSnapped;
-        var baseAngle = (rand2(wx, wy, 7040 + bi) - 0.5) * 0.35;
-
-        var sx = chunkOriginX + tx * tilePxSnapped + halfTile + offX;
-        var sy = chunkOriginY + ty * tilePxSnapped + halfTile + offY;
-
-        // Distance-based fade at edge to prevent pop-in
-        var dist = Math.max(Math.abs(wx - px), Math.abs(wy - py));
-        var maxR = Math.max(radiusX, radiusY);
-        var fadeStart = maxR - 6;
-        var edgeFade = dist <= fadeStart ? 1.0 : Math.max(0, 1.0 - (dist - fadeStart) / (maxR - fadeStart));
-        var finalAlpha = edgeFade;
-
-        // --- Player walk: check if player is standing on this blade ---
-        var bladeWorldX = wx + 0.5 + (rand2(wx, wy, 7030 + bi) - 0.5) * 0.8;
-        var bladeWorldY = wy + 0.5 + (rand2(wx, wy, 7031 + bi) - 0.5) * 0.8;
-        var pDistX = player.x - bladeWorldX;
-        var pDistY = player.y - bladeWorldY;
-        var pDist = Math.sqrt(pDistX * pDistX + pDistY * pDistY);
-        var WALK_DIST = 0.4;
-        var WALK_HOLD_EXTRA = 400; // ms to stay bent after player leaves
-        var WALK_SPRING_DURATION = FRAME_COUNT * FRAME_DURATION; // time for spring-back anim
-        var BENT_FRAME = Math.floor(FRAME_COUNT * 0.5); // middle frame = most bent
-
-        var walkKey = wx * 100000 + wy * 1000 + bi * 10 + 1;
-        var playerOnBlade = pDist < WALK_DIST;
-
-        if (playerOnBlade) {
-          // Player is on this blade — record/update the "stepped on" timestamp
-          triggerTimes.set(walkKey, { time: timeMs, ext: 1 }); // ext=1 means "currently held"
-        }
-
-        var walkData = triggerTimes.get(walkKey);
-        if (walkData && walkData.ext === 1 && !isStatic) {
-          var timeSinceStep = timeMs - walkData.time;
-
-          if (playerOnBlade) {
-            // Player still on blade — hold at bent frame
-            var walkUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/player_walk/v000/frame_' + String(BENT_FRAME).padStart(3, '0') + '.png';
-            var walkImg = loadFrame(walkUrl);
-            if (walkImg) {
-              var halfDraw = drawSize * 0.5;
-              ctx.save();
-              ctx.translate(sx, sy + halfDraw);
-              ctx.rotate(baseAngle);
-              ctx.globalAlpha = finalAlpha;
-              ctx.drawImage(walkImg, -halfDraw, -drawSize, drawSize, drawSize);
-              ctx.restore();
-              continue;
-            }
-          } else if (timeSinceStep < WALK_HOLD_EXTRA) {
-            // Player just left — hold bent a bit longer
-            var walkUrl2 = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/player_walk/v000/frame_' + String(BENT_FRAME).padStart(3, '0') + '.png';
-            var walkImg2 = loadFrame(walkUrl2);
-            if (walkImg2) {
-              var halfDraw2 = drawSize * 0.5;
-              ctx.save();
-              ctx.translate(sx, sy + halfDraw2);
-              ctx.rotate(baseAngle);
-              ctx.globalAlpha = finalAlpha;
-              ctx.drawImage(walkImg2, -halfDraw2, -drawSize, drawSize, drawSize);
-              ctx.restore();
-              continue;
-            }
-          } else if (timeSinceStep < WALK_HOLD_EXTRA + WALK_SPRING_DURATION) {
-            // Spring back — play from bent frame to end
-            var springElapsed = timeSinceStep - WALK_HOLD_EXTRA;
-            var springFrame = BENT_FRAME + Math.floor((springElapsed / WALK_SPRING_DURATION) * (FRAME_COUNT - BENT_FRAME));
-            springFrame = Math.min(springFrame, FRAME_COUNT - 1);
-            var walkUrl3 = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/player_walk/v000/frame_' + String(springFrame).padStart(3, '0') + '.png';
-            var walkImg3 = loadFrame(walkUrl3);
-            if (walkImg3) {
-              var halfDraw3 = drawSize * 0.5;
-              ctx.save();
-              ctx.translate(sx, sy + halfDraw3);
-              ctx.rotate(baseAngle);
-              ctx.globalAlpha = finalAlpha;
-              ctx.drawImage(walkImg3, -halfDraw3, -drawSize, drawSize, drawSize);
-              ctx.restore();
-              continue;
-            }
-          } else {
-            // Spring-back done — clear the walk state
-            triggerTimes.delete(walkKey);
-          }
-        }
-
-        // --- Normal wind_sway / static rendering ---
         // Sway: gentle lean smoothly eased by animBlend (static objects don't sway)
         var swayDir = currentEffect.rot + playerEffect.rot;
         var sway = isStatic ? 0 : swayDir * 1.2 * animBlend;
