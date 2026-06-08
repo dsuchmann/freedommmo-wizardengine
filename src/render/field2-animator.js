@@ -37,8 +37,8 @@ function spawnCurrent(time, windDir, windIntensity, playerX, playerY) {
     speed: 15 + windIntensity * 25 + Math.random() * 10, // tiles per second
     width: 3 + Math.random() * 5, // wavefront width in tiles
     strength: 0.03 + windIntensity * 0.06 + Math.random() * 0.03, // rotation radians
-    pushX: dirX * (0.05 + windIntensity * 0.08), // subtle position offset in tile fractions
-    pushY: dirY * (0.02 + windIntensity * 0.04),
+    pushX: 0, // no position shift — wind only triggers sway rotation
+    pushY: 0,
     born: time,
     lifespan: 3 + Math.random() * 4, // seconds
   });
@@ -111,9 +111,9 @@ function samplePlayerPush(wx, wy, playerX, playerY, playerVX, playerVY) {
   var mvY = playerVY / mvLen;
   var combinedX = (nx * 0.4 + mvX * 0.6);
   var combinedY = (ny * 0.4 + mvY * 0.6);
-  // Rotation: tilt away from player
+  // Rotation: tilt away from player. No position shift.
   var rot = pushStrength * 0.6 * (nx > 0 ? 1 : -1);
-  return { rot: rot, px: combinedX * pushStrength * 2, py: combinedY * pushStrength * 1 };
+  return { rot: rot, px: 0, py: 0 };
 }
 
 // Cache: url → Image
@@ -251,12 +251,11 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         // Player interaction — sprites pushed when player walks through
         var playerEffect = samplePlayerPush(wx, wy, player.x, player.y, playerVX, playerVY);
 
+        // Wind and player only affect sway rotation — sprites stay in place
         var sway = baseSway + currentEffect.rot + playerEffect.rot;
-        var pushOffsetX = (currentEffect.px + playerEffect.px) * tilePxSnapped;
-        var pushOffsetY = (currentEffect.py + playerEffect.py) * tilePxSnapped;
 
-        var sx = chunkOriginX + tx * tilePxSnapped + halfTile + offX + pushOffsetX;
-        var sy = chunkOriginY + ty * tilePxSnapped + halfTile + offY + pushOffsetY;
+        var sx = chunkOriginX + tx * tilePxSnapped + halfTile + offX;
+        var sy = chunkOriginY + ty * tilePxSnapped + halfTile + offY;
 
         // Distance-based fade at edge to prevent pop-in
         var dist = Math.max(Math.abs(wx - px), Math.abs(wy - py));
