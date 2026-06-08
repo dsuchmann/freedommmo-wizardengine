@@ -1,7 +1,7 @@
 import { setWorldSeed } from '../core/world-seed.js';
 import { WORLD } from '../core/constants.js';
 import { ChunkCompiler } from './chunk-compiler.js';
-import { getAllWangImageURLs, getWangImageURLsForBiomes, getSoilImageURLs, getGroundCoverImageURLs, getSmallFloraImageURLs } from '../render/wang-image-list.js';
+import { getAllWangImageURLs, getWangImageURLsForBiomes, getSoilImageURLs, getGroundCoverImageURLs, getSmallFloraImageURLs, getSmallScatterImageURLs } from '../render/wang-image-list.js';
 import { renderChunkToBitmap } from '../render/worker-chunk-renderer.js';
 import { denoiseBitmap } from '../render/sprite-denoise.js';
 
@@ -127,16 +127,16 @@ self.onmessage = function(event) {
   var data = event.data;
 
   if (data.type === 'preloadBiomes') {
-    // Phase 1: Preload tiles for specified biomes + soil sprites, then signal ready.
+    // Phase 1: Preload ONLY wang tiles + soil + ground cover (essential for chunk rendering).
+    // Flora and scatter URLs load in phase 2 (background) — they're not needed for chunks.
     var biomeUrls = getWangImageURLsForBiomes(data.biomes);
     var soilUrls = getSoilImageURLs();
-    var gcUrls = getGroundCoverImageURLs();
-    var sfUrls = getSmallFloraImageURLs();
-    var priorityUrls = biomeUrls.concat(soilUrls).concat(gcUrls).concat(sfUrls);
+    var gcUrls = typeof getGroundCoverImageURLs === 'function' ? getGroundCoverImageURLs() : [];
+    var priorityUrls = biomeUrls.concat(soilUrls).concat(gcUrls);
     loadImageBatch(priorityUrls, 40).then(function(result) {
       imagesReady = true;
-      self.postMessage({ type: 'imagesReady', loaded: result.loaded, failed: result.failed, total: biomeUrls.length });
-      // Phase 2: Load everything else in the background
+      self.postMessage({ type: 'imagesReady', loaded: result.loaded, failed: result.failed, total: priorityUrls.length });
+      // Phase 2: Load flora, scatter, and everything else in the background
       backgroundLoadRemaining();
     });
     return;
