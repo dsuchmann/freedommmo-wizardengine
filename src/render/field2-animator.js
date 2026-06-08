@@ -34,9 +34,9 @@ function spawnCurrent(time, windDir, windIntensity, playerX, playerY) {
     originY: originY,
     dirX: dirX,
     dirY: dirY,
-    speed: 15 + windIntensity * 25 + Math.random() * 10, // tiles per second
-    width: 3 + Math.random() * 5, // wavefront width in tiles
-    strength: 0.03 + windIntensity * 0.06 + Math.random() * 0.03, // rotation radians
+    speed: 6 + windIntensity * 8 + Math.random() * 4, // tiles per second — gentle drift
+    width: 4 + Math.random() * 6, // wavefront width in tiles — broad and soft
+    strength: 0.015 + windIntensity * 0.025 + Math.random() * 0.01, // rotation radians — subtle
     pushX: 0, // no position shift — wind only triggers sway rotation
     pushY: 0,
     born: time,
@@ -52,7 +52,7 @@ function updateCurrents(timeSec, windDir, windIntensity, playerX, playerY) {
     }
   }
   // Spawn new ones based on wind intensity
-  var spawnRate = 0.3 + windIntensity * 1.5; // currents per second
+  var spawnRate = 0.1 + windIntensity * 0.4; // currents per second — occasional, not constant
   if (timeSec - _lastCurrentSpawn > 1 / spawnRate && windCurrents.length < MAX_CURRENTS) {
     spawnCurrent(timeSec, windDir, windIntensity, playerX, playerY);
     _lastCurrentSpawn = timeSec;
@@ -252,10 +252,9 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         var drawSize = tilePxSnapped;
         var baseAngle = (rand2(wx, wy, 7040 + bi) - 0.5) * 0.35;
 
-        // Sway rotation scaled by excitation — still when calm
-        var swayPhase = rand2(wx, wy, 7070 + bi) * 6.28;
-        var swayDir = currentEffect.rot + playerEffect.rot; // direction of the impulse
-        var sway = swayDir * 2.5; // amplify the directional lean
+        // Sway: gentle lean driven by wind/player. Anchored at bottom (root).
+        var swayDir = currentEffect.rot + playerEffect.rot;
+        var sway = swayDir * 1.2; // gentle lean
 
         var sx = chunkOriginX + tx * tilePxSnapped + halfTile + offX;
         var sy = chunkOriginY + ty * tilePxSnapped + halfTile + offY;
@@ -267,11 +266,13 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         var edgeFade = dist <= fadeStart ? 1.0 : Math.max(0, 1.0 - (dist - fadeStart) / (maxR - fadeStart));
         var finalAlpha = edgeFade;
 
+        // Draw anchored at bottom center — rotate around the base so top sways
+        var halfDraw = drawSize * 0.5;
         ctx.save();
-        ctx.translate(sx, sy);
+        ctx.translate(sx, sy + halfDraw); // anchor at bottom of sprite
         ctx.rotate(baseAngle + sway);
         ctx.globalAlpha = finalAlpha;
-        ctx.drawImage(img, -drawSize * 0.5, -drawSize * 0.5, drawSize, drawSize);
+        ctx.drawImage(img, -halfDraw, -drawSize, drawSize, drawSize); // draw upward from anchor
         ctx.restore();
       }
     }
