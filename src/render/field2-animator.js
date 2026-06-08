@@ -361,7 +361,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
   updateCurrents(timeSec, wind.direction, wind.intensity, player.x, player.y);
 
   ctx.save();
-  ctx.imageSmoothingEnabled = false;
+  ctx.imageSmoothingEnabled = true;
 
   // Clamp animation radius to visible screen to avoid off-screen work
   var visibleTilesX = Math.ceil(w / tilePxSnapped / 2) + 2;
@@ -652,7 +652,14 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
   // Sort by world Y (top-to-bottom = far-to-near)
   drawBuffer.sort(function(a, b) { return a.sortY - b.sortY; });
 
-  // Draw all visible sprites — fast path for static, slow path only for swaying
+  // Shadow params from sun/moon
+  var shadowX = sun ? sun.shadowX || 0 : 0;
+  var shadowY = sun ? sun.shadowY || 0.5 : 0.5;
+  var shadowLen = sun ? sun.shadowLength || 1 : 1;
+  var shadowAlpha = sun ? (sun.isDaytime ? 0.20 * Math.min(1, sun.sunHeight * 2.5) : 0.06 * (sun.moonHeight || 0)) : 0;
+  var hasShadows = shadowAlpha > 0.02;
+
+  // Draw all visible sprites with shadows
   var playerInserted = false;
   for (var di = 0; di < drawBuffer.length; di++) {
     if (!playerInserted && drawBuffer[di].sortY > player.y + 0.4) {
@@ -660,8 +667,21 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
       playerInserted = true;
     }
     var d = drawBuffer[di];
+
+    // --- Shadow projection ---
+    if (hasShadows) {
+      var shOffX = shadowX * d.drawSize * shadowLen * 0.5;
+      var shOffY = d.drawSize * 0.1;
+      ctx.save();
+      ctx.translate(d.sx + shOffX, d.sy + d.halfDraw + shOffY);
+      ctx.scale(1 + shadowLen * 0.2, 0.22);
+      ctx.globalAlpha = shadowAlpha * d.alpha;
+      ctx.drawImage(d.img, -d.halfDraw * 1.1, -d.drawSize * 0.4, d.drawSize * 1.1, d.drawSize * 0.5);
+      ctx.restore();
+    }
+
+    // --- Sprite ---
     if (d.hasSway) {
-      // Slow path: transform pipeline for actively swaying sprites
       ctx.save();
       ctx.translate(d.sx, d.sy + d.halfDraw);
       ctx.rotate(d.baseAngle + d.sway);
@@ -669,7 +689,6 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
       ctx.drawImage(d.img, -d.halfDraw, -d.drawSize, d.drawSize, d.drawSize);
       ctx.restore();
     } else {
-      // Fast path: simple drawImage, no save/translate/rotate/restore
       if (d.alpha < 0.99) ctx.globalAlpha = d.alpha;
       ctx.drawImage(d.img, d.sx - d.halfDraw, d.sy - d.halfDraw, d.drawSize, d.drawSize);
     }
