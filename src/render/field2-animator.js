@@ -191,19 +191,106 @@ function denoiseImage(img) {
   return cleaned;
 }
 
+// Temporal denoise: after all frames of an animation are loaded, compare each
+// frame against its siblings. Pixels that only appear in a minority of frames
+// (at the same position) are noise and get removed.
+var _temporalSets = new Map(); // animKey → { urls: [], loaded: 0, total: N }
+
+function temporalDenoise(animKey) {
+  var set = _temporalSets.get(animKey);
+  if (!set || set.loaded < set.total) return;
+  var frames = [];
+  for (var i = 0; i < set.urls.length; i++) {
+    var img = frameCache.get(set.urls[i]);
+    if (!img || !img.complete || !img.naturalWidth) return; // not all ready
+    frames.push(img);
+  }
+  var w = frames[0].naturalWidth || frames[0].width;
+  var h = frames[0].naturalHeight || frames[0].height;
+  if (w < 3 || h < 3) return;
+
+  // Read all frame pixel data
+  if (!_denoiseCanvas) _denoiseCanvas = document.createElement('canvas');
+  _denoiseCanvas.width = w;
+  _denoiseCanvas.height = h;
+  var ctx = _denoiseCanvas.getContext('2d');
+  var allData = [];
+  for (var f = 0; f < frames.length; f++) {
+    ctx.clearRect(0, 0, w, h);
+    ctx.drawImage(frames[f], 0, 0);
+    allData.push(ctx.getImageData(0, 0, w, h));
+  }
+
+  // For each frame, check each pixel against the same position in other frames
+  for (var f = 0; f < allData.length; f++) {
+    var data = allData[f].data;
+    var changed = false;
+    for (var y = 0; y < h; y++) {
+      for (var x = 0; x < w; x++) {
+        var idx = (y * w + x) * 4;
+        if (data[idx + 3] < 16) continue; // already transparent
+
+        // Count how many other frames have an opaque pixel here
+        var presentCount = 0;
+        for (var of2 = 0; of2 < allData.length; of2++) {
+          if (allData[of2].data[idx + 3] > 32) presentCount++;
+        }
+
+        // If this pixel only exists in < 30% of frames, it's likely noise
+        if (presentCount <= Math.ceil(allData.length * 0.3)) {
+          data[idx + 3] = 0;
+          changed = true;
+        }
+      }
+    }
+    if (changed) {
+      ctx.putImageData(allData[f], 0, 0);
+      var cleanImg = new Image();
+      cleanImg.src = _denoiseCanvas.toDataURL();
+      frameCache.set(set.urls[f], cleanImg);
+    }
+  }
+  _temporalSets.delete(animKey);
+}
+
 function loadFrame(url) {
   if (frameCache.has(url)) return frameCache.get(url);
   if (loadingSet.has(url)) return null;
   loadingSet.add(url);
+
+  // Track animation sets for temporal denoise
+  var animMatch = url.match(/(.+\/anim\/.+\/v\d+\/)frame_(\d+)\.png$/);
+  var animKey = animMatch ? animMatch[1] : null;
+  if (animKey && !_temporalSets.has(animKey)) {
+    var urls = [];
+    for (var fi = 0; fi < FRAME_COUNT; fi++) {
+      urls.push(animKey + 'frame_' + String(fi).padStart(3, '0') + '.png');
+    }
+    _temporalSets.set(animKey, { urls: urls, loaded: 0, total: FRAME_COUNT });
+  }
+
   var img = new Image();
   img.src = url;
   img.onload = function() {
+    // Spatial denoise first
     var clean = denoiseImage(img);
     if (clean !== img && !clean.complete) {
-      clean.onload = function() { frameCache.set(url, clean); loadingSet.delete(url); };
+      clean.onload = function() {
+        frameCache.set(url, clean);
+        loadingSet.delete(url);
+        // Check if all frames in this animation set are loaded
+        if (animKey) {
+          var set = _temporalSets.get(animKey);
+          if (set) { set.loaded++; temporalDenoise(animKey); }
+        }
+      };
     } else {
       frameCache.set(url, clean);
       loadingSet.delete(url);
+      if (animKey) {
+        var set = _temporalSets.get(animKey);
+        if (set) { set.loaded++; temporalDenoise(animKey); }
+      }
     }
   };
   img.onerror = function() { frameCache.set(url, null); loadingSet.delete(url); };
