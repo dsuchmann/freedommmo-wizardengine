@@ -258,6 +258,28 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
 
         var triggerTime = triggerTimes.get(triggerKey) || -99999;
         var elapsed = timeMs - triggerTime;
+
+        // Neighbor contagion: if nearby sprites are still animating,
+        // extend this sprite's animation so they don't snap-stop together.
+        if (elapsed > triggerDuration * 0.8) {
+          // Check a few neighbors for active triggers
+          for (var nd = -1; nd <= 1; nd++) {
+            for (var ne = -1; ne <= 1; ne++) {
+              if (nd === 0 && ne === 0) continue;
+              var nKey = (wx + ne) * 10000 + (wy + nd) * 100;
+              var nTrigger = triggerTimes.get(nKey) || -99999;
+              var nElapsed = timeMs - nTrigger;
+              if (nElapsed < triggerDuration * 0.6) {
+                // Neighbor is still going strong — extend our animation
+                triggerTimes.set(triggerKey, triggerTime + CYCLE_DURATION);
+                elapsed = timeMs - triggerTime - CYCLE_DURATION;
+                break;
+              }
+            }
+            if (elapsed < triggerDuration * 0.8) break;
+          }
+        }
+
         var frameIdx;
         if (elapsed > triggerDuration) {
           frameIdx = 0; // Settled — show still frame
