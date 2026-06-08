@@ -13,6 +13,49 @@ import { drawWaterWaveOverlay, preloadSeaweedAnimations } from './water-wave-ove
 import { drawLargeObjects, preloadLargeObjectSprites, setPlayerDrawFn } from './large-object-renderer.js';
 import { findNearbyInteraction, objectReaction, performInteraction } from '../world/interactions.js';
 
+function drawPrecipitation(ctx, w, h, precip, wind, time) {
+  if (precip.type === 'none' || precip.intensity < 0.01) return;
+  var count = Math.floor(precip.intensity * 200);
+  var windX = Math.cos(wind.direction) * wind.intensity;
+  var windY = Math.sin(wind.direction) * wind.intensity;
+
+  ctx.save();
+  if (precip.type === 'rain') {
+    ctx.strokeStyle = 'rgba(180,200,220,' + (0.15 + precip.intensity * 0.25) + ')';
+    ctx.lineWidth = 1;
+    for (var i = 0; i < count; i++) {
+      var seed = (i * 7919 + Math.floor(time * 8)) % 10007;
+      var rx = (seed * 3.1 + time * 80 * (1 + windX)) % w;
+      var ry = (seed * 7.3 + time * 300) % h;
+      var len = 8 + precip.intensity * 12;
+      ctx.beginPath();
+      ctx.moveTo(rx, ry);
+      ctx.lineTo(rx + windX * len, ry + len);
+      ctx.stroke();
+    }
+  } else if (precip.type === 'snow') {
+    ctx.fillStyle = 'rgba(240,245,255,' + (0.3 + precip.intensity * 0.4) + ')';
+    for (var i = 0; i < count * 0.4; i++) {
+      var seed = (i * 6271 + Math.floor(time * 2)) % 10007;
+      var sx = (seed * 4.7 + time * 15 * (1 + windX * 0.5) + Math.sin(time * 0.5 + i) * 10) % w;
+      var sy = (seed * 2.3 + time * 40) % h;
+      var size = 1.5 + (seed % 3);
+      ctx.beginPath();
+      ctx.arc(sx, sy, size, 0, 6.28);
+      ctx.fill();
+    }
+  } else if (precip.type === 'sandstorm') {
+    ctx.fillStyle = 'rgba(194,170,120,' + (0.08 + precip.intensity * 0.15) + ')';
+    for (var i = 0; i < count * 0.6; i++) {
+      var seed = (i * 5381 + Math.floor(time * 6)) % 10007;
+      var sx = (seed * 3.9 + time * 200 * windX) % w;
+      var sy = (seed * 8.1 + time * 30) % h;
+      ctx.fillRect(sx, sy, 2 + (seed % 4), 1);
+    }
+  }
+  ctx.restore();
+}
+
 export class CanvasRenderer {
   constructor(canvas, statsElement, compositor = null) {
     this.canvas = canvas;
@@ -102,6 +145,10 @@ export class CanvasRenderer {
     // === FIELD 1 ANIMATED WATER OVERLAY ===
     // Per-pixel wave modulation + animated seaweed sprites
     drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, h, performance.now() / 1000, weather ? weather.wind() : null);
+
+    if (weather) {
+      drawPrecipitation(ctx, w, h, weather.precipitation(), weather.wind(), performance.now() / 1000);
+    }
 
     // Wang debug overlay (toggle with D key)
     if (this.debugWang) {
