@@ -60,15 +60,15 @@ export async function denoiseBitmap(bmp, opts) {
         }
       }
 
-      // 1. Isolated pixel removal — pixel with very few opaque neighbors
-      if (opaqueNeighbors < minNeighbors) {
+      // 1. Isolated pixel removal — pixel with fewer than 3 opaque neighbors
+      if (opaqueNeighbors < 3) {
         remove[idx] = 1;
         changed++;
         continue;
       }
 
       // Skip further checks if pixel has many neighbors (it's interior, not noise)
-      if (opaqueNeighbors >= 6) continue;
+      if (opaqueNeighbors >= 7) continue;
 
       if (nCount === 0) continue;
       var avgR = totalR / nCount;
@@ -78,7 +78,14 @@ export async function denoiseBitmap(bmp, opts) {
       // 2. White/bright confetti — pixel much brighter than neighbors
       var brightness = r * 0.299 + g * 0.587 + b * 0.114;
       var neighborBrightness = avgR * 0.299 + avgG * 0.587 + avgB * 0.114;
-      if (brightness > whiteCutoff && brightness - neighborBrightness > 60 && opaqueNeighbors < 5) {
+      if (brightness > 200 && brightness - neighborBrightness > 40 && opaqueNeighbors < 6) {
+        remove[idx] = 1;
+        changed++;
+        continue;
+      }
+
+      // 2b. Dark confetti — dark specks near brighter content
+      if (brightness < 40 && neighborBrightness - brightness > 40 && opaqueNeighbors < 5) {
         remove[idx] = 1;
         changed++;
         continue;
@@ -86,7 +93,7 @@ export async function denoiseBitmap(bmp, opts) {
 
       // 3. Colored confetti — pixel very different color from neighbors
       var colorDiff = Math.abs(r - avgR) + Math.abs(g - avgG) + Math.abs(b - avgB);
-      var threshold = 180 - strength * 12; // strength 5 → threshold 120
+      var threshold = 150 - strength * 12; // strength 5 → threshold 90
       if (colorDiff > threshold && opaqueNeighbors < 4) {
         remove[idx] = 1;
         changed++;
