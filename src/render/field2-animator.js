@@ -246,11 +246,15 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           }
         }
 
-        // Track trigger per sprite
+        // Track trigger per sprite — stagger start with per-sprite random delay
         var triggerKey = wx * 10000 + wy * 100 + bi;
+        var startDelay = rand2(wx, wy, 7095 + bi) * 300; // 0-300ms jitter
         if (impulse > 0.08) {
-          // Fresh trigger resets extensions
-          triggerTimes.set(triggerKey, { time: timeMs, ext: 0 });
+          var existing = triggerTimes.get(triggerKey);
+          // Only re-trigger if not currently animating (prevent restart flicker)
+          if (!existing || timeMs - existing.time > CYCLE_DURATION * 2) {
+            triggerTimes.set(triggerKey, { time: timeMs + startDelay, ext: 0 });
+          }
         }
 
         // Per-sprite loop count: 100%→4, 70%→5, 40%→6, 10%→7, 5%→8
@@ -287,18 +291,30 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         }
 
         var frameIdx;
-        if (elapsed > triggerDuration) {
-          frameIdx = 0; // Settled — show still frame
+        var animBlend = 0; // 0 = fully still, 1 = fully animated
+        if (elapsed < 0 || elapsed > triggerDuration) {
+          frameIdx = 0; // Not started yet or settled
         } else {
           var cycleProgress = elapsed / CYCLE_DURATION;
           frameIdx = Math.floor((elapsed / FRAME_DURATION) % FRAME_COUNT);
-          // On the last cycle, ease to a stop at frame 0
-          if (cycleProgress > loopCount - 1) {
-            var lastCycleT = (cycleProgress - (loopCount - 1));
-            if (lastCycleT > 0.7) frameIdx = 0;
+          // Ease in over first cycle: 0→1
+          if (cycleProgress < 1) {
+            animBlend = cycleProgress;
+          }
+          // Full animation in middle cycles
+          else if (cycleProgress < loopCount - 1) {
+            animBlend = 1;
+          }
+          // Ease out over last cycle: 1→0
+          else {
+            animBlend = Math.max(0, 1 - (cycleProgress - (loopCount - 1)));
+            // Decelerate frame progression — slow down toward frame 0
+            var lastT = cycleProgress - (loopCount - 1);
+            var slowedElapsed = elapsed - lastT * CYCLE_DURATION * lastT * 0.5;
+            frameIdx = Math.floor((slowedElapsed / FRAME_DURATION) % FRAME_COUNT);
           }
         }
-        var isAnimating = elapsed <= triggerDuration;
+        var isAnimating = elapsed >= 0 && elapsed <= triggerDuration;
 
         // Build animation frame URL
         var url = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/frame_' + String(frameIdx).padStart(3, '0') + '.png';
@@ -311,10 +327,9 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         var drawSize = tilePxSnapped;
         var baseAngle = (rand2(wx, wy, 7040 + bi) - 0.5) * 0.35;
 
-        // Sway: gentle lean driven by wind/player, fades as animation settles.
-        var swayFade = isAnimating ? Math.max(0, 1 - elapsed / triggerDuration) : 0;
+        // Sway: gentle lean smoothly eased by animBlend
         var swayDir = currentEffect.rot + playerEffect.rot;
-        var sway = swayDir * 1.2 * swayFade;
+        var sway = swayDir * 1.2 * animBlend;
 
         var sx = chunkOriginX + tx * tilePxSnapped + halfTile + offX;
         var sy = chunkOriginY + ty * tilePxSnapped + halfTile + offY;
