@@ -263,38 +263,6 @@ export class CanvasRenderer {
       drawFog(ctx, w, h, weather.atmosphere().fog);
     }
 
-    // Atmospheric color grading from day/night cycle
-    if (sun) {
-      // Subtle color tint — only visible when tint deviates from neutral white
-      var tintR = sun.tint.r, tintG = sun.tint.g, tintB = sun.tint.b;
-      // How far from neutral (1,1,1) is the tint?
-      var tintStrength = Math.abs(tintR - 1) + Math.abs(tintG - 1) + Math.abs(tintB - 1);
-      if (tintStrength > 0.05) {
-        // Map tint to an overlay color: values < 1 darken, > 1 brighten
-        // Use the tint as a color wash at low opacity
-        var tr = Math.round(clamp01(tintR) * 255);
-        var tg = Math.round(clamp01(tintG) * 255);
-        var tb = Math.round(clamp01(tintB) * 255);
-        var alpha = Math.min(0.25, tintStrength * 0.15);
-        ctx.fillStyle = 'rgba(' + tr + ',' + tg + ',' + tb + ',' + alpha.toFixed(3) + ')';
-        ctx.fillRect(0, 0, w, h);
-      }
-
-      // Night darkening — deep navy blanket
-      if (sun.ambient < 0.5) {
-        var darkness = (0.5 - sun.ambient) * 1.2;
-        ctx.fillStyle = 'rgba(8,12,28,' + clamp01(darkness).toFixed(3) + ')';
-        ctx.fillRect(0, 0, w, h);
-      }
-
-      // Cloud cover dimming
-      if (weather && weather.clouds().cover > 0.15) {
-        var cloudDim = (weather.clouds().cover - 0.15) * 0.15;
-        ctx.fillStyle = 'rgba(40,45,55,' + clamp01(cloudDim).toFixed(3) + ')';
-        ctx.fillRect(0, 0, w, h);
-      }
-    }
-
     // Wang debug overlay (toggle with D key)
     if (this.debugWang) {
       ctx.save();
@@ -342,6 +310,30 @@ export class CanvasRenderer {
     // });
     // drawLargeObjects(ctx, chunkStore, player, camera, w, h, { baseSX, baseSY, minCX, minCY, chunkPx });
     this.drawPlayerAt(w / 2, h / 2 - elevationLift(focusTile.climate.elevation) * camera.zoom, camera.zoom, player);
+
+    // Atmospheric color grading — applied AFTER all objects/sprites so everything gets affected
+    if (sun) {
+      var tintR = sun.tint.r, tintG = sun.tint.g, tintB = sun.tint.b;
+      var tintStrength = Math.abs(tintR - 1) + Math.abs(tintG - 1) + Math.abs(tintB - 1);
+      if (tintStrength > 0.05) {
+        var tr = Math.round(clamp01(tintR) * 255);
+        var tg = Math.round(clamp01(tintG) * 255);
+        var tb = Math.round(clamp01(tintB) * 255);
+        var alpha = Math.min(0.25, tintStrength * 0.15);
+        ctx.fillStyle = 'rgba(' + tr + ',' + tg + ',' + tb + ',' + alpha.toFixed(3) + ')';
+        ctx.fillRect(0, 0, w, h);
+      }
+      if (sun.ambient < 0.5) {
+        var darkness = (0.5 - sun.ambient) * 1.2;
+        ctx.fillStyle = 'rgba(8,12,28,' + clamp01(darkness).toFixed(3) + ')';
+        ctx.fillRect(0, 0, w, h);
+      }
+      if (weather && weather.clouds().cover > 0.15) {
+        var cloudDim = (weather.clouds().cover - 0.15) * 0.15;
+        ctx.fillStyle = 'rgba(40,45,55,' + clamp01(cloudDim).toFixed(3) + ')';
+        ctx.fillRect(0, 0, w, h);
+      }
+    }
 
     drawElevationOverlay(ctx, chunkStore, camX, camY, w, h, sun, camera);
     this.drawContactOverlay(player, w, h, camera.zoom, performance.now() / 1000);

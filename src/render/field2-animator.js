@@ -36,9 +36,9 @@ function spawnCurrent(time, windDir, windIntensity, playerX, playerY) {
     dirY: dirY,
     speed: 15 + windIntensity * 25 + Math.random() * 10, // tiles per second
     width: 3 + Math.random() * 5, // wavefront width in tiles
-    strength: 0.08 + windIntensity * 0.18 + Math.random() * 0.06, // rotation radians
-    pushX: dirX * (0.3 + windIntensity * 0.5), // position offset in tile fractions
-    pushY: dirY * (0.15 + windIntensity * 0.25),
+    strength: 0.03 + windIntensity * 0.06 + Math.random() * 0.03, // rotation radians
+    pushX: dirX * (0.05 + windIntensity * 0.08), // subtle position offset in tile fractions
+    pushY: dirY * (0.02 + windIntensity * 0.04),
     born: time,
     lifespan: 3 + Math.random() * 4, // seconds
   });
