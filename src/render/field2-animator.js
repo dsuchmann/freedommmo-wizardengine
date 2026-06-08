@@ -613,10 +613,10 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           if (!img) continue;
           isStatic = true;
         } else {
-          // Try per-variant animation
-          var animBase = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/';
-          var frameStr = '/frame_' + String(frameIdx).padStart(3, '0') + '.png';
-          img = loadFrame(animBase + 'v' + vStr + frameStr);
+          // Use v000 animation frames (shared across all variants — no per-variant 404 flood)
+          var animBase = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/';
+          var frameStr = 'frame_' + String(frameIdx).padStart(3, '0') + '.png';
+          img = loadFrame(animBase + frameStr);
           if (!img) {
             // Fall back to static sprite with sway transforms
             var staticUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/sf__' + tile.biome + '__' + objName + '__v' + vStr + '.png';
