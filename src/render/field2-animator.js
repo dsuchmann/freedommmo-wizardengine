@@ -95,11 +95,11 @@ function samplePlayerPush(wx, wy, playerX, playerY, playerVX, playerVY) {
   var dx = wx - playerX;
   var dy = wy - playerY;
   var dist = Math.sqrt(dx * dx + dy * dy);
-  if (dist > 3 || dist < 0.3) return { rot: 0, px: 0, py: 0 };
+  if (dist > 1.8 || dist < 0.2) return { rot: 0, px: 0, py: 0 };
   // Player push: radial from player position, strength based on distance and speed
   var speed = Math.sqrt(playerVX * playerVX + playerVY * playerVY);
   if (speed < 0.5) return { rot: 0, px: 0, py: 0 };
-  var falloff = Math.max(0, 1 - dist / 3);
+  var falloff = Math.max(0, 1 - dist / 1.8);
   falloff = falloff * falloff; // quadratic
   var pushStrength = Math.min(speed * 0.08, 0.4) * falloff;
   // Push away from player
@@ -229,16 +229,16 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         var playerEffect = samplePlayerPush(wx, wy, player.x, player.y, playerVX, playerVY);
         var excitation = Math.min(1, Math.abs(currentEffect.rot) * 12 + Math.abs(playerEffect.rot) * 8);
 
-        // Animation frame driven by excitation:
-        // Still (frame 0) when calm, cycles through frames when excited
+        // Animation: fixed speed cycle, but only plays when excited.
+        // When calm → frame 0 (still). When triggered → plays through
+        // the cycle at normal speed, then stops when excitation fades.
         var tilePhase = rand2(wx, wy, 7060 + bi) * FRAME_COUNT;
         var frameIdx;
         if (excitation < 0.05) {
           frameIdx = 0; // Still
         } else {
-          // Cycle speed proportional to excitation
-          var cycleSpeed = excitation * 1.5; // faster when more excited
-          frameIdx = Math.floor((timeSec * cycleSpeed * FRAME_COUNT / (FRAME_DURATION * 0.001) * 0.15 + tilePhase) % FRAME_COUNT);
+          // Normal fixed-speed animation — same rate always
+          frameIdx = Math.floor((timeMs / FRAME_DURATION + tilePhase) % FRAME_COUNT);
         }
 
         // Build animation frame URL
