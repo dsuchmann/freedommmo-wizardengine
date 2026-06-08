@@ -358,10 +358,13 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
     }
   }
 
-  // Draw wind wisps — faint curved streaks along active wind currents
-  drawWindWisps(ctx, w, h, timeSec, player, tilePxSnapped, chunkGrid);
-
   ctx.restore();
+}
+
+// Exported so canvas-renderer can call AFTER atmospheric overlays
+export function drawWindWispOverlay(ctx, w, h, player, tilePx) {
+  var timeSec = performance.now() * 0.001;
+  drawWindWisps(ctx, w, h, timeSec, player, tilePx);
 }
 
 function drawWindWisps(ctx, w, h, timeSec, player, tilePx, chunkGrid) {
@@ -401,7 +404,7 @@ function drawWindWisps(ctx, w, h, timeSec, player, tilePx, chunkGrid) {
 
       // Smooth fade in and long dissolve
       var wispFade = wispAge < 0.6 ? wispAge / 0.6 : (wispAge > 4.0 ? Math.max(0, 1 - (wispAge - 4.0) / 1.5) : 1);
-      var alpha = 0.03 + wispFade * lifeFade * 0.05;
+      var alpha = 0.05 + wispFade * lifeFade * 0.08;
 
       // World position of wisp head
       var headAlong = wavefront + (seed % 7) - 3;

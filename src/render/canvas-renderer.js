@@ -11,7 +11,7 @@ import { biomeVariantFrameId } from '../assets/variant-selector.js';
 import { drawElevationOverlay } from './elevation-overlay.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations } from './water-wave-overlay.js';
 import { drawLargeObjects, preloadLargeObjectSprites, setPlayerDrawFn } from './large-object-renderer.js';
-import { drawField2Animations, preloadField2Animations } from './field2-animator.js';
+import { drawField2Animations, preloadField2Animations, drawWindWispOverlay } from './field2-animator.js';
 import { findNearbyInteraction, objectReaction, performInteraction } from '../world/interactions.js';
 
 function drawPrecipitation(ctx, w, h, precip, wind, time) {
@@ -334,6 +334,9 @@ export class CanvasRenderer {
         ctx.fillRect(0, 0, w, h);
       }
     }
+
+    // Wind wisps — drawn after atmospheric overlays so they're visible on top
+    drawWindWispOverlay(ctx, w, h, player, tilePx);
 
     drawElevationOverlay(ctx, chunkStore, camX, camY, w, h, sun, camera);
     this.drawContactOverlay(player, w, h, camera.zoom, performance.now() / 1000);
