@@ -56,6 +56,19 @@ function drawPrecipitation(ctx, w, h, precip, wind, time) {
   ctx.restore();
 }
 
+function drawFog(ctx, w, h, fog) {
+  if (fog < 0.05) return;
+  var cx = w / 2;
+  var cy = h / 2;
+  var innerRadius = Math.min(w, h) * 0.15;
+  var outerRadius = Math.max(w, h) * 0.6;
+  var gradient = ctx.createRadialGradient(cx, cy, innerRadius, cx, cy, outerRadius);
+  gradient.addColorStop(0, 'rgba(180,195,210,0)');
+  gradient.addColorStop(1, 'rgba(180,195,210,' + (fog * 0.55) + ')');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, w, h);
+}
+
 export class CanvasRenderer {
   constructor(canvas, statsElement, compositor = null) {
     this.canvas = canvas;
@@ -148,6 +161,7 @@ export class CanvasRenderer {
 
     if (weather) {
       drawPrecipitation(ctx, w, h, weather.precipitation(), weather.wind(), performance.now() / 1000);
+      drawFog(ctx, w, h, weather.atmosphere().fog);
     }
 
     // Wang debug overlay (toggle with D key)
