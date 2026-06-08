@@ -301,8 +301,8 @@ var GC_VARIANT_COUNT = 64;
 var GC_BIOME_OBJECTS = {
   beach: [
     { name: 'wet_sand', mode: 'luminance', strength: 0.20, density: 0.85, maxShoreDist: null },
-    { name: 'sea_foam', mode: 'sprite', maxShoreDist: 3, sparsity: 0.92 },
-    { name: 'tide_line', mode: 'sprite', minShoreDist: 8, maxShoreDist: 11, sparsity: 0.94 }
+    { name: 'sea_foam', mode: 'sprite', maxShoreDist: 4, sparsity: 0.82, scale: 0.55 },
+    { name: 'tide_line', mode: 'sprite', minShoreDist: 1, maxShoreDist: 5, sparsity: 0.85, scale: 0.50 }
   ],
   // --- FOREST BIOMES ---
   forest: [
@@ -354,7 +354,6 @@ var GC_BIOME_OBJECTS = {
   ],
   // --- HIGHLAND BIOMES ---
   hills: [
-    { name: 'hillside_grass', mode: 'sprite', sparsity: 0.70, scale: 0.50, pattern: 'scattered_even' },
     { name: 'flat_stone', mode: 'sprite', sparsity: 0.75, scale: 0.55, pattern: 'scattered_even' },
     { name: 'brown_moss', mode: 'sprite', sparsity: 0.80, scale: 0.50, pattern: 'patchy_groups' }
   ],
@@ -471,7 +470,7 @@ function worldHash(worldX, worldY, salt) {
 
 // Apply ground cover field to entire chunk (Field 1).
 // Two modes: luminance modulation (texture) and sprite placement (objects).
-function applyGroundCoverToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache) {
+function applyGroundCoverToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache, occupancy, cellsPerTile, cellPx, gridW) {
   // Quick check: does any tile in this chunk have ground cover defined?
   var hasGC = false;
   for (var i = 0; i < chunk.tiles.length; i++) {
@@ -495,7 +494,9 @@ function applyGroundCoverToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, im
       var tile = chunk.tiles[ty * chunkSize + tx];
       var biomeObjs = GC_BIOME_OBJECTS[tile.biome];
       if (!biomeObjs) continue;
-      if (tile.transitionPair) continue;
+      // Skip transition tiles EXCEPT for water-adjacent biomes where ground cover is essential
+      var skipTransition = tile.transitionPair && tile.biome !== 'beach' && tile.biome !== 'swamp';
+      if (skipTransition) continue;
 
       var wx = chunk.cx * chunkSize + tx;
       var wy = chunk.cy * chunkSize + ty;
@@ -574,15 +575,17 @@ function applyGroundCoverToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, im
   if (anyLum) ctx.putImageData(imageData, 0, 0);
 
   // === SPRITE PLACEMENT PASS ===
-  // Place actual sprites (sea_foam, tide_line, etc.) near contextual features like shorelines.
-  // These are drawn with drawImage, not pixel-blended, so they happen after putImageData.
+  // Objects check the chunk-wide occupancy grid before placing.
+  // After placing, they mark the cells they cover as occupied.
+  // This prevents graphical overlap across ALL fields.
 
   for (var ty = 0; ty < chunkSize; ty++) {
     for (var tx = 0; tx < chunkSize; tx++) {
       var tile = chunk.tiles[ty * chunkSize + tx];
       var biomeObjs = GC_BIOME_OBJECTS[tile.biome];
       if (!biomeObjs) continue;
-      if (tile.transitionPair) continue;
+      var skipTransition2 = tile.transitionPair && tile.biome !== 'beach' && tile.biome !== 'swamp';
+      if (skipTransition2) continue;
 
       var wx = chunk.cx * chunkSize + tx;
       var wy = chunk.cy * chunkSize + ty;
@@ -595,9 +598,7 @@ function applyGroundCoverToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, im
         if (obj.maxShoreDist !== null && shoreDist > obj.maxShoreDist) continue;
         if (obj.minShoreDist !== undefined && shoreDist < obj.minShoreDist) continue;
 
-        // Sparsity check — most tiles don't get a sprite
         var sparsity = obj.sparsity || 0.90;
-        // Higher chance closer to shore
         var shoreBoost = obj.maxShoreDist ? (1.0 - shoreDist / obj.maxShoreDist) * 0.15 : 0;
         if (rand2(wx, wy, 8500 + oi) > (1.0 - sparsity + shoreBoost)) continue;
 
@@ -607,41 +608,218 @@ function applyGroundCoverToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, im
         var bmp = imageCache.get(url);
         if (!bmp) continue;
 
-        var sx = tx * tileSize;
-        var sy = ty * tileSize;
-
-        // Compute shore direction from distance gradient for orientation
-        var distL = tx > 0 ? shoreDistMap[tileIdx - 1] : shoreDist;
-        var distR = tx < chunkSize - 1 ? shoreDistMap[tileIdx + 1] : shoreDist;
-        var distU = ty > 0 ? shoreDistMap[tileIdx - chunkSize] : shoreDist;
-        var distD = ty < chunkSize - 1 ? shoreDistMap[tileIdx + chunkSize] : shoreDist;
-        // Gradient points away from water (toward higher distance)
-        var gradX = distR - distL;
-        var gradY = distD - distU;
-        // Shore direction is perpendicular to gradient
-        var shoreAngle = Math.atan2(-gradX, gradY);
-
-        // Jitter position
-        var jitterX = (rand2(wx, wy, 8520 + oi) - 0.5) * tileSize * 0.6;
-        var jitterY = (rand2(wx, wy, 8530 + oi) - 0.5) * tileSize * 0.6;
-
-        // Scale — use per-object scale if defined, otherwise default
+        // Compute draw position
+        var jitterX = (rand2(wx, wy, 8520 + oi) - 0.5) * tileSize * 0.5;
+        var jitterY = (rand2(wx, wy, 8530 + oi) - 0.5) * tileSize * 0.5;
         var proximity = obj.maxShoreDist ? 1.0 - Math.min(1.0, shoreDist / obj.maxShoreDist) : 1.0;
         var baseScale = obj.scale || (0.5 + proximity * 0.5);
         var drawSize = tileSize * baseScale;
 
-        // Draw with rotation to align with shoreline
+        // Compute which occupancy cells this sprite would cover
+        var drawCenterX = tx * tileSize + tileSize * 0.5 + jitterX;
+        var drawCenterY = ty * tileSize + tileSize * 0.5 + jitterY;
+        var halfDraw = drawSize * 0.5;
+        var cellMinX = Math.max(0, Math.floor((drawCenterX - halfDraw) / cellPx));
+        var cellMinY = Math.max(0, Math.floor((drawCenterY - halfDraw) / cellPx));
+        var cellMaxX = Math.min(gridW - 1, Math.floor((drawCenterX + halfDraw) / cellPx));
+        var cellMaxY = Math.min(gridW - 1, Math.floor((drawCenterY + halfDraw) / cellPx));
+
+        // Check occupancy: if >40% of target cells are taken, skip this placement
+        var totalCells = 0;
+        var occupiedCells = 0;
+        for (var cy2 = cellMinY; cy2 <= cellMaxY; cy2++) {
+          for (var cx2 = cellMinX; cx2 <= cellMaxX; cx2++) {
+            totalCells++;
+            if (occupancy[cy2 * gridW + cx2]) occupiedCells++;
+          }
+        }
+        if (totalCells > 0 && occupiedCells / totalCells > 0.40) continue;
+
+        // Place the sprite
+        var sx = tx * tileSize;
+        var sy = ty * tileSize;
+        var distL = tx > 0 ? shoreDistMap[tileIdx - 1] : shoreDist;
+        var distR = tx < chunkSize - 1 ? shoreDistMap[tileIdx + 1] : shoreDist;
+        var distU = ty > 0 ? shoreDistMap[tileIdx - chunkSize] : shoreDist;
+        var distD = ty < chunkSize - 1 ? shoreDistMap[tileIdx + chunkSize] : shoreDist;
+        var shoreAngle = Math.atan2(-(distR - distL), distD - distU);
+
         ctx.save();
-        ctx.translate(sx + tileSize * 0.5 + jitterX, sy + tileSize * 0.5 + jitterY);
+        ctx.translate(drawCenterX, drawCenterY);
         ctx.rotate(shoreAngle + (rand2(wx, wy, 8540 + oi) - 0.5) * 0.4);
         ctx.globalAlpha = 0.6 + proximity * 0.3;
-        // Underwater tint: blue-shift and slight transparency for submerged look
         if (obj.underwaterTint) {
           ctx.globalAlpha *= 0.7;
           ctx.filter = 'saturate(0.7) brightness(0.85) sepia(0.15) hue-rotate(180deg)';
         }
-        ctx.drawImage(bmp, -drawSize * 0.5, -drawSize * 0.5, drawSize, drawSize);
+        ctx.drawImage(bmp, -halfDraw, -halfDraw, drawSize, drawSize);
         if (obj.underwaterTint) ctx.filter = 'none';
+        ctx.globalAlpha = 1.0;
+        ctx.restore();
+
+        // Mark occupancy cells as taken
+        for (var cy3 = cellMinY; cy3 <= cellMaxY; cy3++) {
+          for (var cx3 = cellMinX; cx3 <= cellMaxX; cx3++) {
+            occupancy[cy3 * gridW + cx3] = 1;
+          }
+        }
+        break; // This tile placed an object — don't try more object types on same tile
+      }
+    }
+  }
+}
+
+// === FIELD 2: SMALL FLORA ===
+// Small vegetation sprites (grass, ferns, flowers) placed per-tile.
+// Static base rendering — wind sway animations will draw on main thread later.
+var SF_BIOME_OBJECTS = {
+  arctic: [
+    { name: 'frost_flower', sparsity: 0.88, scale: 0.55 },
+    { name: 'frozen_grass', sparsity: 0.80, scale: 0.50 },
+    { name: 'ice_needle', sparsity: 0.85, scale: 0.45 },
+  ],
+  beach: [
+    { name: 'beach_weed', sparsity: 0.88, scale: 0.50 },
+    { name: 'dune_grass', sparsity: 0.82, scale: 0.55 },
+    { name: 'sea_oat', sparsity: 0.90, scale: 0.55 },
+  ],
+  dense_forest: [
+    { name: 'shade_fern', sparsity: 0.72, scale: 0.55 },
+    { name: 'dark_herb', sparsity: 0.78, scale: 0.50 },
+    { name: 'bracket_fungus', sparsity: 0.85, scale: 0.45 },
+  ],
+  desert: [
+    { name: 'sand_grass', sparsity: 0.88, scale: 0.45 },
+  ],
+  forest: [
+    { name: 'grass_blade_cluster', sparsity: 0.70, scale: 0.50 },
+    { name: 'small_fern', sparsity: 0.75, scale: 0.55 },
+    { name: 'clover_bloom', sparsity: 0.80, scale: 0.45 },
+  ],
+  grassland: [
+    { name: 'tall_grass_blade', sparsity: 0.68, scale: 0.55 },
+    { name: 'dandelion_stem', sparsity: 0.82, scale: 0.45 },
+    { name: 'wild_herb', sparsity: 0.78, scale: 0.50 },
+  ],
+  hills: [
+    { name: 'heather_sprig', sparsity: 0.80, scale: 0.55 },
+  ],
+  mountains: [
+    { name: 'alpine_tuft', sparsity: 0.85, scale: 0.50 },
+    { name: 'rock_cress', sparsity: 0.90, scale: 0.42 },
+    { name: 'hardy_lichen', sparsity: 0.82, scale: 0.45 },
+  ],
+  mystic: [
+    { name: 'glow_grass_blade', sparsity: 0.75, scale: 0.50 },
+    { name: 'aether_fern', sparsity: 0.80, scale: 0.55 },
+    { name: 'crystal_sprout', sparsity: 0.85, scale: 0.50 },
+  ],
+  savanna: [
+    { name: 'dry_grass_spike', sparsity: 0.78, scale: 0.55 },
+    { name: 'thorn_sprout', sparsity: 0.85, scale: 0.45 },
+    { name: 'acacia_seedling', sparsity: 0.92, scale: 0.50 },
+  ],
+  steppe: [
+    { name: 'wind_grass', sparsity: 0.85, scale: 0.45 },
+    { name: 'sparse_weed', sparsity: 0.82, scale: 0.50 },
+    { name: 'dry_tuft', sparsity: 0.88, scale: 0.42 },
+  ],
+  swamp: [
+    { name: 'swamp_herb', sparsity: 0.80, scale: 0.50 },
+  ],
+  taiga: [
+    { name: 'frost_grass', sparsity: 0.78, scale: 0.55 },
+    { name: 'low_juniper', sparsity: 0.85, scale: 0.50 },
+    { name: 'cold_moss_tuft', sparsity: 0.80, scale: 0.50 },
+  ],
+  tropical_forest: [
+    { name: 'broad_fern', sparsity: 0.72, scale: 0.60 },
+    { name: 'orchid_sprout', sparsity: 0.85, scale: 0.45 },
+    { name: 'vine_tendril', sparsity: 0.78, scale: 0.50 },
+  ],
+  tundra: [
+    { name: 'tundra_grass', sparsity: 0.88, scale: 0.45 },
+    { name: 'low_berry_bush', sparsity: 0.90, scale: 0.42 },
+    { name: 'ice_moss', sparsity: 0.85, scale: 0.45 },
+  ],
+  volcanic: [
+    { name: 'heat_sprout', sparsity: 0.90, scale: 0.50 },
+    { name: 'lava_fern', sparsity: 0.85, scale: 0.50 },
+  ],
+};
+var SF_BASE_PATH = '/assets/pixelab/landscape_v2/micro/small_flora/';
+var SF_VARIANT_COUNT = 64;
+
+function applySmallFloraToChunk(ctx, chunk, tileSize, chunkSize, imageCache) {
+  // Field 2: Dense vegetation layer — Ghost of Tsushima style.
+  // Object A (grass) is placed 3-4 times per tile at sub-tile positions,
+  // creating a dense carpet of overlapping individual blades.
+  // Objects B, C (flowers, ferns) occasionally replace one of the grass placements.
+  // Coverage driven by tile vegetation density and fertility.
+
+  var halfTile = tileSize >> 1;
+
+  for (var ty = 0; ty < chunkSize; ty++) {
+    for (var tx = 0; tx < chunkSize; tx++) {
+      var tile = chunk.tiles[ty * chunkSize + tx];
+      var biomeObjs = SF_BIOME_OBJECTS[tile.biome];
+      if (!biomeObjs) continue;
+      if (tile.transitionPair) continue;
+
+      var wx = chunk.cx * chunkSize + tx;
+      var wy = chunk.cy * chunkSize + ty;
+
+      var vegDensity = tile.layers && tile.layers[6] ? tile.layers[6].vegetationDensity : 0.5;
+      var fertility = tile.layers && tile.layers[6] ? tile.layers[6].fertility : 0.5;
+
+      // Skip tiles with very low vegetation potential
+      if (vegDensity < 0.08 && fertility < 0.10) continue;
+
+      // How many blades to place on this tile (2-4 based on fertility)
+      var bladeCount = 2 + Math.floor(fertility * 2.5);
+      var sx = tx * tileSize;
+      var sy = ty * tileSize;
+
+      for (var bi = 0; bi < bladeCount; bi++) {
+        // Per-blade coverage check — sparser in arid biomes
+        var bladeCoverage = 0.50 + vegDensity * 0.35 + fertility * 0.15;
+        if (rand2(wx, wy, 7000 + bi) > bladeCoverage) continue;
+
+        // Pick species: 90% grass (Object A), 7% Object B, 3% Object C
+        var speciesRoll = rand2(wx, wy, 7010 + bi * 100);
+        var oi;
+        if (biomeObjs.length === 1) {
+          oi = 0;
+        } else if (biomeObjs.length === 2) {
+          oi = speciesRoll < 0.90 ? 0 : 1;
+        } else {
+          if (speciesRoll < 0.90) oi = 0;
+          else if (speciesRoll < 0.97) oi = 1;
+          else oi = 2;
+        }
+        var obj = biomeObjs[oi];
+
+        // Pick variant — use different salt per blade so each is unique
+        var v = Math.floor(rand2(wx, wy, 7020 + bi * 17 + oi) * SF_VARIANT_COUNT);
+        var url = SF_BASE_PATH + tile.biome + '/' + obj.name + '/sf__' + tile.biome + '__' + obj.name + '__v' + formatIdx(v) + '.png';
+        var bmp = imageCache.get(url);
+        if (!bmp) continue;
+
+        // Sub-tile position: distribute blades across the tile
+        var offX = (rand2(wx, wy, 7030 + bi) - 0.5) * tileSize * 0.8;
+        var offY = (rand2(wx, wy, 7031 + bi) - 0.5) * tileSize * 0.8;
+
+        // Draw size: full tile for grass, slightly smaller for accents
+        var drawSize = oi === 0 ? tileSize : Math.round(tileSize * obj.scale);
+
+        // Slight rotation for organic feel
+        var angle = (rand2(wx, wy, 7040 + bi) - 0.5) * 0.35;
+
+        ctx.save();
+        ctx.translate(sx + halfTile + offX, sy + halfTile + offY);
+        ctx.rotate(angle);
+        ctx.globalAlpha = 0.85 + rand2(wx, wy, 7050 + bi) * 0.15;
+        ctx.drawImage(bmp, -drawSize * 0.5, -drawSize * 0.5, drawSize, drawSize);
         ctx.globalAlpha = 1.0;
         ctx.restore();
       }
@@ -860,9 +1038,20 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
     }
   }
 
-  // Apply decoration fields in order (each does one getImageData/putImageData)
+  // Chunk-wide occupancy grid: tracks which pixels are claimed by placed objects.
+  // Resolution: 4×4 cells per tile (8px per cell). Each cell = 1 bit.
+  // Total: (chunkSize*4) × (chunkSize*4) = 256×256 = 65,536 cells = 8KB.
+  // All decoration fields share this grid — objects in any field respect
+  // pixels claimed by objects in earlier fields.
+  var cellsPerTile = 4;
+  var cellPx = tileSize / cellsPerTile; // 8px per cell
+  var gridW = chunkSize * cellsPerTile; // 256
+  var occupancy = new Uint8Array(gridW * gridW); // 0 = free, 1 = occupied
+
+  // Apply decoration fields in order — each field reads+writes the occupancy grid
   applySoilFieldToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache);
-  applyGroundCoverToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache);
+  applyGroundCoverToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache, occupancy, cellsPerTile, cellPx, gridW);
+  applySmallFloraToChunk(ctx, chunk, tileSize, chunkSize, imageCache);
 
   var bitmap = offscreen.transferToImageBitmap();
   return {
