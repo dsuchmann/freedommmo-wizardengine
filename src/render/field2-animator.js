@@ -11,9 +11,7 @@ var ANIM_RADIUS = 40; // tiles around player — large enough to cover full scre
 var FADE_INNER = 34; // fully opaque inside this radius
 var FRAME_COUNT = 9;
 var FRAME_DURATION = 120; // ms per frame
-var LOOP_COUNT = 3; // cycles before settling back to still
 var CYCLE_DURATION = FRAME_COUNT * FRAME_DURATION; // ms per full cycle
-var TRIGGER_DURATION = CYCLE_DURATION * LOOP_COUNT; // total animation time after trigger
 
 // Track per-sprite trigger times: key → triggerTimeMs
 var triggerTimes = new Map();
@@ -242,7 +240,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           // Random self-trigger every few seconds
           var ambientPeriod = 4000 + rand2(wx, wy, 7081 + bi) * 8000; // 4-12 sec
           var ambientPhase = rand2(wx, wy, 7082 + bi) * ambientPeriod;
-          if ((timeMs + ambientPhase) % ambientPeriod < TRIGGER_DURATION) {
+          if ((timeMs + ambientPhase) % ambientPeriod < CYCLE_DURATION * 4) {
             impulse = 0.2; // gentle ambient trigger
           }
         }
@@ -253,23 +251,26 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           triggerTimes.set(triggerKey, timeMs);
         }
 
+        // Per-sprite loop count: 100%→4, 70%→5, 40%→6, 10%→7, 5%→8
+        var loopRoll = rand2(wx, wy, 7090 + bi);
+        var loopCount = loopRoll < 0.05 ? 8 : loopRoll < 0.10 ? 7 : loopRoll < 0.40 ? 6 : loopRoll < 0.70 ? 5 : 4;
+        var triggerDuration = CYCLE_DURATION * loopCount;
+
         var triggerTime = triggerTimes.get(triggerKey) || -99999;
         var elapsed = timeMs - triggerTime;
         var frameIdx;
-        if (elapsed > TRIGGER_DURATION) {
+        if (elapsed > triggerDuration) {
           frameIdx = 0; // Settled — show still frame
         } else {
-          // Playing: fixed speed, loops for LOOP_COUNT cycles then stops
-          // Ease out on the last cycle
           var cycleProgress = elapsed / CYCLE_DURATION;
           frameIdx = Math.floor((elapsed / FRAME_DURATION) % FRAME_COUNT);
-          // On the last cycle, slow to a stop at frame 0
-          if (cycleProgress > LOOP_COUNT - 1) {
-            var lastCycleT = (cycleProgress - (LOOP_COUNT - 1));
-            if (lastCycleT > 0.7) frameIdx = 0; // settle early in last cycle
+          // On the last cycle, ease to a stop at frame 0
+          if (cycleProgress > loopCount - 1) {
+            var lastCycleT = (cycleProgress - (loopCount - 1));
+            if (lastCycleT > 0.7) frameIdx = 0;
           }
         }
-        var isAnimating = elapsed <= TRIGGER_DURATION;
+        var isAnimating = elapsed <= triggerDuration;
 
         // Build animation frame URL
         var url = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/frame_' + String(frameIdx).padStart(3, '0') + '.png';
@@ -283,7 +284,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         var baseAngle = (rand2(wx, wy, 7040 + bi) - 0.5) * 0.35;
 
         // Sway: gentle lean driven by wind/player, fades as animation settles.
-        var swayFade = isAnimating ? Math.max(0, 1 - elapsed / TRIGGER_DURATION) : 0;
+        var swayFade = isAnimating ? Math.max(0, 1 - elapsed / triggerDuration) : 0;
         var swayDir = currentEffect.rot + playerEffect.rot;
         var sway = swayDir * 1.2 * swayFade;
 
