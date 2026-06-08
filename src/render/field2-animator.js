@@ -614,14 +614,24 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           if (!img) continue;
           isStatic = true;
         } else {
-          // Per-variant animation: each variant (v000-v063) has its own animation frames.
-          // When triggered: cycle through that variant's frames.
-          // When at rest: show frame 0 of that variant (or static sprite fallback).
-          var animBase = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v' + vStr + '/';
+          // Try per-variant animation, fall back to v000, then static sprite.
+          // Not all 64 variants have animation dirs — avoid 404 floods.
           var frameStr = 'frame_' + String(frameIdx).padStart(3, '0') + '.png';
-          img = loadFrame(animBase + frameStr);
+          var animBase = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/';
+          // Try this variant's animation
+          var variantAnimUrl = animBase + 'v' + vStr + '/' + frameStr;
+          img = frameCache.get(variantAnimUrl);
+          if (img === undefined) {
+            // Not in cache yet — try loading, but also preload v000 as fallback
+            img = loadFrame(variantAnimUrl);
+          }
+          if (img === null) {
+            // This variant's animation doesn't exist (404'd) — use v000
+            var v000Url = animBase + 'v000/' + frameStr;
+            img = loadFrame(v000Url);
+          }
           if (!img) {
-            // No per-variant animation — try static sprite
+            // No animation at all — use static sprite
             var staticUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/sf__' + tile.biome + '__' + objName + '__v' + vStr + '.png';
             img = loadFrame(staticUrl);
             if (!img) continue;
