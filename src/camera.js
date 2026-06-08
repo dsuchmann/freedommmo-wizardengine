@@ -6,20 +6,20 @@ export class Camera {
     this.elevationOffsetY = 0;
     window.addEventListener('wheel', event => {
       event.preventDefault();
-      const delta = Math.sign(event.deltaY) * -0.05;
+      const delta = Math.sign(event.deltaY) * -0.08;
       this.manualZoom = clamp(this.manualZoom + delta, 0.35, 2.4);
     }, { passive: false });
   }
 
   update(dt, tile) {
-    const elevation = tile?.climate?.elevation ?? 0.5;
-    const slope = tile?.layers?.[7]?.slope ?? 0;
-    const plateau = tile?.layers?.[7]?.plateauLevel ?? 1;
-    const elevationZoom = 1.04 - Math.max(0, elevation - 0.42) * 0.22 - plateau * 0.02 - slope * 0.12;
-    this.targetZoom = clamp(this.manualZoom * elevationZoom, 0.32, 2.4);
-    this.zoom += (this.targetZoom - this.zoom) * Math.min(1, dt * 4.5);
-    const targetOffset = -(elevation - 0.5) * 26 - plateau * 3;
-    this.elevationOffsetY += (targetOffset - this.elevationOffsetY) * Math.min(1, dt * 3.5);
+    // Zoom is purely manual — no elevation/slope/plateau adjustment.
+    // The old system caused jitter as each tile's different values
+    // micro-adjusted the zoom while walking.
+    this.targetZoom = clamp(this.manualZoom, 0.32, 2.4);
+    var lerpSpeed = Math.min(1, dt * 4.0);
+    this.zoom += (this.targetZoom - this.zoom) * lerpSpeed;
+    if (Math.abs(this.targetZoom - this.zoom) < 0.0005) this.zoom = this.targetZoom;
+    this.elevationOffsetY = 0;
   }
 }
 
