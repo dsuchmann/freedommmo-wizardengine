@@ -662,28 +662,23 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           if (!img) continue;
           isStatic = true;
         } else {
-          // Try per-variant animation, then v000 animation, then static.
-          // If the specific frame isn't loaded, fall back to frame_000 or static
-          // to avoid sprites popping in and out.
-          var frameStr = 'frame_' + String(frameIdx).padStart(3, '0') + '.png';
-          var frame0Str = 'frame_000.png';
-          var animDir = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v' + vStr + '/';
-          var v000Dir = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/';
+          // Static sprite for visual diversity, v000 animation for wind sway.
+          // Simple, stable, no cascading fallbacks.
           var staticUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/sf__' + tile.biome + '__' + objName + '__v' + vStr + '.png';
+          var v000Url = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/frame_' + String(frameIdx).padStart(3, '0') + '.png';
 
-          // Try per-variant animation frame
-          if (!_deadAnimDirs.has(animDir)) {
-            img = loadFrame(animDir + frameStr);
-            if (img === null && frameIdx === 0) _deadAnimDirs.add(animDir);
+          if (isAnimating) {
+            // When wind-triggered: use v000 animation frame
+            img = loadFrame(v000Url);
           }
-          // Try v000 animation frame
-          if (!img) img = loadFrame(v000Dir + frameStr);
-          // Try v000 frame_000 (always exists after preload)
-          if (!img) img = loadFrame(v000Dir + frame0Str);
-          // Try static sprite
           if (!img) {
+            // At rest or no animation: use static variant sprite
             img = loadFrame(staticUrl);
             if (img) isStatic = true;
+          }
+          if (!img) {
+            // Last resort: v000 frame_000
+            img = loadFrame(SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/frame_000.png');
           }
           if (!img) continue;
         }
