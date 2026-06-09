@@ -322,9 +322,7 @@ export function preloadField2Animations(biomes) {
   var key = biomes.sort().join(',');
   if (key === lastPreloadKey) return;
   lastPreloadKey = key;
-  _f2Ready = false;
-  _f2TotalToLoad = 0;
-  _f2Loaded = 0;
+  // Don't reset _f2Ready — keep showing existing sprites while new ones load
 
   var urls = [];
   for (var b = 0; b < biomes.length; b++) {
@@ -343,11 +341,16 @@ export function preloadField2Animations(biomes) {
     }
   }
 
-  _f2TotalToLoad = urls.length;
+  // Only load URLs not already cached or loading
+  var newUrls = [];
   for (var u = 0; u < urls.length; u++) {
-    var url = urls[u];
-    if (frameCache.has(url)) { _f2Loaded++; continue; }
-    if (loadingSet.has(url)) continue;
+    if (!frameCache.has(urls[u]) && !loadingSet.has(urls[u])) newUrls.push(urls[u]);
+  }
+  _f2TotalToLoad += newUrls.length;
+  if (newUrls.length === 0) { _f2Ready = true; return; }
+
+  for (var nu = 0; nu < newUrls.length; nu++) {
+    var url = newUrls[nu];
     loadingSet.add(url);
     var img = new Image();
     img.src = url;
