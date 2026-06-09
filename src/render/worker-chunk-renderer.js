@@ -115,7 +115,14 @@ function prepareSoilBlobs(material, wx, wy, imageCache, blobMin, blobMax) {
     var data = getSoilPixels(url, imageCache);
     if (data) blobs.push(data);
   }
-  if (blobs.length === 0) return null;
+  if (blobs.length === 0) {
+    if (!self._soilBlobDebugDone) {
+      self._soilBlobDebugDone = true;
+      var testUrl = SOIL_BASE_PATH + material + '/soil__' + material + '__v000.png';
+      console.log('[SOIL BLOB] material:', material, 'url:', testUrl, 'cached:', !!imageCache.get(testUrl), 'bmp type:', typeof imageCache.get(testUrl), 'SOIL_BASE_PATH:', SOIL_BASE_PATH);
+    }
+    return null;
+  }
   var offsets = [];
   for (var oi = 0; oi < blobs.length; oi++) {
     offsets.push({
