@@ -361,7 +361,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
   updateCurrents(timeSec, wind.direction, wind.intensity, player.x, player.y);
 
   ctx.save();
-  ctx.imageSmoothingEnabled = false;
+  ctx.imageSmoothingEnabled = true;
 
   // Clamp animation radius to visible screen to avoid off-screen work
   var visibleTilesX = Math.ceil(w / tilePxSnapped / 2) + 2;
