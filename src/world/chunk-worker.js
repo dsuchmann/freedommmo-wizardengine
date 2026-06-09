@@ -127,17 +127,16 @@ self.onmessage = function(event) {
   var data = event.data;
 
   if (data.type === 'preloadBiomes') {
-    // Phase 1: Preload tiles for specified biomes + soil sprites, then signal ready.
+    // Phase 1: wang + soil + ground cover ONLY (needed for chunk bitmap rendering).
+    // ~9,800 URLs — loads in ~30 seconds, then chunks can render with f0/f1.
     var biomeUrls = getWangImageURLsForBiomes(data.biomes);
     var soilUrls = getSoilImageURLs();
     var gcUrls = getGroundCoverImageURLs();
-    var sfUrls = getSmallFloraImageURLs();
-    var ssUrls = getSmallScatterImageURLs();
-    var priorityUrls = biomeUrls.concat(soilUrls).concat(gcUrls).concat(sfUrls).concat(ssUrls);
-    loadImageBatch(priorityUrls, 40).then(function(result) {
+    var priorityUrls = biomeUrls.concat(soilUrls).concat(gcUrls);
+    loadImageBatch(priorityUrls, 60).then(function(result) {
       imagesReady = true;
-      self.postMessage({ type: 'imagesReady', loaded: result.loaded, failed: result.failed, total: biomeUrls.length });
-      // Phase 2: Load everything else in the background
+      self.postMessage({ type: 'imagesReady', loaded: result.loaded, failed: result.failed, total: priorityUrls.length });
+      // Phase 2: small flora (main thread), small scatter (optional bake), everything else
       backgroundLoadRemaining();
     });
     return;
