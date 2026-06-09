@@ -127,17 +127,20 @@ self.onmessage = function(event) {
   var data = event.data;
 
   if (data.type === 'preloadBiomes') {
-    // Phase 1: wang + soil + ground cover ONLY (needed for chunk bitmap rendering).
-    // ~9,800 URLs — loads in ~30 seconds, then chunks can render with f0/f1.
+    // Phase 1: wang tiles ONLY — chunks render immediately with terrain.
     var biomeUrls = getWangImageURLsForBiomes(data.biomes);
-    var soilUrls = getSoilImageURLs();
-    var gcUrls = getGroundCoverImageURLs();
-    var priorityUrls = biomeUrls.concat(soilUrls).concat(gcUrls);
-    loadImageBatch(priorityUrls, 60).then(function(result) {
+    loadImageBatch(biomeUrls, 80).then(function(result) {
       imagesReady = true;
-      self.postMessage({ type: 'imagesReady', loaded: result.loaded, failed: result.failed, total: priorityUrls.length });
-      // Phase 2: small flora (main thread), small scatter (optional bake), everything else
-      backgroundLoadRemaining();
+      self.postMessage({ type: 'imagesReady', loaded: result.loaded, failed: result.failed, total: biomeUrls.length });
+
+      // Phase 2: soil + ground cover — then signal to re-render chunks with f0/f1.
+      var soilUrls = getSoilImageURLs();
+      var gcUrls = getGroundCoverImageURLs();
+      loadImageBatch(soilUrls.concat(gcUrls), 80).then(function(r2) {
+        self.postMessage({ type: 'decorationsReady', loaded: r2.loaded, failed: r2.failed });
+        // Phase 3: everything else in background
+        backgroundLoadRemaining();
+      });
     });
     return;
   }
