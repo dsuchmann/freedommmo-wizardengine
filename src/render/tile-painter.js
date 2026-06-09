@@ -7,7 +7,7 @@ var TRANSITIONS_BASE = 'assets/pixelab/landscape_v2/transitions/';
 var wangImgCache = {};
 
 // Wang tile lookup: corner mask → tile index (0-15)
-var CLIFF_CORNER_TO_WANG = [7,9,14,0,10,2,3,11,1,15,8,6,12,4,5,13];
+var CLIFF_CORNER_TO_WANG = [6,13,0,3,8,11,14,5,15,4,1,2,9,10,7,12];
 
 // Mapping from biome to cliff Wang tileset directory
 var BIOME_CLIFF = {

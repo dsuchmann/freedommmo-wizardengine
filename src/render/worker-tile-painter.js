@@ -7,8 +7,8 @@ import { cliffLevel } from '../world/terrain-shaper.js';
 import { WANG_SUFFIX, TRANSITIONS_BASE, BIOME_INTERIOR, BIOME_CLIFF } from './wang-image-list.js';
 
 // Cliff overlay wang index mapping — matches PixelLab's cliff tile ordering.
-// Differs from terrain CORNER_TO_WANG because cliff tiles have their own layout.
-var CLIFF_CORNER_TO_WANG = [7,9,14,0,10,2,3,11,1,15,8,6,12,4,5,13];
+// Derived from visual inspection of all 16 grass_cliff tiles.
+var CLIFF_CORNER_TO_WANG = [6,13,0,3,8,11,14,5,15,4,1,2,9,10,7,12];
 var WATER_BIOMES = { ocean: 1, deep_ocean: 1, shallow_water: 1, river: 1, lake: 1 };
 
 function getWangSrc(tile, variant) {
