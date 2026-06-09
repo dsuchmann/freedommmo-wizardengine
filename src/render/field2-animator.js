@@ -27,9 +27,9 @@ var RIGID_OBJECTS = {
 };
 
 // Track per-sprite trigger times and extension count
-// key → { time: triggerTimeMs, extensions: count }
 var triggerTimes = new Map();
-var MAX_EXTENSIONS = 3; // hard cap on neighbor extensions to prevent infinite loops
+var MAX_EXTENSIONS = 3;
+var _deadAnimDirs = new Set(); // variant anim dirs that 404'd — skip all frames
 
 // ---- Wind Currents ----
 // Visible wavefronts that sweep across the map, bending sprites as they pass.
