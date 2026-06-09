@@ -11,7 +11,7 @@ import { biomeVariantFrameId } from '../assets/variant-selector.js';
 import { drawElevationOverlay } from './elevation-overlay.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations } from './water-wave-overlay.js';
 import { drawLargeObjects, preloadLargeObjectSprites, setPlayerDrawFn } from './large-object-renderer.js';
-import { drawField2Animations, preloadField2Animations, drawWindWispOverlay } from './field2-animator.js';
+import { drawField2Animations, preloadField2Animations, drawWindWispOverlay, setField2PlayerDraw } from './field2-animator.js';
 import { findNearbyInteraction, objectReaction, performInteraction } from '../world/interactions.js';
 
 function drawPrecipitation(ctx, w, h, precip, wind, time) {
@@ -299,40 +299,19 @@ export class CanvasRenderer {
 
     if (player.interactPressed) performInteraction(player, chunkStore);
 
-    // === FIELD 2: ANIMATED WIND SWAY ===
-    // Draws animated sprites over the static baked ones for tiles near the player
-    drawField2Animations(ctx, chunkStore, player, camera, w, h, { baseSX, baseSY, minCX, minCY, chunkPx }, performance.now(), weather);
+    // Register player draw into field2's depth-sorted buffer BEFORE drawing
+    var _self = this;
+    var _playerScreenY = h / 2 - elevationLift(focusTile.climate.elevation) * camera.zoom;
+    setField2PlayerDraw(function(drawCtx) {
+      _self.drawPlayerAt(w / 2, _playerScreenY, camera.zoom, player);
+    });
 
-    // === FIELD 6: LARGE OBJECTS — DISABLED while focusing on Fields 0-2 ===
-    // TODO: Re-enable once tree art quality and sizing are resolved.
-    // setPlayerDrawFn((ctx2, pl, cam, vw, vh) => {
-    //   this.drawPlayerAt(vw / 2, vh / 2 - elevationLift(chunkStore.tileAt(pl.x, pl.y).climate.elevation) * cam.zoom, cam.zoom, pl);
-    // });
-    // drawLargeObjects(ctx, chunkStore, player, camera, w, h, { baseSX, baseSY, minCX, minCY, chunkPx });
-    this.drawPlayerAt(w / 2, h / 2 - elevationLift(focusTile.climate.elevation) * camera.zoom, camera.zoom, player);
+    // === FIELD 2: ANIMATED WIND SWAY ===
+    drawField2Animations(ctx, chunkStore, player, camera, w, h, { baseSX, baseSY, minCX, minCY, chunkPx }, performance.now(), weather, sun);
 
     // Atmospheric color grading — applied AFTER all objects/sprites so everything gets affected
     if (sun) {
-      var tintR = sun.tint.r, tintG = sun.tint.g, tintB = sun.tint.b;
-      var tintStrength = Math.abs(tintR - 1) + Math.abs(tintG - 1) + Math.abs(tintB - 1);
-      if (tintStrength > 0.05) {
-        var tr = Math.round(clamp01(tintR) * 255);
-        var tg = Math.round(clamp01(tintG) * 255);
-        var tb = Math.round(clamp01(tintB) * 255);
-        var alpha = Math.min(0.25, tintStrength * 0.15);
-        ctx.fillStyle = 'rgba(' + tr + ',' + tg + ',' + tb + ',' + alpha.toFixed(3) + ')';
-        ctx.fillRect(0, 0, w, h);
-      }
-      if (sun.ambient < 0.5) {
-        var darkness = (0.5 - sun.ambient) * 1.2;
-        ctx.fillStyle = 'rgba(8,12,28,' + clamp01(darkness).toFixed(3) + ')';
-        ctx.fillRect(0, 0, w, h);
-      }
-      if (weather && weather.clouds().cover > 0.15) {
-        var cloudDim = (weather.clouds().cover - 0.15) * 0.15;
-        ctx.fillStyle = 'rgba(40,45,55,' + clamp01(cloudDim).toFixed(3) + ')';
-        ctx.fillRect(0, 0, w, h);
-      }
+      this.drawLighting(ctx, sun, w, h, weather, player, camera);
     }
 
     // Wind wisps — drawn after atmospheric overlays so they're visible on top
@@ -466,9 +445,134 @@ export class CanvasRenderer {
   }
 
   drawAtmosphere(sun, w, h) {
-    const ctx = this.ctx;
-    ctx.fillStyle = `rgba(12,18,42,${Math.max(0, 0.36 - sun.height * 0.34)})`;
-    ctx.fillRect(0, 0, w, h);
+    // Now handled by drawLighting
+  }
+
+  drawLighting(ctx, sun, w, h, weather, player, camera) {
+    var time = sun.time;
+    var ambient = sun.ambient;
+    var sunAngle = sun.sunAngle || 0;
+    var sunHeight = sun.sunHeight || 0;
+    var moonHeight = sun.moonHeight || 0;
+    var tint = sun.tint;
+
+    // --- 1. Directional sunlight gradient ---
+    // Sun direction: 0 = east, PI/2 = overhead, PI = west
+    // Light comes FROM the sun, so the bright side is toward the sun
+    if (sunHeight > 0.02) {
+      var sunDirX = Math.cos(sunAngle); // positive = east, negative = west
+      // Gradient from sun side (bright) to shadow side (dim)
+      var gx1 = w * 0.5 + sunDirX * w * 0.6;
+      var gy1 = h * 0.3;
+      var gx2 = w * 0.5 - sunDirX * w * 0.6;
+      var gy2 = h * 0.7;
+
+      var grad = ctx.createLinearGradient(gx1, gy1, gx2, gy2);
+
+      // Dawn/sunrise: amber-gold from the east
+      if (time >= 0.20 && time < 0.35) {
+        var t = (time - 0.20) / 0.15;
+        var alpha = 0.18 * (1 - t) + 0.05 * t;
+        grad.addColorStop(0, 'rgba(255,180,60,' + alpha.toFixed(3) + ')');
+        grad.addColorStop(0.5, 'rgba(255,200,100,' + (alpha * 0.3).toFixed(3) + ')');
+        grad.addColorStop(1, 'rgba(40,50,80,' + (alpha * 0.4).toFixed(3) + ')');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+      }
+      // Morning: fading warmth to crisp white
+      else if (time >= 0.35 && time < 0.42) {
+        var alpha = 0.06;
+        grad.addColorStop(0, 'rgba(255,240,200,' + alpha.toFixed(3) + ')');
+        grad.addColorStop(1, 'rgba(200,220,240,' + (alpha * 0.3).toFixed(3) + ')');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+      }
+      // Golden hour: deep amber bath
+      else if (time >= 0.55 && time < 0.72) {
+        var t = (time - 0.55) / 0.17;
+        var alpha = 0.12 + t * 0.22; // builds intensity
+        grad.addColorStop(0, 'rgba(255,140,30,' + alpha.toFixed(3) + ')');
+        grad.addColorStop(0.4, 'rgba(255,160,50,' + (alpha * 0.7).toFixed(3) + ')');
+        grad.addColorStop(1, 'rgba(180,80,30,' + (alpha * 0.5).toFixed(3) + ')');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+      }
+    }
+
+    // --- 2. Color tint overlay (general atmosphere) ---
+    var tintR = tint.r, tintG = tint.g, tintB = tint.b;
+    var tintStrength = Math.abs(tintR - 1) + Math.abs(tintG - 1) + Math.abs(tintB - 1);
+    if (tintStrength > 0.05) {
+      var tr = Math.round(clamp01(tintR) * 255);
+      var tg = Math.round(clamp01(tintG) * 255);
+      var tb = Math.round(clamp01(tintB) * 255);
+      var alpha = Math.min(0.20, tintStrength * 0.12);
+      ctx.fillStyle = 'rgba(' + tr + ',' + tg + ',' + tb + ',' + alpha.toFixed(3) + ')';
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    // --- 3. Night darkness + inky blue ---
+    if (ambient < 0.5) {
+      var darkness = (0.5 - ambient) * 1.4;
+
+      // Dusk transition: amber → inky blue
+      if (time >= 0.72 && time < 0.85) {
+        var t = (time - 0.72) / 0.13;
+        var r = Math.round(30 * (1 - t) + 12 * t);
+        var g = Math.round(25 * (1 - t) + 16 * t);
+        var b = Math.round(40 * (1 - t) + 48 * t);
+        ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + clamp01(darkness).toFixed(3) + ')';
+      } else {
+        // Deep night: inky dark blue
+        ctx.fillStyle = 'rgba(8,12,32,' + clamp01(darkness).toFixed(3) + ')';
+      }
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    // --- 4. Moonlight ---
+    if (moonHeight > 0.05) {
+      var moonDirX = -Math.cos(sun.moonAngle || Math.PI);
+      var mx = w * 0.5 + moonDirX * w * 0.5;
+      var moonGrad = ctx.createRadialGradient(mx, h * 0.2, 0, mx, h * 0.2, w * 0.8);
+      var moonAlpha = moonHeight * 0.08;
+      moonGrad.addColorStop(0, 'rgba(200,210,240,' + moonAlpha.toFixed(3) + ')');
+      moonGrad.addColorStop(0.3, 'rgba(160,170,210,' + (moonAlpha * 0.5).toFixed(3) + ')');
+      moonGrad.addColorStop(1, 'rgba(100,110,160,0)');
+      ctx.fillStyle = moonGrad;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    // --- 5. Cloud dimming ---
+    if (weather && weather.clouds().cover > 0.15) {
+      var cloudDim = (weather.clouds().cover - 0.15) * 0.15;
+      ctx.fillStyle = 'rgba(40,45,55,' + clamp01(cloudDim).toFixed(3) + ')';
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    // --- 6. Player spotlight at night ---
+    if (ambient < 0.45) {
+      var spotStrength = clamp01((0.45 - ambient) * 2.0); // 0 at dusk, 1 at deep night
+      var spotRadius = 120 * camera.zoom;
+      var px = w * 0.5;
+      var py = h * 0.5;
+
+      // Dark vignette with transparent hole around player
+      var spotGrad = ctx.createRadialGradient(px, py, spotRadius * 0.3, px, py, spotRadius * 2.5);
+      spotGrad.addColorStop(0, 'rgba(8,12,28,0)');
+      spotGrad.addColorStop(0.4, 'rgba(8,12,28,' + (spotStrength * 0.15).toFixed(3) + ')');
+      spotGrad.addColorStop(1, 'rgba(8,12,28,' + (spotStrength * 0.35).toFixed(3) + ')');
+      ctx.fillStyle = spotGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      // Soft warm glow at player center (torch/lantern feel)
+      var glowGrad = ctx.createRadialGradient(px, py + 5 * camera.zoom, 0, px, py, spotRadius * 0.8);
+      var glowAlpha = spotStrength * 0.06;
+      glowGrad.addColorStop(0, 'rgba(255,220,160,' + glowAlpha.toFixed(3) + ')');
+      glowGrad.addColorStop(0.5, 'rgba(255,200,140,' + (glowAlpha * 0.3).toFixed(3) + ')');
+      glowGrad.addColorStop(1, 'rgba(255,180,120,0)');
+      ctx.fillStyle = glowGrad;
+      ctx.fillRect(0, 0, w, h);
+    }
   }
 
   hud(chunkStore, player, lighting, camera, perf, weather) {
