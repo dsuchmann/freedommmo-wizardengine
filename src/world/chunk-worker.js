@@ -10,6 +10,7 @@ var SLICE_ROWS = 8;
 var imageCache = new Map();
 var imagesReady = false;
 var backgroundLoadingDone = false;
+var chunksWithoutSoil = [];
 var neighborCache = new Map();
 var MAX_NEIGHBOR_CACHE = 50;
 
@@ -57,6 +58,20 @@ async function backgroundLoadRemaining() {
   await loadImageBatch(remaining, 40);
   backgroundLoadingDone = true;
   self.postMessage({ type: 'backgroundLoadDone', total: allUrls.length, cached: imageCache.size });
+
+  // Repaint any chunks that compiled without soil (images weren't ready yet)
+  if (chunksWithoutSoil.length > 0) {
+    var toRepaint = chunksWithoutSoil.splice(0);
+    for (var ri = 0; ri < toRepaint.length; ri++) {
+      var rchunk = toRepaint[ri];
+      var tiles = neighborCache.get(rchunk.cx + ',' + rchunk.cy);
+      if (!tiles) continue;
+      var chunk = { cx: rchunk.cx, cy: rchunk.cy, tiles: tiles };
+      var sun = { height: 0.5, ambient: 0.85 };
+      var result = renderChunkToBitmap(chunk, neighborCache, sun, imageCache);
+      self.postMessage({ type: 'chunkRepainted', key: rchunk.key, cx: rchunk.cx, cy: rchunk.cy, bitmap: result.bitmap, wangDebug: result.debug }, [result.bitmap]);
+    }
+  }
 }
 
 // Compute shore distance and shore angle for every tile in a chunk.
@@ -176,6 +191,11 @@ self.onmessage = function(event) {
     // Paint the chunk
     var sun = { height: 0.5, ambient: 0.85 };
     var result = renderChunkToBitmap(chunk, neighborCache, sun, imageCache);
+
+    // Track chunks that compiled without soil — they'll be repainted after background load
+    if (!result.hasSoil) {
+      chunksWithoutSoil.push({ key: key, cx: cx, cy: cy });
+    }
 
     // Transfer bitmap to main thread (zero-copy)
     self.postMessage({ type: 'chunkPainted', key: key, cx: cx, cy: cy, bitmap: result.bitmap, wangDebug: result.debug }, [result.bitmap]);

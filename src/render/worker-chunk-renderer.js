@@ -116,10 +116,13 @@ function prepareSoilBlobs(material, wx, wy, imageCache, blobMin, blobMax) {
     if (data) blobs.push(data);
   }
   if (blobs.length === 0) {
-    if (!self._soilBlobDebugDone) {
-      self._soilBlobDebugDone = true;
+    if (!self._soilBlobDebug) self._soilBlobDebug = {};
+    if (!self._soilBlobDebug[material]) {
+      self._soilBlobDebug[material] = true;
       var testUrl = SOIL_BASE_PATH + material + '/soil__' + material + '__v000.png';
-      console.log('[SOIL BLOB] material:', material, 'url:', testUrl, 'cached:', !!imageCache.get(testUrl), 'bmp type:', typeof imageCache.get(testUrl), 'SOIL_BASE_PATH:', SOIL_BASE_PATH);
+      var allSoilCount = 0;
+      imageCache.forEach(function(v, k) { if (k.includes('/soil/')) allSoilCount++; });
+      console.log('[SOIL MISS] material:', material, 'url:', testUrl, 'inCache:', imageCache.has(testUrl), 'val:', imageCache.get(testUrl), 'totalSoil:', allSoilCount, 'totalCache:', imageCache.size);
     }
     return null;
   }
@@ -296,6 +299,7 @@ function applySoilFieldToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imag
   }
 
   if (anySoil) ctx.putImageData(imageData, 0, 0);
+  return anySoil;
 }
 
 var GC_BASE_PATH = '/assets/pixelab/landscape_v2/micro/ground_cover/';
@@ -712,9 +716,8 @@ var SF_BIOME_OBJECTS = {
     { name: 'heather_sprig', sparsity: 0.80, scale: 0.55 },
   ],
   mountains: [
-    { name: 'alpine_tuft', sparsity: 0.85, scale: 0.50 },
-    { name: 'rock_cress', sparsity: 0.90, scale: 0.42 },
-    { name: 'hardy_lichen', sparsity: 0.82, scale: 0.45 },
+    { name: 'alpine_tuft', sparsity: 0.985, scale: 0.50 },
+    { name: 'hardy_lichen', sparsity: 0.985, scale: 0.45 },
   ],
   mystic: [
     { name: 'glow_grass_blade', sparsity: 0.75, scale: 0.50 },
@@ -727,7 +730,6 @@ var SF_BIOME_OBJECTS = {
     { name: 'acacia_seedling', sparsity: 0.92, scale: 0.50 },
   ],
   steppe: [
-    { name: 'wind_grass', sparsity: 0.85, scale: 0.45 },
     { name: 'sparse_weed', sparsity: 0.82, scale: 0.50 },
     { name: 'dry_tuft', sparsity: 0.88, scale: 0.42 },
   ],
@@ -746,12 +748,11 @@ var SF_BIOME_OBJECTS = {
   ],
   tundra: [
     { name: 'tundra_grass', sparsity: 0.88, scale: 0.45 },
-    { name: 'low_berry_bush', sparsity: 0.90, scale: 0.42 },
     { name: 'ice_moss', sparsity: 0.85, scale: 0.45 },
   ],
   volcanic: [
-    { name: 'heat_sprout', sparsity: 0.97, scale: 0.50 },
-    { name: 'lava_fern', sparsity: 0.96, scale: 0.50 },
+    { name: 'heat_sprout', sparsity: 0.997, scale: 0.50 },
+    { name: 'lava_fern', sparsity: 0.996, scale: 0.50 },
   ],
 };
 var SF_BASE_PATH = '/assets/pixelab/landscape_v2/micro/small_flora/';
@@ -1308,7 +1309,7 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
     imageCache.forEach(function(v, k) { if (k.includes('/soil/') && soilKeys.length < 5) soilKeys.push(k); });
     console.log('[SOIL DEBUG] actual soil keys:', soilKeys);
   }
-  applySoilFieldToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache);
+  var hasSoil = applySoilFieldToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache);
   applyGroundCoverToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache, occupancy, cellsPerTile, cellPx, gridW);
   // Field 2 rendered entirely on main thread via GPU instancing (field2-gpu.js)
   // applySmallFloraToChunk(ctx, chunk, tileSize, chunkSize, imageCache);
@@ -1317,6 +1318,7 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
   var bitmap = offscreen.transferToImageBitmap();
   return {
     bitmap: bitmap,
+    hasSoil: hasSoil,
     debug: {
       masks: debugMasks, successes: debugSuccesses, srcs: debugSrcs, biomes: debugBiomes,
       neighbors: debugNeighbors, transitionDirs: debugTransitionDirs, transitionSides: debugTransitionSides,
