@@ -64,6 +64,13 @@ export class ChunkProvider {
           this.schedulePump();
           return;
         }
+        if (msg.type === 'decorationsReady') {
+          // Soil + ground cover loaded — re-render all cached chunks to get f0/f1
+          console.log('[ChunkProvider] Decorations ready, re-rendering chunks');
+          if (this.renderCache) this.renderCache.clear();
+          this.schedulePump();
+          return;
+        }
         const { key } = msg;
         if (msg.type === 'chunkStart') {
           this.assembling.set(key, { cx: msg.cx, cy: msg.cy, tiles: [], renderTiles: [], objects: [] });
