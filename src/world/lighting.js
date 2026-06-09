@@ -18,14 +18,14 @@ var PHASES = [
     ambient: 1.00, tint: { r: 1.05, g: 1.02, b: 0.98 },
     sky: [212, 234, 245], fog: [230, 240, 250] },
   { name: 'golden_hour', start: 0.58,
-    ambient: 0.68, tint: { r: 1.18, g: 0.82, b: 0.42 },
-    sky: [196, 134, 58], fog: [200, 160, 100] },
+    ambient: 0.62, tint: { r: 1.25, g: 0.78, b: 0.35 },
+    sky: [210, 120, 40], fog: [220, 150, 80] },
   { name: 'dusk',      start: 0.72,
-    ambient: 0.30, tint: { r: 0.50, g: 0.42, b: 0.55 },
-    sky: [58, 42, 74], fog: [80, 60, 90] },
+    ambient: 0.24, tint: { r: 0.40, g: 0.35, b: 0.58 },
+    sky: [40, 30, 65], fog: [60, 45, 80] },
   { name: 'night',     start: 0.82,
-    ambient: 0.12, tint: { r: 0.22, g: 0.24, b: 0.48 },
-    sky: [12, 16, 32], fog: [18, 22, 45] },
+    ambient: 0.10, tint: { r: 0.18, g: 0.20, b: 0.45 },
+    sky: [8, 12, 28], fog: [14, 18, 38] },
 ];
 
 function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }

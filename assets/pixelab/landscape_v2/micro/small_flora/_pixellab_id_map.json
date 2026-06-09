@@ -1,0 +1,144 @@
+{
+  "acacia_seedling": [
+    "26d00838-f262-4fb8-b75b-3dd7890e1b75"
+  ],
+  "aether_fern": [
+    "3006778d-edbd-4229-88f9-fad31e06ad94"
+  ],
+  "alpine_tuft": [
+    "52b98d54-9463-4061-820c-e597a65fe0bc"
+  ],
+  "ash_grass": [
+    "0e826c20-991d-4158-b25d-7846a2c04d1c"
+  ],
+  "beach_weed": [
+    "f50bfaa6-6eb5-4c6a-ae9c-84eeb0f1a80b"
+  ],
+  "bracket_fungus": [
+    "36ec732d-2ed1-4285-b9ff-76c9ec9a5608",
+    "747498fc-918d-432d-b05e-6a10f86b6b05"
+  ],
+  "broad_fern": [
+    "4bb23513-dec5-44bf-9004-149094645fa9"
+  ],
+  "cattail_base": [
+    "c9530dca-1d2c-48d5-a257-ff17754cbbe7",
+    "5ba4c332-58ce-407b-b94d-9330372fdbea",
+    "dff88896-02c5-492a-9891-d92f98c3c5ca",
+    "39a4078d-07e5-4874-bb16-92461c94795c"
+  ],
+  "clover_bloom": [
+    "fbb450bd-8cb7-4a0a-9801-592fd5c3de30",
+    "0c706844-7454-4fcb-9966-d689cfc71154"
+  ],
+  "cold_moss_tuft": [
+    "258be4b5-efae-4905-a454-e95dbb83aefa",
+    "ac7cc9f9-4c2b-4318-9dc7-896908895feb"
+  ],
+  "dandelion_stem": [
+    "bcfc1d87-f98d-45a5-800a-d8c5606d1d2a",
+    "a631efc3-11e6-4ad4-b3c6-d7b5d8d0d10e"
+  ],
+  "dark_herb": [
+    "3d354d0c-797c-4b3c-b875-5cf15f1420d1"
+  ],
+  "desert_thorn": [
+    "78d4c2ab-0a09-4792-b44b-e37e9bac1b03"
+  ],
+  "dry_grass_spike": [
+    "50347cba-5514-4f85-b204-79a00fcafbcc"
+  ],
+  "dune_grass": [
+    "88dd85b4-0ebb-4c8a-be9f-99c8482f1442",
+    "858f7941-c69b-48be-b2eb-7b307b0681b4"
+  ],
+  "frost_flower": [
+    "eed9957b-7795-4a4e-ac45-b1bfe14fdc24"
+  ],
+  "frost_grass": [
+    "415ceffe-9d9f-411e-a4f5-07bc96442942"
+  ],
+  "glow_grass_blade": [
+    "56c8892f-116d-4848-ad83-3da9afad1843"
+  ],
+  "grass_blade_cluster": [
+    "909809bb-c073-4e46-9f7e-6f50553c5b2a",
+    "60b9cbad-09e4-499b-aa0a-1136f8cd191e",
+    "fb9fa4e3-5c15-4e68-a9c3-6629a9d65d0b",
+    "7cb5c077-498e-42a3-9a27-031e441bcf1c",
+    "c1d980a1-4e11-4702-b2d2-9de8abb6894f",
+    "4fa325e8-c260-43c9-9039-266c9103f7eb"
+  ],
+  "hardy_lichen": [
+    "08a8652f-6516-4d15-b95f-784358109e3f"
+  ],
+  "heat_sprout": [
+    "a9f02ac9-4597-42c9-bb41-3af743c26794",
+    "7842678c-74c9-4fe0-9f3d-ba7dba2804dc",
+    "ef5c829e-8208-4d08-af5a-03de66b49e74"
+  ],
+  "heather_sprig": [
+    "0dbe8327-8e1c-460c-b9ea-0d1727c20fee"
+  ],
+  "hillside_grass": [
+    "354a0fe3-aa36-4ee1-939a-6e0d64ece577"
+  ],
+  "ice_moss": [
+    "722b697c-ca52-4319-8cad-1e75d9c77d11"
+  ],
+  "ice_needle": [
+    "917c219e-245d-4040-b439-a4678f9b1e0f"
+  ],
+  "low_juniper": [
+    "63938c6f-96da-4dde-b622-55c595b3c60d"
+  ],
+  "orchid_sprout": [
+    "ffb85ef3-7699-4154-a480-8f6455962ee0",
+    "e33cece4-c155-4d3a-b2d7-f0e56208956b",
+    "9499a525-8a14-41ba-bfd6-283e34e45a24"
+  ],
+  "rock_cress": [
+    "2239ff9c-cb66-49ad-b633-b5c46144685a",
+    "e5494cf9-7657-47ca-9800-f5cc3dc3fb8d"
+  ],
+  "rock_flower_bud": [
+    "0c637cb4-4c04-4aad-8a80-b66e2edd941c"
+  ],
+  "sea_oat": [
+    "670b546d-1af1-4790-a5c2-a30fa4d8002f"
+  ],
+  "shade_fern": [
+    "ceafd3b8-14bb-4430-86ca-244652b18acb"
+  ],
+  "small_fern": [
+    "5837fd5f-8f7d-47be-84a1-33ba8a7bfa67",
+    "315c85e5-5531-4d95-819c-7e3be85ab217"
+  ],
+  "sparse_weed": [
+    "c77da00f-5ec3-46be-8b33-dc8a0fd9d979",
+    "3dad5ea0-2b64-46ac-a56c-a794e6aa4696"
+  ],
+  "swamp_herb": [
+    "0748aa90-d38a-4bd4-8e66-9761dbbf83e1"
+  ],
+  "tall_grass_blade": [
+    "f83abd65-b629-4df1-8726-9a514fb62898",
+    "a5f088d8-57fe-43fa-bdfd-015c75e9a49d"
+  ],
+  "thorn_sprout": [
+    "130c6bf5-bdef-4b1d-8b1c-dc5d3ca95987",
+    "46ae3c6b-6beb-4bd9-b98a-df87bd7dba38"
+  ],
+  "tundra_grass": [
+    "6585bcdb-a06e-4d88-806b-c05124751a86"
+  ],
+  "vine_tendril": [
+    "70fe416f-7b29-4ef7-a1e2-77713fe7af39",
+    "3f6af663-0e16-4f29-94e4-bf9f757ac565",
+    "49e8a5b7-4df9-455b-af35-147e6e38e0c4"
+  ],
+  "wild_herb": [
+    "bc524bbc-fe0a-400a-9b3c-d49c040b9dc0",
+    "637b1053-c0ac-431d-a0be-a599ee6c15eb"
+  ]
+}

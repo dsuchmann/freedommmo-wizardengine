@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__pixellab__create_map_object",
+      "mcp__pixellab__get_map_object",
+      "mcp__pixellab__create_1_direction_object",
+      "mcp__pixellab__get_object",
+      "mcp__pixellab__create_tiles_pro",
+      "mcp__pixellab__create_topdown_tileset",
+      "mcp__pixellab__get_tiles_pro",
+      "mcp__pixellab__get_topdown_tileset",
+      "mcp__pixellab__select_object_frames",
+      "mcp__pixellab__animate_object",
+      "mcp__pixellab__list_objects",
+      "mcp__pixellab__get_balance",
+      "mcp__pixellab__create_object_state",
+      "mcp__pixellab__delete_object",
+      "mcp__pixellab__list_projects",
+      "mcp__pixellab__agent_help",
+      "mcp__pixellab__agent_feedback"
+    ]
+  }
+}

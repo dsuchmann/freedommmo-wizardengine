@@ -1,0 +1,13 @@
+Player elev: 0.632805250336127
+West elev: 0.63551620637095
+West-2 elev: 0.6383364823563377
+West nearN: 0.6376125625192217
+West nearS: 0.6337959601474409
+West localStep: 0.002820275985387699
+Player plateau: 2
+West plateau: 2
+West slope: 0.00953178116608619 sX: 0.0055312320202106635 sY: -0.007762752381517246
+Neighbor plateau levels: [2,2,2,2]
+West plateauDelta: 0
+West form: hillside
+canEnterTile: PASS

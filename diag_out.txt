@@ -1,0 +1,7 @@
+elev: 0.63551620637095
+plateauLevel: 2 plateauDelta: 0
+localStep: 0.002820275985387699 slope: 0.17049837233080078
+ridgeSignal: 0.5141535264269604 valleySignal: 0.4133129211292644 convexity: -0.04036806730323628
+form: cliff
+
+BLOCKED: cliff

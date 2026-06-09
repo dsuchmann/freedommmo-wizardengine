@@ -110,7 +110,7 @@ Fields 0-2 use bilinear corner interpolation to determine per-pixel biome owners
 ---
 
 ## Field 2: Small Flora / Ground Detail
-**Status: NEEDS GENERATION**
+**Status: BASE SPRITES COMPLETE (all 16 biomes, 6,246 sprites). Animations in progress.**
 
 | Property | Value |
 |---|---|
@@ -198,13 +198,13 @@ alpha-transparent background, small debris sprite, detailed shading
 ---
 
 ## Field 4: Medium Flora / Flowers
-**Status: NEEDS GENERATION**
+**Status: PARTIAL (4 biomes)**
 
 | Property | Value |
 |---|---|
 | Grid | 6x6 (36 cells) |
 | Density | 3-12% |
-| Sprite size | 32x32 |
+| Sprite size | 64x64 (PixelLab size=64, 16 candidates/call) |
 | Variants per object | 60 |
 | Transition support | No |
 | Asset path | `assets/pixelab/landscape_v2/micro/medium_flora/{biome}/{object}/` |
@@ -243,13 +243,13 @@ detailed shading, medium flora sprite
 ---
 
 ## Field 5: Medium Objects
-**Status: NEEDS GENERATION**
+**Status: PARTIAL (19 biomes from sorting)**
 
 | Property | Value |
 |---|---|
 | Grid | 4x4 (16 cells) |
 | Density | 1-5% |
-| Sprite size | 32x32 or 48x48 |
+| Sprite size | 96x96 (PixelLab size=96, 16 candidates/call) |
 | Variants per object | 60 |
 | Footprint | 8-16px, claims cells in lower fields |
 | Transition support | No |
@@ -285,18 +285,28 @@ top-down high fantasy pixel art [object], jaw-dropping beauty, hyper-detailed,
 rich saturated colors, Final Fantasy aesthetic, alpha-transparent background,
 detailed shading, medium terrain object
 ```
-Use size=48 for `create_1_direction_object` (gives 16 candidates per call, need 4 calls per object).
+Use size=96 for `create_1_direction_object` (gives 16 candidates per call, need 4 calls per object).
+
+### PixelLab generation size guide (UPDATED 2026-06-07)
+| Field | Object type | PixelLab size | Candidates/call | Rationale |
+|-------|------------|---------------|-----------------|-----------|
+| 2 | Small flora | 32 | 64 | Half-tile objects, 32px is plenty |
+| 3 | Small scatter | 32 | 64 | Pebbles/twigs, same as Field 2 |
+| 4 | Medium flora | 64 | 16 | 1-1.5 tile objects, need detail for flowers |
+| 5 | Medium objects | 96 | 16 | 1.5-2 tile objects, boulders/stumps need texture |
+| 6 | Large objects | 192 | 4 | 4-5 tile objects, trees need bark/leaf detail |
+| 7 | Canopy | 192 | 4 | Same as Field 6, overhead layer |
 
 ---
 
 ## Field 6: Large Objects
-**Status: ASSETS READY**
+**Status: ASSETS EXIST but need regeneration at higher resolution. Rendering disabled pending quality review.**
 
 | Property | Value |
 |---|---|
 | Grid | 2x2 (4 cells) or 1x1 |
 | Density | 1-4% |
-| Sprite size | 64x64 |
+| Sprite size | 192x192 (PixelLab size=192, 4 candidates/call) — REGENERATE at this size |
 | Variants per object | ~60 |
 | Footprint | 20-40px, can span tile boundaries |
 | Y-sorted | Yes, sorted with player |

@@ -35,7 +35,7 @@ Use the **upper** ID when this biome is the upper/second terrain in a transition
 | deep_ocean | fbfa2b84-1701-4cad-a7c1-4d7f19321626 | 09e824f3-86b5-45b8-9e6f-2f54b8d17ce1 | 14ee3566-c439-4049-b95b-04419b5c5cee |
 | shallow_water | 3bcc59a8-5d49-47e3-a4c5-3c30ab8e05d3 | b76c4461-725a-4468-9631-e28b50b76f25 | 7ef8b363-bfc5-48e3-ab70-f4d12a5ac1f7 |
 | lake | 89c98c89-7d65-458b-8774-fc6c2a85e390 | b3c7768c-4611-43d2-92d9-c9dcb35f7fa4 | ec6cc367-df58-468d-8370-8e9b354ef050 |
-| river | PENDING — rate limited, generate next | — | — |
+| river | 160d9a82-cb5b-4a84-8b04-9ce93b39540c | 818260d3-6de2-4db1-88f2-8839b44d22c9 | 0627c024-7bf6-4371-bd04-4232858c3269 |
 
 ## Usage
 

@@ -1,1 +1,0 @@
-{"family":"forest_floor__to__swamp_ground","layer":"transition","from":"forest/forest_floor","to":"ground/swamp_ground","dimensions":[32,32],"alpha":false,"wang":true,"wangMasks":16,"overlayVariants":16,"seedBase":{"wang":300200000,"overlays":300200100},"transitionIndex":2}
