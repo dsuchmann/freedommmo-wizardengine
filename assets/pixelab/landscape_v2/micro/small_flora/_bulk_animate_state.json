@@ -911,7 +911,15 @@
     "bracket_fungus/v028": true,
     "bracket_fungus/v029": true,
     "bracket_fungus/v031": true,
-    "bracket_fungus/v030": true
+    "bracket_fungus/v030": true,
+    "bracket_fungus/v032": true,
+    "bracket_fungus/v033": true,
+    "bracket_fungus/v034": true,
+    "bracket_fungus/v035": true,
+    "bracket_fungus/v036": true,
+    "bracket_fungus/v037": true,
+    "bracket_fungus/v038": true,
+    "bracket_fungus/v040": true
   },
   "pending": {
     "tall_grass_blade/v011": "b4a67284-0c66-44ce-b800-76b49ddcfa47",
@@ -922,10 +930,10 @@
     "tall_grass_blade/v022": "32eb583f-e0ba-41ae-ae76-ae4e47255021",
     "tall_grass_blade/v025": "f53dc016-baff-4c4f-8112-62ed65cd86a2",
     "tall_grass_blade/v026": "f29f56bc-81ff-4b45-905b-20258f7089f3",
-    "bracket_fungus/v032": "39739e4f-bcb6-483f-bf4d-dc43a0841dbf",
-    "bracket_fungus/v033": "6f569bc6-61fd-432c-a0aa-0e3dbbdd9cfb",
-    "bracket_fungus/v034": "9c8e8614-2f1d-4767-bf17-0d9543eb2d19",
-    "bracket_fungus/v035": "0b913262-61eb-4c7d-b974-665350cc4192"
+    "bracket_fungus/v039": "a1ca2665-9e6e-44e2-bff7-cb3892618f6b",
+    "bracket_fungus/v041": "662bd55d-4d91-4dff-8f18-4c7cdb90d555",
+    "bracket_fungus/v042": "c1e17532-aef8-44e6-b121-97658273b2d2",
+    "bracket_fungus/v043": "0c167b11-4113-4bc8-963b-f96152a1f7c1"
   },
   "failed": [
     "tall_grass_blade/v011",
