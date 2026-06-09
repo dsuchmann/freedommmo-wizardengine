@@ -659,24 +659,30 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           if (!img) continue;
           isStatic = true;
         } else {
-          // Try per-variant animation first, then v000 fallback, then static
+          // Try per-variant animation, then v000 animation, then static.
+          // If the specific frame isn't loaded, fall back to frame_000 or static
+          // to avoid sprites popping in and out.
           var frameStr = 'frame_' + String(frameIdx).padStart(3, '0') + '.png';
+          var frame0Str = 'frame_000.png';
           var animDir = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v' + vStr + '/';
+          var v000Dir = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/';
+          var staticUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/sf__' + tile.biome + '__' + objName + '__v' + vStr + '.png';
+
+          // Try per-variant animation frame
           if (!_deadAnimDirs.has(animDir)) {
             img = loadFrame(animDir + frameStr);
             if (img === null && frameIdx === 0) _deadAnimDirs.add(animDir);
           }
+          // Try v000 animation frame
+          if (!img) img = loadFrame(v000Dir + frameStr);
+          // Try v000 frame_000 (always exists after preload)
+          if (!img) img = loadFrame(v000Dir + frame0Str);
+          // Try static sprite
           if (!img) {
-            // Fallback to v000 animation
-            img = loadFrame(SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/' + frameStr);
-          }
-          if (!img) {
-            // Fallback to static sprite
-            var staticUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/sf__' + tile.biome + '__' + objName + '__v' + vStr + '.png';
             img = loadFrame(staticUrl);
-            if (!img) continue;
-            isStatic = true;
+            if (img) isStatic = true;
           }
+          if (!img) continue;
         }
 
         // Sway: scaled by lifecycle state (dead=0, seedling=weak, normal=full)
