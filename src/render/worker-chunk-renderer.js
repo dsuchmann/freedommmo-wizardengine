@@ -681,14 +681,14 @@ function applyGroundCoverToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, im
 // Static base rendering — wind sway animations will draw on main thread later.
 var SF_BIOME_OBJECTS = {
   arctic: [
-    { name: 'frost_flower', sparsity: 0.88, scale: 0.55 },
-    { name: 'frozen_grass', sparsity: 0.80, scale: 0.50 },
-    { name: 'ice_needle', sparsity: 0.85, scale: 0.45 },
+    { name: 'frost_flower', sparsity: 0.94, scale: 0.55 },
+    { name: 'frozen_grass', sparsity: 0.90, scale: 0.50 },
+    { name: 'ice_needle', sparsity: 0.92, scale: 0.45 },
   ],
   beach: [
-    { name: 'beach_weed', sparsity: 0.88, scale: 0.50 },
-    { name: 'dune_grass', sparsity: 0.82, scale: 0.55 },
-    { name: 'sea_oat', sparsity: 0.90, scale: 0.55 },
+    { name: 'beach_weed', sparsity: 0.94, scale: 0.50 },
+    { name: 'dune_grass', sparsity: 0.91, scale: 0.55 },
+    { name: 'sea_oat', sparsity: 0.95, scale: 0.55 },
   ],
   dense_forest: [
     { name: 'shade_fern', sparsity: 0.72, scale: 0.55 },
@@ -750,8 +750,8 @@ var SF_BIOME_OBJECTS = {
     { name: 'ice_moss', sparsity: 0.85, scale: 0.45 },
   ],
   volcanic: [
-    { name: 'heat_sprout', sparsity: 0.90, scale: 0.50 },
-    { name: 'lava_fern', sparsity: 0.85, scale: 0.50 },
+    { name: 'heat_sprout', sparsity: 0.97, scale: 0.50 },
+    { name: 'lava_fern', sparsity: 0.96, scale: 0.50 },
   ],
 };
 var SF_BASE_PATH = '/assets/pixelab/landscape_v2/micro/small_flora/';

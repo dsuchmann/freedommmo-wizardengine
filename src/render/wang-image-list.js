@@ -145,7 +145,7 @@ var SOIL_MATERIALS = {
   swamp: 'peat_mud',
   hills: 'hillside_grass',
   mountains: 'grey_gravel',
-  volcanic: 'basalt_ash',
+  volcanic: 'ash_grass',
   tundra: 'frozen_earth',
   arctic: 'glacial_crust',
   mystic: 'aether_loam',
@@ -224,7 +224,7 @@ var SF_BIOME_OBJECTS_LIST = {
   arctic: ['frost_flower', 'frozen_grass', 'ice_needle'],
   beach: ['beach_weed', 'dune_grass', 'sea_oat'],
   dense_forest: ['shade_fern', 'dark_herb', 'bracket_fungus'],
-  desert: ['sand_grass', 'desert_thorn'],
+  desert: ['sand_grass'],
   forest: ['grass_blade_cluster', 'small_fern', 'clover_bloom'],
   grassland: ['tall_grass_blade', 'dandelion_stem', 'wild_herb'],
   hills: ['heather_sprig'],
@@ -236,7 +236,7 @@ var SF_BIOME_OBJECTS_LIST = {
   taiga: ['frost_grass', 'low_juniper', 'cold_moss_tuft'],
   tropical_forest: ['broad_fern', 'orchid_sprout', 'vine_tendril'],
   tundra: ['tundra_grass', 'low_berry_bush', 'ice_moss', 'arctic_berry'],
-  volcanic: ['ash_grass', 'heat_sprout', 'lava_fern'],
+  volcanic: ['heat_sprout', 'lava_fern'],
 };
 var SF_BASE_PATH = '/assets/pixelab/landscape_v2/micro/small_flora/';
 var SF_VARIANT_COUNT = 64;

@@ -952,7 +952,15 @@
     "desert_thorn/v007": true,
     "desert_thorn/v008": true,
     "desert_thorn/v010": true,
-    "desert_thorn/v009": true
+    "desert_thorn/v009": true,
+    "desert_thorn/v011": true,
+    "desert_thorn/v005": true,
+    "desert_thorn/v012": true,
+    "desert_thorn/v013": true,
+    "desert_thorn/v015": true,
+    "desert_thorn/v014": true,
+    "desert_thorn/v016": true,
+    "desert_thorn/v017": true
   },
   "pending": {
     "tall_grass_blade/v011": "b4a67284-0c66-44ce-b800-76b49ddcfa47",
@@ -963,10 +971,9 @@
     "tall_grass_blade/v022": "32eb583f-e0ba-41ae-ae76-ae4e47255021",
     "tall_grass_blade/v025": "f53dc016-baff-4c4f-8112-62ed65cd86a2",
     "tall_grass_blade/v026": "f29f56bc-81ff-4b45-905b-20258f7089f3",
-    "desert_thorn/v005": "55bb0cdf-5d74-4f58-8954-bc049283c826",
-    "desert_thorn/v011": "726bf292-280b-4bf1-96b6-830d3ef8233d",
-    "desert_thorn/v012": "411a43b6-3b15-44d5-b389-e3a694c9ccb0",
-    "desert_thorn/v013": "26ff1c77-c86b-4a48-8cd3-7c5890dfd1d1"
+    "desert_thorn/v018": "0ef2dc11-c952-4115-9ec2-0ab187840cde",
+    "desert_thorn/v019": "a2b08f37-158b-42cf-be7d-698138e50d27",
+    "desert_thorn/v020": "f00ea50c-5fcd-4065-bd6e-ff6e42958c26"
   },
   "failed": [
     "tall_grass_blade/v011",
@@ -996,8 +1003,4 @@
     "frost_flower/v029",
     "frost_flower/v035",
     "frost_flower/v032",
-    "sea_oat/v038",
-    "sea_oat/v058",
-    "sea_oat/v050"
-  ]
-}
+  
