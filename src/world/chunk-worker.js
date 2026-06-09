@@ -10,7 +10,7 @@ var SLICE_ROWS = 8;
 var imageCache = new Map();
 var imagesReady = false;
 var backgroundLoadingDone = false;
-var chunksWithoutSoil = [];
+var chunksNeedingRepaint = [];
 var neighborCache = new Map();
 var MAX_NEIGHBOR_CACHE = 50;
 
@@ -20,9 +20,11 @@ function shouldDenoise(url) {
 }
 
 // Load a batch of image URLs into the cache. Returns {loaded, failed}.
+// Retries failed URLs once with a smaller batch size to handle server overload.
 async function loadImageBatch(urls, batchSize) {
   var loaded = 0;
   var failed = 0;
+  var failedUrls = [];
   for (var i = 0; i < urls.length; i += batchSize) {
     var batch = urls.slice(i, i + batchSize);
     await Promise.all(batch.map(async function(url) {
@@ -38,9 +40,30 @@ async function loadImageBatch(urls, batchSize) {
         imageCache.set(url, bmp);
         loaded++;
       } catch (e) {
+        failedUrls.push(url);
         failed++;
       }
     }));
+  }
+  // Retry failed URLs with smaller batch size (likely failed due to connection overload)
+  if (failedUrls.length > 0) {
+    var retryBatch = Math.min(20, Math.ceil(batchSize / 10));
+    for (var ri = 0; ri < failedUrls.length; ri += retryBatch) {
+      var rBatch = failedUrls.slice(ri, ri + retryBatch);
+      await Promise.all(rBatch.map(async function(url) {
+        if (imageCache.has(url)) return;
+        try {
+          var response = await fetch(url);
+          if (!response.ok) return;
+          var blob = await response.blob();
+          var bmp = await createImageBitmap(blob);
+          if (shouldDenoise(url)) bmp = await denoiseBitmap(bmp);
+          imageCache.set(url, bmp);
+          loaded++;
+          failed--;
+        } catch (e) { /* truly missing */ }
+      }));
+    }
   }
   return { loaded: loaded, failed: failed };
 }
@@ -59,9 +82,9 @@ async function backgroundLoadRemaining() {
   backgroundLoadingDone = true;
   self.postMessage({ type: 'backgroundLoadDone', total: allUrls.length, cached: imageCache.size });
 
-  // Repaint any chunks that compiled without soil (images weren't ready yet)
-  if (chunksWithoutSoil.length > 0) {
-    var toRepaint = chunksWithoutSoil.splice(0);
+  // Repaint any chunks that compiled with missing images (soil, wang tiles)
+  if (chunksNeedingRepaint.length > 0) {
+    var toRepaint = chunksNeedingRepaint.splice(0);
     for (var ri = 0; ri < toRepaint.length; ri++) {
       var rchunk = toRepaint[ri];
       var tiles = neighborCache.get(rchunk.cx + ',' + rchunk.cy);
@@ -192,9 +215,9 @@ self.onmessage = function(event) {
     var sun = { height: 0.5, ambient: 0.85 };
     var result = renderChunkToBitmap(chunk, neighborCache, sun, imageCache);
 
-    // Track chunks that compiled without soil — they'll be repainted after background load
-    if (!result.hasSoil) {
-      chunksWithoutSoil.push({ key: key, cx: cx, cy: cy });
+    // Track chunks that had missing images — they'll be repainted after background load
+    if (result.needsRepaint) {
+      chunksNeedingRepaint.push({ key: key, cx: cx, cy: cy });
     }
 
     // Transfer bitmap to main thread (zero-copy)

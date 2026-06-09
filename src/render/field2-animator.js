@@ -19,9 +19,11 @@ var RIGID_OBJECTS = {
   'crystal_sprout': true,
   'hardy_lichen': true,
   'rock_cress': true,
+  'alpine_tuft': true,
   'low_berry_bush': true,
   'bracket_fungus': true,
   'dry_tuft': true,
+  'sparse_weed': true,
   'cold_moss_tuft': true,
   'ice_moss': true,
 };
@@ -459,13 +461,20 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
       // High blade count creates continuous coverage.
       var biome = tile.biome;
       var baseDensity = 4; // default
+      var tileChance = 1.0; // probability this tile gets ANY sprites
       if (biome === 'grassland') baseDensity = 7;
       else if (biome === 'forest' || biome === 'tropical_forest') baseDensity = 6;
       else if (biome === 'dense_forest') baseDensity = 8;
       else if (biome === 'savanna' || biome === 'steppe') baseDensity = 5;
       else if (biome === 'swamp') baseDensity = 5;
-      else if (biome === 'taiga') baseDensity = 5;
-      else if (biome === 'desert' || biome === 'volcanic' || biome === 'arctic' || biome === 'tundra') baseDensity = 3;
+      else if (biome === 'taiga') baseDensity = 7;
+      else if (biome === 'volcanic') { baseDensity = 1; tileChance = 0.20; }
+      else if (biome === 'mountains') { baseDensity = 1; tileChance = 0.10; }
+      else if (biome === 'arctic' || biome === 'tundra') { baseDensity = 1; tileChance = 0.30; }
+      else if (biome === 'desert' || biome === 'beach') { baseDensity = 1; tileChance = 0.35; }
+
+      // Skip this tile entirely based on biome harshness
+      if (tileChance < 1.0 && rand2(wx, wy, 6999) > tileChance) continue;
 
       var bladeCount = baseDensity + Math.floor(fertility * 3);
 

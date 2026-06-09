@@ -1315,10 +1315,17 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
   // applySmallFloraToChunk(ctx, chunk, tileSize, chunkSize, imageCache);
   applySmallScatterToChunk(ctx, chunk, tileSize, chunkSize, imageCache, occupancy, cellsPerTile, cellPx, gridW);
 
+  // Check if any wang tiles failed to load
+  var wangMissing = 0;
+  for (var wi = 0; wi < debugSuccesses.length; wi++) {
+    if (!debugSuccesses[wi]) wangMissing++;
+  }
+
   var bitmap = offscreen.transferToImageBitmap();
   return {
     bitmap: bitmap,
     hasSoil: hasSoil,
+    needsRepaint: !hasSoil || wangMissing > 0,
     debug: {
       masks: debugMasks, successes: debugSuccesses, srcs: debugSrcs, biomes: debugBiomes,
       neighbors: debugNeighbors, transitionDirs: debugTransitionDirs, transitionSides: debugTransitionSides,
