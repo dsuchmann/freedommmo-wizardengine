@@ -1296,6 +1296,10 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
     var soilCount = 0;
     imageCache.forEach(function(v, k) { if (k.includes('/soil/')) soilCount++; });
     console.log('[SOIL DEBUG] imageCache size:', imageCache.size, 'soil entries:', soilCount, 'base test:', !!imageCache.get(soilTestUrl), 'accent test:', !!imageCache.get(soilTestUrl2));
+    // Log first few soil keys to see actual URL format
+    var soilKeys = [];
+    imageCache.forEach(function(v, k) { if (k.includes('/soil/') && k.includes('base') && soilKeys.length < 3) soilKeys.push(k); });
+    console.log('[SOIL DEBUG] actual base keys:', soilKeys);
   }
   applySoilFieldToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache);
   applyGroundCoverToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache, occupancy, cellsPerTile, cellPx, gridW);
