@@ -750,7 +750,12 @@
     "sea_oat/v055": true,
     "sea_oat/v057": true,
     "sea_oat/v056": true,
-    "sea_oat/v060": true
+    "sea_oat/v060": true,
+    "sea_oat/v059": true,
+    "sea_oat/v061": true,
+    "sea_oat/v063": true,
+    "sea_oat/v062": true,
+    "beach_weed/v001": true
   },
   "pending": {
     "tall_grass_blade/v011": "b4a67284-0c66-44ce-b800-76b49ddcfa47",
@@ -761,10 +766,10 @@
     "tall_grass_blade/v022": "32eb583f-e0ba-41ae-ae76-ae4e47255021",
     "tall_grass_blade/v025": "f53dc016-baff-4c4f-8112-62ed65cd86a2",
     "tall_grass_blade/v026": "f29f56bc-81ff-4b45-905b-20258f7089f3",
-    "sea_oat/v050": "07158ef8-139d-43f5-a7f6-9eb86a0f49e6",
-    "sea_oat/v059": "ff80485c-e6f7-4173-ab44-1ed59cef2a7f",
-    "sea_oat/v061": "f79e8f5d-c5b4-44c5-8228-83d1672e1371",
-    "sea_oat/v062": "d8c8b2c6-2c84-4c6b-b992-1e6462dec208"
+    "beach_weed/v002": "746cc53f-7664-4e5f-9d63-abd000365b00",
+    "beach_weed/v003": "071d0a08-471e-4163-b082-37f1df5ac48b",
+    "beach_weed/v004": "1142c9ec-76bd-47b9-b70b-ec3589265721",
+    "beach_weed/v005": "d6eae46a-6c21-445e-83ac-145ec37b2521"
   },
   "failed": [
     "tall_grass_blade/v011",
@@ -793,4 +798,9 @@
     "frost_flower/v028",
     "frost_flower/v029",
     "frost_flower/v035",
-    "frost_flower/v
+    "frost_flower/v032",
+    "sea_oat/v038",
+    "sea_oat/v058",
+    "sea_oat/v050"
+  ]
+}
