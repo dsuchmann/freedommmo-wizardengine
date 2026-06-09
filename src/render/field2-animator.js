@@ -312,31 +312,75 @@ function loadFrame(url) {
 
 // Preload wind sway frames AND static sprites for nearby biomes
 var lastPreloadKey = '';
+var _f2Ready = false;
+var _f2TotalToLoad = 0;
+var _f2Loaded = 0;
+
+export function isField2Ready() { return _f2Ready; }
+
 export function preloadField2Animations(biomes) {
   var key = biomes.sort().join(',');
   if (key === lastPreloadKey) return;
   lastPreloadKey = key;
+  _f2Ready = false;
+  _f2TotalToLoad = 0;
+  _f2Loaded = 0;
+
+  var urls = [];
   for (var b = 0; b < biomes.length; b++) {
     var objects = SF_BIOME_OBJECTS_LIST[biomes[b]];
     if (!objects) continue;
     for (var oi = 0; oi < objects.length; oi++) {
-      // Preload ALL animation variants and ALL static sprites
+      // All static sprites (64 per object)
       for (var v = 0; v < SF_VARIANT_COUNT; v++) {
         var pvStr = v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v);
-        // Animation frames for this variant
-        for (var f = 0; f < FRAME_COUNT; f++) {
-          loadFrame(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/anim/wind_sway/v' + pvStr + '/frame_' + String(f).padStart(3, '0') + '.png');
-        }
-        // Static sprite for this variant
-        loadFrame(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/sf__' + biomes[b] + '__' + objects[oi] + '__v' + pvStr + '.png');
+        urls.push(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/sf__' + biomes[b] + '__' + objects[oi] + '__v' + pvStr + '.png');
+      }
+      // v000 animation frames only (guaranteed to exist)
+      for (var f = 0; f < FRAME_COUNT; f++) {
+        urls.push(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/anim/wind_sway/v000/frame_' + String(f).padStart(3, '0') + '.png');
       }
     }
+  }
+
+  _f2TotalToLoad = urls.length;
+  for (var u = 0; u < urls.length; u++) {
+    var url = urls[u];
+    if (frameCache.has(url)) { _f2Loaded++; continue; }
+    if (loadingSet.has(url)) continue;
+    loadingSet.add(url);
+    var img = new Image();
+    img.src = url;
+    img.onload = (function(imgRef, urlRef) {
+      return function() {
+        var clean = denoiseImage(imgRef);
+        if (clean !== imgRef && !clean.complete) {
+          clean.onload = function() { frameCache.set(urlRef, clean); loadingSet.delete(urlRef); _f2Loaded++; checkReady(); };
+        } else {
+          frameCache.set(urlRef, clean); loadingSet.delete(urlRef); _f2Loaded++; checkReady();
+        }
+      };
+    })(img, url);
+    img.onerror = (function(urlRef) {
+      return function() { frameCache.set(urlRef, null); loadingSet.delete(urlRef); _f2Loaded++; checkReady(); };
+    })(url);
+  }
+  checkReady();
+}
+
+function checkReady() {
+  if (_f2Loaded >= _f2TotalToLoad && !_f2Ready) {
+    _f2Ready = true;
+    console.log('[F2] All sprites loaded:', _f2Loaded, '/', _f2TotalToLoad);
   }
 }
 
 // Draw animated Field 2 sprites near the player.
 // Called per-frame from canvas-renderer after chunk drawing.
 export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, weather) {
+  // Don't render until all sprites are loaded — prevents cascading pops
+  if (!_f2Ready) return;
+
   var tilePx = WORLD.tileSize * camera.zoom;
   var chunkPx = chunkGrid.chunkPx;
   var baseSX = chunkGrid.baseSX;
