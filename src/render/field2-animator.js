@@ -27,11 +27,9 @@ var RIGID_OBJECTS = {
 };
 
 // Track per-sprite trigger times and extension count
+// key → { time: triggerTimeMs, extensions: count }
 var triggerTimes = new Map();
-var MAX_EXTENSIONS = 3;
-
-// Track animation variant dirs that 404'd — skip all frames for dead dirs
-var _deadAnimDirs = new Set();
+var MAX_EXTENSIONS = 3; // hard cap on neighbor extensions to prevent infinite loops
 
 // ---- Wind Currents ----
 // Visible wavefronts that sweep across the map, bending sprites as they pass.
@@ -184,8 +182,8 @@ function denoiseImage(img) {
       if (brightness > 220 && brightness - avgBright > 60 && opaque < 5) {
         data[idx + 3] = 0; changed = true; continue;
       }
-      // Remove dark specks — only completely isolated single dark pixels
-      if (brightness < 20 && avgBright - brightness > 80 && opaque < 2) {
+      // Remove dark specks — only truly isolated dark dots
+      if (brightness < 30 && avgBright - brightness > 60 && opaque < 3) {
         data[idx + 3] = 0; changed = true; continue;
       }
       // Remove color confetti
@@ -337,7 +335,7 @@ export function preloadField2Animations(biomes) {
 
 // Draw animated Field 2 sprites near the player.
 // Called per-frame from canvas-renderer after chunk drawing.
-export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, weather, sun) {
+export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, weather) {
   var tilePx = WORLD.tileSize * camera.zoom;
   var chunkPx = chunkGrid.chunkPx;
   var baseSX = chunkGrid.baseSX;
@@ -363,7 +361,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
   updateCurrents(timeSec, wind.direction, wind.intensity, player.x, player.y);
 
   ctx.save();
-  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingEnabled = false;
 
   // Clamp animation radius to visible screen to avoid off-screen work
   var visibleTilesX = Math.ceil(w / tilePxSnapped / 2) + 2;
@@ -616,18 +614,12 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           if (!img) continue;
           isStatic = true;
         } else {
-          // Load this variant's animation frame.
-          // Track which variant dirs have 404'd so we don't try all 9 frames.
-          var animDir = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v' + vStr + '/';
-          if (!_deadAnimDirs.has(animDir)) {
-            var animUrl = animDir + 'frame_' + String(frameIdx).padStart(3, '0') + '.png';
-            img = loadFrame(animUrl);
-            // If frame_000 fails, mark the whole dir as dead
-            if (img === null && frameIdx === 0) {
-              _deadAnimDirs.add(animDir);
-            }
-          }
+          // Use v000 animation frames (shared across all variants — no per-variant 404 flood)
+          var animBase = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/';
+          var frameStr = 'frame_' + String(frameIdx).padStart(3, '0') + '.png';
+          img = loadFrame(animBase + frameStr);
           if (!img) {
+            // Fall back to static sprite with sway transforms
             var staticUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/sf__' + tile.biome + '__' + objName + '__v' + vStr + '.png';
             img = loadFrame(staticUrl);
             if (!img) continue;
@@ -643,11 +635,10 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
 
         // Buffer for Y-sorted drawing
         var halfDraw = drawSize * 0.5;
-        var hasSway = Math.abs(sway) > 0.001 || Math.abs(baseAngle) > 0.001;
         drawBuffer.push({
-          sortY: wy + 0.5 + (rand2(wx, wy, 7031 + bi) - 0.5) * 0.5,
+          sortY: wy + 0.5 + (rand2(wx, wy, 7031 + bi) - 0.5) * 0.5, // world Y for depth sort
           sx: sx, sy: sy, halfDraw: halfDraw, drawSize: drawSize,
-          baseAngle: baseAngle, sway: sway, hasSway: hasSway,
+          baseAngle: baseAngle, sway: sway,
           alpha: finalAlpha * lifeAlpha, img: img
         });
       }
@@ -657,49 +648,24 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
   // Sort by world Y (top-to-bottom = far-to-near)
   drawBuffer.sort(function(a, b) { return a.sortY - b.sortY; });
 
-  // Shadow params from sun/moon
-  var shadowX = sun ? sun.shadowX || 0 : 0;
-  var shadowY = sun ? sun.shadowY || 0.5 : 0.5;
-  var shadowLen = sun ? sun.shadowLength || 1 : 1;
-  var shadowAlpha = sun ? (sun.isDaytime ? 0.20 * Math.min(1, sun.sunHeight * 2.5) : 0.06 * (sun.moonHeight || 0)) : 0;
-  var hasShadows = shadowAlpha > 0.02;
-
-  // Draw all visible sprites with shadows
+  // Find where to insert the player
   var playerInserted = false;
   for (var di = 0; di < drawBuffer.length; di++) {
+    // Draw player when we reach sprites at or below player's Y
     if (!playerInserted && drawBuffer[di].sortY > player.y + 0.4) {
       if (_playerDrawFn) _playerDrawFn(ctx);
       playerInserted = true;
     }
     var d = drawBuffer[di];
-
-    // --- Shadow projection ---
-    if (hasShadows) {
-      var shOffX = shadowX * d.drawSize * shadowLen * 0.5;
-      var shOffY = d.drawSize * 0.1;
-      ctx.save();
-      ctx.translate(d.sx + shOffX, d.sy + d.halfDraw + shOffY);
-      ctx.scale(1 + shadowLen * 0.2, 0.22);
-      ctx.globalAlpha = shadowAlpha * d.alpha;
-      ctx.drawImage(d.img, -d.halfDraw * 1.1, -d.drawSize * 0.4, d.drawSize * 1.1, d.drawSize * 0.5);
-      ctx.restore();
-    }
-
-    // --- Sprite ---
-    if (d.hasSway) {
-      ctx.save();
-      ctx.translate(d.sx, d.sy + d.halfDraw);
-      ctx.rotate(d.baseAngle + d.sway);
-      ctx.globalAlpha = d.alpha;
-      ctx.drawImage(d.img, -d.halfDraw, -d.drawSize, d.drawSize, d.drawSize);
-      ctx.restore();
-    } else {
-      if (d.alpha < 0.99) ctx.globalAlpha = d.alpha;
-      ctx.drawImage(d.img, d.sx - d.halfDraw, d.sy - d.halfDraw, d.drawSize, d.drawSize);
-    }
+    ctx.save();
+    ctx.translate(d.sx, d.sy + d.halfDraw);
+    ctx.rotate(d.baseAngle + d.sway);
+    ctx.globalAlpha = d.alpha;
+    ctx.drawImage(d.img, -d.halfDraw, -d.drawSize, d.drawSize, d.drawSize);
+    ctx.restore();
   }
+  // If player is below all sprites, draw last
   if (!playerInserted && _playerDrawFn) _playerDrawFn(ctx);
-  ctx.globalAlpha = 1.0;
 
   ctx.restore();
 }
