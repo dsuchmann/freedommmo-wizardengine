@@ -127,20 +127,16 @@ self.onmessage = function(event) {
   var data = event.data;
 
   if (data.type === 'preloadBiomes') {
-    // Phase 1: wang tiles ONLY — chunks render immediately with terrain.
+    // Load wang + soil + ground cover together. Wait for all before rendering chunks.
+    // This ensures f0/f1 are always present when chunks paint.
     var biomeUrls = getWangImageURLsForBiomes(data.biomes);
-    loadImageBatch(biomeUrls, 80).then(function(result) {
+    var soilUrls = getSoilImageURLs();
+    var gcUrls = getGroundCoverImageURLs();
+    var allUrls = biomeUrls.concat(soilUrls).concat(gcUrls);
+    loadImageBatch(allUrls, 200).then(function(result) {
       imagesReady = true;
-      self.postMessage({ type: 'imagesReady', loaded: result.loaded, failed: result.failed, total: biomeUrls.length });
-
-      // Phase 2: soil + ground cover — then signal to re-render chunks with f0/f1.
-      var soilUrls = getSoilImageURLs();
-      var gcUrls = getGroundCoverImageURLs();
-      loadImageBatch(soilUrls.concat(gcUrls), 80).then(function(r2) {
-        self.postMessage({ type: 'decorationsReady', loaded: r2.loaded, failed: r2.failed });
-        // Phase 3: everything else in background
-        backgroundLoadRemaining();
-      });
+      self.postMessage({ type: 'imagesReady', loaded: result.loaded, failed: result.failed, total: allUrls.length });
+      backgroundLoadRemaining();
     });
     return;
   }
