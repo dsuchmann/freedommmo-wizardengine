@@ -15,7 +15,7 @@ var MAX_NEIGHBOR_CACHE = 50;
 
 // URLs matching these patterns get denoised at load time
 function shouldDenoise(url) {
-  return url.includes('/small_flora/') || url.includes('/micro/soil/');
+  return url.includes('/small_flora/');
 }
 
 // Load a batch of image URLs into the cache. Returns {loaded, failed}.
