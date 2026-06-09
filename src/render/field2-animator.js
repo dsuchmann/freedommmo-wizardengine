@@ -320,12 +320,14 @@ export function preloadField2Animations(biomes) {
     var objects = SF_BIOME_OBJECTS_LIST[biomes[b]];
     if (!objects) continue;
     for (var oi = 0; oi < objects.length; oi++) {
-      // Preload v000 animation frames and ALL 64 static sprites
-      for (var f = 0; f < FRAME_COUNT; f++) {
-        loadFrame(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/anim/wind_sway/v000/frame_' + String(f).padStart(3, '0') + '.png');
-      }
+      // Preload ALL animation variants and ALL static sprites
       for (var v = 0; v < SF_VARIANT_COUNT; v++) {
         var pvStr = v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v);
+        // Animation frames for this variant
+        for (var f = 0; f < FRAME_COUNT; f++) {
+          loadFrame(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/anim/wind_sway/v' + pvStr + '/frame_' + String(f).padStart(3, '0') + '.png');
+        }
+        // Static sprite for this variant
         loadFrame(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/sf__' + biomes[b] + '__' + objects[oi] + '__v' + pvStr + '.png');
       }
     }
