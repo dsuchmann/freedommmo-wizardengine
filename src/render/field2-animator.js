@@ -615,12 +615,19 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           if (!img) continue;
           isStatic = true;
         } else {
-          // Use v000 animation frames (shared across all variants — no per-variant 404 flood)
-          var animBase = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/';
+          // Try per-variant animation first, then v000 fallback, then static
           var frameStr = 'frame_' + String(frameIdx).padStart(3, '0') + '.png';
-          img = loadFrame(animBase + frameStr);
+          var animDir = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v' + vStr + '/';
+          if (!_deadAnimDirs.has(animDir)) {
+            img = loadFrame(animDir + frameStr);
+            if (img === null && frameIdx === 0) _deadAnimDirs.add(animDir);
+          }
           if (!img) {
-            // Fall back to static sprite with sway transforms
+            // Fallback to v000 animation
+            img = loadFrame(SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/' + frameStr);
+          }
+          if (!img) {
+            // Fallback to static sprite
             var staticUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/sf__' + tile.biome + '__' + objName + '__v' + vStr + '.png';
             img = loadFrame(staticUrl);
             if (!img) continue;
@@ -637,12 +644,38 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         // Buffer for Y-sorted drawing
         var halfDraw = drawSize * 0.5;
         drawBuffer.push({
-          sortY: wy + 0.5 + (rand2(wx, wy, 7031 + bi) - 0.5) * 0.5, // world Y for depth sort
+          sortY: wy + 0.5 + (rand2(wx, wy, 7031 + bi) - 0.5) * 0.5,
           sx: sx, sy: sy, halfDraw: halfDraw, drawSize: drawSize,
           baseAngle: baseAngle, sway: sway,
-          alpha: finalAlpha * lifeAlpha, img: img
+          alpha: finalAlpha * lifeAlpha, img: img,
+          _url: img ? img.src || '' : ''
         });
       }
+    }
+  }
+
+  // Debug: press 9 to dump all drawn sprite URLs to console
+  if (!self._f2DebugListener) {
+    self._f2DebugListener = true;
+    window.addEventListener('keydown', function(e) {
+      if (e.key === '9') {
+        self._f2DumpNext = true;
+      }
+    });
+  }
+  if (self._f2DumpNext && drawBuffer.length > 0) {
+    self._f2DumpNext = false;
+    var urlCounts = {};
+    for (var di = 0; di < drawBuffer.length; di++) {
+      var u = drawBuffer[di]._url || 'unknown';
+      // Shorten URL for readability
+      u = u.replace(/.*\/small_flora\//, '');
+      urlCounts[u] = (urlCounts[u] || 0) + 1;
+    }
+    console.log('[F2 DEBUG] ' + drawBuffer.length + ' sprites on screen:');
+    var sorted = Object.entries(urlCounts).sort(function(a,b) { return b[1] - a[1]; });
+    for (var si = 0; si < sorted.length; si++) {
+      console.log('  ' + sorted[si][1] + 'x ' + sorted[si][0]);
     }
   }
 
