@@ -13,19 +13,6 @@ var FRAME_COUNT = 9;
 var FRAME_DURATION = 120; // ms per frame
 var CYCLE_DURATION = FRAME_COUNT * FRAME_DURATION; // ms per full cycle
 
-// Objects that should NEVER sway — rigid/mineral/crystal types
-var RIGID_OBJECTS = {
-  'ice_needle': true,
-  'crystal_sprout': true,
-  'hardy_lichen': true,
-  'rock_cress': true,
-  'low_berry_bush': true,
-  'bracket_fungus': true,
-  'dry_tuft': true,
-  'cold_moss_tuft': true,
-  'ice_moss': true,
-};
-
 // Track per-sprite trigger times and extension count
 // key → { time: triggerTimeMs, extensions: count }
 var triggerTimes = new Map();
@@ -320,14 +307,16 @@ export function preloadField2Animations(biomes) {
     var objects = SF_BIOME_OBJECTS_LIST[biomes[b]];
     if (!objects) continue;
     for (var oi = 0; oi < objects.length; oi++) {
-      // Preload v000 animation frames (guaranteed fallback) and static sprites
+      // Preload wind_sway and player_walk animation frames
       for (var f = 0; f < FRAME_COUNT; f++) {
         loadFrame(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/anim/wind_sway/v000/frame_' + String(f).padStart(3, '0') + '.png');
         loadFrame(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/anim/player_walk/v000/frame_' + String(f).padStart(3, '0') + '.png');
       }
+      // Preload static sprites as fallback (first 16 variants)
       for (var v = 0; v < 16; v++) {
-        var pvStr = v < 10 ? '00' + v : '0' + v;
-        loadFrame(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/sf__' + biomes[b] + '__' + objects[oi] + '__v' + pvStr + '.png');
+        var vStr = v < 10 ? '00' + v : '0' + v;
+        var staticUrl = SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/sf__' + biomes[b] + '__' + objects[oi] + '__v' + vStr + '.png';
+        loadFrame(staticUrl);
       }
     }
   }
@@ -348,7 +337,6 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
   var px = Math.floor(player.x);
   var py = Math.floor(player.y);
   var timeSec = timeMs * 0.001;
-  var drawBuffer = [];
 
   // Compute player velocity for interaction push
   var playerVX = (player.x - _prevPlayerX) / Math.max(0.001, 1 / 60);
@@ -361,7 +349,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
   updateCurrents(timeSec, wind.direction, wind.intensity, player.x, player.y);
 
   ctx.save();
-  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingEnabled = false;
 
   // Clamp animation radius to visible screen to avoid off-screen work
   var visibleTilesX = Math.ceil(w / tilePxSnapped / 2) + 2;
@@ -385,120 +373,36 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
       if (!objects || objects.length === 0) continue;
       if (tile.transitionPair) continue;
 
-      // Skip tiles near any edge — biome transitions OR elevation changes
-      var myElev = tile.climate ? tile.climate.elevation : 0.5;
-      var isNearEdge = false;
-      for (var edy = -2; edy <= 2 && !isNearEdge; edy++) {
-        for (var edx = -2; edx <= 2 && !isNearEdge; edx++) {
-          if (edx === 0 && edy === 0) continue;
-          var nbTile = chunkStore.tileAt(wx + edx, wy + edy);
-          if (!nbTile) continue;
-          // Different biome = edge
-          if (nbTile.biome !== tile.biome) { isNearEdge = true; break; }
-          // Significant elevation change = edge (cliff level differs)
-          var nbElev = nbTile.climate ? nbTile.climate.elevation : 0.5;
-          if (Math.abs(Math.floor(myElev * 10) - Math.floor(nbElev * 10)) >= 1) { isNearEdge = true; break; }
-        }
-      }
-      if (isNearEdge) continue;
-
-      // Density driven by biome + tile fertility/vegetation
+      // Same placement logic as the static renderer — must match exactly
       var vegDensity = tile.layers && tile.layers[6] ? tile.layers[6].vegetationDensity : 0.5;
       var fertility = tile.layers && tile.layers[6] ? tile.layers[6].fertility : 0.5;
       if (vegDensity < 0.08 && fertility < 0.10) continue;
 
-      // Dense carpet: grass is ground cover, not decoration.
-      // High blade count creates continuous coverage.
-      var biome = tile.biome;
-      var baseDensity = 4; // default
-      if (biome === 'grassland') baseDensity = 7;
-      else if (biome === 'forest' || biome === 'tropical_forest') baseDensity = 6;
-      else if (biome === 'dense_forest') baseDensity = 8;
-      else if (biome === 'savanna' || biome === 'steppe') baseDensity = 5;
-      else if (biome === 'swamp') baseDensity = 5;
-      else if (biome === 'taiga') baseDensity = 5;
-      else if (biome === 'desert' || biome === 'volcanic' || biome === 'arctic' || biome === 'tundra') baseDensity = 3;
-
-      var bladeCount = baseDensity + Math.floor(fertility * 3);
+      var bladeCount = 2 + Math.floor(fertility * 2.5);
 
       // Chunk screen origin
       var chunkOriginX = baseSX + (cx - gridMinCX) * chunkPx;
       var chunkOriginY = baseSY + (cy - gridMinCY) * chunkPx;
 
       for (var bi = 0; bi < bladeCount; bi++) {
-        // Primary grass (oi=0) always placed — it's the carpet.
-        // Secondary/tertiary objects (flowers, herbs) are sparser accents.
-        var isAccent = bi >= baseDensity; // extra blades from fertility are accent slots
-        if (isAccent) {
-          var accentCoverage = 0.30 + fertility * 0.40;
-          if (rand2(wx, wy, 7000 + bi) > accentCoverage) continue;
-        }
+        var bladeCoverage = 0.50 + vegDensity * 0.35 + fertility * 0.15;
+        if (rand2(wx, wy, 7000 + bi) > bladeCoverage) continue;
 
-        // Species selection: primary grass (carpet) vs accent vegetation
-        // Carpet blades (bi < baseDensity) are almost always the primary grass species.
-        // Accent blades (bi >= baseDensity) can be flowers, herbs, etc.
+        // Species selection — same as static
         var speciesRoll = rand2(wx, wy, 7010 + bi * 100);
         var oi;
-        if (objects.length === 1) {
-          oi = 0;
-        } else if (!isAccent) {
-          // Carpet: overwhelmingly primary grass, rare accent
-          oi = speciesRoll < 0.95 ? 0 : (objects.length > 2 && speciesRoll > 0.98 ? 2 : 1);
-        } else {
-          // Accent slots: flowers and herbs emerge from the carpet
-          if (objects.length === 2) oi = speciesRoll < 0.40 ? 0 : 1;
-          else { if (speciesRoll < 0.25) oi = 0; else if (speciesRoll < 0.65) oi = 1; else oi = 2; }
-        }
+        if (objects.length === 1) oi = 0;
+        else if (objects.length === 2) oi = speciesRoll < 0.90 ? 0 : 1;
+        else { if (speciesRoll < 0.90) oi = 0; else if (speciesRoll < 0.97) oi = 1; else oi = 2; }
 
         var objName = objects[oi];
 
-        // Per-blade variant index — deterministic, used for both animation paths and static fallback
-        var variantIdx = Math.floor(rand2(wx, wy, 7035 + bi) * SF_VARIANT_COUNT);
-        var vStr = variantIdx < 10 ? '00' + variantIdx : (variantIdx < 100 ? '0' + variantIdx : '' + variantIdx);
-
-        // Lifecycle state — deterministic per blade, affects sprite and transforms
-        // seedling 15%, normal 55%, wilting 20%, dead 10%
-        var stateRoll = rand2(wx, wy, 7100 + bi);
-        var lifecycleState = 'normal';
-        if (stateRoll < 0.15) lifecycleState = 'seedling';
-        else if (stateRoll < 0.70) lifecycleState = 'normal';
-        else if (stateRoll < 0.90) lifecycleState = 'wilting';
-        else lifecycleState = 'dead';
-
-        // Lifecycle modifiers
-        var lifeScale = 1.0;    // size multiplier
-        var lifeAngle = 0;      // additional rotation
-        var lifeAlpha = 1.0;    // opacity
-        var lifeSway = 1.0;     // sway intensity multiplier
-        var lifeStaticOverride = null; // state sprite URL if available
-
-        if (lifecycleState === 'seedling') {
-          lifeScale = 0.45 + rand2(wx, wy, 7101 + bi) * 0.15; // 45-60% size
-          lifeSway = 0.3; // tiny sway
-        } else if (lifecycleState === 'wilting') {
-          lifeScale = 0.85 + rand2(wx, wy, 7102 + bi) * 0.1;
-          lifeAngle = (0.2 + rand2(wx, wy, 7103 + bi) * 0.3) * (rand2(wx, wy, 7104 + bi) > 0.5 ? 1 : -1); // droop
-          lifeSway = 0.5; // weak sway
-        } else if (lifecycleState === 'dead') {
-          lifeScale = 0.6 + rand2(wx, wy, 7106 + bi) * 0.2;
-          lifeAngle = (0.4 + rand2(wx, wy, 7107 + bi) * 0.4) * (rand2(wx, wy, 7108 + bi) > 0.5 ? 1 : -1); // fallen over
-          lifeSway = 0; // no sway — stiff/dead
-        }
-
-        // Try loading actual state sprite (if not normal)
-        if (lifecycleState !== 'normal') {
-          var stateUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/states/' + lifecycleState + '/v000.png';
-          var stateImg = loadFrame(stateUrl);
-          if (stateImg) lifeStaticOverride = stateImg;
-        }
-
         // === PRIORITY 1: Player walk — checked BEFORE wind/sway ===
         // Position must be computed first
-        // Spread blades across full tile and slightly into neighbors for seamless coverage
-        var offX = (rand2(wx, wy, 7030 + bi) - 0.5) * tilePxSnapped * 1.1;
-        var offY = (rand2(wx, wy, 7031 + bi) - 0.5) * tilePxSnapped * 1.1;
-        var drawSize = tilePxSnapped * lifeScale;
-        var baseAngle = (rand2(wx, wy, 7040 + bi) - 0.5) * 0.35 + lifeAngle;
+        var offX = (rand2(wx, wy, 7030 + bi) - 0.5) * tilePxSnapped * 0.8;
+        var offY = (rand2(wx, wy, 7031 + bi) - 0.5) * tilePxSnapped * 0.8;
+        var drawSize = tilePxSnapped;
+        var baseAngle = (rand2(wx, wy, 7040 + bi) - 0.5) * 0.35;
         var sx = chunkOriginX + tx * tilePxSnapped + halfTile + offX;
         var sy = chunkOriginY + ty * tilePxSnapped + halfTile + offY;
         var dist = Math.max(Math.abs(wx - px), Math.abs(wy - py));
@@ -507,11 +411,71 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         var edgeFade = dist <= fadeStart ? 1.0 : Math.max(0, 1.0 - (dist - fadeStart) / (maxR - fadeStart));
         var finalAlpha = edgeFade;
 
-        // === Wind sway / static rendering ===
+        var bladeWorldX = wx + 0.5 + (rand2(wx, wy, 7030 + bi) - 0.5) * 0.8;
+        var bladeWorldY = wy + 0.5 + (rand2(wx, wy, 7031 + bi) - 0.5) * 0.8;
+        var pDistX = player.x - bladeWorldX;
+        var pDistY = player.y - bladeWorldY;
+        var pDist = Math.sqrt(pDistX * pDistX + pDistY * pDistY);
+        var WALK_DIST = 0.65;
+        var WALK_HOLD_EXTRA = 600;
+        var WALK_SPRING_DURATION = FRAME_COUNT * FRAME_DURATION * 1.5;
+        var BENT_FRAME = Math.floor(FRAME_COUNT * 0.55);
+        var BEND_DOWN_DURATION = 250;
 
-        // Wind impulse triggers animation for a few cycles then settles.
+        var walkKey = wx * 100000 + wy * 1000 + bi * 10 + 1;
+        var playerOnBlade = pDist < WALK_DIST;
+
+        if (playerOnBlade) {
+          var existingWalk = triggerTimes.get(walkKey);
+          if (!existingWalk || existingWalk.ext !== 1) {
+            triggerTimes.set(walkKey, { time: timeMs, ext: 1, bendStart: timeMs });
+          } else {
+            triggerTimes.set(walkKey, { time: timeMs, ext: 1, bendStart: existingWalk.bendStart });
+          }
+        }
+
+        var walkData = triggerTimes.get(walkKey);
+        if (walkData && walkData.ext === 1) {
+          var timeSinceLeave = timeMs - walkData.time;
+          var showFrame = -1;
+
+          if (playerOnBlade) {
+            var bendElapsed = timeMs - walkData.bendStart;
+            showFrame = bendElapsed < BEND_DOWN_DURATION
+              ? Math.floor((bendElapsed / BEND_DOWN_DURATION) * BENT_FRAME)
+              : BENT_FRAME;
+          } else if (timeSinceLeave < WALK_HOLD_EXTRA) {
+            showFrame = BENT_FRAME;
+          } else if (timeSinceLeave < WALK_HOLD_EXTRA + WALK_SPRING_DURATION) {
+            var springElapsed = timeSinceLeave - WALK_HOLD_EXTRA;
+            showFrame = BENT_FRAME + Math.floor((springElapsed / WALK_SPRING_DURATION) * (FRAME_COUNT - BENT_FRAME));
+            showFrame = Math.min(showFrame, FRAME_COUNT - 1);
+          } else {
+            triggerTimes.delete(walkKey);
+          }
+
+          if (showFrame >= 0) {
+            var walkUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/player_walk/v000/frame_' + String(showFrame).padStart(3, '0') + '.png';
+            var walkImg = loadFrame(walkUrl);
+            if (walkImg) {
+              var halfDraw = drawSize * 0.5;
+              ctx.save();
+              ctx.translate(sx, sy + halfDraw);
+              ctx.rotate(baseAngle);
+              ctx.globalAlpha = finalAlpha;
+              ctx.drawImage(walkImg, -halfDraw, -drawSize, drawSize, drawSize);
+              ctx.restore();
+              continue; // SKIP wind_sway entirely — player walk takes priority
+            }
+          }
+        }
+
+        // === PRIORITY 2: Wind sway / static (only if NOT being walked on) ===
+
+        // Wind/player impulse triggers animation for a few cycles then settles.
         var currentEffect = sampleCurrents(wx, wy, timeSec);
-        var impulse = Math.abs(currentEffect.rot) * 12;
+        var playerEffect = samplePlayerPush(wx, wy, player.x, player.y, playerVX, playerVY);
+        var impulse = Math.abs(currentEffect.rot) * 12 + Math.abs(playerEffect.rot) * 8;
 
         // ~7% of sprites randomly animate on their own (ambient life)
         var ambientRoll = rand2(wx, wy, 7080 + bi);
@@ -599,80 +563,38 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           }
         }
 
-        // Choose sprite: state override > per-variant animation > static with motion
-        // Rigid objects always use static sprite — no animation frames
-        var img;
+        // Build animation frame URL
+        var url = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/frame_' + String(frameIdx).padStart(3, '0') + '.png';
+        var img = loadFrame(url);
         var isStatic = false;
-
-        if (lifeStaticOverride) {
-          img = lifeStaticOverride;
-          isStatic = true;
-        } else if (isRigid) {
-          // Rigid objects: static sprite only, no wind_sway frames
+        if (!img) {
+          // No animation frames — fall back to static base sprite
+          var variantIdx = Math.floor(rand2(wx, wy, 7035 + bi) * SF_VARIANT_COUNT);
+          var vStr = variantIdx < 10 ? '00' + variantIdx : (variantIdx < 100 ? '0' + variantIdx : '' + variantIdx);
           var staticUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/sf__' + tile.biome + '__' + objName + '__v' + vStr + '.png';
           img = loadFrame(staticUrl);
           if (!img) continue;
           isStatic = true;
-        } else {
-          // Use v000 animation frames (shared across all variants — no per-variant 404 flood)
-          var animBase = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/';
-          var frameStr = 'frame_' + String(frameIdx).padStart(3, '0') + '.png';
-          img = loadFrame(animBase + frameStr);
-          if (!img) {
-            // Fall back to static sprite with sway transforms
-            var staticUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/sf__' + tile.biome + '__' + objName + '__v' + vStr + '.png';
-            img = loadFrame(staticUrl);
-            if (!img) continue;
-            isStatic = true;
-          }
         }
 
-        // Sway: scaled by lifecycle state (dead=0, seedling=weak, normal=full)
-        // Rigid objects never sway regardless of state
-        var isRigid = RIGID_OBJECTS[objName] || false;
-        var swayDir = currentEffect.rot;
-        var sway = isRigid ? 0 : swayDir * 1.2 * animBlend * lifeSway;
+        // Sway: gentle lean smoothly eased by animBlend (static objects don't sway)
+        var swayDir = currentEffect.rot + playerEffect.rot;
+        var sway = isStatic ? 0 : swayDir * 1.2 * animBlend;
 
-        // Buffer for Y-sorted drawing
+        // Draw anchored at bottom center — rotate around the base so top sways
         var halfDraw = drawSize * 0.5;
-        drawBuffer.push({
-          sortY: wy + 0.5 + (rand2(wx, wy, 7031 + bi) - 0.5) * 0.5, // world Y for depth sort
-          sx: sx, sy: sy, halfDraw: halfDraw, drawSize: drawSize,
-          baseAngle: baseAngle, sway: sway,
-          alpha: finalAlpha * lifeAlpha, img: img
-        });
+        ctx.save();
+        ctx.translate(sx, sy + halfDraw); // anchor at bottom of sprite
+        ctx.rotate(baseAngle + sway);
+        ctx.globalAlpha = finalAlpha;
+        ctx.drawImage(img, -halfDraw, -drawSize, drawSize, drawSize); // draw upward from anchor
+        ctx.restore();
       }
     }
   }
 
-  // Sort by world Y (top-to-bottom = far-to-near)
-  drawBuffer.sort(function(a, b) { return a.sortY - b.sortY; });
-
-  // Find where to insert the player
-  var playerInserted = false;
-  for (var di = 0; di < drawBuffer.length; di++) {
-    // Draw player when we reach sprites at or below player's Y
-    if (!playerInserted && drawBuffer[di].sortY > player.y + 0.4) {
-      if (_playerDrawFn) _playerDrawFn(ctx);
-      playerInserted = true;
-    }
-    var d = drawBuffer[di];
-    ctx.save();
-    ctx.translate(d.sx, d.sy + d.halfDraw);
-    ctx.rotate(d.baseAngle + d.sway);
-    ctx.globalAlpha = d.alpha;
-    ctx.drawImage(d.img, -d.halfDraw, -d.drawSize, d.drawSize, d.drawSize);
-    ctx.restore();
-  }
-  // If player is below all sprites, draw last
-  if (!playerInserted && _playerDrawFn) _playerDrawFn(ctx);
-
   ctx.restore();
 }
-
-// Allow canvas-renderer to register the player draw function for depth sorting
-var _playerDrawFn = null;
-export function setField2PlayerDraw(fn) { _playerDrawFn = fn; }
 
 // Exported so canvas-renderer can call AFTER atmospheric overlays
 export function drawWindWispOverlay(ctx, w, h, player, tilePx) {
