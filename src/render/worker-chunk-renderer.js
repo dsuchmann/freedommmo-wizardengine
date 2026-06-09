@@ -1207,7 +1207,7 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
           Math.abs(selfELevel - selfSELevel),
           Math.abs(selfSLevel - selfSELevel)
         );
-        if (selfMaxDelta >= 1) {
+        if (selfMaxDelta >= 3) {
           var selfDir = tile.biome + '_to_' + tile.biome;
           tile.transitionPair = { from: tile.biome, to: tile.biome, dir: selfDir };
           var selfMinLevel = Math.min(selfMyLevel, selfELevel, selfSLevel, selfSELevel);
