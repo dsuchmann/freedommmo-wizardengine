@@ -228,14 +228,14 @@ var SF_BIOME_OBJECTS_LIST = {
   forest: ['grass_blade_cluster', 'small_fern', 'clover_bloom'],
   grassland: ['tall_grass_blade', 'dandelion_stem', 'wild_herb'],
   hills: ['hillside_grass', 'rock_flower_bud', 'heather_sprig'],
-  mountains: ['alpine_tuft', 'rock_cress', 'hardy_lichen'],
+  mountains: ['alpine_tuft', 'alpine_grass', 'rock_cress', 'hardy_lichen'],
   mystic: ['glow_grass_blade', 'aether_fern', 'crystal_sprout'],
   savanna: ['dry_grass_spike', 'thorn_sprout', 'acacia_seedling'],
-  steppe: ['wind_grass', 'sparse_weed', 'dry_tuft'],
+  steppe: ['wind_grass', 'sparse_weed', 'dry_tuft', 'dry_weed'],
   swamp: ['bog_grass', 'cattail_base', 'swamp_herb'],
   taiga: ['frost_grass', 'low_juniper', 'cold_moss_tuft'],
   tropical_forest: ['broad_fern', 'orchid_sprout', 'vine_tendril'],
-  tundra: ['tundra_grass', 'low_berry_bush', 'ice_moss'],
+  tundra: ['tundra_grass', 'low_berry_bush', 'ice_moss', 'arctic_berry'],
   volcanic: ['ash_grass', 'heat_sprout', 'lava_fern'],
 };
 var SF_BASE_PATH = '/assets/pixelab/landscape_v2/micro/small_flora/';
