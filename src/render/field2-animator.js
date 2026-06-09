@@ -329,14 +329,14 @@ export function preloadField2Animations(biomes) {
     var objects = SF_BIOME_OBJECTS_LIST[biomes[b]];
     if (!objects) continue;
     for (var oi = 0; oi < objects.length; oi++) {
-      // All static sprites (64 per object)
       for (var v = 0; v < SF_VARIANT_COUNT; v++) {
         var pvStr = v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v);
+        // Per-variant animation frames
+        for (var f = 0; f < FRAME_COUNT; f++) {
+          urls.push(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/anim/wind_sway/v' + pvStr + '/frame_' + String(f).padStart(3, '0') + '.png');
+        }
+        // Static sprite
         urls.push(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/sf__' + biomes[b] + '__' + objects[oi] + '__v' + pvStr + '.png');
-      }
-      // v000 animation frames only (guaranteed to exist)
-      for (var f = 0; f < FRAME_COUNT; f++) {
-        urls.push(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/anim/wind_sway/v000/frame_' + String(f).padStart(3, '0') + '.png');
       }
     }
   }
@@ -662,23 +662,14 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           if (!img) continue;
           isStatic = true;
         } else {
-          // Static sprite for visual diversity, v000 animation for wind sway.
-          // Simple, stable, no cascading fallbacks.
-          var staticUrl = SF_BASE_PATH + tile.biome + '/' + objName + '/sf__' + tile.biome + '__' + objName + '__v' + vStr + '.png';
-          var v000Url = SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/frame_' + String(frameIdx).padStart(3, '0') + '.png';
-
-          if (isAnimating) {
-            // When wind-triggered: use v000 animation frame
-            img = loadFrame(v000Url);
-          }
+          // Per-variant animation: each variant has its own animation frames.
+          // All preloaded before rendering starts — no fallback needed.
+          var frameStr = 'frame_' + String(frameIdx).padStart(3, '0') + '.png';
+          img = loadFrame(SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v' + vStr + '/' + frameStr);
           if (!img) {
-            // At rest or no animation: use static variant sprite
-            img = loadFrame(staticUrl);
+            // Variant animation not available — use static sprite
+            img = loadFrame(SF_BASE_PATH + tile.biome + '/' + objName + '/sf__' + tile.biome + '__' + objName + '__v' + vStr + '.png');
             if (img) isStatic = true;
-          }
-          if (!img) {
-            // Last resort: v000 frame_000
-            img = loadFrame(SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v000/frame_000.png');
           }
           if (!img) continue;
         }
