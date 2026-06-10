@@ -48,6 +48,10 @@ function update(dt) {
   if (input.wasPressed('escape') && overmap.expanded) overmap.toggleExpand();
   if (input.wasPressed('l')) lighting.togglePause();
   if (input.wasPressed('0')) renderer.debugWang = !renderer.debugWang;
+  if (input.wasPressed('g')) {
+    renderer.useGL = !renderer.useGL && renderer.glc?.ok;
+    console.log('[GL] terrain renderer:', renderer.useGL ? 'WebGL2' : 'Canvas 2D');
+  }
   if (input.wasPressed('t')) {
     player.x = 208;
     player.y = 212;

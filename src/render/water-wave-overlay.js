@@ -88,7 +88,7 @@ function computeLandDistanceMap(chunk, cs) {
   return dist;
 }
 
-export function drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, h, timeSeconds, wind) {
+export function drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, h, timeSeconds, wind, glMode) {
   // Ocean current is a fixed slow drift — not driven by weather wind.
   // Weather wind affects grass/trees/rain but ocean has its own current.
   var CURRENT_DIR = 0.3;
@@ -122,6 +122,11 @@ export function drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, 
 
     // Compute wave values on a tiny canvas (1px per tile)
     const { canvas: wc, ctx: wctx } = getWaveCanvas(Math.max(visW, visH));
+    // In GL mode, skip the soft-light wave modulation: it blends against
+    // terrain pixels, which now live on the GL canvas underneath. Soft-light
+    // over a transparent backdrop would paint opaque gray squares.
+    // Restored as a GPU post pass in stage 4 of the GPU migration.
+    if (!glMode) {
     const imgData = wctx.createImageData(visW, visH);
     const pixels = imgData.data;
 
@@ -200,6 +205,7 @@ export function drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, 
 
     // Put wave data onto tiny canvas
     wctx.putImageData(imgData, 0, 0);
+    } // end !glMode wave modulation
 
     // Draw scaled up over the chunk area with soft-light blend
     // GPU handles bilinear interpolation → smooth per-pixel result
@@ -208,15 +214,17 @@ export function drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, 
     const drawW = Math.round(visW * tilePx);
     const drawH = Math.round(visH * tilePx);
 
-    ctx.save();
-    ctx.imageSmoothingEnabled = true;
-    ctx.globalCompositeOperation = 'soft-light';
-    ctx.globalAlpha = 0.85;
-    ctx.drawImage(wc, 0, 0, visW, visH, drawX, drawY, drawW, drawH);
-    ctx.globalAlpha = 1.0;
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.imageSmoothingEnabled = false;
-    ctx.restore();
+    if (!glMode) {
+      ctx.save();
+      ctx.imageSmoothingEnabled = true;
+      ctx.globalCompositeOperation = 'soft-light';
+      ctx.globalAlpha = 0.85;
+      ctx.drawImage(wc, 0, 0, visW, visH, drawX, drawY, drawW, drawH);
+      ctx.globalAlpha = 1.0;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.imageSmoothingEnabled = false;
+      ctx.restore();
+    }
 
     // === SHORELINE FOAM — GPU-scaled like waves (no visible tile grid) ===
     // Compute foam intensity per tile on tiny canvas, scale up with bilinear interpolation.

@@ -13,6 +13,7 @@ import { drawWaterWaveOverlay, preloadSeaweedAnimations } from './water-wave-ove
 import { drawLargeObjects, preloadLargeObjectSprites, setPlayerDrawFn } from './large-object-renderer.js';
 import { drawField2Animations, preloadField2Animations, drawWindWispOverlay, setField2PlayerDraw } from './field2-animator.js';
 import { findNearbyInteraction, objectReaction, performInteraction } from '../world/interactions.js';
+import { GLCompositor } from './gl-compositor.js';
 
 function drawPrecipitation(ctx, w, h, precip, wind, time) {
   if (precip.type === 'none' || precip.intensity < 0.01) return;
@@ -171,8 +172,19 @@ function drawFog(ctx, w, h, fog) {
 export class CanvasRenderer {
   constructor(canvas, statsElement, compositor = null) {
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d', { alpha: false });
+    // alpha:true — in GL mode this canvas sits transparently OVER the GL
+    // terrain canvas; in 2D mode the sky fill makes it fully opaque anyway.
+    this.ctx = canvas.getContext('2d', { alpha: true });
     installBlackFillWarning(this.ctx);
+    // WebGL2 terrain compositor — GL canvas layered UNDER the 2D canvas.
+    this.glc = new GLCompositor();
+    this.useGL = this.glc.ok; // A/B toggle with G key (main.js)
+    if (this.glc.ok) {
+      this.glc.canvas.style.cssText = 'position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:0;pointer-events:none;';
+      canvas.style.position = 'relative';
+      canvas.style.zIndex = '1';
+      canvas.parentNode.insertBefore(this.glc.canvas, canvas);
+    }
     this.ctx.imageSmoothingEnabled = false;
     this.statsElement = statsElement;
     preloadSeaweedAnimations();
@@ -199,6 +211,7 @@ export class CanvasRenderer {
     this.canvas.height = Math.floor(window.innerHeight * window.devicePixelRatio);
     this.ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
     this.ctx.imageSmoothingEnabled = false;
+    if (this.glc && this.glc.ok) this.glc.resize(window.innerWidth, window.innerHeight, window.devicePixelRatio);
   }
 
   draw(chunkStore, player, lighting, camera, provider, weather) {
@@ -209,8 +222,15 @@ export class CanvasRenderer {
     const sun = lighting.sun();
     const tilePx = WORLD.tileSize * camera.zoom;
     const focusTile = chunkStore.tileAt(player.x, player.y);
-    ctx.fillStyle = sun.skyColor || '#18262b';
-    ctx.fillRect(0, 0, w, h);
+    const glOn = this.useGL && this.glc && this.glc.ok;
+    if (glOn) {
+      // GL canvas underneath draws sky + terrain; this canvas only carries overlays.
+      ctx.clearRect(0, 0, w, h);
+      this.glc.beginFrame(sun.skyColor || '#18262b', w, h);
+    } else {
+      ctx.fillStyle = sun.skyColor || '#18262b';
+      ctx.fillRect(0, 0, w, h);
+    }
 
     const camX = player.x * tilePx - w / 2;
     const camY = player.y * tilePx - h / 2 + (camera.elevationOffsetY ?? 0);
@@ -247,16 +267,22 @@ export class CanvasRenderer {
       const sx = baseSX + (cx - minCX) * chunkPx;
       const sy = baseSY + (cy - minCY) * chunkPx;
       if (!cached) continue;
-      ctx.drawImage(cached, sx, sy, chunkPx, chunkPx);
+      if (glOn) this.glc.drawChunk(key, cached, sx, sy, chunkPx, chunkPx);
+      else ctx.drawImage(cached, sx, sy, chunkPx, chunkPx);
       // Feed worker wang debug data into the debug overlay system
       const wd = provider.getWangDebug(cx, cy);
       if (wd && !getDebugWangData(key)) setDebugWangData(key, wd);
       visibleChunks.push({ cx, cy, key, sx, sy, dw: chunkPx, dh: chunkPx });
     }
 
+    if (glOn) this.glc.endFrame();
+
     // === FIELD 1 ANIMATED WATER OVERLAY ===
-    // Per-pixel wave modulation + animated seaweed sprites
-    drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, h, performance.now() / 1000, weather ? weather.wind() : null);
+    // Per-pixel wave modulation + animated seaweed sprites.
+    // In GL mode the soft-light wave pass is skipped (it blends against
+    // terrain pixels, which now live on the GL canvas below) — restored as a
+    // GPU post pass in stage 4. Foam/seaweed still draw.
+    drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, h, performance.now() / 1000, weather ? weather.wind() : null, glOn);
 
     if (weather) {
       drawPrecipitation(ctx, w, h, weather.precipitation(), weather.wind(), performance.now() / 1000);
@@ -595,7 +621,10 @@ export class CanvasRenderer {
     const chunkStats = chunkStore.stats();
     const cacheStats = this.chunkRenderCache.stats();
     const atlasStats = this.atlas.stats().generated;
-    const workerLine = `workers ${chunkStats.workers} (${chunkStats.workersReady ?? '?'} ready) · pending ${chunkStats.pending} · ready ${chunkStats.ready} · bitmaps ${chunkStats.bitmaps ?? 0} · art sheets ${atlasStats.loaded}/${atlasStats.sheets}`;
+    const glLine = this.useGL && this.glc?.ok
+      ? `<b style="color:#8f8">GL</b> tex ${this.glc.stats().glTextures}`
+      : '<span style="color:#ff8">2D</span>';
+    const workerLine = `terrain ${glLine} (G toggle) · workers ${chunkStats.workers} (${chunkStats.workersReady ?? '?'} ready) · pending ${chunkStats.pending} · ready ${chunkStats.ready} · bitmaps ${chunkStats.bitmaps ?? 0} · art sheets ${atlasStats.loaded}/${atlasStats.sheets}`;
     const perfLine = perf ? `<br>fps ${perf.fps.toFixed(0)} · update ${perf.updateMs.toFixed(1)}ms · draw ${perf.drawMs.toFixed(1)}ms · ${workerLine}` : '';
     // ---- 8-layer Wang diagnostic for the tile under the player ----
     let wangDebugLine = '';
