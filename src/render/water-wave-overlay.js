@@ -42,6 +42,85 @@ function isWaterBiome(b) {
   return b && (b.includes('ocean') || b === 'shallow_water' || b === 'river' || b === 'lake');
 }
 
+// Ocean current is a fixed slow drift — not driven by weather wind.
+var CURRENT_DIR = 0.3;
+
+// Wave modulation value (-1..1) for a water tile. Shared by the 2D
+// soft-light path and the GL present-pass wave field.
+function waveValue(tile, wx, wy, t) {
+  const biome = tile.biome;
+  const shoreDist = tile.shoreDistance || 50;
+  const shoreAngle = tile.shoreAngle || 0;
+
+  // Blend between shore-directed angle (near coast) and global current (open water)
+  const SHORE_BLEND_DIST = 15;
+  const shoreInfluence = Math.max(0, 1.0 - shoreDist / SHORE_BLEND_DIST);
+  const effectiveAngle = shoreAngle * shoreInfluence + CURRENT_DIR * (1 - shoreInfluence);
+
+  const toShoreX = -Math.sin(effectiveAngle);
+  const toShoreY = Math.cos(effectiveAngle);
+  const sp = wx * toShoreX + wy * toShoreY;
+  const cp = wx * Math.cos(effectiveAngle) + wy * Math.sin(effectiveAngle);
+
+  let wave = 0;
+  if (biome === 'shallow_water' || (biome.includes('ocean') && biome !== 'deep_ocean')) {
+    const w1 = Math.sin(sp * 2.5 - t * 2.5 + Math.sin(cp * 0.4) * 1.2);
+    const w2 = Math.sin(sp * 1.5 - t * 1.8 + Math.sin(cp * 0.2 + 1.2) * 1.8);
+    const w3 = Math.sin(sp * 3.5 - t * 3.2 + cp * 0.15);
+    wave = w1 * 0.45 + w2 * 0.35 + w3 * 0.20;
+    // Stronger near shore, gentler in open water
+    const intensity = biome === 'shallow_water'
+      ? Math.min(1.0, 0.5 + shoreInfluence * 0.8)
+      : Math.min(0.6, 0.3 + shoreInfluence * 0.5);
+    wave *= intensity;
+  } else if (biome === 'deep_ocean') {
+    // Deep ocean uses current direction only (no shore influence)
+    const currentX = -Math.sin(CURRENT_DIR);
+    const currentY = Math.cos(CURRENT_DIR);
+    const deepSp = wx * currentX + wy * currentY;
+    const s1 = Math.sin(deepSp * 0.8 - t * 0.8 + wy * 0.15);
+    const s2 = Math.sin(deepSp * 0.5 - t * 0.6 + wx * 0.1 + 2.1);
+    wave = (s1 * 0.5 + s2 * 0.5) * 0.35;
+  } else if (biome === 'river') {
+    const f1 = Math.sin(sp * 3.0 - t * 4.0 + cp * 0.25);
+    const f2 = Math.sin(sp * 1.8 - t * 3.0 + Math.sin(cp * 0.5) * 1.2);
+    wave = (f1 * 0.55 + f2 * 0.45) * 0.5;
+  } else {
+    // Lake
+    const r = Math.sqrt((wx % 8 - 4) ** 2 + (wy % 8 - 4) ** 2);
+    wave = Math.sin(r * 2.0 - t * 2.0) * 0.3;
+  }
+  return wave;
+}
+
+// Stage 4: build a viewport-spanning wave field (one byte-luma texel per
+// tile, 128 = neutral) for the GL present pass. Returns the RGBA buffer or
+// null if no water tile is visible. Buffer is reused across frames.
+var _waveFieldBuf = null;
+export function buildWaveField(chunkStore, tile0X, tile0Y, tilesW, tilesH, timeSeconds) {
+  var n = tilesW * tilesH * 4;
+  if (!_waveFieldBuf || _waveFieldBuf.length !== n) _waveFieldBuf = new Uint8Array(n);
+  var data = _waveFieldBuf;
+  var hasWater = false;
+  for (var ty = 0; ty < tilesH; ty++) {
+    for (var tx = 0; tx < tilesW; tx++) {
+      var idx = (ty * tilesW + tx) * 4;
+      var val = 128;
+      var tile = chunkStore.tileAt(tile0X + tx, tile0Y + ty);
+      if (tile && isWaterBiome(tile.biome) && !tile.transitionPair) {
+        var wave = waveValue(tile, tile0X + tx, tile0Y + ty, timeSeconds);
+        val = Math.max(0, Math.min(255, 128 + wave * 160));
+        hasWater = true;
+      }
+      data[idx] = val;
+      data[idx + 1] = val;
+      data[idx + 2] = val;
+      data[idx + 3] = 255;
+    }
+  }
+  return hasWater ? data : null;
+}
+
 // Reusable offscreen canvas for wave overlay (one per chunk, tile resolution)
 let waveCanvas = null;
 let waveCtx = null;

@@ -93,15 +93,71 @@ uniform sampler2D uScene;
 uniform vec4 uArt;    // artW, artH, allocW, allocH (texels)
 uniform vec2 uView;   // visible art px (cssW/zoom, cssH/zoom)
 uniform vec2 uOff;    // fractional camera offset, art px
-uniform float uSharp; // zoom factor (screen px per art px)
+uniform float uSharp; // DEVICE px per art px (zoom * devicePixelRatio)
+uniform float uMode;  // 0 = sharp-bilinear, 1 = + edge-directed smoothing
+// Stage 4: per-tile water wave field, soft-light blended over the scene.
+// One texel per world tile; 0.5 = neutral (non-water tiles stay untouched).
+uniform sampler2D uWave;
+uniform float uWaveOn;
+uniform vec2 uWaveOrg; // art px from view texel space to wave field origin
+uniform vec2 uWaveN;   // wave field size, tiles
+uniform float uTilePx; // art px per tile
 out vec4 outColor;
+
+// Sample the scene at an art-px coordinate (top-left origin). Texel-center
+// coordinates hit exact texels despite the LINEAR filter.
+vec3 fetchA(vec2 t) {
+  t = clamp(t, vec2(0.5), uArt.xy - 0.5);
+  return texture(uScene, vec2(t.x / uArt.z, (uArt.y - t.y) / uArt.w)).rgb;
+}
+
+bool sim(vec3 a, vec3 b) { vec3 d = a - b; return dot(d, d) < 0.025; }
+
 void main() {
   vec2 texel = vTL * uView + uOff;            // art px, top-left origin
   vec2 seam = floor(texel) + 0.5;
   vec2 f = clamp((texel - seam) * uSharp, -0.5, 0.5);
   vec2 p = seam + f;
   vec2 uv = vec2(p.x / uArt.z, (uArt.y - p.y) / uArt.w);
-  outColor = vec4(texture(uScene, uv).rgb, 1.0);
+  vec3 c = texture(uScene, uv).rgb;
+  if (uMode > 0.5) {
+    // Edge-directed smoothing (xBR-flavored corner cuts): when two
+    // orthogonal neighbors match each other but not this texel, the texel
+    // corner is "cut" along the 45-degree diagonal and blended toward the
+    // neighbor color, with a one-device-pixel anti-aliased band. Diagonal
+    // staircases become continuous smooth edges instead of fat-pixel steps.
+    vec2 ip = floor(texel);
+    vec2 fp = texel - ip;
+    vec3 E = fetchA(ip + vec2(0.5, 0.5));
+    vec3 N = fetchA(ip + vec2(0.5, -0.5));
+    vec3 S = fetchA(ip + vec2(0.5, 1.5));
+    vec3 W = fetchA(ip + vec2(-0.5, 0.5));
+    vec3 R = fetchA(ip + vec2(1.5, 0.5));
+    vec3 NW = fetchA(ip + vec2(-0.5, -0.5));
+    vec3 NE = fetchA(ip + vec2(1.5, -0.5));
+    vec3 SW = fetchA(ip + vec2(-0.5, 1.5));
+    vec3 SE = fetchA(ip + vec2(1.5, 1.5));
+    // !sim(E, diag) keeps genuine diagonal lines (checkerboards) intact
+    if (sim(W, N) && !sim(E, W) && !sim(E, N) && !sim(E, NW))
+      c = mix(c, 0.5 * (W + N), clamp((0.5 - fp.x - fp.y) * uSharp + 0.5, 0.0, 1.0));
+    if (sim(R, N) && !sim(E, R) && !sim(E, N) && !sim(E, NE))
+      c = mix(c, 0.5 * (R + N), clamp((fp.x - fp.y - 0.5) * uSharp + 0.5, 0.0, 1.0));
+    if (sim(W, S) && !sim(E, W) && !sim(E, S) && !sim(E, SW))
+      c = mix(c, 0.5 * (W + S), clamp((fp.y - fp.x - 0.5) * uSharp + 0.5, 0.0, 1.0));
+    if (sim(R, S) && !sim(E, R) && !sim(E, S) && !sim(E, SE))
+      c = mix(c, 0.5 * (R + S), clamp((fp.x + fp.y - 1.5) * uSharp + 0.5, 0.0, 1.0));
+  }
+  if (uWaveOn > 0.5) {
+    vec2 wuv = ((texel + uWaveOrg) / uTilePx) / uWaveN;
+    float s = texture(uWave, wuv).r;
+    // W3C soft-light blend, single gray source channel
+    vec3 d = mix(((16.0 * c - 12.0) * c + 4.0) * c, sqrt(c), step(vec3(0.25), c));
+    vec3 b = (s <= 0.5)
+      ? c - (1.0 - 2.0 * s) * c * (1.0 - c)
+      : c + (2.0 * s - 1.0) * (d - c);
+    c = mix(c, b, 0.85);
+  }
+  outColor = vec4(c, 1.0);
 }`;
 
 // Evict chunk textures not drawn for this many frames.
@@ -145,6 +201,7 @@ export class GLCompositor {
     }
     this.gl = gl;
     this.textures = new Map(); // 'cx,cy' -> { tex, bmp, lastUsed }
+    this.presentMode = 1; // 0 = sharp-bilinear, 1 = + edge smoothing (U key)
     this.frame = 0;
     this._lastSkyCss = null;
     this._skyRGB = [0, 0, 0];
@@ -279,6 +336,23 @@ export class GLCompositor {
       this.pUView = gl.getUniformLocation(prog, 'uView');
       this.pUOff = gl.getUniformLocation(prog, 'uOff');
       this.pUSharp = gl.getUniformLocation(prog, 'uSharp');
+      this.pUMode = gl.getUniformLocation(prog, 'uMode');
+      this.pUWave = gl.getUniformLocation(prog, 'uWave');
+      this.pUWaveOn = gl.getUniformLocation(prog, 'uWaveOn');
+      this.pUWaveOrg = gl.getUniformLocation(prog, 'uWaveOrg');
+      this.pUWaveN = gl.getUniformLocation(prog, 'uWaveN');
+      this.pUTilePx = gl.getUniformLocation(prog, 'uTilePx');
+      this.waveTex = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, this.waveTex);
+      // LINEAR: smooth tile-to-tile shimmer gradients (the 2D path was blocky
+      // per tile); CLAMP so the viewport edge holds the last tile's value.
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      this._waveOn = false;
+      this._waveTW = 0;
+      this._waveTH = 0;
       this.presentVao = gl.createVertexArray();
       gl.bindVertexArray(this.presentVao);
       gl.bindBuffer(gl.ARRAY_BUFFER, this.unitVbo);
@@ -317,6 +391,32 @@ export class GLCompositor {
     return true;
   }
 
+  // Stage 4: upload this frame's per-tile wave field (RGBA, one texel/tile,
+  // 128 = neutral). orgX/orgY = art-px offset from the view's texel space to
+  // the field origin (camXi - tile0X*tileSize). tilePx = art px per tile.
+  setWaveField(data, tilesW, tilesH, orgX, orgY, tilePx) {
+    if (!this.ok || !this.waveTex) return;
+    var gl = this.gl;
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.waveTex);
+    if (tilesW !== this._waveTW || tilesH !== this._waveTH) {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, tilesW, tilesH, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+      this._waveTW = tilesW;
+      this._waveTH = tilesH;
+    } else {
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, tilesW, tilesH, gl.RGBA, gl.UNSIGNED_BYTE, data);
+    }
+    gl.activeTexture(gl.TEXTURE0);
+    this._waveOn = true;
+    this._waveOrgX = orgX;
+    this._waveOrgY = orgY;
+    this._waveTilePx = tilePx;
+  }
+
+  clearWaveField() {
+    this._waveOn = false;
+  }
+
   // Upscale the art-res scene to the full canvas with sharp-bilinear sampling.
   presentScene(cssW, cssH, zoom, fracX, fracY) {
     if (!this.ok || !this.sceneActive) return;
@@ -331,7 +431,23 @@ export class GLCompositor {
     gl.uniform4f(this.pUArt, this._artW, this._artH, this._sceneAllocW, this._sceneAllocH);
     gl.uniform2f(this.pUView, cssW / zoom, cssH / zoom);
     gl.uniform2f(this.pUOff, fracX, fracY);
-    gl.uniform1f(this.pUSharp, zoom);
+    // Sharpness band is one DEVICE pixel — on scaled displays (dpr > 1) the
+    // canvas backing store is larger than CSS px, and using zoom alone makes
+    // every pixel edge dpr-times blurrier than intended.
+    gl.uniform1f(this.pUSharp, zoom * (this.canvas.width / Math.max(1, cssW)));
+    gl.uniform1f(this.pUMode, this.presentMode === 1 ? 1 : 0);
+    if (this._waveOn) {
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, this.waveTex);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.uniform1i(this.pUWave, 1);
+      gl.uniform1f(this.pUWaveOn, 1);
+      gl.uniform2f(this.pUWaveOrg, this._waveOrgX, this._waveOrgY);
+      gl.uniform2f(this.pUWaveN, this._waveTW, this._waveTH);
+      gl.uniform1f(this.pUTilePx, this._waveTilePx);
+    } else {
+      gl.uniform1f(this.pUWaveOn, 0);
+    }
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.bindVertexArray(null);
     this.sceneActive = false;

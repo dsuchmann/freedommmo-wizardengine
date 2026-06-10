@@ -53,6 +53,10 @@ function update(dt) {
     renderer.useGL = !renderer.useGL && renderer.glc?.ok;
     console.log('[GL] terrain renderer:', renderer.useGL ? 'WebGL2' : 'Canvas 2D');
   }
+  if (input.wasPressed('u') && renderer.glc?.ok) {
+    renderer.glc.presentMode = renderer.glc.presentMode === 1 ? 0 : 1;
+    console.log('[GL] upscale filter:', renderer.glc.presentMode === 1 ? 'edge-smoothed' : 'sharp-bilinear');
+  }
   if (input.wasPressed('t')) {
     player.x = 208;
     player.y = 212;

@@ -9,7 +9,7 @@ import { AtlasManager } from '../assets/atlas-manager.js';
 import { setChunkStore, getDebugWangData, setDebugWangData } from './wang-terrain-painter.js';
 import { biomeVariantFrameId } from '../assets/variant-selector.js';
 import { drawElevationOverlay } from './elevation-overlay.js';
-import { drawWaterWaveOverlay, preloadSeaweedAnimations } from './water-wave-overlay.js';
+import { drawWaterWaveOverlay, preloadSeaweedAnimations, buildWaveField } from './water-wave-overlay.js';
 import { drawLargeObjects, preloadLargeObjectSprites, setPlayerDrawFn } from './large-object-renderer.js';
 import { drawField2Animations, preloadField2Animations, drawWindWispOverlay, setField2PlayerDraw, setField2PlayerGL } from './field2-animator.js';
 import { findNearbyInteraction, objectReaction, performInteraction } from '../world/interactions.js';
@@ -420,7 +420,19 @@ export class CanvasRenderer {
     // this.drawDepthBokeh(chunkStore, player, focusTile, camera, camX, camY, w, h);
     this.drawAtmosphere(sun, w, h);
 
-    if (glScene) this.glc.presentScene(w, h, camera.zoom, fracX, fracY);
+    if (glScene) {
+      // Stage 4: per-tile water wave field, soft-light blended in the present
+      // shader (restores the 2D path's water shimmer, minus its chunk-edge
+      // seams — the field spans the whole viewport).
+      const tile0X = Math.floor(camXi / ts);
+      const tile0Y = Math.floor(camYi / ts);
+      const tilesW = Math.ceil(this.glc._artW / ts) + 2;
+      const tilesH = Math.ceil(this.glc._artH / ts) + 2;
+      const field = buildWaveField(chunkStore, tile0X, tile0Y, tilesW, tilesH, performance.now() / 1000);
+      if (field) this.glc.setWaveField(field, tilesW, tilesH, camXi - tile0X * ts, camYi - tile0Y * ts, ts);
+      else this.glc.clearWaveField();
+      this.glc.presentScene(w, h, camera.zoom, fracX, fracY);
+    }
     if (glOn) this.glc.endFrame();
   }
 
