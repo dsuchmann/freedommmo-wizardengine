@@ -26,11 +26,20 @@ const provider = new ChunkProvider();
 const chunks = new ChunkStore(provider);
 window._debugProvider = provider;
 window._debugChunks = chunks;
+window._lighting = null; // set below — lets tests/dev freeze & set time of day
 const compositor = new RuntimeCompositor(defaultAssetCatalog);
 const renderer = new CanvasRenderer(canvas, stats, compositor);
+window._dbgRenderer = renderer;
 preloadWangTiles();
 provider.initPreload(player.x, player.y);
 const lighting = new DayNightCycle();
+window._lighting = lighting;
+import('./world/biome-atmosphere.js').then(m => {
+  window.atmo = {
+    set(biome, partial) { Object.assign(m.BIOME_ATMOSPHERE[biome], partial); },
+    get(biome) { return m.BIOME_ATMOSPHERE[biome]; },
+  };
+});
 const weather = new WeatherSystem(lighting);
 const overmap = new OvermapController(overmapCanvas, player, chunks);
 const camera = new Camera();

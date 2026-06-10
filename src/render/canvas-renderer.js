@@ -14,8 +14,9 @@ import { drawLargeObjects, preloadLargeObjectSprites, setPlayerDrawFn } from './
 import { drawField2Animations, preloadField2Animations, drawWindWispOverlay, setField2PlayerDraw, setField2PlayerGL } from './field2-animator.js';
 import { findNearbyInteraction, objectReaction, performInteraction } from '../world/interactions.js';
 import { GLCompositor } from './gl-compositor.js';
+import { buildAtmoField } from './atmosphere-pass.js';
 
-function drawPrecipitation(ctx, w, h, precip, wind, time) {
+function drawPrecipitation(ctx, w, h, precip, wind, time, tint) {
   if (precip.type === 'none' || precip.intensity < 0.01) return;
   var count = Math.floor(precip.intensity * 300);
   var windX = Math.cos(wind.direction) * wind.intensity * 0.6;
@@ -403,13 +404,14 @@ export class CanvasRenderer {
     // but not the near-player 2D sprites, leaving a clear "spotlight" box
     // around the player. Drawing here keeps both modes uniform.
     if (weather) {
-      drawPrecipitation(ctx, w, h, weather.precipitation(), weather.wind(), performance.now() / 1000);
-      drawFog(ctx, w, h, weather.atmosphere().fog);
+      drawPrecipitation(ctx, w, h, weather.precipitation(), weather.wind(), performance.now() / 1000, sun.tint);
+      if (!glScene) drawFog(ctx, w, h, weather.atmosphere().fog);
     }
 
-    // Atmospheric color grading — applied AFTER all objects/sprites so everything gets affected
+    // Atmospheric color grading: in GL-scene mode the present shader does
+    // tint/darkness/fog; keep only moonlight + player torch glow on 2D.
     if (sun) {
-      this.drawLighting(ctx, sun, w, h, weather, player, camera);
+      this.drawLighting(ctx, sun, w, h, weather, player, camera, glScene);
     }
 
     // Wind wisps — drawn after atmospheric overlays so they're visible on top
@@ -431,6 +433,27 @@ export class CanvasRenderer {
       const field = buildWaveField(chunkStore, tile0X, tile0Y, tilesW, tilesH, performance.now() / 1000);
       if (field) this.glc.setWaveField(field, tilesW, tilesH, camXi - tile0X * ts, camYi - tile0Y * ts, ts);
       else this.glc.clearWaveField();
+      const afield = buildAtmoField(chunkStore, tile0X, tile0Y, tilesW, tilesH);
+      this.glc.setAtmoField(afield, tilesW, tilesH, camXi - tile0X * ts, camYi - tile0Y * ts, ts);
+      const cloudsNow = weather ? weather.clouds() : { cover: 0, speed: 0, direction: 0 };
+      if (!this._cloudOff) this._cloudOff = { x: 0, y: 0, t: performance.now() };
+      const cdt = Math.min(0.1, (performance.now() - this._cloudOff.t) / 1000);
+      this._cloudOff.t = performance.now();
+      this._cloudOff.x += Math.cos(cloudsNow.direction) * cloudsNow.speed * 14 * cdt;
+      this._cloudOff.y += Math.sin(cloudsNow.direction) * cloudsNow.speed * 14 * cdt;
+      this.glc.setAtmoEnv({
+        ambient: sun.ambient,
+        tint: [sun.tint.r, sun.tint.g, sun.tint.b],
+        fogColor: [sun.fogTint[0] / 255, sun.fogTint[1] / 255, sun.fogTint[2] / 255],
+        sunAzim: sun.sunAngle,
+        sunHeight: sun.sunHeight,
+        timeSec: performance.now() / 1000,
+        cloudCover: cloudsNow.cover,
+        cloudOffX: this._cloudOff.x,
+        cloudOffY: this._cloudOff.y,
+        worldOrgX: camXi,
+        worldOrgY: camYi,
+      });
       this.glc.presentScene(w, h, camera.zoom, fracX, fracY);
     }
     if (glOn) this.glc.endFrame();
@@ -561,7 +584,7 @@ export class CanvasRenderer {
     // Now handled by drawLighting
   }
 
-  drawLighting(ctx, sun, w, h, weather, player, camera) {
+  drawLighting(ctx, sun, w, h, weather, player, camera, glMode) {
     // Lighting is all low-frequency gradients — up to 7 full-screen fills
     // during dawn/dusk transitions, which costs 10+ms at high resolutions.
     // Paint at 1/8 res offscreen, then composite with ONE smoothed blit.
@@ -576,14 +599,14 @@ export class CanvasRenderer {
     lctx.setTransform(1, 0, 0, 1, 0, 0);
     lctx.clearRect(0, 0, lw, lh);
     lctx.setTransform(lw / w, 0, 0, lh / h, 0, 0);
-    this._paintLighting(lctx, sun, w, h, weather, player, camera);
+    this._paintLighting(lctx, sun, w, h, weather, player, camera, glMode);
     var smoothWas = ctx.imageSmoothingEnabled;
     ctx.imageSmoothingEnabled = true;
     ctx.drawImage(this._lightCanvas, 0, 0, w, h);
     ctx.imageSmoothingEnabled = smoothWas;
   }
 
-  _paintLighting(ctx, sun, w, h, weather, player, camera) {
+  _paintLighting(ctx, sun, w, h, weather, player, camera, glMode) {
     var time = sun.time;
     var ambient = sun.ambient;
     var sunAngle = sun.sunAngle || 0;
@@ -591,6 +614,9 @@ export class CanvasRenderer {
     var moonHeight = sun.moonHeight || 0;
     var tint = sun.tint;
 
+    // Sections 1-3 and 5 are replaced by the GL present shader's atmosphere
+    // pass when the art-res scene path is active (glMode).
+    if (!glMode) {
     // --- 1. Directional sunlight gradient ---
     // Sun direction: 0 = east, PI/2 = overhead, PI = west
     // Light comes FROM the sun, so the bright side is toward the sun
@@ -663,6 +689,7 @@ export class CanvasRenderer {
       }
       ctx.fillRect(0, 0, w, h);
     }
+    } // end !glMode (sections 1-3)
 
     // --- 4. Moonlight ---
     if (moonHeight > 0.05) {
@@ -678,7 +705,7 @@ export class CanvasRenderer {
     }
 
     // --- 5. Cloud dimming ---
-    if (weather && weather.clouds().cover > 0.15) {
+    if (!glMode && weather && weather.clouds().cover > 0.15) {
       var cloudDim = (weather.clouds().cover - 0.15) * 0.15;
       ctx.fillStyle = 'rgba(40,45,55,' + clamp01(cloudDim).toFixed(3) + ')';
       ctx.fillRect(0, 0, w, h);

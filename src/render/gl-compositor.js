@@ -130,6 +130,39 @@ vec3 fetchA(vec2 t) {
 
 bool sim(vec3 a, vec3 b) { vec3 d = a - b; return dot(d, d) < 0.025; }
 
+float vnoise(vec2 p) {
+  vec2 i = floor(p), f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  float a = fract(sin(dot(i, vec2(127.1, 311.7))) * 43758.5453);
+  float b = fract(sin(dot(i + vec2(1.0, 0.0), vec2(127.1, 311.7))) * 43758.5453);
+  float c2 = fract(sin(dot(i + vec2(0.0, 1.0), vec2(127.1, 311.7))) * 43758.5453);
+  float d = fract(sin(dot(i + vec2(1.0, 1.0), vec2(127.1, 311.7))) * 43758.5453);
+  return mix(mix(a, b, u.x), mix(c2, d, u.x), u.y);
+}
+vec3 blendOverlay(vec3 b, vec3 s) {
+  return mix(2.0 * b * s, 1.0 - 2.0 * (1.0 - b) * (1.0 - s), step(vec3(0.5), b));
+}
+vec3 blendScreen(vec3 b, vec3 s) { return 1.0 - (1.0 - b) * (1.0 - s); }
+vec3 blendSoft(vec3 b, vec3 s) {
+  vec3 d = mix(((16.0 * b - 12.0) * b + 4.0) * b, sqrt(b), step(vec3(0.25), b));
+  return mix(b - (1.0 - 2.0 * s) * b * (1.0 - b), b + (2.0 * s - 1.0) * (d - b), step(vec3(0.5), s));
+}
+vec3 satAdj(vec3 c, float s) {
+  float l = dot(c, vec3(0.299, 0.587, 0.114));
+  return mix(vec3(l), c, s);
+}
+vec3 hueRot(vec3 c, float a) {
+  const vec3 k = vec3(0.57735);
+  float cs = cos(a), sn = sin(a);
+  return c * cs + cross(k, c) * sn + k * dot(k, c) * (1.0 - cs);
+}
+vec4 atmoSample(sampler2D t, vec2 uv, vec2 bs) {
+  // center + 4-tap cross blur — widens the biome blend band beyond bilinear
+  return texture(t, uv) * 0.4
+       + (texture(t, uv + vec2(bs.x, 0.0)) + texture(t, uv - vec2(bs.x, 0.0))
+        + texture(t, uv + vec2(0.0, bs.y)) + texture(t, uv - vec2(0.0, bs.y))) * 0.15;
+}
+
 void main() {
   vec2 texel = vTL * uView + uOff;            // art px, top-left origin
   vec2 seam = floor(texel) + 0.5;
@@ -173,6 +206,86 @@ void main() {
       ? c - (1.0 - 2.0 * s) * c * (1.0 - c)
       : c + (2.0 * s - 1.0) * (d - c);
     c = mix(c, b, 0.85);
+  }
+  if (uAtmoOn > 0.5) {
+    vec2 auv = ((texel + uAtmoOrg) / uTilePx) / uAtmoN;
+    vec2 bs = vec2(8.0) / uAtmoN;            // ±8-tile blur taps → ~24-tile blend band
+    vec4 A = atmoSample(uAtmoA, auv, bs);
+    vec4 B = atmoSample(uAtmoB, auv, bs);
+    vec4 M = atmoSample(uAtmoC, auv, bs);
+    float hue = (A.r * 120.0 - 60.0) * 0.017453;
+    float sat = A.g * 2.0;
+    float con = A.b * 2.0;
+    float bri = A.a * 2.0;
+    float warm = B.r;
+    float fogD = B.g;
+    float nightF = B.a;
+    float msum = max(0.001, M.r + M.g + M.b + M.a);
+    vec4 mw = M / msum;                       // mood weights, sum 1
+
+    // mood base curves (from tuner CSS filters):
+    // filmic contrast(1.12) | painterly saturate(1.15) | muted sat(.82) con(1.08) | chiaroscuro con(1.28)
+    float mCon = mw.x * 1.12 + mw.y * 1.00 + mw.z * 1.08 + mw.w * 1.28;
+    float mSat = mw.x * 1.00 + mw.y * 1.15 + mw.z * 0.82 + mw.w * 1.18;
+    c = satAdj(c, sat * mSat);
+    c = clamp(hueRot(c, hue), 0.0, 1.0);
+    c = (c - 0.5) * (con * mCon) + 0.5;
+    c = clamp(c * bri, 0.0, 1.0);
+
+    // mood overlays — screen-space gradients matching the tuner previews,
+    // scaled by warmth and gated to daylight (sun up) like golden light is
+    float dayGate = smoothstep(0.0, 0.15, uSunHeight);
+    float gd = clamp(vTL.x * 0.5 + vTL.y * 0.5, 0.0, 1.0);  // 160° diagonal
+    float wA = warm * 0.55 * dayGate;
+    vec3 filmCol = mix(vec3(1.0, 0.63, 0.24), vec3(0.0, 0.24, 0.31), gd);
+    c = mix(c, blendOverlay(c, filmCol), mix(wA, wA * 0.6, gd) * mw.x);
+    float rad = clamp(length(vTL - vec2(0.2, 0.0)), 0.0, 1.0);
+    vec3 paintCol = mix(vec3(1.0, 0.82, 0.35), vec3(0.47, 0.31, 0.55), rad);
+    c = mix(c, blendScreen(c, paintCol), clamp(mix(wA * 1.6, 0.10 * dayGate, rad), 0.0, 0.85) * mw.y);
+    vec3 muteCol = mix(vec3(0.71, 0.51, 0.31), vec3(0.24, 0.27, 0.43), vTL.y);
+    c = mix(c, blendSoft(c, muteCol), (wA * 0.66 + 0.10) * mw.z);
+    vec3 chiCol = mix(vec3(1.0, 0.55, 0.12), vec3(0.06, 0.04, 0.16), gd);
+    c = mix(c, blendOverlay(c, chiCol), clamp(mix(wA * 1.4, wA * 1.65 + 0.10, gd), 0.0, 0.85) * mw.w);
+    float vig = smoothstep(0.55, 1.0, length(vTL - 0.5) * 1.6);
+    c *= 1.0 - vig * (0.32 * mw.z + 0.30 * mw.w);
+
+    // cloud shadows: 2-octave world-space noise drifting with the wind
+    vec2 wp = (texel + uWorldOrg + uCloudOff) * 0.004;
+    float cl = vnoise(wp) * 0.65 + vnoise(wp * 2.7 + 13.1) * 0.35;
+    float cmask = smoothstep(0.55, 0.80, cl) * uCloudCover * uSunHeight;
+    c *= 1.0 - cmask * 0.18;
+
+    // phase tint (replaces the 2D tint fillRect)
+    c = clamp(c * uPhaseTint, 0.0, 1.0);
+
+    // day/night brightness with per-biome night floor (the "too dark" fix).
+    // The floor lifts toward a luminance-NORMALIZED moonlit version of the
+    // scene: dark-albedo biomes (deep ocean) have bases far too dark for a
+    // multiplicative floor to ever keep them readable at night.
+    float nightAmt = 1.0 - smoothstep(0.10, 0.55, uAmbient);
+    vec3 nightShift = vec3(0.62, 0.70, 1.10);
+    vec3 dark = c * max(uAmbient, 0.10) * nightShift;
+    float lum0 = dot(c, vec3(0.299, 0.587, 0.114));
+    vec3 moonlit = min(c * (0.25 / max(lum0, 0.05)), vec3(1.0)) * nightShift;
+    dark = mix(dark, moonlit, nightF);
+    c = mix(c, dark, nightAmt);
+
+    // god rays: angled shafts at low sun, strongest with fog
+    float rayAmt = (1.0 - smoothstep(0.08, 0.45, uSunHeight)) * step(0.02, uSunHeight);
+    float rayStr = rayAmt * (0.25 + fogD * 0.75) * 0.30;
+    if (rayStr > 0.004) {
+      vec2 rd = normalize(vec2(cos(uSunAzim), 0.55));
+      float band = dot(vTL, rd) * 14.0 + uTimeSec * 0.06;
+      float shafts = smoothstep(0.45, 1.0, vnoise(vec2(band, band * 0.13)));
+      c += uPhaseTint * shafts * rayStr * (1.0 - vig * 0.5);
+    }
+
+    // fog: per-biome density, phase-colored, breathing noise, edge-biased
+    float fn = vnoise((texel + uWorldOrg) * 0.012 + vec2(uTimeSec * 0.015, -uTimeSec * 0.010));
+    float fedge = smoothstep(0.25, 0.95, length(vTL - 0.5) * 1.45);
+    float fogA = clamp(fogD * (0.30 + 0.45 * fedge + 0.25 * fn), 0.0, 0.8);
+    c = mix(c, uFogColor, fogA * 0.55);
+    c = clamp(c, 0.0, 1.0);
   }
   if (uCrt > 0.5) {
     // Subtle CRT: gentle scanlines aligned to art rows (darkest at row
@@ -478,7 +591,7 @@ export class GLCompositor {
 
   // Atmosphere field: three per-tile RGBA layers (see atmosphere-pass.js).
   // Same origin convention as setWaveField.
-  setAtmoField(field, tilesW, tilesH, orgX, orgY) {
+  setAtmoField(field, tilesW, tilesH, orgX, orgY, tilePx) {
     if (!this.ok || !this.atmoTex) return;
     var gl = this.gl;
     var bufs = [field.a, field.b, field.c];
@@ -497,6 +610,7 @@ export class GLCompositor {
     this._atmoOn = true;
     this._atmoOrgX = orgX;
     this._atmoOrgY = orgY;
+    if (tilePx) this._atmoTilePx = tilePx;
   }
 
   // Per-frame scalar atmosphere environment (sun/weather/time).
@@ -551,6 +665,9 @@ export class GLCompositor {
       gl.uniform1i(this.pUAtmoB, 3);
       gl.uniform1i(this.pUAtmoC, 4);
       gl.uniform1f(this.pUAtmoOn, 1);
+      // uTilePx is shared with the wave block; ensure it's set even when
+      // no water is visible this frame (wave branch skipped).
+      if (!this._waveOn) gl.uniform1f(this.pUTilePx, this._atmoTilePx || 16);
       gl.uniform2f(this.pUAtmoOrg, this._atmoOrgX, this._atmoOrgY);
       gl.uniform2f(this.pUAtmoN, this._atmoTW, this._atmoTH);
       gl.uniform1f(this.pUAmbient, env.ambient);
