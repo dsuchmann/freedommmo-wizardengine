@@ -57,6 +57,10 @@ function update(dt) {
     renderer.glc.presentMode = renderer.glc.presentMode === 1 ? 0 : 1;
     console.log('[GL] upscale filter:', renderer.glc.presentMode === 1 ? 'edge-smoothed' : 'sharp-bilinear');
   }
+  if (input.wasPressed('c') && renderer.glc?.ok) {
+    renderer.glc.crt = !renderer.glc.crt;
+    console.log('[GL] CRT effect:', renderer.glc.crt ? 'on' : 'off');
+  }
   if (input.wasPressed('t')) {
     player.x = 208;
     player.y = 212;

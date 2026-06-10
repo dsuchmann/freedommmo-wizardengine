@@ -102,6 +102,7 @@ uniform float uWaveOn;
 uniform vec2 uWaveOrg; // art px from view texel space to wave field origin
 uniform vec2 uWaveN;   // wave field size, tiles
 uniform float uTilePx; // art px per tile
+uniform float uCrt;    // 0 = off, 1 = subtle CRT (scanlines + aperture grille)
 out vec4 outColor;
 
 // Sample the scene at an art-px coordinate (top-left origin). Texel-center
@@ -157,6 +158,17 @@ void main() {
       : c + (2.0 * s - 1.0) * (d - c);
     c = mix(c, b, 0.85);
   }
+  if (uCrt > 0.5) {
+    // Subtle CRT: gentle scanlines aligned to art rows (darkest at row
+    // boundaries) + a faint aperture-grille RGB tint per device-pixel
+    // triad, brightness-compensated so the image doesn't dim.
+    float scan = 1.0 - 0.10 * (0.5 + 0.5 * cos(6.28318 * texel.y));
+    float gx = mod(gl_FragCoord.x, 3.0);
+    vec3 grille = gx < 1.0 ? vec3(1.03, 0.97, 0.97)
+                : gx < 2.0 ? vec3(0.97, 1.03, 0.97)
+                           : vec3(0.97, 0.97, 1.03);
+    c = clamp(c * scan * grille * 1.06, 0.0, 1.0);
+  }
   outColor = vec4(c, 1.0);
 }`;
 
@@ -202,6 +214,7 @@ export class GLCompositor {
     this.gl = gl;
     this.textures = new Map(); // 'cx,cy' -> { tex, bmp, lastUsed }
     this.presentMode = 1; // 0 = sharp-bilinear, 1 = + edge smoothing (U key)
+    this.crt = false;     // subtle CRT scanlines + grille (C key)
     this.frame = 0;
     this._lastSkyCss = null;
     this._skyRGB = [0, 0, 0];
@@ -337,6 +350,7 @@ export class GLCompositor {
       this.pUOff = gl.getUniformLocation(prog, 'uOff');
       this.pUSharp = gl.getUniformLocation(prog, 'uSharp');
       this.pUMode = gl.getUniformLocation(prog, 'uMode');
+      this.pUCrt = gl.getUniformLocation(prog, 'uCrt');
       this.pUWave = gl.getUniformLocation(prog, 'uWave');
       this.pUWaveOn = gl.getUniformLocation(prog, 'uWaveOn');
       this.pUWaveOrg = gl.getUniformLocation(prog, 'uWaveOrg');
@@ -436,6 +450,7 @@ export class GLCompositor {
     // every pixel edge dpr-times blurrier than intended.
     gl.uniform1f(this.pUSharp, zoom * (this.canvas.width / Math.max(1, cssW)));
     gl.uniform1f(this.pUMode, this.presentMode === 1 ? 1 : 0);
+    gl.uniform1f(this.pUCrt, this.crt ? 1 : 0);
     if (this._waveOn) {
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, this.waveTex);
