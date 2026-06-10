@@ -107,7 +107,9 @@ export class DayNightCycle {
     var shadowHeight = sunHeight > 0.05 ? sunHeight : moonHeight;
     // Steep-sun look: shadows stretch hard at dawn/golden/dusk (low sun),
     // stay short and tight at noon. Length in "object heights".
-    var lowSun = Math.pow(1 - shadowHeight, 1.6);
+    // Remap height so the sun reads "low" through all of golden hour, not
+    // just the last minutes before dusk — this is what sells the steep-sun look.
+    var lowSun = Math.pow(1 - Math.pow(shadowHeight, 1.8), 1.6);
     var shadowX = -Math.cos(shadowSource) * (1.0 + lowSun * 1.6);
     var shadowY = 0.30 + lowSun * 0.55;
     var shadowLength = 0.35 + lowSun * 3.4;   // up to ~3.75 object heights
