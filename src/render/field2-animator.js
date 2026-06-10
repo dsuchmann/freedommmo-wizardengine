@@ -155,13 +155,22 @@ var frameCache = new Map();
 var loadingSet = new Set();
 var _denoiseCanvas = null;
 
-// Key out a solid gray generation-background square (PixelLab artifact on some
-// hills anim frames/variants). Finds the dominant low-saturation gray color among
+// Key out a solid gray generation-background square (PixelLab artifact on many
+// anim frames/variants). Finds the dominant low-saturation gray color among
 // opaque pixels; if it covers a large area (a box, not natural texture), clears
 // all pixels close to that color. Returns true if any pixels were cleared.
-function keyOutGrayBackground(data, w, h) {
+//
+// strict mode (everything except hills, which shipped on the legacy heuristic):
+// the dominant color must be one EXACT flat gray covering ≥20% of the frame AND
+// ≥40% of the 2px border ring. Generated background boxes are a single uniform
+// color that reaches the frame edge; legit gray art (rocks, lichen, soil mounds)
+// is shaded across many colors and/or sits centered with transparent borders.
+// Validated against the full asset set: fires on the real boxes (steppe
+// sparse_weed, arctic ice_needle, ...) and never on gray-bodied sprites.
+function keyOutGrayBackground(data, w, h, strict) {
   var total = w * h;
-  // Histogram of low-saturation mid-tone colors, quantized to 8 levels/channel
+  // Histogram of low-saturation mid-tone colors. Legacy: quantized to 8
+  // levels/channel. Strict: exact colors (a generated box is one flat color).
   var buckets = new Map();
   for (var i = 0; i < total; i++) {
     var p = i * 4;
@@ -169,7 +178,8 @@ function keyOutGrayBackground(data, w, h) {
     var r = data[p], g = data[p + 1], b = data[p + 2];
     var mx = Math.max(r, g, b), mn = Math.min(r, g, b);
     if (mx - mn > 28 || mx < 60 || mx > 215) continue; // only flat grays
-    var key = ((r >> 5) << 6) | ((g >> 5) << 3) | (b >> 5);
+    var key = strict ? ((r << 16) | (g << 8) | b)
+                     : (((r >> 5) << 6) | ((g >> 5) << 3) | (b >> 5));
     var e = buckets.get(key);
     if (e) { e.n++; e.r += r; e.g += g; e.b += b; }
     else buckets.set(key, { n: 1, r: r, g: g, b: b });
@@ -177,8 +187,21 @@ function keyOutGrayBackground(data, w, h) {
   var top = null;
   buckets.forEach(function(e) { if (!top || e.n > top.n) top = e; });
   // A background box covers a big chunk of the frame; natural gray texture doesn't
-  if (!top || top.n < total * 0.12) return false;
+  if (!top || top.n < total * (strict ? 0.20 : 0.12)) return false;
   var mr = top.r / top.n, mg = top.g / top.n, mb = top.b / top.n;
+  if (strict) {
+    // Box must reach the frame edge: ≥40% of the 2px border ring is the color
+    var borderHit = 0, borderN = 0;
+    for (var by = 0; by < h; by++) {
+      for (var bx = 0; bx < w; bx++) {
+        if (bx >= 2 && bx < w - 2 && by >= 2 && by < h - 2) continue;
+        borderN++;
+        var bp = (by * w + bx) * 4;
+        if (data[bp + 3] >= 200 && data[bp] === Math.round(mr) && data[bp + 1] === Math.round(mg) && data[bp + 2] === Math.round(mb)) borderHit++;
+      }
+    }
+    if (borderHit < borderN * 0.4) return false;
+  }
   var changed = false;
   for (var j = 0; j < total; j++) {
     var q = j * 4;
@@ -207,9 +230,17 @@ function denoiseImage(img, url) {
   var imageData = ctx.getImageData(0, 0, w, h);
   var data = imageData.data;
   var changed = false;
-  // Hills F2 sprites: some PixelLab frames ship with a solid gray background box
-  if (url && url.indexOf('/small_flora/hills/') !== -1) {
-    if (keyOutGrayBackground(data, w, h)) changed = true;
+  // PixelLab artifact: many anim frames ship with a solid gray background box
+  // (steppe sparse_weed, arctic ice_needle, hills, ...). Hills keeps the legacy
+  // looser heuristic it shipped with; everything else uses the strict detector.
+  // Gray-bodied sprites (lichen/moss/rock objects) are skipped entirely — their
+  // art is legitimately flat gray.
+  if (url && url.indexOf('/small_flora/') !== -1) {
+    if (url.indexOf('/small_flora/hills/') !== -1) {
+      if (keyOutGrayBackground(data, w, h, false)) changed = true;
+    } else if (!/lichen|moss|rock/.test(url)) {
+      if (keyOutGrayBackground(data, w, h, true)) changed = true;
+    }
   }
   // Strip frame-border artifact lines (dark edge lines, gray box outlines)
   if (clearBorderLines(data, w, h)) changed = true;
