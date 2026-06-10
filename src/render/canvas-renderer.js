@@ -18,6 +18,10 @@ import { buildAtmoField } from './atmosphere-pass.js';
 
 function drawPrecipitation(ctx, w, h, precip, wind, time, tint) {
   if (precip.type === 'none' || precip.intensity < 0.01) return;
+  var tr = tint ? tint.r : 1, tg = tint ? tint.g : 1, tb = tint ? tint.b : 1;
+  function tc(r, g, b, a) {
+    return 'rgba(' + Math.round(Math.min(255, r * tr)) + ',' + Math.round(Math.min(255, g * tg)) + ',' + Math.round(Math.min(255, b * tb)) + ',' + a + ')';
+  }
   var count = Math.floor(precip.intensity * 300);
   var windX = Math.cos(wind.direction) * wind.intensity * 0.6;
 
@@ -25,7 +29,7 @@ function drawPrecipitation(ctx, w, h, precip, wind, time, tint) {
   if (precip.type === 'rain') {
     // Layer 1: Fine background drizzle
     ctx.lineWidth = 0.5;
-    ctx.strokeStyle = 'rgba(160,185,210,' + (0.08 + precip.intensity * 0.10) + ')';
+    ctx.strokeStyle = tc(160, 185, 210, 0.08 + precip.intensity * 0.10);
     for (var i = 0; i < count * 0.3; i++) {
       var seed = (i * 4919 + Math.floor(time * 10)) % 10007;
       var rx = ((seed * 2.7 + time * 100 * (1 + windX)) % (w + 60)) - 30;
@@ -43,12 +47,12 @@ function drawPrecipitation(ctx, w, h, precip, wind, time, tint) {
       var len = 12 + precip.intensity * 16;
       var thick = 1.0 + (seed % 3) * 0.4;
       // Bright raindrop head
-      ctx.fillStyle = 'rgba(200,220,240,' + (0.25 + precip.intensity * 0.20) + ')';
+      ctx.fillStyle = tc(200, 220, 240, 0.25 + precip.intensity * 0.20);
       ctx.beginPath();
       ctx.arc(rx + windX * len, ry + len, thick, 0, 6.28);
       ctx.fill();
       // Tapered streak tail
-      ctx.strokeStyle = 'rgba(180,200,225,' + (0.10 + precip.intensity * 0.15) + ')';
+      ctx.strokeStyle = tc(180, 200, 225, 0.10 + precip.intensity * 0.15);
       ctx.lineWidth = thick * 0.6;
       ctx.beginPath();
       ctx.moveTo(rx, ry);
@@ -58,7 +62,7 @@ function drawPrecipitation(ctx, w, h, precip, wind, time, tint) {
     // Layer 3: Splash circles on ground (heavy rain)
     if (precip.intensity > 0.4) {
       var splashCount = Math.floor((precip.intensity - 0.4) * 60);
-      ctx.strokeStyle = 'rgba(180,200,220,' + (0.06 + precip.intensity * 0.06) + ')';
+      ctx.strokeStyle = tc(180, 200, 220, 0.06 + precip.intensity * 0.06);
       ctx.lineWidth = 0.5;
       for (var s = 0; s < splashCount; s++) {
         var seed = (s * 4271 + Math.floor(time * 18)) % 10007;
@@ -77,7 +81,7 @@ function drawPrecipitation(ctx, w, h, precip, wind, time, tint) {
       var sx = ((seed * 4.7 + time * 10 * (1 + windX * 0.3)) % (w + 40)) - 20;
       var sy = ((seed * 2.3 + time * 22) % (h + 40)) - 20;
       sx += Math.sin(time * 0.6 + i * 0.7) * 8;
-      ctx.fillStyle = 'rgba(220,228,240,' + (0.15 + precip.intensity * 0.12) + ')';
+      ctx.fillStyle = tc(220, 228, 240, 0.15 + precip.intensity * 0.12);
       ctx.fillRect(sx, sy, 1.5, 1.5);
     }
     // Layer 2: Near snowflakes — 6-pointed star shapes
@@ -94,7 +98,7 @@ function drawPrecipitation(ctx, w, h, precip, wind, time, tint) {
       ctx.save();
       ctx.translate(sx, sy);
       ctx.rotate(rot);
-      ctx.strokeStyle = 'rgba(240,245,255,' + alpha + ')';
+      ctx.strokeStyle = tc(240, 245, 255, alpha);
       ctx.lineWidth = 0.8;
       // Draw 6-pointed snowflake
       for (var arm = 0; arm < 6; arm++) {
@@ -123,12 +127,12 @@ function drawPrecipitation(ctx, w, h, precip, wind, time, tint) {
       var sy = ((seed * 8.1 + time * 35 + Math.sin(time * 2 + i) * 15) % (h + 40)) - 20;
       var size = 1 + (seed % 5);
       var alpha = 0.05 + (seed % 10) * 0.012;
-      ctx.fillStyle = 'rgba(194,170,120,' + alpha + ')';
+      ctx.fillStyle = tc(194, 170, 120, alpha);
       ctx.fillRect(sx, sy, size, 1 + (seed % 2));
     }
     // Amber haze overlay
     if (precip.intensity > 0.3) {
-      ctx.fillStyle = 'rgba(180,155,100,' + (precip.intensity * 0.18) + ')';
+      ctx.fillStyle = tc(180, 155, 100, precip.intensity * 0.18);
       ctx.fillRect(0, 0, w, h);
     }
   } else if (precip.type === 'sleet') {
@@ -139,11 +143,11 @@ function drawPrecipitation(ctx, w, h, precip, wind, time, tint) {
       var ry = ((seed * 6.7 + time * 340) % (h + 40)) - 20;
       if (seed % 3 === 0) {
         // Ice pellet
-        ctx.fillStyle = 'rgba(200,210,230,' + (0.3 + precip.intensity * 0.2) + ')';
+        ctx.fillStyle = tc(200, 210, 230, 0.3 + precip.intensity * 0.2);
         ctx.fillRect(rx, ry, 2, 2);
       } else {
         // Rain streak
-        ctx.strokeStyle = 'rgba(170,190,215,' + (0.10 + precip.intensity * 0.12) + ')';
+        ctx.strokeStyle = tc(170, 190, 215, 0.10 + precip.intensity * 0.12);
         ctx.lineWidth = 0.7;
         ctx.beginPath();
         ctx.moveTo(rx, ry);
