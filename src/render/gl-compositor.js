@@ -245,6 +245,15 @@ void main() {
       ? c - (1.0 - 2.0 * s) * c * (1.0 - c)
       : c + (2.0 * s - 1.0) * (d - c);
     c = mix(c, b, 0.85);
+    // Sun glints: wave crests catch the sun's color. Strongest at low sun
+    // (golden path of sparkle), aligned to the sun's side of the screen.
+    if (uAtmoOn > 0.5 && uSunHeight > 0.02) {
+      float crest = smoothstep(0.62, 0.85, s);
+      float lowSun2 = 1.0 - smoothstep(0.10, 0.60, uSunHeight);
+      float sunSide = 1.0 - abs(vTL.x - (0.5 + cos(uSunAzim) * 0.45));
+      float glint = crest * (0.10 + lowSun2 * 0.55) * clamp(sunSide, 0.2, 1.0);
+      c += uPhaseTint * glint;
+    }
   }
   if (uAtmoOn > 0.5) {
     vec2 auv = ((texel + uAtmoOrg) / uTilePx) / uAtmoN;
