@@ -250,6 +250,8 @@ var SF_VARIANT_WHITELIST = {
   'steppe/sparse_weed': [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 20, 22, 23, 24, 25, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 43, 44, 46, 47, 48, 49, 50, 52, 53, 54, 56, 57, 58, 59, 60, 61, 62, 63],
   'tundra/tundra_grass': [0, 1, 4, 7, 8, 15, 17, 18, 19, 20, 36, 40],
   'tundra/low_berry_bush': [0, 4, 6, 9, 23, 45, 47],
+  // arctic/ice_needle: all 64 minus full-bleed square variants 21,25,30,35,40,45,50,55,60
+  'arctic/ice_needle': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 24, 26, 27, 28, 29, 31, 32, 33, 34, 36, 37, 38, 39, 41, 42, 43, 44, 46, 47, 48, 49, 51, 52, 53, 54, 56, 57, 58, 59, 61, 62, 63],
 };
 
 // Anim coverage map ('biome/object' → variant indices that HAVE wind_sway frames on disk).

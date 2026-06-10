@@ -35,7 +35,8 @@ var RIGID_OBJECTS = {
 var STATE_SPRITES = {
   'arctic/frost_flower': true,
   'arctic/frozen_grass': true,
-  'arctic/ice_needle': true,
+  // arctic/ice_needle removed: its seedling state is a translucent gray blob
+  // (bad asset) — transform-only states look correct
   'mountains/rock_cress': true,
   'steppe/grass_wisp': true,
   'volcanic/lava_fern': true,
