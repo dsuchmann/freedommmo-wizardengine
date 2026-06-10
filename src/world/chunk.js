@@ -56,6 +56,9 @@ export class ChunkStore {
   streamAround(wx, wy) {
     const pcx = floorDiv(wx, WORLD.chunkSize);
     const pcy = floorDiv(wy, WORLD.chunkSize);
+    const moved = this._lastStreamPos && (Math.abs(wx - this._lastStreamPos.x) > 0.01 || Math.abs(wy - this._lastStreamPos.y) > 0.01);
+    this._lastStreamPos = { x: wx, y: wy };
+    this.provider.setPlayerFocus(pcx, pcy, moved);
     const currentReady = this.getIfReady(pcx, pcy);
     if (currentReady) this.lastPlayerChunk = { cx: pcx, cy: pcy };
 

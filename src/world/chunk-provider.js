@@ -18,7 +18,10 @@ export class ChunkProvider {
     this.nextWorker = 0;
     this.workerSupported = typeof Worker !== 'undefined';
     this.maxActive = Math.max(1, workerCount);
-    this.maxAdoptPerFrame = 1;
+    this.adoptBudgetMs = 3.0;       // frame-time budget for adopting compiled chunks
+    this.adoptBudgetMovingMs = 1.5; // tighter while the player is moving
+    this._playerChunk = null;
+    this._playerMoving = false;
     this.pumpScheduled = false;
     this.wangDebug = new Map();
     this.workersReady = 0;
@@ -54,6 +57,14 @@ export class ChunkProvider {
     for (const worker of this.workers) {
       worker.postMessage({ type: 'preloadBiomes', biomes });
     }
+  }
+
+  // Called by ChunkStore.streamAround every frame: lets the queue re-sort by
+  // CURRENT distance (priorities assigned at request time go stale as the
+  // player walks) and tightens the adoption budget while moving.
+  setPlayerFocus(cx, cy, moving) {
+    this._playerChunk = { cx, cy };
+    this._playerMoving = !!moving;
   }
 
   createWorker() {
@@ -160,8 +171,10 @@ export class ChunkProvider {
   }
 
   pumpQueue() {
+    const budget = this._playerMoving ? this.adoptBudgetMovingMs : this.adoptBudgetMs;
+    const t0 = performance.now();
     let adopted = 0;
-    while (this.completed.length > 0 && adopted < this.maxAdoptPerFrame) {
+    while (this.completed.length > 0 && (adopted === 0 || performance.now() - t0 < budget)) {
       const { key, chunk } = this.completed.shift();
       this.ready.set(key, chunk);
       adopted++;
@@ -170,7 +183,12 @@ export class ChunkProvider {
     const readyWorkers = this.workers.filter(w => w._imagesReady);
     if (readyWorkers.length > 0) {
       while (this.pending.size < this.maxActive && this.queued.size > 0) {
-        const jobs = [...this.queued.values()].sort((a, b) => a.priority - b.priority || a.requestedAt - b.requestedAt);
+        const pc = this._playerChunk;
+        const jobs = [...this.queued.values()].sort((a, b) => {
+          const da = pc ? Math.abs(a.cx - pc.cx) + Math.abs(a.cy - pc.cy) : a.priority;
+          const db = pc ? Math.abs(b.cx - pc.cx) + Math.abs(b.cy - pc.cy) : b.priority;
+          return da - db || a.requestedAt - b.requestedAt;
+        });
         const job = jobs[0];
         this.queued.delete(job.key);
         this.pending.set(job.key, job);
