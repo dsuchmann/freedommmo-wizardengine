@@ -103,6 +103,22 @@ uniform vec2 uWaveOrg; // art px from view texel space to wave field origin
 uniform vec2 uWaveN;   // wave field size, tiles
 uniform float uTilePx; // art px per tile
 uniform float uCrt;    // 0 = off, 1 = subtle CRT (scanlines + aperture grille)
+// Atmosphere pass: per-tile biome grading fields (same addressing as uWave)
+uniform sampler2D uAtmoA;  // hue, sat, con, bri
+uniform sampler2D uAtmoB;  // warm, fog, shadow, night-floor
+uniform sampler2D uAtmoC;  // mood one-hot weights (filmic/painterly/muted/chiaroscuro)
+uniform float uAtmoOn;
+uniform vec2 uAtmoOrg;     // art-px offset, view texel space -> field origin
+uniform vec2 uAtmoN;       // field size, tiles
+uniform float uAmbient;    // phase ambient 0..1
+uniform vec3 uPhaseTint;   // phase tint (≈1.0 neutral)
+uniform vec3 uFogColor;    // phase fog color 0..1
+uniform float uSunAzim;    // sun angle: 0=east, pi/2=overhead, pi=west
+uniform float uSunHeight;  // 0..1
+uniform float uTimeSec;
+uniform float uCloudCover; // 0..1
+uniform vec2 uCloudOff;    // accumulated cloud drift, world art px
+uniform vec2 uWorldOrg;    // world art-px of view texel origin (camXi, camYi)
 out vec4 outColor;
 
 // Sample the scene at an art-px coordinate (top-left origin). Texel-center
@@ -356,6 +372,35 @@ export class GLCompositor {
       this.pUWaveOrg = gl.getUniformLocation(prog, 'uWaveOrg');
       this.pUWaveN = gl.getUniformLocation(prog, 'uWaveN');
       this.pUTilePx = gl.getUniformLocation(prog, 'uTilePx');
+      this.pUAtmoA = gl.getUniformLocation(prog, 'uAtmoA');
+      this.pUAtmoB = gl.getUniformLocation(prog, 'uAtmoB');
+      this.pUAtmoC = gl.getUniformLocation(prog, 'uAtmoC');
+      this.pUAtmoOn = gl.getUniformLocation(prog, 'uAtmoOn');
+      this.pUAtmoOrg = gl.getUniformLocation(prog, 'uAtmoOrg');
+      this.pUAtmoN = gl.getUniformLocation(prog, 'uAtmoN');
+      this.pUAmbient = gl.getUniformLocation(prog, 'uAmbient');
+      this.pUPhaseTint = gl.getUniformLocation(prog, 'uPhaseTint');
+      this.pUFogColor = gl.getUniformLocation(prog, 'uFogColor');
+      this.pUSunAzim = gl.getUniformLocation(prog, 'uSunAzim');
+      this.pUSunHeight = gl.getUniformLocation(prog, 'uSunHeight');
+      this.pUTimeSec = gl.getUniformLocation(prog, 'uTimeSec');
+      this.pUCloudCover = gl.getUniformLocation(prog, 'uCloudCover');
+      this.pUCloudOff = gl.getUniformLocation(prog, 'uCloudOff');
+      this.pUWorldOrg = gl.getUniformLocation(prog, 'uWorldOrg');
+      this.atmoTex = [];
+      for (var ai = 0; ai < 3; ai++) {
+        var t = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, t);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        this.atmoTex.push(t);
+      }
+      this._atmoOn = false;
+      this._atmoTW = 0;
+      this._atmoTH = 0;
+      this._atmoEnv = null;
       this.waveTex = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, this.waveTex);
       // LINEAR: smooth tile-to-tile shimmer gradients (the 2D path was blocky
@@ -431,6 +476,38 @@ export class GLCompositor {
     this._waveOn = false;
   }
 
+  // Atmosphere field: three per-tile RGBA layers (see atmosphere-pass.js).
+  // Same origin convention as setWaveField.
+  setAtmoField(field, tilesW, tilesH, orgX, orgY) {
+    if (!this.ok || !this.atmoTex) return;
+    var gl = this.gl;
+    var bufs = [field.a, field.b, field.c];
+    for (var i = 0; i < 3; i++) {
+      gl.activeTexture(gl.TEXTURE2 + i);
+      gl.bindTexture(gl.TEXTURE_2D, this.atmoTex[i]);
+      if (tilesW !== this._atmoTW || tilesH !== this._atmoTH) {
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, tilesW, tilesH, 0, gl.RGBA, gl.UNSIGNED_BYTE, bufs[i]);
+      } else {
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, tilesW, tilesH, gl.RGBA, gl.UNSIGNED_BYTE, bufs[i]);
+      }
+    }
+    this._atmoTW = tilesW;
+    this._atmoTH = tilesH;
+    gl.activeTexture(gl.TEXTURE0);
+    this._atmoOn = true;
+    this._atmoOrgX = orgX;
+    this._atmoOrgY = orgY;
+  }
+
+  // Per-frame scalar atmosphere environment (sun/weather/time).
+  setAtmoEnv(env) {
+    this._atmoEnv = env;
+  }
+
+  clearAtmoField() {
+    this._atmoOn = false;
+  }
+
   // Upscale the art-res scene to the full canvas with sharp-bilinear sampling.
   presentScene(cssW, cssH, zoom, fracX, fracY) {
     if (!this.ok || !this.sceneActive) return;
@@ -462,6 +539,31 @@ export class GLCompositor {
       gl.uniform1f(this.pUTilePx, this._waveTilePx);
     } else {
       gl.uniform1f(this.pUWaveOn, 0);
+    }
+    var env = this._atmoEnv;
+    if (this._atmoOn && env) {
+      for (var ai = 0; ai < 3; ai++) {
+        gl.activeTexture(gl.TEXTURE2 + ai);
+        gl.bindTexture(gl.TEXTURE_2D, this.atmoTex[ai]);
+      }
+      gl.activeTexture(gl.TEXTURE0);
+      gl.uniform1i(this.pUAtmoA, 2);
+      gl.uniform1i(this.pUAtmoB, 3);
+      gl.uniform1i(this.pUAtmoC, 4);
+      gl.uniform1f(this.pUAtmoOn, 1);
+      gl.uniform2f(this.pUAtmoOrg, this._atmoOrgX, this._atmoOrgY);
+      gl.uniform2f(this.pUAtmoN, this._atmoTW, this._atmoTH);
+      gl.uniform1f(this.pUAmbient, env.ambient);
+      gl.uniform3f(this.pUPhaseTint, env.tint[0], env.tint[1], env.tint[2]);
+      gl.uniform3f(this.pUFogColor, env.fogColor[0], env.fogColor[1], env.fogColor[2]);
+      gl.uniform1f(this.pUSunAzim, env.sunAzim);
+      gl.uniform1f(this.pUSunHeight, env.sunHeight);
+      gl.uniform1f(this.pUTimeSec, env.timeSec);
+      gl.uniform1f(this.pUCloudCover, env.cloudCover);
+      gl.uniform2f(this.pUCloudOff, env.cloudOffX, env.cloudOffY);
+      gl.uniform2f(this.pUWorldOrg, env.worldOrgX, env.worldOrgY);
+    } else {
+      gl.uniform1f(this.pUAtmoOn, 0);
     }
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.bindVertexArray(null);
