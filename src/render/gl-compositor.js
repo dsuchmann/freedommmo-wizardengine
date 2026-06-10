@@ -70,6 +70,40 @@ void main() {
 export var SPRITE_FLOATS = 9;
 var SPRITE_STRIDE = SPRITE_FLOATS * 4;
 
+// --- Stage 3: 1:1 art-res scene framebuffer + sharp-bilinear present ---
+// The whole GL scene (terrain + sprites) renders at art resolution (one
+// texel per art pixel) into an offscreen framebuffer, snapped to integer
+// art pixels. The present pass upscales to the canvas with "sharp bilinear"
+// sampling: pixels stay fat and crisp, but pixel EDGES get exactly one
+// screen-pixel of bilinear smoothing — uniform pixel sizes at any zoom, and
+// smooth sub-pixel camera scroll via the fractional offset uniform.
+var PRESENT_VERT_SRC = `#version 300 es
+precision highp float;
+in vec2 aUnit;
+out vec2 vTL; // unit coords, top-left origin
+void main() {
+  gl_Position = vec4(aUnit.x * 2.0 - 1.0, 1.0 - aUnit.y * 2.0, 0.0, 1.0);
+  vTL = aUnit;
+}`;
+
+var PRESENT_FRAG_SRC = `#version 300 es
+precision highp float;
+in vec2 vTL;
+uniform sampler2D uScene;
+uniform vec4 uArt;    // artW, artH, allocW, allocH (texels)
+uniform vec2 uView;   // visible art px (cssW/zoom, cssH/zoom)
+uniform vec2 uOff;    // fractional camera offset, art px
+uniform float uSharp; // zoom factor (screen px per art px)
+out vec4 outColor;
+void main() {
+  vec2 texel = vTL * uView + uOff;            // art px, top-left origin
+  vec2 seam = floor(texel) + 0.5;
+  vec2 f = clamp((texel - seam) * uSharp, -0.5, 0.5);
+  vec2 p = seam + f;
+  vec2 uv = vec2(p.x / uArt.z, (uArt.y - p.y) / uArt.w);
+  outColor = vec4(texture(uScene, uv).rgb, 1.0);
+}`;
+
 // Evict chunk textures not drawn for this many frames.
 var EVICT_AFTER_FRAMES = 600;
 var SWEEP_INTERVAL = 256;
@@ -191,10 +225,12 @@ export class GLCompositor {
   beginFrame(skyColorCss, cssW, cssH) {
     if (!this.ok) return;
     var gl = this.gl;
+    this.sceneActive = false;
     if (skyColorCss !== this._lastSkyCss) {
       this._lastSkyCss = skyColorCss;
       this._skyRGB = parseColor(skyColorCss);
     }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     gl.clearColor(this._skyRGB[0], this._skyRGB[1], this._skyRGB[2], 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -203,6 +239,102 @@ export class GLCompositor {
     gl.uniform2f(this.uViewport, cssW, cssH);
     gl.uniform1i(this.uTex, 0);
     gl.activeTexture(gl.TEXTURE0);
+  }
+
+  // Stage 3: begin an art-resolution scene pass. All subsequent drawChunk /
+  // drawSpriteInstances calls take ART-pixel coordinates (integer-snapped
+  // camera). Returns false if the framebuffer path is unavailable — caller
+  // should fall back to beginFrame() with CSS-px coordinates.
+  beginScene(skyColorCss, artW, artH) {
+    if (!this.ok || !this._ensureScene(artW, artH)) return false;
+    var gl = this.gl;
+    if (skyColorCss !== this._lastSkyCss) {
+      this._lastSkyCss = skyColorCss;
+      this._skyRGB = parseColor(skyColorCss);
+    }
+    this._artW = artW;
+    this._artH = artH;
+    this.sceneActive = true;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.sceneFbo);
+    gl.viewport(0, 0, artW, artH);
+    gl.clearColor(this._skyRGB[0], this._skyRGB[1], this._skyRGB[2], 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.useProgram(this.program);
+    gl.bindVertexArray(this.vao);
+    gl.uniform2f(this.uViewport, artW, artH);
+    gl.uniform1i(this.uTex, 0);
+    gl.activeTexture(gl.TEXTURE0);
+    return true;
+  }
+
+  _ensureScene(artW, artH) {
+    if (this.sceneOk === false) return false; // failed once — don't retry
+    var gl = this.gl;
+    if (!this.presentProgram) {
+      var prog = this._buildProgram(PRESENT_VERT_SRC, PRESENT_FRAG_SRC);
+      if (!prog) { this.sceneOk = false; return false; }
+      this.presentProgram = prog;
+      this.pUScene = gl.getUniformLocation(prog, 'uScene');
+      this.pUArt = gl.getUniformLocation(prog, 'uArt');
+      this.pUView = gl.getUniformLocation(prog, 'uView');
+      this.pUOff = gl.getUniformLocation(prog, 'uOff');
+      this.pUSharp = gl.getUniformLocation(prog, 'uSharp');
+      this.presentVao = gl.createVertexArray();
+      gl.bindVertexArray(this.presentVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.unitVbo);
+      var loc = gl.getAttribLocation(prog, 'aUnit');
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+      gl.bindVertexArray(null);
+      this.sceneTex = gl.createTexture();
+      this.sceneFbo = gl.createFramebuffer();
+      this._sceneAllocW = 0;
+      this._sceneAllocH = 0;
+    }
+    if (artW > this._sceneAllocW || artH > this._sceneAllocH) {
+      // Round allocation up to 64-texel steps so zoom wobble doesn't realloc
+      this._sceneAllocW = Math.max(this._sceneAllocW, Math.ceil(artW / 64) * 64);
+      this._sceneAllocH = Math.max(this._sceneAllocH, Math.ceil(artH / 64) * 64);
+      gl.bindTexture(gl.TEXTURE_2D, this.sceneTex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, this._sceneAllocW, this._sceneAllocH, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      // LINEAR — the present shader does the sharp-bilinear math itself
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this.sceneFbo);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.sceneTex, 0);
+      var status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      if (status !== gl.FRAMEBUFFER_COMPLETE) {
+        console.warn('[GL] scene framebuffer incomplete (status ' + status + ') — falling back to direct rendering');
+        this.sceneOk = false;
+        return false;
+      }
+      console.log('[GL] art-res scene framebuffer: ' + this._sceneAllocW + 'x' + this._sceneAllocH);
+    }
+    this.sceneOk = true;
+    return true;
+  }
+
+  // Upscale the art-res scene to the full canvas with sharp-bilinear sampling.
+  presentScene(cssW, cssH, zoom, fracX, fracY) {
+    if (!this.ok || !this.sceneActive) return;
+    var gl = this.gl;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    gl.useProgram(this.presentProgram);
+    gl.bindVertexArray(this.presentVao);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.sceneTex);
+    gl.uniform1i(this.pUScene, 0);
+    gl.uniform4f(this.pUArt, this._artW, this._artH, this._sceneAllocW, this._sceneAllocH);
+    gl.uniform2f(this.pUView, cssW / zoom, cssH / zoom);
+    gl.uniform2f(this.pUOff, fracX, fracY);
+    gl.uniform1f(this.pUSharp, zoom);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.bindVertexArray(null);
+    this.sceneActive = false;
   }
 
   // Upload (or reuse) the chunk bitmap as a texture and draw it as a quad.
@@ -356,7 +488,10 @@ export class GLCompositor {
     var gl = this.gl;
     gl.useProgram(this.spriteProgram);
     gl.bindVertexArray(this.spriteVao);
-    gl.uniform2f(this.sUViewport, cssW, cssH);
+    // In scene mode the viewport MUST match beginScene's art dims exactly,
+    // or sprites drift off the terrain's pixel grid by the ceil+margin delta.
+    if (this.sceneActive) gl.uniform2f(this.sUViewport, this._artW, this._artH);
+    else gl.uniform2f(this.sUViewport, cssW, cssH);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.atlasTex);
     gl.uniform1i(this.sUAtlas, 0);

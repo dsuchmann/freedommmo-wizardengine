@@ -939,7 +939,13 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         playerInGL = true;
       }
       var rect = glc.atlasRect(g.img, g._url);
-      if (!rect) { twoD.push(g); continue; } // not atlased (yet) — 2D fallback
+      if (!rect) {
+        // Not atlased (yet). In art-scene mode coords are art px — they can't
+        // draw on the CSS-px 2D canvas, so skip a frame (sprite is mid-fade
+        // anyway); otherwise fall back to the 2D canvas.
+        if (!glc.sceneActive) twoD.push(g);
+        continue;
+      }
       var o = instCount * SPRITE_FLOATS;
       _instArray[o] = g.sx;
       _instArray[o + 1] = g.sy + g.halfDraw; // pivot at bottom-center

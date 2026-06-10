@@ -223,10 +223,27 @@ export class CanvasRenderer {
     const tilePx = WORLD.tileSize * camera.zoom;
     const focusTile = chunkStore.tileAt(player.x, player.y);
     const glOn = this.useGL && this.glc && this.glc.ok;
+    // Stage 3: art-resolution scene pass. The GL scene renders 1:1 with the
+    // art (one texel per art pixel) snapped to INTEGER art pixels; the
+    // present pass upscales with sharp-bilinear sampling and applies the
+    // fractional camera offset for smooth sub-pixel scrolling.
+    const ts = WORLD.tileSize;
+    let glScene = false;
+    let camXi = 0, camYi = 0, fracX = 0, fracY = 0;
     if (glOn) {
+      // 2-px margin covers the fractional offset + bilinear taps at edges
+      const artW = Math.ceil(w / camera.zoom) + 2;
+      const artH = Math.ceil(h / camera.zoom) + 2;
+      const camXa = player.x * ts - w / camera.zoom / 2;
+      const camYa = player.y * ts - h / camera.zoom / 2 + (camera.elevationOffsetY ?? 0) / camera.zoom;
+      camXi = Math.floor(camXa);
+      camYi = Math.floor(camYa);
+      fracX = camXa - camXi;
+      fracY = camYa - camYi;
       // GL canvas underneath draws sky + terrain; this canvas only carries overlays.
       ctx.clearRect(0, 0, w, h);
-      this.glc.beginFrame(sun.skyColor || '#18262b', w, h);
+      glScene = this.glc.beginScene(sun.skyColor || '#18262b', artW, artH);
+      if (!glScene) this.glc.beginFrame(sun.skyColor || '#18262b', w, h); // stage-2 fallback
     } else {
       ctx.fillStyle = sun.skyColor || '#18262b';
       ctx.fillRect(0, 0, w, h);
@@ -267,8 +284,15 @@ export class CanvasRenderer {
       const sx = baseSX + (cx - minCX) * chunkPx;
       const sy = baseSY + (cy - minCY) * chunkPx;
       if (!cached) continue;
-      if (glOn) this.glc.drawChunk(key, cached, sx, sy, chunkPx, chunkPx);
-      else ctx.drawImage(cached, sx, sy, chunkPx, chunkPx);
+      if (glScene) {
+        // Art-space: chunk quads land on exact integer art pixels (zero seams)
+        const chunkArt = WORLD.chunkSize * ts;
+        this.glc.drawChunk(key, cached, cx * chunkArt - camXi, cy * chunkArt - camYi, chunkArt, chunkArt);
+      } else if (glOn) {
+        this.glc.drawChunk(key, cached, sx, sy, chunkPx, chunkPx);
+      } else {
+        ctx.drawImage(cached, sx, sy, chunkPx, chunkPx);
+      }
       // Feed worker wang debug data into the debug overlay system
       const wd = provider.getWangDebug(cx, cy);
       if (wd && !getDebugWangData(key)) setDebugWangData(key, wd);
@@ -342,19 +366,37 @@ export class CanvasRenderer {
       var pctx = this._playerCanvas.getContext('2d');
       pctx.clearRect(0, 0, PC, PC);
       pctx.imageSmoothingEnabled = false;
-      this.drawPlayerAt(PC / 2, PBASE, camera.zoom, player, pctx);
-      setField2PlayerGL({
-        canvas: this._playerCanvas,
-        pivotX: w / 2,
-        pivotY: _playerScreenY + (PC - PBASE), // quad pivot is bottom-center
-        size: PC,
-      });
+      if (glScene) {
+        // Art-res scene: player composited at zoom 1 so its pixels share the
+        // world's pixel grid; CSS->art mapping is css/zoom + frac.
+        this.drawPlayerAt(PC / 2, PBASE, 1, player, pctx);
+        setField2PlayerGL({
+          canvas: this._playerCanvas,
+          pivotX: w / 2 / camera.zoom + fracX,
+          pivotY: _playerScreenY / camera.zoom + fracY + (PC - PBASE),
+          size: PC,
+        });
+      } else {
+        this.drawPlayerAt(PC / 2, PBASE, camera.zoom, player, pctx);
+        setField2PlayerGL({
+          canvas: this._playerCanvas,
+          pivotX: w / 2,
+          pivotY: _playerScreenY + (PC - PBASE), // quad pivot is bottom-center
+          size: PC,
+        });
+      }
     } else {
       setField2PlayerGL(null);
     }
 
     // === FIELD 2: ANIMATED WIND SWAY ===
-    drawField2Animations(ctx, chunkStore, player, camera, w, h, { baseSX, baseSY, minCX, minCY, chunkPx }, performance.now(), weather, sun, glOn ? this.glc : null);
+    // In art-scene mode the grid is in art pixels (so all sprite instances
+    // land on the same integer-snapped pixel grid as the terrain).
+    const chunkArtPx = WORLD.chunkSize * ts;
+    const f2Grid = glScene
+      ? { baseSX: minCX * chunkArtPx - camXi, baseSY: minCY * chunkArtPx - camYi, minCX, minCY, chunkPx: chunkArtPx }
+      : { baseSX, baseSY, minCX, minCY, chunkPx };
+    drawField2Animations(ctx, chunkStore, player, camera, glScene ? w / camera.zoom : w, glScene ? h / camera.zoom : h, f2Grid, performance.now(), weather, sun, glOn ? this.glc : null);
 
     // Weather AFTER all sprites — in GL mode most F2 sprites live on the GL
     // canvas (below this one), so fog/precip drawn earlier would cover them
@@ -378,6 +420,7 @@ export class CanvasRenderer {
     // this.drawDepthBokeh(chunkStore, player, focusTile, camera, camX, camY, w, h);
     this.drawAtmosphere(sun, w, h);
 
+    if (glScene) this.glc.presentScene(w, h, camera.zoom, fracX, fracY);
     if (glOn) this.glc.endFrame();
   }
 
