@@ -67,6 +67,9 @@ function update(dt) {
   weather.update(dt, chunks.tileAt(player.x, player.y));
   player.update(input, dt, chunks, { movementCost, resolveMovement });
   chunks.streamAround(player.x, player.y);
+  // Re-run biome preload as the player travels — no-ops until they've moved
+  // ~15 chunks from the last preload center (kills sprite pop-in on new biomes)
+  if ((frame & 127) === 0) provider.initPreload(player.x, player.y);
   camera.update(dt, chunks.tileAt(player.x, player.y));
   if ((frame & 31) === 0) savePlayerPosition(player);
 }

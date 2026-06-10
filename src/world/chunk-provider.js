@@ -29,9 +29,13 @@ export class ChunkProvider {
   }
 
   // Sample biomes in a radius around a world position and tell workers to preload those tiles.
+  // Safe to call repeatedly (e.g. periodically as the player moves) — it
+  // no-ops until the player has moved far enough from the last preload center.
   initPreload(wx, wy) {
     const pcx = Math.floor(wx / 64);
     const pcy = Math.floor(wy / 64);
+    if (this._lastPreload && Math.max(Math.abs(pcx - this._lastPreload.cx), Math.abs(pcy - this._lastPreload.cy)) < 15) return;
+    this._lastPreload = { cx: pcx, cy: pcy };
     const biomeSet = new Set();
     // Sample a grid around the player — sparse sampling is fine, just need biome variety
     const sampleRadius = 30;

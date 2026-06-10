@@ -275,7 +275,8 @@ export class CanvasRenderer {
       visibleChunks.push({ cx, cy, key, sx, sy, dw: chunkPx, dh: chunkPx });
     }
 
-    if (glOn) this.glc.endFrame();
+    // (glc.endFrame() runs at the end of draw() — F2 sprite instances still
+    // need to land on the GL canvas after terrain.)
 
     // === FIELD 1 ANIMATED WATER OVERLAY ===
     // Per-pixel wave modulation + animated seaweed sprites.
@@ -333,7 +334,7 @@ export class CanvasRenderer {
     });
 
     // === FIELD 2: ANIMATED WIND SWAY ===
-    drawField2Animations(ctx, chunkStore, player, camera, w, h, { baseSX, baseSY, minCX, minCY, chunkPx }, performance.now(), weather, sun);
+    drawField2Animations(ctx, chunkStore, player, camera, w, h, { baseSX, baseSY, minCX, minCY, chunkPx }, performance.now(), weather, sun, glOn ? this.glc : null);
 
     // Atmospheric color grading — applied AFTER all objects/sprites so everything gets affected
     if (sun) {
@@ -347,6 +348,8 @@ export class CanvasRenderer {
     this.drawContactOverlay(player, w, h, camera.zoom, performance.now() / 1000);
     // this.drawDepthBokeh(chunkStore, player, focusTile, camera, camX, camY, w, h);
     this.drawAtmosphere(sun, w, h);
+
+    if (glOn) this.glc.endFrame();
   }
 
   drawContactOverlay(player, w, h, zoom, timeSeconds) {
@@ -622,7 +625,7 @@ export class CanvasRenderer {
     const cacheStats = this.chunkRenderCache.stats();
     const atlasStats = this.atlas.stats().generated;
     const glLine = this.useGL && this.glc?.ok
-      ? `<b style="color:#8f8">GL</b> tex ${this.glc.stats().glTextures}`
+      ? `<b style="color:#8f8">GL</b> tex ${this.glc.stats().glTextures} · atlas ${this.glc.stats().atlasSprites}`
       : '<span style="color:#ff8">2D</span>';
     const workerLine = `terrain ${glLine} (G toggle) · workers ${chunkStats.workers} (${chunkStats.workersReady ?? '?'} ready) · pending ${chunkStats.pending} · ready ${chunkStats.ready} · bitmaps ${chunkStats.bitmaps ?? 0} · art sheets ${atlasStats.loaded}/${atlasStats.sheets}`;
     const perfLine = perf ? `<br>fps ${perf.fps.toFixed(0)} · update ${perf.updateMs.toFixed(1)}ms · draw ${perf.drawMs.toFixed(1)}ms · ${workerLine}` : '';
