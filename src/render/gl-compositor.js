@@ -162,12 +162,12 @@ void main() {
     // Subtle CRT: gentle scanlines aligned to art rows (darkest at row
     // boundaries) + a faint aperture-grille RGB tint per device-pixel
     // triad, brightness-compensated so the image doesn't dim.
-    float scan = 1.0 - 0.10 * (0.5 + 0.5 * cos(6.28318 * texel.y));
+    float scan = 1.0 - 0.22 * (0.5 + 0.5 * cos(6.28318 * texel.y));
     float gx = mod(gl_FragCoord.x, 3.0);
-    vec3 grille = gx < 1.0 ? vec3(1.03, 0.97, 0.97)
-                : gx < 2.0 ? vec3(0.97, 1.03, 0.97)
-                           : vec3(0.97, 0.97, 1.03);
-    c = clamp(c * scan * grille * 1.06, 0.0, 1.0);
+    vec3 grille = gx < 1.0 ? vec3(1.06, 0.94, 0.94)
+                : gx < 2.0 ? vec3(0.94, 1.06, 0.94)
+                           : vec3(0.94, 0.94, 1.06);
+    c = clamp(c * scan * grille * 1.13, 0.0, 1.0);
   }
   outColor = vec4(c, 1.0);
 }`;
