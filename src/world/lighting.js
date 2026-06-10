@@ -17,10 +17,10 @@ var PHASES = [
   { name: 'noon',      start: 0.42,
     ambient: 1.00, tint: { r: 1.05, g: 1.02, b: 0.98 },
     sky: [212, 234, 245], fog: [230, 240, 250] },
-  { name: 'golden_hour', start: 0.58,
+  { name: 'golden_hour', start: 0.55,
     ambient: 0.62, tint: { r: 1.25, g: 0.78, b: 0.35 },
     sky: [210, 120, 40], fog: [220, 150, 80] },
-  { name: 'dusk',      start: 0.72,
+  { name: 'dusk',      start: 0.74,
     ambient: 0.24, tint: { r: 0.40, g: 0.35, b: 0.58 },
     sky: [40, 30, 65], fog: [60, 45, 80] },
   { name: 'night',     start: 0.82,
@@ -105,9 +105,12 @@ export class DayNightCycle {
     // Shadow direction from sun (daytime) or moon (nighttime)
     var shadowSource = sunHeight > 0.05 ? sunAngle : moonAngle;
     var shadowHeight = sunHeight > 0.05 ? sunHeight : moonHeight;
-    var shadowX = -Math.cos(shadowSource) * (1.5 - shadowHeight * 1.2);
-    var shadowY = 0.35 + (1 - shadowHeight) * 0.65;
-    var shadowLength = 0.3 + (1 - shadowHeight) * 1.5;
+    // Steep-sun look: shadows stretch hard at dawn/golden/dusk (low sun),
+    // stay short and tight at noon. Length in "object heights".
+    var lowSun = Math.pow(1 - shadowHeight, 1.6);
+    var shadowX = -Math.cos(shadowSource) * (1.0 + lowSun * 1.6);
+    var shadowY = 0.30 + lowSun * 0.55;
+    var shadowLength = 0.35 + lowSun * 3.4;   // up to ~3.75 object heights
 
     // Sky color as CSS string
     var skyColor = 'rgb(' + Math.round(phase.sky[0]) + ',' + Math.round(phase.sky[1]) + ',' + Math.round(phase.sky[2]) + ')';
