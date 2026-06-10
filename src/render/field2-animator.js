@@ -8,6 +8,7 @@ import { SF_BIOME_OBJECTS_LIST, SF_BASE_PATH, SF_VARIANT_COUNT, SF_EXTRA_OBJECTS
 import { clearBorderLines } from './sprite-denoise.js';
 import { floorDiv } from '../world/chunk.js';
 import { SPRITE_FLOATS } from './gl-compositor.js';
+import { getAtmosphere } from '../world/biome-atmosphere.js';
 
 var ANIM_RADIUS = 40; // tiles around player — large enough to cover full screen at any zoom
 var FADE_INNER = 34; // fully opaque inside this radius
@@ -559,6 +560,7 @@ function checkReady() {
 var _tileDescCache = new Map(); // 'wx,wy' -> desc | null
 var MAX_TILE_DESC_CACHE = 30000;
 var _instArray = null; // Float32Array scratch for GL instances
+var _shadowArray = null; // Float32Array scratch for GL silhouette shadows
 
 function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
   // Returns { desc, cacheable }; desc === null means nothing on this tile.
@@ -806,6 +808,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
       // Wind impulse is constant across the tile — sample once per tile
       var currentEffect = sampleCurrents(wx, wy, timeSec);
       var baseImpulse = Math.abs(currentEffect.rot) * 12;
+      var biomeShadowK = getAtmosphere(tile.biome).shadow / 100;
 
       for (var b = 0; b < desc.blades.length; b++) {
         var bl = desc.blades[b];
@@ -889,7 +892,8 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           halfDraw: drawSize * 0.5, drawSize: drawSize,
           baseAngle: bl.baseAngle, sway: sway,
           alpha: edgeFade * imgFade(img, timeMs), img: img,
-          _url: img.src || ''
+          _url: img.src || '',
+          shadowK: biomeShadowK
         });
       }
 
@@ -904,7 +908,8 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
             halfDraw: halfTile, drawSize: tilePxSnapped,
             baseAngle: 0, sway: 0,
             alpha: edgeFade * imgFade(exImg, timeMs), img: exImg,
-            _url: exImg.src || ''
+            _url: exImg.src || '',
+            shadowK: biomeShadowK
           });
         }
       }
@@ -950,6 +955,35 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
     var maxInst = drawBuffer.length + 1;
     if (!_instArray || _instArray.length < maxInst * SPRITE_FLOATS) {
       _instArray = new Float32Array(Math.max(4096, maxInst * SPRITE_FLOATS * 2));
+    }
+    // Silhouette shadows: one shadow instance per sufficiently large sprite.
+    // Tiny sprites (grass blades < 60% of a tile) skip — silhouettes don't
+    // read at that size and the ground sells the lighting anyway.
+    var sunH = sun ? sun.sunHeight : 1;
+    var shadowOn = glc.shadowOk && sun && sunH > 0.04;
+    var shCount = 0;
+    if (shadowOn) {
+      if (!_shadowArray || _shadowArray.length < drawBuffer.length * SPRITE_FLOATS) {
+        _shadowArray = new Float32Array(Math.max(4096, drawBuffer.length * SPRITE_FLOATS * 2));
+      }
+      var minShadowSize = tilePxSnapped * 0.6;
+      for (var shi = 0; shi < drawBuffer.length; shi++) {
+        var sg = drawBuffer[shi];
+        if (sg.drawSize < minShadowSize) continue;
+        var srect = glc.atlasRect(sg.img, sg._url);
+        if (!srect) continue;
+        var so = shCount * SPRITE_FLOATS;
+        _shadowArray[so] = sg.sx;
+        _shadowArray[so + 1] = sg.sy + sg.halfDraw;       // same ground pivot as sprite
+        _shadowArray[so + 2] = sg.drawSize;
+        _shadowArray[so + 3] = 0;
+        _shadowArray[so + 4] = sg.alpha * (sg.shadowK !== undefined ? sg.shadowK : 0.5);
+        _shadowArray[so + 5] = srect.u0;
+        _shadowArray[so + 6] = srect.v0;
+        _shadowArray[so + 7] = srect.du;
+        _shadowArray[so + 8] = srect.dv;
+        shCount++;
+      }
     }
     var instCount = 0;
     var playerSortY = player.y + 0.4;
@@ -1003,6 +1037,16 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
       _instArray[po2 + 8] = pRect.dv;
       instCount++;
       playerInGL = true;
+    }
+    if (shadowOn && shCount > 0) {
+      // shadowVec: top of sprite lands shadowLength sprite-heights away,
+      // skewed horizontally by sun azimuth; flattened to 35% vertical run.
+      var shVec = {
+        x: sun.shadowX * sun.shadowLength * 0.9,
+        y: sun.shadowLength * 0.35,
+      };
+      var shStrength = 0.40 * Math.min(1, 0.35 + (1 - sunH) * 0.9);
+      glc.drawShadowInstances(_shadowArray, shCount, w, h, shVec, shStrength);
     }
     glc.drawSpriteInstances(_instArray, instCount, w, h);
   }

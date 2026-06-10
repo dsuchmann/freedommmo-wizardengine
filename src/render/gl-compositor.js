@@ -66,6 +66,45 @@ void main() {
   outColor = texture(uAtlas, vUV) * vAlpha; // premultiplied alpha
 }`;
 
+// Silhouette shadows: same instance data as sprites, but the quad is sheared
+// along the sun direction and flattened onto the ground. The fragment shader
+// keeps only the sprite's alpha as a dark, tip-faded silhouette.
+var SHADOW_VERT_SRC = `#version 300 es
+precision highp float;
+in vec2 aUnit;
+in vec4 aPSR;      // pivot.xy, size, rotation (rotation ignored for shadows)
+in float aAlpha;   // sprite alpha * per-biome shadow strength
+in vec4 aUV;
+uniform vec2 uViewport;
+uniform vec2 uShadowVec;  // ground displacement per unit sprite-height (art px ratio): x=skew, y=flatten
+out vec2 vUV;
+out float vAlpha;
+out float vH;             // 0 at base, 1 at sprite top
+void main() {
+  float hgt = 1.0 - aUnit.y;                       // quad top = sprite top
+  vec2 base = vec2(aUnit.x * aPSR.z - aPSR.z * 0.5, 0.0);
+  // project the sprite onto the ground: top of sprite lands shadowVec away
+  vec2 px = aPSR.xy + base + hgt * aPSR.z * uShadowVec;
+  vec2 clip = vec2(px.x / uViewport.x * 2.0 - 1.0, 1.0 - px.y / uViewport.y * 2.0);
+  gl_Position = vec4(clip, 0.0, 1.0);
+  vUV = aUV.xy + aUnit * aUV.zw;
+  vAlpha = aAlpha;
+  vH = hgt;
+}`;
+
+var SHADOW_FRAG_SRC = `#version 300 es
+precision highp float;
+in vec2 vUV;
+in float vAlpha;
+in float vH;
+uniform sampler2D uAtlas;
+uniform float uShadowAlpha; // global strength (sun-height driven)
+out vec4 outColor;
+void main() {
+  float a = texture(uAtlas, vUV).a * vAlpha * uShadowAlpha * (1.0 - vH * 0.55);
+  outColor = vec4(vec3(0.035, 0.045, 0.085) * a, a); // premultiplied dark blue-black
+}`;
+
 // Floats per sprite instance: pivotX, pivotY, size, rot, alpha, u0, v0, du, dv
 export var SPRITE_FLOATS = 9;
 var SPRITE_STRIDE = SPRITE_FLOATS * 4;
@@ -765,6 +804,41 @@ export class GLCompositor {
     gl.vertexAttribDivisor(locUV, 1);
     gl.bindVertexArray(null);
     this._instCapacityBytes = 0;
+
+    // Shadow pass: same instance layout, separate program/VAO/VBO so the
+    // shadow batch (subset of sprites) doesn't disturb the sprite batch.
+    var sprog = this._buildProgram(SHADOW_VERT_SRC, SHADOW_FRAG_SRC);
+    this.shadowOk = false;
+    if (sprog) {
+      this.shadowProgram = sprog;
+      this.shUViewport = gl.getUniformLocation(sprog, 'uViewport');
+      this.shUAtlas = gl.getUniformLocation(sprog, 'uAtlas');
+      this.shUShadowVec = gl.getUniformLocation(sprog, 'uShadowVec');
+      this.shUShadowAlpha = gl.getUniformLocation(sprog, 'uShadowAlpha');
+      this.shadowVao = gl.createVertexArray();
+      gl.bindVertexArray(this.shadowVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.unitVbo);
+      var sLocUnit = gl.getAttribLocation(sprog, 'aUnit');
+      gl.enableVertexAttribArray(sLocUnit);
+      gl.vertexAttribPointer(sLocUnit, 2, gl.FLOAT, false, 0, 0);
+      this.shadowVbo = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.shadowVbo);
+      var sLocPSR = gl.getAttribLocation(sprog, 'aPSR');
+      gl.enableVertexAttribArray(sLocPSR);
+      gl.vertexAttribPointer(sLocPSR, 4, gl.FLOAT, false, SPRITE_STRIDE, 0);
+      gl.vertexAttribDivisor(sLocPSR, 1);
+      var sLocAlpha = gl.getAttribLocation(sprog, 'aAlpha');
+      gl.enableVertexAttribArray(sLocAlpha);
+      gl.vertexAttribPointer(sLocAlpha, 1, gl.FLOAT, false, SPRITE_STRIDE, 16);
+      gl.vertexAttribDivisor(sLocAlpha, 1);
+      var sLocUV = gl.getAttribLocation(sprog, 'aUV');
+      gl.enableVertexAttribArray(sLocUV);
+      gl.vertexAttribPointer(sLocUV, 4, gl.FLOAT, false, SPRITE_STRIDE, 20);
+      gl.vertexAttribDivisor(sLocUV, 1);
+      gl.bindVertexArray(null);
+      this._shadowCapacityBytes = 0;
+      this.shadowOk = true;
+    }
     this.spritesOk = true;
   }
 
@@ -850,6 +924,35 @@ export class GLCompositor {
     if (bytes > this._instCapacityBytes) {
       this._instCapacityBytes = bytes * 2;
       gl.bufferData(gl.ARRAY_BUFFER, this._instCapacityBytes, gl.DYNAMIC_DRAW);
+    }
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, data, 0, count * SPRITE_FLOATS);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); // premultiplied alpha
+    gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
+    gl.disable(gl.BLEND);
+    gl.bindVertexArray(null);
+  }
+
+  // Draw silhouette shadows (same packed layout as sprites). shadowVec is the
+  // ground displacement of a sprite's TOP, as a fraction of sprite size
+  // (x = horizontal skew toward shadow side, y = vertical ground run).
+  drawShadowInstances(data, count, cssW, cssH, shadowVec, strength) {
+    if (!this.ok || !this.shadowOk || count === 0) return;
+    var gl = this.gl;
+    gl.useProgram(this.shadowProgram);
+    gl.bindVertexArray(this.shadowVao);
+    if (this.sceneActive) gl.uniform2f(this.shUViewport, this._artW, this._artH);
+    else gl.uniform2f(this.shUViewport, cssW, cssH);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.atlasTex);
+    gl.uniform1i(this.shUAtlas, 0);
+    gl.uniform2f(this.shUShadowVec, shadowVec.x, shadowVec.y);
+    gl.uniform1f(this.shUShadowAlpha, strength);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.shadowVbo);
+    var bytes = count * SPRITE_STRIDE;
+    if (bytes > this._shadowCapacityBytes) {
+      this._shadowCapacityBytes = bytes * 2;
+      gl.bufferData(gl.ARRAY_BUFFER, this._shadowCapacityBytes, gl.DYNAMIC_DRAW);
     }
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, data, 0, count * SPRITE_FLOATS);
     gl.enable(gl.BLEND);

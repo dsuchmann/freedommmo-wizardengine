@@ -221,6 +221,7 @@ export class CanvasRenderer {
     const w = window.innerWidth;
     const h = window.innerHeight;
     const sun = lighting.sun();
+    this._sun = sun;
     const tilePx = WORLD.tileSize * camera.zoom;
     const focusTile = chunkStore.tileAt(player.x, player.y);
     const glOn = this.useGL && this.glc && this.glc.ok;
@@ -570,9 +571,14 @@ export class CanvasRenderer {
     const ctx = targetCtx || this.ctx;
     const py = sy - (player?.z ?? 0) * 10 * zoom;
     const frame = Math.floor(player?.character?.frame ?? 0);
-    ctx.fillStyle = `rgba(42,46,43,${player?.z > 0 ? 0.15 : 0.24})`;
+    // Blob shadow stretched/skewed by the sun (long at golden hour, tight at noon)
+    const sun2 = this._sun;
+    const lowSun = sun2 ? Math.pow(1 - Math.max(0, sun2.sunHeight), 1.6) : 0;
+    const stretch = 1 + (sun2 ? sun2.shadowLength : 0) * 0.9;
+    const skewX = sun2 ? sun2.shadowX * 6 * zoom * stretch * 0.4 : 0;
+    ctx.fillStyle = `rgba(20,24,38,${player?.z > 0 ? 0.12 : 0.20 + lowSun * 0.10})`;
     ctx.beginPath();
-    ctx.ellipse(px, sy + 8 * zoom, 8 * zoom + (player?.z ?? 0) * zoom, 3 * zoom, 0, 0, Math.PI * 2);
+    ctx.ellipse(px + skewX, sy + 8 * zoom, (8 * zoom + (player?.z ?? 0) * zoom) * stretch, 3 * zoom, 0, 0, Math.PI * 2);
     ctx.fill();
     drawModularPlayer(ctx, px, py, zoom, frame, player?.character?.animation ?? 'idle');
     // Always draw a visible red dot so player is never invisible
