@@ -31,7 +31,8 @@ async function loadImageBatch(urls, batchSize) {
       if (imageCache.has(url)) { loaded++; return; }
       try {
         var response = await fetch(url);
-        if (!response.ok) { failed++; return; }
+        // Non-ok responses (server overload, transient errors) are retried below
+        if (!response.ok) { failedUrls.push(url); failed++; return; }
         var blob = await response.blob();
         var bmp = await createImageBitmap(blob);
         if (shouldDenoise(url)) {
@@ -54,7 +55,7 @@ async function loadImageBatch(urls, batchSize) {
         if (imageCache.has(url)) return;
         try {
           var response = await fetch(url);
-          if (!response.ok) return;
+          if (!response.ok) return; // failed twice — repaint pass will retry later
           var blob = await response.blob();
           var bmp = await createImageBitmap(blob);
           if (shouldDenoise(url)) bmp = await denoiseBitmap(bmp);
@@ -83,18 +84,54 @@ async function backgroundLoadRemaining() {
   self.postMessage({ type: 'backgroundLoadDone', total: allUrls.length, cached: imageCache.size });
 
   // Repaint any chunks that compiled with missing images (soil, wang tiles)
-  if (chunksNeedingRepaint.length > 0) {
-    var toRepaint = chunksNeedingRepaint.splice(0);
-    for (var ri = 0; ri < toRepaint.length; ri++) {
-      var rchunk = toRepaint[ri];
-      var tiles = neighborCache.get(rchunk.cx + ',' + rchunk.cy);
-      if (!tiles) continue;
-      var chunk = { cx: rchunk.cx, cy: rchunk.cy, tiles: tiles };
-      var sun = { height: 0.5, ambient: 0.85 };
-      var result = renderChunkToBitmap(chunk, neighborCache, sun, imageCache);
-      self.postMessage({ type: 'chunkRepainted', key: rchunk.key, cx: rchunk.cx, cy: rchunk.cy, bitmap: result.bitmap, wangDebug: result.debug }, [result.bitmap]);
-    }
+  scheduleRepaintPass();
+}
+
+// Repaint chunks that compiled while images were missing. Re-fetches any
+// still-missing soil/wang URLs first so the repaint actually has the images.
+// Re-flags chunks that still come out incomplete (up to MAX_REPAINT_ATTEMPTS).
+var MAX_REPAINT_ATTEMPTS = 3;
+var repaintPassScheduled = false;
+
+function scheduleRepaintPass() {
+  if (repaintPassScheduled || !backgroundLoadingDone || chunksNeedingRepaint.length === 0) return;
+  repaintPassScheduled = true;
+  setTimeout(runRepaintPass, 250);
+}
+
+async function runRepaintPass() {
+  repaintPassScheduled = false;
+  if (chunksNeedingRepaint.length === 0) return;
+
+  // Re-fetch anything still missing (failed loads from earlier batches)
+  var critical = getSoilImageURLs().concat(getAllWangImageURLs());
+  var missing = critical.filter(function(url) { return !imageCache.has(url); });
+  if (missing.length > 0) {
+    await loadImageBatch(missing, 40);
   }
+  console.log('[SOIL REPAINT] pass:', chunksNeedingRepaint.length, 'chunks flagged,', missing.length, 'images were missing');
+
+  var toRepaint = chunksNeedingRepaint.splice(0);
+  for (var ri = 0; ri < toRepaint.length; ri++) {
+    var rchunk = toRepaint[ri];
+    var tiles = neighborCache.get(rchunk.cx + ',' + rchunk.cy);
+    if (!tiles) {
+      // Tiles evicted from neighborCache — ask main thread to resend them
+      self.postMessage({ type: 'repaintNeedsTiles', key: rchunk.key, cx: rchunk.cx, cy: rchunk.cy });
+      continue;
+    }
+    var chunk = { cx: rchunk.cx, cy: rchunk.cy, tiles: tiles };
+    var sun = { height: 0.5, ambient: 0.85 };
+    var result = renderChunkToBitmap(chunk, neighborCache, sun, imageCache);
+    if (result.needsRepaint) {
+      console.warn('[SOIL REPAINT] chunk', rchunk.cx + ',' + rchunk.cy, 'STILL incomplete after repaint (attempt ' + ((rchunk.attempts || 0) + 1) + ')');
+      if ((rchunk.attempts || 0) + 1 < MAX_REPAINT_ATTEMPTS) {
+        chunksNeedingRepaint.push({ key: rchunk.key, cx: rchunk.cx, cy: rchunk.cy, attempts: (rchunk.attempts || 0) + 1 });
+      }
+    }
+    self.postMessage({ type: 'chunkRepainted', key: rchunk.key, cx: rchunk.cx, cy: rchunk.cy, bitmap: result.bitmap, wangDebug: result.debug }, [result.bitmap]);
+  }
+  scheduleRepaintPass();
 }
 
 // Compute shore distance and shore angle for every tile in a chunk.
@@ -171,7 +208,9 @@ self.onmessage = function(event) {
     var soilUrls = getSoilImageURLs();
     var gcUrls = getGroundCoverImageURLs();
     var allUrls = biomeUrls.concat(soilUrls).concat(gcUrls);
-    loadImageBatch(allUrls, 200).then(function(result) {
+    // Batch of 50 per worker — with up to 6 workers plus main-thread preloads,
+    // larger batches exhaust the browser's network stack (ERR_INSUFFICIENT_RESOURCES)
+    loadImageBatch(allUrls, 50).then(function(result) {
       imagesReady = true;
       self.postMessage({ type: 'imagesReady', loaded: result.loaded, failed: result.failed, total: allUrls.length });
       backgroundLoadRemaining();
@@ -217,7 +256,9 @@ self.onmessage = function(event) {
 
     // Track chunks that had missing images — they'll be repainted after background load
     if (result.needsRepaint) {
-      chunksNeedingRepaint.push({ key: key, cx: cx, cy: cy });
+      console.log('[SOIL] chunk', cx + ',' + cy, 'painted incomplete (soilMissed=' + !result.hasSoil + ') — repaint scheduled');
+      chunksNeedingRepaint.push({ key: key, cx: cx, cy: cy, attempts: 0 });
+      scheduleRepaintPass();
     }
 
     // Transfer bitmap to main thread (zero-copy)
@@ -238,6 +279,10 @@ self.onmessage = function(event) {
     var chunk = { cx: cx, cy: cy, tiles: tiles };
     var sun = { height: 0.5, ambient: 0.85 };
     var result = renderChunkToBitmap(chunk, neighborCache, sun, imageCache);
+    if (result.needsRepaint) {
+      chunksNeedingRepaint.push({ key: key, cx: cx, cy: cy, attempts: 0 });
+      scheduleRepaintPass();
+    }
     self.postMessage({ type: 'chunkRepainted', key: key, cx: cx, cy: cy, bitmap: result.bitmap, wangDebug: result.debug }, [result.bitmap]);
   }
 };

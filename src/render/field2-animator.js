@@ -4,7 +4,8 @@
 
 import { WORLD } from '../core/constants.js';
 import { rand2 } from '../core/random.js';
-import { SF_BIOME_OBJECTS_LIST, SF_BASE_PATH, SF_VARIANT_COUNT } from './wang-image-list.js';
+import { SF_BIOME_OBJECTS_LIST, SF_BASE_PATH, SF_VARIANT_COUNT, SF_EXTRA_OBJECTS, sfVariantsFor, sfAnimVariantsFor } from './wang-image-list.js';
+import { clearBorderLines } from './sprite-denoise.js';
 import { floorDiv } from '../world/chunk.js';
 
 var ANIM_RADIUS = 40; // tiles around player — large enough to cover full screen at any zoom
@@ -142,19 +143,64 @@ var frameCache = new Map();
 var loadingSet = new Set();
 var _denoiseCanvas = null;
 
-function denoiseImage(img) {
+// Key out a solid gray generation-background square (PixelLab artifact on some
+// hills anim frames/variants). Finds the dominant low-saturation gray color among
+// opaque pixels; if it covers a large area (a box, not natural texture), clears
+// all pixels close to that color. Returns true if any pixels were cleared.
+function keyOutGrayBackground(data, w, h) {
+  var total = w * h;
+  // Histogram of low-saturation mid-tone colors, quantized to 8 levels/channel
+  var buckets = new Map();
+  for (var i = 0; i < total; i++) {
+    var p = i * 4;
+    if (data[p + 3] < 200) continue;
+    var r = data[p], g = data[p + 1], b = data[p + 2];
+    var mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    if (mx - mn > 28 || mx < 60 || mx > 215) continue; // only flat grays
+    var key = ((r >> 5) << 6) | ((g >> 5) << 3) | (b >> 5);
+    var e = buckets.get(key);
+    if (e) { e.n++; e.r += r; e.g += g; e.b += b; }
+    else buckets.set(key, { n: 1, r: r, g: g, b: b });
+  }
+  var top = null;
+  buckets.forEach(function(e) { if (!top || e.n > top.n) top = e; });
+  // A background box covers a big chunk of the frame; natural gray texture doesn't
+  if (!top || top.n < total * 0.12) return false;
+  var mr = top.r / top.n, mg = top.g / top.n, mb = top.b / top.n;
+  var changed = false;
+  for (var j = 0; j < total; j++) {
+    var q = j * 4;
+    if (data[q + 3] < 8) continue;
+    var r2 = data[q], g2 = data[q + 1], b2 = data[q + 2];
+    var mx2 = Math.max(r2, g2, b2), mn2 = Math.min(r2, g2, b2);
+    if (mx2 - mn2 > 34) continue; // keep saturated content (flowers, foliage)
+    if (Math.abs(r2 - mr) + Math.abs(g2 - mg) + Math.abs(b2 - mb) <= 66) {
+      data[q + 3] = 0;
+      changed = true;
+    }
+  }
+  return changed;
+}
+
+function denoiseImage(img, url) {
   var w = img.naturalWidth || img.width;
   var h = img.naturalHeight || img.height;
   if (w < 3 || h < 3) return img;
   if (!_denoiseCanvas) _denoiseCanvas = document.createElement('canvas');
   _denoiseCanvas.width = w;
   _denoiseCanvas.height = h;
-  var ctx = _denoiseCanvas.getContext('2d');
+  var ctx = _denoiseCanvas.getContext('2d', { willReadFrequently: true });
   ctx.clearRect(0, 0, w, h);
   ctx.drawImage(img, 0, 0);
   var imageData = ctx.getImageData(0, 0, w, h);
   var data = imageData.data;
   var changed = false;
+  // Hills F2 sprites: some PixelLab frames ship with a solid gray background box
+  if (url && url.indexOf('/small_flora/hills/') !== -1) {
+    if (keyOutGrayBackground(data, w, h)) changed = true;
+  }
+  // Strip frame-border artifact lines (dark edge lines, gray box outlines)
+  if (clearBorderLines(data, w, h)) changed = true;
   for (var y = 1; y < h - 1; y++) {
     for (var x = 1; x < w - 1; x++) {
       var idx = (y * w + x) * 4;
@@ -288,7 +334,7 @@ function loadFrame(url) {
   img.src = url;
   img.onload = function() {
     // Spatial denoise first
-    var clean = denoiseImage(img);
+    var clean = denoiseImage(img, url);
     if (clean !== img && !clean.complete) {
       clean.onload = function() {
         frameCache.set(url, clean);
@@ -317,6 +363,8 @@ var lastPreloadKey = '';
 var _f2Ready = false;
 var _f2TotalToLoad = 0;
 var _f2Loaded = 0;
+var _f2StaticTotal = 0;
+var _f2StaticLoaded = 0;
 
 export function isField2Ready() { return _f2Ready; }
 
@@ -326,56 +374,125 @@ export function preloadField2Animations(biomes) {
   lastPreloadKey = key;
   // Don't reset _f2Ready — keep showing existing sprites while new ones load
 
-  var urls = [];
+  // Build URL lists: statics first (gate rendering), anim frames stream in after.
+  var staticUrls = [];
+  var animUrls = [];
   for (var b = 0; b < biomes.length; b++) {
     var objects = SF_BIOME_OBJECTS_LIST[biomes[b]];
     if (!objects) continue;
     for (var oi = 0; oi < objects.length; oi++) {
-      for (var v = 0; v < SF_VARIANT_COUNT; v++) {
-        var pvStr = v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v);
-        // Per-variant animation frames
-        for (var f = 0; f < FRAME_COUNT; f++) {
-          urls.push(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/anim/wind_sway/v' + pvStr + '/frame_' + String(f).padStart(3, '0') + '.png');
+      var wl = sfVariantsFor(biomes[b], objects[oi]);
+      var animWl = sfAnimVariantsFor(biomes[b], objects[oi]); // null = full coverage
+      var variantCount = wl ? wl.length : SF_VARIANT_COUNT;
+      for (var v = 0; v < variantCount; v++) {
+        var vn = wl ? wl[v] : v;
+        var pvStr = vn < 10 ? '00' + vn : (vn < 100 ? '0' + vn : '' + vn);
+        // Per-variant animation frames — only for variants that have anims on disk
+        if (!animWl || animWl.indexOf(vn) !== -1) {
+          for (var f = 0; f < FRAME_COUNT; f++) {
+            animUrls.push(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/anim/wind_sway/v' + pvStr + '/frame_' + String(f).padStart(3, '0') + '.png');
+          }
         }
         // Static sprite
-        urls.push(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/sf__' + biomes[b] + '__' + objects[oi] + '__v' + pvStr + '.png');
+        staticUrls.push(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/sf__' + biomes[b] + '__' + objects[oi] + '__v' + pvStr + '.png');
       }
     }
+    // Rare static decor objects (full URLs)
+    var extras = SF_EXTRA_OBJECTS[biomes[b]];
+    if (extras) for (var ex = 0; ex < extras.length; ex++) staticUrls.push(extras[ex]);
   }
 
   // Only load URLs not already cached or loading
-  var newUrls = [];
-  for (var u = 0; u < urls.length; u++) {
-    if (!frameCache.has(urls[u]) && !loadingSet.has(urls[u])) newUrls.push(urls[u]);
+  var newStatics = [];
+  var newAnims = [];
+  for (var u = 0; u < staticUrls.length; u++) {
+    if (!frameCache.has(staticUrls[u]) && !loadingSet.has(staticUrls[u])) newStatics.push(staticUrls[u]);
   }
-  _f2TotalToLoad += newUrls.length;
-  if (newUrls.length === 0) { _f2Ready = true; return; }
+  for (var u2 = 0; u2 < animUrls.length; u2++) {
+    if (!frameCache.has(animUrls[u2]) && !loadingSet.has(animUrls[u2])) newAnims.push(animUrls[u2]);
+  }
+  _f2TotalToLoad += newStatics.length + newAnims.length;
+  _f2StaticTotal += newStatics.length;
+  if (newStatics.length === 0 && newAnims.length === 0) { _f2Ready = true; return; }
 
-  for (var nu = 0; nu < newUrls.length; nu++) {
-    var url = newUrls[nu];
-    loadingSet.add(url);
-    var img = new Image();
-    img.src = url;
-    img.onload = (function(imgRef, urlRef) {
-      return function() {
-        var clean = denoiseImage(imgRef);
-        if (clean !== imgRef && !clean.complete) {
-          clean.onload = function() { frameCache.set(urlRef, clean); loadingSet.delete(urlRef); _f2Loaded++; checkReady(); };
-        } else {
-          frameCache.set(urlRef, clean); loadingSet.delete(urlRef); _f2Loaded++; checkReady();
-        }
-      };
-    })(img, url);
-    img.onerror = (function(urlRef) {
-      return function() { frameCache.set(urlRef, null); loadingSet.delete(urlRef); _f2Loaded++; checkReady(); };
-    })(url);
+  // Queue instead of firing all at once — tens of thousands of simultaneous
+  // Image() requests exhaust the browser (ERR_INSUFFICIENT_RESOURCES) and
+  // starve worker fetches (soil/wang), causing bare F0 chunks.
+  // Statics go in the priority queue: rendering unblocks when they finish
+  // (~hundreds of images, seconds) while anim frames (~30k) stream in behind.
+  for (var ns = 0; ns < newStatics.length; ns++) {
+    loadingSet.add(newStatics[ns]);
+    _staticQueue.push({ url: newStatics[ns], attempts: 0, isStatic: true });
   }
+  for (var na = 0; na < newAnims.length; na++) {
+    loadingSet.add(newAnims[na]);
+    _preloadQueue.push({ url: newAnims[na], attempts: 0, isStatic: false });
+  }
+  pumpPreloadQueue();
   checkReady();
 }
 
+// Throttled preload queue — bounded concurrency with retry on transient failures
+var _staticQueue = [];   // priority: static sprites gate _f2Ready
+var _preloadQueue = [];  // anim frames stream in after statics
+var _activePreloads = 0;
+var MAX_CONCURRENT_PRELOADS = 48;
+var MAX_PRELOAD_ATTEMPTS = 3;
+
+function pumpPreloadQueue() {
+  while (_activePreloads < MAX_CONCURRENT_PRELOADS && (_staticQueue.length > 0 || _preloadQueue.length > 0)) {
+    startPreload(_staticQueue.length > 0 ? _staticQueue.shift() : _preloadQueue.shift());
+  }
+}
+
+function startPreload(item) {
+  _activePreloads++;
+  var url = item.url;
+  var img = new Image();
+  img.src = url;
+  img.onload = function() {
+    var clean = denoiseImage(img, url);
+    var finish = function() {
+      frameCache.set(url, clean);
+      loadingSet.delete(url);
+      _activePreloads--;
+      _f2Loaded++;
+      if (item.isStatic) _f2StaticLoaded++;
+      checkReady();
+      pumpPreloadQueue();
+    };
+    if (clean !== img && !clean.complete) clean.onload = finish;
+    else finish();
+  };
+  img.onerror = function() {
+    _activePreloads--;
+    item.attempts++;
+    if (item.attempts < MAX_PRELOAD_ATTEMPTS) {
+      // Transient failure (browser resource exhaustion) — retry after a delay
+      setTimeout(function() {
+        (item.isStatic ? _staticQueue : _preloadQueue).push(item);
+        pumpPreloadQueue();
+      }, 500 * item.attempts);
+    } else {
+      frameCache.set(url, null);
+      loadingSet.delete(url);
+      _f2Loaded++;
+      if (item.isStatic) _f2StaticLoaded++;
+      checkReady();
+    }
+    pumpPreloadQueue();
+  };
+}
+
 function checkReady() {
-  if (_f2Loaded >= _f2TotalToLoad && !_f2Ready) {
+  // Rendering unblocks once all STATIC sprites are in — anim frames stream in
+  // behind and the draw loop falls back to statics until each frame arrives.
+  if (!_f2Ready && _f2StaticLoaded >= _f2StaticTotal) {
     _f2Ready = true;
+    console.log('[F2] Statics loaded (' + _f2StaticLoaded + ') — rendering enabled, ' + (_f2TotalToLoad - _f2Loaded) + ' anim frames streaming in');
+  }
+  if (_f2Loaded >= _f2TotalToLoad && _f2TotalToLoad > 0 && !self._f2AllLogged) {
+    self._f2AllLogged = true;
     console.log('[F2] All sprites loaded:', _f2Loaded, '/', _f2TotalToLoad);
   }
 }
@@ -470,8 +587,10 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
       else if (biome === 'taiga') baseDensity = 7;
       else if (biome === 'volcanic') { baseDensity = 1; tileChance = 0.20; }
       else if (biome === 'mountains') { baseDensity = 1; tileChance = 0.10; }
-      else if (biome === 'arctic' || biome === 'tundra') { baseDensity = 1; tileChance = 0.30; }
-      else if (biome === 'desert' || biome === 'beach') { baseDensity = 1; tileChance = 0.35; }
+      else if (biome === 'arctic') { baseDensity = 1; tileChance = 0.075; }
+      else if (biome === 'tundra') { baseDensity = 1; tileChance = 0.30; }
+      else if (biome === 'desert') { baseDensity = 1; tileChance = 0.35; }
+      else if (biome === 'beach') { baseDensity = 1; tileChance = 0.175; }
 
       // Skip this tile entirely based on biome harshness
       if (tileChance < 1.0 && rand2(wx, wy, 6999) > tileChance) continue;
@@ -509,8 +628,18 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
 
         var objName = objects[oi];
 
+        // cold_moss_tuft should appear only very sparsely — demote most picks to primary grass
+        if (objName === 'cold_moss_tuft' && rand2(wx, wy, 7036 + bi) > 0.15) {
+          oi = 0;
+          objName = objects[0];
+        }
+
         // Per-blade variant index — deterministic, used for both animation paths and static fallback
-        var variantIdx = Math.floor(rand2(wx, wy, 7035 + bi) * SF_VARIANT_COUNT);
+        // Whitelisted species pick only from their curated variant list.
+        var variantWl = sfVariantsFor(biome, objName);
+        var variantIdx = variantWl
+          ? variantWl[Math.floor(rand2(wx, wy, 7035 + bi) * variantWl.length)]
+          : Math.floor(rand2(wx, wy, 7035 + bi) * SF_VARIANT_COUNT);
         var vStr = variantIdx < 10 ? '00' + variantIdx : (variantIdx < 100 ? '0' + variantIdx : '' + variantIdx);
 
         // Lifecycle state — deterministic per blade, affects sprite and transforms
@@ -672,9 +801,12 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           isStatic = true;
         } else {
           // Per-variant animation: each variant has its own animation frames.
-          // All preloaded before rendering starts — no fallback needed.
-          var frameStr = 'frame_' + String(frameIdx).padStart(3, '0') + '.png';
-          img = loadFrame(SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v' + vStr + '/' + frameStr);
+          // Variants without anims on disk go straight to the static sprite.
+          var animAvail = sfAnimVariantsFor(tile.biome, objName);
+          if (!animAvail || animAvail.indexOf(variantIdx) !== -1) {
+            var frameStr = 'frame_' + String(frameIdx).padStart(3, '0') + '.png';
+            img = loadFrame(SF_BASE_PATH + tile.biome + '/' + objName + '/anim/wind_sway/v' + vStr + '/' + frameStr);
+          }
           if (!img) {
             // Variant animation not available — use static sprite
             img = loadFrame(SF_BASE_PATH + tile.biome + '/' + objName + '/sf__' + tile.biome + '__' + objName + '__v' + vStr + '.png');
@@ -698,6 +830,28 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           alpha: finalAlpha * lifeAlpha, img: img,
           _url: img ? img.src || '' : ''
         });
+      }
+
+      // Rare static decor objects (e.g., tundra fish piles, snow sculptures)
+      var extraObjs = SF_EXTRA_OBJECTS[biome];
+      if (extraObjs && rand2(wx, wy, 7300) < 0.012) {
+        var exImg = loadFrame(extraObjs[Math.floor(rand2(wx, wy, 7301) * extraObjs.length)]);
+        if (exImg) {
+          var exSize = tilePxSnapped;
+          var exX = chunkOriginX + tx * tilePxSnapped + halfTile + (rand2(wx, wy, 7302) - 0.5) * tilePxSnapped * 0.6;
+          var exY = chunkOriginY + ty * tilePxSnapped + halfTile + (rand2(wx, wy, 7303) - 0.5) * tilePxSnapped * 0.6;
+          var exDist = Math.max(Math.abs(wx - px), Math.abs(wy - py));
+          var exMaxR = Math.max(radiusX, radiusY);
+          var exFadeStart = exMaxR - 6;
+          var exFade = exDist <= exFadeStart ? 1.0 : Math.max(0, 1.0 - (exDist - exFadeStart) / (exMaxR - exFadeStart));
+          drawBuffer.push({
+            sortY: wy + 0.5,
+            sx: exX, sy: exY, halfDraw: exSize * 0.5, drawSize: exSize,
+            baseAngle: 0, sway: 0,
+            alpha: exFade, img: exImg,
+            _url: exImg.src || ''
+          });
+        }
       }
     }
   }

@@ -91,6 +91,14 @@ export class ChunkProvider {
           this.pending.delete(key);
           if (partial) this.completed.push({ key, chunk: { cx: partial.cx, cy: partial.cy, tiles: partial.tiles, renderTiles: partial.renderTiles, objects: partial.objects } });
           this.schedulePump();
+        } else if (msg.type === 'repaintNeedsTiles') {
+          // Worker evicted this chunk's tiles from its neighbor cache — resend them
+          const chunk = this.ready.get(msg.key);
+          if (chunk) {
+            const neighbors = {};
+            neighbors[msg.cx + ',' + msg.cy] = chunk.tiles;
+            worker.postMessage({ type: 'repaintChunk', key: msg.key, cx: msg.cx, cy: msg.cy, neighbors });
+          }
         } else if (msg.type === 'chunkRepainted') {
           const bitmapKey = msg.cx + ',' + msg.cy;
           const old = this.bitmaps.get(bitmapKey);

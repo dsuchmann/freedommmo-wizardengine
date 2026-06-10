@@ -2,6 +2,41 @@
 // Removes: isolated bright pixels (white confetti), stray colored pixels,
 // semi-transparent edge fringe. Runs once per sprite, result cached.
 
+// Remove frame-border artifact lines: near-continuous runs of low-saturation
+// gray/dark pixels along the outermost rows/columns (generation frame remnants).
+// Causes: dark vertical line on sprite edges, gray box outlines on anim frames.
+// Returns true if any pixels were cleared.
+export function clearBorderLines(data, w, h) {
+  var changed = false;
+  function isGray(idx) {
+    var r = data[idx], g = data[idx + 1], b = data[idx + 2];
+    var mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    return (mx - mn) < 40 && mx < 180;
+  }
+  function scanLine(getIdx, len) {
+    var filled = 0, gray = 0;
+    for (var i = 0; i < len; i++) {
+      var idx = getIdx(i);
+      if (data[idx + 3] > 32) { filled++; if (isGray(idx)) gray++; }
+    }
+    // A mostly-filled, mostly-gray border line is an artifact, not content
+    if (filled >= len * 0.55 && gray >= filled * 0.75) {
+      for (var j = 0; j < len; j++) {
+        var jdx = getIdx(j);
+        if (data[jdx + 3] > 0 && isGray(jdx)) { data[jdx + 3] = 0; changed = true; }
+      }
+    }
+  }
+  for (var c = 0; c < 2; c++) {
+    var xr = w - 1 - c, xl = c, yt = c, yb = h - 1 - c;
+    scanLine(function(i) { return (i * w + xr) * 4; }, h); // east column
+    scanLine(function(i) { return (i * w + xl) * 4; }, h); // west column
+    scanLine(function(i) { return (yt * w + i) * 4; }, w); // north row
+    scanLine(function(i) { return (yb * w + i) * 4; }, w); // south row
+  }
+  return changed;
+}
+
 /**
  * Denoise an ImageBitmap by removing isolated noisy pixels.
  * Returns a new clean ImageBitmap. Works in both workers and main thread.
@@ -23,6 +58,9 @@ export async function denoiseBitmap(bmp, opts) {
   var imageData = ctx.getImageData(0, 0, w, h);
   var data = imageData.data;
   var changed = 0;
+
+  // Strip frame-border artifact lines first (dark edge lines, gray box outlines)
+  if (clearBorderLines(data, w, h)) changed++;
 
   // Build alpha mask for neighbor counting
   var alpha = new Uint8Array(w * h);

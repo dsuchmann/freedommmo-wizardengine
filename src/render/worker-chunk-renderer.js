@@ -4,7 +4,7 @@
 import { WORLD } from '../core/constants.js';
 import { paintTerrainTile, paintCliffOverlay, getWangSrc } from './worker-tile-painter.js';
 import { cliffLevel } from '../world/terrain-shaper.js';
-import { soilMaterialForBiome } from './wang-image-list.js';
+import { soilMaterialForBiome, sfVariantsFor } from './wang-image-list.js';
 import { rand2 } from '../core/random.js';
 
 // PixelLab wang tile index = NW*8 + NE*4 + SW*2 + SE*1 where 1=upper biome.
@@ -70,7 +70,7 @@ var SOIL_BIOME_CONFIG = {
   hills:            { density: 0.94, alpha: 0.60, blobMin: 4, blobMax: 7, tint: null },
   mountains:        { density: 0.92, alpha: 0.55, blobMin: 5, blobMax: 8, tint: null },
   volcanic:         { density: 0.90, alpha: 0.60, blobMin: 4, blobMax: 6, tint: null },
-  tundra:           { density: 0.93, alpha: 0.55, blobMin: 4, blobMax: 6, tint: null },
+  tundra:           { density: 0.97, alpha: 0.75, blobMin: 4, blobMax: 6, tint: null },
   arctic:           { density: 0.88, alpha: 0.50, blobMin: 3, blobMax: 5, tint: null },
   mystic:           { density: 0.95, alpha: 0.65, blobMin: 4, blobMax: 6, tint: null },
   ocean:            { density: 0.96, alpha: 0.50, blobMin: 4, blobMax: 6, tint: null },
@@ -85,15 +85,41 @@ var SOIL_DEFAULT_CONFIG = { density: 0.94, alpha: 0.65, blobMin: 4, blobMax: 6, 
 // Key: URL, Value: Uint8ClampedArray (32*32*4 RGBA)
 var soilPixelCache = new Map();
 
+// Shared extraction canvas — one per worker instead of one per soil image
+var _soilExtractCanvas = null;
+var _soilExtractCtx = null;
+
 // Extract RGBA pixel data from an ImageBitmap by drawing to a tiny OffscreenCanvas.
 function getSoilPixels(url, imageCache) {
   if (soilPixelCache.has(url)) return soilPixelCache.get(url);
   var bmp = imageCache.get(url);
   if (!bmp) return null;
-  var c = new OffscreenCanvas(32, 32);
-  var cx = c.getContext('2d', { willReadFrequently: true });
-  cx.drawImage(bmp, 0, 0, 32, 32);
-  var data = cx.getImageData(0, 0, 32, 32).data;
+  if (!_soilExtractCtx) {
+    _soilExtractCanvas = new OffscreenCanvas(32, 32);
+    _soilExtractCtx = _soilExtractCanvas.getContext('2d', { willReadFrequently: true });
+  }
+  _soilExtractCtx.clearRect(0, 0, 32, 32);
+  _soilExtractCtx.drawImage(bmp, 0, 0, 32, 32);
+  var data = _soilExtractCtx.getImageData(0, 0, 32, 32).data;
+  // Validate: under resource pressure (canvas context loss) getImageData returns
+  // transparent black. NEVER cache a blank extraction — it permanently poisons
+  // this worker's soil cache and produces bare F0 chunks. Return null so the
+  // tile is flagged missedSoil and repainted later when extraction succeeds.
+  var hasPixels = false;
+  for (var i = 3; i < data.length; i += 4) {
+    if (data[i] >= 10) { hasPixels = true; break; }
+  }
+  if (!hasPixels) {
+    if (!self._soilBlankWarned) {
+      self._soilBlankWarned = true;
+      console.warn('[SOIL] blank pixel extraction (canvas context loss?) for', url, '— evicting bitmap, will refetch on repaint');
+    }
+    // Evict the bitmap too — it may itself be blank (bad decode under pressure).
+    // The repaint pass refetches URLs missing from imageCache.
+    try { bmp.close(); } catch (e) {}
+    imageCache.delete(url);
+    return null;
+  }
   soilPixelCache.set(url, data);
   return data;
 }
@@ -186,6 +212,8 @@ function applySoilFieldToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imag
   var pixels = imageData.data;
   var stride = canvasSize * 4;
   var anySoil = false;
+  var missedSoil = false; // true if any tile couldn't paint soil due to missing images
+  var soilPixels = 0; // total pixels actually blended — 0 on a land chunk means the loop painted nothing
 
   // Cache blob sets per material so we don't re-prepare for repeated materials
   var blobCache = new Map();
@@ -231,13 +259,14 @@ function applySoilFieldToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imag
       var keyA = materialA + '_' + wx + '_' + wy;
       if (!blobCache.has(keyA)) blobCache.set(keyA, prepareSoilBlobs(materialA, wx, wy, imageCache, configA.blobMin, configA.blobMax));
       blobSetA = blobCache.get(keyA);
-      if (!blobSetA) continue;
+      if (!blobSetA) { missedSoil = true; continue; }
 
       if (materialB && materialB !== materialA) {
         var cB = configB || SOIL_DEFAULT_CONFIG;
         var keyB = materialB + '_' + wx + '_' + wy + '_B';
         if (!blobCache.has(keyB)) blobCache.set(keyB, prepareSoilBlobs(materialB, wx, wy + 7000, imageCache, cB.blobMin, cB.blobMax));
         blobSetB = blobCache.get(keyB);
+        if (!blobSetB) missedSoil = true;
       } else {
         blobSetB = blobSetA;
       }
@@ -268,8 +297,13 @@ function applySoilFieldToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imag
             transitionFade = Math.min(1.0, (distFromBoundary - 0.08) / 0.22);
           }
 
-          // Density check using per-biome density
-          var hash = ((wx * 7919 + wy * 6271 + px * 131 + py * 97) & 0x7FFFFFFF) / 0x7FFFFFFF;
+          // Density check using per-biome density.
+          // NOTE: must be a true per-pixel hash. The old linear form
+          // (wx*7919 + wy*6271 + px*131 + py*97) was near-constant across whole
+          // regions — wherever it exceeded density, entire areas painted ZERO soil.
+          var hpx = wx * 32 + px;
+          var hpy = wy * 32 + py;
+          var hash = ((hpx * 73856093 ^ hpy * 19349669) & 0x7FFFFFFF) / 0x7FFFFFFF;
           if (hash > cfg.density) continue;
 
           // Use random sampling for land biomes to break diagonal sprite patterns
@@ -293,13 +327,14 @@ function applySoilFieldToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imag
           pixels[dstIdx]     = (pixels[dstIdx] * (1 - a) + srcR * a + 0.5) | 0;
           pixels[dstIdx + 1] = (pixels[dstIdx + 1] * (1 - a) + srcG * a + 0.5) | 0;
           pixels[dstIdx + 2] = (pixels[dstIdx + 2] * (1 - a) + srcB * a + 0.5) | 0;
+          soilPixels++;
         }
       }
     }
   }
 
   if (anySoil) ctx.putImageData(imageData, 0, 0);
-  return anySoil;
+  return { anySoil: anySoil, missedSoil: missedSoil, soilPixels: soilPixels };
 }
 
 var GC_BASE_PATH = '/assets/pixelab/landscape_v2/micro/ground_cover/';
@@ -748,7 +783,7 @@ var SF_BIOME_OBJECTS = {
   ],
   tundra: [
     { name: 'tundra_grass', sparsity: 0.88, scale: 0.45 },
-    { name: 'ice_moss', sparsity: 0.85, scale: 0.45 },
+    { name: 'low_berry_bush', sparsity: 0.93, scale: 0.50 },
   ],
   volcanic: [
     { name: 'heat_sprout', sparsity: 0.997, scale: 0.50 },
@@ -807,8 +842,12 @@ function applySmallFloraToChunk(ctx, chunk, tileSize, chunkSize, imageCache) {
         }
         var obj = biomeObjs[oi];
 
-        // Pick variant — use different salt per blade so each is unique
-        var v = Math.floor(rand2(wx, wy, 7020 + bi * 17 + oi) * SF_VARIANT_COUNT);
+        // Pick variant — use different salt per blade so each is unique.
+        // Whitelisted species pick only from their curated variant list.
+        var sfWl = sfVariantsFor(tile.biome, obj.name);
+        var v = sfWl
+          ? sfWl[Math.floor(rand2(wx, wy, 7020 + bi * 17 + oi) * sfWl.length)]
+          : Math.floor(rand2(wx, wy, 7020 + bi * 17 + oi) * SF_VARIANT_COUNT);
         var url = SF_BASE_PATH + tile.biome + '/' + obj.name + '/sf__' + tile.biome + '__' + obj.name + '__v' + formatIdx(v) + '.png';
         var bmp = imageCache.get(url);
         if (!bmp) continue;
@@ -1309,7 +1348,13 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
     imageCache.forEach(function(v, k) { if (k.includes('/soil/') && soilKeys.length < 5) soilKeys.push(k); });
     console.log('[SOIL DEBUG] actual soil keys:', soilKeys);
   }
-  var hasSoil = applySoilFieldToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache);
+  var soilResult = applySoilFieldToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache);
+  var hasSoil = soilResult.anySoil;
+  // Diagnostic: a land chunk that painted few/no soil pixels indicates the soil
+  // loop is skipping everything (not a missing-image problem)
+  if (soilResult.soilPixels < 10000 && !soilResult.missedSoil) {
+    console.log('[SOIL LOW] chunk', chunk.cx + ',' + chunk.cy, 'painted only', soilResult.soilPixels, 'soil pixels (anySoil=' + soilResult.anySoil + ')');
+  }
   applyGroundCoverToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache, occupancy, cellsPerTile, cellPx, gridW);
   // Field 2 rendered entirely on main thread via GPU instancing (field2-gpu.js)
   // applySmallFloraToChunk(ctx, chunk, tileSize, chunkSize, imageCache);
@@ -1325,12 +1370,13 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
   return {
     bitmap: bitmap,
     hasSoil: hasSoil,
-    needsRepaint: !hasSoil || wangMissing > 0,
+    needsRepaint: soilResult.missedSoil || wangMissing > 0,
     debug: {
       masks: debugMasks, successes: debugSuccesses, srcs: debugSrcs, biomes: debugBiomes,
       neighbors: debugNeighbors, transitionDirs: debugTransitionDirs, transitionSides: debugTransitionSides,
       cornerMasks: debugCornerMasks, variants: debugVariants, cliffLevels: debugCliffLevels,
-      interiorUsed: debugInteriorUsed, cliffOverlay: debugCliffOverlay
+      interiorUsed: debugInteriorUsed, cliffOverlay: debugCliffOverlay,
+      soilPixels: soilResult.soilPixels, soilMissed: soilResult.missedSoil
     }
   };
 }

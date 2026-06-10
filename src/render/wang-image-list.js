@@ -235,21 +235,92 @@ var SF_BIOME_OBJECTS_LIST = {
   swamp: ['swamp_herb'],
   taiga: ['frost_grass', 'low_juniper', 'cold_moss_tuft'],
   tropical_forest: ['broad_fern', 'orchid_sprout', 'vine_tendril'],
-  tundra: ['tundra_grass', 'ice_moss'],
+  tundra: ['tundra_grass', 'low_berry_bush'],
   volcanic: ['heat_sprout', 'lava_fern'],
 };
 var SF_BASE_PATH = '/assets/pixelab/landscape_v2/micro/small_flora/';
 var SF_VARIANT_COUNT = 64;
 
-export { SF_BIOME_OBJECTS_LIST, SF_BASE_PATH, SF_VARIANT_COUNT };
+// Hand-curated variant whitelists ('biome/object' → allowed variant indices).
+// Variants not listed have square tile shapes or other artifacts.
+// Objects not listed here use all SF_VARIANT_COUNT variants.
+var SF_VARIANT_WHITELIST = {
+  'taiga/frost_grass': [0, 1, 2, 4, 7, 13, 16, 22, 26, 39, 40, 41, 47, 51, 55, 63],
+  // steppe/sparse_weed: all 64 minus square-tile-shaped variants 6,14,21,26,42,45,51,55
+  'steppe/sparse_weed': [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 20, 22, 23, 24, 25, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 43, 44, 46, 47, 48, 49, 50, 52, 53, 54, 56, 57, 58, 59, 60, 61, 62, 63],
+  'tundra/tundra_grass': [0, 1, 4, 7, 8, 15, 17, 18, 19, 20, 36, 40],
+  'tundra/low_berry_bush': [0, 4, 6, 9, 23, 45, 47],
+};
+
+// Anim coverage map ('biome/object' → variant indices that HAVE wind_sway frames on disk).
+// Generated from the asset tree — prevents 404 floods when preloading anim frames.
+// Objects NOT listed here have complete coverage (all 64 variants animated).
+// Empty array = no animations at all (static only).
+var SF_ANIM_VARIANTS = {
+  'beach/sea_oat': [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,39,40,41,42,43,44,45,46,47,48,49,51,52,53,54,55,56,57,59,60,61,62,63],
+  'dense_forest/shade_fern': [0],
+  'desert/sand_grass': [0],
+  'forest/grass_blade_cluster': [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,43,44,45,46,47,48,49,51,52,53,54,55,56,57,58,59,60,61,62,63],
+  'forest/small_fern': [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,23,24,25,26,28,29,30,31,32,33,34,35,36,37,38,39,40,41,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63],
+  'forest/clover_bloom': [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,57,58,59,60,61,62,63],
+  'grassland/tall_grass_blade': [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,20,23,24,27,28,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,59,60,61,62,63],
+  'grassland/dandelion_stem': [0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63],
+  'grassland/wild_herb': [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63],
+  'mountains/hardy_lichen': [0],
+  'mystic/glow_grass_blade': [0],
+  'mystic/crystal_sprout': [],
+  'steppe/sparse_weed': [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63],
+  'steppe/dry_tuft': [0],
+  'taiga/low_juniper': [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63],
+  'taiga/cold_moss_tuft': [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,46,48,49,50,51,52,53,54,55,56,57,59,60,61,62,63],
+  'tropical_forest/broad_fern': [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63],
+  'tropical_forest/orchid_sprout': [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63],
+  'tundra/tundra_grass': [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,20],
+  'tundra/low_berry_bush': [],
+  'volcanic/heat_sprout': [0],
+  'volcanic/lava_fern': [0],
+};
+
+// Returns the Set-like array of variant indices that have wind_sway anims,
+// or null if the object has full coverage (no entry = all variants animated).
+export function sfAnimVariantsFor(biome, objName) {
+  var wl = SF_ANIM_VARIANTS[biome + '/' + objName];
+  return wl !== undefined ? wl : null;
+}
+
+// Rare static decor objects mixed into Field 2 per biome (full sprite URLs).
+var SF_EXTRA_OBJECTS = {
+  tundra: [
+    '/assets/pixelab/landscape_v2/objects/tundra_ground_cover/sprites/tundra_frozen_fish_pile__object__v108.png',
+    '/assets/pixelab/landscape_v2/objects/tundra_ground_cover/sprites/tundra_snow_sculpture__object__v004.png',
+    '/assets/pixelab/landscape_v2/objects/tundra_ground_cover/sprites/tundra_permafrost_crack__object__v003.png',
+    '/assets/pixelab/landscape_v2/objects/tundra_ground_cover/sprites/tundra_permafrost_crack__object__v024.png',
+  ],
+};
+
+export { SF_BIOME_OBJECTS_LIST, SF_BASE_PATH, SF_VARIANT_COUNT, SF_VARIANT_WHITELIST, SF_EXTRA_OBJECTS };
+
+export function sfVariantsFor(biome, objName) {
+  return SF_VARIANT_WHITELIST[biome + '/' + objName] || null;
+}
+
+function sfVariantIndices(biome, objName) {
+  var wl = SF_VARIANT_WHITELIST[biome + '/' + objName];
+  if (wl) return wl;
+  var all = [];
+  for (var v = 0; v < SF_VARIANT_COUNT; v++) all.push(v);
+  return all;
+}
 
 export function getSmallFloraImageURLs() {
   var urls = [];
   for (var biome in SF_BIOME_OBJECTS_LIST) {
     var objects = SF_BIOME_OBJECTS_LIST[biome];
     for (var oi = 0; oi < objects.length; oi++) {
-      for (var v = 0; v < SF_VARIANT_COUNT; v++) {
-        var idx = v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v);
+      var variants = sfVariantIndices(biome, objects[oi]);
+      for (var v = 0; v < variants.length; v++) {
+        var n = variants[v];
+        var idx = n < 10 ? '00' + n : (n < 100 ? '0' + n : '' + n);
         urls.push(SF_BASE_PATH + biome + '/' + objects[oi] + '/sf__' + biome + '__' + objects[oi] + '__v' + idx + '.png');
       }
     }
@@ -263,11 +334,15 @@ export function getSmallFloraImageURLsForBiomes(biomes) {
     var objects = SF_BIOME_OBJECTS_LIST[biomes[b]];
     if (!objects) continue;
     for (var oi = 0; oi < objects.length; oi++) {
-      for (var v = 0; v < SF_VARIANT_COUNT; v++) {
-        var idx = v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v);
+      var variants = sfVariantIndices(biomes[b], objects[oi]);
+      for (var v = 0; v < variants.length; v++) {
+        var n = variants[v];
+        var idx = n < 10 ? '00' + n : (n < 100 ? '0' + n : '' + n);
         urls.push(SF_BASE_PATH + biomes[b] + '/' + objects[oi] + '/sf__' + biomes[b] + '__' + objects[oi] + '__v' + idx + '.png');
       }
     }
+    var extras = SF_EXTRA_OBJECTS[biomes[b]];
+    if (extras) for (var e = 0; e < extras.length; e++) urls.push(extras[e]);
   }
   return urls;
 }

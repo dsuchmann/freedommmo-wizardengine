@@ -8,7 +8,9 @@ import { WANG_SUFFIX, TRANSITIONS_BASE, BIOME_INTERIOR, BIOME_CLIFF } from './wa
 
 // Cliff overlay wang index mapping — matches PixelLab's cliff tile ordering.
 // Derived from visual inspection of all 16 grass_cliff tiles.
-var CLIFF_CORNER_TO_WANG = [6,13,0,3,8,11,14,5,15,4,1,2,9,10,7,12];
+// Entries at indices 5 and 10 swapped: vertical cliff overlays must show cliff on
+// the same side as terrain wang tiles (RIGHT for mask 5, LEFT for mask 10).
+var CLIFF_CORNER_TO_WANG = [6,13,0,3,8,1,14,5,15,4,11,2,9,10,7,12];
 var WATER_BIOMES = { ocean: 1, deep_ocean: 1, shallow_water: 1, river: 1, lake: 1 };
 
 function getWangSrc(tile, variant) {

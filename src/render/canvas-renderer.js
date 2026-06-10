@@ -667,9 +667,12 @@ export class CanvasRenderer {
         if (wangData.interiorUsed && wangData.interiorUsed[i]) interiors++;
         total++;
       }
+      const soilPx = wangData.soilPixels !== undefined ? wangData.soilPixels : 'n/a';
+      const soilMissed = wangData.soilMissed === true;
+      const soilLine = `<br><b>F0 Soil:</b> <span style="color:${soilPx === 0 || soilMissed ? '#f88' : '#8f8'}">${soilPx} px painted${soilMissed ? ' · MISSED images' : ''}</span>`;
       const summaryLine = `<br><span style="color:${failed?'#f88':'#8f8'}">${failed ? '⚠ ' + failed + '/' + total + ' missing' : '✓ ' + total + '/' + total + ' loaded'}</span> · transitions=${transitions} interior=${interiors}`;
-      wangDebugLine = l2Line + l4Line + l5Line + l6Line + l7Line + l8Line + summaryLine;
-      rawDebugJson = `chunk=${wangKey} playerTile=(${tileX},${tileY}) local=(${localX},${localY}) idx=${localIdx}\nmask=${m} success=${ok} src=${src} biome=${b}\ncornerMask=${rawCorner} variant=${variant} transition=${tDirClean||'none'} side=${tSideClean||'none'}\ncliffLevels=${cliffs} interior=${isInterior} cliffOverlay=${hasCliff}`;
+      wangDebugLine = l2Line + l4Line + l5Line + l6Line + l7Line + l8Line + soilLine + summaryLine;
+      rawDebugJson = `chunk=${wangKey} playerTile=(${tileX},${tileY}) local=(${localX},${localY}) idx=${localIdx}\nmask=${m} success=${ok} src=${src} biome=${b}\ncornerMask=${rawCorner} variant=${variant} transition=${tDirClean||'none'} side=${tSideClean||'none'}\ncliffLevels=${cliffs} interior=${isInterior} cliffOverlay=${hasCliff}\nsoilPixels=${soilPx} soilMissed=${soilMissed}`;
     } else {
       wangDebugLine = '<br><span style="color:#888">Wang data: no chunk data yet (press R to re-render)</span>';
     }
