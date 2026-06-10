@@ -101,7 +101,8 @@ uniform sampler2D uAtlas;
 uniform float uShadowAlpha; // global strength (sun-height driven)
 out vec4 outColor;
 void main() {
-  float a = texture(uAtlas, vUV).a * vAlpha * uShadowAlpha * (1.0 - vH * 0.55);
+  float sa = texture(uAtlas, vUV).a;
+  float a = smoothstep(0.15, 0.85, sa) * vAlpha * uShadowAlpha * (1.0 - vH * 0.55);
   outColor = vec4(vec3(0.035, 0.045, 0.085) * a, a); // premultiplied dark blue-black
 }`;
 
@@ -158,6 +159,8 @@ uniform float uTimeSec;
 uniform float uCloudCover; // 0..1
 uniform vec2 uCloudOff;    // accumulated cloud drift, world art px
 uniform vec2 uWorldOrg;    // world art-px of view texel origin (camXi, camYi)
+uniform vec2 uPlayerPos;   // world art-px of player feet
+uniform float uPlayerLight; // visibility radius scale, ~1.0
 out vec4 outColor;
 
 // Sample the scene at an art-px coordinate (top-left origin). Texel-center
@@ -316,7 +319,13 @@ void main() {
     float lum0 = dot(c, vec3(0.299, 0.587, 0.114));
     vec3 moonlit = min(c * (0.25 / max(lum0, 0.05)), vec3(1.0)) * nightShift;
     dark = mix(dark, moonlit, nightF);
-    c = mix(c, dark, nightAmt);
+    // player visibility pool: the night stays dark, but a warm readable
+    // circle follows the player (torch-like falloff, ~3 tiles core, ~7 fade)
+    float pdist = length((texel + uWorldOrg) - uPlayerPos);
+    float pvis = (1.0 - smoothstep(uTilePx * 2.5, uTilePx * 7.0, pdist)) * uPlayerLight;
+    float nightLocal = nightAmt * (1.0 - pvis * 0.85);
+    c = mix(c, dark, nightLocal);
+    c += vec3(0.85, 0.55, 0.22) * pvis * nightAmt * 0.13;   // faint warm torch tint, only at night
 
     // god rays: angled shafts at low sun, strongest with fog
     float rayAmt = (1.0 - smoothstep(0.08, 0.45, uSunHeight)) * step(0.02, uSunHeight);
@@ -548,6 +557,8 @@ export class GLCompositor {
       this.pUCloudCover = gl.getUniformLocation(prog, 'uCloudCover');
       this.pUCloudOff = gl.getUniformLocation(prog, 'uCloudOff');
       this.pUWorldOrg = gl.getUniformLocation(prog, 'uWorldOrg');
+      this.pUPlayerPos = gl.getUniformLocation(prog, 'uPlayerPos');
+      this.pUPlayerLight = gl.getUniformLocation(prog, 'uPlayerLight');
       this.atmoTex = [];
       for (var ai = 0; ai < 3; ai++) {
         var t = gl.createTexture();
@@ -727,6 +738,8 @@ export class GLCompositor {
       gl.uniform1f(this.pUCloudCover, env.cloudCover);
       gl.uniform2f(this.pUCloudOff, env.cloudOffX, env.cloudOffY);
       gl.uniform2f(this.pUWorldOrg, env.worldOrgX, env.worldOrgY);
+      gl.uniform2f(this.pUPlayerPos, env.playerX || 0, env.playerY || 0);
+      gl.uniform1f(this.pUPlayerLight, env.playerLight !== undefined ? env.playerLight : 1);
     } else {
       gl.uniform1f(this.pUAtmoOn, 0);
     }

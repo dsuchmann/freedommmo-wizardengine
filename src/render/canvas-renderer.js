@@ -458,6 +458,11 @@ export class CanvasRenderer {
         cloudOffY: this._cloudOff.y,
         worldOrgX: camXi,
         worldOrgY: camYi,
+        // player feet in world art px (camera is centered on the player, so
+        // this matches the texel+uWorldOrg space used by the present shader)
+        playerX: player.x * ts,
+        playerY: player.y * ts,
+        playerLight: 1,
       });
       this.glc.presentScene(w, h, camera.zoom, fracX, fracY);
     }

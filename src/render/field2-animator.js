@@ -960,7 +960,8 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
     // Tiny sprites (grass blades < 60% of a tile) skip — silhouettes don't
     // read at that size and the ground sells the lighting anyway.
     var sunH = sun ? sun.sunHeight : 1;
-    var shadowOn = glc.shadowOk && sun && sunH > 0.04;
+    var sunUp = sunH < 0.08 ? (sunH / 0.08) * (sunH / 0.08) * (3 - 2 * (sunH / 0.08)) : 1; // smoothstep 0..0.08
+    var shadowOn = glc.shadowOk && sun && sunH > 0.001;
     var shCount = 0;
     if (shadowOn) {
       if (!_shadowArray || _shadowArray.length < drawBuffer.length * SPRITE_FLOATS) {
@@ -977,7 +978,12 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         _shadowArray[so + 1] = sg.sy + sg.halfDraw;       // same ground pivot as sprite
         _shadowArray[so + 2] = sg.drawSize;
         _shadowArray[so + 3] = 0;
-        _shadowArray[so + 4] = sg.alpha * (sg.shadowK !== undefined ? sg.shadowK : 0.5);
+        // diffusion tier: small flora → faint individual silhouettes that
+        // only read in aggregate; large objects → full defined silhouette
+        var tier = (sg.drawSize - minShadowSize) / (tilePxSnapped * 1.2);
+        tier = tier < 0 ? 0 : tier > 1 ? 1 : tier;
+        var diffuseK = 0.30 + 0.70 * tier;
+        _shadowArray[so + 4] = sg.alpha * (sg.shadowK !== undefined ? sg.shadowK : 0.5) * diffuseK;
         _shadowArray[so + 5] = srect.u0;
         _shadowArray[so + 6] = srect.v0;
         _shadowArray[so + 7] = srect.du;
@@ -1045,7 +1051,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         x: sun.shadowX * sun.shadowLength * 0.9,
         y: sun.shadowLength * 0.35,
       };
-      var shStrength = 0.40 * Math.min(1, 0.35 + (1 - sunH) * 0.9);
+      var shStrength = 0.50 * (0.45 + (1 - sunH) * 0.55) * sunUp;
       glc.drawShadowInstances(_shadowArray, shCount, w, h, shVec, shStrength);
     }
     glc.drawSpriteInstances(_instArray, instCount, w, h);
