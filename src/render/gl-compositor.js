@@ -252,8 +252,11 @@ export class GLCompositor {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     this.atlasRects = new Map(); // url -> {u0,v0,du,dv} | null (failed/full)
+    // Fixed region reserved for the player sprite, re-uploaded every frame so
+    // the player participates in the depth-sorted instance batch.
+    this._playerRegion = { x: 1, y: 1, w: 256, h: 256 };
     this._shelfX = 1;
-    this._shelfY = 1;
+    this._shelfY = this._playerRegion.y + this._playerRegion.h + 2; // shelves pack below it
     this._shelfH = 0;
     this._atlasFullWarned = false;
 
@@ -325,6 +328,25 @@ export class GLCompositor {
     rect = { u0: (x + 0.5) / A, v0: (y + 0.5) / A, du: (w - 1) / A, dv: (h - 1) / A };
     this.atlasRects.set(url, rect);
     return rect;
+  }
+
+  // Upload the player's composited canvas into its reserved atlas region.
+  // Returns the UV rect, or null if sprites are unavailable.
+  uploadPlayerSprite(canvas) {
+    if (!this.ok || !this.spritesOk) return null;
+    var gl = this.gl;
+    var r = this._playerRegion;
+    gl.bindTexture(gl.TEXTURE_2D, this.atlasTex);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+    try {
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, r.x, r.y, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+    } catch (e) {
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+      return null;
+    }
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    var A = this.atlasSize;
+    return { u0: r.x / A, v0: r.y / A, du: r.w / A, dv: r.h / A };
   }
 
   // Draw `count` sprite instances from a packed Float32Array

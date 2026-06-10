@@ -11,7 +11,7 @@ import { biomeVariantFrameId } from '../assets/variant-selector.js';
 import { drawElevationOverlay } from './elevation-overlay.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations } from './water-wave-overlay.js';
 import { drawLargeObjects, preloadLargeObjectSprites, setPlayerDrawFn } from './large-object-renderer.js';
-import { drawField2Animations, preloadField2Animations, drawWindWispOverlay, setField2PlayerDraw } from './field2-animator.js';
+import { drawField2Animations, preloadField2Animations, drawWindWispOverlay, setField2PlayerDraw, setField2PlayerGL } from './field2-animator.js';
 import { findNearbyInteraction, objectReaction, performInteraction } from '../world/interactions.js';
 import { GLCompositor } from './gl-compositor.js';
 
@@ -285,11 +285,6 @@ export class CanvasRenderer {
     // GPU post pass in stage 4. Foam/seaweed still draw.
     drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, h, performance.now() / 1000, weather ? weather.wind() : null, glOn);
 
-    if (weather) {
-      drawPrecipitation(ctx, w, h, weather.precipitation(), weather.wind(), performance.now() / 1000);
-      drawFog(ctx, w, h, weather.atmosphere().fog);
-    }
-
     // Wang debug overlay (toggle with D key)
     if (this.debugWang) {
       ctx.save();
@@ -332,9 +327,43 @@ export class CanvasRenderer {
     setField2PlayerDraw(function(drawCtx) {
       _self.drawPlayerAt(w / 2, _playerScreenY, camera.zoom, player);
     });
+    // In GL mode, also composite the player into a small offscreen canvas so
+    // field2 can upload it to the sprite atlas and draw it INSIDE the
+    // depth-sorted GL batch — keeping all F2 sprites in one ordering domain
+    // (a 2D/GL split pops sprite depth at the split boundary while walking).
+    if (glOn && this.glc.spritesOk) {
+      var PC = 256; // matches glc._playerRegion
+      var PBASE = 192; // player baseline row inside the canvas
+      if (!this._playerCanvas) {
+        this._playerCanvas = document.createElement('canvas');
+        this._playerCanvas.width = PC;
+        this._playerCanvas.height = PC;
+      }
+      var pctx = this._playerCanvas.getContext('2d');
+      pctx.clearRect(0, 0, PC, PC);
+      pctx.imageSmoothingEnabled = false;
+      this.drawPlayerAt(PC / 2, PBASE, camera.zoom, player, pctx);
+      setField2PlayerGL({
+        canvas: this._playerCanvas,
+        pivotX: w / 2,
+        pivotY: _playerScreenY + (PC - PBASE), // quad pivot is bottom-center
+        size: PC,
+      });
+    } else {
+      setField2PlayerGL(null);
+    }
 
     // === FIELD 2: ANIMATED WIND SWAY ===
     drawField2Animations(ctx, chunkStore, player, camera, w, h, { baseSX, baseSY, minCX, minCY, chunkPx }, performance.now(), weather, sun, glOn ? this.glc : null);
+
+    // Weather AFTER all sprites — in GL mode most F2 sprites live on the GL
+    // canvas (below this one), so fog/precip drawn earlier would cover them
+    // but not the near-player 2D sprites, leaving a clear "spotlight" box
+    // around the player. Drawing here keeps both modes uniform.
+    if (weather) {
+      drawPrecipitation(ctx, w, h, weather.precipitation(), weather.wind(), performance.now() / 1000);
+      drawFog(ctx, w, h, weather.atmosphere().fog);
+    }
 
     // Atmospheric color grading — applied AFTER all objects/sprites so everything gets affected
     if (sun) {
@@ -459,8 +488,8 @@ export class CanvasRenderer {
     ctx.restore();
   }
 
-  drawPlayerAt(px, sy, zoom, player) {
-    const ctx = this.ctx;
+  drawPlayerAt(px, sy, zoom, player, targetCtx) {
+    const ctx = targetCtx || this.ctx;
     const py = sy - (player?.z ?? 0) * 10 * zoom;
     const frame = Math.floor(player?.character?.frame ?? 0);
     ctx.fillStyle = `rgba(42,46,43,${player?.z > 0 ? 0.15 : 0.24})`;
@@ -478,6 +507,28 @@ export class CanvasRenderer {
   }
 
   drawLighting(ctx, sun, w, h, weather, player, camera) {
+    // Lighting is all low-frequency gradients — up to 7 full-screen fills
+    // during dawn/dusk transitions, which costs 10+ms at high resolutions.
+    // Paint at 1/8 res offscreen, then composite with ONE smoothed blit.
+    var lw = Math.max(1, Math.round(w / 8));
+    var lh = Math.max(1, Math.round(h / 8));
+    if (!this._lightCanvas) this._lightCanvas = document.createElement('canvas');
+    if (this._lightCanvas.width !== lw || this._lightCanvas.height !== lh) {
+      this._lightCanvas.width = lw;
+      this._lightCanvas.height = lh;
+    }
+    var lctx = this._lightCanvas.getContext('2d');
+    lctx.setTransform(1, 0, 0, 1, 0, 0);
+    lctx.clearRect(0, 0, lw, lh);
+    lctx.setTransform(lw / w, 0, 0, lh / h, 0, 0);
+    this._paintLighting(lctx, sun, w, h, weather, player, camera);
+    var smoothWas = ctx.imageSmoothingEnabled;
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(this._lightCanvas, 0, 0, w, h);
+    ctx.imageSmoothingEnabled = smoothWas;
+  }
+
+  _paintLighting(ctx, sun, w, h, weather, player, camera) {
     var time = sun.time;
     var ambient = sun.ambient;
     var sunAngle = sun.sunAngle || 0;
@@ -605,6 +656,12 @@ export class CanvasRenderer {
   }
 
   hud(chunkStore, player, lighting, camera, perf, weather) {
+    if (this.hudCollapsed) {
+      this.statsElement.innerHTML = perf
+        ? `fps ${perf.fps.toFixed(0)} · draw ${perf.drawMs.toFixed(1)}ms · <span style="color:#888">H for full HUD</span>`
+        : '<span style="color:#888">H for full HUD</span>';
+      return;
+    }
     const tile = chunkStore.tileAt(player.x, player.y);
     const sun = lighting.sun();
     const now = performance.now();

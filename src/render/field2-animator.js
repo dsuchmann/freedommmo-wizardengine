@@ -908,25 +908,35 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
   drawBuffer.sort(function(a, b) { return a.sortY - b.sortY; });
 
   var twoD = drawBuffer;
+  var playerInGL = false;
   if (glc && glc.spritesOk) {
-    // Hybrid split: the GL canvas sits BELOW the 2D canvas, so anything
-    // GL-instanced renders under all 2D content. The only 2D content sprites
-    // interleave with is the player — so sprites that sort in FRONT of the
-    // player AND are close enough to overlap them stay on the 2D canvas;
-    // everything else (the vast majority) goes to the GL instanced batch.
-    var nearR = tilePxSnapped * 2.5;
-    var pScreenX = w * 0.5;
-    var pScreenY = h * 0.5;
-    if (!_instArray || _instArray.length < drawBuffer.length * SPRITE_FLOATS) {
-      _instArray = new Float32Array(Math.max(4096, drawBuffer.length * SPRITE_FLOATS * 2));
+    // ALL sprites go to the GL instanced batch, and the player joins it as
+    // one more instance (composited offscreen, uploaded to a reserved atlas
+    // region each frame). One ordering domain — no 2D/GL split boundary
+    // where relative sprite depth would pop as the player moves.
+    var pRect = _playerGL ? glc.uploadPlayerSprite(_playerGL.canvas) : null;
+    var maxInst = drawBuffer.length + 1;
+    if (!_instArray || _instArray.length < maxInst * SPRITE_FLOATS) {
+      _instArray = new Float32Array(Math.max(4096, maxInst * SPRITE_FLOATS * 2));
     }
     var instCount = 0;
+    var playerSortY = player.y + 0.4;
     twoD = [];
     for (var gi = 0; gi < drawBuffer.length; gi++) {
       var g = drawBuffer[gi];
-      if (g.sortY > player.y + 0.4 && Math.abs(g.sx - pScreenX) < nearR && Math.abs(g.sy - pScreenY) < nearR) {
-        twoD.push(g); // could overlap the player — needs 2D interleave
-        continue;
+      if (pRect && !playerInGL && g.sortY > playerSortY) {
+        var po = instCount * SPRITE_FLOATS;
+        _instArray[po] = _playerGL.pivotX;
+        _instArray[po + 1] = _playerGL.pivotY;
+        _instArray[po + 2] = _playerGL.size;
+        _instArray[po + 3] = 0;
+        _instArray[po + 4] = 1;
+        _instArray[po + 5] = pRect.u0;
+        _instArray[po + 6] = pRect.v0;
+        _instArray[po + 7] = pRect.du;
+        _instArray[po + 8] = pRect.dv;
+        instCount++;
+        playerInGL = true;
       }
       var rect = glc.atlasRect(g.img, g._url);
       if (!rect) { twoD.push(g); continue; } // not atlased (yet) — 2D fallback
@@ -942,11 +952,25 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
       _instArray[o + 8] = rect.dv;
       instCount++;
     }
+    if (pRect && !playerInGL) {
+      var po2 = instCount * SPRITE_FLOATS;
+      _instArray[po2] = _playerGL.pivotX;
+      _instArray[po2 + 1] = _playerGL.pivotY;
+      _instArray[po2 + 2] = _playerGL.size;
+      _instArray[po2 + 3] = 0;
+      _instArray[po2 + 4] = 1;
+      _instArray[po2 + 5] = pRect.u0;
+      _instArray[po2 + 6] = pRect.v0;
+      _instArray[po2 + 7] = pRect.du;
+      _instArray[po2 + 8] = pRect.dv;
+      instCount++;
+      playerInGL = true;
+    }
     glc.drawSpriteInstances(_instArray, instCount, w, h);
   }
 
-  // 2D pass (everything in 2D mode; near-player foreground + atlas misses in GL mode)
-  var playerInserted = false;
+  // 2D pass (everything in 2D mode; rare atlas misses in GL mode)
+  var playerInserted = playerInGL;
   for (var di = 0; di < twoD.length; di++) {
     // Draw player when we reach sprites at or below player's Y
     if (!playerInserted && twoD[di].sortY > player.y + 0.4) {
@@ -970,6 +994,12 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
 // Allow canvas-renderer to register the player draw function for depth sorting
 var _playerDrawFn = null;
 export function setField2PlayerDraw(fn) { _playerDrawFn = fn; }
+
+// GL-mode player sprite: { canvas, pivotX, pivotY, size } or null.
+// The canvas is uploaded to the atlas's reserved player region each frame and
+// drawn as a normal instance inside the depth-sorted batch.
+var _playerGL = null;
+export function setField2PlayerGL(info) { _playerGL = info; }
 
 // Exported so canvas-renderer can call AFTER atmospheric overlays
 export function drawWindWispOverlay(ctx, w, h, player, tilePx) {
