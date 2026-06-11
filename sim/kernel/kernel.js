@@ -1,5 +1,6 @@
 import { Graph } from '../store/graph.js';
 import { Ledger } from '../store/ledger.js';
+import { Deltas } from '../store/deltas.js';
 import { FluxField } from '../time/flux.js';
 import { Scheduler } from './scheduler.js';
 import { SPECIES, materialize, stageAt } from '../time/metabolism.js';
@@ -12,6 +13,7 @@ export class Kernel {
     this.bounds = bounds;   // {x0,y0,w,h} or null = unbounded; seeds outside bounds fail to establish
     this.graph = new Graph();
     this.ledger = new Ledger();
+    this.deltas = new Deltas();
     this.flux = new FluxField({ phi });
     this.scheduler = new Scheduler();
     this.handlers = new Map();   // kind -> (kernel, node, ev) => void

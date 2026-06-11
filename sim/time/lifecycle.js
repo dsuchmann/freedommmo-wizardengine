@@ -4,8 +4,6 @@ import { rand, randRange } from '../kernel/rng.js';
 const GONE_THRESHOLD = 0.5;   // tu — corpse below this is gone
 
 export function registerLifecycle(kernel) {
-  kernel.deltas = [];
-
   kernel._scheduleLifecycle = (node, tick) => {
     const sp = SPECIES[node.attrs.species];
     const birth = node.attrs.birthTick;
