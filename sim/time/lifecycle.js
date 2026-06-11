@@ -14,7 +14,9 @@ export function registerLifecycle(kernel) {
       if (birth + startAge > tick) kernel.scheduler.schedule(birth + startAge, node.id, 'stage', -1);
     }
     if (birth + sp.senescence.start > tick) {
-      kernel.scheduler.schedule(birth + sp.senescence.start, node.id, 'sen_step', -1);
+      // ±20 % per-node jitter on senescence onset spreads the synchronized die-off cliff.
+      const senJit = 1 + (rand(kernel.seed, node.id, 303) - 0.5) * 0.40;
+      kernel.scheduler.schedule(birth + sp.senescence.start * senJit, node.id, 'sen_step', -1);
     }
     const jit = 1 + (rand(kernel.seed, node.id, 101) - 0.5) * 2 * sp.seed.jitter;
     kernel.scheduler.schedule(tick + sp.seed.every * jit, node.id, 'seed', -1);
@@ -45,7 +47,7 @@ export function registerLifecycle(kernel) {
   kernel.on('death_check', (k, node, ev) => {
     k.closeSegment(node, ev.tick);
     if (node.R > 1e-9) {   // rates changed since prediction; re-predict
-      if (node.r < 0) k.scheduler.schedule(ev.tick + node.R / -node.r, node.id, 'death_check', node.ver);
+      if (node.r < 0) k.scheduler.schedule(Math.max(ev.tick + 1, ev.tick + node.R / -node.r), node.id, 'death_check', node.ver);
       return;
     }
     die(k, node, ev.tick, null);

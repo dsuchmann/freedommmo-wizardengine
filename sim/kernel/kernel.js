@@ -78,14 +78,14 @@ export class Kernel {
     node.ver++;
     if (node.r < 0) {
       if (node.R > 0) {
-        this.scheduler.schedule(tick + node.R / -node.r, node.id, 'death_check', node.ver);
+        this.scheduler.schedule(Math.max(tick + 1, tick + node.R / -node.r), node.id, 'death_check', node.ver);
       } else {
         // R already exhausted AND rate still negative; die immediately
         this.scheduler.schedule(tick, node.id, 'death_check', node.ver);
       }
     }
     if (grow > 0) {  // body-full crossing: growth stops, surplus reroutes to R
-      this.scheduler.schedule(tick + (sp.maxBody - node.attrs.body) / grow, node.id, 'body_full', node.ver);
+      this.scheduler.schedule(Math.max(tick + 1, tick + (sp.maxBody - node.attrs.body) / grow), node.id, 'body_full', node.ver);
     }
   }
 
