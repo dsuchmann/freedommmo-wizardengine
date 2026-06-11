@@ -320,8 +320,10 @@ export function getClaimMask(wx, wy, tileInfo) {
   if (hit) return hit;
   var mask = new Uint8Array(CELLS);
   var ox = wx * TILE_ART_PX, oy = wy * TILE_ART_PX;
+  var complete = true; // any null (unloaded) neighbor -> don't cache the mask
   for (var ny = -1; ny <= 1; ny++) {
     for (var nx = -1; nx <= 1; nx++) {
+      if (!tileInfo(wx + nx, wy + ny)) { complete = false; continue; }
       var pls = f3Placements(wx + nx, wy + ny, tileInfo);
       for (var i = 0; i < pls.length; i++) {
         var p = pls[i];
@@ -340,7 +342,7 @@ export function getClaimMask(wx, wy, tileInfo) {
       }
     }
   }
-  return cachePut(_maskCache, key, mask);
+  return complete ? cachePut(_maskCache, key, mask) : mask;
 }
 
 // Point test in world art px — used by F2 to cull blades.
