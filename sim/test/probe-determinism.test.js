@@ -14,6 +14,7 @@ function runWorld(seed) {
   // is a FK → events(id); inserting nodes first violates the constraint.
   k.ledger.flush(db);
   k.graph.flush(db, k.tick);
+  k.scheduler.flush(db);
   const dump = canonicalDump(db);
   db.close();
   return dump;

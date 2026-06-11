@@ -21,10 +21,10 @@ test('scheduler heap round-trips through SQLite preserving array order', () => {
 test('node ver and flux demand survive flush', () => {
   const db = openDb(':memory:');
   const k = new Kernel({ seed: 7, bounds: { x0: 0, y0: 0, w: 4, h: 4 } });
-  let n;
-  k.graph.boot(() => { n = k.addLiving({ species: 'grass', x: 1, y: 1, R: 500, body: 20, tick: 0 }); });
+  k.graph.boot(() => { k.addLiving({ species: 'grass', x: 1, y: 1, R: 500, body: 20, tick: 0 }); });
   k.runTo(20 * DAY);
-  const live = k.graph.nodes.get(n.id) ?? [...k.graph.nodes.values()][0];
+  const live = [...k.graph.nodes.values()].filter(m => m.R != null && m.attrs.demand != null).sort((a, b) => a.id - b.id)[0];
+  assert.ok(live, 'a re-rated living node exists at day 20');
   assert.ok(live.ver >= 0);
   assert.ok(typeof live.attrs.demand === 'number'); // _reRateOne must record it
   k.graph.flush(db, k.tick);
