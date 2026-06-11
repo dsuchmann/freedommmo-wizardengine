@@ -1029,3 +1029,20 @@ git add -A docs/ && git commit -m "docs: atmosphere implementation verification 
 - **Type consistency:** instance layout SPRITE_FLOATS=9 shared by sprites and shadows; `setAtmoField(field, tilesW, tilesH, orgX, orgY)` matches `buildAtmoField` return `{a,b,c}`; `setAtmoEnv` keys match `presentScene` reads; `drawPrecipitation(..., tint)` signature added in Task 4, used in Task 8.
 - **Known risk:** mood overlay constants (Task 4 step 2) are CSS→GLSL translations — expect one fine-tuning pass with the user via `window.atmo.set` and direct constant nudges; that's by design (live-tunable uniforms).
 
+
+---
+
+## Task 10 verification results (2026-06-10, swiftshader headless, fresh incognito contexts)
+
+Harness: `pwtest/atmo-verify.js` + `atmo-verify-t4fix.js`. CDP `Page.captureScreenshot`, time frozen via `_lighting.time/paused`, readiness gated on `bitmaps >= 9`.
+
+1. **Per-biome grading (t=0.45), pairwise pixel diff (% pixels with mean-channel abs diff > 8; criterion > 8%)** — all 6 pairs PASS:
+   desert/swamp 99.9% (meanAbsDiff 133.7), desert/arctic 100% (70.0), desert/tundra 100% (82.2), swamp/arctic 100% (180.5), swamp/tundra 99.8% (95.8), arctic/tundra 98.1% (95.1).
+2. **Long shadows, steppe t=0.50 vs t=0.64 (bottom 40% of frame)** — PASS: meanAbsDiff 21.6, 80.2% of pixels differ (>8).
+3. **No biome seam (desert/volcanic border, 3 strips, column-mean scan)** — PASS: median adjacent-column jump 0.81–1.43, p95 3.5–4.5, max 11.3–14.7 (isolated terrain-feature edges, no consistent grading wall).
+4. **Night floor, t=0.0, screen-edge sampling away from player pool** — FAIL vs the 2x criterion: deep_ocean edge luminance 11.5 vs desert 8.9 (ratio 1.29; outer-column grid ratio 1.33). Direction is correct and the moonlit lift is clearly visible on deep_ocean (night=53 vs desert night=0 in biome-atmosphere.js); desert sand's high albedo keeps its absolute night luminance close. Left for the user fine-tune pass (window.atmo.set).
+   Note: a naive center-crop measurement is invalid — the player visibility pool dominates a 600x460 center clip.
+5. **Frame probe, 15 s auto-walk (steppe)** — 88 frames, avg 167.6 ms, max 199.9 ms, 0 frames over 2x avg. Absolute numbers meaningless under swiftshader (~185 ms/frame software raster baseline); the point is no chunk-adoption spikes: max/avg = 1.19.
+6. **Console health across all runs** — 0 shader compile/link errors, 0 uncaught page errors. 8755 console errors are all `404 (Not Found)` resource probes from the asset loader (pre-existing, not atmosphere-related).
+
+Fresh per-biome captures at t=0.65 saved to `screenshots/_atmo2_<biome>.png` (21 biomes, untracked by convention).
