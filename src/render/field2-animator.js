@@ -560,6 +560,10 @@ function checkReady() {
 // every neighbor tile resolved (edge detection result is final).
 var _tileDescCache = new Map(); // 'wx,wy' -> desc | null
 var MAX_TILE_DESC_CACHE = 30000;
+
+// Dev tuner hook (F4 size sliders): descriptors bake F4 lifeScale/sortYOff,
+// so a scale change must rebuild them.
+export function clearF2TileDescriptors() { _tileDescCache.clear(); }
 var _instArray = null; // Float32Array scratch for GL instances
 var _shadowArray = null; // Float32Array scratch for GL silhouette shadows
 

@@ -16,6 +16,21 @@ var F4_TILE_CHANCE = {
 };
 var _f4Cache = new Map();   // 'wx,wy,biome' -> placements
 
+// Runtime-tunable F4 size multiplier per biome — applied to BOTH the sprite
+// draw size and the claim footprint. Tuned live via the dev panel (key '4',
+// src/dev/f4-tuner.js). 1.0 = native sprite size (64px = 2 tiles).
+export var F4_BIOME_SCALE = {
+  grassland: 0.65, forest: 0.65, dense_forest: 0.65, tropical_forest: 0.65,
+  taiga: 0.65, swamp: 0.65, mystic: 0.65, savanna: 0.65, hills: 0.65,
+  steppe: 0.65, beach: 0.65, tundra: 0.65, desert: 0.65, arctic: 0.65,
+  mountains: 0.65, volcanic: 0.65,
+};
+export function setF4BiomeScale(biome, s) {
+  F4_BIOME_SCALE[biome] = s;
+  _f4Cache.clear();
+  _maskCache.clear(); // footprints changed -> claim masks must rebuild
+}
+
 export var SS_BASE_PATH = '/assets/pixelab/landscape_v2/micro/small_scatter/';
 export var SS_VARIANT_COUNT = 64;
 
@@ -405,8 +420,9 @@ export function f4Placements(wx, wy, tileInfo) {
   }
   var ux = 0.5 + (rand2(wx, wy, 9703) - 0.5) * 0.5;
   var uy = 0.5 + (rand2(wx, wy, 9704) - 0.5) * 0.5;
-  var sizeTiles = obj.size / TILE_ART_PX;       // 64px -> 2 tiles, 80px -> 2.5
-  var drawPx = obj.size;                         // world art px at scale 1 tile = 32px
+  var scale = F4_BIOME_SCALE[t.biome] || 1.0;
+  var sizeTiles = obj.size * scale / TILE_ART_PX; // 64px @ 1.0 -> 2 tiles
+  var drawPx = obj.size * scale;                  // world art px at 1 tile = 32px
   var p = {
     name: obj.name, biome: t.biome, size: obj.size, variant: variant, state: st,
     ux: ux, uy: uy, sizeTiles: sizeTiles,

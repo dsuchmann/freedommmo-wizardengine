@@ -55,6 +55,7 @@ import('./world/biome-atmosphere.js').then(m => {
     get(biome) { return m.BIOME_ATMOSPHERE[biome]; },
   };
 });
+import('./dev/f4-tuner.js').then(m => m.initF4Tuner()); // F4 size sliders (key '4')
 const weather = new WeatherSystem(lighting);
 const overmap = new OvermapController(overmapCanvas, player, chunks);
 const camera = new Camera();
