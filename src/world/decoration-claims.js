@@ -187,7 +187,7 @@ var SS_STATES = {
   'desert/scorpion_shell': ['burned', 'cracked', 'destroyed', 'enchanted', 'frozen'],
   'forest/acorn_cluster': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
   'forest/bark_shard': ['burned', 'destroyed', 'enchanted', 'frozen'],
-  'forest/small_stone': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'forest/small_forest_stone': ['cracked', 'destroyed', 'enchanted', 'frozen'],
   'forest/twig_bundle': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
   'grassland/dried_flower': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
   'grassland/field_stone': ['cracked', 'destroyed', 'enchanted', 'frozen'],
@@ -242,7 +242,8 @@ var CELLS = 8;                  // 8x8 claim cells per tile
 var CELL_PX = TILE_ART_PX / CELLS;
 
 var EMPTY = [];
-var _placeCache = new Map();    // 'wx,wy' -> placements
+var _placeCache = new Map();    // 'wx,wy,biome' -> placements
+// _maskCache uses 'wx,wy' (no biome) because masks derive from biome-keyed placements and tileInfo is deterministic, so the result is implicitly biome-correct.
 var _maskCache = new Map();     // 'wx,wy' -> Uint8Array(8) row bitmasks
 var MAX_CACHE = 20000;
 
