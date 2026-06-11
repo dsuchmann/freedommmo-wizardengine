@@ -323,7 +323,7 @@ git commit -m "feat(sim): event heap with deterministic (tick, nodeId, kind) ord
 - Create: `sim/store/db.js`
 - Test: `sim/test/db.test.js`
 
-Schema per spec §2.1–§2.2, §2.7, §5.2: `nodes` (with `R, r, last_tick`, `created_by_event`, `owner`), `edges`, `edge_members`, `events`, `event_targets`, `deltas`, `meta`. `canonicalDump(db)` returns a stable string for determinism comparison (probe 4) — raw file bytes differ across runs (WAL timing), so equality is defined over content.
+Schema per spec §2.1–§2.2, §2.7, §5.2: `nodes` (with `R, rate, last_tick`, `created_by_event`, `owner` — SQLite identifiers are case-insensitive so the in-memory `r` field maps to column `rate`), `edges`, `edge_members`, `events`, `event_targets`, `deltas`, `meta`. `canonicalDump(db)` returns a stable string for determinism comparison (probe 4) — raw file bytes differ across runs (WAL timing), so equality is defined over content.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -348,7 +348,7 @@ test('openDb creates schema in WAL mode', () => {
 test('canonicalDump is equal for identical content, differs for different content', () => {
   const a = openDb(':memory:'), b = openDb(':memory:');
   const ins = d => d.prepare(
-    'INSERT INTO nodes(id,type,born_tick,x,y,R,r,last_tick,created_by_event,owner,attrs) VALUES (?,?,?,?,?,?,?,?,?,?,?)'
+    'INSERT INTO nodes(id,type,born_tick,x,y,R,rate,last_tick,created_by_event,owner,attrs) VALUES (?,?,?,?,?,?,?,?,?,?,?)'
   );
   ins(a).run(1,'grass',0,5,5,100,0.2,0,null,null,'{}');
   ins(b).run(1,'grass',0,5,5,100,0.2,0,null,null,'{}');
@@ -377,7 +377,7 @@ CREATE TABLE IF NOT EXISTS nodes(
   type TEXT NOT NULL,
   born_tick INTEGER NOT NULL,
   x REAL, y REAL,
-  R REAL, r REAL, last_tick INTEGER,
+  R REAL, rate REAL, last_tick INTEGER,
   created_by_event INTEGER REFERENCES events(id),
   owner INTEGER REFERENCES nodes(id),
   attrs TEXT NOT NULL DEFAULT '{}'
@@ -621,7 +621,7 @@ export class Graph {
   flush(db, tick) {
     const tx = db.transaction(() => {
       db.exec('DELETE FROM nodes; DELETE FROM edges; DELETE FROM edge_members;');
-      const ni = db.prepare('INSERT INTO nodes(id,type,born_tick,x,y,R,r,last_tick,created_by_event,owner,attrs) VALUES (?,?,?,?,?,?,?,?,?,?,?)');
+      const ni = db.prepare('INSERT INTO nodes(id,type,born_tick,x,y,R,rate,last_tick,created_by_event,owner,attrs) VALUES (?,?,?,?,?,?,?,?,?,?,?)');
       for (const n of this.nodes.values()) {
         ni.run(n.id, n.type, n.bornTick, n.x, n.y, n.R, n.r, n.lastTick, n.createdByEvent, n.owner, JSON.stringify(n.attrs));
       }
