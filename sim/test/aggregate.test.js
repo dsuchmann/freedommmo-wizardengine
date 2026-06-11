@@ -58,3 +58,51 @@ test('nested boot scopes stay baseline (re-entrant)', () => {
   });
   assert.ok([...k.graph.nodes.values()].some(n => n.type === 'group'));
 });
+
+function flows(k) {
+  const t = k.ledger.totals;
+  return t.captured - t.burned - t.decayed - t.transferLoss;
+}
+
+test('agg_step: conservation identity holds exactly over a statistical year', () => {
+  const k = new Kernel({ seed: 42, bounds: { x0: 0, y0: 0, w: 64, h: 64 } });
+  spawnWorld(k, { x0: 0, y0: 0, w: 64, h: 64 }, { x0: 0, y0: 0, w: 0, h: 0 });  // all statistical
+  const start = k.stocks(0), f0 = flows(k);
+  k.runTo(360 * 86400);
+  const end = k.stocks(k.tick), f1 = flows(k);
+  const scale = Math.max(Math.abs(k.ledger.totals.captured), 1);
+  assert.ok(Math.abs((end - start) - (f1 - f0)) / scale < 1e-9,
+    `conservation: Δstocks=${end - start} Δflows=${f1 - f0}`);
+});
+
+test('agg_step: populations persist without explosion or instant extinction', () => {
+  const k = new Kernel({ seed: 42, bounds: { x0: 0, y0: 0, w: 64, h: 64 } });
+  spawnWorld(k, { x0: 0, y0: 0, w: 64, h: 64 }, { x0: 0, y0: 0, w: 0, h: 0 });
+  const count = kk => [...kk.graph.nodes.values()].filter(n => n.type === 'aggregate')
+    .reduce((s, n) => s + (n.attrs.pops.grass?.count ?? 0), 0);
+  const c0 = count(k);
+  k.runTo(360 * 86400);
+  const c1 = count(k);
+  assert.ok(c1 > 0, 'grass must not go extinct in a year');
+  // Region-pooled flux carries ~25× the baseline density before starvation bites
+  // (baseline spawns well below carrying capacity); the bound catches unbounded growth.
+  assert.ok(c1 < c0 * 50, `grass must not explode (was ${c0}, now ${c1})`);
+});
+
+test('agg_step is deterministic (two runs, identical pops)', () => {
+  const run = () => {
+    const k = new Kernel({ seed: 99, bounds: { x0: 0, y0: 0, w: 32, h: 32 } });
+    spawnWorld(k, { x0: 0, y0: 0, w: 32, h: 32 }, { x0: 0, y0: 0, w: 0, h: 0 });
+    k.runTo(200 * 86400);
+    return JSON.stringify([...k.graph.nodes.values()].filter(n => n.type === 'aggregate')
+      .sort((a, b) => a.id - b.id).map(n => n.attrs));
+  };
+  assert.equal(run(), run());
+});
+
+test('stocks() counts aggregate mass', () => {
+  const k = new Kernel({ seed: 7 });
+  k.graph.boot(() => createAggregate(k, '0,0',
+    { grass: { count: 4, sumR: 1000, sumBody: 100, ageSum: 4 * 86400 * 20, detritusE: 50 } }, 0, null));
+  assert.equal(k.stocks(0), 1150);
+});

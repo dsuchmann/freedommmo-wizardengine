@@ -5,6 +5,7 @@ import { FluxField } from '../time/flux.js';
 import { Scheduler } from './scheduler.js';
 import { SPECIES, materialize, stageAt } from '../time/metabolism.js';
 import { registerLifecycle } from '../time/lifecycle.js';
+import { registerAggregates } from '../lod/aggregate.js';
 
 export class Kernel {
   constructor({ seed, phi = 4, bounds = null }) {
@@ -18,6 +19,7 @@ export class Kernel {
     this.scheduler = new Scheduler();
     this.handlers = new Map();   // kind -> (kernel, node, ev) => void
     registerLifecycle(this);
+    registerAggregates(this);
   }
 
   on(kind, fn) { this.handlers.set(kind, fn); }
@@ -103,6 +105,8 @@ export class Kernel {
       if (n.type === 'corpse') {
         materialize(n, tick, this.ledger);
         s += n.attrs.E;
+      } else if (n.type === 'aggregate') {
+        for (const p of Object.values(n.attrs.pops)) s += p.sumR + p.sumBody + p.detritusE;
       } else if (n.R != null) {
         this.closeSegment(n, tick);
         s += n.R + n.attrs.body;
