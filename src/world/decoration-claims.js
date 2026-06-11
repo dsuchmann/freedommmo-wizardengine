@@ -4,6 +4,17 @@
 // inside higher-field objects' base footprints. Pure + deterministic:
 // worker and main thread compute identical results independently.
 import { rand2 } from '../core/random.js';
+import { MF_CATALOG } from './mf-catalog.js';
+
+var MF_BASE_PATH = '/assets/pixelab/landscape_v2/micro/medium_flora/';
+// Per-tile chance of one medium-flora plant (master plan: 3-12% density)
+var F4_TILE_CHANCE = {
+  grassland: 0.10, forest: 0.12, dense_forest: 0.12, tropical_forest: 0.12,
+  taiga: 0.09, swamp: 0.09, mystic: 0.10, savanna: 0.07, hills: 0.07,
+  steppe: 0.06, beach: 0.05, tundra: 0.05, desert: 0.04, arctic: 0.03,
+  mountains: 0.04, volcanic: 0.04,
+};
+var _f4Cache = new Map();   // 'wx,wy,biome' -> placements
 
 export var SS_BASE_PATH = '/assets/pixelab/landscape_v2/micro/small_scatter/';
 export var SS_VARIANT_COUNT = 64;
@@ -321,10 +332,11 @@ export function getClaimMask(wx, wy, tileInfo) {
   var mask = new Uint8Array(CELLS);
   var ox = wx * TILE_ART_PX, oy = wy * TILE_ART_PX;
   var complete = true; // any null (unloaded) neighbor -> don't cache the mask
-  for (var ny = -1; ny <= 1; ny++) {
-    for (var nx = -1; nx <= 1; nx++) {
+  for (var ny = -2; ny <= 2; ny++) {
+    for (var nx = -2; nx <= 2; nx++) {
       if (!tileInfo(wx + nx, wy + ny)) { complete = false; continue; }
-      var pls = f3Placements(wx + nx, wy + ny, tileInfo);
+      var pls = f3Placements(wx + nx, wy + ny, tileInfo)
+        .concat(f4Placements(wx + nx, wy + ny, tileInfo));
       for (var i = 0; i < pls.length; i++) {
         var p = pls[i];
         // rasterize the base ellipse into this tile's cells (center test)
@@ -356,7 +368,69 @@ export function isClaimedAt(px, py, tileInfo) {
   return (mask[r] & (1 << c)) !== 0;
 }
 
-export function clearClaimCaches() { _placeCache.clear(); _maskCache.clear(); }
+export function clearClaimCaches() { _placeCache.clear(); _maskCache.clear(); _f4Cache.clear(); }
+
+function pad3(v) { return v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v); }
+
+// One medium-flora plant per tile max. Deterministic (seed roots 9700-9713).
+// Placement: { name, biome, size, variant, state, ux, uy, sizeTiles,
+//              hasAnim, bx, by, fw, fh } — bx/by/fw/fh = base footprint
+// ellipse in world art px, same contract as f3 placements.
+export function f4Placements(wx, wy, tileInfo) {
+  var t = tileInfo(wx, wy);
+  if (!t || t.transition) return EMPTY;
+  var key = wx + ',' + wy + ',' + t.biome;
+  var hit = _f4Cache.get(key);
+  if (hit) return hit;
+  var objs = MF_CATALOG[t.biome];
+  var chance = F4_TILE_CHANCE[t.biome] || 0;
+  if (!objs || !objs.length || chance === 0) return cachePut(_f4Cache, key, EMPTY);
+  if (rand2(wx, wy, 9700) > chance) return cachePut(_f4Cache, key, EMPTY);
+
+  var obj = objs[Math.floor(rand2(wx, wy, 9701) * objs.length)];
+  // Lifecycle roll: 15% seedling / 55% normal / 20% wilting / 8% dead / 2% enchanted
+  var roll = rand2(wx, wy, 9705);
+  var st = null;
+  if (roll < 0.15) st = 'seedling';
+  else if (roll < 0.70) st = null;
+  else if (roll < 0.90) st = 'wilting';
+  else if (roll < 0.98) st = 'dead';
+  else st = 'enchanted';
+  var variant;
+  if (st && obj.statePool.length) {
+    variant = obj.statePool[Math.floor(rand2(wx, wy, 9706) * obj.statePool.length)];
+  } else {
+    st = null; // no pool -> render base
+    variant = Math.floor(rand2(wx, wy, 9702) * obj.variants);
+  }
+  var ux = 0.5 + (rand2(wx, wy, 9703) - 0.5) * 0.5;
+  var uy = 0.5 + (rand2(wx, wy, 9704) - 0.5) * 0.5;
+  var sizeTiles = obj.size / TILE_ART_PX;       // 64px -> 2 tiles, 80px -> 2.5
+  var drawPx = obj.size;                         // world art px at scale 1 tile = 32px
+  var p = {
+    name: obj.name, biome: t.biome, size: obj.size, variant: variant, state: st,
+    ux: ux, uy: uy, sizeTiles: sizeTiles,
+    hasAnim: obj.anims.indexOf(variant) !== -1,
+    // base footprint: bottom-centre of the sprite (plants are bottom-weighted)
+    bx: (wx + ux) * TILE_ART_PX,
+    by: (wy + uy) * TILE_ART_PX + drawPx * 0.30,
+    fw: drawPx * 0.30, fh: drawPx * 0.16,
+  };
+  return cachePut(_f4Cache, key, [p]);
+}
+
+export function f4SpriteUrl(p) {
+  if (p.state) {
+    return MF_BASE_PATH + p.biome + '/' + p.name + '/_states/' + p.state +
+      '/mf__' + p.biome + '__' + p.name + '__' + p.state + '__v' + pad3(p.variant) + '.png';
+  }
+  return MF_BASE_PATH + p.biome + '/' + p.name +
+    '/mf__' + p.biome + '__' + p.name + '__v' + pad3(p.variant) + '.png';
+}
+
+export function f4AnimUrlBase(p) {
+  return MF_BASE_PATH + p.biome + '/' + p.name + '/anim/wind_sway/v' + pad3(p.variant) + '/';
+}
 
 // Returns all state sprite URLs for objects in `biome` that have known states.
 // Used by preloaders to warm the image cache for lifecycle-state sprites.
