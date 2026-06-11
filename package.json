@@ -6,7 +6,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test sim/test/*.test.js"
+    "test": "node --test sim/test/*.test.js",
+    "sim:serve": "node sim/server/main.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.0.0",
