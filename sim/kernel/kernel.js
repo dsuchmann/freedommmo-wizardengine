@@ -90,7 +90,10 @@ export class Kernel {
   }
 
   /** World stocks at `tick`: ΣR + Σbody (living) + ΣE (corpses), materialized.
-   *  Living nodes are closed (captured/burned accrued) so the conservation identity holds. */
+   *  Living nodes are closed (captured/burned accrued) so the conservation identity holds.
+   *  NOTE: destructive audit — materializes every node (mutates R/body/E/lastTick, accrues
+   *  counters). Only call at the current sim tick (e.g. right after runTo), never mid-run
+   *  at a past tick, or the skipped interval's accrual is lost. */
   stocks(tick) {
     let s = 0;
     for (const n of this.graph.nodes.values()) {

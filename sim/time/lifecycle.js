@@ -61,6 +61,8 @@ export function registerLifecycle(kernel) {
       const inBounds = b == null ||
         (cx >= b.x0 && cx < b.x0 + b.w && cy >= b.y0 && cy < b.y0 + b.h);
       if (inBounds) {   // seeds landing outside the world fail to establish (no spend)
+        // Direct R mutation is conservation-safe ONLY because closeSegment ran above
+        // at this same tick (dt=0 inside the reRateTileOf below). Keep them same-tick.
         node.R -= sp.seed.cost;
         const delivered = transfer(sp.seed.cost, 'nurture', k.ledger);
         const evId = k.ledger.emit({ tick: ev.tick, type: 'seed', actor: node.id, magnitude: sp.seed.cost });
