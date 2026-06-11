@@ -9,7 +9,7 @@ import { clearBorderLines } from './sprite-denoise.js';
 import { floorDiv } from '../world/chunk.js';
 import { SPRITE_FLOATS } from './gl-compositor.js';
 import { getAtmosphere } from '../world/biome-atmosphere.js';
-import { isClaimedAt } from '../world/decoration-claims.js';
+import { isClaimedAt, f4Placements, f4SpriteUrl, f4AnimUrlBase } from '../world/decoration-claims.js';
 
 var ANIM_RADIUS = 40; // tiles around player — large enough to cover full screen at any zoom
 var FADE_INNER = 34; // fully opaque inside this radius
@@ -593,10 +593,39 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
   }
   if (isNearEdge) return { desc: null, cacheable: cacheable };
 
+  // ---- Field 4 medium flora (deterministic, claim-registered) ----
+  var f4Blades = [];
+  var f4pls = f4Placements(wx, wy, _claimTileInfo(chunkStore));
+  for (var fi = 0; fi < f4pls.length; fi++) {
+    var fp = f4pls[fi];
+    f4Blades.push({
+      bi: 90 + fi, // distinct trigger-key space from F2 blades
+      stateUrl: fp.state ? f4SpriteUrl(fp) : null,
+      animUrlBase: (!fp.state && fp.hasAnim) ? f4AnimUrlBase(fp) : null,
+      staticUrl: fp.state ? f4SpriteUrl(fp) : f4SpriteUrl({ name: fp.name, biome: fp.biome, variant: fp.variant, state: null }),
+      isRigid: false,
+      lifeScale: fp.sizeTiles,         // 64px -> 2 tiles, 80px -> 2.5 tiles
+      lifeSway: 0.35,                  // big plants sway less than grass
+      baseAngle: 0,
+      offUX: fp.ux - 0.5,
+      offUY: fp.uy - 0.5,
+      sortYOff: fp.uy + fp.sizeTiles * 0.30,  // sort by sprite base, not centre
+      ambientPeriod: 6000 + rand2(wx, wy, 9710) * 9000,
+      ambientPhase: rand2(wx, wy, 9711) * 9000,
+      startDelay: rand2(wx, wy, 9712) * 300,
+      loopCount: 4,
+      restFrame: Math.floor(rand2(wx, wy, 9713) * FRAME_COUNT)
+    });
+  }
+
   // Density driven by biome + tile fertility/vegetation
   var vegDensity = tile.layers && tile.layers[6] ? tile.layers[6].vegetationDensity : 0.5;
   var fertility = tile.layers && tile.layers[6] ? tile.layers[6].fertility : 0.5;
-  if (vegDensity < 0.08 && fertility < 0.10) return { desc: null, cacheable: cacheable };
+  var bladeCountOverride = -1;
+  if (vegDensity < 0.08 && fertility < 0.10) {
+    if (!f4Blades.length) return { desc: null, cacheable: cacheable };
+    bladeCountOverride = 0;
+  }
 
   var biome = tile.biome;
   var baseDensity = 4;
@@ -614,9 +643,12 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
   else if (biome === 'desert') { baseDensity = 1; tileChance = 0.35; }
   else if (biome === 'beach') { baseDensity = 1; tileChance = 0.175; }
 
-  if (tileChance < 1.0 && rand2(wx, wy, 6999) > tileChance) return { desc: null, cacheable: cacheable };
+  if (tileChance < 1.0 && rand2(wx, wy, 6999) > tileChance) {
+    if (!f4Blades.length) return { desc: null, cacheable: cacheable };
+    bladeCountOverride = 0;
+  }
 
-  var bladeCount = baseDensity + Math.floor(fertility * 3);
+  var bladeCount = bladeCountOverride === 0 ? 0 : baseDensity + Math.floor(fertility * 3);
   var blades = [];
 
   for (var bi = 0; bi < bladeCount; bi++) {
@@ -731,6 +763,8 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
       offUY: (rand2(wx, wy, 7303) - 0.5) * 0.6
     };
   }
+
+  for (var fbi = 0; fbi < f4Blades.length; fbi++) blades.push(f4Blades[fbi]);
 
   if (blades.length === 0 && !extra) return { desc: null, cacheable: cacheable };
   return { desc: { blades: blades, extra: extra }, cacheable: cacheable };
