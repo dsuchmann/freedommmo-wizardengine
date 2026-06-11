@@ -33,6 +33,7 @@ test('serializeEntity sends only render-relevant fields', () => {
 test('message builders stamp type and tick', () => {
   assert.equal(snapshotMsg(5, 1, [], []).type, 'snapshot');
   assert.equal(tickDeltaMsg(5, [], [], { R: 0 }).type, 'tick-delta');
+  assert.deepEqual(tickDeltaMsg(5, [], [], { R: 0 }, [{ id: 1 }]).deltas, [{ id: 1 }]);  // live scars ride tick-delta
   assert.equal(eventsMsg(5, []).type, 'events');
   assert.deepEqual(timeMsg(86400), { type: 'time', tick: 86400, day: 1 });
 });

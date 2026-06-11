@@ -1319,6 +1319,7 @@ Append entries here when implementation legitimately diverges from the plan. For
 3. **Admin ff days clamped to [1, 365]** (Task 5, commit 0ce0acc8c): untrusted client input must not fast-forward the sim arbitrarily far; flagged by code review, clamped in `parseClientMsg`.
 4. **Tree `embodiedDecayDays` 21 → 7** (Task 8): a mature tree at 30 sim-days holds E≈1.8M tu; halflife decay time is `halflife × log2(E/0.5)`, so 21d gave ~458 days to gone — violating the "stump heals over weeks" intent and probe 6's 360-day window. Constant tuned (mechanism untouched); 7d gives ~150 days.
 5. **Probe 6 conservation tolerance is relative** (Task 8): the plan's absolute `< 1e-3` cannot hold over 390 sim-days where flows reach ~1.9e9 tu (float accumulation alone is ~1e-2). Probe 6 now uses probe 1's canonical form: `|Δstocks − Δflows| / captured < 1e-9` (measured rel err ≈ 4e-12).
+6. **tick-delta carries `deltas`** (Task 9, found by live smoke): the plan's client only received scars in the snapshot, so a live chop never showed its scar until reconnect. `tickDeltaMsg` gained a fifth param `deltas = []`; the server sends `kernel.deltas.list` each frame (consistent with the sanctioned coarse-frame philosophy). Client also keys corpse color by `type` — `serializeEntity` puts the dead thing's species in `species`, which otherwise wins the color lookup.
 
 ## Deliberately out of scope (per spec §6.4 and roadmap)
 

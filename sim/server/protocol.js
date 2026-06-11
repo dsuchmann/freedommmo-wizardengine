@@ -43,7 +43,7 @@ export function serializeEntity(node, tick) {
 
 export const snapshotMsg = (tick, playerId, entities, deltas) =>
   ({ type: 'snapshot', tick, playerId, entities, deltas });
-export const tickDeltaMsg = (tick, upserts, removed, player) =>
-  ({ type: 'tick-delta', tick, upserts, removed, player });
+export const tickDeltaMsg = (tick, upserts, removed, player, deltas = []) =>
+  ({ type: 'tick-delta', tick, upserts, removed, player, deltas });
 export const eventsMsg = (tick, events) => ({ type: 'events', tick, events });
 export const timeMsg = tick => ({ type: 'time', tick, day: Math.floor(tick / DAY) });

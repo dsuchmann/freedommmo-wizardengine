@@ -116,7 +116,7 @@ export class SimServer {
       const removed = [...s.knownIds].filter(id => !curIds.has(id));
       s.knownIds = curIds;
       const player = this.kernel.materialized(s.playerId);
-      s.ws.send(JSON.stringify(tickDeltaMsg(this.kernel.tick, entities, removed, { R: player?.R ?? 0 })));
+      s.ws.send(JSON.stringify(tickDeltaMsg(this.kernel.tick, entities, removed, { R: player?.R ?? 0 }, this.kernel.deltas.list)));
       if (fresh.length) s.ws.send(JSON.stringify(eventsMsg(this.kernel.tick, fresh)));
       s.ws.send(JSON.stringify(timeMsg(this.kernel.tick)));
     }
