@@ -5,6 +5,9 @@ import { openDb } from '../store/db.js';
 import { Scheduler } from '../kernel/scheduler.js';
 import { Kernel } from '../kernel/kernel.js';
 import { DAY } from '../time/metabolism.js';
+import { checkpoint, loadKernel } from '../store/checkpoint.js';
+import { spawnMeadow } from '../world/spawn.js';
+import { canonicalDump } from '../store/db.js';
 
 test('scheduler heap round-trips through SQLite preserving array order', () => {
   const db = openDb(':memory:');
@@ -31,4 +34,34 @@ test('node ver and flux demand survive flush', () => {
   const row = db.prepare('SELECT ver, attrs FROM nodes WHERE id=?').get(live.id);
   assert.equal(row.ver, live.ver);
   assert.equal(JSON.parse(row.attrs).demand, live.attrs.demand);
+});
+
+test('checkpoint at day 30, load, run to day 60 === straight run to day 60', () => {
+  const bounds = { x0: 0, y0: 0, w: 12, h: 12 };
+  const mk = () => { const k = new Kernel({ seed: 99, bounds }); spawnMeadow(k, bounds); return k; };
+
+  const straight = mk();
+  straight.runTo(60 * DAY);
+
+  const split = mk();
+  split.runTo(30 * DAY);
+  const db = openDb(':memory:');
+  checkpoint(split, db);
+  const resumed = loadKernel(db);
+  assert.equal(resumed.tick, 30 * DAY);
+  resumed.runTo(60 * DAY);
+
+  const dbA = openDb(':memory:'); checkpoint(straight, dbA);
+  const dbB = openDb(':memory:'); checkpoint(resumed, dbB);
+  assert.equal(canonicalDump(dbB), canonicalDump(dbA));   // bit-identical recovery (spec §5.1)
+});
+
+test('checkpoint preserves conservation totals across load', () => {
+  const k = new Kernel({ seed: 5, bounds: { x0: 0, y0: 0, w: 8, h: 8 } });
+  spawnMeadow(k, { x0: 0, y0: 0, w: 8, h: 8 });
+  k.runTo(10 * DAY);
+  const db = openDb(':memory:');
+  checkpoint(k, db);
+  const k2 = loadKernel(db);
+  assert.deepEqual(k2.ledger.totals, k.ledger.totals);
 });
