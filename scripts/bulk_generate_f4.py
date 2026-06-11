@@ -183,7 +183,8 @@ def valid_png(data: bytes | None) -> bool:
         opaque = sum(hist[16:])  # pixels with alpha >= 16
         total = im.width * im.height
         # reject blank (almost nothing) and full-bleed (no transparency at all)
-        return opaque > total * 0.02 and opaque < total * 0.98
+        # floor 0.3% (~12px at 64x64): tiny seedling states are legitimately sparse
+        return opaque > total * 0.003 and opaque < total * 0.98
     except ImportError:
         return True  # PIL unavailable: magic check only
     except Exception:
