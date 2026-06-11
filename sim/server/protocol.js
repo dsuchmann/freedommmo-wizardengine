@@ -24,7 +24,8 @@ export function parseClientMsg(raw) {
       return { type: 'query', id: m.id };
     case 'admin':
       if (!ADMIN_OPS.has(m.op)) return null;
-      return { type: 'admin', op: m.op, days: Number.isFinite(m.days) ? m.days : 1 };
+      // clamp ff range: untrusted input must not fast-forward the sim into heat death
+      return { type: 'admin', op: m.op, days: Number.isFinite(m.days) ? Math.min(Math.max(m.days, 1), 365) : 1 };
     default:
       return null;
   }
