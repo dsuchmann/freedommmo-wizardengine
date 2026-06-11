@@ -83,6 +83,8 @@ One substrate for everything. **Nodes** are anything that exists (person, tree, 
 id, type, born_tick, pos?        identity & place
 created_by_event?                provenance: null = baseline-from-seed,
                                  else the ledger event that caused it (§5.4)
+owner?                           scope: null = ground truth, else the entity
+                                 whose subjective layer this belongs to (§2.5)
 R, r, last_tick                  the time annotation: reserve, net rate,
                                  last materialization tick (lazy-flow core)
 attrs                            typed bag per node-type (JSON column)
@@ -94,7 +96,7 @@ The time annotation on every node is the driver/kernel coupling made literal. No
 ### 2.2 Hyperedge shape
 
 ```
-id, type, members[(node_id, role)], weight, born_tick, attrs
+id, type, members[(node_id, role)], weight, born_tick, owner?, attrs
 ```
 
 Bond weights feed group capture; roles let one edge express structure ("family of 5, two parents").
@@ -110,7 +112,19 @@ Bond weights feed group capture; roles let one edge express structure ("family o
 - type scans; semantic search over embeddings
 - **`materialize(node)`** — the only way to read R; lazily advances it to the current tick. No system touches stored R directly; the metabolism math lives in one place.
 
-### 2.5 Causal ledger
+### 2.5 Subjective layers — minds get their own corner of the hypergraph
+
+The store distinguishes **ground truth** from **belief**. Any node or edge can be *scoped to an owner*: a belief-scoped edge ("X believes Y loves Z") references its ground-truth counterpart (if one exists) but may diverge — wrong, stale, secret, or about things that never happened. An entity's world-model is exactly its owned subgraph: its perceived relationships, its knowledge, its theories. Deception, rumor, dramatic irony, and the privacy-of-minds principle (information moves only through conversation and observation) all rest on this scoping. Ground truth has `owner = null`; queries declare which scope they read. Pass 1 ships the scoping mechanism; Mind (S4) and Lore (S6) populate it.
+
+### 2.6 Plans, predictions, and the learning loop (Agency's landing pad)
+
+Three shapes the kernel must support so Agency (S4) and Goals & Quests (S6) bolt on without rework:
+
+- **Goal nodes** — long-lived intention nodes, owned by an entity or *shared* (a hyperedge joining multiple entities to a joint goal — the quest shape: "kill the bandit in two days" driving both parties' behavior).
+- **Plan steps as scheduled events** — an entity's plan is a chain of future events in the scheduler ("reconsider the harvest at tick N"); re-planning is re-deriving its own queue entries. The three horizons map to kernel machinery directly: in-moment reaction = bubble sampler, short-term plan = scheduled events, long-term goal = goal nodes evaluated at reconsideration events.
+- **Prediction records** — when an entity acts toward a goal, its *expected outcome* is recorded (belief-scoped); when the ledger delivers the *actual outcome*, the divergence is queryable. This is the mechanized learning loop (the old design's `learning_gained`, kept): entities iterate their causal model of the world from their own history.
+
+### 2.7 Causal ledger
 
 Append-only `events` table: `tick, actor, targets[], type, magnitude, cause_event_id?`. The `cause` self-reference is the ripple chain. Full ripple semantics (impact matrix, decision records with learning) deepen in the S6 Causal Ledger pass; Pass 1 ships the table and write path.
 
