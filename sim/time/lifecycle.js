@@ -18,6 +18,9 @@ export function registerLifecycle(kernel) {
     }
     const jit = 1 + (rand(kernel.seed, node.id, 101) - 0.5) * 2 * sp.seed.jitter;
     kernel.scheduler.schedule(tick + sp.seed.every * jit, node.id, 'seed', -1);
+    if (sp.graze) {
+      kernel.scheduler.schedule(tick + sp.graze.every, node.id, 'graze', -1);
+    }
   };
 
   kernel.on('stage', (k, node, ev) => {
@@ -76,6 +79,38 @@ export function registerLifecycle(kernel) {
     }
     const jit = 1 + (rand(k.seed, node.id, 102 + ev.tick % 7) - 0.5) * 2 * sp.seed.jitter;
     k.scheduler.schedule(ev.tick + sp.seed.every * jit, node.id, 'seed', -1);
+  });
+
+  kernel.on('graze', (k, node, ev) => {
+    const sp = SPECIES[node.attrs.species];
+    k.closeSegment(node, ev.tick);
+    // deterministic target: nearest living flora within radius, ties by lowest id
+    const prey = k.graph.nodesNear(node.x, node.y, sp.graze.radius)
+      .filter(n => n.R != null && SPECIES[n.attrs.species] && !SPECIES[n.attrs.species].graze && n.id !== node.id)
+      .sort((a, b) => {
+        const da = (a.x - node.x) ** 2 + (a.y - node.y) ** 2;
+        const db = (b.x - node.x) ** 2 + (b.y - node.y) ** 2;
+        return da - db || a.id - b.id;
+      })[0];
+    if (prey) {
+      k.closeSegment(prey, ev.tick);
+      const bite = Math.min(sp.graze.bite, prey.attrs.body + Math.max(prey.R, 0));
+      const fromBody = Math.min(bite, prey.attrs.body);
+      prey.attrs.body -= fromBody;
+      prey.R -= (bite - fromBody);
+      const gained = transfer(bite, 'harvest', k.ledger);
+      node.R += gained;
+      const evId = k.ledger.emit({
+        tick: ev.tick, type: 'graze', actor: node.id, targets: [prey.id], magnitude: bite,
+      });
+      if (prey.attrs.body + Math.max(prey.R, 0) <= 1e-9) {
+        die(k, prey, ev.tick, evId);
+      } else {
+        k.reRateTileOf(prey.id, ev.tick);
+      }
+      k.reRateTileOf(node.id, ev.tick);
+    }
+    k.scheduler.schedule(ev.tick + sp.graze.every, node.id, 'graze', -1);
   });
 
   kernel.on('decay_gone', (k, node, ev) => {
