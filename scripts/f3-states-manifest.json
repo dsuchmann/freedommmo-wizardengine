@@ -1,0 +1,2090 @@
+{
+  "states": [
+    {
+      "id": "59c1343a-d90b-4370-a449-71f4bcd20bcf",
+      "source": "610f6f51-ac78-40b0-b698-0d85e384801c",
+      "edit": "destroyed",
+      "biome": "forest",
+      "object": "twig_bundle"
+    },
+    {
+      "id": "d1127c94-1714-4ab9-88a3-78a0dfb2a56e",
+      "source": "610f6f51-ac78-40b0-b698-0d85e384801c",
+      "edit": "burned",
+      "biome": "forest",
+      "object": "twig_bundle"
+    },
+    {
+      "id": "81f17f09-567d-478c-8422-5bccdc8a3654",
+      "source": "610f6f51-ac78-40b0-b698-0d85e384801c",
+      "edit": "frozen",
+      "biome": "forest",
+      "object": "twig_bundle"
+    },
+    {
+      "id": "17eeb792-bfc8-4ea1-b9e3-7136aa40dd14",
+      "source": "610f6f51-ac78-40b0-b698-0d85e384801c",
+      "edit": "enchanted",
+      "biome": "forest",
+      "object": "twig_bundle"
+    },
+    {
+      "id": "ef36bb51-1cad-47e9-bcfc-a1205d384993",
+      "source": "610f6f51-ac78-40b0-b698-0d85e384801c",
+      "edit": "decayed",
+      "biome": "forest",
+      "object": "twig_bundle"
+    },
+    {
+      "id": "5fc31c15-269e-491c-961f-38f08a66c31c",
+      "source": "2925da69-574f-4608-9329-0b895100e844",
+      "edit": "destroyed",
+      "biome": "forest",
+      "object": "acorn_cluster"
+    },
+    {
+      "id": "03c7a4ff-d430-41a5-8b5b-7c083d5413d5",
+      "source": "2925da69-574f-4608-9329-0b895100e844",
+      "edit": "burned",
+      "biome": "forest",
+      "object": "acorn_cluster"
+    },
+    {
+      "id": "953e992e-aa93-4f88-8790-a6456532e093",
+      "source": "2925da69-574f-4608-9329-0b895100e844",
+      "edit": "frozen",
+      "biome": "forest",
+      "object": "acorn_cluster"
+    },
+    {
+      "id": "f72d7997-7015-4437-b631-722b320e0811",
+      "source": "2925da69-574f-4608-9329-0b895100e844",
+      "edit": "enchanted",
+      "biome": "forest",
+      "object": "acorn_cluster"
+    },
+    {
+      "id": "5e7c99d6-efb1-4b7f-8a46-4d4a6f51d982",
+      "source": "2925da69-574f-4608-9329-0b895100e844",
+      "edit": "decayed",
+      "biome": "forest",
+      "object": "acorn_cluster"
+    },
+    {
+      "id": "7d2be0df-db74-47a7-bb1b-9f686b2dea32",
+      "source": "94987c91-005f-4d1a-a0a5-de1f592dcdbb",
+      "edit": "destroyed",
+      "biome": "forest",
+      "object": "small_stone"
+    },
+    {
+      "id": "c85b4958-af6e-47fa-ae6d-b178b03e7008",
+      "source": "94987c91-005f-4d1a-a0a5-de1f592dcdbb",
+      "edit": "frozen",
+      "biome": "forest",
+      "object": "small_stone"
+    },
+    {
+      "id": "d21cfdb6-d71b-4940-8f86-505978180dfc",
+      "source": "94987c91-005f-4d1a-a0a5-de1f592dcdbb",
+      "edit": "enchanted",
+      "biome": "forest",
+      "object": "small_stone"
+    },
+    {
+      "id": "b8f2ed43-8e5f-47d8-95a3-1cf39e4246a1",
+      "source": "94987c91-005f-4d1a-a0a5-de1f592dcdbb",
+      "edit": "cracked",
+      "biome": "forest",
+      "object": "small_stone"
+    },
+    {
+      "id": "365f6fc7-b83f-4d3f-b181-2abeefa4171d",
+      "source": "b51e2260-e733-4260-b4d6-f4f777e02c6a",
+      "edit": "destroyed",
+      "biome": "forest",
+      "object": "bark_shard"
+    },
+    {
+      "id": "b6ad45d3-3b02-457c-9221-1420d22d9eab",
+      "source": "b51e2260-e733-4260-b4d6-f4f777e02c6a",
+      "edit": "burned",
+      "biome": "forest",
+      "object": "bark_shard"
+    },
+    {
+      "id": "81ece678-4b5f-4ed0-a931-cab00a0c65e6",
+      "source": "b51e2260-e733-4260-b4d6-f4f777e02c6a",
+      "edit": "frozen",
+      "biome": "forest",
+      "object": "bark_shard"
+    },
+    {
+      "id": "4bf105af-81a9-4777-a2c2-d5a2187dd967",
+      "source": "b51e2260-e733-4260-b4d6-f4f777e02c6a",
+      "edit": "enchanted",
+      "biome": "forest",
+      "object": "bark_shard"
+    },
+    {
+      "id": "0434d35d-f162-4947-a949-f189ef370b01",
+      "source": "3a11f0b9-1115-428c-9e37-782aa7ce2e4d",
+      "edit": "destroyed",
+      "biome": "dense_forest",
+      "object": "rotting_branch"
+    },
+    {
+      "id": "045fd73a-0f75-4cf6-a0ba-3032f8a71d49",
+      "source": "3a11f0b9-1115-428c-9e37-782aa7ce2e4d",
+      "edit": "burned",
+      "biome": "dense_forest",
+      "object": "rotting_branch"
+    },
+    {
+      "id": "0289fa1a-868d-4d86-b73e-b509369dc4f6",
+      "source": "3a11f0b9-1115-428c-9e37-782aa7ce2e4d",
+      "edit": "frozen",
+      "biome": "dense_forest",
+      "object": "rotting_branch"
+    },
+    {
+      "id": "1bed9fc5-1fe4-4d04-b0c2-6fe91bcb4519",
+      "source": "3a11f0b9-1115-428c-9e37-782aa7ce2e4d",
+      "edit": "enchanted",
+      "biome": "dense_forest",
+      "object": "rotting_branch"
+    },
+    {
+      "id": "7191add5-f332-4de7-b866-5f33abe73802",
+      "source": "3a11f0b9-1115-428c-9e37-782aa7ce2e4d",
+      "edit": "decayed",
+      "biome": "dense_forest",
+      "object": "rotting_branch"
+    },
+    {
+      "id": "d11906f6-70f2-4f20-9fe9-2f97a3f3dba1",
+      "source": "17b48729-f222-45f6-a286-ed0a620c4301",
+      "edit": "destroyed",
+      "biome": "dense_forest",
+      "object": "mushroom_cluster"
+    },
+    {
+      "id": "b1ecef73-41f8-47d5-86a8-138474557d4f",
+      "source": "17b48729-f222-45f6-a286-ed0a620c4301",
+      "edit": "burned",
+      "biome": "dense_forest",
+      "object": "mushroom_cluster"
+    },
+    {
+      "id": "ad2f7696-ff28-4b26-9fef-b898182e8304",
+      "source": "17b48729-f222-45f6-a286-ed0a620c4301",
+      "edit": "frozen",
+      "biome": "dense_forest",
+      "object": "mushroom_cluster"
+    },
+    {
+      "id": "9c688b40-1961-461a-a860-667647eb7e2f",
+      "source": "17b48729-f222-45f6-a286-ed0a620c4301",
+      "edit": "enchanted",
+      "biome": "dense_forest",
+      "object": "mushroom_cluster"
+    },
+    {
+      "id": "80ce7fef-c8de-454a-a85c-bfc860ce3e0d",
+      "source": "17b48729-f222-45f6-a286-ed0a620c4301",
+      "edit": "decayed",
+      "biome": "dense_forest",
+      "object": "mushroom_cluster"
+    },
+    {
+      "id": "88c89bb7-dc4f-46c2-a7ee-3cccc8b1ead6",
+      "source": "729438c4-d2c4-4d2d-9f55-7ca1c1f87b20",
+      "edit": "destroyed",
+      "biome": "dense_forest",
+      "object": "fallen_pinecone"
+    },
+    {
+      "id": "14d3138b-19c7-4c10-9a33-12bf100743f4",
+      "source": "729438c4-d2c4-4d2d-9f55-7ca1c1f87b20",
+      "edit": "burned",
+      "biome": "dense_forest",
+      "object": "fallen_pinecone"
+    },
+    {
+      "id": "38e90464-ad74-4b68-9a5e-0d8f36ce1af0",
+      "source": "729438c4-d2c4-4d2d-9f55-7ca1c1f87b20",
+      "edit": "frozen",
+      "biome": "dense_forest",
+      "object": "fallen_pinecone"
+    },
+    {
+      "id": "c1228c8b-9753-48e1-87ef-ea27e5c914c6",
+      "source": "729438c4-d2c4-4d2d-9f55-7ca1c1f87b20",
+      "edit": "enchanted",
+      "biome": "dense_forest",
+      "object": "fallen_pinecone"
+    },
+    {
+      "id": "568c9c4c-5278-4bef-9753-ee5d0f0d5d37",
+      "source": "729438c4-d2c4-4d2d-9f55-7ca1c1f87b20",
+      "edit": "decayed",
+      "biome": "dense_forest",
+      "object": "fallen_pinecone"
+    },
+    {
+      "id": "cbd56648-d6d5-4484-9452-c62dc4e4e39b",
+      "source": "7dbb323d-a3a0-4ae8-bd7f-73b75e514200",
+      "edit": "destroyed",
+      "biome": "dense_forest",
+      "object": "moss_stone"
+    },
+    {
+      "id": "e5001c87-71c9-47a4-b123-a6133d7921e5",
+      "source": "7dbb323d-a3a0-4ae8-bd7f-73b75e514200",
+      "edit": "frozen",
+      "biome": "dense_forest",
+      "object": "moss_stone"
+    },
+    {
+      "id": "1d4c4c18-d795-44f0-afe3-f619303035ef",
+      "source": "7dbb323d-a3a0-4ae8-bd7f-73b75e514200",
+      "edit": "enchanted",
+      "biome": "dense_forest",
+      "object": "moss_stone"
+    },
+    {
+      "id": "cdd458ed-6495-43bb-9ce7-743cd11f9fdf",
+      "source": "7dbb323d-a3a0-4ae8-bd7f-73b75e514200",
+      "edit": "cracked",
+      "biome": "dense_forest",
+      "object": "moss_stone"
+    },
+    {
+      "id": "bd6a8a7a-154f-4a76-9e1a-1ee5b1bbb3ac",
+      "source": "4bf7e801-f704-4ec3-8169-23151a45830e",
+      "edit": "destroyed",
+      "biome": "tropical_forest",
+      "object": "seed_pod"
+    },
+    {
+      "id": "4dbac1b5-b477-4d73-a742-6b674a219eb8",
+      "source": "4bf7e801-f704-4ec3-8169-23151a45830e",
+      "edit": "burned",
+      "biome": "tropical_forest",
+      "object": "seed_pod"
+    },
+    {
+      "id": "f0d2adb1-d0a9-4259-acb2-709b109ee7c8",
+      "source": "4bf7e801-f704-4ec3-8169-23151a45830e",
+      "edit": "frozen",
+      "biome": "tropical_forest",
+      "object": "seed_pod"
+    },
+    {
+      "id": "f041e138-93e3-4eca-96b0-9348c6927f7e",
+      "source": "4bf7e801-f704-4ec3-8169-23151a45830e",
+      "edit": "enchanted",
+      "biome": "tropical_forest",
+      "object": "seed_pod"
+    },
+    {
+      "id": "2e84b45d-0906-4386-80c2-793d253af38e",
+      "source": "4bf7e801-f704-4ec3-8169-23151a45830e",
+      "edit": "decayed",
+      "biome": "tropical_forest",
+      "object": "seed_pod"
+    },
+    {
+      "id": "a46e211a-31b9-461c-a23e-4020b644ef93",
+      "source": "51ad7987-0c4d-44c6-a664-5206ee209b92",
+      "edit": "destroyed",
+      "biome": "tropical_forest",
+      "object": "beetle_shell"
+    },
+    {
+      "id": "42cb507a-96d0-49a4-bee5-0e964b732ec4",
+      "source": "51ad7987-0c4d-44c6-a664-5206ee209b92",
+      "edit": "burned",
+      "biome": "tropical_forest",
+      "object": "beetle_shell"
+    },
+    {
+      "id": "2e086264-85ab-4b64-98f6-f12a6f6f778c",
+      "source": "51ad7987-0c4d-44c6-a664-5206ee209b92",
+      "edit": "frozen",
+      "biome": "tropical_forest",
+      "object": "beetle_shell"
+    },
+    {
+      "id": "72125ccd-b5b5-4c1b-95fd-8c8406bce9d2",
+      "source": "51ad7987-0c4d-44c6-a664-5206ee209b92",
+      "edit": "enchanted",
+      "biome": "tropical_forest",
+      "object": "beetle_shell"
+    },
+    {
+      "id": "0be9d16e-a732-4734-a44e-7cda3127db74",
+      "source": "03b1df74-5810-4bce-8971-2e58b73febe8",
+      "edit": "destroyed",
+      "biome": "taiga",
+      "object": "pine_cone"
+    },
+    {
+      "id": "f7c4f581-d9c4-4eb7-9fe1-7dbfee3527ea",
+      "source": "03b1df74-5810-4bce-8971-2e58b73febe8",
+      "edit": "burned",
+      "biome": "taiga",
+      "object": "pine_cone"
+    },
+    {
+      "id": "429c96da-7825-4ec2-903e-f55e496971dd",
+      "source": "03b1df74-5810-4bce-8971-2e58b73febe8",
+      "edit": "frozen",
+      "biome": "taiga",
+      "object": "pine_cone"
+    },
+    {
+      "id": "feec63ad-a103-4070-9e0e-b2eea3a0921e",
+      "source": "03b1df74-5810-4bce-8971-2e58b73febe8",
+      "edit": "enchanted",
+      "biome": "taiga",
+      "object": "pine_cone"
+    },
+    {
+      "id": "f18bba2e-d0ce-4bfd-b354-9f028d566ccd",
+      "source": "03b1df74-5810-4bce-8971-2e58b73febe8",
+      "edit": "decayed",
+      "biome": "taiga",
+      "object": "pine_cone"
+    },
+    {
+      "id": "ffc2abe3-b89e-4034-85e6-53733dea407f",
+      "source": "0656a37c-4901-466b-94af-9969c74b37e3",
+      "edit": "destroyed",
+      "biome": "taiga",
+      "object": "frozen_twig"
+    },
+    {
+      "id": "e39a16d3-d444-4ca6-9575-99246ed06162",
+      "source": "0656a37c-4901-466b-94af-9969c74b37e3",
+      "edit": "burned",
+      "biome": "taiga",
+      "object": "frozen_twig"
+    },
+    {
+      "id": "3ae83ba2-68b7-408b-97a1-e43167194868",
+      "source": "0656a37c-4901-466b-94af-9969c74b37e3",
+      "edit": "frozen",
+      "biome": "taiga",
+      "object": "frozen_twig"
+    },
+    {
+      "id": "472e2649-f7d0-467c-8210-a42763619906",
+      "source": "0656a37c-4901-466b-94af-9969c74b37e3",
+      "edit": "enchanted",
+      "biome": "taiga",
+      "object": "frozen_twig"
+    },
+    {
+      "id": "80e141db-e551-4876-840f-28f7c01a0697",
+      "source": "0656a37c-4901-466b-94af-9969c74b37e3",
+      "edit": "decayed",
+      "biome": "taiga",
+      "object": "frozen_twig"
+    },
+    {
+      "id": "8713b551-c844-40cd-83db-591f25a0f353",
+      "source": "06050666-8524-41b4-8830-58e700339467",
+      "edit": "destroyed",
+      "biome": "taiga",
+      "object": "resin_drop"
+    },
+    {
+      "id": "b744d85a-0506-42a3-9238-ac6fcb042930",
+      "source": "06050666-8524-41b4-8830-58e700339467",
+      "edit": "burned",
+      "biome": "taiga",
+      "object": "resin_drop"
+    },
+    {
+      "id": "f4cfc7a2-08e2-4bb0-88db-1dd485dce026",
+      "source": "06050666-8524-41b4-8830-58e700339467",
+      "edit": "frozen",
+      "biome": "taiga",
+      "object": "resin_drop"
+    },
+    {
+      "id": "adef6431-5af3-4e2c-bdcb-c3d03ae79524",
+      "source": "06050666-8524-41b4-8830-58e700339467",
+      "edit": "enchanted",
+      "biome": "taiga",
+      "object": "resin_drop"
+    },
+    {
+      "id": "6b5fc17b-9b4f-4b59-8302-1ce8221650e7",
+      "source": "06050666-8524-41b4-8830-58e700339467",
+      "edit": "decayed",
+      "biome": "taiga",
+      "object": "resin_drop"
+    },
+    {
+      "id": "caf662b1-b4f9-4e18-91f5-2c4ce8392d7c",
+      "source": "0515b9a0-b03d-4867-8c4b-20d2059c7f33",
+      "edit": "destroyed",
+      "biome": "taiga",
+      "object": "ice_pebble"
+    },
+    {
+      "id": "7096b7a0-ea6b-47cd-8f8e-6646568478fc",
+      "source": "0515b9a0-b03d-4867-8c4b-20d2059c7f33",
+      "edit": "frozen",
+      "biome": "taiga",
+      "object": "ice_pebble"
+    },
+    {
+      "id": "54ead9a2-d861-4426-bf7b-139b554bbd4e",
+      "source": "0515b9a0-b03d-4867-8c4b-20d2059c7f33",
+      "edit": "enchanted",
+      "biome": "taiga",
+      "object": "ice_pebble"
+    },
+    {
+      "id": "0437c30a-92fc-466b-8811-dafe2982b41e",
+      "source": "0515b9a0-b03d-4867-8c4b-20d2059c7f33",
+      "edit": "cracked",
+      "biome": "taiga",
+      "object": "ice_pebble"
+    },
+    {
+      "id": "51b9cbfd-2445-4cb7-9588-fa4bed87321f",
+      "source": "084590f1-225f-4711-a44d-41bf833b52b4",
+      "edit": "destroyed",
+      "biome": "grassland",
+      "object": "field_stone"
+    },
+    {
+      "id": "c022e59d-b255-40c6-ab5a-0b407c1c7c3f",
+      "source": "084590f1-225f-4711-a44d-41bf833b52b4",
+      "edit": "frozen",
+      "biome": "grassland",
+      "object": "field_stone"
+    },
+    {
+      "id": "790eb154-ea00-41df-ad22-978766b65b88",
+      "source": "084590f1-225f-4711-a44d-41bf833b52b4",
+      "edit": "enchanted",
+      "biome": "grassland",
+      "object": "field_stone"
+    },
+    {
+      "id": "4b56e44c-b51c-4634-aedc-fc0194e07d96",
+      "source": "084590f1-225f-4711-a44d-41bf833b52b4",
+      "edit": "cracked",
+      "biome": "grassland",
+      "object": "field_stone"
+    },
+    {
+      "id": "9480bdce-39de-42a5-b766-9face84a94c2",
+      "source": "02c50f03-50f2-421d-ac2f-79a1f8095661",
+      "edit": "destroyed",
+      "biome": "grassland",
+      "object": "dried_flower"
+    },
+    {
+      "id": "bf278572-5df4-4e61-97dd-085060087fba",
+      "source": "02c50f03-50f2-421d-ac2f-79a1f8095661",
+      "edit": "burned",
+      "biome": "grassland",
+      "object": "dried_flower"
+    },
+    {
+      "id": "5bc24451-c7ce-4cf8-9239-027a80616cf0",
+      "source": "02c50f03-50f2-421d-ac2f-79a1f8095661",
+      "edit": "frozen",
+      "biome": "grassland",
+      "object": "dried_flower"
+    },
+    {
+      "id": "b39d1195-cb02-4ca0-b226-2c030a54672d",
+      "source": "02c50f03-50f2-421d-ac2f-79a1f8095661",
+      "edit": "enchanted",
+      "biome": "grassland",
+      "object": "dried_flower"
+    },
+    {
+      "id": "c485931d-7126-4050-8fd4-f586449cab2e",
+      "source": "02c50f03-50f2-421d-ac2f-79a1f8095661",
+      "edit": "decayed",
+      "biome": "grassland",
+      "object": "dried_flower"
+    },
+    {
+      "id": "5017ac30-c808-421d-94b0-6ebb6408eebb",
+      "source": "03d93d8a-a1ac-4776-956c-0b63499e30fd",
+      "edit": "destroyed",
+      "biome": "grassland",
+      "object": "seed_head"
+    },
+    {
+      "id": "160d2031-6ee4-4efe-92e2-c86f7735c0e6",
+      "source": "03d93d8a-a1ac-4776-956c-0b63499e30fd",
+      "edit": "burned",
+      "biome": "grassland",
+      "object": "seed_head"
+    },
+    {
+      "id": "aa717e19-452d-4afa-be92-a936bc072e46",
+      "source": "03d93d8a-a1ac-4776-956c-0b63499e30fd",
+      "edit": "frozen",
+      "biome": "grassland",
+      "object": "seed_head"
+    },
+    {
+      "id": "e495c4a9-06a1-4b71-9d8a-1578af6b90e5",
+      "source": "03d93d8a-a1ac-4776-956c-0b63499e30fd",
+      "edit": "enchanted",
+      "biome": "grassland",
+      "object": "seed_head"
+    },
+    {
+      "id": "4915237e-3d7b-478c-9f2d-889975f23bdc",
+      "source": "03d93d8a-a1ac-4776-956c-0b63499e30fd",
+      "edit": "decayed",
+      "biome": "grassland",
+      "object": "seed_head"
+    },
+    {
+      "id": "62e25808-e244-4efe-bb96-923bbf36abd5",
+      "source": "038cf6ae-8b53-4539-8296-beb05159c7f5",
+      "edit": "destroyed",
+      "biome": "grassland",
+      "object": "snail_shell"
+    },
+    {
+      "id": "2002f141-9dae-4951-8189-5aabf2425faf",
+      "source": "038cf6ae-8b53-4539-8296-beb05159c7f5",
+      "edit": "burned",
+      "biome": "grassland",
+      "object": "snail_shell"
+    },
+    {
+      "id": "133d6e34-1678-43bd-a321-5a90dbd5629f",
+      "source": "038cf6ae-8b53-4539-8296-beb05159c7f5",
+      "edit": "frozen",
+      "biome": "grassland",
+      "object": "snail_shell"
+    },
+    {
+      "id": "fe150a5f-9ea9-44fb-a91a-e386676644aa",
+      "source": "038cf6ae-8b53-4539-8296-beb05159c7f5",
+      "edit": "enchanted",
+      "biome": "grassland",
+      "object": "snail_shell"
+    },
+    {
+      "id": "69ffa51b-f6ab-4612-b642-26c8418f3aaa",
+      "source": "038cf6ae-8b53-4539-8296-beb05159c7f5",
+      "edit": "cracked",
+      "biome": "grassland",
+      "object": "snail_shell"
+    },
+    {
+      "id": "6c995bd7-a4cb-44a2-b32b-3cc1f4021746",
+      "source": "16ace506-b14d-41c0-ba2f-b6d85c43d2e6",
+      "edit": "destroyed",
+      "biome": "savanna",
+      "object": "dry_bone"
+    },
+    {
+      "id": "910df047-ade8-47c8-ad53-dffe705b05e3",
+      "source": "16ace506-b14d-41c0-ba2f-b6d85c43d2e6",
+      "edit": "burned",
+      "biome": "savanna",
+      "object": "dry_bone"
+    },
+    {
+      "id": "c8369f83-cc95-4538-ad81-c0b1b9e94d53",
+      "source": "16ace506-b14d-41c0-ba2f-b6d85c43d2e6",
+      "edit": "frozen",
+      "biome": "savanna",
+      "object": "dry_bone"
+    },
+    {
+      "id": "14a3b741-4a73-4269-a264-e02fdcfe0665",
+      "source": "16ace506-b14d-41c0-ba2f-b6d85c43d2e6",
+      "edit": "enchanted",
+      "biome": "savanna",
+      "object": "dry_bone"
+    },
+    {
+      "id": "d3f7d8cd-10a4-4868-afc7-be5e0a2b7a55",
+      "source": "07e82398-8743-454f-975b-9646380a04bd",
+      "edit": "destroyed",
+      "biome": "savanna",
+      "object": "cracked_pod"
+    },
+    {
+      "id": "ed4e689e-ecb5-4eeb-bc98-acf82dbd2ad9",
+      "source": "16ace506-b14d-41c0-ba2f-b6d85c43d2e6",
+      "edit": "cracked",
+      "biome": "savanna",
+      "object": "dry_bone"
+    },
+    {
+      "id": "1b141db2-cb7c-4bce-b302-9e11997314bc",
+      "source": "07e82398-8743-454f-975b-9646380a04bd",
+      "edit": "burned",
+      "biome": "savanna",
+      "object": "cracked_pod"
+    },
+    {
+      "id": "8c97bd87-f02f-4470-bdd0-f157017ef6e7",
+      "source": "07e82398-8743-454f-975b-9646380a04bd",
+      "edit": "frozen",
+      "biome": "savanna",
+      "object": "cracked_pod"
+    },
+    {
+      "id": "0becd55d-50da-4f9f-ac52-54d8417ee492",
+      "source": "07e82398-8743-454f-975b-9646380a04bd",
+      "edit": "enchanted",
+      "biome": "savanna",
+      "object": "cracked_pod"
+    },
+    {
+      "id": "5e004973-6fc9-465b-8fd2-b52d93e41945",
+      "source": "07e82398-8743-454f-975b-9646380a04bd",
+      "edit": "decayed",
+      "biome": "savanna",
+      "object": "cracked_pod"
+    },
+    {
+      "id": "6f680b56-bee8-4b38-bf72-5e543c71a718",
+      "source": "1085efc2-2e22-4abf-bedf-bc6586ed6296",
+      "edit": "destroyed",
+      "biome": "savanna",
+      "object": "bleached_stick"
+    },
+    {
+      "id": "407a82c3-61f6-4f27-9db6-1431b2e9e7af",
+      "source": "1085efc2-2e22-4abf-bedf-bc6586ed6296",
+      "edit": "burned",
+      "biome": "savanna",
+      "object": "bleached_stick"
+    },
+    {
+      "id": "1c6edf0f-3f85-47e1-83dd-f1b6f239c1ed",
+      "source": "1085efc2-2e22-4abf-bedf-bc6586ed6296",
+      "edit": "frozen",
+      "biome": "savanna",
+      "object": "bleached_stick"
+    },
+    {
+      "id": "9e0e9498-6ea7-4e71-b9fe-fb39f74908f6",
+      "source": "1085efc2-2e22-4abf-bedf-bc6586ed6296",
+      "edit": "enchanted",
+      "biome": "savanna",
+      "object": "bleached_stick"
+    },
+    {
+      "id": "0f5951b8-657b-4e9b-bda9-b8c60d42947d",
+      "source": "03a6f4bd-28a6-4a42-9a62-ce115768e836",
+      "edit": "frozen",
+      "biome": "savanna",
+      "object": "termite_chip"
+    },
+    {
+      "id": "b008762a-395a-48cf-8483-a6af83ddb816",
+      "source": "1085efc2-2e22-4abf-bedf-bc6586ed6296",
+      "edit": "decayed",
+      "biome": "savanna",
+      "object": "bleached_stick"
+    },
+    {
+      "id": "3b1275d5-817c-46c7-bba5-730a8a40c867",
+      "source": "03a6f4bd-28a6-4a42-9a62-ce115768e836",
+      "edit": "destroyed",
+      "biome": "savanna",
+      "object": "termite_chip"
+    },
+    {
+      "id": "c3ce49d9-6179-4fb2-85ed-e7ca08a7fbce",
+      "source": "03a6f4bd-28a6-4a42-9a62-ce115768e836",
+      "edit": "burned",
+      "biome": "savanna",
+      "object": "termite_chip"
+    },
+    {
+      "id": "2d96969d-1c86-457a-b552-42f2033096e7",
+      "source": "03a6f4bd-28a6-4a42-9a62-ce115768e836",
+      "edit": "enchanted",
+      "biome": "savanna",
+      "object": "termite_chip"
+    },
+    {
+      "id": "d7f97f3a-05ca-4831-ada7-c5a4ccf6a890",
+      "source": "03a6f4bd-28a6-4a42-9a62-ce115768e836",
+      "edit": "decayed",
+      "biome": "savanna",
+      "object": "termite_chip"
+    },
+    {
+      "id": "3cc3b91d-341e-4be4-858d-706695e6825f",
+      "source": "06c48b19-80a8-4b24-b8a6-9a4e950cb8d4",
+      "edit": "destroyed",
+      "biome": "steppe",
+      "object": "wind_pebble"
+    },
+    {
+      "id": "1d8fd6ed-ca56-4919-911e-d598ed82bb67",
+      "source": "06c48b19-80a8-4b24-b8a6-9a4e950cb8d4",
+      "edit": "frozen",
+      "biome": "steppe",
+      "object": "wind_pebble"
+    },
+    {
+      "id": "37f03721-115b-4efe-bbba-ed557ff6a283",
+      "source": "06c48b19-80a8-4b24-b8a6-9a4e950cb8d4",
+      "edit": "enchanted",
+      "biome": "steppe",
+      "object": "wind_pebble"
+    },
+    {
+      "id": "93403054-f0b1-4353-a508-0c8a7916c441",
+      "source": "06c48b19-80a8-4b24-b8a6-9a4e950cb8d4",
+      "edit": "cracked",
+      "biome": "steppe",
+      "object": "wind_pebble"
+    },
+    {
+      "id": "0c85e180-36ca-49bc-84af-d4cbd3ce9e86",
+      "source": "015daaea-feb1-43b1-8bd9-44a0b94dab07",
+      "edit": "destroyed",
+      "biome": "steppe",
+      "object": "grass_ball"
+    },
+    {
+      "id": "1673525d-91b5-4cf0-9814-f5b2ef5d6bf5",
+      "source": "015daaea-feb1-43b1-8bd9-44a0b94dab07",
+      "edit": "burned",
+      "biome": "steppe",
+      "object": "grass_ball"
+    },
+    {
+      "id": "d1d16e81-8a0a-436e-ba15-6ceb947ae54c",
+      "source": "015daaea-feb1-43b1-8bd9-44a0b94dab07",
+      "edit": "frozen",
+      "biome": "steppe",
+      "object": "grass_ball"
+    },
+    {
+      "id": "1da38edf-f3aa-44cd-a1a0-651b75ed8ed8",
+      "source": "015daaea-feb1-43b1-8bd9-44a0b94dab07",
+      "edit": "enchanted",
+      "biome": "steppe",
+      "object": "grass_ball"
+    },
+    {
+      "id": "32d44755-c39b-47c6-a68d-2e18bf86d197",
+      "source": "015daaea-feb1-43b1-8bd9-44a0b94dab07",
+      "edit": "decayed",
+      "biome": "steppe",
+      "object": "grass_ball"
+    },
+    {
+      "id": "b0daca81-a390-4e3e-a077-838b7b9786a0",
+      "source": "0836bed1-c177-4eed-a889-73a9ffd21939",
+      "edit": "destroyed",
+      "biome": "steppe",
+      "object": "small_skull"
+    },
+    {
+      "id": "90593c11-ac39-4a20-acc2-5c9459b8217f",
+      "source": "0836bed1-c177-4eed-a889-73a9ffd21939",
+      "edit": "burned",
+      "biome": "steppe",
+      "object": "small_skull"
+    },
+    {
+      "id": "f2a8750b-9d90-4b0c-8077-4dd28cbab525",
+      "source": "0836bed1-c177-4eed-a889-73a9ffd21939",
+      "edit": "frozen",
+      "biome": "steppe",
+      "object": "small_skull"
+    },
+    {
+      "id": "6afcfdc2-9f84-42b9-9c65-5861c052b0bd",
+      "source": "0836bed1-c177-4eed-a889-73a9ffd21939",
+      "edit": "enchanted",
+      "biome": "steppe",
+      "object": "small_skull"
+    },
+    {
+      "id": "f1a4d104-5d7b-4ff4-8c4c-20de3561774b",
+      "source": "0836bed1-c177-4eed-a889-73a9ffd21939",
+      "edit": "cracked",
+      "biome": "steppe",
+      "object": "small_skull"
+    },
+    {
+      "id": "9a3ca16d-748e-41e9-9491-80fb15565c07",
+      "source": "02f88282-91f3-42f9-8589-e5586c65b773",
+      "edit": "destroyed",
+      "biome": "steppe",
+      "object": "dust_clod"
+    },
+    {
+      "id": "0ba11255-232c-440f-9423-75f003ce4dfb",
+      "source": "02f88282-91f3-42f9-8589-e5586c65b773",
+      "edit": "frozen",
+      "biome": "steppe",
+      "object": "dust_clod"
+    },
+    {
+      "id": "6f032170-584c-4332-8a6a-440faeefa3a8",
+      "source": "02f88282-91f3-42f9-8589-e5586c65b773",
+      "edit": "enchanted",
+      "biome": "steppe",
+      "object": "dust_clod"
+    },
+    {
+      "id": "97964e03-0459-4f55-a345-646cbf0bca85",
+      "source": "02f88282-91f3-42f9-8589-e5586c65b773",
+      "edit": "cracked",
+      "biome": "steppe",
+      "object": "dust_clod"
+    },
+    {
+      "id": "871c7b2d-6a58-4d30-bc72-850631aedfc1",
+      "source": "0697d200-45dd-499e-9612-45c089061f53",
+      "edit": "destroyed",
+      "biome": "desert",
+      "object": "bleached_bone"
+    },
+    {
+      "id": "9b6fb0fd-01b0-4a5a-a2fb-3b18adb46672",
+      "source": "0697d200-45dd-499e-9612-45c089061f53",
+      "edit": "burned",
+      "biome": "desert",
+      "object": "bleached_bone"
+    },
+    {
+      "id": "735d2b12-480e-4330-bc7f-d31f62b7aba4",
+      "source": "0697d200-45dd-499e-9612-45c089061f53",
+      "edit": "frozen",
+      "biome": "desert",
+      "object": "bleached_bone"
+    },
+    {
+      "id": "9fb9d231-ef5e-4351-af49-f34f92ed8ad6",
+      "source": "0697d200-45dd-499e-9612-45c089061f53",
+      "edit": "enchanted",
+      "biome": "desert",
+      "object": "bleached_bone"
+    },
+    {
+      "id": "54acd999-1390-43da-8d03-1581a465eb7d",
+      "source": "0697d200-45dd-499e-9612-45c089061f53",
+      "edit": "cracked",
+      "biome": "desert",
+      "object": "bleached_bone"
+    },
+    {
+      "id": "f5ced36d-5487-4ea5-8221-4c5a4b91be87",
+      "source": "09d236b2-ba01-47d6-bd00-8e68a2a5649f",
+      "edit": "destroyed",
+      "biome": "desert",
+      "object": "polished_stone"
+    },
+    {
+      "id": "d4a7460d-b0e1-46d5-b2ea-0d9db898725d",
+      "source": "09d236b2-ba01-47d6-bd00-8e68a2a5649f",
+      "edit": "frozen",
+      "biome": "desert",
+      "object": "polished_stone"
+    },
+    {
+      "id": "73f92895-bc70-4687-a6a3-2fa559ed7330",
+      "source": "09d236b2-ba01-47d6-bd00-8e68a2a5649f",
+      "edit": "enchanted",
+      "biome": "desert",
+      "object": "polished_stone"
+    },
+    {
+      "id": "f81b232f-080c-4a5b-8c47-8ebeb1ada649",
+      "source": "09d236b2-ba01-47d6-bd00-8e68a2a5649f",
+      "edit": "cracked",
+      "biome": "desert",
+      "object": "polished_stone"
+    },
+    {
+      "id": "e993fce8-092b-471f-b958-b1cea9b66dca",
+      "source": "0d5d0f69-9c5a-4a99-8ba4-6ce64ab0d1ca",
+      "edit": "destroyed",
+      "biome": "desert",
+      "object": "scorpion_shell"
+    },
+    {
+      "id": "43476c2d-715d-4abd-a08c-09424e573792",
+      "source": "0d5d0f69-9c5a-4a99-8ba4-6ce64ab0d1ca",
+      "edit": "burned",
+      "biome": "desert",
+      "object": "scorpion_shell"
+    },
+    {
+      "id": "dd20ba36-4d98-4457-80ee-30081021842e",
+      "source": "0d5d0f69-9c5a-4a99-8ba4-6ce64ab0d1ca",
+      "edit": "frozen",
+      "biome": "desert",
+      "object": "scorpion_shell"
+    },
+    {
+      "id": "35772f6f-1824-4c12-a361-f10869f0cb6c",
+      "source": "0d5d0f69-9c5a-4a99-8ba4-6ce64ab0d1ca",
+      "edit": "enchanted",
+      "biome": "desert",
+      "object": "scorpion_shell"
+    },
+    {
+      "id": "002d7b12-2bd3-41da-9118-ba6144f8c1aa",
+      "source": "0d5d0f69-9c5a-4a99-8ba4-6ce64ab0d1ca",
+      "edit": "cracked",
+      "biome": "desert",
+      "object": "scorpion_shell"
+    },
+    {
+      "id": "a72e020c-a3b8-4c16-b948-bae5abc9b250",
+      "source": "01f36807-b0a2-4cde-8bfe-7e2811b4371c",
+      "edit": "destroyed",
+      "biome": "desert",
+      "object": "dried_seed"
+    },
+    {
+      "id": "10adc5d9-f7e6-4e47-824e-af99776fe97f",
+      "source": "01f36807-b0a2-4cde-8bfe-7e2811b4371c",
+      "edit": "burned",
+      "biome": "desert",
+      "object": "dried_seed"
+    },
+    {
+      "id": "cc7a2843-c203-4b35-a061-6974e2dcf779",
+      "source": "01f36807-b0a2-4cde-8bfe-7e2811b4371c",
+      "edit": "frozen",
+      "biome": "desert",
+      "object": "dried_seed"
+    },
+    {
+      "id": "de7b3f65-10e5-44dc-af72-7d8c5ddba5eb",
+      "source": "01f36807-b0a2-4cde-8bfe-7e2811b4371c",
+      "edit": "enchanted",
+      "biome": "desert",
+      "object": "dried_seed"
+    },
+    {
+      "id": "dfa03b8d-16ae-45ab-bc5b-bca1a692b319",
+      "source": "01f36807-b0a2-4cde-8bfe-7e2811b4371c",
+      "edit": "decayed",
+      "biome": "desert",
+      "object": "dried_seed"
+    },
+    {
+      "id": "e2c26578-f87a-443b-96fb-2f5a02a7f850",
+      "source": "0d92657d-0259-4504-8609-10a4a581a89e",
+      "edit": "destroyed",
+      "biome": "beach",
+      "object": "seashell"
+    },
+    {
+      "id": "d48b358d-8ce0-4707-9c65-1f38119f49fb",
+      "source": "0d92657d-0259-4504-8609-10a4a581a89e",
+      "edit": "burned",
+      "biome": "beach",
+      "object": "seashell"
+    },
+    {
+      "id": "acaf948e-dfca-41d1-b22a-9baf377a20c5",
+      "source": "0d92657d-0259-4504-8609-10a4a581a89e",
+      "edit": "frozen",
+      "biome": "beach",
+      "object": "seashell"
+    },
+    {
+      "id": "5afaf54f-c279-4ff2-9bcf-ec38b5be2f66",
+      "source": "0d92657d-0259-4504-8609-10a4a581a89e",
+      "edit": "enchanted",
+      "biome": "beach",
+      "object": "seashell"
+    },
+    {
+      "id": "6205d767-fefb-4587-bbf3-2bce119705ed",
+      "source": "0d92657d-0259-4504-8609-10a4a581a89e",
+      "edit": "cracked",
+      "biome": "beach",
+      "object": "seashell"
+    },
+    {
+      "id": "0c0a24f7-ed33-41e1-adac-f30184c9d5d9",
+      "source": "0cd70a4f-070e-4cc1-a037-71ce3fd8a006",
+      "edit": "destroyed",
+      "biome": "beach",
+      "object": "sea_glass"
+    },
+    {
+      "id": "ec0890f6-4c2e-4558-8296-d3bb9d0433f7",
+      "source": "0cd70a4f-070e-4cc1-a037-71ce3fd8a006",
+      "edit": "frozen",
+      "biome": "beach",
+      "object": "sea_glass"
+    },
+    {
+      "id": "2ca09681-663e-4824-9e09-d542da476244",
+      "source": "0cd70a4f-070e-4cc1-a037-71ce3fd8a006",
+      "edit": "enchanted",
+      "biome": "beach",
+      "object": "sea_glass"
+    },
+    {
+      "id": "1e043e60-a897-4586-a98d-9a54b51a3b2c",
+      "source": "0cd70a4f-070e-4cc1-a037-71ce3fd8a006",
+      "edit": "cracked",
+      "biome": "beach",
+      "object": "sea_glass"
+    },
+    {
+      "id": "ac3d7d99-b27f-4fa8-b78f-715d873ad5e6",
+      "source": "07e4d11c-5556-4329-826b-873b0712a97c",
+      "edit": "destroyed",
+      "biome": "beach",
+      "object": "driftwood_chip"
+    },
+    {
+      "id": "25784fa0-fa69-4fdd-9575-5f02c4234a31",
+      "source": "07e4d11c-5556-4329-826b-873b0712a97c",
+      "edit": "burned",
+      "biome": "beach",
+      "object": "driftwood_chip"
+    },
+    {
+      "id": "ae7ab6aa-fb87-402b-904a-249468907c96",
+      "source": "07e4d11c-5556-4329-826b-873b0712a97c",
+      "edit": "frozen",
+      "biome": "beach",
+      "object": "driftwood_chip"
+    },
+    {
+      "id": "6e9685fe-7119-4860-8114-54b08796bded",
+      "source": "07e4d11c-5556-4329-826b-873b0712a97c",
+      "edit": "enchanted",
+      "biome": "beach",
+      "object": "driftwood_chip"
+    },
+    {
+      "id": "dfee8032-9b63-4db7-829a-d228fb8b2060",
+      "source": "07e4d11c-5556-4329-826b-873b0712a97c",
+      "edit": "decayed",
+      "biome": "beach",
+      "object": "driftwood_chip"
+    },
+    {
+      "id": "bedb463a-b817-428d-8c57-cdc900c0f06b",
+      "source": "07c2f532-1ded-44a5-aa8c-62991ef45f83",
+      "edit": "destroyed",
+      "biome": "beach",
+      "object": "coral_fragment"
+    },
+    {
+      "id": "c17e9d44-3d2f-4154-8eb1-5be269737b13",
+      "source": "07c2f532-1ded-44a5-aa8c-62991ef45f83",
+      "edit": "burned",
+      "biome": "beach",
+      "object": "coral_fragment"
+    },
+    {
+      "id": "df5002df-b9e4-40b9-af05-9feb7a7787f2",
+      "source": "07c2f532-1ded-44a5-aa8c-62991ef45f83",
+      "edit": "frozen",
+      "biome": "beach",
+      "object": "coral_fragment"
+    },
+    {
+      "id": "e60557b2-9944-439e-af2a-e1d538adf5ca",
+      "source": "07c2f532-1ded-44a5-aa8c-62991ef45f83",
+      "edit": "enchanted",
+      "biome": "beach",
+      "object": "coral_fragment"
+    },
+    {
+      "id": "1d5d904b-d531-4529-8b4f-67be8234bb12",
+      "source": "07c2f532-1ded-44a5-aa8c-62991ef45f83",
+      "edit": "cracked",
+      "biome": "beach",
+      "object": "coral_fragment"
+    },
+    {
+      "id": "d7fee09d-adbc-46dd-aded-614d47f2d290",
+      "source": "0515095e-fe4c-4e40-bd86-4a102ec698c8",
+      "edit": "destroyed",
+      "biome": "swamp",
+      "object": "rotting_stick"
+    },
+    {
+      "id": "b7e36e56-2833-4f1e-b072-c1f7b8e9b979",
+      "source": "0515095e-fe4c-4e40-bd86-4a102ec698c8",
+      "edit": "burned",
+      "biome": "swamp",
+      "object": "rotting_stick"
+    },
+    {
+      "id": "7a8f1230-61e5-4793-b2a7-2b25b3540552",
+      "source": "0515095e-fe4c-4e40-bd86-4a102ec698c8",
+      "edit": "frozen",
+      "biome": "swamp",
+      "object": "rotting_stick"
+    },
+    {
+      "id": "5cb43f7d-45fd-4017-b642-785a76baa4f2",
+      "source": "0515095e-fe4c-4e40-bd86-4a102ec698c8",
+      "edit": "enchanted",
+      "biome": "swamp",
+      "object": "rotting_stick"
+    },
+    {
+      "id": "edb86549-56dc-4b62-a1bc-4b717ea7c4b9",
+      "source": "0515095e-fe4c-4e40-bd86-4a102ec698c8",
+      "edit": "decayed",
+      "biome": "swamp",
+      "object": "rotting_stick"
+    },
+    {
+      "id": "072d08e5-c731-41dd-b102-45de3326ac3f",
+      "source": "00da1b6e-eb3a-4b14-8301-13cd829f932c",
+      "edit": "destroyed",
+      "biome": "swamp",
+      "object": "leech"
+    },
+    {
+      "id": "600129b4-7f6b-47b3-b377-9fdf0fef4bc4",
+      "source": "00da1b6e-eb3a-4b14-8301-13cd829f932c",
+      "edit": "burned",
+      "biome": "swamp",
+      "object": "leech"
+    },
+    {
+      "id": "ed6c2291-0053-49ba-af28-664465a7f7f4",
+      "source": "00da1b6e-eb3a-4b14-8301-13cd829f932c",
+      "edit": "frozen",
+      "biome": "swamp",
+      "object": "leech"
+    },
+    {
+      "id": "750c9fd1-8547-47e8-b2c0-4c6cbcd11b5f",
+      "source": "00da1b6e-eb3a-4b14-8301-13cd829f932c",
+      "edit": "enchanted",
+      "biome": "swamp",
+      "object": "leech"
+    },
+    {
+      "id": "c8bc8da5-c65b-4727-855a-ce9549fbd088",
+      "source": "00da1b6e-eb3a-4b14-8301-13cd829f932c",
+      "edit": "decayed",
+      "biome": "swamp",
+      "object": "leech"
+    },
+    {
+      "id": "c6ddc493-f4b1-4b82-a5c7-624ac2ac955e",
+      "source": "e235bf45-cb17-4e46-b0c0-ba7cf302f90b",
+      "edit": "destroyed",
+      "biome": "swamp",
+      "object": "bog_iron"
+    },
+    {
+      "id": "f0fa2dad-582d-4c46-8a2b-639d1e490545",
+      "source": "e235bf45-cb17-4e46-b0c0-ba7cf302f90b",
+      "edit": "frozen",
+      "biome": "swamp",
+      "object": "bog_iron"
+    },
+    {
+      "id": "f6ff92b5-43ea-4417-89ed-d73c55c8078f",
+      "source": "e235bf45-cb17-4e46-b0c0-ba7cf302f90b",
+      "edit": "enchanted",
+      "biome": "swamp",
+      "object": "bog_iron"
+    },
+    {
+      "id": "ba13fa7a-2a49-4c59-843e-328ec6f30f3f",
+      "source": "e235bf45-cb17-4e46-b0c0-ba7cf302f90b",
+      "edit": "cracked",
+      "biome": "swamp",
+      "object": "bog_iron"
+    },
+    {
+      "id": "aa4b7ffe-5a75-4b58-8bea-044bfb4967ba",
+      "source": "040c6384-35bb-469a-b32c-0c6fca0fd2c9",
+      "edit": "destroyed",
+      "biome": "hills",
+      "object": "limestone_chip"
+    },
+    {
+      "id": "4af51170-b56d-42b4-90c2-b70ba22cb414",
+      "source": "040c6384-35bb-469a-b32c-0c6fca0fd2c9",
+      "edit": "frozen",
+      "biome": "hills",
+      "object": "limestone_chip"
+    },
+    {
+      "id": "260cc2e6-1954-42a4-b87d-251c18ce8727",
+      "source": "040c6384-35bb-469a-b32c-0c6fca0fd2c9",
+      "edit": "enchanted",
+      "biome": "hills",
+      "object": "limestone_chip"
+    },
+    {
+      "id": "aa66cc4d-a25b-41a2-a8f8-548958cfd890",
+      "source": "040c6384-35bb-469a-b32c-0c6fca0fd2c9",
+      "edit": "cracked",
+      "biome": "hills",
+      "object": "limestone_chip"
+    },
+    {
+      "id": "225ca141-4559-4925-b41a-78538fb0b6f7",
+      "source": "067c9097-c04b-4a92-85c0-50551731fa88",
+      "edit": "destroyed",
+      "biome": "hills",
+      "object": "slate_fragment"
+    },
+    {
+      "id": "8aa12a45-a906-4906-b4ab-69385a1ebed6",
+      "source": "067c9097-c04b-4a92-85c0-50551731fa88",
+      "edit": "frozen",
+      "biome": "hills",
+      "object": "slate_fragment"
+    },
+    {
+      "id": "666d56dd-aa74-460a-a9dd-4900ed407adc",
+      "source": "067c9097-c04b-4a92-85c0-50551731fa88",
+      "edit": "enchanted",
+      "biome": "hills",
+      "object": "slate_fragment"
+    },
+    {
+      "id": "570b8a42-efc2-4261-bd43-b33a860574e3",
+      "source": "067c9097-c04b-4a92-85c0-50551731fa88",
+      "edit": "cracked",
+      "biome": "hills",
+      "object": "slate_fragment"
+    },
+    {
+      "id": "5570b776-a209-4881-a734-20b1fbe67524",
+      "source": "8d8e6c45-7bc0-4ebe-a133-ccf90261cde7",
+      "edit": "destroyed",
+      "biome": "hills",
+      "object": "quartz_pebble"
+    },
+    {
+      "id": "09098b2f-a70b-4366-aa06-b023fce693c9",
+      "source": "8d8e6c45-7bc0-4ebe-a133-ccf90261cde7",
+      "edit": "frozen",
+      "biome": "hills",
+      "object": "quartz_pebble"
+    },
+    {
+      "id": "4bea3413-9b5e-49f8-8c93-daffafdfc2f9",
+      "source": "8d8e6c45-7bc0-4ebe-a133-ccf90261cde7",
+      "edit": "enchanted",
+      "biome": "hills",
+      "object": "quartz_pebble"
+    },
+    {
+      "id": "169a2011-11a3-4f88-9dae-10755f3a0696",
+      "source": "8d8e6c45-7bc0-4ebe-a133-ccf90261cde7",
+      "edit": "cracked",
+      "biome": "hills",
+      "object": "quartz_pebble"
+    },
+    {
+      "id": "bd6e6554-ed78-405d-81bf-d207d3d76853",
+      "source": "6f8bfded-b295-4bd2-8722-bb91fc8a5da3",
+      "edit": "destroyed",
+      "biome": "hills",
+      "object": "iron_nugget"
+    },
+    {
+      "id": "b8d3d2df-f79d-4453-a43d-d7d7a9e1200a",
+      "source": "6f8bfded-b295-4bd2-8722-bb91fc8a5da3",
+      "edit": "frozen",
+      "biome": "hills",
+      "object": "iron_nugget"
+    },
+    {
+      "id": "2a82918c-3d43-4591-844a-1f08a143a766",
+      "source": "6f8bfded-b295-4bd2-8722-bb91fc8a5da3",
+      "edit": "enchanted",
+      "biome": "hills",
+      "object": "iron_nugget"
+    },
+    {
+      "id": "9ed65ea0-3f9e-4997-8a14-4ed9046d7061",
+      "source": "6f8bfded-b295-4bd2-8722-bb91fc8a5da3",
+      "edit": "cracked",
+      "biome": "hills",
+      "object": "iron_nugget"
+    },
+    {
+      "id": "34ec77e0-8a74-4bc2-9156-351f3b5198b8",
+      "source": "11f4d7de-57c5-496e-b087-69c50499be57",
+      "edit": "destroyed",
+      "biome": "mountains",
+      "object": "rock_shard"
+    },
+    {
+      "id": "84c2eda5-fcc6-4ff0-bedd-71be9bb5efca",
+      "source": "11f4d7de-57c5-496e-b087-69c50499be57",
+      "edit": "frozen",
+      "biome": "mountains",
+      "object": "rock_shard"
+    },
+    {
+      "id": "aca82445-41ec-4daa-9b10-687e4e932252",
+      "source": "11f4d7de-57c5-496e-b087-69c50499be57",
+      "edit": "enchanted",
+      "biome": "mountains",
+      "object": "rock_shard"
+    },
+    {
+      "id": "dae37f99-c7dc-496e-897f-5ee626879c26",
+      "source": "11f4d7de-57c5-496e-b087-69c50499be57",
+      "edit": "cracked",
+      "biome": "mountains",
+      "object": "rock_shard"
+    },
+    {
+      "id": "78e7ed81-0d29-434c-b8be-235f6fda8b23",
+      "source": "5cb04650-8428-4892-ac1f-b7b786a90169",
+      "edit": "destroyed",
+      "biome": "mountains",
+      "object": "ice_chunk"
+    },
+    {
+      "id": "6c100b59-b653-4676-864c-47aaac8f453c",
+      "source": "5cb04650-8428-4892-ac1f-b7b786a90169",
+      "edit": "frozen",
+      "biome": "mountains",
+      "object": "ice_chunk"
+    },
+    {
+      "id": "5c05d443-d805-4b57-9c4b-d1a77a011f41",
+      "source": "5cb04650-8428-4892-ac1f-b7b786a90169",
+      "edit": "enchanted",
+      "biome": "mountains",
+      "object": "ice_chunk"
+    },
+    {
+      "id": "eaef8f0d-5402-46d7-870b-f11469efe84b",
+      "source": "5cb04650-8428-4892-ac1f-b7b786a90169",
+      "edit": "cracked",
+      "biome": "mountains",
+      "object": "ice_chunk"
+    },
+    {
+      "id": "88f9e282-eb96-4a7c-99ea-5a213299f042",
+      "source": "4a79a2af-af9a-4acd-9129-3b8a5d509adf",
+      "edit": "destroyed",
+      "biome": "mountains",
+      "object": "crystal_fragment"
+    },
+    {
+      "id": "812f6bdb-a988-4d21-8e6f-a9cbf9a9aa80",
+      "source": "4a79a2af-af9a-4acd-9129-3b8a5d509adf",
+      "edit": "frozen",
+      "biome": "mountains",
+      "object": "crystal_fragment"
+    },
+    {
+      "id": "e3f27d83-23a4-45d9-96cb-f8b34fd5328e",
+      "source": "4a79a2af-af9a-4acd-9129-3b8a5d509adf",
+      "edit": "enchanted",
+      "biome": "mountains",
+      "object": "crystal_fragment"
+    },
+    {
+      "id": "a70990db-240f-46ba-869c-311aaa8ec686",
+      "source": "4a79a2af-af9a-4acd-9129-3b8a5d509adf",
+      "edit": "cracked",
+      "biome": "mountains",
+      "object": "crystal_fragment"
+    },
+    {
+      "id": "6fa75493-4fb7-4184-a24f-03fbc32ef502",
+      "source": "58ba9795-1e93-4725-90ed-0be7224145ce",
+      "edit": "destroyed",
+      "biome": "mountains",
+      "object": "ore_glint"
+    },
+    {
+      "id": "fce95fed-89bd-4b15-9ff5-0f46bff632e6",
+      "source": "58ba9795-1e93-4725-90ed-0be7224145ce",
+      "edit": "frozen",
+      "biome": "mountains",
+      "object": "ore_glint"
+    },
+    {
+      "id": "8322cb9c-446e-4ba5-a8a9-641bfacd43a9",
+      "source": "58ba9795-1e93-4725-90ed-0be7224145ce",
+      "edit": "enchanted",
+      "biome": "mountains",
+      "object": "ore_glint"
+    },
+    {
+      "id": "ed0ccee6-9bd7-450e-8408-afc0d580bd94",
+      "source": "58ba9795-1e93-4725-90ed-0be7224145ce",
+      "edit": "cracked",
+      "biome": "mountains",
+      "object": "ore_glint"
+    },
+    {
+      "id": "1d1f9158-97e1-46f3-a8f8-934e22764ce2",
+      "source": "0aeeed9e-449d-4595-846b-568acb663ca4",
+      "edit": "destroyed",
+      "biome": "volcanic",
+      "object": "obsidian_shard"
+    },
+    {
+      "id": "caf659ce-2a54-4db0-8ebf-cf1aed1ef211",
+      "source": "0aeeed9e-449d-4595-846b-568acb663ca4",
+      "edit": "frozen",
+      "biome": "volcanic",
+      "object": "obsidian_shard"
+    },
+    {
+      "id": "6e5d662f-7d0e-448a-920b-9967595c9242",
+      "source": "0aeeed9e-449d-4595-846b-568acb663ca4",
+      "edit": "enchanted",
+      "biome": "volcanic",
+      "object": "obsidian_shard"
+    },
+    {
+      "id": "80bb215f-5ec9-40ea-a618-23b10f2065e2",
+      "source": "0aeeed9e-449d-4595-846b-568acb663ca4",
+      "edit": "cracked",
+      "biome": "volcanic",
+      "object": "obsidian_shard"
+    },
+    {
+      "id": "ad2f1bab-b7b7-4fb3-b231-073cc3927176",
+      "source": "3469fd82-74e7-402b-835f-aad779b3f3c1",
+      "edit": "destroyed",
+      "biome": "volcanic",
+      "object": "sulfur_crystal"
+    },
+    {
+      "id": "6519dd2f-a15f-428c-9039-3edc0cc36717",
+      "source": "3469fd82-74e7-402b-835f-aad779b3f3c1",
+      "edit": "frozen",
+      "biome": "volcanic",
+      "object": "sulfur_crystal"
+    },
+    {
+      "id": "32aeb51b-4a7f-4c26-8b70-ef044fe10057",
+      "source": "3469fd82-74e7-402b-835f-aad779b3f3c1",
+      "edit": "enchanted",
+      "biome": "volcanic",
+      "object": "sulfur_crystal"
+    },
+    {
+      "id": "399834ee-9855-4e1b-8e48-063818ea75fa",
+      "source": "3469fd82-74e7-402b-835f-aad779b3f3c1",
+      "edit": "cracked",
+      "biome": "volcanic",
+      "object": "sulfur_crystal"
+    },
+    {
+      "id": "0b9889dc-7d74-4ce9-9608-97c2734ba5b2",
+      "source": "103e150d-e71b-416b-b50a-245a8821cb3f",
+      "edit": "destroyed",
+      "biome": "volcanic",
+      "object": "charred_bone"
+    },
+    {
+      "id": "55ad4574-9bca-4ba2-924a-182ea1a3fb8f",
+      "source": "103e150d-e71b-416b-b50a-245a8821cb3f",
+      "edit": "burned",
+      "biome": "volcanic",
+      "object": "charred_bone"
+    },
+    {
+      "id": "65233c8b-560b-48b9-bcad-ef7fcde1fd38",
+      "source": "103e150d-e71b-416b-b50a-245a8821cb3f",
+      "edit": "frozen",
+      "biome": "volcanic",
+      "object": "charred_bone"
+    },
+    {
+      "id": "24936071-de47-4b05-b61b-04058904186b",
+      "source": "103e150d-e71b-416b-b50a-245a8821cb3f",
+      "edit": "enchanted",
+      "biome": "volcanic",
+      "object": "charred_bone"
+    },
+    {
+      "id": "37802cd3-adfd-438c-bea4-5e56c72012bb",
+      "source": "103e150d-e71b-416b-b50a-245a8821cb3f",
+      "edit": "cracked",
+      "biome": "volcanic",
+      "object": "charred_bone"
+    },
+    {
+      "id": "eee8e652-5372-4d01-929e-eb626a037015",
+      "source": "69691d4f-e784-4e34-bfdd-20ae62e57d2b",
+      "edit": "destroyed",
+      "biome": "volcanic",
+      "object": "lava_pebble"
+    },
+    {
+      "id": "dd76cea0-3093-4662-a17e-b3d0ce307ed8",
+      "source": "69691d4f-e784-4e34-bfdd-20ae62e57d2b",
+      "edit": "frozen",
+      "biome": "volcanic",
+      "object": "lava_pebble"
+    },
+    {
+      "id": "45970b0b-76ca-4048-b598-6a06874f4672",
+      "source": "69691d4f-e784-4e34-bfdd-20ae62e57d2b",
+      "edit": "enchanted",
+      "biome": "volcanic",
+      "object": "lava_pebble"
+    },
+    {
+      "id": "4ab17ae0-6834-4936-8ed9-b3004b9dfda7",
+      "source": "69691d4f-e784-4e34-bfdd-20ae62e57d2b",
+      "edit": "cracked",
+      "biome": "volcanic",
+      "object": "lava_pebble"
+    },
+    {
+      "id": "be641c38-efc1-45fc-975c-3e597ed6c1dc",
+      "source": "0ad422f7-73ee-4184-9a5e-4d50720e968a",
+      "edit": "destroyed",
+      "biome": "tundra",
+      "object": "frozen_pebble"
+    },
+    {
+      "id": "066af640-a2bc-416a-a0db-8520c5b40f59",
+      "source": "0ad422f7-73ee-4184-9a5e-4d50720e968a",
+      "edit": "frozen",
+      "biome": "tundra",
+      "object": "frozen_pebble"
+    },
+    {
+      "id": "4c8d9375-977d-4b8a-a0a8-4c851871fc8d",
+      "source": "0ad422f7-73ee-4184-9a5e-4d50720e968a",
+      "edit": "enchanted",
+      "biome": "tundra",
+      "object": "frozen_pebble"
+    },
+    {
+      "id": "1b67c2e9-3ea6-4ab2-9dc0-28d0ea4a58ea",
+      "source": "0ad422f7-73ee-4184-9a5e-4d50720e968a",
+      "edit": "cracked",
+      "biome": "tundra",
+      "object": "frozen_pebble"
+    },
+    {
+      "id": "dbe7d5a1-0f6e-45ac-9490-6394a8c9790c",
+      "source": "10c94ab8-3985-4a6d-8725-0bba92053e80",
+      "edit": "destroyed",
+      "biome": "tundra",
+      "object": "ice_shard"
+    },
+    {
+      "id": "34450b54-b304-40ea-8bea-f647f0b11218",
+      "source": "10c94ab8-3985-4a6d-8725-0bba92053e80",
+      "edit": "frozen",
+      "biome": "tundra",
+      "object": "ice_shard"
+    },
+    {
+      "id": "5049f66b-bae7-4aab-9b1d-db733ecb9c7d",
+      "source": "10c94ab8-3985-4a6d-8725-0bba92053e80",
+      "edit": "enchanted",
+      "biome": "tundra",
+      "object": "ice_shard"
+    },
+    {
+      "id": "9bbe81d9-55d6-4900-90a8-c099e0b02821",
+      "source": "10c94ab8-3985-4a6d-8725-0bba92053e80",
+      "edit": "cracked",
+      "biome": "tundra",
+      "object": "ice_shard"
+    },
+    {
+      "id": "2dcdb690-f77e-4d92-86bd-a83333905281",
+      "source": "813d5f2e-f14d-4685-b969-d60bd6de3ea3",
+      "edit": "destroyed",
+      "biome": "tundra",
+      "object": "lichen_rock"
+    },
+    {
+      "id": "856408a8-1733-445b-bd00-925feafe0075",
+      "source": "813d5f2e-f14d-4685-b969-d60bd6de3ea3",
+      "edit": "frozen",
+      "biome": "tundra",
+      "object": "lichen_rock"
+    },
+    {
+      "id": "b1637e26-9783-46b9-8e95-7374f81c7e21",
+      "source": "813d5f2e-f14d-4685-b969-d60bd6de3ea3",
+      "edit": "enchanted",
+      "biome": "tundra",
+      "object": "lichen_rock"
+    },
+    {
+      "id": "b4bc5144-3776-4af0-9b29-c2124b8e0d7d",
+      "source": "813d5f2e-f14d-4685-b969-d60bd6de3ea3",
+      "edit": "cracked",
+      "biome": "tundra",
+      "object": "lichen_rock"
+    },
+    {
+      "id": "f3af10c7-af4d-4b6b-9fb6-d06b6ea36076",
+      "source": "29bd105c-0e0f-455c-8fe3-eae31bf9bb8c",
+      "edit": "destroyed",
+      "biome": "tundra",
+      "object": "fossil_fragment"
+    },
+    {
+      "id": "75aa3b1f-7a12-4a96-81f9-7d6eb477c58f",
+      "source": "29bd105c-0e0f-455c-8fe3-eae31bf9bb8c",
+      "edit": "burned",
+      "biome": "tundra",
+      "object": "fossil_fragment"
+    },
+    {
+      "id": "d3a7d7dd-54c1-4575-801b-181dd613698b",
+      "source": "29bd105c-0e0f-455c-8fe3-eae31bf9bb8c",
+      "edit": "frozen",
+      "biome": "tundra",
+      "object": "fossil_fragment"
+    },
+    {
+      "id": "2baf121d-0917-4eca-bf79-fb3e20a786e0",
+      "source": "29bd105c-0e0f-455c-8fe3-eae31bf9bb8c",
+      "edit": "enchanted",
+      "biome": "tundra",
+      "object": "fossil_fragment"
+    },
+    {
+      "id": "f0c52d09-5cd2-461b-912d-33a835900bd4",
+      "source": "29bd105c-0e0f-455c-8fe3-eae31bf9bb8c",
+      "edit": "cracked",
+      "biome": "tundra",
+      "object": "fossil_fragment"
+    },
+    {
+      "id": "37778fb1-9fee-43db-9b5a-7eac30945893",
+      "source": "012f5dd3-af1a-4eb2-8430-d588f616f989",
+      "edit": "destroyed",
+      "biome": "arctic",
+      "object": "snow_clump"
+    },
+    {
+      "id": "da23c597-39bf-435c-a85f-7d17aad3b8ee",
+      "source": "012f5dd3-af1a-4eb2-8430-d588f616f989",
+      "edit": "frozen",
+      "biome": "arctic",
+      "object": "snow_clump"
+    },
+    {
+      "id": "572e43a0-dc3c-4d1f-8364-a6568f98b34d",
+      "source": "012f5dd3-af1a-4eb2-8430-d588f616f989",
+      "edit": "enchanted",
+      "biome": "arctic",
+      "object": "snow_clump"
+    },
+    {
+      "id": "975b303f-1c4e-4a38-9dbf-73906930f0c5",
+      "source": "012f5dd3-af1a-4eb2-8430-d588f616f989",
+      "edit": "cracked",
+      "biome": "arctic",
+      "object": "snow_clump"
+    },
+    {
+      "id": "e35a57c2-ed7b-4bbd-beee-e5823d61e2b3",
+      "source": "02b8b594-a842-4003-85d7-e30efc3cf6f7",
+      "edit": "destroyed",
+      "biome": "arctic",
+      "object": "ice_crystal_cluster"
+    },
+    {
+      "id": "671d1195-1578-4ca9-bfdc-bc76e22b1547",
+      "source": "02b8b594-a842-4003-85d7-e30efc3cf6f7",
+      "edit": "frozen",
+      "biome": "arctic",
+      "object": "ice_crystal_cluster"
+    },
+    {
+      "id": "79ef5c17-5c8e-4e58-9750-d66bda0ab62c",
+      "source": "02b8b594-a842-4003-85d7-e30efc3cf6f7",
+      "edit": "enchanted",
+      "biome": "arctic",
+      "object": "ice_crystal_cluster"
+    },
+    {
+      "id": "1b0cd934-3887-4694-91bc-21a1cd168544",
+      "source": "02b8b594-a842-4003-85d7-e30efc3cf6f7",
+      "edit": "cracked",
+      "biome": "arctic",
+      "object": "ice_crystal_cluster"
+    },
+    {
+      "id": "ca5dfcfb-f4ae-441c-a124-4385fdd2077f",
+      "source": "0886282c-e914-4b35-b94b-834d3f905e27",
+      "edit": "destroyed",
+      "biome": "arctic",
+      "object": "frozen_shell"
+    },
+    {
+      "id": "87e16652-0da0-4c93-b6f6-92bca5032f63",
+      "source": "0886282c-e914-4b35-b94b-834d3f905e27",
+      "edit": "burned",
+      "biome": "arctic",
+      "object": "frozen_shell"
+    },
+    {
+      "id": "f5de7704-0ba9-4f49-888c-456cfd30bd1f",
+      "source": "0886282c-e914-4b35-b94b-834d3f905e27",
+      "edit": "frozen",
+      "biome": "arctic",
+      "object": "frozen_shell"
+    },
+    {
+      "id": "eee021f9-7beb-4630-bbdf-c9cd6f7822fc",
+      "source": "0886282c-e914-4b35-b94b-834d3f905e27",
+      "edit": "enchanted",
+      "biome": "arctic",
+      "object": "frozen_shell"
+    },
+    {
+      "id": "f7fb85ec-b8e4-4a06-b719-287be5717fce",
+      "source": "0886282c-e914-4b35-b94b-834d3f905e27",
+      "edit": "cracked",
+      "biome": "arctic",
+      "object": "frozen_shell"
+    },
+    {
+      "id": "333e99b4-a2c3-4ce2-9c35-b5b6157afa3b",
+      "source": "0f91987f-a4c4-4de1-9fba-e874a4929c8d",
+      "edit": "destroyed",
+      "biome": "mystic",
+      "object": "aether_crystal"
+    },
+    {
+      "id": "8ee35532-befe-4cfb-9749-8cd0887776bc",
+      "source": "0f91987f-a4c4-4de1-9fba-e874a4929c8d",
+      "edit": "frozen",
+      "biome": "mystic",
+      "object": "aether_crystal"
+    },
+    {
+      "id": "99459db1-9c4a-41e0-9a31-a9b9f5dffe40",
+      "source": "0f91987f-a4c4-4de1-9fba-e874a4929c8d",
+      "edit": "enchanted",
+      "biome": "mystic",
+      "object": "aether_crystal"
+    },
+    {
+      "id": "16a1eece-82ce-40d8-beb5-80db68217966",
+      "source": "0f91987f-a4c4-4de1-9fba-e874a4929c8d",
+      "edit": "cracked",
+      "biome": "mystic",
+      "object": "aether_crystal"
+    },
+    {
+      "id": "418fc922-42b0-4a5a-97f1-ca744562abc4",
+      "source": "0ebba04b-f03d-4efd-bdb9-ab84308c350b",
+      "edit": "destroyed",
+      "biome": "mystic",
+      "object": "rune_shard"
+    },
+    {
+      "id": "161f0262-2c9e-42fd-93f3-d5d8bd51e55e",
+      "source": "0ebba04b-f03d-4efd-bdb9-ab84308c350b",
+      "edit": "frozen",
+      "biome": "mystic",
+      "object": "rune_shard"
+    },
+    {
+      "id": "0327e4fb-60a8-4a39-93be-bd6cb5a4d636",
+      "source": "0ebba04b-f03d-4efd-bdb9-ab84308c350b",
+      "edit": "enchanted",
+      "biome": "mystic",
+      "object": "rune_shard"
+    },
+    {
+      "id": "5d451bfb-d43b-4e82-8f6a-21b86c7bd7c2",
+      "source": "0ebba04b-f03d-4efd-bdb9-ab84308c350b",
+      "edit": "cracked",
+      "biome": "mystic",
+      "object": "rune_shard"
+    },
+    {
+      "id": "cbed792e-163f-4503-bca8-40330de818f5",
+      "source": "02e17ed7-d991-4871-94f8-33a719c6c1cd",
+      "edit": "destroyed",
+      "biome": "mystic",
+      "object": "glowing_pebble"
+    },
+    {
+      "id": "b1477b9a-a690-4a80-b11c-3d63258e1168",
+      "source": "02e17ed7-d991-4871-94f8-33a719c6c1cd",
+      "edit": "frozen",
+      "biome": "mystic",
+      "object": "glowing_pebble"
+    },
+    {
+      "id": "50d27c31-c296-4300-b22c-695b56926068",
+      "source": "02e17ed7-d991-4871-94f8-33a719c6c1cd",
+      "edit": "enchanted",
+      "biome": "mystic",
+      "object": "glowing_pebble"
+    },
+    {
+      "id": "3fd79723-5ea1-45ba-920f-5ffabe56aed3",
+      "source": "02e17ed7-d991-4871-94f8-33a719c6c1cd",
+      "edit": "cracked",
+      "biome": "mystic",
+      "object": "glowing_pebble"
+    },
+    {
+      "id": "60c9cf48-76ed-4f73-990b-6fdea41d76ce",
+      "source": "1139326d-fae7-4cf2-a6c8-296271832acd",
+      "edit": "destroyed",
+      "biome": "mystic",
+      "object": "stardust_cluster"
+    },
+    {
+      "id": "6ca7ef16-6a25-4766-a5ba-4d73b73c30ce",
+      "source": "1139326d-fae7-4cf2-a6c8-296271832acd",
+      "edit": "frozen",
+      "biome": "mystic",
+      "object": "stardust_cluster"
+    },
+    {
+      "id": "6c9d63d4-7630-45f0-9cb5-9a5e7ceaf79a",
+      "source": "1139326d-fae7-4cf2-a6c8-296271832acd",
+      "edit": "enchanted",
+      "biome": "mystic",
+      "object": "stardust_cluster"
+    },
+    {
+      "id": "d075362f-b083-47ce-b4ec-356cb3bcb0ec",
+      "source": "1139326d-fae7-4cf2-a6c8-296271832acd",
+      "edit": "cracked",
+      "biome": "mystic",
+      "object": "stardust_cluster"
+    },
+    {
+      "id": "b789ef04-7814-48e4-b03b-1c3b57fa29e9",
+      "source": "0b5e53d0-702c-4868-aeee-795c08fcb41d",
+      "edit": "destroyed",
+      "biome": "tropical_forest",
+      "object": "beetle_shell"
+    },
+    {
+      "id": "4c43a521-d7ca-42b3-8db8-c85c900c90d9",
+      "source": "0b5e53d0-702c-4868-aeee-795c08fcb41d",
+      "edit": "burned",
+      "biome": "tropical_forest",
+      "object": "beetle_shell"
+    },
+    {
+      "id": "6f4f7f97-3dc2-48ed-b587-f782e1ac2720",
+      "source": "0b5e53d0-702c-4868-aeee-795c08fcb41d",
+      "edit": "frozen",
+      "biome": "tropical_forest",
+      "object": "beetle_shell"
+    },
+    {
+      "id": "dc0a37d7-558f-4286-8cb5-5c0c9bfc994b",
+      "source": "0b5e53d0-702c-4868-aeee-795c08fcb41d",
+      "edit": "enchanted",
+      "biome": "tropical_forest",
+      "object": "beetle_shell"
+    },
+    {
+      "id": "8bc4e97c-475b-4939-b6b7-1be99296091b",
+      "source": "0b5e53d0-702c-4868-aeee-795c08fcb41d",
+      "edit": "cracked",
+      "biome": "tropical_forest",
+      "object": "beetle_shell"
+    },
+    {
+      "id": "f6424eb3-6538-4164-a96e-459e63de2304",
+      "source": "01ded5c5-3b22-45c6-ad30-a0b8d58d4240",
+      "edit": "destroyed",
+      "biome": "tropical_forest",
+      "object": "palm_nut"
+    },
+    {
+      "id": "0d2be888-889e-4f1b-967f-ed89e2682ad5",
+      "source": "01ded5c5-3b22-45c6-ad30-a0b8d58d4240",
+      "edit": "burned",
+      "biome": "tropical_forest",
+      "object": "palm_nut"
+    },
+    {
+      "id": "df3b5611-5a10-432f-a1e0-0d4d218e038f",
+      "source": "01ded5c5-3b22-45c6-ad30-a0b8d58d4240",
+      "edit": "frozen",
+      "biome": "tropical_forest",
+      "object": "palm_nut"
+    },
+    {
+      "id": "8dbfb960-30ae-43bd-9e51-2a5117677f5e",
+      "source": "01ded5c5-3b22-45c6-ad30-a0b8d58d4240",
+      "edit": "enchanted",
+      "biome": "tropical_forest",
+      "object": "palm_nut"
+    },
+    {
+      "id": "75de170b-9059-4345-844c-17429691edf0",
+      "source": "01ded5c5-3b22-45c6-ad30-a0b8d58d4240",
+      "edit": "decayed",
+      "biome": "tropical_forest",
+      "object": "palm_nut"
+    },
+    {
+      "id": "ba5c7a43-ab7d-4d7a-ac74-ad150503f0a3",
+      "source": "1191ef11-e619-40e9-8d39-ec380da55e1e",
+      "edit": "destroyed",
+      "biome": "tropical_forest",
+      "object": "vine_cutting"
+    },
+    {
+      "id": "c95b813e-2b73-4fb9-87c9-b90f2038e5f6",
+      "source": "1191ef11-e619-40e9-8d39-ec380da55e1e",
+      "edit": "burned",
+      "biome": "tropical_forest",
+      "object": "vine_cutting"
+    },
+    {
+      "id": "a294a096-df8a-4c2c-8bbc-c2e20f4d7ea6",
+      "source": "1191ef11-e619-40e9-8d39-ec380da55e1e",
+      "edit": "frozen",
+      "biome": "tropical_forest",
+      "object": "vine_cutting"
+    },
+    {
+      "id": "9fba2e63-10a7-4424-979d-c74d5248d92d",
+      "source": "1191ef11-e619-40e9-8d39-ec380da55e1e",
+      "edit": "enchanted",
+      "biome": "tropical_forest",
+      "object": "vine_cutting"
+    },
+    {
+      "id": "95b72e0a-b6f0-4c00-8115-539f647b2fb1",
+      "source": "1191ef11-e619-40e9-8d39-ec380da55e1e",
+      "edit": "decayed",
+      "biome": "tropical_forest",
+      "object": "vine_cutting"
+    },
+    {
+      "id": "9a2c09e0-aaea-4f77-8450-bd940e507a41",
+      "source": "02c0949b-6639-4f7f-90a0-4c32b5375f87",
+      "edit": "destroyed",
+      "biome": "tropical_forest",
+      "object": "seed_pod"
+    },
+    {
+      "id": "c2815c8f-c52c-43d4-b47f-85c7f7963050",
+      "source": "02c0949b-6639-4f7f-90a0-4c32b5375f87",
+      "edit": "burned",
+      "biome": "tropical_forest",
+      "object": "seed_pod"
+    },
+    {
+      "id": "05e022c6-adc0-40eb-a3c8-19e698d6b6d4",
+      "source": "02c0949b-6639-4f7f-90a0-4c32b5375f87",
+      "edit": "frozen",
+      "biome": "tropical_forest",
+      "object": "seed_pod"
+    },
+    {
+      "id": "5dbdb78c-34a3-403d-a648-6ff6f64cd67c",
+      "source": "02c0949b-6639-4f7f-90a0-4c32b5375f87",
+      "edit": "enchanted",
+      "biome": "tropical_forest",
+      "object": "seed_pod"
+    },
+    {
+      "id": "39cbec37-a6c0-4361-b3a3-6764c9241910",
+      "source": "02c0949b-6639-4f7f-90a0-4c32b5375f87",
+      "edit": "decayed",
+      "biome": "tropical_forest",
+      "object": "seed_pod"
+    },
+    {
+      "id": "37027f9a-033b-4989-a446-690c965ba11b",
+      "source": "e1f88b42-625d-4ba7-a777-9ab22be7720d",
+      "edit": "destroyed",
+      "biome": "swamp",
+      "object": "frog_eggs"
+    },
+    {
+      "id": "c0cbcf74-f5d2-4f26-8478-fa2614a30912",
+      "source": "e1f88b42-625d-4ba7-a777-9ab22be7720d",
+      "edit": "burned",
+      "biome": "swamp",
+      "object": "frog_eggs"
+    },
+    {
+      "id": "857d7e45-e4a0-4b4b-aed1-84c0efda0b93",
+      "source": "e1f88b42-625d-4ba7-a777-9ab22be7720d",
+      "edit": "frozen",
+      "biome": "swamp",
+      "object": "frog_eggs"
+    },
+    {
+      "id": "16675693-911b-4f01-9d1a-e51fd00d9e9a",
+      "source": "e1f88b42-625d-4ba7-a777-9ab22be7720d",
+      "edit": "enchanted",
+      "biome": "swamp",
+      "object": "frog_eggs"
+    },
+    {
+      "id": "53046b9b-4ad6-48ac-8d22-a4d663b5badf",
+      "source": "e1f88b42-625d-4ba7-a777-9ab22be7720d",
+      "edit": "decayed",
+      "biome": "swamp",
+      "object": "frog_eggs"
+    },
+    {
+      "id": "f56cc71e-3b30-4d77-8bce-1668dd7896e4",
+      "source": "b6a61552-3b28-4b76-97db-68f79771a525",
+      "edit": "destroyed",
+      "biome": "arctic",
+      "object": "frost_stone"
+    },
+    {
+      "id": "eb26a2c5-d2a0-4247-a251-6d06abce3f7d",
+      "source": "b6a61552-3b28-4b76-97db-68f79771a525",
+      "edit": "frozen",
+      "biome": "arctic",
+      "object": "frost_stone"
+    },
+    {
+      "id": "3a1ff5d5-8eed-4ac7-8245-a7815719a03c",
+      "source": "b6a61552-3b28-4b76-97db-68f79771a525",
+      "edit": "enchanted",
+      "biome": "arctic",
+      "object": "frost_stone"
+    },
+    {
+      "id": "dd5f4523-e3c8-49b8-9d1d-d37bd3d53c1e",
+      "source": "b6a61552-3b28-4b76-97db-68f79771a525",
+      "edit": "cracked",
+      "biome": "arctic",
+      "object": "frost_stone"
+    }
+  ]
+}

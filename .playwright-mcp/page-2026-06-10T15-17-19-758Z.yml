@@ -1,0 +1,35 @@
+- generic [active] [ref=e1]:
+  - generic:
+    - generic:
+      - text: FreedomMMO — deterministic world slice
+      - button "📋" [ref=e3] [cursor=pointer]
+    - generic:
+      - text: WASD/arrows move · mousewheel zoom · R reset · T topology showcase · D debug
+      - text: M map · L pause sun · click overmap teleport
+      - text: seed 42 · chunks 15 · zoom 1.95
+      - text: fps 60 · update 0.1ms · draw 1.4ms · terrain GL tex 9 · atlas 0 (G toggle) · workers 6 (6 ready) · pending 0 · ready 15 · bitmaps 15 · art sheets 3035/3036
+      - text: tile 208, 212 · chunk 3, 3 · z 0.00
+      - text: biome ocean · form plains · plateau 1 · form plains · features none
+      - text: material ocean_water · surface shallow_water
+      - text: elev 0.52 lift 3.1 slope 0.02
+      - text: micro water_body
+      - text: fertility 0.68 vegetation 0.00
+      - text: moist 0.62 heat 0.52
+      - text: noon · light 0.92 · sun height 0.73
+      - text: "weather: wind 0.83 @ 18° gust 0.45 · rain 0.55 · clouds 0.47 · spring day 18 (5%) · fog 0.04 · temp 0.52 · humid 0.62"
+      - text: "overmap biomes 21/21: steppe 13%, ocean 13%, river 10%, hills 10%, arctic 9%, grassland 9%"
+      - text: "missing: none"
+      - text: "transitions loaded map: needed 1, missing 0"
+      - text: "L1 Neighbors: N=ocean NE=ocean E=ocean SE=ocean S=ocean SW=ocean W=ocean NW=ocean"
+      - text: debug off (0 toggle)
+      - text: "L2 Transition: none"
+      - text: "L4 Mask: corner=0b0000(0) → wang=0 | NW=to NE=to SW=to SE=to"
+      - text: "L5 Elev: cliff: NW=5 NE=5 SW=5 SE=5 → wang"
+      - text: "L6 URL: LOADED /assets/pixelab/landscape_v2/transitions/deep_ocean_to_ocean/wang/deep_ocean_to_ocean__wang_15__v000.png"
+      - text: "L7 Interior: yes (no transition detected)"
+      - text: "L8 Cliff: none"
+      - text: "F0 Soil: 3350888 px painted"
+      - text: ✓ 4096/4096 loaded · transitions=523 interior=3573
+  - generic [ref=e6]:
+    - text: click chunk-pixel to teleport · M toggle · F expand
+    - text: yellow pixel = current chunk · white box = loaded chunks
