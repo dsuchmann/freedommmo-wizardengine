@@ -363,6 +363,11 @@ def migrate_state_table(state):
         log.info(f"migrating state table: dropping {len(old)} per-variant tasks (files on disk are kept)")
         for k in old:
             del state["states"][k]
+    # un-park batches failed by the >9-frames 400 (cap is now size-aware)
+    for k, t in state["states"].items():
+        if t.get("status") == "failed" and "vs" in t:
+            t["status"] = "pending"
+            t["retries"] = 0
 
 
 def spawn_anim_tasks(state, only_type=None):
@@ -390,8 +395,10 @@ def submit_base(t):
 
 def submit_state(t):
     """Batch edit: up to 16 variant PNGs -> one edit-images-v2 background job."""
+    # server caps frames per edit call by size: 16 at <=64px, 9 above
+    cap = 16 if t["size"] <= 64 else 9
     imgs, sent_vs = [], []
-    for v in t["vs"][:16]:
+    for v in t["vs"][:cap]:
         p = variant_path(t["biome"], t["obj"], v)
         if not p.exists():
             continue
@@ -403,7 +410,7 @@ def submit_state(t):
     t["sent_vs"] = sent_vs
     resp, code = api_call("POST", "edit-images-v2",
                           {"method": "edit_with_text",
-                           "edit_images": imgs[:16],
+                           "edit_images": imgs,
                            "image_size": {"width": t["size"], "height": t["size"]},
                            "description": STATES[t["state"]],
                            "no_background": True})
