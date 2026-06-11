@@ -15,7 +15,7 @@ export class Graph {
     this._boot = false;
   }
 
-  boot(fn) { this._boot = true; try { fn(); } finally { this._boot = false; } }
+  boot(fn) { const prev = this._boot; this._boot = true; try { fn(); } finally { this._boot = prev; } }
 
   _cellKey(x, y) { return `${Math.floor(x / CELL)},${Math.floor(y / CELL)}`; }
 
