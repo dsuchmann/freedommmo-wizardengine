@@ -328,20 +328,41 @@ def ensure_tasks(state, only_type=None):
 
 
 def spawn_state_tasks(state, biome, obj):
-    """After a type's base finalize: queue state tasks for a spread pool."""
+    """After a type's base finalize: queue one edit-images-v2 batch per state.
+
+    Batches (up to 16 variant PNGs per call) replace the old per-variant
+    objects/{id}/states route: stateless (no 8h expiry), 16x fewer calls.
+    """
     vs = sorted([info for k, info in state["variants"].items()
-                 if info["biome"] == biome and info["obj"] == obj and info.get("png") and info.get("object_id")],
+                 if info["biome"] == biome and info["obj"] == obj and info.get("png")],
                 key=lambda i: i["v"])
     if not vs:
         return
     step = max(1, len(vs) // STATE_POOL)
     pool = vs[::step][:STATE_POOL]
+    size = next((s for b, o, s in all_types() if b == biome and o == obj), 64)
     for st in STATES:
-        for info in pool:
-            key = f"{biome}/{obj}/{st}/v{info['v']:03d}"
-            if key not in state["states"] and not state_path(biome, obj, st, info["v"]).exists():
-                state["states"][key] = {"status": "pending", "biome": biome, "obj": obj,
-                                        "state": st, "v": info["v"], "src": info["object_id"]}
+        key = f"{biome}/{obj}/{st}"
+        if key in state["states"]:
+            continue
+        missing = [info["v"] for info in pool
+                   if not state_path(biome, obj, st, info["v"]).exists()]
+        if not missing:
+            state["states"][key] = {"status": "done", "biome": biome, "obj": obj,
+                                    "state": st, "vs": [], "size": size}
+            continue
+        state["states"][key] = {"status": "pending", "biome": biome, "obj": obj,
+                                "state": st, "vs": missing, "size": size}
+
+
+def migrate_state_table(state):
+    """Drop old per-variant state tasks (keys like biome/obj/st/vNNN);
+    batch tasks are respawned from disk truth."""
+    old = [k for k, t in state["states"].items() if "v" in t and "vs" not in t]
+    if old:
+        log.info(f"migrating state table: dropping {len(old)} per-variant tasks (files on disk are kept)")
+        for k in old:
+            del state["states"][k]
 
 
 def spawn_anim_tasks(state, only_type=None):
@@ -368,10 +389,24 @@ def submit_base(t):
 
 
 def submit_state(t):
-    resp, code = api_call("POST", f"objects/{t['src']}/states",
-                          {"edit_description": STATES[t["state"]]})
-    if resp is None and code == 404:
-        return "expired"
+    """Batch edit: up to 16 variant PNGs -> one edit-images-v2 background job."""
+    imgs, sent_vs = [], []
+    for v in t["vs"][:16]:
+        p = variant_path(t["biome"], t["obj"], v)
+        if not p.exists():
+            continue
+        b64 = base64.b64encode(p.read_bytes()).decode("ascii")
+        imgs.append({"image": {"base64": b64}, "width": t["size"], "height": t["size"]})
+        sent_vs.append(v)
+    if not imgs:
+        return None
+    t["sent_vs"] = sent_vs
+    resp, code = api_call("POST", "edit-images-v2",
+                          {"method": "edit_with_text",
+                           "edit_images": imgs[:16],
+                           "image_size": {"width": t["size"], "height": t["size"]},
+                           "description": STATES[t["state"]],
+                           "no_background": True})
     return resp
 
 
@@ -430,25 +465,37 @@ def finalize_base(state, key, t):
     return True
 
 
-def finalize_state(state, key, t):
-    """State object completed: download its sprite."""
-    resp, code = api_call("GET", f"objects/{t['object_id']}")
-    if not resp:
-        return False
-    urls = []
-    ru = resp.get("rotation_urls") or {}
-    if isinstance(ru, dict):
-        urls += [u for u in ru.values() if isinstance(u, str)]
-    su = resp.get("storage_urls") or {}
-    if isinstance(su, dict):
-        urls += [u for u in su.values() if isinstance(u, str)]
-    for url in urls:
-        data = fetch_bytes(url)
+def finalize_state(state, key, t, job):
+    """Batch edit job completed: images[] map 1:1 to sent_vs order."""
+    last = (job or {}).get("last_response") or {}
+    images = last.get("images") or []
+    sent = t.get("sent_vs") or t["vs"][:16]
+    n = 0
+    for i, v in enumerate(sent):
+        if i >= len(images):
+            break
+        fr = images[i]
+        b64 = fr.get("base64") if isinstance(fr, dict) else fr
+        data = None
+        if isinstance(b64, str):
+            if b64.startswith("http"):
+                data = fetch_bytes(b64)
+            else:
+                try:
+                    data = base64.b64decode(b64.split("base64,")[-1])
+                except Exception:
+                    data = None
         if valid_png(data):
-            save_png(data, state_path(t["biome"], t["obj"], t["state"], t["v"]))
-            return True
-    log.warning(f"{key}: state object completed but no valid image found")
-    return False
+            save_png(data, state_path(t["biome"], t["obj"], t["state"], v))
+            n += 1
+        else:
+            log.warning(f"{key}: v{v:03d} output rejected by validation")
+    log.info(f"state {key}: saved {n}/{len(sent)}")
+    if n < len(sent):
+        # retry only the still-missing variants
+        t["vs"] = [v for v in sent if not state_path(t["biome"], t["obj"], t["state"], v).exists()]
+        return False
+    return True
 
 
 def finalize_anim(state, key, t, job):
@@ -519,6 +566,7 @@ def base_type_complete(state, biome, obj):
 
 def run(phases, only_type, dry_run):
     state = load_state()
+    migrate_state_table(state)
     ensure_tasks(state, only_type)
     if "anims" in phases:
         spawn_anim_tasks(state, only_type)
@@ -540,6 +588,9 @@ def run(phases, only_type, dry_run):
     for kind, table in (("base", state["base_calls"]), ("state", state["states"]), ("anim", state["anims"])):
         for key, t in table.items():
             if t.get("status") in ("queued", "review") and (not only_type or t.get("obj") == only_type):
+                if kind in ("anim", "state") and not t.get("job_id"):
+                    t["status"] = "pending"
+                    continue
                 inflight[f"{kind}:{key}"] = {"kind": kind, "key": key, "task": t, "submitted": time.time()}
 
     log.info(f"Starting. inflight(adopted)={len(inflight)}")
@@ -568,19 +619,17 @@ def run(phases, only_type, dry_run):
                         log.error(f"base {key}: failed permanently")
             elif kind == "state":
                 resp = submit_state(t)
-                if resp == "expired":
-                    t["status"] = "expired"
-                    log.warning(f"state {key}: source object expired (8h)")
+                track_usage(state, resp)
+                job_id = (resp or {}).get("background_job_id")
+                if job_id:
+                    t["status"] = "queued"
+                    t["job_id"] = job_id
+                    inflight[f"state:{key}"] = {"kind": "state", "key": key, "task": t, "submitted": time.time()}
+                    log.info(f"state batch {key} -> job {job_id} ({len(t.get('sent_vs') or [])} images)")
                 else:
-                    track_usage(state, resp)
-                    if resp and resp.get("object_id"):
-                        t["status"] = "queued"
-                        t["object_id"] = resp["object_id"]
-                        inflight[f"state:{key}"] = {"kind": "state", "key": key, "task": t, "submitted": time.time()}
-                    else:
-                        t["retries"] = t.get("retries", 0) + 1
-                        if t["retries"] >= MAX_RETRIES:
-                            t["status"] = "failed"
+                    t["retries"] = t.get("retries", 0) + 1
+                    if t["retries"] >= MAX_RETRIES:
+                        t["status"] = "failed"
             elif kind == "anim":
                 resp = submit_anim(t)
                 track_usage(state, resp)
@@ -619,28 +668,19 @@ def run(phases, only_type, dry_run):
             kind, key, t = info["kind"], info["key"], info["task"]
             age = time.time() - info["submitted"]
             try:
-                if kind in ("base", "state"):
+                if kind == "base":
                     resp, code = api_call("GET", f"objects/{t['object_id']}")
                     if resp is None and code == 404:
-                        t["status"] = "expired" if kind == "state" else "pending"
+                        t["status"] = "pending"
                         t["retries"] = t.get("retries", 0) + 1
                         done_keys.append(ikey)
                         continue
                     status = (resp or {}).get("status")
-                    if kind == "base" and status == "review":
+                    if status in ("review", "completed"):
                         if finalize_base(state, key, t):
                             t["status"] = "done"
                             done_keys.append(ikey)
                             if base_type_complete(state, t["biome"], t["obj"]):
-                                spawn_state_tasks(state, t["biome"], t["obj"])
-                                if "anims" in phases:
-                                    spawn_anim_tasks(state, t["obj"])
-                    elif status == "completed":
-                        ok = finalize_base(state, key, t) if kind == "base" else finalize_state(state, key, t)
-                        if ok:
-                            t["status"] = "done"
-                            done_keys.append(ikey)
-                            if kind == "base" and base_type_complete(state, t["biome"], t["obj"]):
                                 spawn_state_tasks(state, t["biome"], t["obj"])
                                 if "anims" in phases:
                                     spawn_anim_tasks(state, t["obj"])
@@ -650,11 +690,13 @@ def run(phases, only_type, dry_run):
                         if t["retries"] >= MAX_RETRIES:
                             t["status"] = "failed"
                         done_keys.append(ikey)
-                elif kind == "anim":
+                elif kind in ("anim", "state"):
                     job, code = api_call("GET", f"background-jobs/{t['job_id']}")
                     status = (job or {}).get("status")
                     if status == "completed":
-                        if finalize_anim(state, key, t, job):
+                        ok = (finalize_anim(state, key, t, job) if kind == "anim"
+                              else finalize_state(state, key, t, job))
+                        if ok:
                             t["status"] = "done"
                         else:
                             t["status"] = "pending"
