@@ -111,8 +111,8 @@ export class DayNightCycle {
     // just the last minutes before dusk — this is what sells the steep-sun look.
     var lowSun = Math.pow(1 - Math.pow(shadowHeight, 1.8), 1.6);
     var shadowX = -Math.cos(shadowSource) * (1.0 + lowSun * 1.6);
-    var shadowY = 0.30 + lowSun * 0.55;
-    var shadowLength = 0.35 + lowSun * 3.4;   // up to ~3.75 object heights
+    var shadowY = 0.38 + lowSun * 0.47;
+    var shadowLength = 0.9 + lowSun * 2.85;   // noon floor 0.9 — shadows visible all day
 
     // Sky color as CSS string
     var skyColor = 'rgb(' + Math.round(phase.sky[0]) + ',' + Math.round(phase.sky[1]) + ',' + Math.round(phase.sky[2]) + ')';

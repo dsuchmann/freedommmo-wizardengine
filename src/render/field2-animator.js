@@ -977,11 +977,12 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         _shadowArray[so] = sg.sx;
         _shadowArray[so + 1] = sg.sy + sg.halfDraw;       // same ground pivot as sprite
         _shadowArray[so + 2] = sg.drawSize;
-        _shadowArray[so + 3] = 0;
         // diffusion tier: small flora → faint individual silhouettes that
         // only read in aggregate; large objects → full defined silhouette
         var tier = (sg.drawSize - minShadowSize) / (tilePxSnapped * 1.2);
         tier = tier < 0 ? 0 : tier > 1 ? 1 : tier;
+        // rotation slot carries per-instance diffusion for the shadow program
+        _shadowArray[so + 3] = 1.0 - tier;
         var diffuseK = 0.30 + 0.70 * tier;
         _shadowArray[so + 4] = sg.alpha * (sg.shadowK !== undefined ? sg.shadowK : 0.5) * diffuseK;
         _shadowArray[so + 5] = srect.u0;
@@ -1051,7 +1052,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         x: sun.shadowX * sun.shadowLength * 0.9,
         y: sun.shadowLength * 0.35,
       };
-      var shStrength = 0.50 * (0.45 + (1 - sunH) * 0.55) * sunUp;
+      var shStrength = 0.50 * (0.62 + (1 - sunH) * 0.38) * sunUp;
       glc.drawShadowInstances(_shadowArray, shCount, w, h, shVec, shStrength);
     }
     glc.drawSpriteInstances(_instArray, instCount, w, h);

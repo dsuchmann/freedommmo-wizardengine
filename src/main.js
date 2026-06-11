@@ -43,6 +43,7 @@ import('./world/biome-atmosphere.js').then(m => {
 const weather = new WeatherSystem(lighting);
 const overmap = new OvermapController(overmapCanvas, player, chunks);
 const camera = new Camera();
+window._camera = camera; // test/dev hook: set zoom via manualZoom
 const perf = new PerformanceMonitor();
 
 let last = performance.now();

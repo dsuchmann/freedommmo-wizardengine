@@ -72,7 +72,7 @@ void main() {
 var SHADOW_VERT_SRC = `#version 300 es
 precision highp float;
 in vec2 aUnit;
-in vec4 aPSR;      // pivot.xy, size, rotation (rotation ignored for shadows)
+in vec4 aPSR;      // pivot.xy, size, w = diffusion (1 - tier; sprite rotation slot)
 in float aAlpha;   // sprite alpha * per-biome shadow strength
 in vec4 aUV;
 uniform vec2 uViewport;
@@ -80,16 +80,27 @@ uniform vec2 uShadowVec;  // ground displacement per unit sprite-height (art px 
 out vec2 vUV;
 out float vAlpha;
 out float vH;             // 0 at base, 1 at sprite top
+out float vDiff;          // 0 = crisp large silhouette, 1 = soft diffuse pool
 void main() {
   float hgt = 1.0 - aUnit.y;                       // quad top = sprite top
-  vec2 base = vec2(aUnit.x * aPSR.z - aPSR.z * 0.5, 0.0);
-  // project the sprite onto the ground: top of sprite lands shadowVec away
+  float diff = aPSR.w;
+  // Ground-plane projection: the quad gets real vertical extent below the
+  // base line (pivot row) — short midday shadows are squat pools spreading
+  // from the full base width; long golden-hour shadows stretch tall.
+  float shadowLen = length(uShadowVec);
+  float flatK = clamp(1.0 - shadowLen / 2.5, 0.0, 1.0);
+  float vert = mix(0.85, 0.40, flatK);
+  // diffuse (small/oval flora) shadows ground across their whole base width
+  float wide = 1.0 + diff * 0.45;
+  vec2 base = vec2((aUnit.x - 0.5) * aPSR.z * wide, hgt * aPSR.z * vert);
+  // then the existing shear: top of sprite lands shadowVec away
   vec2 px = aPSR.xy + base + hgt * aPSR.z * uShadowVec;
   vec2 clip = vec2(px.x / uViewport.x * 2.0 - 1.0, 1.0 - px.y / uViewport.y * 2.0);
   gl_Position = vec4(clip, 0.0, 1.0);
   vUV = aUV.xy + aUnit * aUV.zw;
   vAlpha = aAlpha;
   vH = hgt;
+  vDiff = diff;
 }`;
 
 var SHADOW_FRAG_SRC = `#version 300 es
@@ -97,12 +108,23 @@ precision highp float;
 in vec2 vUV;
 in float vAlpha;
 in float vH;
+in float vDiff;
 uniform sampler2D uAtlas;
 uniform float uShadowAlpha; // global strength (sun-height driven)
+uniform float uAtlasTexel;  // 1 / atlas size
 out vec4 outColor;
 void main() {
-  float sa = texture(uAtlas, vUV).a;
-  float a = smoothstep(0.15, 0.85, sa) * vAlpha * uShadowAlpha * (1.0 - vH * 0.55);
+  // 5-tap blur of atlas alpha, radius scaled by per-instance diffusion
+  float r = vDiff * 1.6 * uAtlasTexel;
+  float sa = texture(uAtlas, vUV).a * 0.36
+           + (texture(uAtlas, vUV + vec2(r, 0.0)).a
+            + texture(uAtlas, vUV - vec2(r, 0.0)).a
+            + texture(uAtlas, vUV + vec2(0.0, r)).a
+            + texture(uAtlas, vUV - vec2(0.0, r)).a) * 0.16;
+  // crisp large silhouettes keep a mild edge; diffuse flora stays soft
+  float crisp = smoothstep(0.25, 0.75, sa);
+  sa = mix(crisp, sa, clamp(vDiff * 2.0, 0.0, 1.0));
+  float a = sa * vAlpha * uShadowAlpha * (1.0 - vH * 0.55);
   outColor = vec4(vec3(0.035, 0.045, 0.085) * a, a); // premultiplied dark blue-black
 }`;
 
@@ -143,6 +165,7 @@ uniform vec2 uWaveOrg; // art px from view texel space to wave field origin
 uniform vec2 uWaveN;   // wave field size, tiles
 uniform float uTilePx; // art px per tile
 uniform float uCrt;    // 0 = off, 1 = subtle CRT (scanlines + aperture grille)
+uniform float uCrtK;   // zoom / 1.84 — keeps scanline device-px pitch constant
 // Atmosphere pass: per-tile biome grading fields (same addressing as uWave)
 uniform sampler2D uAtmoA;  // hue, sat, con, bri
 uniform sampler2D uAtmoB;  // warm, fog, shadow, night-floor
@@ -327,14 +350,20 @@ void main() {
     c = mix(c, dark, nightLocal);
     c += vec3(0.85, 0.55, 0.22) * pvis * nightAmt * 0.13;   // faint warm torch tint, only at night
 
-    // god rays: angled shafts at low sun, strongest with fog
-    float rayAmt = (1.0 - smoothstep(0.08, 0.45, uSunHeight)) * step(0.02, uSunHeight);
-    float rayStr = rayAmt * (0.25 + fogD * 0.75) * 0.30;
+    // god rays: soft patchy light shafts, present most of the day, fading
+    // near high noon, strongest at low sun. Never visible parallel lines.
+    float rayAmt = (1.0 - smoothstep(0.30, 0.95, uSunHeight)) * step(0.02, uSunHeight);
+    float rayStr = rayAmt * (0.25 + fogD * 0.75) * 0.14;
     if (rayStr > 0.004) {
       vec2 rd = normalize(vec2(cos(uSunAzim), 0.55));
-      float band = dot(vTL, rd) * 14.0 + uTimeSec * 0.06;
-      float shafts = smoothstep(0.45, 1.0, vnoise(vec2(band, band * 0.13)));
-      c += uPhaseTint * shafts * rayStr * (1.0 - vig * 0.5);
+      float band = dot(vTL, rd) * 3.5 + uTimeSec * 0.05;
+      float n = vnoise(vec2(band, band * 0.13)) * 0.6
+              + vnoise(vec2(band * 2.3 + 7.0, band * 0.31)) * 0.4;
+      float shafts = smoothstep(0.30, 1.05, n);
+      // large-scale screen mask: shafts are patchy, not wall-to-wall
+      float pmask = smoothstep(0.25, 0.80, vnoise(vTL * 2.1 + vec2(uTimeSec * 0.02, 3.7)));
+      vec3 sunCol = mix(uPhaseTint, vec3(1.0, 0.85, 0.55), 0.6);
+      c += sunCol * shafts * pmask * rayStr * (1.0 - vig * 0.5);
     }
 
     // fog: per-biome density, phase-colored, breathing noise, edge-biased
@@ -348,7 +377,7 @@ void main() {
     // Subtle CRT: gentle scanlines aligned to art rows (darkest at row
     // boundaries) + a faint aperture-grille RGB tint per device-pixel
     // triad, brightness-compensated so the image doesn't dim.
-    float scan = 1.0 - 0.22 * (0.5 + 0.5 * cos(6.28318 * texel.y));
+    float scan = 1.0 - 0.22 * (0.5 + 0.5 * cos(6.28318 * texel.y * uCrtK));
     float gx = mod(gl_FragCoord.x, 3.0);
     vec3 grille = gx < 1.0 ? vec3(1.06, 0.94, 0.94)
                 : gx < 2.0 ? vec3(0.94, 1.06, 0.94)
@@ -400,7 +429,7 @@ export class GLCompositor {
     this.gl = gl;
     this.textures = new Map(); // 'cx,cy' -> { tex, bmp, lastUsed }
     this.presentMode = 1; // 0 = sharp-bilinear, 1 = + edge smoothing (U key)
-    this.crt = false;     // subtle CRT scanlines + grille (C key)
+    this.crt = true;      // subtle CRT scanlines + grille (C key toggles)
     this.frame = 0;
     this._lastSkyCss = null;
     this._skyRGB = [0, 0, 0];
@@ -537,6 +566,7 @@ export class GLCompositor {
       this.pUSharp = gl.getUniformLocation(prog, 'uSharp');
       this.pUMode = gl.getUniformLocation(prog, 'uMode');
       this.pUCrt = gl.getUniformLocation(prog, 'uCrt');
+      this.pUCrtK = gl.getUniformLocation(prog, 'uCrtK');
       this.pUWave = gl.getUniformLocation(prog, 'uWave');
       this.pUWaveOn = gl.getUniformLocation(prog, 'uWaveOn');
       this.pUWaveOrg = gl.getUniformLocation(prog, 'uWaveOrg');
@@ -701,6 +731,7 @@ export class GLCompositor {
     gl.uniform1f(this.pUSharp, zoom * (this.canvas.width / Math.max(1, cssW)));
     gl.uniform1f(this.pUMode, this.presentMode === 1 ? 1 : 0);
     gl.uniform1f(this.pUCrt, this.crt ? 1 : 0);
+    gl.uniform1f(this.pUCrtK, zoom / 1.84);
     if (this._waveOn) {
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, this.waveTex);
@@ -837,6 +868,7 @@ export class GLCompositor {
       this.shUAtlas = gl.getUniformLocation(sprog, 'uAtlas');
       this.shUShadowVec = gl.getUniformLocation(sprog, 'uShadowVec');
       this.shUShadowAlpha = gl.getUniformLocation(sprog, 'uShadowAlpha');
+      this.shUAtlasTexel = gl.getUniformLocation(sprog, 'uAtlasTexel');
       this.shadowVao = gl.createVertexArray();
       gl.bindVertexArray(this.shadowVao);
       gl.bindBuffer(gl.ARRAY_BUFFER, this.unitVbo);
@@ -970,6 +1002,7 @@ export class GLCompositor {
     gl.uniform1i(this.shUAtlas, 0);
     gl.uniform2f(this.shUShadowVec, shadowVec.x, shadowVec.y);
     gl.uniform1f(this.shUShadowAlpha, strength);
+    gl.uniform1f(this.shUAtlasTexel, 1 / this.atlasSize);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.shadowVbo);
     var bytes = count * SPRITE_STRIDE;
     if (bytes > this._shadowCapacityBytes) {
