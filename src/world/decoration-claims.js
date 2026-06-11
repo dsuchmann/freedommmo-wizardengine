@@ -1,0 +1,356 @@
+// src/world/decoration-claims.js
+// Single source of truth for Field 3+ decoration placement and the
+// cross-field claim masks that stop lower fields (F2 flora) from spawning
+// inside higher-field objects' base footprints. Pure + deterministic:
+// worker and main thread compute identical results independently.
+import { rand2 } from '../core/random.js';
+
+export var SS_BASE_PATH = '/assets/pixelab/landscape_v2/micro/small_scatter/';
+export var SS_VARIANT_COUNT = 64;
+
+// MOVED VERBATIM from worker-chunk-renderer.js lines ~881-1035 — do not edit entries.
+export var SS_BIOME_OBJECTS = {
+  arctic: [
+    { name: 'blue_ice_crystal_scatter', sparsity: 0.93, scale: 0.35 },
+    { name: 'frost_crystal_scatter', sparsity: 0.95, scale: 0.30 },
+    { name: 'sparkling_crystal_dust_hyperdetailed_rich', sparsity: 0.94, scale: 0.28 },
+    { name: 'thin_ice_crust_hyperdetailed_rich', sparsity: 0.96, scale: 0.32 },
+    { name: 'frost_stone', sparsity: 0.94, scale: 0.30 },
+    { name: 'frozen_shell', sparsity: 0.95, scale: 0.28 },
+    { name: 'ice_crystal_cluster', sparsity: 0.93, scale: 0.32 },
+    { name: 'snow_clump', sparsity: 0.92, scale: 0.35 },
+  ],
+  beach: [
+    { name: 'shell_scatter_scattered_seashells_on', sparsity: 0.90, scale: 0.35 },
+    { name: 'small_crab_burrow_hole_in', sparsity: 0.95, scale: 0.30 },
+    { name: 'wet_sand_grain_texture', sparsity: 0.94, scale: 0.28 },
+    { name: 'dark_tide_line_mark', sparsity: 0.96, scale: 0.32 },
+    { name: 'coral_fragment', sparsity: 0.93, scale: 0.30 },
+    { name: 'driftwood_chip', sparsity: 0.94, scale: 0.35 },
+    { name: 'sea_glass', sparsity: 0.95, scale: 0.28 },
+    { name: 'seashell', sparsity: 0.92, scale: 0.32 },
+  ],
+  dense_forest: [
+    { name: 'fallen_pinecone', sparsity: 0.92, scale: 0.30 },
+    { name: 'moss_covered_small_stone', sparsity: 0.93, scale: 0.35 },
+    { name: 'mushroom_cluster', sparsity: 0.94, scale: 0.32 },
+    { name: 'rotting_branch_piece', sparsity: 0.91, scale: 0.38 },
+    { name: 'moss_stone', sparsity: 0.93, scale: 0.32 },
+    { name: 'rotting_branch', sparsity: 0.92, scale: 0.35 },
+  ],
+  desert: [
+    { name: 'animal_skull_bleached_white_bone', sparsity: 0.97, scale: 0.35 },
+    { name: 'cracked_dry_clay_hyperdetailed_rich', sparsity: 0.93, scale: 0.32 },
+    { name: 'sunbaked_earth_patch_tan_ochre', sparsity: 0.95, scale: 0.30 },
+    { name: 'hot_sand_patch_goldentan_fine', sparsity: 0.94, scale: 0.28 },
+    { name: 'bleached_bone', sparsity: 0.96, scale: 0.32 },
+    { name: 'dried_seed', sparsity: 0.94, scale: 0.28 },
+    { name: 'polished_stone', sparsity: 0.95, scale: 0.30 },
+    { name: 'scorpion_shell', sparsity: 0.96, scale: 0.30 },
+  ],
+  forest: [
+    { name: 'acorn_cluster', sparsity: 0.92, scale: 0.30 },
+    { name: 'brown_mushroom_morel_growing_from', sparsity: 0.94, scale: 0.32 },
+    { name: 'small_forest_stone', sparsity: 0.93, scale: 0.35 },
+    { name: 'small_twig_bundle', sparsity: 0.91, scale: 0.35 },
+    { name: 'puffball_mushroom_round_white_puffy', sparsity: 0.95, scale: 0.28 },
+    { name: 'bark_shard_piece', sparsity: 0.94, scale: 0.30 },
+    { name: 'bark_shard', sparsity: 0.93, scale: 0.30 },
+    { name: 'twig_bundle', sparsity: 0.92, scale: 0.35 },
+  ],
+  grassland: [
+    { name: 'dried_wildflower', sparsity: 0.92, scale: 0.32 },
+    { name: 'exposed_flat_stone_in_grass', sparsity: 0.94, scale: 0.35 },
+    { name: 'seed_head_cluster', sparsity: 0.93, scale: 0.30 },
+    { name: 'small_field_stone', sparsity: 0.95, scale: 0.32 },
+    { name: 'dried_flower', sparsity: 0.93, scale: 0.30 },
+    { name: 'field_stone', sparsity: 0.94, scale: 0.35 },
+    { name: 'seed_head', sparsity: 0.95, scale: 0.28 },
+    { name: 'snail_shell', sparsity: 0.96, scale: 0.28 },
+  ],
+  hills: [
+    { name: 'rocky_soil_patch_brown_earth', sparsity: 0.92, scale: 0.35 },
+    { name: 'slate_slab_flat_dark_grey_layered_rock', sparsity: 0.94, scale: 0.38 },
+    { name: 'natural_quartz_crystal_formation_white', sparsity: 0.96, scale: 0.30 },
+    { name: 'gem_deposit_colorful_crystals_embedded', sparsity: 0.97, scale: 0.28 },
+    { name: 'iron_nugget', sparsity: 0.95, scale: 0.28 },
+    { name: 'limestone_chip', sparsity: 0.93, scale: 0.32 },
+    { name: 'quartz_pebble', sparsity: 0.94, scale: 0.30 },
+    { name: 'slate_fragment', sparsity: 0.93, scale: 0.35 },
+  ],
+  mountains: [
+    { name: 'fine_gravel_scatter_hyperdetailed_rich', sparsity: 0.91, scale: 0.32 },
+    { name: 'grey_mountain_gravel_patch_stone', sparsity: 0.93, scale: 0.35 },
+    { name: 'iron_ore_deposit', sparsity: 0.96, scale: 0.30 },
+    { name: 'scree_loose_grey_angular_rock', sparsity: 0.92, scale: 0.38 },
+    { name: 'crystal_fragment', sparsity: 0.95, scale: 0.28 },
+    { name: 'ice_chunk', sparsity: 0.94, scale: 0.32 },
+    { name: 'ore_glint', sparsity: 0.96, scale: 0.25 },
+    { name: 'rock_shard', sparsity: 0.93, scale: 0.35 },
+  ],
+  mystic: [
+    { name: 'glowing_arcane_flower_with_purple', sparsity: 0.93, scale: 0.32 },
+    { name: 'mystic_crystal_glowing_purple_magical', sparsity: 0.94, scale: 0.30 },
+    { name: 'runic_stone_ancient_carved_stone', sparsity: 0.95, scale: 0.35 },
+    { name: 'spirit_wisp', sparsity: 0.96, scale: 0.28 },
+    { name: 'aether_crystal', sparsity: 0.94, scale: 0.28 },
+    { name: 'glowing_pebble', sparsity: 0.93, scale: 0.30 },
+    { name: 'rune_shard', sparsity: 0.95, scale: 0.32 },
+    { name: 'stardust_cluster', sparsity: 0.94, scale: 0.28 },
+  ],
+  savanna: [
+    { name: 'bone_fragment', sparsity: 0.94, scale: 0.30 },
+    { name: 'dried_seed_pod', sparsity: 0.93, scale: 0.28 },
+    { name: 'dry_golden_thatch_hyperdetailed_rich', sparsity: 0.92, scale: 0.35 },
+    { name: 'termite_mound_piece', sparsity: 0.95, scale: 0.32 },
+    { name: 'bleached_stick', sparsity: 0.94, scale: 0.35 },
+    { name: 'cracked_pod', sparsity: 0.93, scale: 0.28 },
+    { name: 'dry_bone', sparsity: 0.96, scale: 0.30 },
+    { name: 'termite_chip', sparsity: 0.95, scale: 0.25 },
+  ],
+  steppe: [
+    { name: 'dried_brown_stem_scatter_hyperdetailed', sparsity: 0.93, scale: 0.30 },
+    { name: 'dusty_earth_patch_pale_browngray', sparsity: 0.94, scale: 0.32 },
+    { name: 'scattered_seed_husks_hyperdetailed_rich', sparsity: 0.95, scale: 0.28 },
+    { name: 'windblown_dust_patch_hyperdetailed_rich', sparsity: 0.92, scale: 0.35 },
+    { name: 'dust_clod', sparsity: 0.94, scale: 0.30 },
+    { name: 'grass_ball', sparsity: 0.93, scale: 0.32 },
+    { name: 'small_skull', sparsity: 0.96, scale: 0.30 },
+    { name: 'wind_pebble', sparsity: 0.95, scale: 0.28 },
+  ],
+  swamp: [
+    { name: 'algae_film_green_slimy_algae', sparsity: 0.91, scale: 0.35 },
+    { name: 'thin_fungal_film_on_ground', sparsity: 0.93, scale: 0.32 },
+    { name: 'waterlogged_dark_leaf', sparsity: 0.92, scale: 0.30 },
+    { name: 'bog_iron', sparsity: 0.94, scale: 0.30 },
+    { name: 'frog_eggs', sparsity: 0.95, scale: 0.28 },
+    { name: 'leech', sparsity: 0.96, scale: 0.25 },
+    { name: 'rotting_stick', sparsity: 0.93, scale: 0.35 },
+  ],
+  taiga: [
+    { name: 'frozen_twig', sparsity: 0.92, scale: 0.32 },
+    { name: 'ice_covered_pebble', sparsity: 0.94, scale: 0.28 },
+    { name: 'pine_cone', sparsity: 0.93, scale: 0.30 },
+    { name: 'pine_needle_duff_soil_patch', sparsity: 0.91, scale: 0.35 },
+    { name: 'ice_pebble', sparsity: 0.94, scale: 0.28 },
+  ],
+  tropical_forest: [
+    { name: 'bright_beetle_shell', sparsity: 0.94, scale: 0.28 },
+    { name: 'exotic_seed_pod', sparsity: 0.93, scale: 0.30 },
+    { name: 'small_palm_nut', sparsity: 0.92, scale: 0.32 },
+    { name: 'vine_cutting_piece', sparsity: 0.91, scale: 0.35 },
+    { name: 'beetle_shell', sparsity: 0.94, scale: 0.28 },
+    { name: 'palm_nut', sparsity: 0.93, scale: 0.30 },
+    { name: 'seed_pod', sparsity: 0.95, scale: 0.28 },
+    { name: 'vine_cutting', sparsity: 0.92, scale: 0.35 },
+  ],
+  tundra: [
+    { name: 'antler_shard', sparsity: 0.95, scale: 0.32 },
+    { name: 'frozen_pebble_cluster', sparsity: 0.93, scale: 0.30 },
+    { name: 'frozen_permafrost_earth_patch_graybrown', sparsity: 0.92, scale: 0.35 },
+    { name: 'fossil_fragment', sparsity: 0.95, scale: 0.30 },
+    { name: 'frozen_pebble', sparsity: 0.94, scale: 0.28 },
+    { name: 'ice_shard', sparsity: 0.93, scale: 0.32 },
+    { name: 'lichen_rock', sparsity: 0.94, scale: 0.35 },
+  ],
+  volcanic: [
+    { name: 'dark_ash_film', sparsity: 0.92, scale: 0.32 },
+    { name: 'grey_pumice_stone_lightweight_porous', sparsity: 0.94, scale: 0.30 },
+    { name: 'lava_rock_glowing_redhot_rock', sparsity: 0.95, scale: 0.35 },
+    { name: 'volcanic_rock_dark_black_ignite', sparsity: 0.93, scale: 0.32 },
+    { name: 'yellow_sulfur_deposit_on_rock', sparsity: 0.96, scale: 0.28 },
+    { name: 'charred_bone', sparsity: 0.95, scale: 0.30 },
+    { name: 'lava_pebble', sparsity: 0.94, scale: 0.28 },
+    { name: 'obsidian_shard', sparsity: 0.93, scale: 0.32 },
+    { name: 'sulfur_crystal', sparsity: 0.96, scale: 0.25 },
+  ],
+};
+
+// Generated from assets/_states: 'biome/object' -> available states.
+// Only objects with known state PNGs are listed. 'unknown' biome excluded.
+var SS_STATES = {
+  'arctic/frost_stone': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'arctic/frozen_shell': ['burned', 'cracked', 'destroyed', 'enchanted', 'frozen'],
+  'arctic/ice_crystal_cluster': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'arctic/snow_clump': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'beach/coral_fragment': ['burned', 'cracked', 'destroyed', 'enchanted', 'frozen'],
+  'beach/driftwood_chip': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
+  'beach/sea_glass': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'beach/seashell': ['burned', 'cracked', 'destroyed', 'enchanted', 'frozen'],
+  'dense_forest/fallen_pinecone': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
+  'dense_forest/moss_stone': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'dense_forest/mushroom_cluster': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
+  'dense_forest/rotting_branch': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
+  'desert/bleached_bone': ['burned', 'cracked', 'destroyed', 'enchanted', 'frozen'],
+  'desert/dried_seed': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
+  'desert/polished_stone': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'desert/scorpion_shell': ['burned', 'cracked', 'destroyed', 'enchanted', 'frozen'],
+  'forest/acorn_cluster': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
+  'forest/bark_shard': ['burned', 'destroyed', 'enchanted', 'frozen'],
+  'forest/small_stone': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'forest/twig_bundle': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
+  'grassland/dried_flower': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
+  'grassland/field_stone': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'grassland/seed_head': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
+  'grassland/snail_shell': ['burned', 'cracked', 'destroyed', 'enchanted', 'frozen'],
+  'hills/iron_nugget': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'hills/limestone_chip': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'hills/quartz_pebble': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'hills/slate_fragment': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'mountains/crystal_fragment': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'mountains/ice_chunk': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'mountains/ore_glint': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'mountains/rock_shard': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'mystic/aether_crystal': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'mystic/glowing_pebble': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'mystic/rune_shard': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'mystic/stardust_cluster': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'savanna/bleached_stick': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
+  'savanna/cracked_pod': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
+  'savanna/dry_bone': ['burned', 'cracked', 'destroyed', 'enchanted', 'frozen'],
+  'savanna/termite_chip': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
+  'steppe/dust_clod': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'steppe/grass_ball': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
+  'steppe/small_skull': ['burned', 'cracked', 'destroyed', 'enchanted', 'frozen'],
+  'steppe/wind_pebble': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'swamp/bog_iron': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'swamp/frog_eggs': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
+  'swamp/leech': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
+  'swamp/rotting_stick': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
+  'taiga/frozen_twig': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
+  'taiga/ice_pebble': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'taiga/pine_cone': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
+  'taiga/resin_drop': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
+  'tropical_forest/beetle_shell': ['burned', 'cracked', 'destroyed', 'enchanted', 'frozen'],
+  'tropical_forest/palm_nut': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
+  'tropical_forest/seed_pod': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
+  'tropical_forest/vine_cutting': ['burned', 'decayed', 'destroyed', 'enchanted', 'frozen'],
+  'tundra/fossil_fragment': ['burned', 'cracked', 'destroyed', 'enchanted', 'frozen'],
+  'tundra/frozen_pebble': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'tundra/ice_shard': ['cracked', 'destroyed', 'frozen'],
+  'tundra/lichen_rock': ['destroyed', 'enchanted', 'frozen'],
+  'volcanic/charred_bone': ['burned', 'cracked', 'destroyed', 'enchanted', 'frozen'],
+  'volcanic/lava_pebble': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'volcanic/obsidian_shard': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+  'volcanic/sulfur_crystal': ['cracked', 'destroyed', 'enchanted', 'frozen'],
+};
+
+var STATE_CHANCE = 0.22;        // share of placements that use a state sprite
+var MAX_PER_TILE = 2;
+var TILE_ART_PX = 32;           // art px per tile (claim space)
+var CELLS = 8;                  // 8x8 claim cells per tile
+var CELL_PX = TILE_ART_PX / CELLS;
+
+var EMPTY = [];
+var _placeCache = new Map();    // 'wx,wy' -> placements
+var _maskCache = new Map();     // 'wx,wy' -> Uint8Array(8) row bitmasks
+var MAX_CACHE = 20000;
+
+function cachePut(map, key, val) {
+  if (map.size >= MAX_CACHE) map.clear(); // deterministic — safe to drop wholesale
+  map.set(key, val);
+  return val;
+}
+
+// tileInfo(wx, wy) -> { biome, transition } | null  (caller-supplied lookup)
+export function f3Placements(wx, wy, tileInfo) {
+  var t = tileInfo(wx, wy);
+  if (!t || t.transition) return EMPTY; // don't cache null/transition tiles (may load later)
+  var key = wx + ',' + wy + ',' + t.biome;
+  var hit = _placeCache.get(key);
+  if (hit) return hit;
+  var objs = SS_BIOME_OBJECTS[t.biome];
+  if (!objs) return cachePut(_placeCache, key, EMPTY);
+  var out = [];
+  for (var oi = 0; oi < objs.length && out.length < MAX_PER_TILE; oi++) {
+    var obj = objs[oi];
+    var sparsity = obj.sparsity || 0.93;
+    if (rand2(wx, wy, 9500 + oi) > (1.0 - sparsity)) continue; // SAME seeds as today
+    var scale = obj.scale || 0.32;
+    var ux = 0.5 + (rand2(wx, wy, 9520 + oi) - 0.5) * 0.6;     // tile units
+    var uy = 0.5 + (rand2(wx, wy, 9530 + oi) - 0.5) * 0.6;
+    var drawPx = TILE_ART_PX * scale;
+    var p = {
+      name: obj.name, biome: t.biome,
+      variant: Math.floor(rand2(wx, wy, 9510 + oi) * SS_VARIANT_COUNT),
+      ux: ux, uy: uy, scale: scale,
+      angle: (rand2(wx, wy, 9540 + oi) - 0.5) * 0.5,
+      alpha: 0.85 + rand2(wx, wy, 9550 + oi) * 0.15,
+      state: null,
+      // base footprint ellipse, world art px, centered at the sprite base
+      bx: (wx + ux) * TILE_ART_PX,
+      by: (wy + uy) * TILE_ART_PX + drawPx * 0.32,
+      fw: drawPx * 0.55, fh: drawPx * 0.30,
+    };
+    var states = SS_STATES[t.biome + '/' + obj.name];
+    if (states && states.length && rand2(wx, wy, 9560 + oi) < STATE_CHANCE) {
+      p.state = states[Math.floor(rand2(wx, wy, 9561 + oi) * states.length)];
+    }
+    // self-spacing within the tile: reject if base centers closer than the
+    // sum of half-widths (looser than ellipse-touch — debris may abut)
+    var ok = true;
+    for (var pi = 0; pi < out.length; pi++) {
+      var q = out[pi];
+      var dx = p.bx - q.bx, dy = p.by - q.by;
+      if (dx * dx + dy * dy < (p.fw + q.fw) * (p.fw + q.fw) * 0.36) { ok = false; break; }
+    }
+    if (ok) out.push(p);
+  }
+  return cachePut(_placeCache, key, out.length ? out : EMPTY);
+}
+
+export function f3SpriteUrl(p) {
+  if (p.state) {
+    return SS_BASE_PATH + '_states/' + p.biome + '/' + p.name +
+      '/ss__' + p.biome + '__' + p.name + '__state__' + p.state + '.png';
+  }
+  var v = p.variant;
+  var idx = v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v);
+  return SS_BASE_PATH + p.biome + '/' + p.name +
+    '/ss__' + p.biome + '__' + p.name + '__v' + idx + '.png';
+}
+
+// 8x8 bitmask of claimed cells for tile (wx,wy). Row r bit c = cell claimed.
+// Scans this tile + 8 neighbors (F3 max reach: jitter 0.3 tile + half base
+// width ~6px well under one tile). Raise the radius when F4+ register.
+export function getClaimMask(wx, wy, tileInfo) {
+  var key = wx + ',' + wy;
+  var hit = _maskCache.get(key);
+  if (hit) return hit;
+  var mask = new Uint8Array(CELLS);
+  var ox = wx * TILE_ART_PX, oy = wy * TILE_ART_PX;
+  for (var ny = -1; ny <= 1; ny++) {
+    for (var nx = -1; nx <= 1; nx++) {
+      var pls = f3Placements(wx + nx, wy + ny, tileInfo);
+      for (var i = 0; i < pls.length; i++) {
+        var p = pls[i];
+        // rasterize the base ellipse into this tile's cells (center test)
+        var c0 = Math.max(0, Math.floor((p.bx - p.fw - ox) / CELL_PX));
+        var c1 = Math.min(CELLS - 1, Math.floor((p.bx + p.fw - ox) / CELL_PX));
+        var r0 = Math.max(0, Math.floor((p.by - p.fh - oy) / CELL_PX));
+        var r1 = Math.min(CELLS - 1, Math.floor((p.by + p.fh - oy) / CELL_PX));
+        for (var r = r0; r <= r1; r++) {
+          for (var c = c0; c <= c1; c++) {
+            var px = ox + (c + 0.5) * CELL_PX, py = oy + (r + 0.5) * CELL_PX;
+            var ex = (px - p.bx) / p.fw, ey = (py - p.by) / p.fh;
+            if (ex * ex + ey * ey < 1.0) mask[r] |= (1 << c);
+          }
+        }
+      }
+    }
+  }
+  return cachePut(_maskCache, key, mask);
+}
+
+// Point test in world art px — used by F2 to cull blades.
+export function isClaimedAt(px, py, tileInfo) {
+  var wx = Math.floor(px / TILE_ART_PX), wy = Math.floor(py / TILE_ART_PX);
+  var mask = getClaimMask(wx, wy, tileInfo);
+  var c = Math.floor((px - wx * TILE_ART_PX) / CELL_PX);
+  var r = Math.floor((py - wy * TILE_ART_PX) / CELL_PX);
+  if (c < 0) c = 0; else if (c > 7) c = 7;
+  if (r < 0) r = 0; else if (r > 7) r = 7;
+  return (mask[r] & (1 << c)) !== 0;
+}
+
+export function clearClaimCaches() { _placeCache.clear(); _maskCache.clear(); }
