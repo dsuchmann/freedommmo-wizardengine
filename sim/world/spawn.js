@@ -2,11 +2,12 @@ import { rand, randRange } from '../kernel/rng.js';
 import { DAY } from '../time/metabolism.js';
 
 // Deterministic baseline meadow (spec §5.1). Densities are per-tile probabilities.
-const DENSITY = { grass: 0.5, berry_bush: 0.05, grazer: 0.004 };
+const DENSITY = { grass: 0.5, berry_bush: 0.05, grazer: 0.004, tree: 0.02 };
 const START = {
   grass:      { R: [200, 1500],   body: [10, 60],    maxAgeDays: 50 },
   berry_bush: { R: [3000, 15000], body: [500, 3000], maxAgeDays: 600 },
   grazer:     { R: [20000, 60000], body: [2000, 8000], maxAgeDays: 1500 },
+  tree:       { R: [10000, 40000], body: [5000, 30000], maxAgeDays: 3000 },
 };
 
 export function spawnMeadow(kernel, { x0, y0, w, h }) {

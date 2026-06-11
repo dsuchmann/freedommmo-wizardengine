@@ -119,6 +119,10 @@ export function registerLifecycle(kernel) {
     node.attrs.E = 0;
     k.ledger.emit({ tick: ev.tick, type: 'decay_gone', targets: [node.id], causeEventId: node.createdByEvent });
     k.deltas.push({ tick: ev.tick, x: node.x, y: node.y, target: `corpse:${node.id}`, kind: 'gone' });
+    if (node.attrs.healDeltaId != null) {
+      k.deltas.remove(node.attrs.healDeltaId);
+      k.ledger.emit({ tick: ev.tick, type: 'delta_healed', targets: [node.id], causeEventId: node.createdByEvent });
+    }
     k.graph.removeNode(node.id);
   });
 }
@@ -153,7 +157,8 @@ export function die(kernel, node, tick, causeEventId) {
     });
     const goneTick = tick + halflife * Math.log2(E / GONE_THRESHOLD);
     kernel.scheduler.schedule(goneTick, corpse.id, 'decay_gone', -1);
-  } else {
-    kernel.ledger.count('decayed', E);
+    return corpse;
   }
+  kernel.ledger.count('decayed', E);
+  return null;
 }

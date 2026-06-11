@@ -33,6 +33,18 @@ export const SPECIES = {
     senescence: { start: 4 * YEAR, stepEvery: 30 * DAY, burnGrowth: 1.08, demandDecay: 0.95 },
     seed: { every: 90 * DAY, cost: 3000, minR: 10000, jitter: 0.3 },
     embodiedDecayDays: 30,
+    pick: { bite: 300 },
+  },
+  tree: {
+    demand: 0.80, burn: 0.08, growFrac: 0.6, maxBody: 50000,
+    stages: [
+      ['seedling', 0,          0.4, 0.5],
+      ['growing',  60 * DAY,   0.8, 0.8],
+      ['mature',   1 * YEAR,   1.0, 1.0],
+    ],
+    senescence: { start: 30 * YEAR, stepEvery: 180 * DAY, burnGrowth: 1.08, demandDecay: 0.96 },
+    seed: { every: 180 * DAY, cost: 8000, minR: 30000, jitter: 0.3 },
+    embodiedDecayDays: 21,    // stump heals over ~weeks (probe 6)
   },
   grazer: {
     demand: 0.10, burn: 0.50, growFrac: 0.4, maxBody: 20000,   // ambient barely feeds it: must graze (Task 11)
