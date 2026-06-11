@@ -81,6 +81,8 @@ One substrate for everything. **Nodes** are anything that exists (person, tree, 
 
 ```
 id, type, born_tick, pos?        identity & place
+created_by_event?                provenance: null = baseline-from-seed,
+                                 else the ledger event that caused it (§5.4)
 R, r, last_tick                  the time annotation: reserve, net rate,
                                  last materialization tick (lazy-flow core)
 attrs                            typed bag per node-type (JSON column)
@@ -186,7 +188,18 @@ A delta is a persistent override of baseline (tree felled, path worn, house buil
 
 Extending the existing F2/F3 claims machinery: large objects claim space first, smaller fields fill the remainder. New entities (building, tree, camp) claim before existing visually; destruction writes a delta and releases the claim. Nothing pops in or out — promotion materializes *into* the claim map.
 
-### 5.4 Determinism discipline
+### 5.4 The provenance rule — nothing exists unexplained
+
+Every node in the world must be accountable to the world equation in one of exactly two ways:
+
+1. **Baseline**: it follows from the seed (a wild tree, an ore vein, a natural vista) — its explanation is the world's nature; or
+2. **Caused**: it carries a `created_by_event` reference into the ledger — it exists because something *did* something (a chest packed and hidden by an entity, a sword forged, a town founded, a corpse fallen).
+
+There is no third category. The kernel enforces this at the schema level: creating a non-baseline node without a causal event is impossible. This is what makes **total discovery** honest — walk in any direction and everything you find (items of power, civilizations, ruins, allies, enemies) has an actual causal path explaining its existence and placement. The chest in the woods has a packer, a route, a reason — unknown to the player, but *real*, discoverable through lore, minds that remember, or evidence, and never invented retroactively at the moment of opening.
+
+Pass 1 ships the schema enforcement and the rule. The chains themselves are written by later systems: Object System (S3) makes items citizens of the hypergraph; History Generation (S6) is the headless world-boot that runs generations of real simulation so the world is strewn with genuine consequences before the player's first step.
+
+### 5.5 Determinism discipline
 
 - One seeded RNG stream per system per region; no shared global RNG.
 - Randomness drawn from `hash(seed, entity_id, event_tick)` — never call-order-dependent, so lazy materialization at tick N is independent of *when* it is computed.
