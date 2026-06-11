@@ -23,6 +23,19 @@ export class EventHeap {
     }
   }
 
+  _siftDown(i) {
+    const a = this.a;
+    for (;;) {
+      const l = 2 * i + 1, r = l + 1;
+      let m = i;
+      if (l < a.length && lt(a[l], a[m])) m = l;
+      if (r < a.length && lt(a[r], a[m])) m = r;
+      if (m === i) break;
+      [a[i], a[m]] = [a[m], a[i]];
+      i = m;
+    }
+  }
+
   pop() {
     const a = this.a;
     if (a.length === 0) return undefined;
@@ -30,17 +43,14 @@ export class EventHeap {
     const last = a.pop();
     if (a.length > 0) {
       a[0] = last;
-      let i = 0;
-      for (;;) {
-        const l = 2 * i + 1, r = l + 1;
-        let m = i;
-        if (l < a.length && lt(a[l], a[m])) m = l;
-        if (r < a.length && lt(a[r], a[m])) m = r;
-        if (m === i) break;
-        [a[i], a[m]] = [a[m], a[i]];
-        i = m;
-      }
+      this._siftDown(0);
     }
     return top;
+  }
+
+  /** Replace contents with `items` and restore heap order (Floyd heapify). */
+  rebuild(items) {
+    this.a = items;
+    for (let i = (items.length >> 1) - 1; i >= 0; i--) this._siftDown(i);
   }
 }

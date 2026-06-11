@@ -4,7 +4,7 @@ import { Kernel } from '../kernel/kernel.js';
 import { DAY, YEAR } from '../time/metabolism.js';
 
 test('grass dies of old age and leaves a decaying corpse with cause chain', () => {
-  const k = new Kernel({ seed: 7, phi: 4 });
+  const k = new Kernel({ seed: 7, phi: 4, bounds: { x0: 0, y0: 0, w: 8, h: 8 } });
   let g;
   k.graph.boot(() => { g = k.addLiving({ species: 'grass', x: 2, y: 2, R: 800, body: 10, tick: 0 }); });
   k.runTo(2 * YEAR);
@@ -16,7 +16,7 @@ test('grass dies of old age and leaves a decaying corpse with cause chain', () =
 });
 
 test('seeding creates provenance-correct offspring and population grows', () => {
-  const k = new Kernel({ seed: 7, phi: 4 });
+  const k = new Kernel({ seed: 7, phi: 4, bounds: { x0: 0, y0: 0, w: 8, h: 8 } });
   k.graph.boot(() => {
     k.addLiving({ species: 'grass', x: 2, y: 2, R: 2000, body: 30, tick: 0, age: 16 * DAY });
   });
@@ -30,7 +30,7 @@ test('seeding creates provenance-correct offspring and population grows', () => 
 });
 
 test('corpse decays to gone and writes a delta', () => {
-  const k = new Kernel({ seed: 7, phi: 4 });
+  const k = new Kernel({ seed: 7, phi: 4, bounds: { x0: 0, y0: 0, w: 8, h: 8 } });
   k.graph.boot(() => {
     k.addLiving({ species: 'grass', x: 2, y: 2, R: 1, body: 5, tick: 0, age: 20 * DAY });
   });

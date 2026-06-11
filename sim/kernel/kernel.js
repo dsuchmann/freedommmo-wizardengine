@@ -6,9 +6,10 @@ import { SPECIES, materialize, stageAt } from '../time/metabolism.js';
 import { registerLifecycle } from '../time/lifecycle.js';
 
 export class Kernel {
-  constructor({ seed, phi = 4 }) {
+  constructor({ seed, phi = 4, bounds = null }) {
     this.seed = seed;
     this.tick = 0;
+    this.bounds = bounds;   // {x0,y0,w,h} or null = unbounded; seeds outside bounds fail to establish
     this.graph = new Graph();
     this.ledger = new Ledger();
     this.flux = new FluxField({ phi });
@@ -105,16 +106,19 @@ export class Kernel {
   }
 
   runTo(targetTick) {
+    const isFresh = e => {
+      const n = this.graph.nodes.get(e.nodeId);
+      return n != null && (e.ver === -1 || e.ver === n.ver);
+    };
     for (;;) {
-      const ev = this.scheduler.nextDue(targetTick, e => {
-        const n = this.graph.nodes.get(e.nodeId);
-        return n != null && (e.ver === -1 || e.ver === n.ver);
-      });
+      const ev = this.scheduler.nextDue(targetTick, isFresh);
       if (!ev) break;
       this.tick = ev.tick;
       const node = this.graph.nodes.get(ev.nodeId);
       const h = this.handlers.get(ev.kind);
       if (h) h(this, node, ev);
+      const sz = this.scheduler.heap.size;
+      if (sz > 4096 && sz > 8 * this.graph.nodes.size) this.scheduler.compact(isFresh);
     }
     this.tick = targetTick;
   }

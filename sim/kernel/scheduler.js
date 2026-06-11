@@ -16,4 +16,11 @@ export class Scheduler {
     }
     return undefined;
   }
+
+  /** Evict events that can never fire. Safe at any time: freshness is monotone
+   *  (node ids never reused, ver only grows), so removing permanently-stale
+   *  events cannot change the pop sequence. */
+  compact(isFresh) {
+    this.heap.rebuild(this.heap.a.filter(isFresh));
+  }
 }
