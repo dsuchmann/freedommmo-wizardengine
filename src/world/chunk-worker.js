@@ -104,8 +104,9 @@ async function runRepaintPass() {
   repaintPassScheduled = false;
   if (chunksNeedingRepaint.length === 0) return;
 
-  // Re-fetch anything still missing (failed loads from earlier batches)
-  var critical = getSoilImageURLs().concat(getAllWangImageURLs());
+  // Re-fetch anything still missing (failed loads from earlier batches).
+  // Include scatter URLs so chunks that baked before F3 images loaded get debris.
+  var critical = getSoilImageURLs().concat(getAllWangImageURLs()).concat(getSmallScatterImageURLs());
   var missing = critical.filter(function(url) { return !imageCache.has(url); });
   if (missing.length > 0) {
     await loadImageBatch(missing, 40);
