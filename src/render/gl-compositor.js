@@ -1002,7 +1002,7 @@ export class GLCompositor {
     gl.uniform1i(this.shUAtlas, 0);
     gl.uniform2f(this.shUShadowVec, shadowVec.x, shadowVec.y);
     gl.uniform1f(this.shUShadowAlpha, strength);
-    gl.uniform1f(this.shUAtlasTexel, 1 / this.atlasSize);
+    gl.uniform1f(this.shUAtlasTexel, 1 / (this.atlasSize || 1));
     gl.bindBuffer(gl.ARRAY_BUFFER, this.shadowVbo);
     var bytes = count * SPRITE_STRIDE;
     if (bytes > this._shadowCapacityBytes) {
