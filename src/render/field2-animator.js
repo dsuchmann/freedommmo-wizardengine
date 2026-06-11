@@ -9,6 +9,7 @@ import { clearBorderLines } from './sprite-denoise.js';
 import { floorDiv } from '../world/chunk.js';
 import { SPRITE_FLOATS } from './gl-compositor.js';
 import { getAtmosphere } from '../world/biome-atmosphere.js';
+import { isClaimedAt } from '../world/decoration-claims.js';
 
 var ANIM_RADIUS = 40; // tiles around player — large enough to cover full screen at any zoom
 var FADE_INNER = 34; // fully opaque inside this radius
@@ -562,6 +563,17 @@ var MAX_TILE_DESC_CACHE = 30000;
 var _instArray = null; // Float32Array scratch for GL instances
 var _shadowArray = null; // Float32Array scratch for GL silhouette shadows
 
+var _ctiStore = null, _ctiFn = null;
+function _claimTileInfo(chunkStore) {
+  if (_ctiStore === chunkStore && _ctiFn) return _ctiFn;
+  _ctiStore = chunkStore;
+  _ctiFn = function (wx, wy) {
+    var t = chunkStore.tileAt(wx, wy);
+    return t ? { biome: t.biome, transition: !!t.transitionPair } : null;
+  };
+  return _ctiFn;
+}
+
 function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
   // Returns { desc, cacheable }; desc === null means nothing on this tile.
   var cacheable = true;
@@ -678,6 +690,15 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
     var animWl = sfAnimVariantsFor(biome, objName);
     var animAvail = !animWl || animWl.indexOf(variantIdx) !== -1;
 
+    var offUX = (rand2(wx, wy, 7030 + bi) - 0.5) * 1.1;
+    var offUY = (rand2(wx, wy, 7031 + bi) - 0.5) * 1.1;
+
+    // F3+ claim test: blade root in world art px (root sits ~0.35 tile
+    // below sprite center). Claimed cell -> the blade never existed.
+    var rootPx = (wx + 0.5 + offUX) * 32;
+    var rootPy = (wy + 0.5 + offUY) * 32 + 0.35 * 32;
+    if (isClaimedAt(rootPx, rootPy, _claimTileInfo(chunkStore))) continue;
+
     blades.push({
       bi: bi,
       stateUrl: lifecycleState !== 'normal' && STATE_SPRITES[biome + '/' + objName]
@@ -689,8 +710,8 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
       lifeScale: lifeScale,
       lifeSway: lifeSway,
       baseAngle: (rand2(wx, wy, 7040 + bi) - 0.5) * 0.35 + lifeAngle,
-      offUX: (rand2(wx, wy, 7030 + bi) - 0.5) * 1.1,
-      offUY: (rand2(wx, wy, 7031 + bi) - 0.5) * 1.1,
+      offUX: offUX,
+      offUY: offUY,
       sortYOff: 0.5 + (rand2(wx, wy, 7031 + bi) - 0.5) * 0.5,
       ambientPeriod: ambientPeriod,
       ambientPhase: ambientPhase,

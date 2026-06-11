@@ -30,6 +30,21 @@ window._lighting = null; // set below — lets tests/dev freeze & set time of da
 const compositor = new RuntimeCompositor(defaultAssetCatalog);
 const renderer = new CanvasRenderer(canvas, stats, compositor);
 window._dbgRenderer = renderer;
+window._dbgChunkStore = chunks;
+import('./world/decoration-claims.js').then(function (m) {
+  window._claims = {
+    mask: function (wx, wy) { return Array.from(m.getClaimMask(wx, wy, function (x, y) {
+      var t = window._dbgChunkStore && window._dbgChunkStore.tileAt(x, y);
+      return t ? { biome: t.biome, transition: !!t.transitionPair } : null; })); },
+    at: function (px, py) { return m.isClaimedAt(px, py, function (x, y) {
+      var t = window._dbgChunkStore && window._dbgChunkStore.tileAt(x, y);
+      return t ? { biome: t.biome, transition: !!t.transitionPair } : null; }); },
+    placements: function (wx, wy) { return m.f3Placements(wx, wy, function (x, y) {
+      var t = window._dbgChunkStore && window._dbgChunkStore.tileAt(x, y);
+      return t ? { biome: t.biome, transition: !!t.transitionPair } : null; }); },
+    clear: m.clearClaimCaches,
+  };
+});
 preloadWangTiles();
 provider.initPreload(player.x, player.y);
 const lighting = new DayNightCycle();
