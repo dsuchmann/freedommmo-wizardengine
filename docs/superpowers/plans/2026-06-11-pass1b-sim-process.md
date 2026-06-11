@@ -41,7 +41,7 @@ The Plan A schema can't round-trip a kernel: `node.ver` (staleness filtering) an
 - Modify: `sim/kernel/scheduler.js` (add `flush(db)` and `load(db)`)
 - Test: `sim/test/checkpoint.test.js` (new file, grows over Tasks 1–3)
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```js
 // sim/test/checkpoint.test.js
@@ -80,12 +80,12 @@ test('node ver and flux demand survive flush', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `node --test sim/test/checkpoint.test.js`
 Expected: FAIL — `s.flush is not a function`, and the demand assertion fails.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `sim/store/db.js`, change the `nodes` DDL to add `ver` (after `last_tick`):
 
@@ -145,11 +145,11 @@ In `sim/kernel/scheduler.js`, add two methods:
   }
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 Run: `node --test sim/test/checkpoint.test.js` → PASS. Then `npm test` → all green (the determinism probe re-canonicalizes with the new columns; if `probe-determinism` fails, it's comparing two dumps *of the same code* so it should still match — investigate any failure, don't paper over it).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add sim/store/db.js sim/store/graph.js sim/kernel/kernel.js sim/kernel/scheduler.js sim/test/checkpoint.test.js
@@ -168,7 +168,7 @@ git commit -m "feat(sim): persist node ver, flux demand, and scheduler heap (che
 - Modify: `sim/time/lifecycle.js` (delete the `kernel.deltas = []` line; `push` callsite keeps working)
 - Test: `sim/test/deltas.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```js
 // sim/test/deltas.test.js
@@ -198,11 +198,11 @@ test('kernel owns a Deltas store, not a plain array', async () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `node --test sim/test/deltas.test.js` → FAIL (module not found).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```js
 // sim/store/deltas.js
@@ -250,11 +250,11 @@ In `sim/kernel/kernel.js`: `import { Deltas } from '../store/deltas.js';` and in
 
 In `sim/time/lifecycle.js`: delete the line `kernel.deltas = [];` (the `k.deltas.push({...})` call in `decay_gone` now hits the class — same signature).
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 `node --test sim/test/deltas.test.js` → PASS, then `npm test` → all green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add sim/store/deltas.js sim/kernel/kernel.js sim/time/lifecycle.js sim/test/deltas.test.js
@@ -271,7 +271,7 @@ Spec §3.4: quit → checkpoint; crash → reopen (SQLite WAL replays automatica
 - Create: `sim/store/checkpoint.js`
 - Test: `sim/test/checkpoint.test.js` (extend)
 
-- [ ] **Step 1: Write the failing test (append to checkpoint.test.js)**
+- [x] **Step 1: Write the failing test (append to checkpoint.test.js)**
 
 ```js
 import { checkpoint, loadKernel } from '../store/checkpoint.js';
@@ -309,9 +309,9 @@ test('checkpoint preserves conservation totals across load', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify it fails** — `node --test sim/test/checkpoint.test.js` → FAIL (module not found).
+- [x] **Step 2: Run to verify it fails** — `node --test sim/test/checkpoint.test.js` → FAIL (module not found).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```js
 // sim/store/checkpoint.js
@@ -401,9 +401,9 @@ export function loadKernel(db) {
 
 IMPORTANT correctness note for the implementer: `loadKernel` must NOT re-rate anything — re-rating closes segments and bumps `ver`, which would invalidate persisted scheduler entries and break bit-identity. It is pure state reconstruction. Also note Task 4 will exclude non-metabolizing wallet nodes (player) from flux on load via `attrs.noFlux === true` — when you reach Task 4, come back and guard the flux re-entry loop with `if (n.attrs.noFlux) continue;`.
 
-- [ ] **Step 4: Run tests** — `node --test sim/test/checkpoint.test.js` then `npm test` → all green.
+- [x] **Step 4: Run tests** — `node --test sim/test/checkpoint.test.js` then `npm test` → all green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add sim/store/checkpoint.js sim/test/checkpoint.test.js
@@ -426,7 +426,7 @@ The player is *an entity sending intents* (spec §3.2). Pass 1 has no body/embod
 - Create: `sim/world/actions.js`
 - Test: `sim/test/actions.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```js
 // sim/test/actions.test.js
@@ -484,9 +484,9 @@ test('chop death is causally chained to the chop event', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure** — `node --test sim/test/actions.test.js` → FAIL (no actions.js, no tree species).
+- [x] **Step 2: Run to verify failure** — `node --test sim/test/actions.test.js` → FAIL (no actions.js, no tree species).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `sim/time/metabolism.js`, add to SPECIES (after `berry_bush`); also add a `pick` block to `berry_bush`:
 
@@ -605,9 +605,9 @@ export function chop(kernel, playerId, targetId, tick) {
 }
 ```
 
-- [ ] **Step 4: Run tests** — `node --test sim/test/actions.test.js` then `npm test` → all green. (Probe suite re-runs with the new tree species in spawn — capacity/conservation probes use their own bounds and densities; if a probe assertion breaks because trees changed meadow composition, that is a REAL finding: re-check the probe's tolerances and document any retune as a deviation. Do not silently weaken assertions.)
+- [x] **Step 4: Run tests** — `node --test sim/test/actions.test.js` then `npm test` → all green. (Probe suite re-runs with the new tree species in spawn — capacity/conservation probes use their own bounds and densities; if a probe assertion breaks because trees changed meadow composition, that is a REAL finding: re-check the probe's tolerances and document any retune as a deviation. Do not silently weaken assertions.)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add sim/time/metabolism.js sim/world/spawn.js sim/time/lifecycle.js sim/store/checkpoint.js sim/world/actions.js sim/test/actions.test.js
@@ -624,7 +624,7 @@ Spec §3.2. JSON messages, validated at the boundary (user input!), built by pur
 - Create: `sim/server/protocol.js`
 - Test: `sim/test/protocol.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```js
 // sim/test/protocol.test.js
@@ -662,9 +662,9 @@ test('message builders stamp type and tick', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure** — module not found.
+- [x] **Step 2: Run to verify failure** — module not found.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```js
 // sim/server/protocol.js
@@ -717,9 +717,9 @@ export const eventsMsg = (tick, events) => ({ type: 'events', tick, events });
 export const timeMsg = tick => ({ type: 'time', tick, day: Math.floor(tick / DAY) });
 ```
 
-- [ ] **Step 4: Run tests** — `node --test sim/test/protocol.test.js` then `npm test` → green.
+- [x] **Step 4: Run tests** — `node --test sim/test/protocol.test.js` then `npm test` → green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add sim/server/protocol.js sim/test/protocol.test.js
@@ -738,7 +738,7 @@ First: `npm install ws` (run it, verify `package.json` gains the dependency).
 - Create: `sim/server/server.js`
 - Test: `sim/test/server.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```js
 // sim/test/server.test.js
@@ -811,9 +811,9 @@ test('admin ff advances sim weeks instantly; admin pause freezes the clock', asy
 });
 ```
 
-- [ ] **Step 2: Run to verify failure** — `node --test sim/test/server.test.js` → FAIL (module not found).
+- [x] **Step 2: Run to verify failure** — `node --test sim/test/server.test.js` → FAIL (module not found).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```js
 // sim/server/server.js
@@ -939,9 +939,9 @@ export class SimServer {
 
 Coarse-delta note (document, don't "fix"): `tick-delta.upserts` re-sends every bubble entity each frame. Spec §3.2 allows this — JSON on localhost, tiny bubbles in Pass 1; per-entity dirty tracking arrives with LOD (Plan C) if profiling demands.
 
-- [ ] **Step 4: Run tests** — `node --test sim/test/server.test.js` then `npm test` → green. Server tests must always `close()` in a `finally` or at test end so the suite exits.
+- [x] **Step 4: Run tests** — `node --test sim/test/server.test.js` then `npm test` → green. Server tests must always `close()` in a `finally` or at test end so the suite exits.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add package.json package-lock.json sim/server/server.js sim/test/server.test.js
@@ -960,7 +960,7 @@ Spec §3.4 lifecycle: launch → open SQLite world → resume at saved tick (or 
 - Modify: `.gitignore` (add `worlds/`)
 - Test: `sim/test/main.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```js
 // sim/test/main.test.js
@@ -983,9 +983,9 @@ test('bootWorld spawns baseline into an empty db, resumes from a saved one', () 
 });
 ```
 
-- [ ] **Step 2: Run to verify failure** — module not found.
+- [x] **Step 2: Run to verify failure** — module not found.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```js
 // sim/server/main.js
@@ -1036,9 +1036,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
 In `package.json` scripts add: `"sim:serve": "node sim/server/main.js"`.
 In `.gitignore` add a line: `worlds/`.
 
-- [ ] **Step 4: Run tests** — `node --test sim/test/main.test.js`, then `npm test` → green. Also smoke the process by hand: `npm run sim:serve` in background, confirm the startup line prints, Ctrl-C (or kill) → "checkpointing…" → exits; second start resumes at a tick > 0. Delete `worlds/dev.db*` afterwards.
+- [x] **Step 4: Run tests** — `node --test sim/test/main.test.js`, then `npm test` → green. Also smoke the process by hand: `npm run sim:serve` in background, confirm the startup line prints, Ctrl-C (or kill) → "checkpointing…" → exits; second start resumes at a tick > 0. Delete `worlds/dev.db*` afterwards.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add sim/server/main.js sim/test/main.test.js package.json .gitignore
@@ -1054,7 +1054,7 @@ Spec §6.2.6 as an automated probe against the kernel + actions (fast, no socket
 **Files:**
 - Test: `sim/test/probe-interaction.test.js`
 
-- [ ] **Step 1: Write the probe**
+- [x] **Step 1: Write the probe**
 
 ```js
 // sim/test/probe-interaction.test.js — Probe 6 (spec §6.2): the world answers to hands.
@@ -1103,11 +1103,11 @@ test('probe 6: pick gains time, chop fells, the stump-delta heals over weeks, co
 });
 ```
 
-- [ ] **Step 2: Run it** — `node --test sim/test/probe-interaction.test.js` → PASS (everything was built in Tasks 1–7; if it fails, the failure is a real bug — debug it, don't loosen the probe).
+- [x] **Step 2: Run it** — `node --test sim/test/probe-interaction.test.js` → PASS (everything was built in Tasks 1–7; if it fails, the failure is a real bug — debug it, don't loosen the probe).
 
-- [ ] **Step 3: Run the full suite** — `npm test` → all green.
+- [x] **Step 3: Run the full suite** — `npm test` → all green.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add sim/test/probe-interaction.test.js
@@ -1124,7 +1124,7 @@ A minimal canvas page served from the repo: connects to the sim, draws bubble en
 - Create: `sim/client/probe.html`
 - Create: `sim/client/probe.js`
 
-- [ ] **Step 1: Write the client**
+- [x] **Step 1: Write the client**
 
 ```html
 <!-- sim/client/probe.html -->
@@ -1211,7 +1211,7 @@ cv.addEventListener('click', ev => {
 $('ff').addEventListener('click', () => ws.send(JSON.stringify({ type: 'admin', op: 'ff', days: 7 })));
 ```
 
-- [ ] **Step 2: Manual smoke (the experienceable artifact — required by project rules)**
+- [x] **Step 2: Manual smoke (the experienceable artifact — required by project rules)**
 
 1. `npm run sim:serve` (background).
 2. Serve the repo root (the project's existing dev server, or `npx serve .`) and open `sim/client/probe.html`.
@@ -1221,9 +1221,9 @@ $('ff').addEventListener('click', () => ws.send(JSON.stringify({ type: 'admin', 
 
 Record the outcome of each check in the commit message body (honest pass/fail; a failed check is a Task 6/7 bug to fix first).
 
-- [ ] **Step 3: Run `npm test`** — green (no test changes, but never commit red).
+- [x] **Step 3: Run `npm test`** — green (no test changes, but never commit red).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add sim/client/probe.html sim/client/probe.js
@@ -1239,7 +1239,7 @@ Intents arrive at nondeterministic real times, but their *effects* are `(tick, v
 **Files:**
 - Test: `sim/test/probe-intent-replay.test.js`
 
-- [ ] **Step 1: Write the probe**
+- [x] **Step 1: Write the probe**
 
 ```js
 // sim/test/probe-intent-replay.test.js — probe 4 extended with player intents (spec §5.5).
@@ -1280,11 +1280,11 @@ test('probe 4+: same seed + same intent log, twice → bit-identical dumps', () 
 });
 ```
 
-- [ ] **Step 2: Run it** — `node --test sim/test/probe-intent-replay.test.js` → PASS (a failure means hidden nondeterminism — find it; never loosen to "approximately equal").
+- [x] **Step 2: Run it** — `node --test sim/test/probe-intent-replay.test.js` → PASS (a failure means hidden nondeterminism — find it; never loosen to "approximately equal").
 
-- [ ] **Step 3: Full suite** — `npm test` → green.
+- [x] **Step 3: Full suite** — `npm test` → green.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add sim/test/probe-intent-replay.test.js
@@ -1299,9 +1299,9 @@ git commit -m "test(sim): probe 4 extension — intent-log replay is bit-identic
 - Modify: `docs/superpowers/plans/2026-06-11-pass1-roadmap.md` (B → DONE with deviation note, C → NEXT)
 - Modify: this file (check all boxes, finalize Canonical deviations)
 
-- [ ] **Step 1:** Run `npm test` one final time → all green. Run the Task 9 manual smoke once more if any server/client file changed since.
-- [ ] **Step 2:** Update the roadmap: Plan B status `**DONE** (see "Canonical deviations" in plan doc)`, Plan C status `**NEXT**`.
-- [ ] **Step 3:** Commit:
+- [x] **Step 1:** Run `npm test` one final time → all green. Run the Task 9 manual smoke once more if any server/client file changed since.
+- [x] **Step 2:** Update the roadmap: Plan B status `**DONE** (see "Canonical deviations" in plan doc)`, Plan C status `**NEXT**`.
+- [x] **Step 3:** Commit:
 
 ```bash
 git add docs/superpowers/plans/2026-06-11-pass1-roadmap.md docs/superpowers/plans/2026-06-11-pass1b-sim-process.md
