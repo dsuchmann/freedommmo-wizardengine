@@ -159,7 +159,7 @@ def api_call(method: str, path: str, body: dict | None = None, timeout: int = 12
 def fetch_bytes(url: str) -> bytes | None:
     for attempt in range(3):
         try:
-            with urlopen(Request(url), timeout=60) as resp:
+            with urlopen(Request(url, headers={"User-Agent": "Mozilla/5.0 (f4-pipeline)"}), timeout=60) as resp:
                 return resp.read()
         except Exception as e:
             log.warning(f"download failed ({attempt+1}/3): {e}")
