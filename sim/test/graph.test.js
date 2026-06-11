@@ -52,3 +52,15 @@ test('flush persists nodes/edges to SQLite and removeNode drops them', () => {
   assert.equal(db.prepare("SELECT value FROM meta WHERE key='tick'").get().value, '123');
   db.close();
 });
+
+test('removeNode purges the edge from surviving members', () => {
+  const g = new Graph();
+  let a, b;
+  g.boot(() => {
+    a = g.createNode({ type: 'bush', tick: 0, x: 0, y: 0 });
+    b = g.createNode({ type: 'bush', tick: 0, x: 1, y: 0 });
+    g.createEdge({ type: 'kin', tick: 0, members: [[a.id, 'parent'], [b.id, 'child']] });
+  });
+  g.removeNode(a.id);
+  assert.deepEqual(g.edgesOf(b.id), []);
+});

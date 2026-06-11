@@ -41,7 +41,11 @@ export class Graph {
     const n = this.nodes.get(id);
     if (!n) return;
     if (n.x != null) this.grid.get(this._cellKey(n.x, n.y))?.delete(id);
-    for (const eid of this.byNode.get(id) ?? []) this.edges.delete(eid);
+    for (const eid of this.byNode.get(id) ?? []) {
+      const edge = this.edges.get(eid);
+      if (edge) for (const [mid] of edge.members) this.byNode.get(mid)?.delete(eid);
+      this.edges.delete(eid);
+    }
     this.byNode.delete(id);
     this.nodes.delete(id);
   }
