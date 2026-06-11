@@ -46,7 +46,7 @@ export function spawnRegionAggregate(kernel, rx, ry, w = REGION, h = REGION) {
     salt += 1000;
     const expected = DENSITY[species] * w * h;
     const frac = expected - Math.floor(expected);
-    const count = Math.floor(expected) + (rand(kernel.seed, rx * 131 + salt, ry * 173 + salt) < frac ? 1 : 0);
+    const count = Math.floor(expected) + (rand(kernel.seed, rx, ry, salt) < frac ? 1 : 0);
     if (count === 0) continue;
     const s = START[species];
     pops[species] = {
