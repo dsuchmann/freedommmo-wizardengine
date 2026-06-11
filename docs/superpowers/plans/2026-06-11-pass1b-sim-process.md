@@ -1314,7 +1314,11 @@ git commit -m "docs: roadmap — Plan B DONE, Plan C NEXT"
 
 Append entries here when implementation legitimately diverges from the plan. Format: number, what changed, why, where.
 
-1. *(none yet)*
+1. **Checkpoint atomicity / commit marker** (Task 3, commit 89c3f7247): `graph.flush(db, tick)` became `flush(db)` — it no longer writes `meta.tick`. `checkpoint()` is one outer `db.transaction` (better-sqlite3 promotes inner transactions to savepoints — the plan's "if savepoints misbehave" fallback was unnecessary) and writes `meta.tick` LAST as the checkpoint's commit marker, so a crash mid-checkpoint can never leave a mixed-generation DB that boot would treat as valid. Found by code review.
+2. **Flux re-entry sorted by id** (Task 3): `loadKernel` re-enters living nodes into flux in id-sorted order so float accumulation order in tile sums is identical to a fresh run regardless of Map iteration order.
+3. **Admin ff days clamped to [1, 365]** (Task 5, commit 0ce0acc8c): untrusted client input must not fast-forward the sim arbitrarily far; flagged by code review, clamped in `parseClientMsg`.
+4. **Tree `embodiedDecayDays` 21 → 7** (Task 8): a mature tree at 30 sim-days holds E≈1.8M tu; halflife decay time is `halflife × log2(E/0.5)`, so 21d gave ~458 days to gone — violating the "stump heals over weeks" intent and probe 6's 360-day window. Constant tuned (mechanism untouched); 7d gives ~150 days.
+5. **Probe 6 conservation tolerance is relative** (Task 8): the plan's absolute `< 1e-3` cannot hold over 390 sim-days where flows reach ~1.9e9 tu (float accumulation alone is ~1e-2). Probe 6 now uses probe 1's canonical form: `|Δstocks − Δflows| / captured < 1e-9` (measured rel err ≈ 4e-12).
 
 ## Deliberately out of scope (per spec §6.4 and roadmap)
 

@@ -44,7 +44,7 @@ export const SPECIES = {
     ],
     senescence: { start: 30 * YEAR, stepEvery: 180 * DAY, burnGrowth: 1.08, demandDecay: 0.96 },
     seed: { every: 180 * DAY, cost: 8000, minR: 30000, jitter: 0.3 },
-    embodiedDecayDays: 21,    // stump heals over ~weeks (probe 6)
+    embodiedDecayDays: 7,     // halflife; a mature tree's stump (E~1.8M tu) is gone in ~150d (probe 6)
   },
   grazer: {
     demand: 0.10, burn: 0.50, growFrac: 0.4, maxBody: 20000,   // ambient barely feeds it: must graze (Task 11)
