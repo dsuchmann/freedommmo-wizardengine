@@ -1,0 +1,121 @@
+import { Graph } from '../store/graph.js';
+import { Ledger } from '../store/ledger.js';
+import { FluxField } from '../time/flux.js';
+import { Scheduler } from './scheduler.js';
+import { SPECIES, materialize, stageAt } from '../time/metabolism.js';
+import { registerLifecycle } from '../time/lifecycle.js';
+
+export class Kernel {
+  constructor({ seed, phi = 4 }) {
+    this.seed = seed;
+    this.tick = 0;
+    this.graph = new Graph();
+    this.ledger = new Ledger();
+    this.flux = new FluxField({ phi });
+    this.scheduler = new Scheduler();
+    this.handlers = new Map();   // kind -> (kernel, node, ev) => void
+    registerLifecycle(this);
+  }
+
+  on(kind, fn) { this.handlers.set(kind, fn); }
+
+  /** Create a living node (inside boot scope or with causeEventId) and wire it in. */
+  addLiving({ species, x, y, R, body, tick, age = 0, causeEventId = null }) {
+    const node = this.graph.createNode({
+      type: species, tick, x, y, R, causeEventId,
+      attrs: { species, body, bodyRate: 0, cap: 0, burn: 0, birthTick: tick - age },
+    });
+    this.flux.enter(node.id, x, y, 0);
+    this.reRateTileOf(node.id, tick);
+    this._scheduleLifecycle(node, tick);   // provided by lifecycle registration
+    return node;
+  }
+
+  materialized(id) {
+    const n = this.graph.nodes.get(id);
+    return n ? materialize(n, this.tick, this.ledger) : undefined;
+  }
+
+  /** Close the open rate segment for a node: materialize + accrue counters. */
+  closeSegment(node, tick) {
+    const dt = tick - node.lastTick;
+    if (dt > 0 && node.R != null) {
+      this.ledger.count('captured', (node.attrs.cap ?? 0) * dt);
+      this.ledger.count('burned', (node.attrs.burn ?? 0) * dt);
+    }
+    materialize(node, tick, this.ledger);
+  }
+
+  /** Recompute rates for every occupant of the tile containing node `id`. */
+  reRateTileOf(id, tick) {
+    const n = this.graph.nodes.get(id);
+    if (!n) return;
+    // 1. update this node's demand, 2. re-rate all tile occupants (rationing shifts)
+    for (const occId of this.flux.occupantsOf(n.x, n.y)) {
+      const occ = this.graph.nodes.get(occId);
+      if (occ?.R != null) this._reRateOne(occ, tick);
+    }
+  }
+
+  _reRateOne(node, tick) {
+    this.closeSegment(node, tick);
+    const sp = SPECIES[node.attrs.species];
+    const age = tick - node.attrs.birthTick;
+    const [, , dF, bF] = stageAt(node.attrs.species, age);
+    const sen = node.attrs.sen ?? { burnMul: 1, demandMul: 1 };
+    const demand = sp.demand * dF * sen.demandMul;
+    this.flux.updateDemand(node.id, demand);
+    const cap = this.flux.captureOf(node.id);
+    const burn = sp.burn * bF * sen.burnMul;
+    const net = cap - burn;
+    const grow = net > 0 && node.attrs.sen == null && node.attrs.body < sp.maxBody
+      ? sp.growFrac * net : 0;
+    node.attrs.cap = cap;
+    node.attrs.burn = burn;
+    node.attrs.bodyRate = grow;
+    node.r = net - grow;
+    node.ver++;
+    if (node.r < 0) {
+      if (node.R > 0) {
+        this.scheduler.schedule(tick + node.R / -node.r, node.id, 'death_check', node.ver);
+      } else {
+        // R already exhausted AND rate still negative; die immediately
+        this.scheduler.schedule(tick, node.id, 'death_check', node.ver);
+      }
+    }
+    if (grow > 0) {  // body-full crossing: growth stops, surplus reroutes to R
+      this.scheduler.schedule(tick + (sp.maxBody - node.attrs.body) / grow, node.id, 'body_full', node.ver);
+    }
+  }
+
+  /** World stocks at `tick`: ΣR + Σbody (living) + ΣE (corpses), materialized.
+   *  Living nodes are closed (captured/burned accrued) so the conservation identity holds. */
+  stocks(tick) {
+    let s = 0;
+    for (const n of this.graph.nodes.values()) {
+      if (n.type === 'corpse') {
+        materialize(n, tick, this.ledger);
+        s += n.attrs.E;
+      } else if (n.R != null) {
+        this.closeSegment(n, tick);
+        s += n.R + n.attrs.body;
+      }
+    }
+    return s;
+  }
+
+  runTo(targetTick) {
+    for (;;) {
+      const ev = this.scheduler.nextDue(targetTick, e => {
+        const n = this.graph.nodes.get(e.nodeId);
+        return n != null && (e.ver === -1 || e.ver === n.ver);
+      });
+      if (!ev) break;
+      this.tick = ev.tick;
+      const node = this.graph.nodes.get(ev.nodeId);
+      const h = this.handlers.get(ev.kind);
+      if (h) h(this, node, ev);
+    }
+    this.tick = targetTick;
+  }
+}
