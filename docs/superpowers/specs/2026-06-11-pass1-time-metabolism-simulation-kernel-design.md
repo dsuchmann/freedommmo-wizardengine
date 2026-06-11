@@ -223,12 +223,14 @@ Plus orthogonal axes: **yield states** (budding / fruiting / harvested), **damag
 
 Pass 1 delivers the taxonomy plus per-archetype requirement sheets: which states each F2–F7 archetype (and future fauna / body assets) needs, at what PixelLab quantization (32px F2–3, 64px F4, 96px F5, 192px F6–7). Generation itself rides the existing pipeline. The existing F2–F4 lifecycle states (seedling / normal / wilting / dead) map 1:1 onto the core spine — nothing is thrown away.
 
-### 6.4 Explicitly deferred (absent, not forgotten)
+### 6.4 Bound to later passes (nothing here is optional)
 
-- Player-offline semantics in MMO mode → Hero Function spec (S7)
-- Group Agency, politics, distribution decisions → S5 Society
-- Ripple-effect depth, impact matrix, decision records with learning → S6 Causal Ledger pass
-- LLM mind integration → S4 Mind
+These are NOT skipped — each is a mandatory design pass in this same body of work, assigned per the atlas assembly order. The kernel designed here must accept each without rework (the node/edge/event/intent shapes in §2–§4 are their landing pads):
+
+- Group Agency, politics, distribution decisions → S5 Society pass (group nodes, reserves, and group-decision scheduler events exist from Pass 1; the politics that drive them are S5)
+- Ripple-effect depth, impact matrix, decision records with learning → S6 Causal Ledger pass (the `events` table with cause chains ships in Pass 1; ripple semantics deepen there)
+- LLM mind integration → S4 Mind pass (the intent channel, embedding columns, and ledger-recorded-intent determinism rule in Pass 1 are designed specifically as its seam)
+- Player-offline semantics in MMO mode → Hero Function spec (S7); never arises in single-player
 - Client-side prediction → when remote play exists
 
 ---
