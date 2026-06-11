@@ -826,6 +826,7 @@ export class GLCompositor {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     this.atlasRects = new Map(); // url -> {u0,v0,du,dv} | null (failed/full)
+    this._lastAtlasReset = -99999;
     // Fixed region reserved for the player sprite, re-uploaded every frame so
     // the player participates in the depth-sorted instance batch.
     this._playerRegion = { x: 1, y: 1, w: 256, h: 256 };
@@ -906,18 +907,38 @@ export class GLCompositor {
     var h = img.naturalHeight || img.height;
     if (!w || !h || !img.complete) return null; // not decoded yet — retry later
     var A = this.atlasSize;
+    if (w + 2 > A || h + 2 > A) {
+      this.atlasRects.set(url, null); // sprite larger than the whole atlas
+      return null;
+    }
     if (this._shelfX + w + 1 > A) {
       this._shelfY += this._shelfH + 1;
       this._shelfX = 1;
       this._shelfH = 0;
     }
-    if (this._shelfY + h + 1 > A || w + 2 > A) {
-      if (!this._atlasFullWarned) {
-        this._atlasFullWarned = true;
-        console.warn('[GL] sprite atlas full (' + this.atlasRects.size + ' sprites) — overflow draws on 2D canvas');
+    if (this._shelfY + h + 1 > A) {
+      // Atlas full. Unique URLs grow unbounded over a session (every anim
+      // frame is its own URL), so permanent null-marking makes sprites vanish
+      // in art-scene mode. Reset the shelves and rebuild lazily from the
+      // sprites actually drawn — packing is synchronous, so the working set
+      // repacks within a frame. Thrash guard: if it fills again within the
+      // SAME frame, this frame's working set itself exceeds the atlas; mark
+      // overflow null (retried after the next reset).
+      if (this.frame !== this._lastAtlasReset) {
+        this._lastAtlasReset = this.frame;
+        this.atlasRects.clear();
+        this._shelfX = 1;
+        this._shelfY = this._playerRegion.y + this._playerRegion.h + 2;
+        this._shelfH = 0;
+        console.log('[GL] sprite atlas full — reset, repacking visible sprites');
+      } else {
+        if (!this._atlasFullWarned) {
+          this._atlasFullWarned = true;
+          console.warn('[GL] sprite atlas working set exceeds capacity (' + this.atlasRects.size + ' sprites) — overflow sprites skipped');
+        }
+        this.atlasRects.set(url, null);
+        return null;
       }
-      this.atlasRects.set(url, null);
-      return null;
     }
     var x = this._shelfX;
     var y = this._shelfY;
