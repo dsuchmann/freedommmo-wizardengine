@@ -47,9 +47,11 @@ test('flush persists nodes/edges to SQLite and removeNode drops them', () => {
   });
   g.removeNode(a.id);
   const db = openDb(':memory:');
-  g.flush(db, 123);
+  g.flush(db);
   assert.equal(db.prepare('SELECT COUNT(*) c FROM nodes').get().c, 1);
-  assert.equal(db.prepare("SELECT value FROM meta WHERE key='tick'").get().value, '123');
+  // meta.tick is no longer written by graph.flush — it is the checkpoint commit marker,
+  // written last by checkpoint() only after all flushes complete.
+  assert.equal(db.prepare("SELECT value FROM meta WHERE key='tick'").get(), undefined);
   db.close();
 });
 

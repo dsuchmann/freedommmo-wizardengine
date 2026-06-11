@@ -30,7 +30,7 @@ test('node ver and flux demand survive flush', () => {
   assert.ok(live, 'a re-rated living node exists at day 20');
   assert.ok(live.ver >= 0);
   assert.ok(typeof live.attrs.demand === 'number'); // _reRateOne must record it
-  k.graph.flush(db, k.tick);
+  k.graph.flush(db);
   const row = db.prepare('SELECT ver, attrs FROM nodes WHERE id=?').get(live.id);
   assert.equal(row.ver, live.ver);
   assert.equal(JSON.parse(row.attrs).demand, live.attrs.demand);
@@ -64,4 +64,16 @@ test('checkpoint preserves conservation totals across load', () => {
   checkpoint(k, db);
   const k2 = loadKernel(db);
   assert.deepEqual(k2.ledger.totals, k.ledger.totals);
+});
+
+test('meta tick is absent until a full checkpoint completes (commit marker)', () => {
+  const db = openDb(':memory:');
+  const k = new Kernel({ seed: 2, bounds: { x0: 0, y0: 0, w: 4, h: 4 } });
+  spawnMeadow(k, { x0: 0, y0: 0, w: 4, h: 4 });
+  k.runTo(DAY);
+  k.ledger.flush(db);
+  k.graph.flush(db);                 // partial write: no scheduler, no meta tick
+  assert.equal(db.prepare('SELECT value FROM meta WHERE key=?').get('tick'), undefined);
+  checkpoint(k, db);
+  assert.equal(Number(db.prepare('SELECT value FROM meta WHERE key=?').get('tick').value), k.tick);
 });

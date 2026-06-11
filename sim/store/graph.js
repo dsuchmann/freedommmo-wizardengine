@@ -79,7 +79,7 @@ export class Graph {
     return out;
   }
 
-  flush(db, tick) {
+  flush(db) {
     const tx = db.transaction(() => {
       db.exec('DELETE FROM nodes; DELETE FROM edges; DELETE FROM edge_members;');
       const ni = db.prepare('INSERT INTO nodes(id,type,born_tick,x,y,R,rate,last_tick,ver,created_by_event,owner,attrs) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
@@ -92,7 +92,6 @@ export class Graph {
         ei.run(e.id, e.type, e.weight, e.bornTick, e.owner, JSON.stringify(e.attrs));
         for (const [nid, role] of e.members) mi.run(e.id, nid, role ?? '');
       }
-      db.prepare('INSERT OR REPLACE INTO meta(key,value) VALUES (?,?)').run('tick', String(tick));
       db.prepare('INSERT OR REPLACE INTO meta(key,value) VALUES (?,?)').run('nextNodeId', String(this.nextNodeId));
       db.prepare('INSERT OR REPLACE INTO meta(key,value) VALUES (?,?)').run('nextEdgeId', String(this.nextEdgeId));
     });

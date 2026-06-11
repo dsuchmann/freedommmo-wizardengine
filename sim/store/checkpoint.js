@@ -1,25 +1,29 @@
 // World equation persistence (spec §5.1, §3.4): everything a Kernel needs to
 // resume bit-identically. Flush order: ledger BEFORE graph (FK created_by_event).
 //
-// NOTE: better-sqlite3 does NOT support nested db.transaction() calls via savepoints
-// in all code paths — the inner flush() calls each open their own transaction.
-// We therefore call the flushes sequentially (no outer wrapper transaction) so each
-// runs in its own implicit transaction. This is safe: checkpoint() is only called
-// at quiesce points (between runTo calls), never concurrently.
+// better-sqlite3 promotes nested db.transaction() calls to SAVEPOINTs automatically,
+// so the outer transaction here wraps all inner flushes atomically. meta.tick is
+// written LAST as the checkpoint commit marker: a crash mid-checkpoint leaves the
+// previous tick value (or none), so boot ignores the partial write and falls back
+// to the prior checkpoint or a fresh world.
 import { Kernel } from '../kernel/kernel.js';
 import { Ledger } from './ledger.js';
 import { Deltas } from './deltas.js';
 
 export function checkpoint(kernel, db) {
-  kernel.ledger.flush(db);            // events first (FK target for nodes.created_by_event)
-  kernel.graph.flush(db, kernel.tick);
-  kernel.deltas.flush(db);
-  kernel.scheduler.flush(db);
-  const meta = db.prepare('INSERT OR REPLACE INTO meta(key,value) VALUES (?,?)');
   db.transaction(() => {
+    kernel.ledger.flush(db);            // events first (FK target for nodes.created_by_event)
+    kernel.graph.flush(db);
+    kernel.deltas.flush(db);
+    kernel.scheduler.flush(db);
+    const meta = db.prepare('INSERT OR REPLACE INTO meta(key,value) VALUES (?,?)');
     meta.run('seed', String(kernel.seed));
     meta.run('phi', String(kernel.flux.phi));
     meta.run('bounds', JSON.stringify(kernel.bounds));
+    // tick is written LAST: it is the checkpoint's commit marker. A crash
+    // mid-checkpoint leaves the previous tick, so the partial write is ignored
+    // (boot treats the world as at the older checkpoint; WAL keeps it readable).
+    meta.run('tick', String(kernel.tick));
   })();
 }
 
@@ -81,8 +85,10 @@ export function loadKernel(db) {
   kernel.scheduler.load(db);
 
   // flux: living nodes re-enter with their persisted demand (set by _reRateOne).
+  // Sorted by id so float accumulation order in flux tile sums is deterministic.
   // Guard: noFlux nodes (e.g. wallet-style nodes added in Task 4) must never capture flux.
-  for (const n of kernel.graph.nodes.values()) {
+  const living = [...kernel.graph.nodes.values()].sort((a, b) => a.id - b.id);
+  for (const n of living) {
     if (n.attrs.noFlux) continue;
     if (n.R != null) kernel.flux.enter(n.id, n.x, n.y, n.attrs.demand ?? 0);
   }

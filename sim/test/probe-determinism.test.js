@@ -13,7 +13,7 @@ function runWorld(seed) {
   // ledger (events) must be flushed before graph (nodes) because nodes.created_by_event
   // is a FK → events(id); inserting nodes first violates the constraint.
   k.ledger.flush(db);
-  k.graph.flush(db, k.tick);
+  k.graph.flush(db);
   k.scheduler.flush(db);
   const dump = canonicalDump(db);
   db.close();
