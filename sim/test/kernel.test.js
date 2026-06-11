@@ -14,7 +14,7 @@ test('spawnBaseline + runTo: lone grass accrues time from ambient', () => {
   k.graph.boot(() => { g = k.addLiving({ species: 'grass', x: 5, y: 5, R: 500, body: 10, tick: 0 }); });
   k.runTo(1000);
   const n = k.materialized(g.id);
-  assert.ok(n.R > 500, 'reserve should grow: demand 0.15 (seedling) > burn 0.03');
+  assert.ok(n.R > 500, 'reserve should grow: demand 0.225 (seedling) > burn 0.18');
 });
 
 test('stale events are dropped after re-rate', () => {

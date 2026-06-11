@@ -13,7 +13,7 @@ export const CHANNEL_EFF = {          // spec §1.5
 // seed: { every, cost, minR, jitter } — reproduction (Task 10).
 export const SPECIES = {
   grass: {
-    demand: 0.30, burn: 0.05, growFrac: 0.6, maxBody: 200,
+    demand: 0.45, burn: 0.30, growFrac: 0.6, maxBody: 200,
     stages: [
       ['seedling', 0,        0.5, 0.6],
       ['growing',  5 * DAY,  0.8, 0.8],
