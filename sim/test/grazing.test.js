@@ -12,7 +12,12 @@ test('grazer eats nearby grass: transfer at harvest efficiency, prey can die wit
       k.addLiving({ species: 'grass', x: 5 + (i % 3), y: 5 + Math.floor(i / 3), R: 300, body: 400, tick: 0, age: 20 * DAY });
     }
   });
+  const start = k.stocks(0);
   k.runTo(30 * DAY);
+  const end = k.stocks(30 * DAY);
+  const t = k.ledger.totals;
+  assert.ok(Math.abs((end - start) - (t.captured - t.burned - t.decayed - t.transferLoss)) < 1e-3,
+    'conservation identity holds through harvest-channel transfers');
   const grazes = k.ledger.events.filter(e => e.type === 'graze' && e.actor === grazer.id);
   assert.ok(grazes.length > 0, 'graze events recorded');
   assert.ok(k.ledger.totals.transferLoss > 0, 'harvest channel loses 50%');
