@@ -1,25 +1,27 @@
 #!/usr/bin/env python3
 """
-bulk_generate_f4.py — Field 4 (medium flora) full asset generation pipeline.
+bulk_generate_f5.py — Field 5 (medium objects) full asset generation pipeline.
+Adapted from the proven bulk_generate_f4.py harness (spec: 2026-06-11-field5-
+medium-objects-design.md).
 
-Stages per object type (48 types, 16 biomes x 3):
-  1. base   - 4x create-1-direction-object (16 candidates each) -> review ->
-              validate -> select-frames -> download variants (target 60)
-  2. states - 7 states x 16-variant pool via POST /objects/{id}/states
-              (submitted promptly after selection: objects expire after 8h)
-  3. anims  - wind_sway via animate-with-text-v3 using variant PNG as
-              first_frame (proven F2 pipeline, no expiry concern)
+Differences from F4:
+  - 48 inanimate objects (16 biomes x geological/organic-remnant/relic), 96px
+  - adaptive base calls: keep calling until 64 valid variants per object
+    (96px returns fewer candidates per call than 64px did)
+  - 6 inorganic weathering states (no growth lifecycle), 9 images/batch
+  - selective idle animations: only 7 light/energy objects, custom action each
+  - mo__ naming under assets/.../micro/medium_objects/
+  - MAX_INFLIGHT kept low: the F4 wind_sway anim run shares the account's
+    20-job concurrency; both schedulers back off on 429.
 
-Resumable: all progress in _f4_state.json + disk (valid PNGs never redone).
-Credits guard: pauses below $3.00, rechecks every 10 min (top-up resumes).
-Concurrency: 16 jobs in flight (account limit 20).
+Resumable: all progress in _f5_state.json + disk (valid PNGs never redone).
 
 Usage:
-  python scripts/bulk_generate_f4.py                # full pipeline
-  python scripts/bulk_generate_f4.py --status       # progress report
-  python scripts/bulk_generate_f4.py --phase base   # one phase only
-  python scripts/bulk_generate_f4.py --type daisy_cluster
-  python scripts/bulk_generate_f4.py --dry-run
+  python scripts/bulk_generate_f5.py                # full pipeline
+  python scripts/bulk_generate_f5.py --status       # progress report
+  python scripts/bulk_generate_f5.py --phase base   # one phase only
+  python scripts/bulk_generate_f5.py --type mossy_boulder
+  python scripts/bulk_generate_f5.py --dry-run
 """
 
 import argparse
@@ -28,7 +30,6 @@ import io
 import json
 import logging
 import os
-import struct
 import sys
 import time
 from pathlib import Path
@@ -36,62 +37,68 @@ from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-FLORA_DIR = REPO_ROOT / "assets" / "pixelab" / "landscape_v2" / "micro" / "medium_flora"
+OBJ_DIR = REPO_ROOT / "assets" / "pixelab" / "landscape_v2" / "micro" / "medium_objects"
 MCP_JSON = REPO_ROOT / ".mcp.json"
-STATE_FILE = FLORA_DIR / "_f4_state.json"
-LOG_FILE = FLORA_DIR / "_f4_run.log"
+STATE_FILE = OBJ_DIR / "_f5_state.json"
+LOG_FILE = OBJ_DIR / "_f5_run.log"
 
 API_BASE = "https://api.pixellab.ai/v2"
-MAX_INFLIGHT = 12  # leave headroom: F5 medium-objects run shares the 20-job account limit
+MAX_INFLIGHT = 6            # F4 anim run is consuming the rest of the 20-job account limit
 POLL_INTERVAL = 20          # seconds between scheduler ticks
 SUBMIT_DELAY = 2            # seconds between submissions
 JOB_TIMEOUT = 1800          # 30 min -> requeue
 MAX_RETRIES = 3
 CREDITS_FLOOR = 3.00        # pause below this
 CREDITS_CHECK_EVERY = 600   # seconds
-BASE_CALLS_PER_TYPE = 4     # 4 x 16 candidates = 64 -> keep up to 60
-MAX_VARIANTS = 60
-STATE_POOL = 16             # variants per state per type
+SIZE = 96                   # boulders/stumps need texture detail
+MAX_VARIANTS = 64
+MAX_BASE_CALLS = 20         # 96px returns only 4 candidates/call; adaptive early-stop at MAX_VARIANTS
+STATE_POOL = 9              # variants per state per type (= edit cap at 96px)
 ANIM_FRAME_COUNT = 8        # v3 stores 8 + reference = 9
 
 PROMPT = ("top-down high fantasy pixel art {obj}, jaw-dropping beauty, "
           "hyper-detailed, rich saturated colors, Final Fantasy aesthetic, "
-          "alpha-transparent background, detailed shading, medium flora sprite")
+          "alpha-transparent background, detailed shading, medium terrain object")
 
-ANIM_ACTION = "swaying gently in wind, natural plant movement, rooted at the base"
-
-# 16 land biomes x 3 objects. Optional size override (default 64; <=85 keeps
-# 16 candidates/call). Larger sizes for showpiece flora.
+# 16 land biomes x (geological, organic remnant, relic/curiosity)
 CATALOG = {
-    "forest":          [("wildflower_cluster", 64), ("forest_mushroom", 64), ("wood_sorrel", 64)],
-    "dense_forest":    [("ghost_orchid", 64), ("giant_mushroom", 80), ("shelf_fungus", 64)],
-    "tropical_forest": [("bird_of_paradise", 80), ("passion_flower", 64), ("heliconia", 80)],
-    "taiga":           [("fireweed", 64), ("arctic_poppy", 64), ("wintergreen", 64)],
-    "grassland":       [("daisy_cluster", 64), ("cornflower", 64), ("wild_lavender", 64)],
-    "savanna":         [("flame_lily", 64), ("desert_rose", 64), ("aloe_rosette", 80)],
-    "steppe":          [("sage_brush", 64), ("thistle", 64), ("yarrow", 64)],
-    "desert":          [("prickly_pear_bloom", 80), ("desert_marigold", 64), ("sand_verbena", 64)],
-    "beach":           [("sea_holly", 64), ("beach_morning_glory", 64), ("dune_daisy", 64)],
-    "swamp":           [("water_lily", 80), ("swamp_iris", 64), ("pitcher_plant", 64)],
-    "hills":           [("mountain_bluebell", 64), ("rock_rose", 64), ("thyme_bush", 64)],
-    "mountains":       [("edelweiss", 64), ("alpine_gentian", 64), ("snow_flower", 64)],
-    "volcanic":        [("fire_flower", 64), ("ash_bloom", 64), ("sulfur_rose", 64)],
-    "tundra":          [("arctic_poppy_tundra", 64), ("moss_campion", 64), ("tundra_rose", 64)],
-    "arctic":          [("ice_flower", 64), ("frost_bloom", 64), ("crystal_rose", 64)],
-    "mystic":          [("aether_bloom", 64), ("starlight_orchid", 64), ("moonpetal", 64)],
+    "grassland":       ["field_boulder", "hay_bale", "fence_post"],
+    "forest":          ["mossy_boulder", "tree_stump", "fallen_log"],
+    "dense_forest":    ["root_mound", "hollow_stump", "rotting_log"],
+    "tropical_forest": ["jungle_rock", "buttress_root", "vine_log"],
+    "taiga":           ["snow_rock", "frost_stump", "ice_log"],
+    "savanna":         ["termite_mound", "bone_pile", "dry_well"],
+    "steppe":          ["wind_rock", "stone_cairn", "buried_post"],
+    "desert":          ["sandstone_formation", "bleached_skull", "clay_pot_shard"],
+    "beach":           ["tide_pool_rock", "beached_log", "anchor_relic"],
+    "swamp":           ["mud_mound", "bog_log", "rotting_dock"],
+    "hills":           ["granite_outcrop", "stone_pile", "old_milestone"],
+    "mountains":       ["ice_boulder", "frozen_cairn", "cliff_fragment"],
+    "tundra":          ["permafrost_mound", "frozen_bones", "ice_boulder"],
+    "arctic":          ["ice_formation", "snow_drift_mound", "frozen_ruin"],
+    "volcanic":        ["obsidian_pillar", "lava_rock", "basalt_column"],
+    "mystic":          ["crystal_cluster", "rune_stone", "ancient_altar"],
 }
-# tundra arctic_poppy duplicates taiga's name; prompt uses the real flower name
-PROMPT_NAME_OVERRIDE = {"arctic_poppy_tundra": "arctic poppy"}
 
-# state name -> edit_description
+# state name -> edit_description (inorganic weathering; rocks don't grow)
 STATES = {
-    "seedling":  "tiny young seedling sprout version of this plant, small and delicate, just emerging from soil",
-    "wilting":   "wilting and drooping, desaturated faded colors, dry curling leaves",
-    "dead":      "dead and withered, dry brown brittle remains",
-    "crushed":   "destroyed, crushed and trampled flat, broken stems and scattered pieces",
-    "burned":    "burned and charred, blackened with ash and glowing embers",
-    "frozen":    "frozen solid, encased in ice crystals, frost coating",
-    "enchanted": "enchanted with glowing arcane aura, magical sparkles, ethereal light",
+    "cracked":         "cracked and fractured, deep fissures running through it, chipped fragments",
+    "destroyed":       "destroyed and broken apart, collapsed into rubble and scattered fragments",
+    "mossy_overgrown": "overgrown with thick green moss and creeping vines, weathered by ages",
+    "burned":          "burned and charred, blackened with soot and ash, faint glowing embers",
+    "frozen":          "frozen solid, encased in ice crystals, thick frost coating",
+    "enchanted":       "enchanted with glowing arcane aura, magical runes and sparkles, ethereal light",
+}
+
+# (biome, obj) -> (anim_name, action). Only objects with inherent light/energy.
+ANIMS = {
+    ("mystic", "crystal_cluster"):   ("glow_pulse",   "magical crystal glow pulsing softly brighter and dimmer, light breathing in and out, object stays perfectly still"),
+    ("mystic", "rune_stone"):        ("rune_shimmer", "glowing runes shimmering and flickering gently across the stone surface, object stays perfectly still"),
+    ("mystic", "ancient_altar"):     ("faint_aura",   "faint magical aura swirling slowly around the altar, soft wisps of light, object stays perfectly still"),
+    ("volcanic", "lava_rock"):       ("ember_glow",   "molten cracks glowing and pulsing with inner heat, faint embers sparking, object stays perfectly still"),
+    ("volcanic", "obsidian_pillar"): ("heat_shimmer", "heat haze shimmering subtly around the pillar, faint orange glow pulsing in the cracks, object stays perfectly still"),
+    ("beach", "tide_pool_rock"):     ("water_glint",  "water in the tide pool glinting and sparkling with shifting light reflections, object stays perfectly still"),
+    ("arctic", "ice_formation"):     ("ice_sparkle",  "ice crystals sparkling and glinting as light shifts across the surface, object stays perfectly still"),
 }
 
 logging.basicConfig(
@@ -100,7 +107,7 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(),
               logging.FileHandler(LOG_FILE, encoding="utf-8")],
 )
-log = logging.getLogger("f4")
+log = logging.getLogger("f5")
 
 # ---------------------------------------------------------------------------
 # API helpers
@@ -131,6 +138,7 @@ def api_call(method: str, path: str, body: dict | None = None, timeout: int = 12
     if body is not None:
         headers["Content-Type"] = "application/json"
         data = json.dumps(body).encode("utf-8")
+    last_code = 0
     for attempt in range(4):
         try:
             req = Request(url, data=data, headers=headers, method=method)
@@ -138,6 +146,7 @@ def api_call(method: str, path: str, body: dict | None = None, timeout: int = 12
                 return json.loads(resp.read()), resp.status
         except HTTPError as e:
             if e.code in (429, 529):
+                last_code = e.code
                 wait = 30 * (2 ** attempt)
                 log.warning(f"{path}: rate limited ({e.code}), waiting {wait}s")
                 time.sleep(wait)
@@ -153,13 +162,13 @@ def api_call(method: str, path: str, body: dict | None = None, timeout: int = 12
         except (URLError, TimeoutError, OSError) as e:
             log.warning(f"{path}: connection error {e}, retry {attempt+1}/4")
             time.sleep(10 * (attempt + 1))
-    return None, 0
+    return None, last_code  # 429/529 if rate-limit starved, else 0 (connection)
 
 
 def fetch_bytes(url: str) -> bytes | None:
     for attempt in range(3):
         try:
-            with urlopen(Request(url, headers={"User-Agent": "Mozilla/5.0 (f4-pipeline)"}), timeout=60) as resp:
+            with urlopen(Request(url, headers={"User-Agent": "Mozilla/5.0 (f5-pipeline)"}), timeout=60) as resp:
                 return resp.read()
         except Exception as e:
             log.warning(f"download failed ({attempt+1}/3): {e}")
@@ -182,8 +191,7 @@ def valid_png(data: bytes | None) -> bool:
         hist = alpha.histogram()
         opaque = sum(hist[16:])  # pixels with alpha >= 16
         total = im.width * im.height
-        # reject blank (almost nothing) and full-bleed (no transparency at all)
-        # floor 0.3% (~12px at 64x64): tiny seedling states are legitimately sparse
+        # reject blank and full-bleed; destroyed/cracked states can be sparse
         return opaque > total * 0.003 and opaque < total * 0.98
     except ImportError:
         return True  # PIL unavailable: magic check only
@@ -240,13 +248,14 @@ def track_usage(state: dict, resp: dict | None):
 # ---------------------------------------------------------------------------
 
 def variant_path(biome, obj, v):
-    return FLORA_DIR / biome / obj / f"mf__{biome}__{obj}__v{v:03d}.png"
+    return OBJ_DIR / biome / obj / f"mo__{biome}__{obj}__v{v:03d}.png"
 
 def state_path(biome, obj, st, v):
-    return FLORA_DIR / biome / obj / "_states" / st / f"mf__{biome}__{obj}__{st}__v{v:03d}.png"
+    return OBJ_DIR / biome / obj / "_states" / st / f"mo__{biome}__{obj}__{st}__v{v:03d}.png"
 
 def anim_dir(biome, obj, v):
-    return FLORA_DIR / biome / obj / "anim" / "wind_sway" / f"v{v:03d}"
+    name = ANIMS[(biome, obj)][0]
+    return OBJ_DIR / biome / obj / "anim" / name / f"v{v:03d}"
 
 def anim_done(biome, obj, v) -> bool:
     d = anim_dir(biome, obj, v)
@@ -259,9 +268,14 @@ def anim_done(biome, obj, v) -> bool:
 def all_types():
     out = []
     for biome, objs in CATALOG.items():
-        for obj, size in objs:
-            out.append((biome, obj, size))
+        for obj in objs:
+            out.append((biome, obj))
     return out
+
+
+def variant_count(state, biome, obj) -> int:
+    return sum(1 for i in state["variants"].values()
+               if i["biome"] == biome and i["obj"] == obj and i.get("png"))
 
 
 # ---------------------------------------------------------------------------
@@ -301,38 +315,34 @@ def credits_ok(state) -> bool:
 # ---------------------------------------------------------------------------
 # Task scheduler
 #
-# Tasks live in state file. Statuses:
-#   base_calls:  pending -> queued -> review -> done | failed
+# Statuses:
+#   base_calls:  pending -> queued -> done | failed | skipped
 #   variants:    (created by base finalize) {object_id, png: bool}
-#   states:      pending -> queued -> done | failed | expired
+#   states:      pending -> queued -> done | failed
 #   anims:       pending -> queued -> done | failed
 # ---------------------------------------------------------------------------
 
 def ensure_tasks(state, only_type=None):
     """Populate base_call tasks; states/anims spawn as dependencies complete."""
-    for biome, obj, size in all_types():
+    for biome, obj in all_types():
         if only_type and obj != only_type:
             continue
-        for c in range(BASE_CALLS_PER_TYPE):
+        for c in range(MAX_BASE_CALLS):
             key = f"{biome}/{obj}/c{c}"
             if key not in state["base_calls"]:
-                state["base_calls"][key] = {"status": "pending", "biome": biome, "obj": obj, "size": size, "call": c}
+                state["base_calls"][key] = {"status": "pending", "biome": biome, "obj": obj, "call": c}
     # re-scan disk for already-downloaded variants
-    for biome, obj, size in all_types():
+    for biome, obj in all_types():
         if only_type and obj != only_type:
             continue
-        for v in range(MAX_VARIANTS + 4):
+        for v in range(MAX_VARIANTS + 8):
             vkey = f"{biome}/{obj}/v{v:03d}"
             if vkey not in state["variants"] and variant_path(biome, obj, v).exists():
                 state["variants"][vkey] = {"object_id": None, "png": True, "biome": biome, "obj": obj, "v": v}
 
 
 def spawn_state_tasks(state, biome, obj):
-    """After a type's base finalize: queue one edit-images-v2 batch per state.
-
-    Batches (up to 16 variant PNGs per call) replace the old per-variant
-    objects/{id}/states route: stateless (no 8h expiry), 16x fewer calls.
-    """
+    """After a type's base finalize: queue one edit-images-v2 batch per state."""
     vs = sorted([info for k, info in state["variants"].items()
                  if info["biome"] == biome and info["obj"] == obj and info.get("png")],
                 key=lambda i: i["v"])
@@ -340,7 +350,6 @@ def spawn_state_tasks(state, biome, obj):
         return
     step = max(1, len(vs) // STATE_POOL)
     pool = vs[::step][:STATE_POOL]
-    size = next((s for b, o, s in all_types() if b == biome and o == obj), 64)
     for st in STATES:
         key = f"{biome}/{obj}/{st}"
         if key in state["states"]:
@@ -349,35 +358,22 @@ def spawn_state_tasks(state, biome, obj):
                    if not state_path(biome, obj, st, info["v"]).exists()]
         if not missing:
             state["states"][key] = {"status": "done", "biome": biome, "obj": obj,
-                                    "state": st, "vs": [], "size": size}
+                                    "state": st, "vs": []}
             continue
         state["states"][key] = {"status": "pending", "biome": biome, "obj": obj,
-                                "state": st, "vs": missing, "size": size}
-
-
-def migrate_state_table(state):
-    """Drop old per-variant state tasks (keys like biome/obj/st/vNNN);
-    batch tasks are respawned from disk truth."""
-    old = [k for k, t in state["states"].items() if "v" in t and "vs" not in t]
-    if old:
-        log.info(f"migrating state table: dropping {len(old)} per-variant tasks (files on disk are kept)")
-        for k in old:
-            del state["states"][k]
-    # un-park batches failed by the >9-frames 400 (cap is now size-aware)
-    for k, t in state["states"].items():
-        if t.get("status") == "failed" and "vs" in t:
-            t["status"] = "pending"
-            t["retries"] = 0
+                                "state": st, "vs": missing}
 
 
 def spawn_anim_tasks(state, only_type=None):
     for vkey, info in state["variants"].items():
+        if (info["biome"], info["obj"]) not in ANIMS:
+            continue
         if only_type and info["obj"] != only_type:
             continue
         if not info.get("png"):
             continue
         if anim_done(info["biome"], info["obj"], info["v"]):
-            state["anims"].setdefault(vkey, {})["status"] = "done"
+            state["anims"].setdefault(vkey, {"biome": info["biome"], "obj": info["obj"], "v": info["v"]})["status"] = "done"
             continue
         if vkey not in state["anims"]:
             state["anims"][vkey] = {"status": "pending", "biome": info["biome"], "obj": info["obj"], "v": info["v"]}
@@ -386,48 +382,45 @@ def spawn_anim_tasks(state, only_type=None):
 # --- submissions -----------------------------------------------------------
 
 def submit_base(t):
-    obj_name = PROMPT_NAME_OVERRIDE.get(t["obj"], t["obj"]).replace("_", " ")
-    resp, code = api_call("POST", "create-1-direction-object",
-                          {"description": PROMPT.format(obj=obj_name),
-                           "size": t["size"], "view": "top-down"})
-    return resp
+    obj_name = t["obj"].replace("_", " ")
+    return api_call("POST", "create-1-direction-object",
+                    {"description": PROMPT.format(obj=obj_name),
+                     "size": SIZE, "view": "top-down"})
 
 
 def submit_state(t):
-    """Batch edit: up to 16 variant PNGs -> one edit-images-v2 background job."""
-    # server caps frames per edit call by size: 16 at <=64px, 9 above
-    cap = 16 if t["size"] <= 64 else 9
+    """Batch edit: variant PNGs -> one edit-images-v2 background job."""
+    cap = 16 if SIZE <= 64 else 9  # server caps frames per edit call by size
     imgs, sent_vs = [], []
     for v in t["vs"][:cap]:
         p = variant_path(t["biome"], t["obj"], v)
         if not p.exists():
             continue
         b64 = base64.b64encode(p.read_bytes()).decode("ascii")
-        imgs.append({"image": {"base64": b64}, "width": t["size"], "height": t["size"]})
+        imgs.append({"image": {"base64": b64}, "width": SIZE, "height": SIZE})
         sent_vs.append(v)
     if not imgs:
-        return None
+        return None, 400
     t["sent_vs"] = sent_vs
-    resp, code = api_call("POST", "edit-images-v2",
-                          {"method": "edit_with_text",
-                           "edit_images": imgs,
-                           "image_size": {"width": t["size"], "height": t["size"]},
-                           "description": STATES[t["state"]],
-                           "no_background": True})
-    return resp
+    return api_call("POST", "edit-images-v2",
+                    {"method": "edit_with_text",
+                     "edit_images": imgs,
+                     "image_size": {"width": SIZE, "height": SIZE},
+                     "description": STATES[t["state"]],
+                     "no_background": True})
 
 
 def submit_anim(t):
     png = variant_path(t["biome"], t["obj"], t["v"])
     if not png.exists():
-        return None
+        return None, 400
+    action = ANIMS[(t["biome"], t["obj"])][1]
     b64 = base64.b64encode(png.read_bytes()).decode("ascii")
-    resp, code = api_call("POST", "animate-with-text-v3",
-                          {"first_frame": {"base64": b64, "format": "png"},
-                           "action": ANIM_ACTION,
-                           "frame_count": ANIM_FRAME_COUNT,
-                           "no_background": True})
-    return resp
+    return api_call("POST", "animate-with-text-v3",
+                    {"first_frame": {"base64": b64, "format": "png"},
+                     "action": action,
+                     "frame_count": ANIM_FRAME_COUNT,
+                     "no_background": True})
 
 
 # --- finalizers -------------------------------------------------------------
@@ -443,7 +436,7 @@ def finalize_base(state, key, t):
         su = resp.get("storage_urls") or {}
         frame_urls = [su[k] for k in sorted(su) if k.startswith("frame_")]
     biome, obj = t["biome"], t["obj"]
-    existing = sum(1 for i in state["variants"].values() if i["biome"] == biome and i["obj"] == obj)
+    existing = variant_count(state, biome, obj)
     good = []   # (index, data)
     for i, url in enumerate(frame_urls):
         if existing + len(good) >= MAX_VARIANTS:
@@ -458,7 +451,7 @@ def finalize_base(state, key, t):
         return True  # nothing to select; treat call as done
     sel, code = api_call("POST", f"objects/{obj_id}/select-frames",
                          {"indices": [i for i, _ in good],
-                          "common_tag": f"f4_{biome}_{obj}"})
+                          "common_tag": f"f5_{biome}_{obj}"})
     track_usage(state, sel)
     created = (sel or {}).get("created_object_ids") or []
     for n, (idx, data) in enumerate(good):
@@ -476,7 +469,7 @@ def finalize_state(state, key, t, job):
     """Batch edit job completed: images[] map 1:1 to sent_vs order."""
     last = (job or {}).get("last_response") or {}
     images = last.get("images") or []
-    sent = t.get("sent_vs") or t["vs"][:16]
+    sent = t.get("sent_vs") or t["vs"][:9]
     n = 0
     for i, v in enumerate(sent):
         if i >= len(images):
@@ -549,12 +542,29 @@ def finalize_anim(state, key, t, job):
 # Main loop
 # ---------------------------------------------------------------------------
 
+def penalize_submit_failure(t, key, code):
+    """Rate-limit starvation (429/529) and connection failures (0) are not the
+    task's fault — leave pending with no retry penalty. Only definitive HTTP
+    errors (400/404/422...) count toward permanent failure."""
+    if code in (429, 529, 0):
+        return
+    t["retries"] = t.get("retries", 0) + 1
+    if t["retries"] >= MAX_RETRIES:
+        t["status"] = "failed"
+        log.error(f"{key}: failed permanently (HTTP {code})")
+
+
 def pick_next(state, phases, only_type):
     """Priority: base > states > anims. Returns (kind, key, task) or None."""
     if "base" in phases:
         for key, t in state["base_calls"].items():
-            if t["status"] == "pending" and (not only_type or t["obj"] == only_type):
-                return "base", key, t
+            if t["status"] != "pending" or (only_type and t["obj"] != only_type):
+                continue
+            # adaptive early-stop: target reached -> skip remaining calls
+            if variant_count(state, t["biome"], t["obj"]) >= MAX_VARIANTS:
+                t["status"] = "skipped"
+                continue
+            return "base", key, t
     if "states" in phases:
         for key, t in state["states"].items():
             if t["status"] == "pending" and (not only_type or t["obj"] == only_type):
@@ -567,18 +577,19 @@ def pick_next(state, phases, only_type):
 
 
 def base_type_complete(state, biome, obj):
-    keys = [f"{biome}/{obj}/c{c}" for c in range(BASE_CALLS_PER_TYPE)]
-    return all(state["base_calls"].get(k, {}).get("status") in ("done", "failed") for k in keys)
+    if variant_count(state, biome, obj) >= MAX_VARIANTS:
+        return True
+    keys = [f"{biome}/{obj}/c{c}" for c in range(MAX_BASE_CALLS)]
+    return all(state["base_calls"].get(k, {}).get("status") in ("done", "failed", "skipped") for k in keys)
 
 
 def run(phases, only_type, dry_run):
     state = load_state()
-    migrate_state_table(state)
     ensure_tasks(state, only_type)
     if "anims" in phases:
         spawn_anim_tasks(state, only_type)
     # respawn states for types whose base already finished (e.g. resume)
-    for biome, obj, _ in all_types():
+    for biome, obj in all_types():
         if only_type and obj != only_type:
             continue
         if base_type_complete(state, biome, obj):
@@ -594,7 +605,7 @@ def run(phases, only_type, dry_run):
     # Re-adopt previously queued jobs after restart
     for kind, table in (("base", state["base_calls"]), ("state", state["states"]), ("anim", state["anims"])):
         for key, t in table.items():
-            if t.get("status") in ("queued", "review") and (not only_type or t.get("obj") == only_type):
+            if t.get("status") == "queued" and (not only_type or t.get("obj") == only_type):
                 if kind in ("anim", "state") and not t.get("job_id"):
                     t["status"] = "pending"
                     continue
@@ -611,7 +622,7 @@ def run(phases, only_type, dry_run):
                 break
             kind, key, t = nxt
             if kind == "base":
-                resp = submit_base(t)
+                resp, code = submit_base(t)
                 track_usage(state, resp)
                 if resp and resp.get("object_id"):
                     t["status"] = "queued"
@@ -620,12 +631,9 @@ def run(phases, only_type, dry_run):
                     inflight[f"base:{key}"] = {"kind": "base", "key": key, "task": t, "submitted": time.time()}
                     log.info(f"base {key} -> {t['object_id']} ({resp.get('n_frames')} candidates)")
                 else:
-                    t["retries"] = t.get("retries", 0) + 1
-                    if t["retries"] >= MAX_RETRIES:
-                        t["status"] = "failed"
-                        log.error(f"base {key}: failed permanently")
+                    penalize_submit_failure(t, key, code)
             elif kind == "state":
-                resp = submit_state(t)
+                resp, code = submit_state(t)
                 track_usage(state, resp)
                 job_id = (resp or {}).get("background_job_id")
                 if job_id:
@@ -634,11 +642,9 @@ def run(phases, only_type, dry_run):
                     inflight[f"state:{key}"] = {"kind": "state", "key": key, "task": t, "submitted": time.time()}
                     log.info(f"state batch {key} -> job {job_id} ({len(t.get('sent_vs') or [])} images)")
                 else:
-                    t["retries"] = t.get("retries", 0) + 1
-                    if t["retries"] >= MAX_RETRIES:
-                        t["status"] = "failed"
+                    penalize_submit_failure(t, key, code)
             elif kind == "anim":
-                resp = submit_anim(t)
+                resp, code = submit_anim(t)
                 track_usage(state, resp)
                 job_id = (resp or {}).get("background_job_id") or (resp or {}).get("id")
                 if job_id:
@@ -646,11 +652,11 @@ def run(phases, only_type, dry_run):
                     t["job_id"] = job_id
                     inflight[f"anim:{key}"] = {"kind": "anim", "key": key, "task": t, "submitted": time.time()}
                 else:
-                    t["retries"] = t.get("retries", 0) + 1
-                    if t["retries"] >= MAX_RETRIES:
-                        t["status"] = "failed"
+                    penalize_submit_failure(t, key, code)
             save_state(state)
             time.sleep(SUBMIT_DELAY)
+            if code in (429, 529, 0) and not (resp or {}):
+                break  # API saturated/unreachable: stop submitting, go poll instead
 
         if not inflight:
             nxt = pick_next(state, phases, only_type)
@@ -748,9 +754,15 @@ def count_statuses(table):
 
 def report(state):
     n_var = sum(1 for i in state["variants"].values() if i.get("png"))
+    per_type = {}
+    for i in state["variants"].values():
+        if i.get("png"):
+            k = f"{i['biome']}/{i['obj']}"
+            per_type[k] = per_type.get(k, 0) + 1
+    done_types = sum(1 for v in per_type.values() if v >= MAX_VARIANTS)
     log.info("=" * 60)
     log.info(f"base calls:  {count_statuses(state['base_calls'])}")
-    log.info(f"variants on disk: {n_var}")
+    log.info(f"variants on disk: {n_var} | types at {MAX_VARIANTS}: {done_types}/48 | types started: {len(per_type)}/48")
     log.info(f"states:      {count_statuses(state['states'])}")
     log.info(f"anims:       {count_statuses(state['anims'])}")
     log.info(f"spend:       ${state['spend']['usd']:.2f} across {state['spend']['calls']} calls")
@@ -766,7 +778,7 @@ def main():
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
-    FLORA_DIR.mkdir(parents=True, exist_ok=True)
+    OBJ_DIR.mkdir(parents=True, exist_ok=True)
     API_KEY = get_api_key()
 
     if args.status:
