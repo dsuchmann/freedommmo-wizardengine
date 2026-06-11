@@ -313,7 +313,10 @@ export class CanvasRenderer {
     // In GL mode the soft-light wave pass is skipped (it blends against
     // terrain pixels, which now live on the GL canvas below) — restored as a
     // GPU post pass in stage 4. Foam/seaweed still draw.
-    drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, h, performance.now() / 1000, weather ? weather.wind() : null, glOn);
+    // Pass sun only in GL-scene mode: there the present shader darkens the GL
+    // canvas below, so the overlay must self-dim. The 2D path darkens this
+    // canvas with a fullscreen fill in drawLighting (after this call) instead.
+    drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, h, performance.now() / 1000, weather ? weather.wind() : null, glOn, glScene ? sun : null);
 
     // Wang debug overlay (toggle with D key)
     if (this.debugWang) {

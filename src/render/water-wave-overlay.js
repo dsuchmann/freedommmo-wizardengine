@@ -167,11 +167,29 @@ function computeLandDistanceMap(chunk, cs) {
   return dist;
 }
 
-export function drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, h, timeSeconds, wind, glMode) {
+export function drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, h, timeSeconds, wind, glMode, sun) {
   // Ocean current is a fixed slow drift — not driven by weather wind.
   // Weather wind affects grass/trees/rain but ocean has its own current.
   var CURRENT_DIR = 0.3;
   const cs = WORLD.chunkSize;
+
+  // Day/night dimming. In GL-scene mode the present shader darkens the GL
+  // canvas BELOW this 2D overlay, so foam/bubbles/seaweed would glow at full
+  // brightness all night. Mirror the shader's curve (gl-compositor.js):
+  // nightAmt = 1 - smoothstep(0.10, 0.55, ambient); floor = max(ambient, 0.10)
+  // with the blue night shift (0.62, 0.70, 1.10). `sun` is only passed in
+  // GL-scene mode — the 2D path darkens this canvas with a fillRect instead.
+  let dimR = 1, dimG = 1, dimB = 1, dayF = 1;
+  if (sun) {
+    const a = sun.ambient;
+    const t = Math.min(1, Math.max(0, (a - 0.10) / 0.45));
+    dayF = t * t * (3 - 2 * t);
+    const nightAmt = 1 - dayF;
+    const floor = Math.max(a, 0.10);
+    dimR = 1 + (floor * 0.62 - 1) * nightAmt;
+    dimG = 1 + (floor * 0.70 - 1) * nightAmt;
+    dimB = 1 + (Math.min(1, floor * 1.10) - 1) * nightAmt;
+  }
 
   for (const vc of visibleChunks) {
     const chunk = chunkStore.getIfReady(vc.cx, vc.cy);
@@ -362,9 +380,9 @@ export function drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, 
 
           const foam = foamBase + waveIntensity * foamWave;
           const val = Math.min(255, Math.floor(foam * 255));
-          foamPx[idx] = 235;     // R (bright white-blue)
-          foamPx[idx + 1] = 248; // G
-          foamPx[idx + 2] = 255; // B
+          foamPx[idx] = Math.round(235 * dimR);     // R (bright white-blue, night-dimmed)
+          foamPx[idx + 1] = Math.round(248 * dimG); // G
+          foamPx[idx + 2] = Math.round(255 * dimB); // B
           foamPx[idx + 3] = val; // A = foam intensity
           hasFoam = true;
         }
@@ -383,7 +401,7 @@ export function drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, 
         ctx.restore();
 
         // === BUBBLE DOTS on top of smooth foam — adds texture and dynamism ===
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = 'rgb(' + Math.round(255 * dimR) + ',' + Math.round(255 * dimG) + ',' + Math.round(255 * dimB) + ')';
         for (let ty = tMinY; ty < tMaxY; ty++) {
           for (let tx = tMinX; tx < tMaxX; tx++) {
             const tile = chunk.tiles[ty * cs + tx];
@@ -470,7 +488,7 @@ export function drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, 
           const waveSway = Math.sin(bobSp * 1.8 - timeSeconds * 1.5 + phase * 6.28) * tilePx * 0.12;
           const swayRotation = Math.sin(bobSp * 1.5 - timeSeconds * 2.0 + phase * 4) * 0.20;
           ctx.save();
-          ctx.globalAlpha = 0.70;
+          ctx.globalAlpha = 0.70 * (0.40 + 0.60 * dayF);
           ctx.filter = 'saturate(0.8) brightness(0.90) hue-rotate(160deg)';
           ctx.translate(spx + tilePx * 0.5 + jitterX + waveSway, spy + tilePx * 0.5 + jitterY + waveBob);
           ctx.rotate(swayRotation);
@@ -483,7 +501,7 @@ export function drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, 
           // Rotate around bottom-center anchor so base stays fixed.
           const swayAngle = Math.sin(bobSp * 2.0 - timeSeconds * 1.8 + phase * 5) * 0.22;
           ctx.save();
-          ctx.globalAlpha = 0.60;
+          ctx.globalAlpha = 0.60 * (0.40 + 0.60 * dayF);
           ctx.filter = 'saturate(0.65) brightness(0.80) hue-rotate(180deg)';
           // Anchor at bottom-center of sprite (base stays planted)
           ctx.translate(spx + tilePx * 0.5 + jitterX, spy + tilePx * 0.5 + jitterY + drawSize * 0.5);
