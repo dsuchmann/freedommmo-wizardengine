@@ -1,7 +1,7 @@
 import { setWorldSeed } from '../core/world-seed.js';
 import { WORLD } from '../core/constants.js';
 import { ChunkCompiler } from './chunk-compiler.js';
-import { getAllWangImageURLs, getWangImageURLsForBiomes, getSoilImageURLs, getGroundCoverImageURLs, getSmallFloraImageURLs } from '../render/wang-image-list.js';
+import { getAllWangImageURLs, getWangImageURLsForBiomes, getSoilImageURLs, getGroundCoverImageURLs, getSmallFloraImageURLs, getSmallScatterImageURLs } from '../render/wang-image-list.js';
 import { renderChunkToBitmap } from '../render/worker-chunk-renderer.js';
 import { denoiseBitmap } from '../render/sprite-denoise.js';
 
@@ -69,9 +69,10 @@ async function loadImageBatch(urls, batchSize) {
   return { loaded: loaded, failed: failed };
 }
 
-// Phase 2: Background-load remaining wang tiles after worker is already active.
+// Phase 2: Background-load remaining wang tiles + scatter sprites after worker is already active.
 async function backgroundLoadRemaining() {
-  var allUrls = getAllWangImageURLs();
+  // Include scatter base variants + lifecycle-state sprites (404s for missing art are normal)
+  var allUrls = getAllWangImageURLs().concat(getSmallScatterImageURLs());
   // Filter to only URLs not yet cached
   var remaining = allUrls.filter(function(url) { return !imageCache.has(url); });
   if (remaining.length === 0) {

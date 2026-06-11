@@ -1,5 +1,6 @@
 // Wang tile image URL list — shared between main thread and workers.
 // No DOM dependencies. Pure data.
+import { SS_BIOME_OBJECTS, SS_BASE_PATH as SS_BASE_PATH_DC, SS_VARIANT_COUNT as SS_VARIANT_COUNT_DC, f3StateUrls } from '../world/decoration-claims.js';
 
 var WANG_SUFFIX = '__v000.png';
 var TRANSITIONS_BASE = '/assets/pixelab/landscape_v2/transitions/';
@@ -349,54 +350,32 @@ export function getSmallFloraImageURLsForBiomes(biomes) {
   return urls;
 }
 
-// Small scatter objects per biome (Field 3) — pebbles, bones, shells, mushrooms
-var SS_BIOME_OBJECTS_LIST = {
-  arctic: ['blue_ice_crystal_scatter', 'frost_crystal_scatter', 'sparkling_crystal_dust_hyperdetailed_rich', 'thin_ice_crust_hyperdetailed_rich', 'frost_stone', 'frozen_shell', 'ice_crystal_cluster', 'snow_clump'],
-  beach: ['shell_scatter_scattered_seashells_on', 'small_crab_burrow_hole_in', 'wet_sand_grain_texture', 'dark_tide_line_mark', 'coral_fragment', 'driftwood_chip', 'sea_glass', 'seashell'],
-  dense_forest: ['fallen_pinecone', 'moss_covered_small_stone', 'mushroom_cluster', 'rotting_branch_piece', 'moss_stone', 'rotting_branch'],
-  desert: ['animal_skull_bleached_white_bone', 'cracked_dry_clay_hyperdetailed_rich', 'sunbaked_earth_patch_tan_ochre', 'hot_sand_patch_goldentan_fine', 'bleached_bone', 'dried_seed', 'polished_stone', 'scorpion_shell'],
-  forest: ['acorn_cluster', 'brown_mushroom_morel_growing_from', 'small_forest_stone', 'small_twig_bundle', 'puffball_mushroom_round_white_puffy', 'bark_shard_piece', 'bark_shard', 'twig_bundle'],
-  grassland: ['dried_wildflower', 'exposed_flat_stone_in_grass', 'seed_head_cluster', 'small_field_stone', 'dried_flower', 'field_stone', 'seed_head', 'snail_shell'],
-  hills: ['rocky_soil_patch_brown_earth', 'slate_slab_flat_dark_grey_layered_rock', 'natural_quartz_crystal_formation_white', 'gem_deposit_colorful_crystals_embedded', 'iron_nugget', 'limestone_chip', 'quartz_pebble', 'slate_fragment'],
-  mountains: ['fine_gravel_scatter_hyperdetailed_rich', 'grey_mountain_gravel_patch_stone', 'iron_ore_deposit', 'scree_loose_grey_angular_rock', 'crystal_fragment', 'ice_chunk', 'ore_glint', 'rock_shard'],
-  mystic: ['glowing_arcane_flower_with_purple', 'mystic_crystal_glowing_purple_magical', 'runic_stone_ancient_carved_stone', 'spirit_wisp', 'aether_crystal', 'glowing_pebble', 'rune_shard', 'stardust_cluster'],
-  savanna: ['bone_fragment', 'dried_seed_pod', 'dry_golden_thatch_hyperdetailed_rich', 'termite_mound_piece', 'bleached_stick', 'cracked_pod', 'dry_bone', 'termite_chip'],
-  steppe: ['dried_brown_stem_scatter_hyperdetailed', 'dusty_earth_patch_pale_browngray', 'scattered_seed_husks_hyperdetailed_rich', 'windblown_dust_patch_hyperdetailed_rich', 'dust_clod', 'grass_ball', 'small_skull', 'wind_pebble'],
-  swamp: ['algae_film_green_slimy_algae', 'thin_fungal_film_on_ground', 'waterlogged_dark_leaf', 'bog_iron', 'frog_eggs', 'leech', 'rotting_stick'],
-  taiga: ['frozen_twig', 'ice_covered_pebble', 'pine_cone', 'pine_needle_duff_soil_patch', 'ice_pebble'],
-  tropical_forest: ['bright_beetle_shell', 'exotic_seed_pod', 'small_palm_nut', 'vine_cutting_piece', 'beetle_shell', 'palm_nut', 'seed_pod', 'vine_cutting'],
-  tundra: ['antler_shard', 'frozen_pebble_cluster', 'frozen_permafrost_earth_patch_graybrown', 'fossil_fragment', 'frozen_pebble', 'ice_shard', 'lichen_rock'],
-  volcanic: ['dark_ash_film', 'grey_pumice_stone_lightweight_porous', 'lava_rock_glowing_redhot_rock', 'volcanic_rock_dark_black_ignite', 'yellow_sulfur_deposit_on_rock', 'charred_bone', 'lava_pebble', 'obsidian_shard', 'sulfur_crystal'],
-};
-var SS_BASE_PATH = '/assets/pixelab/landscape_v2/micro/small_scatter/';
-var SS_VARIANT_COUNT = 64;
-
-export { SS_BIOME_OBJECTS_LIST, SS_BASE_PATH, SS_VARIANT_COUNT };
+// Small scatter (Field 3) — sourced from decoration-claims.js (single source of truth).
+// SS_BIOME_OBJECTS is the shared catalog; SS_BASE_PATH_DC / SS_VARIANT_COUNT_DC imported above.
+export { SS_BIOME_OBJECTS as SS_BIOME_OBJECTS_LIST, SS_BASE_PATH_DC as SS_BASE_PATH, SS_VARIANT_COUNT_DC as SS_VARIANT_COUNT };
 
 export function getSmallScatterImageURLs() {
-  var urls = [];
-  for (var biome in SS_BIOME_OBJECTS_LIST) {
-    var objects = SS_BIOME_OBJECTS_LIST[biome];
-    for (var oi = 0; oi < objects.length; oi++) {
-      for (var v = 0; v < SS_VARIANT_COUNT; v++) {
-        var idx = v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v);
-        urls.push(SS_BASE_PATH + biome + '/' + objects[oi] + '/ss__' + biome + '__' + objects[oi] + '__v' + idx + '.png');
-      }
-    }
-  }
-  return urls;
+  var biomes = Object.keys(SS_BIOME_OBJECTS);
+  return getSmallScatterImageURLsForBiomes(biomes);
 }
 
 export function getSmallScatterImageURLsForBiomes(biomes) {
   var urls = [];
   for (var b = 0; b < biomes.length; b++) {
-    var objects = SS_BIOME_OBJECTS_LIST[biomes[b]];
+    var biome = biomes[b];
+    var objects = SS_BIOME_OBJECTS[biome];
     if (!objects) continue;
     for (var oi = 0; oi < objects.length; oi++) {
-      for (var v = 0; v < SS_VARIANT_COUNT; v++) {
+      var name = objects[oi].name;
+      for (var v = 0; v < SS_VARIANT_COUNT_DC; v++) {
         var idx = v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v);
-        urls.push(SS_BASE_PATH + biomes[b] + '/' + objects[oi] + '/ss__' + biomes[b] + '__' + objects[oi] + '__v' + idx + '.png');
+        urls.push(SS_BASE_PATH_DC + biome + '/' + name + '/ss__' + biome + '__' + name + '__v' + idx + '.png');
       }
+    }
+    // Also preload lifecycle-state sprites so they're in cache when drawn
+    var stateUrls = f3StateUrls(biome);
+    for (var si = 0; si < stateUrls.length; si++) {
+      urls.push(stateUrls[si]);
     }
   }
   return urls;

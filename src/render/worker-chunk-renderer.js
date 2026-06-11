@@ -6,7 +6,7 @@ import { paintTerrainTile, paintCliffOverlay, getWangSrc } from './worker-tile-p
 import { cliffLevel } from '../world/terrain-shaper.js';
 import { soilMaterialForBiome, sfVariantsFor } from './wang-image-list.js';
 import { rand2 } from '../core/random.js';
-import { SS_BIOME_OBJECTS, SS_BASE_PATH, SS_VARIANT_COUNT } from '../world/decoration-claims.js';
+import { SS_BIOME_OBJECTS, f3Placements, f3SpriteUrl } from '../world/decoration-claims.js';
 
 // PixelLab wang tile index = NW*8 + NE*4 + SW*2 + SE*1 where 1=upper biome.
 // Game cornerMask uses same bit positions but 1=lower biome.
@@ -881,80 +881,57 @@ function applySmallFloraToChunk(ctx, chunk, tileSize, chunkSize, imageCache) {
 // Objects are static — no animation. Uses occupancy grid to avoid overlaps.
 // SS_BIOME_OBJECTS, SS_BASE_PATH, SS_VARIANT_COUNT imported from decoration-claims.js above.
 
-function applySmallScatterToChunk(ctx, chunk, tileSize, chunkSize, imageCache, occupancy, cellsPerTile, cellPx, gridW) {
+function applySmallScatterToChunk(ctx, chunk, tileSize, chunkSize, imageCache) {
   // Quick check: does any tile in this chunk have small scatter defined?
   var hasSS = false;
   for (var i = 0; i < chunk.tiles.length; i++) {
     if (SS_BIOME_OBJECTS[chunk.tiles[i].biome]) { hasSS = true; break; }
   }
   if (!hasSS) return;
-
-  for (var ty = 0; ty < chunkSize; ty++) {
-    for (var tx = 0; tx < chunkSize; tx++) {
-      var tile = chunk.tiles[ty * chunkSize + tx];
-      var biomeObjs = SS_BIOME_OBJECTS[tile.biome];
-      if (!biomeObjs) continue;
-      // Skip transition tiles — scatter only on interior tiles
-      if (tile.transitionPair) continue;
-
-      var wx = chunk.cx * chunkSize + tx;
-      var wy = chunk.cy * chunkSize + ty;
-
-      for (var oi = 0; oi < biomeObjs.length; oi++) {
-        var obj = biomeObjs[oi];
-        var sparsity = obj.sparsity || 0.93;
-        if (rand2(wx, wy, 9500 + oi) > (1.0 - sparsity)) continue;
-
-        // Pick variant
-        var v = Math.floor(rand2(wx, wy, 9510 + oi) * SS_VARIANT_COUNT);
-        var url = SS_BASE_PATH + tile.biome + '/' + obj.name + '/ss__' + tile.biome + '__' + obj.name + '__v' + formatIdx(v) + '.png';
-        var bmp = imageCache.get(url);
-        if (!bmp) continue;
-
-        // Compute draw position with jitter
-        var jitterX = (rand2(wx, wy, 9520 + oi) - 0.5) * tileSize * 0.6;
-        var jitterY = (rand2(wx, wy, 9530 + oi) - 0.5) * tileSize * 0.6;
-        var drawSize = tileSize * (obj.scale || 0.32);
-
-        // Check occupancy grid
-        var drawCenterX = tx * tileSize + tileSize * 0.5 + jitterX;
-        var drawCenterY = ty * tileSize + tileSize * 0.5 + jitterY;
-        var halfDraw = drawSize * 0.5;
-        var cellMinX = Math.max(0, Math.floor((drawCenterX - halfDraw) / cellPx));
-        var cellMinY = Math.max(0, Math.floor((drawCenterY - halfDraw) / cellPx));
-        var cellMaxX = Math.min(gridW - 1, Math.floor((drawCenterX + halfDraw) / cellPx));
-        var cellMaxY = Math.min(gridW - 1, Math.floor((drawCenterY + halfDraw) / cellPx));
-
-        var totalCells = 0;
-        var occupiedCells = 0;
-        for (var cy2 = cellMinY; cy2 <= cellMaxY; cy2++) {
-          for (var cx2 = cellMinX; cx2 <= cellMaxX; cx2++) {
-            totalCells++;
-            if (occupancy[cy2 * gridW + cx2]) occupiedCells++;
-          }
-        }
-        if (totalCells > 0 && occupiedCells / totalCells > 0.40) continue;
-
-        // Draw sprite with slight random rotation
-        var angle = (rand2(wx, wy, 9540 + oi) - 0.5) * 0.5;
-        ctx.save();
-        ctx.translate(drawCenterX, drawCenterY);
-        ctx.rotate(angle);
-        ctx.globalAlpha = 0.85 + rand2(wx, wy, 9550 + oi) * 0.15;
-        ctx.drawImage(bmp, -halfDraw, -halfDraw, drawSize, drawSize);
-        ctx.globalAlpha = 1.0;
-        ctx.restore();
-
-        // Mark occupancy cells
-        for (var cy3 = cellMinY; cy3 <= cellMaxY; cy3++) {
-          for (var cx3 = cellMinX; cx3 <= cellMaxX; cx3++) {
-            occupancy[cy3 * gridW + cx3] = 1;
-          }
-        }
-        break; // One object per tile max
+  var tileInfo = function(wx, wy) {
+    var tx = wx - chunk.cx * chunkSize, ty = wy - chunk.cy * chunkSize;
+    if (tx < 0 || ty < 0 || tx >= chunkSize || ty >= chunkSize) return null;
+    var t = chunk.tiles[ty * chunkSize + tx];
+    return t ? { biome: t.biome, transition: !!t.transitionPair } : null;
+  };
+  // Collect every placement for the chunk, then draw far-to-near (base-Y
+  // sort) — perfect stacking regardless of jitter (replaces raster order).
+  var all = [];
+  for (var ty2 = 0; ty2 < chunkSize; ty2++) {
+    for (var tx2 = 0; tx2 < chunkSize; tx2++) {
+      var wx2 = chunk.cx * chunkSize + tx2, wy2 = chunk.cy * chunkSize + ty2;
+      var pls = f3Placements(wx2, wy2, tileInfo);
+      for (var pi = 0; pi < pls.length; pi++) {
+        var p = pls[pi];
+        all.push({
+          p: p,
+          cx: (tx2 + p.ux) * tileSize,
+          cy: (ty2 + p.uy) * tileSize,
+          drawSize: tileSize * p.scale,
+        });
       }
     }
   }
+  all.sort(function(a, b) {
+    return (a.cy + a.drawSize / 2) - (b.cy + b.drawSize / 2);
+  });
+  for (var di = 0; di < all.length; di++) {
+    var e = all[di], pl = e.p;
+    var bmp = imageCache.get(f3SpriteUrl(pl));
+    if (!bmp && pl.state) { // state PNG missing -> fall back to base variant
+      var base = Object.assign({}, pl); base.state = null;
+      bmp = imageCache.get(f3SpriteUrl(base));
+    }
+    if (!bmp) continue;
+    var half = e.drawSize * 0.5;
+    ctx.save();
+    ctx.translate(e.cx, e.cy);
+    ctx.rotate(pl.angle);
+    ctx.globalAlpha = pl.alpha;
+    ctx.drawImage(bmp, -half, -half, e.drawSize, e.drawSize);
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1.0;
 }
 
 // Render a chunk to an OffscreenCanvas and return an ImageBitmap.
@@ -1202,7 +1179,7 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
   applyGroundCoverToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache, occupancy, cellsPerTile, cellPx, gridW);
   // Field 2 rendered entirely on main thread via GPU instancing (field2-gpu.js)
   // applySmallFloraToChunk(ctx, chunk, tileSize, chunkSize, imageCache);
-  applySmallScatterToChunk(ctx, chunk, tileSize, chunkSize, imageCache, occupancy, cellsPerTile, cellPx, gridW);
+  applySmallScatterToChunk(ctx, chunk, tileSize, chunkSize, imageCache);
 
   // Check if any wang tiles failed to load
   var wangMissing = 0;

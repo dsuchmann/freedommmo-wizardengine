@@ -355,3 +355,20 @@ export function isClaimedAt(px, py, tileInfo) {
 }
 
 export function clearClaimCaches() { _placeCache.clear(); _maskCache.clear(); }
+
+// Returns all state sprite URLs for objects in `biome` that have known states.
+// Used by preloaders to warm the image cache for lifecycle-state sprites.
+export function f3StateUrls(biome) {
+  var urls = [];
+  var prefix = biome + '/';
+  for (var key in SS_STATES) {
+    if (key.indexOf(prefix) !== 0) continue;
+    var name = key.slice(prefix.length);
+    var states = SS_STATES[key];
+    for (var si = 0; si < states.length; si++) {
+      urls.push(SS_BASE_PATH + '_states/' + biome + '/' + name +
+        '/ss__' + biome + '__' + name + '__state__' + states[si] + '.png');
+    }
+  }
+  return urls;
+}
