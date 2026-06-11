@@ -375,20 +375,22 @@ export class CanvasRenderer {
       if (glScene) {
         // Art-res scene: player composited at zoom 1 so its pixels share the
         // world's pixel grid; CSS->art mapping is css/zoom + frac.
-        this.drawPlayerAt(PC / 2, PBASE, 1, player, pctx);
+        this.drawPlayerAt(PC / 2, PBASE, 1, player, pctx, true);
         setField2PlayerGL({
           canvas: this._playerCanvas,
           pivotX: w / 2 / camera.zoom + fracX,
           pivotY: _playerScreenY / camera.zoom + fracY + (PC - PBASE),
           size: PC,
+          baseFrac: PBASE / PC, // fraction of canvas height above the feet line
         });
       } else {
-        this.drawPlayerAt(PC / 2, PBASE, camera.zoom, player, pctx);
+        this.drawPlayerAt(PC / 2, PBASE, camera.zoom, player, pctx, true);
         setField2PlayerGL({
           canvas: this._playerCanvas,
           pivotX: w / 2,
           pivotY: _playerScreenY + (PC - PBASE), // quad pivot is bottom-center
           size: PC,
+          baseFrac: PBASE / PC, // fraction of canvas height above the feet line
         });
       }
     } else {
@@ -576,19 +578,23 @@ export class CanvasRenderer {
     ctx.restore();
   }
 
-  drawPlayerAt(px, sy, zoom, player, targetCtx) {
+  drawPlayerAt(px, sy, zoom, player, targetCtx, skipShadow) {
     const ctx = targetCtx || this.ctx;
     const py = sy - (player?.z ?? 0) * 10 * zoom;
     const frame = Math.floor(player?.character?.frame ?? 0);
-    // Blob shadow stretched/skewed by the sun (long at golden hour, tight at noon)
-    const sun2 = this._sun;
-    const lowSun = sun2 ? Math.pow(1 - Math.max(0, sun2.sunHeight), 1.6) : 0;
-    const stretch = 1 + (sun2 ? sun2.shadowLength : 0) * 0.9;
-    const skewX = sun2 ? sun2.shadowX * 6 * zoom * stretch * 0.4 : 0;
-    ctx.fillStyle = `rgba(20,24,38,${player?.z > 0 ? 0.12 : 0.20 + lowSun * 0.10})`;
-    ctx.beginPath();
-    ctx.ellipse(px + skewX, sy + 8 * zoom, (8 * zoom + (player?.z ?? 0) * zoom) * stretch, 3 * zoom, 0, 0, Math.PI * 2);
-    ctx.fill();
+    if (!skipShadow) {
+      // 2D-fallback blob shadow (GL mode casts a real silhouette shadow
+      // instead — baking this ellipse into the atlas sprite put a flat
+      // streak at hip height that followed the player everywhere)
+      const sun2 = this._sun;
+      const lowSun = sun2 ? Math.pow(1 - Math.max(0, sun2.sunHeight), 1.6) : 0;
+      const stretch = 1 + (sun2 ? sun2.shadowLength : 0) * 0.4;
+      const skewX = sun2 ? sun2.shadowX * 6 * zoom * stretch * 0.4 : 0;
+      ctx.fillStyle = `rgba(20,24,38,${player?.z > 0 ? 0.12 : 0.20 + lowSun * 0.10})`;
+      ctx.beginPath();
+      ctx.ellipse(px + skewX, sy + 8 * zoom, (8 * zoom + (player?.z ?? 0) * zoom) * stretch, 3 * zoom, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
     drawModularPlayer(ctx, px, py, zoom, frame, player?.character?.animation ?? 'idle');
     // Always draw a visible red dot so player is never invisible
     ctx.fillStyle = '#ff3333';

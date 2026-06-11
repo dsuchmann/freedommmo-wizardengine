@@ -985,8 +985,8 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
     var shadowOn = glc.shadowOk && sun && sunH > 0.001;
     var shCount = 0;
     if (shadowOn) {
-      if (!_shadowArray || _shadowArray.length < drawBuffer.length * SPRITE_FLOATS) {
-        _shadowArray = new Float32Array(Math.max(4096, drawBuffer.length * SPRITE_FLOATS * 2));
+      if (!_shadowArray || _shadowArray.length < (drawBuffer.length + 1) * SPRITE_FLOATS) {
+        _shadowArray = new Float32Array(Math.max(4096, (drawBuffer.length + 1) * SPRITE_FLOATS * 2));
       }
       var minShadowSize = tilePxSnapped * 0.6;
       for (var shi = 0; shi < drawBuffer.length; shi++) {
@@ -1010,6 +1010,23 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         _shadowArray[so + 6] = srect.v0;
         _shadowArray[so + 7] = srect.du;
         _shadowArray[so + 8] = srect.dv;
+        shCount++;
+      }
+      // Player silhouette shadow: anchor at the FEET line, not the canvas
+      // bottom (the 256px player canvas has a 64px empty band below the
+      // baseline; using the raw quad pivot would detach the shadow).
+      if (pRect && _playerGL) {
+        var pbf = _playerGL.baseFrac || 1;
+        var pso = shCount * SPRITE_FLOATS;
+        _shadowArray[pso] = _playerGL.pivotX;
+        _shadowArray[pso + 1] = _playerGL.pivotY - _playerGL.size * (1 - pbf);
+        _shadowArray[pso + 2] = _playerGL.size * pbf;
+        _shadowArray[pso + 3] = 0.3; // mild diffusion — defined silhouette
+        _shadowArray[pso + 4] = 0.5;
+        _shadowArray[pso + 5] = pRect.u0;
+        _shadowArray[pso + 6] = pRect.v0;
+        _shadowArray[pso + 7] = pRect.du;
+        _shadowArray[pso + 8] = pRect.dv * pbf;
         shCount++;
       }
     }
