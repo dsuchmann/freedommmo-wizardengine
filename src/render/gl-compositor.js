@@ -230,9 +230,15 @@ vec4 atmoSample(sampler2D t, vec2 uv, vec2 bs) {
 
 void main() {
   vec2 texel = vTL * uView + uOff;            // art px, top-left origin
-  vec2 seam = floor(texel) + 0.5;
-  vec2 f = clamp((texel - seam) * uSharp, -0.5, 0.5);
-  vec2 p = seam + f;
+  // Sharp bilinear: sample pinned to the texel CENTER across the texel's
+  // interior (crisp plateau), ramping to the boundary only within a
+  // one-device-pixel band at each edge. (The previous formula was inverted —
+  // it saturated at the texel BOUNDARY, a 50/50 blend, over the outer half
+  // of every texel, blurring the whole image.)
+  vec2 ip = floor(texel);
+  vec2 cd = texel - ip - 0.5;                 // distance from texel center
+  vec2 rr = vec2(max(0.0, 0.5 - 0.5 / uSharp)); // crisp half-width
+  vec2 p = ip + 0.5 + (cd - clamp(cd, -rr, rr)) * uSharp;
   vec2 uv = vec2(p.x / uArt.z, (uArt.y - p.y) / uArt.w);
   vec3 c = texture(uScene, uv).rgb;
   if (uMode > 0.5) {
