@@ -18,6 +18,15 @@ function pngWidth(file) {
   return buf.readUInt32BE(16);
 }
 
+// Per-type variant cap ('biome/object' -> first excluded index). Drops a
+// contiguous tail of bad variants from rotation, including their state
+// sprites and anims. Must be a tail block — the renderer assumes variant
+// indices are contiguous from v000.
+const VARIANT_CAP = {
+  // v048-v059 are literal birds (PixelLab prompt drift) — no fauna in F4
+  'tropical_forest/bird_of_paradise': 48,
+};
+
 const catalog = {};
 for (const biome of fs.readdirSync(FLORA)) {
   const bdir = path.join(FLORA, biome);
@@ -26,7 +35,11 @@ for (const biome of fs.readdirSync(FLORA)) {
     const odir = path.join(bdir, obj);
     if (!fs.statSync(odir).isDirectory()) continue;
     if (!fs.existsSync(path.join(odir, '_states'))) continue; // legacy dirs excluded
-    const bases = fs.readdirSync(odir).filter(f => /^mf__.*__v\d{3}\.png$/.test(f)).sort();
+    const cap = VARIANT_CAP[biome + '/' + obj] ?? Infinity;
+    const bases = fs.readdirSync(odir)
+      .filter(f => /^mf__.*__v\d{3}\.png$/.test(f))
+      .filter(f => parseInt(f.match(/__v(\d{3})\.png$/)[1], 10) < cap)
+      .sort();
     if (!bases.length) continue;
     const size = pngWidth(path.join(odir, bases[0]));
     // state pool: union of variant indices across all state dirs
@@ -36,7 +49,7 @@ for (const biome of fs.readdirSync(FLORA)) {
       if (!fs.statSync(sdir).isDirectory()) continue;
       for (const f of fs.readdirSync(sdir)) {
         const m = f.match(/__v(\d{3})\.png$/);
-        if (m) pool.add(parseInt(m[1], 10));
+        if (m && parseInt(m[1], 10) < cap) pool.add(parseInt(m[1], 10));
       }
     }
     // anim variants: v dirs under anim/wind_sway with >= 9 frames
@@ -45,7 +58,7 @@ for (const biome of fs.readdirSync(FLORA)) {
     if (fs.existsSync(adir)) {
       for (const vd of fs.readdirSync(adir)) {
         const m = vd.match(/^v(\d{3})$/);
-        if (!m) continue;
+        if (!m || parseInt(m[1], 10) >= cap) continue;
         const frames = fs.readdirSync(path.join(adir, vd)).filter(f => /^frame_\d{3}\.png$/.test(f));
         if (frames.length >= 9) anims.push(parseInt(m[1], 10));
       }

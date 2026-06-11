@@ -19,11 +19,12 @@ var _f4Cache = new Map();   // 'wx,wy,biome' -> placements
 // Runtime-tunable F4 size multiplier per biome — applied to BOTH the sprite
 // draw size and the claim footprint. Tuned live via the dev panel (key '4',
 // src/dev/f4-tuner.js). 1.0 = native sprite size (64px = 2 tiles).
+// Hand-tuned in-game via the F4 tuner panel (key '4') — final values 2026-06-11
 export var F4_BIOME_SCALE = {
-  grassland: 0.65, forest: 0.65, dense_forest: 0.65, tropical_forest: 0.65,
-  taiga: 0.65, swamp: 0.65, mystic: 0.65, savanna: 0.65, hills: 0.65,
-  steppe: 0.65, beach: 0.65, tundra: 0.65, desert: 0.65, arctic: 0.65,
-  mountains: 0.65, volcanic: 0.65,
+  grassland: 0.6, forest: 0.4, dense_forest: 0.4, tropical_forest: 0.65,
+  taiga: 0.4, swamp: 0.35, mystic: 0.55, savanna: 0.4, hills: 0.5,
+  steppe: 0.6, beach: 0.5, tundra: 0.55, desert: 0.45, arctic: 0.65,
+  mountains: 0.5, volcanic: 0.5,
 };
 export function setF4BiomeScale(biome, s) {
   F4_BIOME_SCALE[biome] = s;
