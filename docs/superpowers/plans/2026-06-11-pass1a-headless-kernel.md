@@ -1499,6 +1499,16 @@ git add sim/kernel/kernel.js sim/kernel/scheduler.js sim/time/lifecycle.js sim/t
 git commit -m "feat(sim): event-driven kernel — lazy flows, rationed re-rating, lifecycle, death prediction"
 ```
 
+**Canonical deviations applied during implementation (the committed code is authoritative):**
+1. `_reRateOne`: if `node.R <= 0 && node.r < 0`, schedule `death_check` at the current tick (Math.ceil overshoot can leave R slightly negative with no pending check).
+2. `stocks()`: living nodes use `closeSegment` (not bare `materialize`) so the final open segment's captured/burned accrue before the audit. `stocks()` is a destructive audit — only call at the current sim tick.
+3. `die()`: after `closeSegment`, if `node.R < 0`, `ledger.count('burned', node.R)` cancels the 1-tick overdraft, then clamp R to 0 before computing E.
+4. **Bounded world** (replaces a rejected offspring-sterilization shortcut): `Kernel` takes `bounds: {x0,y0,w,h} | null`; the `seed` handler computes the child cell first and, if outside bounds, the seed fails to establish (no spend, no event, no child). Carrying capacity is honest: density limited by flux rationing (≈ φ/burn per tile), area limited by geography. See `sim/time/lifecycle.js` seed handler (commit aa5b22c4d).
+5. **Heap compaction** (stale-event accumulation fix): ver:-1 appointments for dead nodes linger in the heap until their tick (~1.6M entries by sim-year 1 under high turnover). Freshness is *monotone* — node ids never reused, `ver` only increments — so a permanently-stale event can be evicted at any time without changing the deterministic pop sequence. Implemented: `EventHeap.rebuild(items)` (Floyd heapify via extracted `_siftDown`), `Scheduler.compact(isFresh)`, and `Kernel.runTo` compacting when `heap.size > 4096 && heap.size > 8 * graph.nodes.size`.
+6. **FluxField demand-sum cache**: per-tile `sums` map keeps `captureOf` O(1) (the year-1 senescence burst made O(n²) re-rate cascades the bottleneck). Behavior-preserving; reviewed and accepted.
+7. **Probes run in bounded worlds** (consequence of deviation 4; Tasks 13–16 predate it): every probe kernel passes `bounds` matching its spawn/boot region (Probe 1: {x0:0,y0:0,w:16,h:16}; Probe 2: {0,0,120,78}; Probe 3: {0,0,4,4}; Probe 4: {0,0,12,12}; Probe 5: {0,0,8,8}). Without bounds, multi-year probes spread seeds outward indefinitely (population grows with area), exploding runtime and invalidating stable-band assertions.
+8. **`runEagerTo` living check** (Task 16): the plan's `if (n.attrs?.alive)` is a bug — no such flag exists. Canonical: `if (n.R != null) this._reRateOne(n, t); else if (n.type === 'corpse') this.materialized(n.id);`.
+
 ---
 
 ### Task 11: Grazing — eating as time transfer (physiology, not agency)
