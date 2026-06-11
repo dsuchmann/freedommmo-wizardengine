@@ -764,7 +764,7 @@ export class CanvasRenderer {
   hud(chunkStore, player, lighting, camera, perf, weather) {
     if (this.hudCollapsed) {
       const miniGl = this.useGL && this.glc?.ok
-        ? `GL/${this.glc.presentMode === 1 ? 'smooth' : 'sharp'}${this.glc.crt ? '/crt' : ''}`
+        ? `GL${this.glc.crt ? '/crt' : ''}`
         : '2D';
       this.statsElement.innerHTML = perf
         ? `fps ${perf.fps.toFixed(0)} · draw ${perf.drawMs.toFixed(1)}ms · ${miniGl} · <span style="color:#888">H for full HUD</span>`
@@ -791,8 +791,8 @@ export class CanvasRenderer {
     const cacheStats = this.chunkRenderCache.stats();
     const atlasStats = this.atlas.stats().generated;
     const glLine = this.useGL && this.glc?.ok
-      ? `<b style="color:#8f8">GL</b> tex ${this.glc.stats().glTextures} · atlas ${this.glc.stats().atlasSprites} · filter ${this.glc.presentMode === 1 ? '<b style="color:#8f8">smooth</b>' : 'sharp'} (U) · crt ${this.glc.crt ? '<b style="color:#8f8">on</b>' : 'off'} (C)`
-      : '<span style="color:#ff8">2D</span> <span style="color:#888">(U/C need GL)</span>';
+      ? `<b style="color:#8f8">GL</b> tex ${this.glc.stats().glTextures} · atlas ${this.glc.stats().atlasSprites} · crt ${this.glc.crt ? '<b style="color:#8f8">on</b>' : 'off'} (C)`
+      : '<span style="color:#ff8">2D</span> <span style="color:#888">(C needs GL)</span>';
     const workerLine = `terrain ${glLine} (G toggle) · workers ${chunkStats.workers} (${chunkStats.workersReady ?? '?'} ready) · pending ${chunkStats.pending} · ready ${chunkStats.ready} · bitmaps ${chunkStats.bitmaps ?? 0} · art sheets ${atlasStats.loaded}/${atlasStats.sheets}`;
     const perfLine = perf ? `<br>fps ${perf.fps.toFixed(0)} · update ${perf.updateMs.toFixed(1)}ms · draw ${perf.drawMs.toFixed(1)}ms · ${workerLine}` : '';
     // ---- 8-layer Wang diagnostic for the tile under the player ----
