@@ -1,0 +1,13 @@
+# Pass 1 Implementation Roadmap — Time Metabolism + Simulation Kernel
+
+**Spec:** `docs/superpowers/specs/2026-06-11-pass1-time-metabolism-simulation-kernel-design.md`
+**Rule:** this file is the single source of truth for Pass 1 implementation status. Update the status column whenever a plan starts, completes, or changes scope. Plans B–D are written when their predecessor completes (informed by what it teaches), but they are NOT optional — every spec section maps to a plan below.
+
+| Plan | Scope | Spec sections | Status | Plan doc |
+|---|---|---|---|---|
+| **A** | Headless sim kernel: package scaffolding, hypergraph store (SQLite, provenance, owner scoping), lazy time flows, event-queue scheduler, deterministic RNG streams, flux field + tile competition, lifecycle (growth/senescence/death/corpse/decay), reproduction, baseline spawning, probes 1–5 as test suite | §1, §2.1–2.4, §2.7, §4.1, §5.1, §5.4, §5.5, §6.2 (probes 1–5) | **IN PROGRESS** | `2026-06-11-pass1a-headless-kernel.md` |
+| **B** | Sim process + protocol: Node process lifecycle, WebSocket server, hello/intent/query/admin + snapshot/tick-delta/events/time messages, renderer attach (entities served by sim), checkpoint/WAL recovery, in-game probe 6 (pick the berry, fell the tree, stump-delta heals) | §3, §5.2, §5.3, §6.2 (probe 6) | NOT STARTED | — |
+| **C** | Simulation LOD: tiers (full/procedural/statistical), aggregate nodes, bubble sampler, promotion/demotion as ledger events, pinned entities, group nodes individual at every tier | §4.2, §4.3 | NOT STARTED | — |
+| **D** | Asset-state taxonomy: canonical lifecycle state machine doc + per-archetype requirement sheets (F2–F7, future fauna/body) at PixelLab quantizations | §6.3 | NOT STARTED | — |
+
+**Deliberately not in any plan above** (bound to later atlas passes, per spec §6.4): group Agency/politics (S5), ripple depth/impact matrix (S6), LLM mind integration (S4 Mind), MMO offline semantics (S7), client prediction. Kernel seams for all of these ship in Plans A–C (subjective layers §2.5 and goal/plan/prediction shapes §2.6 land with their first consumer; the `owner` column and event versioning ship in Plan A's schema so no migration is needed).
