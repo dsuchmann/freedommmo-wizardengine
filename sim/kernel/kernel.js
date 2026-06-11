@@ -65,6 +65,7 @@ export class Kernel {
     const [, , dF, bF] = stageAt(node.attrs.species, age);
     const sen = node.attrs.sen ?? { burnMul: 1, demandMul: 1 };
     const demand = sp.demand * dF * sen.demandMul;
+    node.attrs.demand = demand;   // persisted so loadKernel can rebuild the flux field
     this.flux.updateDemand(node.id, demand);
     const cap = this.flux.captureOf(node.id);
     const burn = sp.burn * bF * sen.burnMul;

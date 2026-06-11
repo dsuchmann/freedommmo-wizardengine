@@ -17,6 +17,22 @@ export class Scheduler {
     return undefined;
   }
 
+  /** Persist the heap array verbatim (its order IS deterministic state). */
+  flush(db) {
+    const tx = db.transaction(() => {
+      db.exec('DELETE FROM sched;');
+      const ins = db.prepare('INSERT INTO sched(idx,tick,node_id,kind,ver) VALUES (?,?,?,?,?)');
+      this.heap.a.forEach((e, i) => ins.run(i, e.tick, e.nodeId, e.kind, e.ver));
+    });
+    tx();
+  }
+
+  load(db) {
+    this.heap.a = db.prepare('SELECT tick, node_id, kind, ver FROM sched ORDER BY idx').all()
+      .map(r => ({ tick: r.tick, nodeId: r.node_id, kind: r.kind, ver: r.ver }));
+    // already a valid heap (stored verbatim) — no rebuild needed
+  }
+
   /** Evict events that can never fire. Safe at any time: freshness is monotone
    *  (node ids never reused, ver only grows), so removing permanently-stale
    *  events cannot change the pop sequence. */

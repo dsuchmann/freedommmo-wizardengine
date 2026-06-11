@@ -82,9 +82,9 @@ export class Graph {
   flush(db, tick) {
     const tx = db.transaction(() => {
       db.exec('DELETE FROM nodes; DELETE FROM edges; DELETE FROM edge_members;');
-      const ni = db.prepare('INSERT INTO nodes(id,type,born_tick,x,y,R,rate,last_tick,created_by_event,owner,attrs) VALUES (?,?,?,?,?,?,?,?,?,?,?)');
+      const ni = db.prepare('INSERT INTO nodes(id,type,born_tick,x,y,R,rate,last_tick,ver,created_by_event,owner,attrs) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
       for (const n of this.nodes.values()) {
-        ni.run(n.id, n.type, n.bornTick, n.x, n.y, n.R, n.r, n.lastTick, n.createdByEvent, n.owner, JSON.stringify(n.attrs));
+        ni.run(n.id, n.type, n.bornTick, n.x, n.y, n.R, n.r, n.lastTick, n.ver, n.createdByEvent, n.owner, JSON.stringify(n.attrs));
       }
       const ei = db.prepare('INSERT INTO edges(id,type,weight,born_tick,owner,attrs) VALUES (?,?,?,?,?,?)');
       const mi = db.prepare('INSERT INTO edge_members(edge_id,node_id,role) VALUES (?,?,?)');

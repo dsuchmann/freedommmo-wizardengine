@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS nodes(
   born_tick INTEGER NOT NULL,
   x REAL, y REAL,
   R REAL, rate REAL, last_tick INTEGER,
+  ver INTEGER NOT NULL DEFAULT 0,
   created_by_event INTEGER REFERENCES events(id),
   owner INTEGER REFERENCES nodes(id),
   attrs TEXT NOT NULL DEFAULT '{}'
@@ -48,6 +49,13 @@ CREATE TABLE IF NOT EXISTS deltas(
   kind TEXT NOT NULL,
   attrs TEXT NOT NULL DEFAULT '{}'
 );
+CREATE TABLE IF NOT EXISTS sched(
+  idx INTEGER PRIMARY KEY,
+  tick INTEGER NOT NULL,
+  node_id INTEGER NOT NULL,
+  kind TEXT NOT NULL,
+  ver INTEGER NOT NULL
+);
 CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT);
 `;
 
@@ -65,7 +73,7 @@ export function canonicalDump(db) {
   const tables = [
     ['nodes', 'id'], ['edges', 'id'], ['edge_members', 'edge_id, node_id, role'],
     ['events', 'id'], ['event_targets', 'event_id, node_id'],
-    ['deltas', 'id'], ['meta', 'key'],
+    ['deltas', 'id'], ['sched', 'idx'], ['meta', 'key'],
   ];
   for (const [t, order] of tables) {
     parts.push(`== ${t}`);
