@@ -887,7 +887,7 @@ function applySmallScatterToChunk(ctx, chunk, tileSize, chunkSize, imageCache) {
   for (var i = 0; i < chunk.tiles.length; i++) {
     if (SS_BIOME_OBJECTS[chunk.tiles[i].biome]) { hasSS = true; break; }
   }
-  if (!hasSS) return;
+  if (!hasSS) return 0;
   var tileInfo = function(wx, wy) {
     var tx = wx - chunk.cx * chunkSize, ty = wy - chunk.cy * chunkSize;
     if (tx < 0 || ty < 0 || tx >= chunkSize || ty >= chunkSize) return null;
@@ -915,6 +915,7 @@ function applySmallScatterToChunk(ctx, chunk, tileSize, chunkSize, imageCache) {
   all.sort(function(a, b) {
     return (a.cy + a.drawSize / 2) - (b.cy + b.drawSize / 2);
   });
+  var missed = 0;
   for (var di = 0; di < all.length; di++) {
     var e = all[di], pl = e.p;
     var bmp = imageCache.get(f3SpriteUrl(pl));
@@ -922,7 +923,7 @@ function applySmallScatterToChunk(ctx, chunk, tileSize, chunkSize, imageCache) {
       var base = Object.assign({}, pl); base.state = null;
       bmp = imageCache.get(f3SpriteUrl(base));
     }
-    if (!bmp) continue;
+    if (!bmp) { missed++; continue; }
     var half = e.drawSize * 0.5;
     ctx.save();
     ctx.translate(e.cx, e.cy);
@@ -932,6 +933,7 @@ function applySmallScatterToChunk(ctx, chunk, tileSize, chunkSize, imageCache) {
     ctx.restore();
   }
   ctx.globalAlpha = 1.0;
+  return missed;
 }
 
 // Render a chunk to an OffscreenCanvas and return an ImageBitmap.
@@ -1179,7 +1181,7 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
   applyGroundCoverToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache, occupancy, cellsPerTile, cellPx, gridW);
   // Field 2 rendered entirely on main thread via GPU instancing (field2-gpu.js)
   // applySmallFloraToChunk(ctx, chunk, tileSize, chunkSize, imageCache);
-  applySmallScatterToChunk(ctx, chunk, tileSize, chunkSize, imageCache);
+  var scatterMissed = applySmallScatterToChunk(ctx, chunk, tileSize, chunkSize, imageCache) || 0;
 
   // Check if any wang tiles failed to load
   var wangMissing = 0;
@@ -1191,7 +1193,7 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
   return {
     bitmap: bitmap,
     hasSoil: hasSoil,
-    needsRepaint: soilResult.missedSoil || wangMissing > 0,
+    needsRepaint: soilResult.missedSoil || wangMissing > 0 || scatterMissed > 0,
     debug: {
       masks: debugMasks, successes: debugSuccesses, srcs: debugSrcs, biomes: debugBiomes,
       neighbors: debugNeighbors, transitionDirs: debugTransitionDirs, transitionSides: debugTransitionSides,
