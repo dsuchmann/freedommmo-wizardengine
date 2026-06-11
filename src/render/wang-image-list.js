@@ -1,6 +1,6 @@
 // Wang tile image URL list — shared between main thread and workers.
 // No DOM dependencies. Pure data.
-import { SS_BIOME_OBJECTS, SS_BASE_PATH as SS_BASE_PATH_DC, SS_VARIANT_COUNT as SS_VARIANT_COUNT_DC, f3StateUrls } from '../world/decoration-claims.js';
+import { SS_BIOME_OBJECTS, SS_BASE_PATH as SS_BASE_PATH_DC, SS_VARIANT_COUNT as SS_VARIANT_COUNT_DC, f3StateUrls, ssAllowedVariants } from '../world/decoration-claims.js';
 
 var WANG_SUFFIX = '__v000.png';
 var TRANSITIONS_BASE = '/assets/pixelab/landscape_v2/transitions/';
@@ -253,6 +253,10 @@ var SF_VARIANT_WHITELIST = {
   'tundra/low_berry_bush': [0, 4, 6, 9, 23, 45, 47],
   // arctic/ice_needle: all 64 minus full-bleed square variants 21,25,30,35,40,45,50,55,60
   'arctic/ice_needle': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 24, 26, 27, 28, 29, 31, 32, 33, 34, 36, 37, 38, 39, 41, 42, 43, 44, 46, 47, 48, 49, 51, 52, 53, 54, 56, 57, 58, 59, 61, 62, 63],
+  // desert/sand_grass: all 64 minus 19 full-square cream/white box variants
+  'desert/sand_grass': [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 13, 14, 15, 16, 17, 18, 20, 21, 22, 24, 25, 26, 28, 31, 33, 34, 36, 39, 41, 42, 45, 48, 49, 50, 52, 53, 54, 55, 57, 58, 60, 61, 62, 63],
+  // mountains/alpine_tuft: all 64 minus full-square variants 56,57
+  'mountains/alpine_tuft': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 58, 59, 60, 61, 62, 63],
 };
 
 // Anim coverage map ('biome/object' → variant indices that HAVE wind_sway frames on disk).
@@ -367,8 +371,11 @@ export function getSmallScatterImageURLsForBiomes(biomes) {
     if (!objects) continue;
     for (var oi = 0; oi < objects.length; oi++) {
       var name = objects[oi].name;
-      for (var v = 0; v < SS_VARIANT_COUNT_DC; v++) {
-        var idx = v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v);
+      var allowed = ssAllowedVariants(biome, name); // null = all 64
+      var count = allowed ? allowed.length : SS_VARIANT_COUNT_DC;
+      for (var v = 0; v < count; v++) {
+        var n = allowed ? allowed[v] : v;
+        var idx = n < 10 ? '00' + n : (n < 100 ? '0' + n : '' + n);
         urls.push(SS_BASE_PATH_DC + biome + '/' + name + '/ss__' + biome + '__' + name + '__v' + idx + '.png');
       }
     }

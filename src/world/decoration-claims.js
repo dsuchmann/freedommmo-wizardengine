@@ -192,6 +192,85 @@ export var SS_BIOME_OBJECTS = {
   ],
 };
 
+// Variant indices pulled from rotation ('biome/object' -> excluded indices).
+// Found by border-opacity scan (>50% of border pixels alpha>200). Two failure modes:
+//  - "boxy" variants: full-square texture patches with a baked background (no
+//    isolated object — background removal not viable, must be excluded)
+//  - ALL64 dirs: every PNG is a ~94-byte JSON error body saved as .png
+//    (failed generation downloads) — the whole object is disabled until regenerated
+var ALL64 = [];
+for (var _v = 0; _v < 64; _v++) ALL64.push(_v);
+export var SS_VARIANT_EXCLUDE = {
+  'arctic/ice_crystal_cluster': [2, 4, 12, 42],
+  'arctic/sparkling_crystal_dust_hyperdetailed_rich': [60],
+  'beach/shell_scatter_scattered_seashells_on': [51],
+  'beach/wet_sand_grain_texture': [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 20, 21, 24, 26, 27, 29, 30, 31, 32, 34, 36, 37, 38, 39, 40, 42, 43, 45, 48, 51, 53, 54, 55, 57, 58, 59, 61, 62, 63],
+  'dense_forest/fallen_pinecone': [32, 37, 43, 44, 53, 58],
+  'dense_forest/moss_covered_small_stone': ALL64,
+  'dense_forest/mushroom_cluster': ALL64,
+  'dense_forest/rotting_branch_piece': ALL64,
+  'desert/cracked_dry_clay_hyperdetailed_rich': [0],
+  'forest/acorn_cluster': ALL64,
+  'forest/puffball_mushroom_round_white_puffy': [4, 28, 29, 39, 40, 45],
+  'forest/small_twig_bundle': ALL64,
+  'forest/twig_bundle': [6, 7, 8, 13, 17, 19, 20, 42, 48],
+  'grassland/exposed_flat_stone_in_grass': [26, 28, 29, 30, 31, 45, 56, 57, 58, 59, 60, 61],
+  'hills/rocky_soil_patch_brown_earth': [16],
+  'hills/slate_fragment': ALL64,
+  'hills/slate_slab_flat_dark_grey_layered_rock': [0, 1, 2, 3, 4, 7, 8, 9, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 30, 32, 33, 34, 35, 36, 38, 40, 41, 42, 43, 44, 45, 46, 56, 59, 63],
+  'mountains/fine_gravel_scatter_hyperdetailed_rich': [0, 33, 59, 60],
+  'mountains/grey_mountain_gravel_patch_stone': [22, 38, 42],
+  'mountains/ice_chunk': [0, 6, 15, 31, 32, 33],
+  'mountains/rock_shard': [47],
+  'mountains/scree_loose_grey_angular_rock': [0, 1, 2, 5, 7, 8, 11, 12, 14, 16, 18, 20, 22, 25, 26, 29, 34, 35, 37, 39, 40, 41, 46, 48, 49, 50, 52, 53, 55, 56, 58, 59, 63],
+  'mystic/glowing_pebble': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 58, 59, 60, 61, 62, 63],
+  'mystic/mystic_crystal_glowing_purple_magical': [60],
+  'mystic/rune_shard': [0, 1, 2, 3, 4, 5, 6, 9, 10, 11, 13, 16, 18, 27, 30, 31, 34, 35, 36, 37, 38, 39, 40, 43, 44, 46, 47, 50, 52, 54, 56, 57, 60, 61, 63],
+  'mystic/stardust_cluster': [13, 39, 47],
+  'savanna/bleached_stick': [0, 62],
+  'savanna/bone_fragment': [1, 12, 14, 23, 24, 27, 28, 30, 34, 37, 46, 48, 51],
+  'savanna/cracked_pod': [12, 23, 59],
+  'savanna/dried_seed_pod': [1, 4, 7, 9, 19, 20, 23, 24, 25, 26, 29, 30, 31, 34, 35, 36, 38, 39, 40, 41, 43, 44, 45, 46, 48, 49, 50, 53, 56, 59, 60, 61],
+  'savanna/dry_golden_thatch_hyperdetailed_rich': [38],
+  'steppe/dust_clod': [47],
+  'steppe/grass_ball': [15, 25, 30, 62],
+  'swamp/frog_eggs': ALL64,
+  'swamp/thin_fungal_film_on_ground': [42, 52, 53, 54, 55, 59, 62],
+  'swamp/waterlogged_dark_leaf': [13],
+  'taiga/frozen_twig': [21, 23, 36],
+  'taiga/ice_covered_pebble': [0, 2, 3, 7, 12, 13, 14, 16, 17, 19, 20, 21, 23, 25, 26, 27, 30, 31, 32, 33, 35, 36, 37, 39, 40, 42, 43, 48, 51, 54, 57, 58, 59, 60, 63],
+  'taiga/ice_pebble': [4, 5, 15, 22, 24, 27, 28, 40, 41, 44, 53],
+  'taiga/pine_cone': [0, 2, 3, 5, 8, 9, 10, 11, 12, 14, 15, 19, 20, 22, 23, 27, 31, 32, 36, 37, 40, 41, 42, 44, 46, 49, 50, 51, 54, 56, 62],
+  'taiga/pine_needle_duff_soil_patch': [34],
+  'tropical_forest/bright_beetle_shell': ALL64,
+  'tropical_forest/exotic_seed_pod': ALL64,
+  'tropical_forest/seed_pod': [3, 6, 15, 22, 26, 27, 41, 45, 47, 49, 57, 58],
+  'tropical_forest/small_palm_nut': ALL64,
+  'tropical_forest/vine_cutting': [46],
+  'tropical_forest/vine_cutting_piece': [0, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 25, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63],
+  'tundra/frozen_pebble': [17, 19, 27, 37],
+  'volcanic/charred_bone': [56],
+  'volcanic/dark_ash_film': [51],
+  'volcanic/obsidian_shard': [0, 1, 2, 3, 4, 6, 9, 10, 12, 14, 16, 17, 18, 20, 21, 22, 23, 25, 26, 27, 28, 29, 30, 31, 35, 37, 39, 40, 41, 45, 46, 48, 51, 52, 54, 55, 58, 60, 62, 63],
+};
+
+// Precomputed allowed-variant arrays for objects with exclusions.
+var _ssAllowed = {};
+for (var _k in SS_VARIANT_EXCLUDE) {
+  var _ex = {};
+  for (var _i = 0; _i < SS_VARIANT_EXCLUDE[_k].length; _i++) _ex[SS_VARIANT_EXCLUDE[_k][_i]] = 1;
+  var _al = [];
+  for (var _w = 0; _w < SS_VARIANT_COUNT; _w++) if (!_ex[_w]) _al.push(_w);
+  _ssAllowed[_k] = _al;
+}
+
+// Allowed variant indices for an object, or null when all 64 are usable.
+// Empty array = object fully disabled (corrupt assets).
+export function ssAllowedVariants(biome, name) {
+  var a = _ssAllowed[biome + '/' + name];
+  return a !== undefined ? a : null;
+}
+
 // Generated from assets/_states: 'biome/object' -> available states.
 // Only objects with known state PNGs are listed. 'unknown' biome excluded.
 var SS_STATES = {
@@ -291,6 +370,8 @@ export function f3Placements(wx, wy, tileInfo) {
   var out = [];
   for (var oi = 0; oi < objs.length && out.length < MAX_PER_TILE; oi++) {
     var obj = objs[oi];
+    var allowed = _ssAllowed[t.biome + '/' + obj.name];
+    if (allowed && allowed.length === 0) continue; // all variants corrupt/boxy
     var sparsity = obj.sparsity || 0.93;
     if (rand2(wx, wy, 9500 + oi) > (1.0 - sparsity)) continue; // SAME seeds as today
     var scale = obj.scale || 0.32;
@@ -299,7 +380,9 @@ export function f3Placements(wx, wy, tileInfo) {
     var drawPx = TILE_ART_PX * scale;
     var p = {
       name: obj.name, biome: t.biome,
-      variant: Math.floor(rand2(wx, wy, 9510 + oi) * SS_VARIANT_COUNT),
+      variant: allowed
+        ? allowed[Math.floor(rand2(wx, wy, 9510 + oi) * allowed.length)]
+        : Math.floor(rand2(wx, wy, 9510 + oi) * SS_VARIANT_COUNT),
       ux: ux, uy: uy, scale: scale,
       angle: (rand2(wx, wy, 9540 + oi) - 0.5) * 0.5,
       alpha: 0.85 + rand2(wx, wy, 9550 + oi) * 0.15,
