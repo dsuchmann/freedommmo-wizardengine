@@ -42,7 +42,7 @@ STATE_FILE = FLORA_DIR / "_f4_state.json"
 LOG_FILE = FLORA_DIR / "_f4_run.log"
 
 API_BASE = "https://api.pixellab.ai/v2"
-MAX_INFLIGHT = 16
+MAX_INFLIGHT = 20  # account limit; full overnight throughput (8h object expiry race)
 POLL_INTERVAL = 20          # seconds between scheduler ticks
 SUBMIT_DELAY = 2            # seconds between submissions
 JOB_TIMEOUT = 1800          # 30 min -> requeue
