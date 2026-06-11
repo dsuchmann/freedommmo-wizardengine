@@ -52,7 +52,7 @@ export class Kernel {
   /** Recompute rates for every occupant of the tile containing node `id`. */
   reRateTileOf(id, tick) {
     const n = this.graph.nodes.get(id);
-    if (!n) return;
+    if (!n || n.x == null || n.attrs?.noFlux) return;
     // 1. update this node's demand, 2. re-rate all tile occupants (rationing shifts)
     for (const occId of this.flux.occupantsOf(n.x, n.y)) {
       const occ = this.graph.nodes.get(occId);

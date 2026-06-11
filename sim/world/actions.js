@@ -23,7 +23,12 @@ export function pick(kernel, playerId, targetId, tick) {
   const sp = SPECIES[prey.attrs.species];
   if (!sp?.pick) return 0;
   kernel.closeSegment(prey, tick);
-  const bite = Math.min(sp.pick.bite, prey.attrs.body + Math.max(prey.R, 0));
+  // Correct any scheduler-ceil overdraft before computing bite (prevents phantom time minting).
+  if (prey.R < 0) {
+    kernel.ledger.count('burned', prey.R);   // prey.R is negative — decrements burned
+    prey.R = 0;
+  }
+  const bite = Math.min(sp.pick.bite, prey.attrs.body + prey.R);
   if (bite <= 0) return 0;
   const fromBody = Math.min(bite, prey.attrs.body);
   prey.attrs.body -= fromBody;
@@ -34,7 +39,7 @@ export function pick(kernel, playerId, targetId, tick) {
     tick, type: 'pick', actor: playerId, targets: [targetId], magnitude: bite,
     attrs: { species: prey.attrs.species },
   });
-  if (prey.attrs.body + Math.max(prey.R, 0) <= 1e-9) die(kernel, prey, tick, evId);
+  if (prey.attrs.body + prey.R <= 1e-9) die(kernel, prey, tick, evId);
   else kernel.reRateTileOf(targetId, tick);
   return gained;
 }

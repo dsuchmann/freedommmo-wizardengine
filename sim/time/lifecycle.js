@@ -94,7 +94,12 @@ export function registerLifecycle(kernel) {
       })[0];
     if (prey) {
       k.closeSegment(prey, ev.tick);
-      const bite = Math.min(sp.graze.bite, prey.attrs.body + Math.max(prey.R, 0));
+      // Correct any scheduler-ceil overdraft before computing bite (prevents phantom time minting).
+      if (prey.R < 0) {
+        k.ledger.count('burned', prey.R);   // prey.R is negative — decrements burned
+        prey.R = 0;
+      }
+      const bite = Math.min(sp.graze.bite, prey.attrs.body + prey.R);
       const fromBody = Math.min(bite, prey.attrs.body);
       prey.attrs.body -= fromBody;
       prey.R -= (bite - fromBody);
@@ -103,7 +108,7 @@ export function registerLifecycle(kernel) {
       const evId = k.ledger.emit({
         tick: ev.tick, type: 'graze', actor: node.id, targets: [prey.id], magnitude: bite,
       });
-      if (prey.attrs.body + Math.max(prey.R, 0) <= 1e-9) {
+      if (prey.attrs.body + prey.R <= 1e-9) {
         die(k, prey, ev.tick, evId);
       } else {
         k.reRateTileOf(prey.id, ev.tick);
