@@ -108,6 +108,22 @@ export class Kernel {
     return s;
   }
 
+  /** Brute-force mode for probe 5: process events normally, but ALSO force a
+      re-rate of every living node every `step` ticks. closeSegment inside
+      _reRateOne folds the elapsed segment into (R, lastTick) and the ledger
+      counters at every step, so eager mode exercises MANY short segments where
+      lazy mode uses few long ones. Final state must agree within float tolerance. */
+  runEagerTo(targetTick, step = 3600) {
+    for (let t = this.tick + step; t <= targetTick; t += step) {
+      this.runTo(t);
+      for (const n of [...this.graph.nodes.values()].sort((a, b) => a.id - b.id)) {
+        if (n.R != null) this._reRateOne(n, t);
+        else if (n.type === 'corpse') this.materialized(n.id);
+      }
+    }
+    this.runTo(targetTick);
+  }
+
   runTo(targetTick) {
     const isFresh = e => {
       const n = this.graph.nodes.get(e.nodeId);
