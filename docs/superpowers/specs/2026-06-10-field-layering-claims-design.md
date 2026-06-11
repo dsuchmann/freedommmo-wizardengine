@@ -125,3 +125,23 @@ road). Characters/NPCs are dynamic and never claim — they y-sort with F6.
 - F4-F7 placement implementation (each is its own later plan; they only get claim *slots* here).
 - F3 animations / live-object pass.
 - Collision/walkability (claims are visual placement only — gameplay collision is separate).
+
+## Verification (2026-06-10)
+
+**Node test:** `node scripts/test-decoration-claims.mjs` → "all decoration-claims tests passed"
+
+**Invariants from unit test:** 441 tiles sampled, 2289 blade roots tested, 0 claim violations.
+
+**Visual screenshots (Playwright, fresh incognito, daylight frozen at 0.5):**
+- `screenshots/_f3_grassland.png` — lush green terrain, dense grass blades, scatter debris (pebbles/organic) visible at good density; no blade roots piercing debris footprints.
+- `screenshots/_f3_forest.png` — dark green forest floor, ground cover + flora, scatter debris between flora clusters; draw order correct throughout.
+- `screenshots/_f3_desert.png` — sandy orange terrain, sparse rock/pebble scatter at appropriate desert density; biome transitions clean.
+
+Console was clean of real JS errors across all three biome captures (pre-existing asset 404s only).
+
+**Commits landed:**
+- `d399ff31c` — shared decoration-claims.js module (f3Placements, getClaimMask, isClaimedAt)
+- `9d98f82d8` — worker bakes F3 base-Y sorted with lifecycle-state variant pool
+- `6500abea3` — F2 blade culling via claim masks
+- `4e1f8223f` — window._claims debug hook
+- `017d680b9` — Node test: scripts/test-decoration-claims.mjs
