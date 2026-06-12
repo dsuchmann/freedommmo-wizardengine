@@ -10,6 +10,10 @@ export const SPECIES_YIELD = {
   berry_bush: { cellulose: 0.005, sugar: 0.003, fibre: 0.002 },
   tree:       { cellulose: 0.006, lignin: 0.004 },
   grazer:     { keratin: 0.005, bone: 0.003 },
+  human:      { bone: 0.004, keratin: 0.002 },
+  elf:        { bone: 0.003, keratin: 0.002 },
+  dwarf:      { bone: 0.005, keratin: 0.002 },
+  orc:        { bone: 0.005, keratin: 0.003 },
 };
 
 // grain units per tu of E (matter nodes by archetype CLASS — prefix match,

@@ -9,6 +9,31 @@ export const CHANNEL_EFF = {          // spec §1.5
   nurture: 0.95, gift: 0.90, trade: 0.85, harvest: 0.50, violence: 0.30,
 };
 
+// 9-stage humanoid life-stage curve (TIME_SYSTEM burn multipliers 0.2x→2.0x),
+// scaled by per-race lifespan. demandFactor = capture curve (children capture
+// less, the old capture little).
+function humanoid({ lifespan, demand, burn, maxBody, forageBite }) {
+  const Y = YEAR * lifespan;
+  const r = t => Math.round(t);
+  return {
+    demand, burn, growFrac: 0.3, maxBody,
+    stages: [
+      ['infant',      0,         0.30, 0.2],
+      ['toddler',     r(2 * Y),  0.45, 0.3],
+      ['child',       r(4 * Y),  0.60, 0.4],
+      ['adolescent',  r(12 * Y), 0.80, 0.6],
+      ['young_adult', r(18 * Y), 1.00, 0.8],
+      ['adult',       r(30 * Y), 1.00, 1.0],
+      ['middle_aged', r(50 * Y), 0.95, 1.2],
+      ['senior',      r(65 * Y), 0.85, 1.5],
+      ['elderly',     r(80 * Y), 0.70, 2.0],
+    ],
+    senescence: { start: r(70 * Y), stepEvery: r(1 * Y), burnGrowth: 1.15, demandDecay: 0.97 },
+    graze: { every: 12 * 3600, bite: forageBite, radius: 4 },
+    embodiedDecayDays: 25,
+  };
+}
+
 // Initial tunables. Stages: [name, startAgeTicks, demandFactor, burnFactor].
 // senescence: { start, stepEvery, burnGrowth, demandDecay } — applied per step event.
 // seed: { every, cost, minR, jitter } — reproduction (Task 10).
@@ -61,6 +86,17 @@ export const SPECIES = {
     embodiedDecayDays: 20,
     graze: { every: 6 * 3600, bite: 600, radius: 3 },   // every 6 sim-hours
   },
+
+  // — Pass 4 L1: humanoid races. Same kernel machinery as all life; stages carry
+  // the TIME_SYSTEM 10-stage burn multipliers (fetus omitted: gestation is L5's
+  // birth-as-parental-investment — honest absence), senescence carries the
+  // TIME_SYSTEM death-scaling (1.15x/year from age 70). No `seed`: people-
+  // reproduction (family edges, childhood gating) is L5. `graze` here is the
+  // rule-based foraging instinct (grazer precedent) — NOT Agency (L6).
+  human: humanoid({ lifespan: 1,   demand: 0.12, burn: 0.45, maxBody: 25000, forageBite: 500 }),
+  elf:   humanoid({ lifespan: 5,   demand: 0.10, burn: 0.30, maxBody: 22000, forageBite: 350 }),
+  dwarf: humanoid({ lifespan: 2.5, demand: 0.12, burn: 0.40, maxBody: 24000, forageBite: 450 }),
+  orc:   humanoid({ lifespan: 0.7, demand: 0.14, burn: 0.55, maxBody: 30000, forageBite: 650 }),
 };
 
 /** Advance a node's lazy stocks to `tick`. Safe to call repeatedly. */
