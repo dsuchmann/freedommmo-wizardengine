@@ -12,6 +12,7 @@ import { combineOutcome, signatureOf } from '../matter/interaction.js';
 import { canonicalizeRecipe } from '../matter/recipes.js';
 import { toolPowerOf, maxHpOf, WEAR_PER_USE } from '../items/items.js';
 import { wieldedItem } from '../items/equipment.js';
+import { buildingStampAt } from './buildings.js';
 
 // Item id counter. Module-level; starts at 1 for fresh kernels.
 // After loadKernel, call initItemIdFromKernel(kernel) to avoid collisions.
@@ -322,6 +323,9 @@ export function move(kernel, actorId, dx, dy, tick) {
   const toX = actor.x + dx, toY = actor.y + dy;
   const b = kernel.bounds;
   if (b && (toX < b.x0 || toX >= b.x0 + b.w || toY < b.y0 || toY >= b.y0 + b.h)) return false;
+  // Walls are impassable claims (P4): a non-walkable building stamp refuses the step.
+  const stamp = buildingStampAt(kernel, toX, toY);
+  if (stamp && !stamp.walkable) return false;
   const evId = kernel.ledger.emit({
     tick, type: 'move', actor: actorId, targets: [],
     attrs: { fromX: actor.x, fromY: actor.y, toX, toY },

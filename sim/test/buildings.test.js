@@ -230,3 +230,22 @@ test('maintainBuilding restores condition and extends life', () => {
   assert.equal(maintainBuilding(k, g.id, b.id, 10 * DAY), false);
   assert.equal(b.attrs.condition, BUILDING_CONDITION_MAX);
 });
+
+test('walls block move(); doors and floors admit it', () => {
+  const { k, p, g, s } = scenario();
+  const plot = clearPlot(k, s, p.id);
+  const b = constructBuilding(k, g.id, { plotId: plot.id }, 'hut', 0);
+  assert.ok(b);
+  const fp = b.attrs.footprint;
+  const player = k.graph.nodes.get(p.id);
+  // Approach the NW corner wall from outside (one tile west of it).
+  player.x = fp.x0 - 1; player.y = fp.y0;
+  assert.equal(move(k, p.id, 1, 0, 0), false, 'stepping onto a wall is refused');
+  assert.equal(player.x, fp.x0 - 1, 'player did not move');
+  // Enter through the south door (hut: door at x0+2, y0+3).
+  player.x = fp.x0 + 2; player.y = fp.y0 + fp.h;       // outside, below the door
+  assert.equal(move(k, p.id, 0, -1, 0), true, 'door admits movement');
+  assert.equal(move(k, p.id, 0, -1, 0), true, 'interior floor admits movement');
+  assert.equal(move(k, p.id, -1, 0, 0), true, 'floor to floor');
+  assert.equal(move(k, p.id, -1, 0, 0), false, 'interior wall blocks from inside too');
+});
