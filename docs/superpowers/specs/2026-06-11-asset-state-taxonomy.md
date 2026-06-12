@@ -103,6 +103,10 @@ Yield/damage axes: none at 32px — destruction = removal (claim freed).
 | base | E |
 | decayed, cracked, destroyed, burned, frozen, enchanted | E (complete 2026-06-08, selective per organic/mineral/bone category) |
 Sheet status: DONE — F3 already satisfies its taxonomy row.
+Disk layout: `_states/<biome>/<archetype>/` contains flat files named
+`ss__<biome>__<archetype>__state__<name>.png` (not subdirs). The sheet carries
+`layout: 'flat'` in the module to distinguish this from the standard
+`<biome>/<archetype>/_states/<state>/` used by F4.
 
 ### F4 — medium flora, 64px (80px for 6 large types), 48 archetypes
 | State | Mark |

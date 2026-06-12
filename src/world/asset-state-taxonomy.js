@@ -45,6 +45,7 @@ export const FIELD_SHEETS = {
   F2: { px: 32, kind: 'life', diskDir: 'small_flora',
     states: { normal: 'E', seedling: 'T', wilting: 'R', dead: 'R', frozen: 'F', enchanted: 'F' } },
   F3: { px: 32, kind: 'matter', diskDir: 'small_scatter',
+    layout: 'flat',   // _states/<biome>/<archetype>/files named *__state__<name>.png (not subdirs)
     states: { base: 'E', decayed: 'E', cracked: 'E', destroyed: 'E', burned: 'E', frozen: 'E', enchanted: 'E' } },
   F4: { px: 64, kind: 'life', diskDir: 'medium_flora',
     states: { normal: 'E', seedling: 'E', wilting: 'E', dead: 'E', crushed: 'E', burned: 'E', frozen: 'E', enchanted: 'E' } },
