@@ -15,14 +15,18 @@ export const SPECIES_YIELD = {
 // grain units per tu of E (matter nodes by archetype CLASS — prefix match,
 // so 'boulder_small'/'boulder_mossy' → 'boulder'). Default: stone.
 export const ARCHETYPE_YIELD = {
-  boulder: { stone: 0.01 },
-  rock:    { stone: 0.01 },
-  stone:   { stone: 0.01 },
-  log:     { cellulose: 0.006, lignin: 0.004 },
-  branch:  { cellulose: 0.008, lignin: 0.002 },
-  stump:   { cellulose: 0.005, lignin: 0.005 },
-  ore:     { ore: 0.008, stone: 0.004 },
-  default: { stone: 0.01 },
+  boulder:    { stone: 0.01 },
+  rock_chunk: { stone: 0.01 },
+  rock:       { stone: 0.01 },
+  stone_dust: { stone: 0.01 },
+  stone:      { stone: 0.01 },
+  pebble:     { stone: 0.01 },
+  log:        { cellulose: 0.006, lignin: 0.004 },
+  branch:     { cellulose: 0.008, lignin: 0.002 },
+  wood_scrap: { cellulose: 0.006, lignin: 0.004 },
+  stump:      { cellulose: 0.005, lignin: 0.005 },
+  ore:        { ore: 0.008, stone: 0.004 },
+  default:    { stone: 0.01 },
 };
 
 function archetypeYield(archetype) {
