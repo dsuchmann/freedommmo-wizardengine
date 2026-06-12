@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { enumerateRegistry, resolveDerived } from '../scripts/asset-corpus/lib/enumerate.mjs';
+import { emitBatch } from '../scripts/asset-corpus/lib/emit.mjs';
 
 const FIXTURE = {
   id: 'fixture_flora',
@@ -79,4 +80,39 @@ test('f7 derives archetypes from f6 minus exclusions', () => {
   assert.ok(f7.archetypes.every((a) => a.fruit === false)); // canopies carry no fruit axis
   const r = enumerateRegistry(f7);
   assert.equal(r.instances, 24 - 1); // bald_cypress was swamp-only: 1 instance dropped
+});
+
+test('emitBatch produces create/state/anim jobs for an armed object registry', () => {
+  const f6 = loadReg('f6_trees');
+  const batch = emitBatch(f6, {});
+  assert.equal(batch.burst, 'w2-f6_trees');
+  assert.equal(batch.gate, 'armed');
+  const byKind = (k) => batch.jobs.filter((j) => j.kind === k);
+  assert.equal(byKind('create').length, 24);
+  assert.equal(byKind('state').length, 24 * 7 + 4 * 3);
+  assert.equal(byKind('anim').length, 24);
+  const oak = byKind('create').find((j) => j.id === 'forest/oak');
+  assert.equal(oak.size, 192);
+  assert.equal(oak.keep, 64);
+  assert.equal(oak.calls, 16);
+  assert.equal(oak.candidates, 4);
+  assert.match(oak.prompt, /mighty oak tree/);
+  assert.match(oak.prompt, /Final Fantasy aesthetic/);
+  assert.equal(oak.out, 'assets/pixelab/landscape_v2/micro/large_flora/forest/oak');
+  const st = byKind('state').find((j) => j.id === 'forest/oak/stump');
+  assert.equal(st.parent, 'forest/oak');
+  assert.equal(st.pool, 64);
+  assert.match(st.edit, /growth rings/);
+  const an = byKind('anim').find((j) => j.id === 'forest/oak/wind_sway');
+  assert.equal(an.frames, 8);
+});
+
+test('emitBatch is deterministic (stable job order)', () => {
+  const f6 = loadReg('f6_trees');
+  assert.deepEqual(emitBatch(f6, {}), emitBatch(f6, {}));
+});
+
+test('emitBatch refuses dormant registries', () => {
+  assert.throws(() => emitBatch({ ...loadReg('f6_trees'), status: 'dormant' }, {}),
+    /dormant/);
 });
