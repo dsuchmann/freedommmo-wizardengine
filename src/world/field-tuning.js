@@ -136,3 +136,10 @@ export function f5StateDefaults(biome) {
   for (var i = 0; i < w.length; i++) d[w[i]] = 32 / w.length;
   return _f5Defaults[biome] = d;
 }
+
+// F6 large flora (trees). Taxonomy: seedling/growing/normal/wilting/dead/
+// stump/snag/burned/budding/fruiting/harvested. 'base' = normal.
+export var F6_STATE_ORDER = ['seedling', 'growing', 'base', 'wilting', 'dead',
+  'stump', 'snag', 'burned', 'budding', 'fruiting', 'harvested'];
+export var F6_STATE_DEFAULTS = { seedling: 8, growing: 10, base: 55, wilting: 10,
+  dead: 5, stump: 4, snag: 3, burned: 1, budding: 2, fruiting: 1, harvested: 1 };
