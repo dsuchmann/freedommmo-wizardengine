@@ -5,6 +5,10 @@
 // that is how taken/destroyed objects stay gone across re-boots (world = f(seed, deltas)).
 // Only REMOVAL kinds suppress a placement. 'damaged' deltas are intentionally NOT suppressing:
 // they record hp/stage scars for the renderer but the object still exists in the world.
+// Claim suppression (locked decision 7): tiles inside any 'building' node footprint are claimed;
+// baseline placements on claimed tiles are never materialized. Buildings must be compiled BEFORE
+// materializeRect at boot; claims are re-derived from the graph on every call so reboot is
+// reproducible (world = f(seed, deltas), boot buildings are deterministic baseline).
 import { tilePlacements } from './baseline.js';
 import { rand } from '../kernel/rng.js';
 import { DAY } from '../time/metabolism.js';
@@ -37,11 +41,21 @@ export function materializeRect(kernel, { x0, y0, w, h }, tick) {
       .map(d => d.target.slice('placement:'.length)));
   const existing = new Set(
     [...kernel.graph.nodes.values()].map(n => n.attrs?.placement).filter(Boolean));
+  // Claims (locked decision 7): tiles inside any building footprint never materialize
+  // baseline placements. Buildings must be compiled BEFORE materializeRect at boot;
+  // claims are re-derived from the graph on every call, so reboot is reproducible.
+  const claimed = new Set();
+  for (const n of kernel.graph.nodes.values()) {
+    if (n.type !== 'building') continue;
+    const fp = n.attrs.footprint;
+    for (let yy = fp.y0; yy < fp.y0 + fp.h; yy++)
+      for (let xx = fp.x0; xx < fp.x0 + fp.w; xx++) claimed.add(`${xx},${yy}`);
+  }
   const st = START[F4_CLASS];
   let made = 0;
   for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) {
     for (const p of tilePlacements(x, y)) {
-      if (suppressed.has(p.key) || existing.has(p.key)) continue;
+      if (suppressed.has(p.key) || existing.has(p.key) || claimed.has(`${x},${y}`)) continue;
       const hh = keyHash(p.key);
       const meta = { placement: p.key, field: p.field, archetype: p.archetype, biome: p.biome, variant: p.variant };
       if (p.field === 'f4') {

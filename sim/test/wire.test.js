@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { Kernel } from '../kernel/kernel.js';
 import { materializeRect, keyHash } from '../world/wire.js';
 import { tilePlacements } from '../world/baseline.js';
+import { compileBlueprint } from '../world/construct.js';
 
 // Verified: no shared helpers.js exists — sim tests construct kernels inline (see kernel.test.js:5).
 // Origin (0,0) is ocean — no placements there. Grassland starts around x=938; we use a kernel
@@ -81,4 +82,56 @@ test('damaged delta does NOT suppress the placement on reboot; taken/destroyed D
   assert.equal(
     [...kC.graph.nodes.values()].some(n => n.attrs?.placement === victim.key), false,
     'destroyed delta must suppress the placement');
+});
+
+// M4 claims tests — use grassland area (x≈936) where tilePlacements returns real placements.
+// Hut at origin (936, 0) → footprint { x0:936, y0:0, w:5, h:4 }. Verified 11 placements inside.
+const CLAIMS_RECT = { x0: 930, y0: 0, w: 16, h: 16 };
+const HUT_ORIGIN = { x: 936, y: 0 };
+const HUT_FP = { x0: 936, y0: 0, w: 5, h: 4 };
+
+test('M4 claims: placements inside a building footprint are not materialized', () => {
+  // Build two identical kernels over the same rect; one has a hut compiled first.
+  // Any placement materialized in the bare kernel but missing in the claimed kernel
+  // must lie inside the footprint; nothing outside the footprint may differ.
+  const mk = withHut => {
+    const k = new Kernel({ seed: 42, bounds: CLAIMS_RECT });
+    k.graph.boot(() => {
+      if (withHut) compileBlueprint(k, 'hut', HUT_ORIGIN, 0);
+      materializeRect(k, CLAIMS_RECT, 0);
+    });
+    return k;
+  };
+  const bare = mk(false), claimed = mk(true);
+  const placed = k => new Set([...k.graph.nodes.values()]
+    .map(n => n.attrs?.placement).filter(Boolean));
+  const bareNodes = [...bare.graph.nodes.values()].filter(n => n.attrs?.placement);
+  const claimedKeys = placed(claimed);
+  const inside = n => n.x >= HUT_FP.x0 && n.x < HUT_FP.x0 + HUT_FP.w &&
+                      n.y >= HUT_FP.y0 && n.y < HUT_FP.y0 + HUT_FP.h;
+  for (const n of bareNodes) {
+    if (inside(n)) {
+      assert.ok(!claimedKeys.has(n.attrs.placement),
+        `claimed tile ${n.x},${n.y} must not materialize placement ${n.attrs.placement}`);
+    } else {
+      assert.ok(claimedKeys.has(n.attrs.placement),
+        `unclaimed tile ${n.x},${n.y} must be unaffected by the claim`);
+    }
+  }
+  // sanity: the seed actually produces ≥1 placement inside the footprint, else the test is vacuous
+  assert.ok(bareNodes.some(inside),
+    'seed 42 must place ≥1 baseline object inside the hut footprint — pick another seed/origin if not');
+});
+
+test('M4 claims: reboot reproducibility — claimed world rebuilds bit-identical from seed', () => {
+  const mk = () => {
+    const k = new Kernel({ seed: 42, bounds: CLAIMS_RECT });
+    k.graph.boot(() => {
+      compileBlueprint(k, 'compound', { x: 930, y: 0 }, 0);
+      materializeRect(k, CLAIMS_RECT, 0);
+    });
+    return [...k.graph.nodes.values()]
+      .map(n => ({ id: n.id, type: n.type, x: n.x, y: n.y, attrs: n.attrs }));
+  };
+  assert.deepEqual(mk(), mk());
 });
