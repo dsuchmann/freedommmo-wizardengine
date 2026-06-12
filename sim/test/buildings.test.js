@@ -186,3 +186,47 @@ test('claimed suppression deltas keep the footprint bare across reboot', () => {
       `placement ${n.attrs.placement} re-materialized under the building`);
   }
 });
+
+test('unmaintained building decays to ruins: E → ambient, suppression heals, features remain', () => {
+  const { k, p, g, s } = scenario();
+  const plot = clearPlot(k, s, p.id);
+  const b = constructBuilding(k, g.id, { plotId: plot.id }, 'hut', 0);
+  assert.ok(b);
+  assert.ok(b.attrs.suppressDeltaIds.length > 0, 'footprint had baseline placements to suppress');
+  const bId = b.id;
+  const eBefore = b.attrs.E;
+  const deltasHeld = b.attrs.suppressDeltaIds.length;
+  const decBefore = k.ledger.totals.decayed;
+  const days = Math.ceil(BUILDING_CONDITION_MAX / BUILDING_DECAY_PER_DAY);
+  k.runTo((days + 1) * DAY);
+  assert.equal(k.graph.nodes.get(bId), undefined, 'building node removed');
+  assert.ok(k.ledger.events.some(e => e.type === 'building_gone'), 'building_gone emitted');
+  assert.ok(k.ledger.totals.decayed >= decBefore + eBefore - 1e-9,
+    'building E returned to ambient');
+  // Suppression healed: the claimed deltas were removed.
+  const claimedLeft = k.deltas.list.filter(d => d.kind === 'claimed').length;
+  assert.equal(claimedLeft, 0, `all ${deltasHeld} claimed deltas removed`);
+  // Interior features remain as orphaned ruins.
+  const ruins = [...k.graph.nodes.values()].filter(
+    n => n.type === 'matter' && ['hearth', 'bedroll'].includes(n.attrs.archetype));
+  assert.equal(ruins.length, 2, 'features survive the building as loose ruins');
+  for (const r of ruins) assert.equal(r.attrs.building, null);
+});
+
+test('maintainBuilding restores condition and extends life', () => {
+  const { k, p, g, s } = scenario();
+  const plot = clearPlot(k, s, p.id);
+  const b = constructBuilding(k, g.id, { plotId: plot.id }, 'hut', 0);
+  assert.ok(b);
+  k.runTo(10 * DAY);
+  assert.equal(b.attrs.condition, BUILDING_CONDITION_MAX - 10 * BUILDING_DECAY_PER_DAY);
+  const group = k.graph.nodes.get(g.id);
+  const rBefore = group.R;
+  assert.equal(maintainBuilding(k, g.id, b.id, 10 * DAY), true);
+  assert.equal(group.R, rBefore - MAINTAIN_COST);
+  assert.equal(b.attrs.condition, BUILDING_CONDITION_MAX);
+  // Underfunded refusal is side-effect-free.
+  group.R = 0;
+  assert.equal(maintainBuilding(k, g.id, b.id, 10 * DAY), false);
+  assert.equal(b.attrs.condition, BUILDING_CONDITION_MAX);
+});
