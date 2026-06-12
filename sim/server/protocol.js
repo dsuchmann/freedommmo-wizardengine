@@ -11,10 +11,11 @@ export function parseClientMsg(raw) {
   try { m = JSON.parse(raw); } catch { return null; }
   if (m == null || typeof m !== 'object') return null;
   switch (m.type) {
-    case 'hello': {
+    case 'hello':
+    case 'viewport': {
       const v = m.viewport;
       if (!v || ![v.x, v.y, v.w, v.h].every(Number.isFinite)) return null;
-      return { type: 'hello', viewport: { x: v.x, y: v.y, w: v.w, h: v.h } };
+      return { type: m.type, viewport: { x: v.x, y: v.y, w: v.w, h: v.h } };
     }
     case 'intent':
       if (!VERBS.has(m.verb) || !Number.isInteger(m.target)) return null;

@@ -75,7 +75,10 @@ let simClient = null;
 let simConnected = false;
 window._simWorldState = simWorldState; // dev hook (same pattern as _player/_debugProvider)
 // Track last F3 removed set pushed to workers (avoid redundant broadcasts)
-let _lastF3Keys = [];
+let _lastF3Keys = '';
+// Sim viewport center: re-sent to the server when the player strays far from it
+const VP_HALF = 40;
+let _simVpCenter = { x: 0, y: 0 };
 
 function _applySimState(client) {
   simWorldState.update(client);
@@ -92,11 +95,22 @@ function _applySimState(client) {
   }
 }
 
+function _onSimClose() {
+  // Mid-session disconnect → honest absence: degrade to exactly the no-sim world
+  if (!simConnected) return;
+  simConnected = false;
+  simClient = null;
+  setField2SimWorldState(null);
+  provider.setF3RemovedKeys([]);
+  _lastF3Keys = '';
+  console.warn('[sim] connection lost — baseline-only world');
+}
+
 (function _connectSim() {
   // Viewport: 40-tile radius around player in each axis
-  const VP_HALF = 40;
-  const viewport = { x: Math.floor(player.x) - VP_HALF, y: Math.floor(player.y) - VP_HALF, w: VP_HALF * 2, h: VP_HALF * 2 };
-  simClient = new SimClient({ url: 'ws://127.0.0.1:8787', viewport, onState: _applySimState });
+  _simVpCenter = { x: Math.floor(player.x), y: Math.floor(player.y) };
+  const viewport = { x: _simVpCenter.x - VP_HALF, y: _simVpCenter.y - VP_HALF, w: VP_HALF * 2, h: VP_HALF * 2 };
+  simClient = new SimClient({ url: 'ws://127.0.0.1:8787', viewport, onState: _applySimState, onClose: _onSimClose });
   window._simClient = simClient; // dev hook
   simClient.ready.then(() => {
     simConnected = true;
@@ -167,6 +181,14 @@ function update(dt) {
       simClient.intend({ verb, target: best.id });
       // Suppress local fake reaction — sim is authoritative for this entity
       player.interactPressed = false;
+    }
+  }
+  // Re-center the sim attention bubble when the player strays > half its radius
+  if (simConnected && simClient && (frame & 31) === 0) {
+    const px = Math.floor(player.x), py = Math.floor(player.y);
+    if (Math.hypot(px - _simVpCenter.x, py - _simVpCenter.y) > VP_HALF / 2) {
+      _simVpCenter = { x: px, y: py };
+      simClient.setViewport({ x: px - VP_HALF, y: py - VP_HALF, w: VP_HALF * 2, h: VP_HALF * 2 });
     }
   }
   chunks.streamAround(player.x, player.y);

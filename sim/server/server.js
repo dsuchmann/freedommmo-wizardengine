@@ -57,6 +57,8 @@ export class SimServer {
         this._sendSnapshot(session);
       } else if (!session) {
         // ignore everything before hello
+      } else if (m.type === 'viewport') {
+        session.viewport = m.viewport;   // bubble follows the player (spec §4.2)
       } else if (m.type === 'intent') {
         this.pendingIntents.push({ session, ...m });
       } else if (m.type === 'query') {

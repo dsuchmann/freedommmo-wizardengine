@@ -7,7 +7,7 @@
 //   events    → { type, tick, events }
 //   time      → { type, tick, day }
 export class SimClient {
-  constructor({ url, wsFactory = u => new WebSocket(u), viewport, onState = () => {} }) {
+  constructor({ url, wsFactory = u => new WebSocket(u), viewport, onState = () => {}, onClose = () => {} }) {
     this.entities = new Map();      // id → serialized entity
     this.deltas = [];               // current delta list (placement:* targets included)
     this.tick = -1;
@@ -26,12 +26,19 @@ export class SimClient {
       this._onMsg(msg);
     };
     this.ws.onerror = e => this._readyRej?.(e);
-    this.ws.onclose = () => this._readyRej?.(new Error('closed before snapshot'));
+    this.ws.onclose = () => {
+      this._readyRej?.(new Error('closed before snapshot'));
+      this.closed = true;
+      onClose(this);            // mid-session disconnect: let the host degrade to baseline
+    };
+    this.closed = false;
   }
 
   _send(msg) { this.ws.send(JSON.stringify(msg)); }
 
   intend({ verb, target }) { this._send({ type: 'intent', verb, target }); }
+
+  setViewport(v) { this._send({ type: 'viewport', viewport: v }); }
 
   close() { this.ws.close(); }
 

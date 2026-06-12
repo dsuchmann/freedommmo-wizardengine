@@ -46,3 +46,29 @@ test('client attaches, receives snapshot, tracks tick-deltas, sends intents', as
     await server.close();
   }
 });
+
+test('viewport message re-centers the bubble; server close fires onClose', async () => {
+  const { server, port } = await startTestServer();
+  let closed = false;
+  const client = new SimClient({
+    url: `ws://127.0.0.1:${port}`,
+    wsFactory: u => new WebSocket(u),
+    viewport: { x: 938, y: 0, w: 16, h: 16 },
+    onClose: () => { closed = true; },
+  });
+  try {
+    await client.ready;
+    assert.ok(client.entities.size > 0, 'bubble over the wired rect serves entities');
+    // Move the bubble to an empty corner of the world: wired entities drain out
+    client.setViewport({ x: 930, y: 200, w: 4, h: 4 });
+    await new Promise(r => setTimeout(r, 400));                  // a few pumps
+    assert.equal([...client.entities.values()].filter(e => e.placement).length, 0,
+      'wired entities leave the bubble after re-center');
+    assert.equal(closed, false, 'onClose must not fire while connected');
+  } finally {
+    await server.close();                                        // server-side close mid-session
+    await new Promise(r => setTimeout(r, 200));
+    assert.equal(closed, true, 'onClose fires on mid-session disconnect');
+    assert.equal(client.closed, true);
+  }
+});

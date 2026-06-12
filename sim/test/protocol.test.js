@@ -9,6 +9,9 @@ test('parseClientMsg accepts the four client message types', () => {
   assert.equal(parseClientMsg(JSON.stringify({ type: 'intent', verb: 'pick', target: 7 })).verb, 'pick');
   assert.equal(parseClientMsg(JSON.stringify({ type: 'query', id: 3 })).id, 3);
   assert.equal(parseClientMsg(JSON.stringify({ type: 'admin', op: 'ff', days: 14 })).days, 14);
+  assert.deepEqual(parseClientMsg(JSON.stringify({ type: 'viewport', viewport: { x: 5, y: 6, w: 80, h: 80 } })),
+    { type: 'viewport', viewport: { x: 5, y: 6, w: 80, h: 80 } });
+  assert.equal(parseClientMsg(JSON.stringify({ type: 'viewport', viewport: { x: 'NaN', y: 0, w: 1, h: 1 } })), null);
 });
 
 test('parseClientMsg rejects junk', () => {
