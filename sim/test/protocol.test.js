@@ -2,6 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parseClientMsg, serializeEntity, serializeItem, snapshotMsg, tickDeltaMsg, eventsMsg, timeMsg } from '../server/protocol.js';
+import { nameOf } from '../life/identity.js';
 
 test('parseClientMsg accepts the four client message types', () => {
   assert.deepEqual(parseClientMsg(JSON.stringify({ type: 'hello', viewport: { x: 0, y: 0, w: 40, h: 25 } })),
@@ -201,4 +202,28 @@ test('serializeEntity: plot wire form carries rect + owner + district', () => {
     id: 12, type: 'plot', x: 935, y: 4,
     rect: { x0: 935, y0: 4, w: 5, h: 4 }, district: 'residential', owner: 3, settlement: 9,
   });
+});
+
+test('L1 wire: humanoid living entities carry name; traits/attributes NEVER cross', () => {
+  const node = {
+    id: 31, type: 'human', x: 3, y: 4, R: 50000, lastTick: 0,
+    attrs: { species: 'human', body: 15000, birthTick: 0 },
+  };
+  const e = serializeEntity(node, 0, 7);
+  assert.equal(e.name, nameOf(7, 31, 'human'));
+  assert.equal(e.traits, undefined, 'minds are private');
+  assert.equal(e.attributes, undefined, 'minds are private');
+});
+
+test('L1 wire: non-humanoid living entities and seedless calls carry no name', () => {
+  const grass = {
+    id: 32, type: 'grass', x: 1, y: 1, R: 500, lastTick: 0,
+    attrs: { species: 'grass', body: 10, birthTick: 0 },
+  };
+  assert.equal(serializeEntity(grass, 0, 7).name, undefined);
+  const human = {
+    id: 33, type: 'human', x: 1, y: 1, R: 500, lastTick: 0,
+    attrs: { species: 'human', body: 100, birthTick: 0 },
+  };
+  assert.equal(serializeEntity(human, 0).name, undefined, 'no seed, no name (back-compat)');
 });

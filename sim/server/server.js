@@ -64,7 +64,7 @@ export class SimServer {
         this.pendingIntents.push({ session, ...m });
       } else if (m.type === 'query') {
         const node = this.kernel.graph.nodes.get(m.id);
-        ws.send(JSON.stringify({ type: 'query-result', id: m.id, entity: node ? serializeEntity(node, this.kernel.tick) : null }));
+        ws.send(JSON.stringify({ type: 'query-result', id: m.id, entity: node ? serializeEntity(node, this.kernel.tick, this.kernel.seed) : null }));
       } else if (m.type === 'admin') {
         if (m.op === 'pause') this.paused = true;
         if (m.op === 'resume') { this.paused = false; this._lastReal = Date.now(); }
@@ -80,7 +80,7 @@ export class SimServer {
     const radius = Math.hypot(viewport.w, viewport.h) / 2;
     return this.kernel.graph.nodesNear(cx, cy, radius)
       .filter(n => n.type !== 'aggregate')
-      .map(n => serializeEntity(n, this.kernel.tick));
+      .map(n => serializeEntity(n, this.kernel.tick, this.kernel.seed));
   }
 
   _centers() {

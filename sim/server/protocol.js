@@ -3,6 +3,7 @@
 // Validation lives HERE because client messages are untrusted input.
 import { SPECIES, stageAt, DAY } from '../time/metabolism.js';
 import { stageFor } from '../matter/objects.js';
+import { RACES, nameOf } from '../life/identity.js';
 
 const VERBS = new Set(['pick', 'chop', 'harvest', 'take', 'eat', 'strike', 'combine', 'equip', 'unequip', 'move']);
 const DAMAGE_TYPES = new Set(['blunt', 'sharp', 'fire', 'frost']);
@@ -64,7 +65,7 @@ export function parseClientMsg(raw) {
 }
 
 /** Wire form of an entity: render-relevant fields only (sim stays authoritative). */
-export function serializeEntity(node, tick) {
+export function serializeEntity(node, tick, seed) {
   if (node.type === 'path') {
     // suppressDeltaIds and noFlux are sim-internal (privacy rule); only wear is render-relevant.
     return { id: node.id, type: 'path', x: node.x, y: node.y, wear: node.attrs.wear ?? 0 };
@@ -113,6 +114,7 @@ export function serializeEntity(node, tick) {
   }
   const base = { id: node.id, type: node.type, species, x: node.x, y: node.y, body: attrs.body, stage,
                  bufferDays, ageTicks };
+  if (seed != null && RACES.includes(species)) base.name = nameOf(seed, node.id, species);
   // Placement identity: only spread when attrs.placement exists (wired entities)
   if (attrs.placement != null) {
     base.placement = attrs.placement;
