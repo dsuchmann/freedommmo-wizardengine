@@ -63,7 +63,8 @@ function loadReg(name) {
 
 test('f6_trees enumerates the W2 burst', () => {
   const r = enumerateRegistry(loadReg('f6_trees'));
-  // 18 archetypes; biome instances: count pairs in the JSON (24)
+  // 18 archetypes expand to 24 (archetype,biome) instances — multi-biome
+  // archetypes count once per biome (e.g. oak appears in forest AND grassland).
   assert.equal(r.instances, 24);
   assert.equal(r.baseSprites, 24 * 64);
   // 7 universal states x 24 + 3 fruit states x fruit instances (apple:2, banana_palm:1, cherry:1 = 4)

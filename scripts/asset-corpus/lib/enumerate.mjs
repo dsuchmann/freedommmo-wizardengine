@@ -52,6 +52,11 @@ function enumerateWang(reg) {
   };
 }
 
+// Resolves a derived registry's archetypes from its derive_from source.
+// POLICY: derived registries never inherit the fruit axis (fruit forced false) —
+// per the asset-state taxonomy, F7 canopy overlays carry no yield states; the
+// trunk (F6) owns budding/fruiting/harvested. If a future deriver needs fruit
+// inheritance, make this opt-in via a registry flag rather than changing the default.
 export function resolveDerived(reg, registryById) {
   if (!reg.derive_from) return reg;
   const src = registryById[reg.derive_from];
