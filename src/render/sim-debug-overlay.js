@@ -1,18 +1,28 @@
 // Dev debug overlay: draws live sim state (worn paths, road segments, deltas,
 // event ticker) as translucent shapes. READ-ONLY over window._simClient.
 // Toggle: key 9. Pure collector below is node-testable (no DOM at module top).
-// Wire reality 2026-06-12: settlement geometry (territory/districts/plots) is
-// NOT serialized to clients; only stripped events arrive. Extend
-// collectDebugDrawables when the sim lane puts those on the wire — never fake.
+// Wire reality 2026-06-12: settlement/plot geometry (territory/districts/plots)
+// crosses the wire via explicit wire forms (sim/server/protocol.js).
+// Never fake absent layers — honest absence is declared, not simulated.
 
 const EVENT_CAP = 50;
 
 export function collectDebugDrawables(sim) {
-  const out = { paths: [], roads: [], deltas: [], tick: sim?.tick ?? -1 };
+  const out = { paths: [], roads: [], deltas: [], settlements: [], plots: [],
+                buildings: [], crossings: [], tick: sim?.tick ?? -1 };
   if (!sim?.entities) return out;
   for (const e of sim.entities.values()) {
     if (e.type === 'path') out.paths.push({ x: e.x, y: e.y, wear: e.wear ?? 0 });
     else if (e.type === 'matter' && e.archetype === 'road_segment') out.roads.push({ x: e.x, y: e.y });
+    else if (e.type === 'matter' && (e.archetype === 'ford' || e.archetype === 'bridge'))
+      out.crossings.push({ x: e.x, y: e.y, kind: e.archetype });
+    else if (e.type === 'settlement' && e.territory)
+      out.settlements.push({ x: e.x, y: e.y, tier: e.tier, territory: e.territory,
+                             districts: e.districts ?? [] });
+    else if (e.type === 'plot' && e.rect)
+      out.plots.push({ rect: e.rect, owner: e.owner, district: e.district });
+    else if (e.type === 'building' && e.footprint)
+      out.buildings.push({ template: e.template, footprint: e.footprint, stamps: e.stamps ?? [] });
   }
   for (const d of sim.deltas ?? []) {
     if (d.x != null && d.y != null) out.deltas.push({ x: d.x, y: d.y, kind: d.kind });
@@ -58,6 +68,72 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
     ctx.strokeStyle = 'rgba(130,130,255,0.9)';
     ctx.strokeRect(sx + 0.5, sy + 0.5, Math.ceil(tilePx) - 1, Math.ceil(tilePx) - 1);
   }
+  const px = v => Math.ceil(v * tilePx);
+  const rectPx = r => [Math.floor(r.x0 * tilePx - camX), Math.floor(r.y0 * tilePx - camY), px(r.w), px(r.h)];
+  const rectOnScreen = ([sx, sy, sw, sh]) => sx < w && sy < h && sx + sw > 0 && sy + sh > 0;
+  const DISTRICT_COLORS = { residential: 'rgba(80,220,120,', craft: 'rgba(255,150,60,' };
+  for (const s of d.settlements) {                 // territory: white dashed outline + tier label
+    const r = rectPx(s.territory);
+    if (!rectOnScreen(r)) continue;
+    ctx.setLineDash([6, 4]);
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(r[0] + 0.5, r[1] + 0.5, r[2] - 1, r[3] - 1);
+    ctx.setLineDash([]);
+    for (const dist of s.districts) {              // districts: tinted fill + outline by kind
+      const dr = rectPx(dist.rect);
+      const c = DISTRICT_COLORS[dist.kind] ?? 'rgba(180,180,180,';
+      ctx.fillStyle = c + '0.10)';
+      ctx.fillRect(...dr);
+      ctx.strokeStyle = c + '0.8)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(dr[0] + 0.5, dr[1] + 0.5, dr[2] - 1, dr[3] - 1);
+      ctx.font = '10px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillStyle = c + '0.9)';
+      ctx.fillText(dist.kind, dr[0] + 3, dr[1] + 11);
+    }
+    ctx.font = 'bold 13px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = s.tier === 'ghost' ? 'rgba(160,160,160,0.95)' : '#ffd24a';
+    ctx.fillText(s.tier.toUpperCase(), r[0] + 3, r[1] - 5);
+  }
+  for (const p of d.plots) {                       // plots: thin white box + owner tag
+    const r = rectPx(p.rect);
+    if (!rectOnScreen(r)) continue;
+    ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(r[0] + 0.5, r[1] + 0.5, r[2] - 1, r[3] - 1);
+    ctx.font = '9px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.fillText(`g${p.owner}`, r[0] + 2, r[1] + r[3] - 3);
+  }
+  for (const b of d.buildings) {                   // buildings: stamps are the render truth
+    const fr = rectPx(b.footprint);
+    if (!rectOnScreen(fr)) continue;
+    for (const st of b.stamps) {
+      const sx = Math.floor(st.x * tilePx - camX), sy = Math.floor(st.y * tilePx - camY);
+      if (st.piece === 'wall') ctx.fillStyle = 'rgba(70,80,95,0.85)';
+      else if (st.piece === 'door') ctx.fillStyle = 'rgba(160,110,60,0.85)';
+      else ctx.fillStyle = 'rgba(200,190,170,0.35)';            // floor
+      ctx.fillRect(sx, sy, Math.ceil(tilePx), Math.ceil(tilePx));
+    }
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(b.template, fr[0] + 2, fr[1] - 3);
+  }
+  for (const c of d.crossings) {                   // crossings: teal diamonds
+    const sx = Math.floor(c.x * tilePx - camX), sy = Math.floor(c.y * tilePx - camY);
+    if (!onScreen(sx, sy)) continue;
+    ctx.fillStyle = c.kind === 'bridge' ? 'rgba(0,220,220,0.8)' : 'rgba(0,160,160,0.6)';
+    const t = Math.ceil(tilePx), hx = sx + t / 2, hy = sy + t / 2;
+    ctx.beginPath();
+    ctx.moveTo(hx, sy + 2); ctx.lineTo(sx + t - 2, hy); ctx.lineTo(hx, sy + t - 2); ctx.lineTo(sx + 2, hy);
+    ctx.closePath();
+    ctx.fill();
+  }
   for (const dd of d.deltas) {                     // deltas: small corner ticks, color by kind
     const sx = Math.floor(dd.x * tilePx - camX), sy = Math.floor(dd.y * tilePx - camY);
     if (!onScreen(sx, sy)) continue;
@@ -70,7 +146,7 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
   ctx.fillStyle = 'rgba(0,0,0,0.55)';
   ctx.fillRect(w - 320, 8, 312, 16 * 9 + 10);
   ctx.fillStyle = '#9ad';
-  ctx.fillText(`SIM DEBUG  tick=${d.tick}  paths=${d.paths.length} roads=${d.roads.length} deltas=${d.deltas.length}`, w - 14, 22);
+  ctx.fillText(`SIM DEBUG  tick=${d.tick}  paths=${d.paths.length} roads=${d.roads.length} stl=${d.settlements.length} plots=${d.plots.length} bld=${d.buildings.length}`, w - 14, 22);
   seenEvents.slice(-8).forEach((e, i) => {
     ctx.fillStyle = e.type === 'settlement_founded' ? '#ffd24a' : '#ccc';
     ctx.fillText(`[${e.tick}] ${e.type}`, w - 14, 38 + 16 * i);

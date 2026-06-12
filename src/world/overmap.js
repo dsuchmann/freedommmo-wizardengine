@@ -164,6 +164,30 @@ export class OvermapController {
     ctx.strokeStyle = 'rgba(255,255,255,.75)';
     ctx.strokeRect(0, 0, this.size, this.size);
 
+    // Structure markers (debug, gated on the sim debug overlay toggle, key 9).
+    // HONEST LIMIT: the sim only sends entities inside the attention bubble —
+    // distant settlements are absent here, never synthesized.
+    const dbg = (typeof window !== 'undefined') ? window._simDebugOverlay : null;
+    const sim = (typeof window !== 'undefined') ? window._simClient : null;
+    if (dbg?.isEnabled() && sim?.entities) {
+      const chunkPx = tile => ({
+        x: c + (tile.x / WORLD.chunkSize - pcx) / this.chunkScale,
+        y: c + (tile.y / WORLD.chunkSize - pcy) / this.chunkScale,
+      });
+      ctx.font = 'bold 10px monospace';
+      ctx.textAlign = 'center';
+      for (const e of sim.entities.values()) {
+        if (e.type !== 'settlement' || !e.territory) continue;
+        const p = chunkPx(e);
+        if (p.x < 0 || p.y < 0 || p.x > this.size || p.y > this.size) continue;
+        ctx.fillStyle = e.tier === 'ghost' ? 'rgba(160,160,160,0.95)' : '#ffd24a';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillText(e.tier.toUpperCase(), p.x, p.y - 5);
+      }
+    }
+
     // Text diagnostics live in the main HUD only; keep minimap visual-only.
   }
 }

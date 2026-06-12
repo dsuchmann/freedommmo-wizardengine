@@ -171,3 +171,34 @@ test('serializeEntity: road segments ride the matter branch — condition/suppre
   assert.ok(!('condition' in out), 'condition stays sim-side');
   assert.ok(!('suppressDeltaIds' in out), 'internals stay sim-side');
 });
+
+test('serializeEntity: settlement wire form carries structure geometry, not sim internals', () => {
+  const node = { id: 9, type: 'settlement', x: 935, y: 4, attrs: {
+    tier: 'village', founderGroup: 3,
+    territory: { x0: 930, y0: 0, w: 12, h: 10 },
+    districts: [{ kind: 'residential', rect: { x0: 935, y0: 0, w: 6, h: 10 }, reason: 'west half' }],
+    reasons: [{ axis: 'water', score: 0.9 }],
+    noFlux: true, growthEnabled: true, peakBuildings: 2,
+  } };
+  const e = serializeEntity(node, 50);
+  assert.deepEqual(e, {
+    id: 9, type: 'settlement', x: 935, y: 4, tier: 'village',
+    territory: { x0: 930, y0: 0, w: 12, h: 10 },
+    districts: [{ kind: 'residential', rect: { x0: 935, y0: 0, w: 6, h: 10 } }],
+  });
+  // sim internals stay private: no founderGroup, reasons, growthEnabled, peakBuildings, noFlux
+  assert.equal('founderGroup' in e, false);
+  assert.equal('growthEnabled' in e, false);
+});
+
+test('serializeEntity: plot wire form carries rect + owner + district', () => {
+  const node = { id: 12, type: 'plot', x: 935, y: 4, attrs: {
+    rect: { x0: 935, y0: 4, w: 5, h: 4 }, settlement: 9, district: 'residential',
+    owner: 3, noFlux: true,
+  } };
+  const e = serializeEntity(node, 50);
+  assert.deepEqual(e, {
+    id: 12, type: 'plot', x: 935, y: 4,
+    rect: { x0: 935, y0: 4, w: 5, h: 4 }, district: 'residential', owner: 3, settlement: 9,
+  });
+});
