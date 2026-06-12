@@ -37,6 +37,7 @@ export function materializeRect(kernel, { x0, y0, w, h }, tick) {
   // Only removal kinds (taken / felled / destroyed) suppress a placement on reboot.
   // 'damaged' deltas are scar records for the renderer — they must NOT suppress, otherwise
   // a cracked-but-existing object vanishes when the kernel is reconstructed from seed+deltas.
+  // MIRRORED in src/sim/sim-world-state.js REMOVAL_KINDS — update both or the client drifts.
   const REMOVAL_KINDS = new Set(['taken', 'felled', 'destroyed', 'worn']);
   const suppressed = new Set(
     kernel.deltas.list
