@@ -16,8 +16,10 @@ export function tileCost(x, y) {
 }
 
 /** Least-cost 4-connected route from `from` to `to` inside `bounds` ({x0,y0,w,h}).
- *  Returns [{x,y}, ...] including both endpoints, or null when unreachable. */
-export function planRoute(from, to, bounds) {
+ *  opts.crossings: Set of 'x,y' strings — water tiles that may be traversed at cost 2.
+ *  Returns [{x,y}, ...] including both endpoints, or null when unreachable.
+ *  With no opts the behavior is bit-identical to the previous implementation. */
+export function planRoute(from, to, bounds, opts = {}) {
   if (tileCost(from.x, from.y) === Infinity || tileCost(to.x, to.y) === Infinity) return null;
   const inB = (x, y) => x >= bounds.x0 && x < bounds.x0 + bounds.w && y >= bounds.y0 && y < bounds.y0 + bounds.h;
   if (!inB(from.x, from.y) || !inB(to.x, to.y)) return null;
@@ -54,8 +56,11 @@ export function planRoute(from, to, bounds) {
     for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0], [0, 1]]) {   // fixed order: N,W,E,S
       const nx = cur.x + dx, ny = cur.y + dy;
       if (!inB(nx, ny) || closed.has(key(nx, ny))) continue;
-      const c = tileCost(nx, ny);
-      if (c === Infinity) continue;
+      let c = tileCost(nx, ny);
+      if (c === Infinity) {
+        if (opts.crossings?.has(`${nx},${ny}`)) c = 2;
+        else continue;
+      }
       const ng = g.get(ck) + c;
       const nk = key(nx, ny);
       if (ng < (g.get(nk) ?? Infinity)) {

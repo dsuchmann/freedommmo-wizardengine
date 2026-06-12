@@ -27,6 +27,8 @@ export const ARCHETYPE_YIELD = {
   stump:      { cellulose: 0.005, lignin: 0.005 },
   ore:        { ore: 0.008, stone: 0.004 },
   road_segment: {},  // labor-only: no grains conjured from time (material construction = backlog)
+  ford:   {},        // labor-only: longest-prefix fallthrough would conjure stone — must be explicit
+  bridge: {},        // labor-only: longest-prefix fallthrough would conjure stone — must be explicit
   default:    { stone: 0.01 },
 };
 

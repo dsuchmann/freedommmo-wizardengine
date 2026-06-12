@@ -8,6 +8,7 @@ import { registerLifecycle } from '../time/lifecycle.js';
 import { registerAggregates } from '../lod/aggregate.js';
 import { registerPaths } from '../world/paths.js';
 import { registerRoads } from '../world/roads.js';
+import { registerCrossings } from '../world/crossings.js';
 
 export class Kernel {
   constructor({ seed, phi = 4, bounds = null }) {
@@ -24,6 +25,7 @@ export class Kernel {
     registerAggregates(this);
     registerPaths(this);
     registerRoads(this);
+    registerCrossings(this);
   }
 
   on(kind, fn) { this.handlers.set(kind, fn); }
