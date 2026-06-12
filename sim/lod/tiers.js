@@ -1,5 +1,7 @@
 // sim/lod/tiers.js — promotion/demotion between tiers, as ledger events (spec §4.3).
 import { REGION, regionKeyOf, regionOrigin, aggregateOf, createAggregate, stepAggregateTo } from './aggregate.js';
+import { SPECIES, DAY } from '../time/metabolism.js';
+import { rand } from '../kernel/rng.js';
 
 const NEVER_DEMOTE = new Set(['player', 'group', 'corpse', 'aggregate']);
 const HALF = REGION / 2;
@@ -50,4 +52,63 @@ export function demoteRegion(kernel, regionKey, tick) {
     if (n.R != null && !n.attrs.noFlux) kernel._reRateOne(n, tick);
   }
   return agg;
+}
+
+const SPECIES_IDX = Object.fromEntries(Object.keys(SPECIES).map((s, i) => [s, i + 1]));
+
+/** Materialize a region's aggregate into individuals, honoring count/sumR/sumBody exactly
+ *  (spec §4.3: counts and aggregate truth are honored, never contradicted).
+ *  Returns the created nodes ([] if the region has no aggregate). */
+export function promoteRegion(kernel, regionKey, tick) {
+  const agg = aggregateOf(kernel, regionKey);
+  if (!agg) return [];
+  stepAggregateTo(kernel, agg, tick);                     // settle the partial day first
+  if (!kernel.graph.nodes.get(agg.id)) return [];         // it emptied out while stepping
+  const [x0, y0] = regionOrigin(regionKey);
+  const pops = agg.attrs.pops;
+  const evId = kernel.ledger.emit({
+    tick, type: 'promote', targets: [agg.id],
+    attrs: { region: regionKey, counts: Object.fromEntries(Object.entries(pops).map(([s, p]) => [s, p.count])) },
+  });
+  const made = [];
+  for (const [species, p] of Object.entries(pops)) {
+    const sIdx = SPECIES_IDX[species] * 1_000_000;
+    if (p.count > 0) {
+      // Deterministic weights, normalized → ΣR_i = sumR and Σbody_i = sumBody exactly.
+      const wR = [], wB = [];
+      let WR = 0, WB = 0;
+      for (let i = 0; i < p.count; i++) {
+        wR[i] = 0.5 + rand(kernel.seed, agg.id, sIdx + i * 8 + 1); WR += wR[i];
+        wB[i] = 0.5 + rand(kernel.seed, agg.id, sIdx + i * 8 + 2); WB += wB[i];
+      }
+      const meanAge = p.ageSum / p.count;
+      for (let i = 0; i < p.count; i++) {
+        made.push(kernel.addLiving({
+          species,
+          x: x0 + rand(kernel.seed, agg.id, sIdx + i * 8 + 3) * REGION,
+          y: y0 + rand(kernel.seed, agg.id, sIdx + i * 8 + 4) * REGION,
+          R: p.sumR * wR[i] / WR,
+          body: p.sumBody * wB[i] / WB,
+          tick,
+          age: Math.max(0, Math.floor(meanAge * (0.6 + 0.8 * rand(kernel.seed, agg.id, sIdx + i * 8 + 5)))),
+          causeEventId: evId,
+        }));
+      }
+    }
+    // Dead mass becomes a real decaying corpse (the region's accumulated dead).
+    if (p.detritusE > 0.5) {
+      const sp = SPECIES[species];
+      const halflife = sp.embodiedDecayDays * DAY;
+      const corpseEv = kernel.ledger.emit({ tick, type: 'corpse', causeEventId: evId });
+      const corpse = kernel.graph.createNode({
+        type: 'corpse', tick, x: x0 + HALF, y: y0 + HALF, causeEventId: corpseEv,
+        attrs: { E: p.detritusE, decayHalflifeTicks: halflife, of: species },
+      });
+      kernel.scheduler.schedule(tick + halflife * Math.log2(p.detritusE / 0.5), corpse.id, 'decay_gone', -1);
+    } else if (p.detritusE > 0) {
+      kernel.ledger.count('decayed', p.detritusE);
+    }
+  }
+  kernel.graph.removeNode(agg.id);                         // pending agg_step goes stale
+  return made;
 }
