@@ -9,7 +9,7 @@ import { clearBorderLines } from './sprite-denoise.js';
 import { floorDiv } from '../world/chunk.js';
 import { SPRITE_FLOATS } from './gl-compositor.js';
 import { getAtmosphere } from '../world/biome-atmosphere.js';
-import { isClaimedAt, f4Placements, f4SpriteUrl, f4AnimUrlBase, f5Placements, f5SpriteUrl } from '../world/decoration-claims.js';
+import { isClaimedAt, f4Placements, f4SpriteUrl, f4AnimUrlBase, f5Placements, f5SpriteUrl, f5AnimUrlBase } from '../world/decoration-claims.js';
 import { tuneSize, tuneBiomeDensity, tuneObjDensity, tuneAnimEnabled, tuneStateWeights, rollWeighted,
   F2_STATE_ORDER, F2_STATE_DEFAULTS } from '../world/field-tuning.js';
 
@@ -638,8 +638,7 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
       // so playback lights up when art lands + catalog regenerates.
       animUrlBase: (gp.hasAnim && !gp.state
         && tuneAnimEnabled('f5', gp.biome, gp.name, 'wind_sway'))
-        ? '/assets/pixelab/landscape_v2/micro/medium_objects/' + gp.biome + '/' +
-          gp.name + '/anim/wind_sway/v' + (gp.variant < 10 ? '00' + gp.variant : gp.variant < 100 ? '0' + gp.variant : '' + gp.variant) + '/'
+        ? f5AnimUrlBase(gp)
         : null,
       staticUrl: f5SpriteUrl(gp),
       isRigid: true,                       // objects never sway-rotate

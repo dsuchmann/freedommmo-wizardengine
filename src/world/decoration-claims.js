@@ -648,6 +648,10 @@ export function f5SpriteUrl(p) {
     '/mo__' + p.biome + '__' + p.name + '__v' + pad3(p.variant) + '.png';
 }
 
+export function f5AnimUrlBase(p) {
+  return MO_BASE_PATH + p.biome + '/' + p.name + '/anim/wind_sway/v' + pad3(p.variant) + '/';
+}
+
 // Returns all state sprite URLs for objects in `biome` that have known states.
 // Used by preloaders to warm the image cache for lifecycle-state sprites.
 export function f3StateUrls(biome) {
