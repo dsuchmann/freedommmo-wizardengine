@@ -1,10 +1,11 @@
 // Unified dev tuner for decoration fields. Field tabs come from
 // src/dev/field-registry.js — adding a field there adds its tab here.
-// Toggle with backtick (`). Tree: field tabs -> current biome -> collapsible
-// object rows -> state-weight rows -> variant rows. Size + density combine
-// multiplicatively (see src/world/field-tuning.js). Edits persist in
-// localStorage ('fieldTuning'); "copy JSON" exports the tree for baking
-// into source defaults, after which localStorage should be cleared.
+// Toggle with backtick (`). Tree: field tabs -> current biome -> object rows.
+// Clicking the expand arrow (▸) on an object opens a side panel to the left
+// of the main panel showing that object's state-weight rows and variant rows.
+// Size + density combine multiplicatively (see src/world/field-tuning.js).
+// Edits persist in localStorage ('fieldTuning'); "copy JSON" exports the tree
+// for baking into source defaults, after which localStorage should be cleared.
 import { setFieldTuning } from '../world/field-tuning.js';
 import { clearClaimCaches } from '../world/decoration-claims.js';
 import { clearF2TileDescriptors } from '../render/field2-animator.js';
@@ -26,8 +27,8 @@ var BIOME_SPOTS = {
 
 var TREE = emptyTree();
 var activeField = 'f4';
-var expanded = {};   // 'field/biome/obj' -> true (variant rows visible)
-var checked = {};    // rowKey 'field/biome/obj' or 'field/biome/obj/v' -> true
+var expandedKey = null;  // 'field/biome/obj' or null — one object expanded at a time
+var checked = {};        // rowKey 'field/biome/obj' or 'field/biome/obj/v' -> true
 
 // Worst-case apply target for global ops: any repaint-bitmaps field.
 function repaintFieldId() {
@@ -115,6 +116,7 @@ function currentBiome() {
 }
 
 var panel = null, body = null;
+var sidePanel = null, sideBody = null, sideTitle = null;
 
 function el(tag, css, text) {
   var e = document.createElement(tag);
@@ -163,7 +165,7 @@ function tuneRow(label, color, key, getN, prop, min, max, field) {
 // Variant row: min/max size range inputs + effective readout.
 function variantRow(field, biome, objName, v) {
   var key = field + '/' + biome + '/' + objName + '/' + v;
-  var row = el('div', 'display:flex;align-items:center;gap:4px;margin:1px 0 1px 18px');
+  var row = el('div', 'display:flex;align-items:center;gap:4px;margin:1px 0');
   var cb = el('input'); cb.type = 'checkbox'; cb.checked = !!checked[key];
   cb.onchange = function () { checked[key] = cb.checked; };
   row.appendChild(cb);
@@ -184,6 +186,22 @@ function variantRow(field, biome, objName, v) {
   row.appendChild(loBox); row.appendChild(el('span', '', '–')); row.appendChild(hiBox);
   setEff(); row.appendChild(eff);
   return row;
+}
+
+function buildSidePanel() {
+  sidePanel = el('div',
+    'position:fixed;top:48px;right:386px;z-index:9999;background:rgba(10,14,24,0.92);' +
+    'color:#cfe0ff;font:12px monospace;padding:8px 10px;border:1px solid #3a4a6a;' +
+    'border-radius:6px;max-height:calc(100vh - 64px);display:none;flex-direction:column;width:330px');
+  var head = el('div', 'display:flex;align-items:center;margin-bottom:6px');
+  sideTitle = el('span', 'color:#ffd97a;font-weight:bold;flex:1');
+  var close = el('span', 'cursor:pointer;color:#7ea0d0;padding:0 4px', '✕');
+  close.onclick = function () { expandedKey = null; rebuild(); };
+  head.appendChild(sideTitle); head.appendChild(close);
+  sidePanel.appendChild(head);
+  sideBody = el('div', 'overflow-y:auto;flex:1;min-height:0');
+  sidePanel.appendChild(sideBody);
+  document.body.appendChild(sidePanel);
 }
 
 function rebuild() {
@@ -218,8 +236,8 @@ function rebuild() {
     var wrap = el('div', 'border-top:1px solid #243250;padding:2px 0' + (o.disabled ? ';opacity:0.4' : ''));
     var row = tuneRow(o.name, '#cfe0ff', key, function () { return node(field, biome, o.name); }, 'size', 0.25, 2.0, field);
     // expand arrow + path + density on a second line
-    var arrow = el('span', 'cursor:pointer;color:#7ea0d0;margin-left:4px', expanded[key] ? '▾' : '▸');
-    arrow.onclick = function () { expanded[key] = !expanded[key]; rebuild(); };
+    var arrow = el('span', 'cursor:pointer;color:#7ea0d0;margin-left:4px', expandedKey === key ? '▾' : '▸');
+    arrow.onclick = function () { expandedKey = expandedKey === key ? null : key; rebuild(); };
     row.appendChild(arrow);
     wrap.appendChild(row);
     wrap.appendChild(tuneRow('  density', '#9fb6dd', null, function () { return node(field, biome, o.name); }, 'density', 0, 3.0, field));
@@ -251,32 +269,6 @@ function rebuild() {
     }
     var path = el('div', 'color:#5e729a;font-size:10px;margin-left:18px', regFor(field).path + '/' + biome + '/' + o.name + '  (' + o.variants.length + ' variants, eff ' + effSize(field, biome, o.name).toFixed(2) + ')');
     wrap.appendChild(path);
-    if (expanded[key]) {
-      var stNames = regFor(field).stateNames(biome, o.name);
-      if (stNames.length) {
-        var defaults = regFor(field).stateDefaults(biome, o.name);
-        var cur = (peek(field, biome, o.name) || {}).states;
-        stNames.forEach(function (sn) {
-          var row = el('div', 'display:flex;align-items:center;gap:4px;margin:1px 0 1px 18px');
-          row.appendChild(el('span', 'width:96px;overflow:hidden;white-space:nowrap;color:#b8a3e0', 'state ' + sn));
-          var v = cur && cur[sn] != null ? cur[sn] : (defaults[sn] || 0);
-          var val = el('span', 'width:34px;text-align:right', v.toFixed(0));
-          row.appendChild(slider(0, 100, 1, v, function (x) {
-            var t = node(field, biome, o.name);
-            if (!t.states) { // first edit: materialize the full default map
-              t.states = {};
-              stNames.forEach(function (k) { t.states[k] = defaults[k] || 0; });
-            }
-            t.states[sn] = x;
-            val.textContent = x.toFixed(0);
-            applySoon(field);
-          }));
-          row.appendChild(val);
-          wrap.appendChild(row);
-        });
-      }
-      o.variants.forEach(function (v) { wrap.appendChild(variantRow(field, biome, o.name, v)); });
-    }
     body.appendChild(wrap);
   });
 
@@ -321,13 +313,55 @@ function rebuild() {
   };
   foot.appendChild(copy); foot.appendChild(reset);
   body.appendChild(foot);
+
+  // --- side panel: states + variants for the expanded object ---
+  if (!sidePanel) buildSidePanel();
+  var ek = expandedKey && expandedKey.split('/'); // [field, biome, obj]
+  if (ek && ek[0] === field && ek[1] === biome) {
+    var eObj = regFor(field).objectsFor(biome).filter(function (o) { return o.name === ek[2]; })[0];
+    if (eObj) {
+      sideTitle.textContent = ek[2];
+      sideBody.textContent = '';
+      var stNames = regFor(field).stateNames(biome, eObj.name);
+      if (stNames.length) {
+        var defaults = regFor(field).stateDefaults(biome, eObj.name);
+        var curStates = (peek(field, biome, eObj.name) || {}).states;
+        stNames.forEach(function (sn) {
+          var srow = el('div', 'display:flex;align-items:center;gap:4px;margin:1px 0');
+          srow.appendChild(el('span', 'width:96px;overflow:hidden;white-space:nowrap;color:#b8a3e0', 'state ' + sn));
+          var sv = curStates && curStates[sn] != null ? curStates[sn] : (defaults[sn] || 0);
+          var sval = el('span', 'width:34px;text-align:right', sv.toFixed(0));
+          srow.appendChild(slider(0, 100, 1, sv, (function (snCap) {
+            return function (x) {
+              var t = node(field, biome, eObj.name);
+              if (!t.states) {
+                t.states = {};
+                stNames.forEach(function (k) { t.states[k] = defaults[k] || 0; });
+              }
+              t.states[snCap] = x;
+              sval.textContent = x.toFixed(0);
+              applySoon(field);
+            };
+          })(sn)));
+          srow.appendChild(sval);
+          sideBody.appendChild(srow);
+        });
+      }
+      eObj.variants.forEach(function (v) { sideBody.appendChild(variantRow(field, biome, eObj.name, v)); });
+      sidePanel.style.display = 'flex';
+    } else {
+      sidePanel.style.display = 'none';
+    }
+  } else {
+    sidePanel.style.display = 'none';
+  }
 }
 
 function buildPanel() {
   panel = el('div',
     'position:fixed;top:48px;right:8px;z-index:9999;background:rgba(10,14,24,0.92);' +
     'color:#cfe0ff;font:12px monospace;padding:8px 10px;border:1px solid #3a4a6a;' +
-    'border-radius:6px;max-height:70vh;display:flex;flex-direction:column;width:360px');
+    'border-radius:6px;max-height:calc(100vh - 64px);display:flex;flex-direction:column;width:360px');
   var tabs = el('div', 'display:flex;gap:4px;margin-bottom:6px');
   FIELD_REGISTRY.forEach(function (reg) {
     var b = el('button', 'font:12px monospace;cursor:pointer;flex:1', reg.id.toUpperCase());
@@ -335,7 +369,7 @@ function buildPanel() {
     tabs.appendChild(b);
   });
   panel.appendChild(tabs);
-  body = el('div', 'overflow-y:auto;flex:1');
+  body = el('div', 'overflow-y:auto;flex:1;min-height:0');
   panel.appendChild(body);
   document.body.appendChild(panel);
   rebuild();
@@ -371,6 +405,7 @@ export function initFieldTuner() {
     if (!panel) { buildPanel(); return; }
     var hidden = panel.style.display === 'none';
     panel.style.display = hidden ? '' : 'none';
+    if (!hidden && sidePanel) sidePanel.style.display = 'none';
     if (hidden) rebuild(); // refresh biome on reopen
   });
 }
