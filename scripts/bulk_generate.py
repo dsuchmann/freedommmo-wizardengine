@@ -345,14 +345,16 @@ def anim_done(job: dict, v: int) -> bool:
 # ---------------------------------------------------------------------------
 
 def ensure_tasks(batch: dict, state: dict, phase: str | None):
-    """Populate task table from batch jobs. Idempotent (skip existing keys)."""
+    """Populate task table from batch jobs. Idempotent (skip existing keys).
+
+    Always populates ALL job kinds regardless of --phase so that dependency
+    bookkeeping (create task records) is intact when phase='state'/'anim' resumes
+    a prior session.  The phase filter is applied at selection time in pick_next.
+    """
     tasks = state["tasks"]
-    create_jobs = {j["id"]: j for j in batch["jobs"] if j["kind"] == "create"}
 
     for job in batch["jobs"]:
         kind = job["kind"]
-        if phase and kind != phase:
-            continue  # strict phase filter for task creation
         if kind == "create":
             for c in range(job["calls"]):
                 key = f"create:{job['id']}:{c}"
@@ -388,7 +390,6 @@ def _parent_finalized(parent_id: str, tasks: dict) -> bool:
 def unlock_dependents(batch: dict, state: dict, parent_id: str, phase: str | None):
     """After a create parent finalizes: unlock waiting state/anim tasks."""
     tasks = state["tasks"]
-    job_by_id = {j["id"]: j for j in batch["jobs"]}
     for job in batch["jobs"]:
         if job.get("parent") != parent_id:
             continue
