@@ -1,5 +1,7 @@
 // Pure count math over one registry object. No I/O.
 
+const WANG_TILESET_TILES = 25; // a wang_100 tileset is 25 tiles
+
 export function enumerateRegistry(reg) {
   if (reg.category === 'object') return enumerateObject(reg);
   if (reg.category === 'matrix') return enumerateMatrix(reg);
@@ -19,6 +21,7 @@ function enumerateObject(reg) {
   const stateJobs = inst.length * stateNames.length
     + inst.filter((i) => i.fruit).length * fruitNames.length;
   const animStates = reg.anim?.states?.length ?? 0;
+  // animJobs counts animation API jobs (one job animates one instance), NOT output sprite frames.
   return {
     id: reg.id, status: reg.status, plan: reg.consuming_plan,
     instances: inst.length,
@@ -39,11 +42,12 @@ function enumerateMatrix(reg) {
 }
 
 function enumerateWang(reg) {
+  // tilesets is an intentional wang-only semantic alias of instances; object/matrix results omit it.
   const tilesets = reg.materials.length * reg.biomes.length;
   return {
     id: reg.id, status: reg.status, plan: reg.consuming_plan,
     instances: tilesets, tilesets,
     baseSprites: 0, stateSprites: 0, animJobs: 0,
-    totalSprites: tilesets * 25 * (reg.variants ?? 1), // wang_100 = 25 tiles/set
+    totalSprites: tilesets * WANG_TILESET_TILES * (reg.variants ?? 1),
   };
 }
