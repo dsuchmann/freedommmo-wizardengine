@@ -3,7 +3,7 @@
 // decide how far to advance sim-time. The kernel itself never sees real time.
 import { WebSocketServer } from 'ws';
 import { parseClientMsg, serializeEntity, serializeItem, snapshotMsg, tickDeltaMsg, eventsMsg, timeMsg } from './protocol.js';
-import { createPlayer, pick, chop, harvest, take, eat, strike, combine } from '../world/actions.js';
+import { createPlayer, pick, chop, harvest, take, eat, strike, combine, move } from '../world/actions.js';
 import { equip, unequip } from '../items/equipment.js';
 import { checkpoint } from '../store/checkpoint.js';
 import { TierManager } from '../lod/tiers.js';
@@ -114,6 +114,7 @@ export class SimServer {
         else if (it.verb === 'combine') combine(this.kernel, it.session.playerId, it.items, this.kernel.tick);
         else if (it.verb === 'equip') equip(this.kernel, it.session.playerId, it.item, it.slot, this.kernel.tick);
         else if (it.verb === 'unequip') unequip(this.kernel, it.session.playerId, it.slot, this.kernel.tick);
+        else if (it.verb === 'move') move(this.kernel, it.session.playerId, it.dx, it.dy, this.kernel.tick);
       } catch {
         // node died between snapshot and pump — drop the intent silently
       }
@@ -142,6 +143,8 @@ export class SimServer {
       const player = this.kernel.materialized(s.playerId);
       s.ws.send(JSON.stringify(tickDeltaMsg(this.kernel.tick, entities, removed, {
         R: player?.R ?? 0,
+        x: player?.x ?? null,
+        y: player?.y ?? null,
         inventory: (player?.attrs.inventory ?? []).map(serializeItem),
         equipment: Object.fromEntries(Object.entries(player?.attrs.equipment ?? {})
           .map(([slot, it]) => [slot, serializeItem(it)])),

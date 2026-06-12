@@ -207,3 +207,41 @@ test('combine intent dispatched over protocol → combine ledger event emitted',
   ws.close();
   await server.close();
 });
+
+test('move intent: player x/y on tick-delta changes by step; invalid move is dropped silently', async () => {
+  const bounds = { x0: 0, y0: 0, w: 32, h: 32 };
+  const kernel = new Kernel({ seed: 99, bounds });
+  const server = new SimServer({ kernel, port: 0, timeScale: 0 }); // timeScale 0 → sim doesn't advance on its own
+  await server.listen();
+  const ws = await connect(server);
+  ws.send(JSON.stringify({ type: 'hello', viewport: { x: 0, y: 0, w: 32, h: 32 } }));
+  const snap = await next(ws, 'snapshot');
+  const playerId = snap.playerId;
+
+  // Player spawned with no position (createPlayer default pos=null → x=null, y=null).
+  // Confirm: unpositioned move is refused — x/y stay null.
+  ws.send(JSON.stringify({ type: 'intent', verb: 'move', dx: 1, dy: 0 }));
+  const tdNull = await next(ws, 'tick-delta');
+  assert.equal(tdNull.player.x, null, 'unpositioned player x stays null');
+  assert.equal(tdNull.player.y, null, 'unpositioned player y stays null');
+
+  // Reach into kernel to give the player a valid position (test arrangement — not a wire feature).
+  const playerNode = kernel.graph.nodes.get(playerId);
+  playerNode.x = 10;
+  playerNode.y = 10;
+
+  // Send a valid move intent (dx=1, dy=0).
+  ws.send(JSON.stringify({ type: 'intent', verb: 'move', dx: 1, dy: 0 }));
+  const tdMoved = await next(ws, 'tick-delta');
+  assert.equal(tdMoved.player.x, 11, 'x advanced by dx=1');
+  assert.equal(tdMoved.player.y, 10, 'y unchanged');
+
+  // Send an invalid raw intent (dx=2 is out of range) — protocol drops it, no crash, no position change.
+  ws.send(JSON.stringify({ type: 'intent', verb: 'move', dx: 2, dy: 0 }));
+  const tdInvalid = await next(ws, 'tick-delta');
+  assert.equal(tdInvalid.player.x, 11, 'invalid move: x unchanged');
+  assert.equal(tdInvalid.player.y, 10, 'invalid move: y unchanged');
+
+  ws.close();
+  await server.close();
+});

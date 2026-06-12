@@ -144,3 +144,20 @@ test('message builders stamp type and tick', () => {
   assert.equal(eventsMsg(5, []).type, 'events');
   assert.deepEqual(timeMsg(86400), { type: 'time', tick: 86400, day: 1 });
 });
+
+test('parseClientMsg: move intent needs integer dx,dy in {-1,0,1}, not both 0', () => {
+  assert.deepEqual(parseClientMsg(JSON.stringify({ type: 'intent', verb: 'move', dx: 1, dy: 0 })),
+    { type: 'intent', verb: 'move', dx: 1, dy: 0 });
+  assert.deepEqual(parseClientMsg(JSON.stringify({ type: 'intent', verb: 'move', dx: -1, dy: 1 })),
+    { type: 'intent', verb: 'move', dx: -1, dy: 1 });
+  assert.equal(parseClientMsg(JSON.stringify({ type: 'intent', verb: 'move', dx: 0, dy: 0 })), null);
+  assert.equal(parseClientMsg(JSON.stringify({ type: 'intent', verb: 'move', dx: 2, dy: 0 })), null);
+  assert.equal(parseClientMsg(JSON.stringify({ type: 'intent', verb: 'move', dx: 0.5, dy: 0 })), null);
+  assert.equal(parseClientMsg(JSON.stringify({ type: 'intent', verb: 'move', dx: 1 })), null);
+});
+
+test('serializeEntity: path nodes expose id/type/x/y/wear only (no suppressDeltaIds)', () => {
+  const node = { id: 9, type: 'path', x: 5, y: 4,
+    attrs: { wear: 23, suppressDeltaIds: [3, 4], noFlux: true } };
+  assert.deepEqual(serializeEntity(node), { id: 9, type: 'path', x: 5, y: 4, wear: 23 });
+});

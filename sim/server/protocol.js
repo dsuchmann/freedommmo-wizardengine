@@ -4,7 +4,7 @@
 import { SPECIES, stageAt, DAY } from '../time/metabolism.js';
 import { stageFor } from '../matter/objects.js';
 
-const VERBS = new Set(['pick', 'chop', 'harvest', 'take', 'eat', 'strike', 'combine', 'equip', 'unequip']);
+const VERBS = new Set(['pick', 'chop', 'harvest', 'take', 'eat', 'strike', 'combine', 'equip', 'unequip', 'move']);
 const DAMAGE_TYPES = new Set(['blunt', 'sharp', 'fire', 'frost']);
 const ADMIN_OPS = new Set(['pause', 'resume', 'save', 'ff']);
 
@@ -37,6 +37,11 @@ export function parseClientMsg(raw) {
         if (typeof m.slot !== 'string' || m.slot.length > 32 || !/^[a-z_0-9]+$/.test(m.slot)) return null;
         return { type: 'intent', verb: 'unequip', slot: m.slot };
       }
+      if (m.verb === 'move') {
+        const okStep = v => Number.isInteger(v) && v >= -1 && v <= 1;
+        if (!okStep(m.dx) || !okStep(m.dy) || (m.dx === 0 && m.dy === 0)) return null;
+        return { type: 'intent', verb: 'move', dx: m.dx, dy: m.dy };
+      }
       if (!Number.isFinite(m.target) || !Number.isInteger(m.target)) return null;
       if (m.verb === 'strike') {
         if (!DAMAGE_TYPES.has(m.damageType)) return null;
@@ -60,6 +65,10 @@ export function parseClientMsg(raw) {
 
 /** Wire form of an entity: render-relevant fields only (sim stays authoritative). */
 export function serializeEntity(node, tick) {
+  if (node.type === 'path') {
+    // suppressDeltaIds and noFlux are sim-internal (privacy rule); only wear is render-relevant.
+    return { id: node.id, type: 'path', x: node.x, y: node.y, wear: node.attrs.wear };
+  }
   if (node.type === 'recipe') {
     // Knowledge stays private: knownBy is NOT serialized to clients.
     return { id: node.id, type: 'recipe', signature: node.attrs.signature, form: node.attrs.form };
