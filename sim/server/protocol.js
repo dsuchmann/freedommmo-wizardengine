@@ -23,9 +23,9 @@ export function parseClientMsg(raw) {
       if (m.verb === 'combine') {
         if (!Array.isArray(m.items)) return null;
         if (m.items.length < 2 || m.items.length > 8) return null;
-        if (!m.items.every(x => Number.isInteger(x))) return null;
+        if (!m.items.every(x => Number.isInteger(x) && x > 0)) return null;   // ids are positive
         if (new Set(m.items).size !== m.items.length) return null;
-        return { type: 'intent', verb: 'combine', items: m.items };
+        return { type: 'intent', verb: 'combine', items: m.items.slice() };
       }
       if (!Number.isFinite(m.target) || !Number.isInteger(m.target)) return null;
       if (m.verb === 'strike') {

@@ -99,6 +99,7 @@ function runScenario(seed = 99) {
 // ── Step 2: at least one success and one failure ───────────────────────────────
 test('probe M3 step 2: ≥1 success (log pair → composite) and ≥1 failure (pebble pair → ruined)', () => {
   const { attempts } = runScenario();
+  assert.ok(attempts.length >= 3, `experimenter must exercise ≥3 pairs, got ${attempts.length}`);
   const successes = attempts.filter(a => a.ok);
   const failures = attempts.filter(a => !a.ok);
   assert.ok(successes.length >= 1,
