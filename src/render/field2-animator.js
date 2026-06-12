@@ -9,7 +9,7 @@ import { clearBorderLines } from './sprite-denoise.js';
 import { floorDiv } from '../world/chunk.js';
 import { SPRITE_FLOATS } from './gl-compositor.js';
 import { getAtmosphere } from '../world/biome-atmosphere.js';
-import { isClaimedAt, f4Placements, f4SpriteUrl, f4AnimUrlBase, f5Placements, f5SpriteUrl } from '../world/decoration-claims.js';
+import { isClaimedAt, f4Placements, f4SpriteUrl, f4AnimUrlBase, f5Placements, f5SpriteUrl, f6Placements, f6SpriteUrl, f6AnimUrlBase } from '../world/decoration-claims.js';
 import { tuneSize, tuneBiomeDensity, tuneObjDensity, tuneAnimEnabled, tuneStateWeights, rollWeighted,
   F2_STATE_ORDER, F2_STATE_DEFAULTS } from '../world/field-tuning.js';
 
@@ -362,7 +362,7 @@ function temporalDenoise(animKey) {
   _temporalSets.delete(animKey);
 }
 
-function loadFrame(url) {
+function loadFrame(url, frameCount) {
   if (frameCache.has(url)) return frameCache.get(url);
   if (loadingSet.has(url)) return null;
   loadingSet.add(url);
@@ -371,11 +371,12 @@ function loadFrame(url) {
   var animMatch = url.match(/(.+\/anim\/.+\/v\d+\/)frame_(\d+)\.png$/);
   var animKey = animMatch ? animMatch[1] : null;
   if (animKey && !_temporalSets.has(animKey)) {
+    var fcnt = frameCount || FRAME_COUNT;
     var urls = [];
-    for (var fi = 0; fi < FRAME_COUNT; fi++) {
+    for (var fi = 0; fi < fcnt; fi++) {
       urls.push(animKey + 'frame_' + String(fi).padStart(3, '0') + '.png');
     }
-    _temporalSets.set(animKey, { urls: urls, loaded: 0, total: FRAME_COUNT });
+    _temporalSets.set(animKey, { urls: urls, loaded: 0, total: fcnt });
   }
 
   var img = new Image();
@@ -649,6 +650,33 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
       offUX: gp.ux - 0.5,
       offUY: gp.uy - 0.5,
       sortYOff: gp.uy + gp.sizeTiles * 0.30, // sort by sprite base (same rule as F4)
+      ambientPeriod: 0,
+      ambientPhase: 0,
+      startDelay: 0,
+      loopCount: 0,
+      restFrame: 0
+    });
+  }
+
+  // ---- Field 6 large flora (trees; y-sorted with F2/F4/F5/player) ----
+  var f6pls = f6Placements(wx, wy, _claimTileInfo(chunkStore));
+  for (var hi = 0; hi < f6pls.length; hi++) {
+    var hp = f6pls[hi];
+    f4Blades.push({
+      bi: 60 + hi, // distinct trigger-key space (F2 0-19, F5 80+, F4 90+)
+      stateUrl: null,
+      animUrlBase: (hp.hasAnim && !hp.state
+        && tuneAnimEnabled('f6', hp.biome, hp.name, 'wind_sway'))
+        ? f6AnimUrlBase(hp) : null,
+      staticUrl: f6SpriteUrl(hp),
+      isRigid: true,                        // trunk never sway-rotates; wind lives in the frames
+      frameCount: 8,                        // W2 tree anims are 8 frames (F2/F4/F5 use the 9-frame default)
+      lifeScale: hp.sizeTiles,              // 192px @ 1.0 -> 6 tiles
+      lifeSway: 0,
+      baseAngle: 0,
+      offUX: hp.ux - 0.5,
+      offUY: hp.uy - 0.5,
+      sortYOff: hp.uy + hp.sizeTiles * 0.30, // sort by sprite base (F4/F5 rule)
       ambientPeriod: 0,
       ambientPhase: 0,
       startDelay: 0,
@@ -969,12 +997,12 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         if (!isAnimating) {
           if (triggerData && triggerTime > -99999) {
             // Frozen at whatever frame the last animation ended on
-            frameIdx = Math.floor((triggerDuration / FRAME_DURATION + bl.restFrame) % FRAME_COUNT);
+            frameIdx = Math.floor((triggerDuration / FRAME_DURATION + bl.restFrame) % (bl.frameCount || FRAME_COUNT));
           } else {
             frameIdx = bl.restFrame;
           }
         } else {
-          frameIdx = Math.floor((elapsed / FRAME_DURATION + bl.restFrame) % FRAME_COUNT);
+          frameIdx = Math.floor((elapsed / FRAME_DURATION + bl.restFrame) % (bl.frameCount || FRAME_COUNT));
           // Smooth blend for sway: ease in first cycle, ease out last cycle
           var cycleProgress = elapsed / CYCLE_DURATION;
           if (cycleProgress < 1) animBlend = Math.min(1, cycleProgress * 2);
@@ -1000,7 +1028,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         // Sprite: state override > per-variant animation > static fallback
         var img = (simStateUrl || bl.stateUrl) ? loadFrame(simStateUrl || bl.stateUrl) : null;
         if (!img && bl.animUrlBase) {
-          img = loadFrame(bl.animUrlBase + 'frame_' + String(frameIdx).padStart(3, '0') + '.png');
+          img = loadFrame(bl.animUrlBase + 'frame_' + String(frameIdx).padStart(3, '0') + '.png', bl.frameCount);
         }
         if (!img) img = loadFrame(bl.staticUrl);
         if (!img) continue;
