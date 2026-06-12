@@ -1,3 +1,88 @@
+import { f4Placements, f5Placements, f6Placements } from '../world/decoration-claims.js';
+import { volumeForPlacement } from '../world/traversal-templates.js';
+
+const PLAYER_R = 0.30;       // player capsule radius (tiles)
+const SUPPORT_EPS = 0.05;    // landing tolerance onto a standable top
+const SCAN_R = 3;            // placement anchor scan radius (covers 192px trees)
+
+const _volCache = new WeakMap();   // placement record -> volume (records are cached upstream)
+let _tiStore = null, _tiFn = null;
+function claimTileInfo(chunkStore) {
+  if (_tiStore === chunkStore && _tiFn) return _tiFn;
+  _tiStore = chunkStore;
+  _tiFn = (wx, wy) => {
+    const t = chunkStore.tileAt(wx, wy);
+    return t ? { biome: t.biome, transition: !!t.transitionPair } : null;
+  };
+  return _tiFn;
+}
+
+function volumeOf(p, field) {
+  let v = _volCache.get(p);
+  if (v === undefined) { v = volumeForPlacement(p, field); _volCache.set(p, v); }
+  return v;
+}
+
+// Default volume source: decoration placements around the player.
+function decorationVolumes(chunkStore, px, py) {
+  const ti = claimTileInfo(chunkStore);
+  const cx = Math.floor(px), cy = Math.floor(py);
+  const out = [];
+  for (let y = cy - SCAN_R; y <= cy + SCAN_R; y++) {
+    for (let x = cx - SCAN_R; x <= cx + SCAN_R; x++) {
+      pushVols(f6Placements(x, y, ti), 'f6', out);
+      pushVols(f5Placements(x, y, ti), 'f5', out);
+      pushVols(f4Placements(x, y, ti), 'f4', out);
+    }
+  }
+  return out;
+}
+function pushVols(pls, field, out) {
+  for (let i = 0; i < pls.length; i++) {
+    const v = volumeOf(pls[i], field);
+    if (v) out.push(v);
+  }
+}
+
+function volumeBlocks(v, px, py, z) {
+  if (z >= v.solidH - 1e-9) return false;            // above it: jump-over is implicit
+  const rx = v.baseRX + PLAYER_R, ry = v.baseRY + PLAYER_R * 0.6;
+  const dx = (px - v.x) / rx, dy = (py - v.y) / ry;
+  return dx * dx + dy * dy < 1;
+}
+function volumesBlock(vols, px, py, z) {
+  for (let i = 0; i < vols.length; i++) if (volumeBlocks(vols[i], px, py, z)) return true;
+  return false;
+}
+
+function floorZOf(v, px, py, z) {
+  // standable top: only supports from above (never lifts through the side)
+  if (v.topZ != null && z >= v.topZ - SUPPORT_EPS) {
+    const dx = (px - v.x) / (v.baseRX + PLAYER_R * 0.5);
+    const dy = (py - v.y) / (v.baseRY + PLAYER_R * 0.5 * 0.6);
+    if (dx * dx + dy * dy < 1) return v.topZ;
+  }
+  // ramp annulus: floor rises linearly from the outer edge to rampH at the core
+  if (v.rampW > 0) {
+    const orx = v.baseRX + v.rampW, ory = v.baseRY + v.rampW * 0.6;
+    const dx = (px - v.x) / orx, dy = (py - v.y) / ory;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    if (d < 1) {
+      const coreFrac = v.baseRX / orx;
+      const t = Math.min(1, (1 - d) / Math.max(1e-6, 1 - coreFrac));
+      return v.rampH * t;
+    }
+  }
+  return 0;
+}
+
+function underOverhead(v, px, py, z) {
+  if (v.overheadZ == null || z >= v.overheadZ) return false;
+  const dx = (px - v.x) / Math.max(0.01, v.overheadR);
+  const dy = (py - v.y) / Math.max(0.01, v.overheadR * 0.6);
+  return dx * dx + dy * dy < 1;
+}
+
 export function canEnterTile(tile) {
   if (!tile?.walkable) return false;
   return true;
@@ -43,10 +128,21 @@ export function movementCost(tile) {
   return cost;
 }
 
-export function resolveMovement(player, chunkStore, dx, dy) {
+export function resolveMovement(player, chunkStore, dx, dy, volumeSource) {
+  const z = player.z || 0;
+  const vols = volumeSource ? volumeSource(chunkStore, player.x, player.y)
+                            : decorationVolumes(chunkStore, player.x, player.y);
   const nextX = player.x + dx;
   const nextY = player.y + dy;
-  if (canOccupy(chunkStore, nextX, player.y)) player.x = nextX;
-  if (canOccupy(chunkStore, player.x, nextY)) player.y = nextY;
+  if (canOccupy(chunkStore, nextX, player.y) && !volumesBlock(vols, nextX, player.y, z)) player.x = nextX;
+  if (canOccupy(chunkStore, player.x, nextY) && !volumesBlock(vols, player.x, nextY, z)) player.y = nextY;
+  let floor = 0, under = false;
+  for (let i = 0; i < vols.length; i++) {
+    const f = floorZOf(vols[i], player.x, player.y, z);
+    if (f > floor) floor = f;
+    if (!under && underOverhead(vols[i], player.x, player.y, z)) under = true;
+  }
+  player.floorZ = floor;
+  player.underCanopy = under;
   return canOccupy(chunkStore, player.x, player.y);
 }

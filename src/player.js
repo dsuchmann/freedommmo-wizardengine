@@ -25,7 +25,7 @@ export class Player {
     const axis = input.axis();
     const moving = Boolean(axis.x || axis.y);
     const sprinting = input.down?.('shift') && moving && this.rollTimer <= 0;
-    if (input.wasPressed?.(' ') && this.z <= 0.01) this.vz = 7.5;
+    if (input.wasPressed?.(' ') && this.z <= (this.floorZ ?? 0) + 0.01) this.vz = 7.5;
     if (input.wasPressed?.('q') && moving && this.rollTimer <= 0) this.rollTimer = 0.38;
     this.interactPressed = Boolean(input.wasPressed?.('f'));
     this.glide = input.down?.('e') && this.z > 0.6 && this.vz < 0;
@@ -46,12 +46,13 @@ export class Player {
     const gravity = this.glide ? 3.2 : 16;
     this.vz -= gravity * dt;
     this.z += this.vz * dt;
-    if (this.z < 0) {
-      this.z = 0;
+    const floorZ = this.floorZ ?? 0;
+    if (this.z < floorZ) {
+      this.z = floorZ;
       this.vz = 0;
     }
     this.rollTimer = Math.max(0, this.rollTimer - dt);
-    this.character.setMotion({ moving, sprinting, jumping: this.z > 0.05, climbing: this.climbing, gliding: this.glide, rolling: this.rollTimer > 0, direction: directionFromAxis(axis) });
+    this.character.setMotion({ moving, sprinting, jumping: this.z > (this.floorZ ?? 0) + 0.05, climbing: this.climbing, gliding: this.glide, rolling: this.rollTimer > 0, direction: directionFromAxis(axis) });
     this.character.update(dt);
   }
 }
