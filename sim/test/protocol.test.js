@@ -161,3 +161,13 @@ test('serializeEntity: path nodes expose id/type/x/y/wear only (no suppressDelta
     attrs: { wear: 23, suppressDeltaIds: [3, 4], noFlux: true } };
   assert.deepEqual(serializeEntity(node), { id: 9, type: 'path', x: 5, y: 4, wear: 23 });
 });
+
+test('serializeEntity: road segments ride the matter branch — condition/suppressDeltaIds never on the wire', () => {
+  const node = { id: 12, type: 'matter', x: 940, y: 8,
+    attrs: { archetype: 'road_segment', E: 28.5, condition: 73, suppressDeltaIds: [5], noFlux: true } };
+  const out = serializeEntity(node);
+  assert.equal(out.archetype, 'road_segment');
+  assert.equal(out.E, 28.5);
+  assert.ok(!('condition' in out), 'condition stays sim-side');
+  assert.ok(!('suppressDeltaIds' in out), 'internals stay sim-side');
+});
