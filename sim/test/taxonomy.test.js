@@ -16,8 +16,10 @@ test('spine is complete and maps totally onto the visual vocabulary', () => {
   assert.equal(SPINE_TO_VISUAL.gone, null);
 });
 
-test('every kernel species stage name is spine vocabulary', () => {
+test('every renderable kernel species stage name is spine vocabulary', () => {
+  const { UNRENDERED } = FIELD_SHEETS._meta;
   for (const [name, sp] of Object.entries(SPECIES)) {
+    if (UNRENDERED.includes(name)) continue; // humanoids: no bodies until L2 (honest absence)
     for (let d = 0; d <= 2 * (sp.senescence.start / DAY); d += 5) {
       const stage = stageAt(name, d * DAY)[0];
       assert.ok(['seedling', 'growing', 'mature'].includes(stage), `${name}@${d}d: ${stage}`);
@@ -61,9 +63,13 @@ test('field sheets: quantizations and legal vocabularies', () => {
   }
 });
 
-test('kernel species all bind to an archetype class with a sheet', () => {
-  const { SPECIES_CLASS } = FIELD_SHEETS._meta;
+test('kernel species all bind to an archetype class with a sheet, or are declared unrendered', () => {
+  const { SPECIES_CLASS, UNRENDERED } = FIELD_SHEETS._meta;
   for (const name of Object.keys(SPECIES)) {
+    if (UNRENDERED.includes(name)) {
+      assert.ok(!SPECIES_CLASS[name], `${name} is unrendered (L2 honest absence) — must not also bind a sheet`);
+      continue;
+    }
     const cls = SPECIES_CLASS[name];
     assert.ok(cls && FIELD_SHEETS[cls], `${name} → ${cls}`);
   }
