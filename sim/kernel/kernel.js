@@ -116,6 +116,9 @@ export class Kernel {
       } else if (n.type === 'matter') {
         // Static matter nodes (F3): no metabolism, E is conserved as-is.
         s += n.attrs.E ?? 0;
+      } else if (n.type === 'building') {
+        // P4 runtime buildings hold paid embodied time (boot buildings have no E → ?? 0).
+        s += n.attrs.E ?? 0;
       } else if (n.R != null) {
         this.closeSegment(n, tick);
         s += n.R + n.attrs.body;

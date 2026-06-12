@@ -113,3 +113,12 @@ test('heap compaction is deterministic: mid-run compact yields identical results
     `stocks differ: A=${kA.stocks(T)} B=${kB.stocks(T)}`
   );
 });
+
+test('stocks() counts building-node embodied time E', () => {
+  const k = new Kernel({ seed: 1 });
+  k.graph.boot(() => {
+    k.graph.createNode({ type: 'building', tick: 0, x: 0, y: 0,
+      attrs: { E: 400, footprint: { x0: 0, y0: 0, w: 5, h: 4 }, stamps: [], noFlux: true } });
+  });
+  assert.equal(k.stocks(0), 400, 'building E must be world stock or construction destroys time');
+});
