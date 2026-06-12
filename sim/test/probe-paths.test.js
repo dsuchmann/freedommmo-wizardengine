@@ -14,6 +14,23 @@ import { DAY } from '../time/metabolism.js';
 const RECT = { x0: 938, y0: 0, w: 8, h: 8 };
 const makeKernel = () => new Kernel({ seed: 42, phi: 4, bounds: { x0: 930, y0: 0, w: 24, h: 16 } });
 
+/** Find the first tile in RECT that has ≥1 baseline placement AND ≥1 living tramplable node in flux. */
+function findRouteTile(k) {
+  for (let y = RECT.y0; y < RECT.y0 + RECT.h; y++) {
+    for (let x = RECT.x0; x < RECT.x0 + RECT.w; x++) {
+      const hasBaseline = [...k.graph.nodes.values()]
+        .some(n => n.attrs?.placement && Math.floor(n.x) === x && Math.floor(n.y) === y);
+      const hasTramplable = [...k.flux.occupantsOf(x, y)]
+        .some(id => {
+          const n = k.graph.nodes.get(id);
+          return n && n.attrs?.species && ['berry_bush', 'grass'].includes(n.attrs.species);
+        });
+      if (hasBaseline && hasTramplable) return { x, y };
+    }
+  }
+  return null;
+}
+
 /** Walk the scenario and return kernel A along with diagnostic counts.
  *  All moves happen at tick=0 so segment closures are dt=0 no-ops — stocks comparison is clean. */
 function runScenario() {
@@ -24,25 +41,7 @@ function runScenario() {
   // Find a tile in RECT that has ≥1 baseline placement AND ≥1 living tramplable node in flux.
   // We know from inspection that (938,2) qualifies; assert it programmatically so the test fails
   // loudly if the biome ever changes under us.
-  let routeTile = null;
-  outer:
-  for (let y = RECT.y0; y < RECT.y0 + RECT.h; y++) {
-    for (let x = RECT.x0; x < RECT.x0 + RECT.w; x++) {
-      const hasBaseline = [...kA.graph.nodes.values()]
-        .some(n => n.attrs?.placement && Math.floor(n.x) === x && Math.floor(n.y) === y);
-      const hasTramplable = [...kA.flux.occupantsOf(x, y)]
-        .some(id => {
-          const n = kA.graph.nodes.get(id);
-          return n && kA.constructor.name /* always passes */ && n.attrs?.species &&
-            // Check tramplability via the metabolism module inline — avoids circular import
-            ['berry_bush', 'grass'].includes(n.attrs.species);
-        });
-      if (hasBaseline && hasTramplable) {
-        routeTile = { x, y };
-        break outer;
-      }
-    }
-  }
+  const routeTile = findRouteTile(kA);
   assert.ok(routeTile != null,
     'vacuity guard: RECT must contain ≥1 tile with both a baseline placement and tramplable living flora');
 
@@ -179,20 +178,7 @@ test('P1 probe: determinism — two identical runs produce bit-identical results
     kA.graph.boot(() => materializeRect(kA, RECT, 0));
 
     // Locate routeTile deterministically (same search as runScenario)
-    let routeTile = null;
-    outer:
-    for (let y = RECT.y0; y < RECT.y0 + RECT.h; y++) {
-      for (let x = RECT.x0; x < RECT.x0 + RECT.w; x++) {
-        const hasBaseline = [...kA.graph.nodes.values()]
-          .some(n => n.attrs?.placement && Math.floor(n.x) === x && Math.floor(n.y) === y);
-        const hasTramplable = [...kA.flux.occupantsOf(x, y)]
-          .some(id => {
-            const n = kA.graph.nodes.get(id);
-            return n && n.attrs?.species && ['berry_bush', 'grass'].includes(n.attrs.species);
-          });
-        if (hasBaseline && hasTramplable) { routeTile = { x, y }; break outer; }
-      }
-    }
+    const routeTile = findRouteTile(kA);
 
     const player = createPlayer(kA, 0, { x: routeTile.x - 1, y: routeTile.y });
     for (let i = 0; i < WORN_THRESHOLD; i++) {

@@ -67,7 +67,7 @@ export function parseClientMsg(raw) {
 export function serializeEntity(node, tick) {
   if (node.type === 'path') {
     // suppressDeltaIds and noFlux are sim-internal (privacy rule); only wear is render-relevant.
-    return { id: node.id, type: 'path', x: node.x, y: node.y, wear: node.attrs.wear };
+    return { id: node.id, type: 'path', x: node.x, y: node.y, wear: node.attrs.wear ?? 0 };
   }
   if (node.type === 'recipe') {
     // Knowledge stays private: knownBy is NOT serialized to clients.
