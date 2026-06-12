@@ -3,6 +3,9 @@
 // and suppresses baseline placements via 'worn' deltas; wear fades daily and
 // healed deltas let the baseline regrow (ghost paths). Wear is not time (M2/M5
 // hp precedent): zero ledger terms. Pure consumption of claims/deltas/scheduler.
+// TODO(save/load): path nodes are runtime state — worn deltas persist but their
+// owning path node does not. On kernel load, rehydrate path nodes from worn
+// deltas (attrs.pathNode is gone; key by delta x/y) or the deltas can never heal.
 import { tilePlacements } from './baseline.js';
 import { SPECIES, DAY } from '../time/metabolism.js';
 import { die } from '../time/lifecycle.js';
