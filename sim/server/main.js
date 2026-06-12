@@ -3,6 +3,7 @@ import { openDb } from '../store/db.js';
 import { checkpoint, loadKernel } from '../store/checkpoint.js';
 import { Kernel } from '../kernel/kernel.js';
 import { spawnWorld } from '../world/spawn.js';
+import { materializeRect } from '../world/wire.js';
 import { SimServer } from './server.js';
 
 /** Open-or-create: a db with a saved tick resumes; an empty one gets the baseline. */
@@ -11,6 +12,7 @@ export function bootWorld(db, { seed, bounds, start = bounds, phi = 4 }) {
   if (saved != null) return loadKernel(db);
   const kernel = new Kernel({ seed, phi, bounds });
   spawnWorld(kernel, bounds, start);
+  kernel.graph.boot(() => materializeRect(kernel, start, 0));
   checkpoint(kernel, db);          // birth certificate: baseline is durable immediately
   return kernel;
 }
