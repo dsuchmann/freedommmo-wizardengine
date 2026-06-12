@@ -16,6 +16,7 @@ import { drawField2Animations, preloadField2Animations, drawWindWispOverlay, set
 import { findNearbyInteraction, objectReaction, performInteraction } from '../world/interactions.js';
 import { GLCompositor } from './gl-compositor.js';
 import { buildAtmoField } from './atmosphere-pass.js';
+import { drawHumanoidPlayer } from './humanoid-player-renderer.js';
 
 function drawPrecipitation(ctx, w, h, precip, wind, time, tint) {
   if (precip.type === 'none' || precip.intensity < 0.01) return;
@@ -600,10 +601,13 @@ export class CanvasRenderer {
       ctx.ellipse(px + skewX, sy + 8 * zoom, (8 * zoom + (player?.z ?? 0) * zoom) * stretch, 3 * zoom, 0, 0, Math.PI * 2);
       ctx.fill();
     }
-    drawModularPlayer(ctx, px, py, zoom, frame, player?.character?.animation ?? 'idle');
-    // Always draw a visible red dot so player is never invisible
-    ctx.fillStyle = '#ff3333';
-    ctx.fillRect(px - 4 * zoom, py - 4 * zoom, 8 * zoom, 8 * zoom);
+    const bodyDrawn = drawHumanoidPlayer(ctx, px, py, zoom, frame, player?.character?.animation ?? 'idle');
+    if (!bodyDrawn) {
+      drawModularPlayer(ctx, px, py, zoom, frame, player?.character?.animation ?? 'idle');
+      // Visible red dot only on the fallback path (player never invisible)
+      ctx.fillStyle = '#ff3333';
+      ctx.fillRect(px - 4 * zoom, py - 4 * zoom, 8 * zoom, 8 * zoom);
+    }
   }
 
   drawAtmosphere(sun, w, h) {
