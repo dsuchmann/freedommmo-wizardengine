@@ -690,7 +690,13 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
       baseAngle: 0,
       offUX: gp.ux - 0.5,
       offUY: gp.uy - 0.5,
-      sortYOff: gp.uy - 0.5 + gp.sizeTiles * 0.40, // sort at sprite visual base (bottom edge = uy-0.5+sizeTiles*0.5; 0.40 coeff = 0.5 minus ~0.1-tile ground-contact inset; 3-tile boulders were anchored mid-sprite at 0.30)
+      // Sort at the sprite's visual base: bottom edge (uy - 0.5 + sizeTiles*0.5)
+      // minus a FIXED 0.1-tile ground-contact inset. A proportional inset
+      // (0.1*sizeTiles) drifts the anchor up toward mid-sprite as objects grow —
+      // big sprites are exactly where base-accurate sorting matters most.
+      // At sizeTiles=3 this equals the old 0.30 formula (no resort churn);
+      // at 6 tiles it sits at the trunk base instead of 0.7 tiles above it.
+      sortYOff: gp.uy + gp.sizeTiles * 0.5 - 0.6,
       ambientPeriod: 0,
       ambientPhase: 0,
       startDelay: 0,
