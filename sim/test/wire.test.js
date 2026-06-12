@@ -135,3 +135,38 @@ test('M4 claims: reboot reproducibility — claimed world rebuilds bit-identical
   };
   assert.deepEqual(mk(), mk());
 });
+
+test('P1 worn deltas suppress placements on reboot; healed deltas restore them', () => {
+  // Boot kernel A and find a real placement in the grassland rect.
+  const kA = makeKernel();
+  kA.graph.boot(() => materializeRect(kA, RECT, 0));
+  const allKeys = [...kA.graph.nodes.values()]
+    .map(n => n.attrs?.placement).filter(Boolean);
+  // Vacuity guard: seed 42 must produce ≥1 placement in RECT; if not the rect is wrong.
+  assert.ok(allKeys.length >= 1,
+    'seed 42 must produce ≥1 placement in RECT — test setup error if not');
+  const victim = allKeys[0];
+
+  // Kernel B: same seed + a 'worn' delta for victim → victim must be absent, siblings present.
+  const kB = makeKernel();
+  for (const d of kA.deltas.list) kB.deltas.push(d); // copy any existing deltas (none here)
+  kB.deltas.push({ tick: 0, x: 0, y: 0, target: 'placement:' + victim, kind: 'worn', attrs: {} });
+  kB.graph.boot(() => materializeRect(kB, RECT, 0));
+  const bKeys = new Set([...kB.graph.nodes.values()].map(n => n.attrs?.placement).filter(Boolean));
+  assert.ok(!bKeys.has(victim),
+    'worn delta must suppress the placement on reboot');
+  // At least one sibling must still be present (non-vacuous).
+  const siblings = allKeys.filter(k => k !== victim);
+  assert.ok(siblings.length >= 1,
+    'need ≥1 sibling placement to assert non-vacuous suppression');
+  assert.ok(siblings.some(k => bKeys.has(k)),
+    'sibling placements must NOT be suppressed by the worn delta');
+
+  // Kernel C: same seed, worn delta removed (healed) → victim must be materialized again.
+  const kC = makeKernel();
+  // deliberately push no worn delta — simulates delta removal (heal)
+  kC.graph.boot(() => materializeRect(kC, RECT, 0));
+  const cKeys = new Set([...kC.graph.nodes.values()].map(n => n.attrs?.placement).filter(Boolean));
+  assert.ok(cKeys.has(victim),
+    'after healing (delta removed), placement must re-materialize on reboot');
+});

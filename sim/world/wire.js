@@ -2,9 +2,12 @@
 // F4 placements → LIVING berry_bush (metabolic, flux-entered, lifecycle-scheduled).
 // F3 placements → inert MATTER nodes (noFlux, hold embodied time E, no lifecycle).
 // Delta-suppressed placements (target === 'placement:<key>') are silently skipped —
-// that is how taken/destroyed objects stay gone across re-boots (world = f(seed, deltas)).
+// that is how taken/destroyed/worn objects stay gone across re-boots (world = f(seed, deltas)).
 // Only REMOVAL kinds suppress a placement. 'damaged' deltas are intentionally NOT suppressing:
 // they record hp/stage scars for the renderer but the object still exists in the world.
+// 'worn' is a removal kind (Pass 3 P1 worn paths): a tile worn past threshold gets a 'worn' delta
+// that suppresses its baseline placement, keeping it bare until the delta is removed (wear fades
+// or the path decays) at which point the baseline regrows on the next reboot.
 // Claim suppression (locked decision 7): tiles inside any 'building' node footprint are claimed;
 // baseline placements on claimed tiles are never materialized. Buildings must be compiled BEFORE
 // materializeRect at boot; claims are re-derived from the graph on every call so reboot is
@@ -34,7 +37,7 @@ export function materializeRect(kernel, { x0, y0, w, h }, tick) {
   // Only removal kinds (taken / felled / destroyed) suppress a placement on reboot.
   // 'damaged' deltas are scar records for the renderer — they must NOT suppress, otherwise
   // a cracked-but-existing object vanishes when the kernel is reconstructed from seed+deltas.
-  const REMOVAL_KINDS = new Set(['taken', 'felled', 'destroyed']);
+  const REMOVAL_KINDS = new Set(['taken', 'felled', 'destroyed', 'worn']);
   const suppressed = new Set(
     kernel.deltas.list
       .filter(d => d.target?.startsWith('placement:') && REMOVAL_KINDS.has(d.kind))
