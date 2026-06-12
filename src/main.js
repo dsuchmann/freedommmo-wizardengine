@@ -22,6 +22,7 @@ const params = new URLSearchParams(window.location.search);
 const spawnX = params.has('x') ? parseFloat(params.get('x')) : null;
 const spawnY = params.has('y') ? parseFloat(params.get('y')) : null;
 const player = new Player(spawnX != null && spawnY != null ? { x: spawnX, y: spawnY } : (loadPlayerPosition() ?? { x: 0, y: 0 }));
+window._player = player; // dev/tuner hook: current position -> current biome
 const provider = new ChunkProvider();
 const chunks = new ChunkStore(provider);
 window._debugProvider = provider;
@@ -55,7 +56,7 @@ import('./world/biome-atmosphere.js').then(m => {
     get(biome) { return m.BIOME_ATMOSPHERE[biome]; },
   };
 });
-import('./dev/f4-tuner.js').then(m => m.initF4Tuner()); // F4 size sliders (key '4')
+import('./dev/field-tuner.js').then(m => m.initFieldTuner()); // field tuner (key `)
 const weather = new WeatherSystem(lighting);
 const overmap = new OvermapController(overmapCanvas, player, chunks);
 const camera = new Camera();
