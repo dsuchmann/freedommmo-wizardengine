@@ -81,7 +81,7 @@ export function stepAggregate(kernel, node, tick, dt) {
       // Starvation: the fraction whose burn went unmet dies; bodies persist as detritus.
       if (burned < burnDemand - 1e-9) {
         const deaths = Math.min(p.count,
-          stochRound(kernel.seed, node.id, tick + 7, p.count * (burnDemand - burned) / burnDemand));
+          stochRound(kernel.seed, node.id, tick + 7, p.count * (burnDemand - burned) / burnDemand));  // salt 7 vs 23: spacing > any same-call tick delta, no draw collision
         if (deaths > 0) {
           const mAge = p.ageSum / p.count, mBody = p.sumBody / p.count;
           p.count -= deaths;
@@ -97,7 +97,7 @@ export function stepAggregate(kernel, node, tick, dt) {
         if (stageAt(species, mAge)[0] === 'mature' && p.sumR / p.count >= sp.seed.minR) {
           const maxAffordable = Math.floor(p.sumR / sp.seed.cost);
           const births = Math.min(
-            stochRound(kernel.seed, node.id, tick + 11, p.count * dt / sp.seed.every),
+            stochRound(kernel.seed, node.id, tick + 23, p.count * dt / sp.seed.every),
             maxAffordable);
           if (births > 0) {
             const cost = births * sp.seed.cost;
