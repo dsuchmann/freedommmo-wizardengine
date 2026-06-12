@@ -479,6 +479,16 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 - **Ports**: require coast + navigable water + trade rationale (world-compiler L11) — no navigation system exists; backlog.
 - **Save/load**: settlement/plot nodes are runtime state (same backlog as paths/roads rehydration).
 
+## Deviations (canonical)
+
+Executed 2026-06-12 via subagent loop (implementer sonnet → spec reviewer sonnet → quality reviewer opus per task). Commits: 16f95fb8f (suitability), 1fec435a8 (settlements), 3cb33e918 (probe). All spec coordinates verified empirically — zero coordinate adjustments needed ((930,0) river, (938,6) grass with water at (933,2) d=5, (945,12) waterless, (940,8) grass).
+
+1. **Probe: `bestSiteExcluding` helper instead of a sub-rect for site2.** The plan said "findSettlementSite over a sub-rect that excludes village1's territory" — but a narrow sub-rect shrinks `scoreSite`'s routing bounds and breaks the live-trade proof (planRoute can't reach village1 outside the rect). The probe instead scans the FULL rect, skipping tiles whose territory would overlap v1's (same overlap predicate as foundSettlement, imports TERRITORY_W/H, argmax with the same 1e-12 epsilon). Spec-reviewed as assertion-strength-preserving.
+2. **Probe: v1 yields exactly 1 plot, not 2.** Real geometry: territory around the argmax site clips the residential district to 6×10 → one 5×4 land plot. "Assign one plot to each player" became an exact-count assertion (`expectedAssignEvents` = 1 or 2 from real plot count, asserted equal — never silently 0). site2 = (953,0), road = 13 tiles × 30 tu.
+3. **Quality-review minors (accepted backlog, non-blocking):** suitability — Chebyshev same-ring tie-break (dy then dx order) undocumented in JSDoc; trade loop O(rect × settlements × A*) needs caching before P5 growth rescoring; unused GRASS const in suitability.test.js; 1e-12 tie epsilon is a repeated magic number (suitability.js + two tests). Probe — grain:* totals not in the determinism summary (hardening opportunity).
+4. **Conservation confirmed structurally:** settlement/plot nodes carry R=null (createNode default) + no attrs.E, hitting no stocks() branch — founding asserts exact stocks equality, not epsilon.
+5. **Save/load backlog (P1/P2 precedent):** settlement/plot nodes are runtime state; rehydration on load joins the paths/roads backlog item.
+
 ## Seams for later plans
 
 - `settlement.attrs.districts` + plots are P4's building sites (hut blueprint = PLOT_W×PLOT_H footprint, deliberately matched).
