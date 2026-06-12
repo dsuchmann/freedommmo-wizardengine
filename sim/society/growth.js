@@ -11,6 +11,8 @@
 import { chop, take } from '../world/actions.js';
 import { constructBuilding, maintainBuilding, MAINTAIN_COST } from '../world/buildings.js';
 import { DAY } from '../time/metabolism.js';
+import { PLOT_W, PLOT_H } from './settlements.js';
+import { tileCost } from '../world/routing.js';
 
 export const GROWTH_INTERVAL_DAYS = 10;   // one decision every 10 days
 export const RESERVE_FLOOR = 200;         // surplus gate for NEW construction
@@ -38,6 +40,90 @@ function clearLand(kernel, groupId, rect, tick) {
     take(kernel, groupId, n.id, tick);
   }
   return cleared;
+}
+
+function rectsOverlap(a, b) {
+  return a.x0 < b.x0 + b.w && b.x0 < a.x0 + a.w && a.y0 < b.y0 + b.h && b.y0 < a.y0 + a.h;
+}
+
+/** Deed PLOT_W×PLOT_H plots into `strip` for land tiles (founding's tiling rule),
+ *  module-private. Returns number of plots deeded. */
+function deedPlots(kernel, settlement, groupId, strip, evId, tick) {
+  let deeded = 0;
+  for (let py = strip.y0; py + PLOT_H <= strip.y0 + strip.h; py += PLOT_H) {
+    for (let px = strip.x0; px + PLOT_W <= strip.x0 + strip.w; px += PLOT_W) {
+      let land = true;
+      for (let yy = py; yy < py + PLOT_H && land; yy++)
+        for (let xx = px; xx < px + PLOT_W && land; xx++)
+          if (tileCost(xx, yy) === Infinity) land = false;
+      if (!land) continue;
+      const plot = kernel.graph.createNode({
+        type: 'plot', tick, x: px, y: py, causeEventId: evId,
+        attrs: { rect: { x0: px, y0: py, w: PLOT_W, h: PLOT_H },
+                 settlement: settlement.id, district: 'residential',
+                 owner: groupId, noFlux: true },
+      });
+      kernel.ledger.events[evId - 1].targets.push(plot.id);
+      deeded++;
+    }
+  }
+  return deeded;
+}
+
+/** Founder group declares new territory: extend the rect by PLOT_W tiles in the
+ *  first viable direction (W, E, N, S — deterministic), zone the new strip
+ *  residential, deed plots. Zero-cost declaration (P3 founding precedent — the
+ *  labor is paid later by clearing and construction). Returns true, or false
+ *  (side-effect-free) when: bad actor/target, non-founder, or every direction is
+ *  out of bounds / overlaps another settlement / yields zero land plots. */
+export function expandTerritory(kernel, groupId, settlementId, tick) {
+  const group = kernel.graph.nodes.get(groupId);
+  const s = kernel.graph.nodes.get(settlementId);
+  if (!group || group.type !== 'group' || !s || s.type !== 'settlement') return false;
+  if (s.attrs.founderGroup !== groupId) return false;
+  const b = kernel.bounds;
+  const t = s.attrs.territory;
+  const candidates = [
+    { dir: 'west',  rect: { x0: t.x0 - PLOT_W, y0: t.y0, w: PLOT_W, h: t.h } },
+    { dir: 'east',  rect: { x0: t.x0 + t.w,    y0: t.y0, w: PLOT_W, h: t.h } },
+    { dir: 'north', rect: { x0: t.x0, y0: t.y0 - PLOT_H, w: t.w, h: PLOT_H } },
+    { dir: 'south', rect: { x0: t.x0, y0: t.y0 + t.h,    w: t.w, h: PLOT_H } },
+  ];
+  for (const { dir, rect } of candidates) {
+    if (b && (rect.x0 < b.x0 || rect.y0 < b.y0 ||
+        rect.x0 + rect.w > b.x0 + b.w || rect.y0 + rect.h > b.y0 + b.h)) continue;
+    let clash = false;
+    for (const n of kernel.graph.nodes.values()) {
+      if (n.type === 'settlement' && n.id !== s.id &&
+          rectsOverlap(rect, n.attrs.territory)) { clash = true; break; }
+    }
+    if (clash) continue;
+    // Dry-run the plot tiling: a strip with zero land plots is not an expansion.
+    let anyLand = false;
+    for (let py = rect.y0; py + PLOT_H <= rect.y0 + rect.h && !anyLand; py += PLOT_H)
+      for (let px = rect.x0; px + PLOT_W <= rect.x0 + rect.w && !anyLand; px += PLOT_W) {
+        let land = true;
+        for (let yy = py; yy < py + PLOT_H && land; yy++)
+          for (let xx = px; xx < px + PLOT_W && land; xx++)
+            if (tileCost(xx, yy) === Infinity) land = false;
+        if (land) anyLand = true;
+      }
+    if (!anyLand) continue;
+    const evId = kernel.ledger.emit({
+      tick, type: 'territory_expanded', actor: groupId, targets: [s.id],
+      attrs: { dir, rect, reason: `residential district full; ${dir} land available` },
+    });
+    // Merge the strip into territory + the residential district rect.
+    const nx0 = Math.min(t.x0, rect.x0), ny0 = Math.min(t.y0, rect.y0);
+    const nx1 = Math.max(t.x0 + t.w, rect.x0 + rect.w);
+    const ny1 = Math.max(t.y0 + t.h, rect.y0 + rect.h);
+    s.attrs.territory = { x0: nx0, y0: ny0, w: nx1 - nx0, h: ny1 - ny0 };
+    s.attrs.districts.push({ kind: 'residential', rect,
+      reason: `expansion ${dir} (territory_expanded #${evId})` });
+    deedPlots(kernel, s, groupId, rect, evId, tick);
+    return true;
+  }
+  return false;
 }
 
 /** Group clears a plot it owns. Returns cleared count, or null (side-effect-free)
@@ -174,7 +260,19 @@ function decide(kernel, s, group, tick) {
     }
   }
 
-  // 5. IDLE: nothing affordable/possible — an honest recorded non-choice.
+  // 5. EXPAND (declaration): residential full and surplus could fund another hut.
+  if (!ready && group.R >= HUT_COST + RESERVE_FLOOR) {
+    if (expandTerritory(kernel, group.id, s.id, tick)) {
+      emitDecision(kernel, group.id, s.id, tick, 'expand',
+        'residential district full; new land declared');
+      return;
+    }
+    emitDecision(kernel, group.id, s.id, tick, 'idle',
+      'expansion blocked: no viable direction (bounds/overlap/water)');
+    return;
+  }
+
+  // 6. IDLE: nothing affordable/possible — an honest recorded non-choice.
   emitDecision(kernel, group.id, s.id, tick, 'idle',
     ready ? `reserve ${group.R} < ${HUT_COST + RESERVE_FLOOR}` : 'no vacant plots');
 }

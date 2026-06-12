@@ -11,7 +11,7 @@ import { createGroup, contribute } from '../society/groups.js';
 import { foundSettlement } from '../society/settlements.js';
 import { findSettlementSite } from '../society/suitability.js';
 import { materializeRect } from '../world/wire.js';
-import { clearPlot, enableGrowth, GROWTH_INTERVAL_DAYS, RESERVE_FLOOR, TIER_THRESHOLDS } from '../society/growth.js';
+import { clearPlot, enableGrowth, expandTerritory, GROWTH_INTERVAL_DAYS, RESERVE_FLOOR, TIER_THRESHOLDS } from '../society/growth.js';
 import { DAY } from '../time/metabolism.js';
 
 const RECT = { x0: 926, y0: 0, w: 28, h: 14 };
@@ -177,5 +177,51 @@ test('tier demotes when buildings fall (label, never placed)', () => {
     group.R = 0;                         // no maintenance possible
     k.runTo(k.tick + GROWTH_INTERVAL_DAYS * DAY * 2);
     assert.notEqual(s.attrs.tier, 'town', 'tier fell with the buildings');
+  }
+});
+
+test('expandTerritory: declares new land, deeds new plots, refuses honestly', () => {
+  const { k, g, s } = growthScenario(2600);
+  const before = plotsOf(k, s).length;
+  const t0 = { ...s.attrs.territory };
+  const tl0 = k.ledger.totals.transferLoss;
+  const r0 = k.graph.nodes.get(g.id).R;
+  const ok = expandTerritory(k, g.id, s.id, 0);
+  if (ok) {
+    const t1 = s.attrs.territory;
+    assert.ok(t1.w * t1.h > t0.w * t0.h, 'territory genuinely grew');
+    assert.ok(plotsOf(k, s).length > before, 'new plots deeded in the new land');
+    const ev = k.ledger.events.find(e => e.type === 'territory_expanded');
+    assert.ok(ev, 'expansion is a provenanced declaration');
+    assert.equal(ev.actor, g.id);
+    assert.ok(typeof ev.attrs.reason === 'string' && ev.attrs.reason.length > 0);
+    // Zero-cost declaration (P3 founding precedent): no time moved.
+    assert.equal(k.ledger.totals.transferLoss, tl0, 'no transfer happened');
+    assert.equal(k.graph.nodes.get(g.id).R, r0, 'wallet untouched');
+  } else {
+    // Bounds too tight in every direction — must be a clean refusal.
+    assert.ok(!k.ledger.events.some(e => e.type === 'territory_expanded'));
+  }
+  // Refusals: non-founder group, non-settlement.
+  assert.equal(expandTerritory(k, g.id, g.id, 0), false);
+  const g2 = createGroup(k, 0, { x: 940, y: 0 });
+  assert.equal(expandTerritory(k, g2.id, s.id, 0), false, 'only the founder expands');
+});
+
+test('growth loop: expansion follows a full residential district', () => {
+  const { k, g, s } = growthScenario(2600);
+  const group = k.graph.nodes.get(g.id);
+  group.R = 40000;
+  assert.equal(enableGrowth(k, s.id, 0), true);
+  k.runTo(GROWTH_INTERVAL_DAYS * DAY * 40);
+  const d = decisions(k);
+  // Either the village expanded (and built more), or every direction was blocked
+  // by bounds — in which case the idle reason says so (honest evidence).
+  if (d.includes('expand')) {
+    assert.ok(plotsOf(k, s).length > 2, 'expansion deeded more plots');
+  } else {
+    const idle = k.ledger.events.filter(e => e.type === 'growth_decision')
+      .find(e => e.attrs.decision === 'idle' && /expand/.test(e.attrs.reason));
+    assert.ok(idle, 'blocked expansion is recorded as an idle reason');
   }
 });
