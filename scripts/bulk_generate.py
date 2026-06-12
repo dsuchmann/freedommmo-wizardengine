@@ -57,10 +57,21 @@ class InflightLedger:
     def publish(self, count: int):
         data = self._read()
         data[self.key] = {"count": count, "ts": time.time()}
-        tmp = LEDGER.with_suffix(".tmp")
+        # Per-process tmp name + retry: concurrent bursts share this ledger and
+        # Windows os.replace raises WinError 32 if another process holds the file.
+        tmp = LEDGER.with_suffix(f".{os.getpid()}.tmp")
         with open(tmp, "w") as f:
             json.dump(data, f)
-        tmp.replace(LEDGER)
+        for attempt in range(5):
+            try:
+                tmp.replace(LEDGER)
+                return
+            except PermissionError:
+                if attempt == 4:
+                    tmp.unlink(missing_ok=True)
+                    log.warning("ledger publish skipped (file locked by another burst)")
+                    return
+                time.sleep(0.2 * (attempt + 1))
 
     def others(self) -> int:
         return sum(v["count"] for k, v in self._read().items() if k != self.key)
@@ -72,10 +83,18 @@ class InflightLedger:
     def clear(self):
         data = self._read()
         data.pop(self.key, None)
-        tmp = LEDGER.with_suffix(".tmp")
+        tmp = LEDGER.with_suffix(f".{os.getpid()}.tmp")
         with open(tmp, "w") as f:
             json.dump(data, f)
-        tmp.replace(LEDGER)
+        for attempt in range(5):
+            try:
+                tmp.replace(LEDGER)
+                return
+            except PermissionError:
+                if attempt == 4:
+                    tmp.unlink(missing_ok=True)
+                    return
+                time.sleep(0.2 * (attempt + 1))
 
 
 API_BASE = "https://api.pixellab.ai/v2"
