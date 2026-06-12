@@ -9,6 +9,7 @@ import { registerAggregates } from '../lod/aggregate.js';
 import { registerPaths } from '../world/paths.js';
 import { registerRoads } from '../world/roads.js';
 import { registerCrossings } from '../world/crossings.js';
+import { registerBuildings } from '../world/buildings.js';
 
 export class Kernel {
   constructor({ seed, phi = 4, bounds = null }) {
@@ -26,6 +27,7 @@ export class Kernel {
     registerPaths(this);
     registerRoads(this);
     registerCrossings(this);
+    registerBuildings(this);
   }
 
   on(kind, fn) { this.handlers.set(kind, fn); }
