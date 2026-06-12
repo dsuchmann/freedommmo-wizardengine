@@ -200,6 +200,19 @@ function decide(kernel, s, group, tick) {
   const standing = buildingsIn(kernel, s.attrs.territory);
   s.attrs.peakBuildings = Math.max(s.attrs.peakBuildings ?? 0, standing.length);
 
+  // 0. GHOST: once-alive, now structureless, and too poor to rebuild — the
+  //    settlement is abandoned; the loop ends (claims already healed via decay).
+  if (standing.length === 0 && (s.attrs.peakBuildings ?? 0) > 0
+      && group.R < HUT_COST + RESERVE_FLOOR) {
+    kernel.ledger.emit({
+      tick, type: 'settlement_abandoned', actor: group.id, targets: [s.id],
+      attrs: { peakBuildings: s.attrs.peakBuildings,
+               reason: `no standing buildings; reserve ${group.R} cannot rebuild` },
+    });
+    s.attrs.tier = 'ghost';
+    return;
+  }
+
   // 1. MAINTAIN (survival): worst-condition building below threshold.
   const worst = standing.filter(b => (b.attrs.condition ?? 100) < MAINTAIN_AT)
                         .sort((a, b) => a.attrs.condition - b.attrs.condition)[0];

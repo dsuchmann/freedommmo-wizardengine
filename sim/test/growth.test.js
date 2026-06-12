@@ -225,3 +225,25 @@ test('growth loop: expansion follows a full residential district', () => {
     assert.ok(idle, 'blocked expansion is recorded as an idle reason');
   }
 });
+
+test('decline: unfunded village decays to ghost town; growth loop stops', () => {
+  const { k, g, s } = growthScenario(2600);
+  assert.equal(enableGrowth(k, s.id, 0), true);
+  k.runTo(GROWTH_INTERVAL_DAYS * DAY * 4);     // clear + build at least one hut
+  assert.ok([...k.graph.nodes.values()].some(n => n.type === 'building'), 'village built');
+  const group = k.graph.nodes.get(g.id);
+  group.R = 0;                                  // funding stops dead
+  k.runTo(k.tick + 150 * DAY);                  // decay 1/day from ≤100 → all fall
+  assert.equal([...k.graph.nodes.values()].filter(n => n.type === 'building').length, 0,
+    'all buildings decayed');
+  assert.equal(s.attrs.tier, 'ghost', 'settlement is a ghost town');
+  const ev = k.ledger.events.find(e => e.type === 'settlement_abandoned');
+  assert.ok(ev, 'abandonment is a provenanced event');
+  assert.ok(ev.attrs.peakBuildings >= 1, 'evidence: it was once alive');
+  assert.equal(k.deltas.list.filter(d => d.kind === 'claimed').length, 0,
+    'claims healed — wilderness returns on reboot');
+  // The loop stopped: no growth_decision events after the abandonment tick.
+  const after = k.ledger.events.filter(e =>
+    e.type === 'growth_decision' && e.tick > ev.tick + GROWTH_INTERVAL_DAYS * DAY);
+  assert.equal(after.length, 0, 'ghost towns make no decisions');
+});
