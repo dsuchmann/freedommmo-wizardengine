@@ -178,31 +178,30 @@ test('eat moves item grains into grain:metabolized counters', () => {
 });
 
 // (e) corpse decay over sim-days increments grain:decayed:* proportional to E lost
+// The corpse is created via the REAL path (chop -> die()) so species propagates correctly.
 test('corpse decay increments grain:decayed counters proportional to E lost', () => {
-  const k = new Kernel({ seed: 3, bounds: { x0: 0, y0: 0, w: 8, h: 8 } });
-  let corpse;
-  const HALFLIFE = 7 * DAY;
-  const GONE_THRESHOLD = 0.5;
-  k.graph.boot(() => {
-    corpse = k.graph.createNode({
-      type: 'corpse', tick: 0, x: 3, y: 3, R: null, r: 0,
-      attrs: { species: 'tree', E: 10000, decayHalflifeTicks: HALFLIFE },
-    });
-    // Schedule the decay_gone event so the scheduler can fire and materialize will be called.
-    const goneTick = HALFLIFE * Math.log2(10000 / GONE_THRESHOLD);
-    k.scheduler.schedule(goneTick, corpse.id, 'decay_gone', -1);
-  });
+  const { k, tree } = world();
+  const player = createPlayer(k, 0);
+  chop(k, player.id, tree.id, 0);
+  const corpse = [...k.graph.nodes.values()].find(n => n.type === 'corpse');
+  assert.ok(corpse, 'corpse created by chop/die');
+  assert.equal(corpse.attrs.species, 'tree', 'corpse carries species from die()');
+
   const E0 = corpse.attrs.E;
   k.runTo(7 * DAY);   // one half-life: decay_gone not yet (fires much later); force materialization
   // materialize directly to advance E and count grain:decayed
   k.materialized(corpse.id);
   const lost = E0 - corpse.attrs.E;
   assert.ok(lost > 0, 'E decreased');
-  // tree species: cellulose 0.006 + lignin 0.004 per tu
+
+  // tree species: cellulose 0.006 + lignin 0.004 per tu — must appear; stone must NOT.
   const expectedCellulose = 0.006 * lost;
   const expectedLignin = 0.004 * lost;
   assert.ok(Math.abs(k.ledger.totals['grain:decayed:cellulose'] - expectedCellulose) < 1e-6,
     `cellulose decayed: got ${k.ledger.totals['grain:decayed:cellulose']} expected ~${expectedCellulose}`);
   assert.ok(Math.abs(k.ledger.totals['grain:decayed:lignin'] - expectedLignin) < 1e-6,
     `lignin decayed: got ${k.ledger.totals['grain:decayed:lignin']} expected ~${expectedLignin}`);
+  // stone must NOT appear (default yield fall-through would produce it before the fix)
+  assert.ok(!k.ledger.totals['grain:decayed:stone'],
+    `stone should not appear for a tree corpse, got ${k.ledger.totals['grain:decayed:stone']}`);
 });

@@ -158,7 +158,7 @@ export function die(kernel, node, tick, causeEventId) {
     const corpseEv = kernel.ledger.emit({ tick, type: 'corpse', causeEventId: deathEv });
     const corpse = kernel.graph.createNode({
       type: 'corpse', tick, x, y, causeEventId: corpseEv,
-      attrs: { E, decayHalflifeTicks: halflife, of: node.type },
+      attrs: { E, decayHalflifeTicks: halflife, of: node.type, species: node.attrs.species ?? null, archetype: node.attrs.archetype ?? null },
     });
     const goneTick = tick + halflife * Math.log2(E / GONE_THRESHOLD);
     kernel.scheduler.schedule(goneTick, corpse.id, 'decay_gone', -1);
