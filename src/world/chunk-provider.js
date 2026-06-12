@@ -166,7 +166,7 @@ export class ChunkProvider {
           if (chunk) {
             const neighbors = {};
             neighbors[msg.cx + ',' + msg.cy] = chunk.tiles;
-            worker.postMessage({ type: 'repaintChunk', key: msg.key, cx: msg.cx, cy: msg.cy, neighbors });
+            worker.postMessage({ type: 'repaintChunk', key: msg.key, seed: getWorldSeed(), cx: msg.cx, cy: msg.cy, neighbors });
           }
         } else if (msg.type === 'chunkRepainted') {
           const bitmapKey = msg.cx + ',' + msg.cy;
@@ -267,7 +267,7 @@ export class ChunkProvider {
           const neighbors = {};
           neighbors[bk] = chunk.tiles;
           const worker = readyWorkers[this.nextWorker++ % readyWorkers.length];
-          worker.postMessage({ type: 'repaintChunk', key, cx: chunk.cx, cy: chunk.cy, neighbors });
+          worker.postMessage({ type: 'repaintChunk', key, seed: getWorldSeed(), cx: chunk.cx, cy: chunk.cy, neighbors });
         }
       }
     }

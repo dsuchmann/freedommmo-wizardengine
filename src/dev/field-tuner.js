@@ -109,10 +109,19 @@ function apply(field) {
 // Sliders fire oninput continuously during a drag; each apply() drops every
 // chunk bitmap and triggers a full repaint (F3 is baked into bitmaps), which
 // floods the workers. Debounce so only the resting value repaints.
+// The debounce coalesces by field — if an f3 edit lands in the window, the
+// final apply MUST run as 'f3' (it's the only field that purges bitmaps),
+// even when a later f2/f4 edit would otherwise win the timer.
 var applyTimer = 0;
+var applyF3Pending = false;
 function applySoon(field) {
+  if (field === 'f3') applyF3Pending = true;
   clearTimeout(applyTimer);
-  applyTimer = setTimeout(function () { apply(field); }, 200);
+  applyTimer = setTimeout(function () {
+    var f = applyF3Pending ? 'f3' : field;
+    applyF3Pending = false;
+    apply(f);
+  }, 200);
 }
 
 function currentBiome() {

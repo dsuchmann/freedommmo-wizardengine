@@ -287,14 +287,24 @@ self.onmessage = function(event) {
     var key = data.key;
     var cx = data.cx;
     var cy = data.cy;
+    if (data.seed != null) setWorldSeed(data.seed);
     if (data.neighbors) {
       for (var nk in data.neighbors) {
+        // delete-then-set refreshes Map insertion order — plain set() on an
+        // existing key keeps its old position, so evictNeighborCache() could
+        // evict the tiles we were just handed before the get() below.
+        neighborCache.delete(nk);
         neighborCache.set(nk, data.neighbors[nk]);
       }
       evictNeighborCache();
     }
     var tiles = neighborCache.get(cx + ',' + cy);
-    if (!tiles) return;
+    if (!tiles) {
+      // Never drop silently: the provider's _repaintPending entry would pin
+      // this chunk bitmap-less forever. Ask for the tiles to be resent.
+      self.postMessage({ type: 'repaintNeedsTiles', key: key, cx: cx, cy: cy });
+      return;
+    }
     var chunk = { cx: cx, cy: cy, tiles: tiles };
     var sun = { height: 0.5, ambient: 0.85 };
     var result = renderChunkToBitmap(chunk, neighborCache, sun, imageCache);
