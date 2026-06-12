@@ -85,6 +85,7 @@ export function harvest(kernel, playerId, targetId, tick) {
   const prey = kernel.graph.nodes.get(targetId);
   if (!player || !prey || prey.R == null) return null;
   const sp = SPECIES[prey.attrs.species];
+  if (!sp?.pick) return null;
   prey.attrs.pinned = true;   // named in a player ledger event → pinned individual (spec §4.3)
   kernel.closeSegment(prey, tick);
   // Correct any scheduler-ceil overdraft before computing bite (prevents phantom time minting).
@@ -92,7 +93,7 @@ export function harvest(kernel, playerId, targetId, tick) {
     kernel.ledger.count('burned', prey.R);   // prey.R is negative — decrements burned
     prey.R = 0;
   }
-  const bite = Math.min(sp?.pick?.bite ?? 200, prey.attrs.body + prey.R);
+  const bite = Math.min(sp.pick.bite, prey.attrs.body + prey.R);
   if (bite <= 0) return null;
   const fromBody = Math.min(bite, prey.attrs.body);
   prey.attrs.body -= fromBody;
@@ -101,11 +102,11 @@ export function harvest(kernel, playerId, targetId, tick) {
   const item = { id: nextItemId++, kind: 'harvest', species: prey.attrs.species ?? null,
                  archetype: prey.attrs.archetype ?? null, E: delivered, tick };
   (player.attrs.inventory ??= []).push(item);
-  const evId = kernel.ledger.emit({
+  const harvestEvId = kernel.ledger.emit({
     tick, type: 'harvest', actor: playerId, targets: [targetId], magnitude: bite,
     attrs: { species: prey.attrs.species ?? null },
   });
-  if (prey.attrs.body + prey.R <= 1e-9) die(kernel, prey, tick, evId);
+  if (prey.attrs.body + prey.R <= 1e-9) die(kernel, prey, tick, harvestEvId);
   else kernel.reRateTileOf(targetId, tick);
   return item;
 }
