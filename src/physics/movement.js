@@ -5,7 +5,12 @@ const PLAYER_R = 0.30;       // player capsule radius (tiles)
 const SUPPORT_EPS = 0.05;    // landing tolerance onto a standable top
 const SCAN_R = 3;            // placement anchor scan radius (covers 192px trees)
 
-const _volCache = new WeakMap();   // placement record -> volume (records are cached upstream)
+// placement record -> volume (records are cached upstream).
+// SEAM: sim state overrides are F4-only today (flora -> null volume), so cached
+// volumes can never go stale. When the sim lane adds F5/F6 state deltas (e.g.
+// chop -> stump), collision must consume the same override source the renderer
+// does, and this cache must key on (record, state) or be invalidated per delta.
+const _volCache = new WeakMap();
 let _tiStore = null, _tiFn = null;
 function claimTileInfo(chunkStore) {
   if (_tiStore === chunkStore && _tiFn) return _tiFn;
