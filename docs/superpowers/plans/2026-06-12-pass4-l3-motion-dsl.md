@@ -1287,7 +1287,19 @@ No renderer binding (entities still render by lifecycle state — spec §9); no 
 
 ## Deviations (canonical — fill during execution)
 
-_(empty until execution)_
+**Task 1 (421d23865):** none. Noted at review: `locomote` required args `[target, gait, duration]` deviate from spec §3's sketch (`gait, speed, heading-source`) — intentional, annotated inline in PRIMITIVES; carried here as the durable record.
+
+**Task 2 (7a0924a47):** none. Review-accepted constraint: `ikReach2`'s `baseOrigin` assumes chain ancestors at REST — IK targets computed while the spine is bent resolve against a stale base. Acceptable today because pose is presentation-only (world truth never depends on hand position); revisit if L2b renderer needs bent-spine reaches. Minor: round-trip test doesn't numerically pin comAt-vs-comOf y-agreement (verified by hand in review).
+
+**Task 3 (899ea2a2c):** none. Latent seam (review): validator scales IK-SOLVED angles by amplitude hi-bound; identity at NO_VARIANT `[1,1]` (all ik_reach programs today). If a variant-amplitude program ever uses ik_reach, pre-scale the target, not the solved angles (executor's scaleInvert is the model).
+
+**Task 4 (861f1ad1e):** `jump` recovery pose ticks 2→3 — plan arithmetic error: 70°(shin)/2 = 35°/tick > MAX_DEG_PER_TICK 30; 70/3 = 23.3 ✓. Validator untouched. Also relocated the plan's after-`return` comment in the `use` case to a reachable position (style only).
+
+**Task 5 (64e6a03f1):** none (character-identical to plan). Latent divergence (review): executor's `parallel` shares mutable joint state across children (later child reads earlier child's writes) while the validator snapshots entry state per child. Harmless today — the only parallel program (dance_improvised) gives its children disjoint joint sets. Align if a parallel program with competing writes is ever authored.
+
+**Task 6 (47dc91b8f + controller fix 51ceb9e34):** fixture adaptations to probe-6 actuals, all expected by the plan's BINDING note: Kernel ctor without `phi` (4 is default), bounds 20×20 (plan shape said 10×10 — harmless), createPlayer outside `graph.boot` (probe-6 style), conservation audited as probe 6 does (stocks(0) baseline + relative drift vs `ledger.totals.captured`, < 1e-9; `stocks` destructive — once at start, once at final tick per world), World A ground truth uses `harvest`+`eat` (NOT probe 6's `pick`) because that's what the planner path exercises — per plan prose. Controller applied the final review's spec-§10 fix directly (loop convention for trivial fixes): probe now asserts the planned action list `['move_to','pick_up','use']` + target/mode, not just truthiness. Review's "vacuous pass" concern was overstated (World A's non-empty ledger forces World B to match), but the assertion is what §10 literally requires.
+
+**Cross-cutting honest absence (recorded at plan time, reaffirmed):** no ledger record of planned action lists — spec §7's auditability clause targets LLM-sourced plans; the registry is static today and an execution-time ledger event would break Probe M's ledger-identity gate. Record at AUTHORING time when the LLM lane lands.
 
 
 
