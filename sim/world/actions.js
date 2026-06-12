@@ -5,6 +5,21 @@
 import { SPECIES, transfer } from '../time/metabolism.js';
 import { die } from '../time/lifecycle.js';
 
+// Item id counter. Module-level; starts at 1 for fresh kernels.
+// After loadKernel, call initItemIdFromKernel(kernel) to avoid collisions.
+let nextItemId = 1;
+
+/** Derive nextItemId from all inventory items already in the graph (call after loadKernel). */
+export function initItemIdFromKernel(kernel) {
+  let max = 0;
+  for (const n of kernel.graph.nodes.values()) {
+    for (const item of (n.attrs?.inventory ?? [])) {
+      if (item.id > max) max = item.id;
+    }
+  }
+  nextItemId = max + 1;
+}
+
 export function createPlayer(kernel, tick) {
   const evId = kernel.ledger.emit({ tick, type: 'player_join' });
   const player = kernel.graph.createNode({
@@ -61,4 +76,70 @@ export function chop(kernel, playerId, targetId, tick) {
     corpse.attrs.healDeltaId = deltaId;
   }
   return true;
+}
+
+/** Harvest a bite from a living plant into player inventory as embodied time (lossy: harvest channel).
+ *  Mirrors pick's closeSegment + overdraft logic exactly to avoid conservation drift. */
+export function harvest(kernel, playerId, targetId, tick) {
+  const player = kernel.graph.nodes.get(playerId);
+  const prey = kernel.graph.nodes.get(targetId);
+  if (!player || !prey || prey.R == null) return null;
+  const sp = SPECIES[prey.attrs.species];
+  prey.attrs.pinned = true;   // named in a player ledger event → pinned individual (spec §4.3)
+  kernel.closeSegment(prey, tick);
+  // Correct any scheduler-ceil overdraft before computing bite (prevents phantom time minting).
+  if (prey.R < 0) {
+    kernel.ledger.count('burned', prey.R);   // prey.R is negative — decrements burned
+    prey.R = 0;
+  }
+  const bite = Math.min(sp?.pick?.bite ?? 200, prey.attrs.body + prey.R);
+  if (bite <= 0) return null;
+  const fromBody = Math.min(bite, prey.attrs.body);
+  prey.attrs.body -= fromBody;
+  prey.R -= (bite - fromBody);
+  const delivered = transfer(bite, 'harvest', kernel.ledger);
+  const item = { id: nextItemId++, kind: 'harvest', species: prey.attrs.species ?? null,
+                 archetype: prey.attrs.archetype ?? null, E: delivered, tick };
+  (player.attrs.inventory ??= []).push(item);
+  const evId = kernel.ledger.emit({
+    tick, type: 'harvest', actor: playerId, targets: [targetId], magnitude: bite,
+    attrs: { species: prey.attrs.species ?? null },
+  });
+  if (prey.attrs.body + prey.R <= 1e-9) die(kernel, prey, tick, evId);
+  else kernel.reRateTileOf(targetId, tick);
+  return item;
+}
+
+/** Take a whole matter node (F3) into inventory losslessly; writes a placement delta so
+ *  the object stays gone across re-boots. Matter nodes have no metabolism (noFlux). */
+export function take(kernel, playerId, targetId, tick) {
+  const player = kernel.graph.nodes.get(playerId);
+  const node = kernel.graph.nodes.get(targetId);
+  if (!player || !node || node.type !== 'matter') return null;
+  const evId = kernel.ledger.emit({
+    tick, type: 'take', actor: playerId, targets: [targetId], magnitude: node.attrs.E,
+  });
+  if (node.attrs.placement) {
+    kernel.deltas.push({ tick, x: node.x, y: node.y,
+                         target: 'placement:' + node.attrs.placement,
+                         kind: 'taken', attrs: { archetype: node.attrs.archetype ?? null } });
+  }
+  const item = { id: nextItemId++, kind: 'matter', archetype: node.attrs.archetype ?? null,
+                 E: node.attrs.E, tick };
+  (player.attrs.inventory ??= []).push(item);
+  kernel.graph.removeNode(targetId);
+  return item;
+}
+
+/** Eat an inventory item: converts its E to player R through the harvest transfer channel (lossy). */
+export function eat(kernel, playerId, itemId, tick) {
+  const player = kernel.graph.nodes.get(playerId);
+  const inv = player?.attrs.inventory ?? [];
+  const i = inv.findIndex(it => it.id === itemId);
+  if (i < 0) return 0;
+  const [item] = inv.splice(i, 1);
+  const gained = transfer(item.E, 'harvest', kernel.ledger);
+  player.R += gained;
+  kernel.ledger.emit({ tick, type: 'eat', actor: playerId, targets: [], magnitude: item.E });
+  return gained;
 }

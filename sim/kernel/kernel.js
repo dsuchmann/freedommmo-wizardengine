@@ -107,9 +107,16 @@ export class Kernel {
         s += n.attrs.E;
       } else if (n.type === 'aggregate') {
         for (const p of Object.values(n.attrs.pops)) s += p.sumR + p.sumBody + p.detritusE;
+      } else if (n.type === 'matter') {
+        // Static matter nodes (F3): no metabolism, E is conserved as-is.
+        s += n.attrs.E ?? 0;
       } else if (n.R != null) {
         this.closeSegment(n, tick);
         s += n.R + n.attrs.body;
+      }
+      // Inventory items (any node type, incl. players): embodied time waiting to be eaten.
+      if (n.attrs?.inventory) {
+        for (const item of n.attrs.inventory) s += item.E;
       }
     }
     return s;
