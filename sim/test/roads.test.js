@@ -42,12 +42,16 @@ test('P2 buildRoad: segments along the route, E conserved through nurture channe
   assert.ok(paved.every(d => d.target.startsWith('placement:')), 'paved deltas target placements');
 });
 
-test('P2 buildRoad refusals: underfunded group, missing group — side-effect-free', () => {
+test('P2 buildRoad refusals: underfunded, unreachable route, missing group — side-effect-free', () => {
   const k = new Kernel({ seed: 7, bounds: BOUNDS });
   const g = createGroup(k, 0, { x: 940, y: 8 });   // R = 0
   const evCount = k.ledger.events.length;
   assert.equal(buildRoad(k, g.id, { x: 940, y: 8 }, { x: 945, y: 8 }, 0), false, 'underfunded');
   assert.equal(buildRoad(k, 99999, { x: 940, y: 8 }, { x: 945, y: 8 }, 0), false, 'missing group');
+  g.R = 1000;   // funded — refusal below must be due to unreachable route alone
+  assert.equal(buildRoad(k, g.id, { x: 940, y: 8 }, { x: 0, y: 0 }, 0), false, 'unreachable (out of bounds/ocean) refused');
+  assert.equal(g.R, 1000, 'unreachable refusal side-effect-free');
+  g.R = 0;
   assert.equal(k.ledger.events.length, evCount, 'no events on refusal');
   assert.equal([...k.graph.nodes.values()].filter(n => n.attrs?.archetype === 'road_segment').length, 0);
 });
