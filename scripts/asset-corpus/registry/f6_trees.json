@@ -44,6 +44,7 @@
     "harvested": "fruit picked, bare stems and gaps in the foliage where fruit was"
   },
   "anim": {
+    "name": "wind_sway",
     "states": ["base"],
     "action": "canopy swaying gently in wind, branches flexing naturally, trunk steady, rooted",
     "frames": 8

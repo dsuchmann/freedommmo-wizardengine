@@ -30,8 +30,8 @@ function emitObject(reg) {
       }
       for (const animState of reg.anim?.states ?? []) {
         jobs.push({
-          kind: 'anim', id: `${id}/wind_sway`, parent: id, animState,
-          out: `${out}/anim/wind_sway`, action: reg.anim.action, frames: reg.anim.frames,
+          kind: 'anim', id: `${id}/${reg.anim.name}`, parent: id, animState,
+          out: `${out}/anim/${reg.anim.name}`, action: reg.anim.action, frames: reg.anim.frames,
         });
       }
     }
