@@ -26,8 +26,50 @@ test('collector extracts paths with wear, road segments, and deltas — nothing 
 
 test('collector is null-safe before the sim connects', () => {
   assert.deepEqual(collectDebugDrawables(null),
-    { paths: [], roads: [], deltas: [], tick: -1 });
+    { paths: [], roads: [], deltas: [], settlements: [], plots: [], buildings: [], crossings: [], tick: -1 });
   assert.deepEqual(collectDebugDrawables({ entities: new Map(), deltas: null, tick: 3 }).deltas, []);
+});
+
+const structureSim = () => ({
+  tick: 200,
+  entities: new Map([
+    ['s1', { id: 's1', type: 'settlement', x: 935, y: 4, tier: 'village',
+             territory: { x0: 930, y0: 0, w: 12, h: 10 },
+             districts: [{ kind: 'residential', rect: { x0: 935, y0: 0, w: 6, h: 10 } },
+                         { kind: 'craft', rect: { x0: 930, y0: 0, w: 5, h: 10 } }] }],
+    ['pl1', { id: 'pl1', type: 'plot', x: 935, y: 4,
+              rect: { x0: 935, y0: 4, w: 5, h: 4 }, district: 'residential', owner: 3, settlement: 's1' }],
+    ['b1', { id: 'b1', type: 'building', x: 935, y: 4, template: 'hut',
+             footprint: { x0: 935, y0: 4, w: 5, h: 4 },
+             stamps: [{ x: 935, y: 4, piece: 'wall', walkable: false },
+                      { x: 936, y: 7, piece: 'door', walkable: true },
+                      { x: 936, y: 5, piece: 'floor', walkable: true }] }],
+    ['c1', { id: 'c1', type: 'matter', archetype: 'ford', x: 931, y: 2 }],
+    ['c2', { id: 'c2', type: 'matter', archetype: 'bridge', x: 931, y: 3 }],
+  ]),
+  deltas: [],
+});
+
+test('collector extracts settlements, plots, buildings, and crossings', () => {
+  const d = collectDebugDrawables(structureSim());
+  assert.deepEqual(d.settlements, [{ x: 935, y: 4, tier: 'village',
+    territory: { x0: 930, y0: 0, w: 12, h: 10 },
+    districts: [{ kind: 'residential', rect: { x0: 935, y0: 0, w: 6, h: 10 } },
+                { kind: 'craft', rect: { x0: 930, y0: 0, w: 5, h: 10 } }] }]);
+  assert.deepEqual(d.plots, [{ rect: { x0: 935, y0: 4, w: 5, h: 4 }, owner: 3, district: 'residential' }]);
+  assert.deepEqual(d.buildings, [{ template: 'hut', footprint: { x0: 935, y0: 4, w: 5, h: 4 },
+    stamps: [{ x: 935, y: 4, piece: 'wall', walkable: false },
+             { x: 936, y: 7, piece: 'door', walkable: true },
+             { x: 936, y: 5, piece: 'floor', walkable: true }] }]);
+  assert.deepEqual(d.crossings, [{ x: 931, y: 2, kind: 'ford' }, { x: 931, y: 3, kind: 'bridge' }]);
+});
+
+test('collector stays null-safe and backwards-compatible with the new keys', () => {
+  const d = collectDebugDrawables(null);
+  assert.deepEqual(d.settlements, []);
+  assert.deepEqual(d.plots, []);
+  assert.deepEqual(d.buildings, []);
+  assert.deepEqual(d.crossings, []);
 });
 
 test('event accumulator keeps a capped, deduped ledger across replaced batches', () => {
