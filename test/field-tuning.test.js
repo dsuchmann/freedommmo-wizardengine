@@ -35,7 +35,8 @@ test('size range rolls deterministically within [min,max]', () => {
 test('density: biome part and object part are separate', () => {
   setFieldTuning({ f3: { density: 2, biomes: { desert: { density: 0.5, objects: {
     bleached_bone: { density: 0.25 } } } } } });
-  assert.equal(tuneBiomeDensity('f3', 'desert'), 1);      // 2 * 0.5
+  assert.equal(tuneBiomeDensity('f3', 'desert'), 1);       // master 2 x biome 0.5
+  assert.equal(tuneBiomeDensity('f3', 'tundra'), 2);       // master only (no biome node)
   assert.equal(tuneObjDensity('f3', 'desert', 'bleached_bone'), 0.25);
   assert.equal(tuneObjDensity('f3', 'desert', 'other'), 1);
 });
