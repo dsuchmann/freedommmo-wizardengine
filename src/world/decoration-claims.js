@@ -643,6 +643,7 @@ export function f5Placements(wx, wy, tileInfo) {
     ux: ux, uy: uy, sizeTiles: sizeTiles,
     hasAnim: obj.anims.indexOf(variant) !== -1,
     trim: (obj.trims && obj.trims[variant]) || null,
+    sil: (obj.sil && obj.sil[variant]) || null,
     bx: foot.bx, by: foot.by, fw: foot.fw, fh: foot.fh,
   };
   return cachePut(_f5Cache, key, [p]);
@@ -695,6 +696,7 @@ export function f6Placements(wx, wy, tileInfo) {
   var p = {
     name: obj.name, biome: t.biome, size: obj.size, variant: variant,
     state: st, stateOnDisk: stateOnDisk, trim: trim,
+    sil: (obj.sil && obj.sil[variant]) || null,
     ux: ux, uy: uy, sizeTiles: sizeTiles,
     hasAnim: obj.anims.indexOf(variant) !== -1,
     bx: foot.bx, by: foot.by, fw: foot.fw, fh: foot.fh,

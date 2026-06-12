@@ -50,3 +50,19 @@ test('F6_BIOME_SCALE exports all 16 biomes at 1.0', () => {
   assert.equal(Object.keys(F6_BIOME_SCALE).length, 16);
   for (const v of Object.values(F6_BIOME_SCALE)) assert.equal(v, 1.0);
 });
+
+test('f5/f6 placements carry sil when catalog has it', () => {
+  // find any biome+tile that yields an f6 placement (deterministic scan)
+  const ti = () => ({ biome: Object.keys(LG_CATALOG)[0], transition: false });
+  let p = null;
+  for (let x = 0; x < 600 && !p; x++) for (let y = 0; y < 4 && !p; y++) {
+    const pls = f6Placements(x, y, ti);
+    if (pls.length) p = pls[0];
+  }
+  if (!p) return; // no F6 assets on disk in this checkout — nothing to assert
+  if (p.trim) {
+    assert.ok(p.sil, 'placement with trim must carry sil');
+    assert.equal(p.sil.bands.length, 16);
+    assert.equal(p.sil.visH, p.trim[3]);
+  }
+});

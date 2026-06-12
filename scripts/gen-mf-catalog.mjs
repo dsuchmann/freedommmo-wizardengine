@@ -4,7 +4,8 @@
 import fs from 'fs';
 import path from 'path';
 import url from 'url';
-import { alphaBBoxFromBuffer } from './lib/png-alpha-bbox.mjs';
+import { alphaBBoxFromBuffer, decodeAlpha } from './lib/png-alpha-bbox.mjs';
+import { measureSilhouette } from './lib/silhouette-measure.mjs';
 
 const ROOT = path.join(path.dirname(url.fileURLToPath(import.meta.url)), '..');
 const FLORA = path.join(ROOT, 'assets/pixelab/landscape_v2/micro/medium_flora');
@@ -24,6 +25,14 @@ function trimsFor(odir, bases) {
   return bases.map(f => {
     const b = alphaBBoxFromBuffer(fs.readFileSync(path.join(odir, f)));
     return b ? [b.x, b.y, b.w, b.h] : null;
+  });
+}
+
+// Per-variant silhouette measurements; null where trim is null.
+function silsFor(odir, bases, trims) {
+  return bases.map((f, i) => {
+    if (!trims[i]) return null;
+    return measureSilhouette(decodeAlpha(fs.readFileSync(path.join(odir, f))), trims[i]);
   });
 }
 
@@ -130,10 +139,12 @@ for (const biome of fs.readdirSync(OBJECTS)) {
         if (frames.length >= 9) anims.push(parseInt(m[1], 10));
       }
     }
+    const trims = trimsFor(odir, bases);
     (moCatalog[biome] = moCatalog[biome] || []).push({
       name: obj, size,
       variants: bases.length,
-      trims: trimsFor(odir, bases),
+      trims,
+      sil: silsFor(odir, bases, trims),
       states,
       anims: anims.sort((a, b) => a - b),
     });
@@ -185,10 +196,12 @@ if (fs.existsSync(LARGE)) {
           if (frames.length >= 8) anims.push(parseInt(m[1], 10)); // W2 generates 8 frames
         }
       }
+      const trims = trimsFor(odir, bases);
       (lgCatalog[biome] = lgCatalog[biome] || []).push({
         name: obj, size,
         variants: bases.length,
-        trims: trimsFor(odir, bases),
+        trims,
+        sil: silsFor(odir, bases, trims),
         states,
         anims: anims.sort((a, b) => a - b),
       });
