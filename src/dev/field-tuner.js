@@ -325,10 +325,11 @@ export function initFieldTuner() {
     if (saved) TREE = { f2: saved.f2 || {}, f3: saved.f3 || {}, f4: saved.f4 || {} };
   } catch (e) { /* corrupt -> defaults */ }
   setFieldTuning(TREE);
-  // If saved F3 tuning exists, workers must get it before painting chunks.
-  var hasF3 = TREE.f3 && (TREE.f3.size != null || TREE.f3.density != null || TREE.f3.biomes);
+  // If saved F3 tuning exists, chunks may already have been painted with the
+  // default tree before this module loaded — drop bitmaps so they repaint.
+  var hasF3 = !!(TREE.f3 && (TREE.f3.size != null || TREE.f3.density != null || TREE.f3.biomes));
   var prov = window._debugProvider;
-  if (prov && prov.applyFieldTuning) prov.applyFieldTuning(TREE, false);
+  if (prov && prov.applyFieldTuning) prov.applyFieldTuning(TREE, hasF3);
   if (hasF3) clearClaimCaches();
 
   window._fieldTuning = { tree: function () { return TREE; }, set: function (t) { TREE = t; apply('f3'); }, apply: apply };
