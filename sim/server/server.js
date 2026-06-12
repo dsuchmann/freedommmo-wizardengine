@@ -3,7 +3,7 @@
 // decide how far to advance sim-time. The kernel itself never sees real time.
 import { WebSocketServer } from 'ws';
 import { parseClientMsg, serializeEntity, snapshotMsg, tickDeltaMsg, eventsMsg, timeMsg } from './protocol.js';
-import { createPlayer, pick, chop } from '../world/actions.js';
+import { createPlayer, pick, chop, harvest, take, eat } from '../world/actions.js';
 import { checkpoint } from '../store/checkpoint.js';
 import { TierManager } from '../lod/tiers.js';
 
@@ -104,6 +104,9 @@ export class SimServer {
       try {
         if (it.verb === 'pick') pick(this.kernel, it.session.playerId, it.target, this.kernel.tick);
         else if (it.verb === 'chop') chop(this.kernel, it.session.playerId, it.target, this.kernel.tick);
+        else if (it.verb === 'harvest') harvest(this.kernel, it.session.playerId, it.target, this.kernel.tick);
+        else if (it.verb === 'take') take(this.kernel, it.session.playerId, it.target, this.kernel.tick);
+        else if (it.verb === 'eat') eat(this.kernel, it.session.playerId, it.target, this.kernel.tick);
       } catch {
         // node died between snapshot and pump — drop the intent silently
       }

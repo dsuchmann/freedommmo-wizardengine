@@ -1,9 +1,9 @@
 // sim/server/protocol.js
 // Spec §3.2. JSON now; binary framing later if profiling demands.
 // Validation lives HERE because client messages are untrusted input.
-import { stageAt, DAY } from '../time/metabolism.js';
+import { SPECIES, stageAt, DAY } from '../time/metabolism.js';
 
-const VERBS = new Set(['pick', 'chop']);
+const VERBS = new Set(['pick', 'chop', 'harvest', 'take', 'eat']);
 const ADMIN_OPS = new Set(['pause', 'resume', 'save', 'ff']);
 
 export function parseClientMsg(raw) {
@@ -36,9 +36,39 @@ export function serializeEntity(node, tick) {
   if (node.type === 'corpse') {
     return { id: node.id, type: 'corpse', species: node.attrs.of, x: node.x, y: node.y, body: node.attrs.E, stage: 'corpse' };
   }
-  const species = node.attrs.species;
-  const stage = species ? stageAt(species, tick - node.attrs.birthTick)[0] : node.type;
-  return { id: node.id, type: node.type, species, x: node.x, y: node.y, body: node.attrs.body, stage };
+  if (node.type === 'matter') {
+    const { archetype = undefined, E = undefined, placement = undefined, field = undefined, biome = undefined, variant = undefined } = node.attrs ?? {};
+    return { id: node.id, type: 'matter', archetype, x: node.x, y: node.y, E, placement, field, biome, variant };
+  }
+  const attrs = node.attrs ?? {};
+  const species = attrs.species;
+  const ageTicks = tick - (attrs.birthTick ?? 0);
+  const stage = species ? stageAt(species, ageTicks)[0] : node.type;
+  // bufferDays for ALL living entities (taxonomy needs it)
+  let bufferDays = null;
+  if (species) {
+    const sp = SPECIES[species];
+    if (sp) {
+      const burnFactor = stageAt(species, ageTicks)[3];
+      const dailyBurn = sp.burn * burnFactor * DAY;
+      bufferDays = (dailyBurn > 0 && Number.isFinite(dailyBurn)) ? node.R / dailyBurn : null;
+    }
+  }
+  const base = { id: node.id, type: node.type, species, x: node.x, y: node.y, body: attrs.body, stage,
+                 bufferDays, ageTicks };
+  // Placement identity: only spread when attrs.placement exists (wired entities)
+  if (attrs.placement != null) {
+    base.placement = attrs.placement;
+    base.field = attrs.field;
+    base.archetype = attrs.archetype;
+    base.biome = attrs.biome;
+    base.variant = attrs.variant;
+    const sp = SPECIES[species];
+    if (sp?.senescence?.start !== undefined) {
+      base.senescenceStartTicks = sp.senescence.start;
+    }
+  }
+  return base;
 }
 
 export const snapshotMsg = (tick, playerId, entities, deltas) =>

@@ -26,7 +26,7 @@ test('admin ff days is clamped to [1, 365]', () => {
 test('serializeEntity sends only render-relevant fields', () => {
   const node = { id: 4, type: 'grass', x: 1.5, y: 2.5, R: 100, attrs: { species: 'grass', body: 20, birthTick: 0 } };
   const e = serializeEntity(node, 10);
-  assert.deepEqual(Object.keys(e).sort(), ['body', 'id', 'species', 'stage', 'type', 'x', 'y']);
+  assert.deepEqual(Object.keys(e).sort(), ['ageTicks', 'body', 'bufferDays', 'id', 'species', 'stage', 'type', 'x', 'y']);
   assert.equal(e.stage, 'seedling');
 });
 
