@@ -928,65 +928,73 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
       for (var b = 0; b < desc.blades.length; b++) {
         var bl = desc.blades[b];
 
-        // Wind impulse triggers animation for a few cycles then settles.
-        var impulse = baseImpulse;
-        // ~7% of sprites randomly animate on their own (ambient life)
-        if (bl.ambientPeriod && (timeMs + bl.ambientPhase) % bl.ambientPeriod < CYCLE_DURATION * 4) {
-          impulse = 0.2; // gentle ambient trigger
-        }
-
-        // Track trigger per sprite — stagger start with per-sprite random delay
-        var triggerKey = wx * 10000 + wy * 100 + bl.bi;
-        if (impulse > 0.08) {
-          var existing = triggerTimes.get(triggerKey);
-          // Only re-trigger if not currently animating (prevent restart flicker)
-          if (!existing || timeMs - existing.time > CYCLE_DURATION * 2) {
-            triggerTimes.set(triggerKey, { time: timeMs + bl.startDelay, ext: 0 });
+        var frameIdx = bl.restFrame;
+        var animBlend = 0;
+        // Sprites that can never frame-animate (no anim frames, no ambient
+        // trigger) nor sway-rotate (rigid, or lifeSway 0) skip trigger
+        // tracking entirely — avoids triggerTimes Map churn on every wind
+        // gust for static objects (all of F5, rigid F2 decor).
+        var canAnimate = !!bl.animUrlBase || !!bl.ambientPeriod
+          || (!bl.isRigid && bl.lifeSway !== 0);
+        if (canAnimate) {
+          // Wind impulse triggers animation for a few cycles then settles.
+          var impulse = baseImpulse;
+          // ~7% of sprites randomly animate on their own (ambient life)
+          if (bl.ambientPeriod && (timeMs + bl.ambientPhase) % bl.ambientPeriod < CYCLE_DURATION * 4) {
+            impulse = 0.2; // gentle ambient trigger
           }
-        }
 
-        var triggerDuration = CYCLE_DURATION * bl.loopCount;
-        var triggerData = triggerTimes.get(triggerKey);
-        var triggerTime = triggerData ? triggerData.time : -99999;
-        var extensions = triggerData ? triggerData.ext : 0;
-        var elapsed = timeMs - triggerTime;
-
-        // Neighbor contagion: extend while neighbors still animate (≤MAX_EXTENSIONS)
-        if (elapsed > triggerDuration * 0.8 && extensions < MAX_EXTENSIONS) {
-          var shouldExtend = false;
-          for (var nd = -1; nd <= 1 && !shouldExtend; nd++) {
-            for (var ne = -1; ne <= 1 && !shouldExtend; ne++) {
-              if (nd === 0 && ne === 0) continue;
-              var nData = triggerTimes.get((wx + ne) * 10000 + (wy + nd) * 100);
-              if (!nData) continue;
-              var nElapsed = timeMs - nData.time;
-              if (nElapsed < triggerDuration * 0.6 && nData.ext < MAX_EXTENSIONS) shouldExtend = true;
+          // Track trigger per sprite — stagger start with per-sprite random delay
+          var triggerKey = wx * 10000 + wy * 100 + bl.bi;
+          if (impulse > 0.08) {
+            var existing = triggerTimes.get(triggerKey);
+            // Only re-trigger if not currently animating (prevent restart flicker)
+            if (!existing || timeMs - existing.time > CYCLE_DURATION * 2) {
+              triggerTimes.set(triggerKey, { time: timeMs + bl.startDelay, ext: 0 });
             }
           }
-          if (shouldExtend) {
-            triggerTimes.set(triggerKey, { time: triggerTime + CYCLE_DURATION, ext: extensions + 1 });
-            elapsed = timeMs - triggerTime - CYCLE_DURATION;
-          }
-        }
 
-        // Each sprite rests at a random frame and cycles from it while animating
-        var isAnimating = elapsed >= 0 && elapsed <= triggerDuration;
-        var frameIdx;
-        var animBlend = 0;
-        if (!isAnimating) {
-          if (triggerData && triggerTime > -99999) {
-            // Frozen at whatever frame the last animation ended on
-            frameIdx = Math.floor((triggerDuration / FRAME_DURATION + bl.restFrame) % FRAME_COUNT);
-          } else {
-            frameIdx = bl.restFrame;
+          var triggerDuration = CYCLE_DURATION * bl.loopCount;
+          var triggerData = triggerTimes.get(triggerKey);
+          var triggerTime = triggerData ? triggerData.time : -99999;
+          var extensions = triggerData ? triggerData.ext : 0;
+          var elapsed = timeMs - triggerTime;
+
+          // Neighbor contagion: extend while neighbors still animate (≤MAX_EXTENSIONS)
+          if (elapsed > triggerDuration * 0.8 && extensions < MAX_EXTENSIONS) {
+            var shouldExtend = false;
+            for (var nd = -1; nd <= 1 && !shouldExtend; nd++) {
+              for (var ne = -1; ne <= 1 && !shouldExtend; ne++) {
+                if (nd === 0 && ne === 0) continue;
+                var nData = triggerTimes.get((wx + ne) * 10000 + (wy + nd) * 100);
+                if (!nData) continue;
+                var nElapsed = timeMs - nData.time;
+                if (nElapsed < triggerDuration * 0.6 && nData.ext < MAX_EXTENSIONS) shouldExtend = true;
+              }
+            }
+            if (shouldExtend) {
+              triggerTimes.set(triggerKey, { time: triggerTime + CYCLE_DURATION, ext: extensions + 1 });
+              elapsed = timeMs - triggerTime - CYCLE_DURATION;
+            }
           }
-        } else {
-          frameIdx = Math.floor((elapsed / FRAME_DURATION + bl.restFrame) % FRAME_COUNT);
-          // Smooth blend for sway: ease in first cycle, ease out last cycle
-          var cycleProgress = elapsed / CYCLE_DURATION;
-          if (cycleProgress < 1) animBlend = Math.min(1, cycleProgress * 2);
-          else if (cycleProgress > bl.loopCount - 1) animBlend = Math.max(0, (bl.loopCount - cycleProgress) * 2);
-          else animBlend = 1;
+
+          // Each sprite rests at a random frame and cycles from it while animating
+          var isAnimating = elapsed >= 0 && elapsed <= triggerDuration;
+          if (!isAnimating) {
+            if (triggerData && triggerTime > -99999) {
+              // Frozen at whatever frame the last animation ended on
+              frameIdx = Math.floor((triggerDuration / FRAME_DURATION + bl.restFrame) % FRAME_COUNT);
+            } else {
+              frameIdx = bl.restFrame;
+            }
+          } else {
+            frameIdx = Math.floor((elapsed / FRAME_DURATION + bl.restFrame) % FRAME_COUNT);
+            // Smooth blend for sway: ease in first cycle, ease out last cycle
+            var cycleProgress = elapsed / CYCLE_DURATION;
+            if (cycleProgress < 1) animBlend = Math.min(1, cycleProgress * 2);
+            else if (cycleProgress > bl.loopCount - 1) animBlend = Math.max(0, (bl.loopCount - cycleProgress) * 2);
+            else animBlend = 1;
+          }
         }
 
         // Sim override (F4 only — bi >= 90, fi = bi - 90): takes precedence over static lifecycle roll.
