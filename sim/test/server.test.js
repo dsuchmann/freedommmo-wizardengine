@@ -5,6 +5,7 @@ import WebSocket from 'ws';
 import { SimServer } from '../server/server.js';
 import { Kernel } from '../kernel/kernel.js';
 import { spawnMeadow, spawnWorld } from '../world/spawn.js';
+import { take } from '../world/actions.js';
 import { aggregateOf } from '../lod/aggregate.js';
 import { DAY } from '../time/metabolism.js';
 
@@ -109,6 +110,45 @@ test('strike intent dispatched over protocol → strike ledger event emitted', a
   const evMsg = await next(ws, 'events');
   assert.ok(evMsg.events.some(e => e.type === 'strike' && e.targets.includes(boulder.id)),
     'strike event emitted for boulder');
+  ws.close();
+  await server.close();
+});
+
+test('combine intent dispatched over protocol → combine ledger event emitted', async () => {
+  // Boot a world with two log matter nodes; take them into inventory before server starts,
+  // then send a combine intent and confirm the combine event arrives via the events stream.
+  const bounds = { x0: 0, y0: 0, w: 16, h: 16 };
+  const kernel = new Kernel({ seed: 55, bounds });
+  let log1, log2;
+  kernel.graph.boot(() => {
+    log1 = kernel.graph.createNode({
+      type: 'matter', tick: 0, x: 2, y: 2, R: null,
+      attrs: { archetype: 'log', E: 50, noFlux: true },
+    });
+    log2 = kernel.graph.createNode({
+      type: 'matter', tick: 0, x: 3, y: 2, R: null,
+      attrs: { archetype: 'log', E: 50, noFlux: true },
+    });
+  });
+  spawnMeadow(kernel, bounds);
+  const server = new SimServer({ kernel, port: 0, timeScale: 48 });
+  await server.listen();
+  const ws = await connect(server);
+  ws.send(JSON.stringify({ type: 'hello', viewport: { x: 0, y: 0, w: 16, h: 16 } }));
+  const snap = await next(ws, 'snapshot');
+  const playerId = snap.playerId;
+
+  // Take the logs into the player's inventory directly (server-side, before the combine intent)
+  const item1 = take(kernel, playerId, log1.id, 0);
+  const item2 = take(kernel, playerId, log2.id, 0);
+
+  // Send a valid combine intent
+  ws.send(JSON.stringify({ type: 'intent', verb: 'combine', items: [item1.id, item2.id] }));
+
+  // The pump applies the intent and emits events
+  const evMsg = await next(ws, 'events');
+  assert.ok(evMsg.events.some(e => e.type === 'combine' && e.actor === playerId),
+    'combine event emitted for player');
   ws.close();
   await server.close();
 });

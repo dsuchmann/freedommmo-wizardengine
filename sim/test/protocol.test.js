@@ -57,6 +57,41 @@ test('parseClientMsg: strike intent parses and clamps amount to 50', () => {
   assert.equal(parseClientMsg(JSON.stringify({ type: 'intent', verb: 'strike', target: 1.5, damageType: 'blunt', amount: 10 })), null);
 });
 
+test('parseClientMsg: combine intent parses and validates items', () => {
+  // valid combine: 2 distinct integers
+  const m = parseClientMsg(JSON.stringify({ type: 'intent', verb: 'combine', items: [3, 7] }));
+  assert.ok(m, 'valid combine parsed');
+  assert.equal(m.verb, 'combine');
+  assert.deepEqual(m.items, [3, 7]);
+  // valid combine: up to 8 items
+  const big = parseClientMsg(JSON.stringify({ type: 'intent', verb: 'combine', items: [1, 2, 3, 4, 5, 6, 7, 8] }));
+  assert.ok(big, '8-item combine accepted');
+  // invalid: non-array items
+  assert.equal(parseClientMsg(JSON.stringify({ type: 'intent', verb: 'combine', items: 'abc' })), null, 'non-array rejected');
+  // invalid: fewer than 2
+  assert.equal(parseClientMsg(JSON.stringify({ type: 'intent', verb: 'combine', items: [1] })), null, '<2 rejected');
+  // invalid: more than 8
+  assert.equal(parseClientMsg(JSON.stringify({ type: 'intent', verb: 'combine', items: [1,2,3,4,5,6,7,8,9] })), null, '>8 rejected');
+  // invalid: duplicates
+  assert.equal(parseClientMsg(JSON.stringify({ type: 'intent', verb: 'combine', items: [5, 5] })), null, 'duplicates rejected');
+  // invalid: non-integers
+  assert.equal(parseClientMsg(JSON.stringify({ type: 'intent', verb: 'combine', items: [1.5, 2] })), null, 'non-integer rejected');
+  assert.equal(parseClientMsg(JSON.stringify({ type: 'intent', verb: 'combine', items: ['a', 2] })), null, 'string rejected');
+});
+
+test('serializeEntity handles recipe nodes without leaking knownBy', () => {
+  const recipeNode = {
+    id: 42, type: 'recipe', x: null, y: null, R: null,
+    attrs: { signature: 'log+log', form: 'composite:cellulose+lignin', knownBy: [1, 2], noFlux: true },
+  };
+  const wire = serializeEntity(recipeNode, 0);
+  assert.equal(wire.id, 42);
+  assert.equal(wire.type, 'recipe');
+  assert.equal(wire.signature, 'log+log');
+  assert.equal(wire.form, 'composite:cellulose+lignin');
+  assert.equal(wire.knownBy, undefined, 'knownBy must NOT be serialized to clients');
+});
+
 test('message builders stamp type and tick', () => {
   assert.equal(snapshotMsg(5, 1, [], []).type, 'snapshot');
   assert.equal(tickDeltaMsg(5, [], [], { R: 0 }).type, 'tick-delta');

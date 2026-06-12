@@ -3,7 +3,7 @@
 // Validation lives HERE because client messages are untrusted input.
 import { SPECIES, stageAt, DAY } from '../time/metabolism.js';
 
-const VERBS = new Set(['pick', 'chop', 'harvest', 'take', 'eat', 'strike']);
+const VERBS = new Set(['pick', 'chop', 'harvest', 'take', 'eat', 'strike', 'combine']);
 const DAMAGE_TYPES = new Set(['blunt', 'sharp', 'fire', 'frost']);
 const ADMIN_OPS = new Set(['pause', 'resume', 'save', 'ff']);
 
@@ -18,8 +18,16 @@ export function parseClientMsg(raw) {
       if (!v || ![v.x, v.y, v.w, v.h].every(Number.isFinite)) return null;
       return { type: m.type, viewport: { x: v.x, y: v.y, w: v.w, h: v.h } };
     }
-    case 'intent':
-      if (!VERBS.has(m.verb) || !Number.isFinite(m.target) || !Number.isInteger(m.target)) return null;
+    case 'intent': {
+      if (!VERBS.has(m.verb)) return null;
+      if (m.verb === 'combine') {
+        if (!Array.isArray(m.items)) return null;
+        if (m.items.length < 2 || m.items.length > 8) return null;
+        if (!m.items.every(x => Number.isInteger(x))) return null;
+        if (new Set(m.items).size !== m.items.length) return null;
+        return { type: 'intent', verb: 'combine', items: m.items };
+      }
+      if (!Number.isFinite(m.target) || !Number.isInteger(m.target)) return null;
       if (m.verb === 'strike') {
         if (!DAMAGE_TYPES.has(m.damageType)) return null;
         if (!Number.isFinite(m.amount) || m.amount <= 0) return null;
@@ -27,6 +35,7 @@ export function parseClientMsg(raw) {
                  damageType: m.damageType, amount: Math.min(m.amount, 50) };
       }
       return { type: 'intent', verb: m.verb, target: m.target };
+    }
     case 'query':
       if (!Number.isInteger(m.id)) return null;
       return { type: 'query', id: m.id };
@@ -41,6 +50,10 @@ export function parseClientMsg(raw) {
 
 /** Wire form of an entity: render-relevant fields only (sim stays authoritative). */
 export function serializeEntity(node, tick) {
+  if (node.type === 'recipe') {
+    // Knowledge stays private: knownBy is NOT serialized to clients.
+    return { id: node.id, type: 'recipe', signature: node.attrs.signature, form: node.attrs.form };
+  }
   if (node.type === 'corpse') {
     return { id: node.id, type: 'corpse', species: node.attrs.of, x: node.x, y: node.y, body: node.attrs.E, stage: 'corpse' };
   }
