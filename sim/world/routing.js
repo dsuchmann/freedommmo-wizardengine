@@ -17,10 +17,13 @@ export function tileCost(x, y) {
 
 /** Least-cost 4-connected route from `from` to `to` inside `bounds` ({x0,y0,w,h}).
  *  opts.crossings: Set of 'x,y' strings — water tiles that may be traversed at cost 2.
+ *  opts.blocked:   Set of 'x,y' strings — land tiles that may NEVER be traversed
+ *                  (building walls — P4 impassable claims).
  *  Returns [{x,y}, ...] including both endpoints, or null when unreachable.
  *  With no opts the behavior is bit-identical to the previous implementation. */
 export function planRoute(from, to, bounds, opts = {}) {
   if (tileCost(from.x, from.y) === Infinity || tileCost(to.x, to.y) === Infinity) return null;
+  if (opts.blocked?.has(`${from.x},${from.y}`) || opts.blocked?.has(`${to.x},${to.y}`)) return null;
   const inB = (x, y) => x >= bounds.x0 && x < bounds.x0 + bounds.w && y >= bounds.y0 && y < bounds.y0 + bounds.h;
   if (!inB(from.x, from.y) || !inB(to.x, to.y)) return null;
   const key = (x, y) => `${x},${y}`;
@@ -56,6 +59,7 @@ export function planRoute(from, to, bounds, opts = {}) {
     for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0], [0, 1]]) {   // fixed order: N,W,E,S
       const nx = cur.x + dx, ny = cur.y + dy;
       if (!inB(nx, ny) || closed.has(key(nx, ny))) continue;
+      if (opts.blocked?.has(`${nx},${ny}`)) continue;   // impassable claim (P4 walls)
       let c = tileCost(nx, ny);
       if (c === Infinity) {
         if (opts.crossings?.has(`${nx},${ny}`)) c = 2;

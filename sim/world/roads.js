@@ -29,10 +29,10 @@ export function roadAt(kernel, x, y) {
 /** Group `groupId` builds a road from→to along the least-cost route. Refuses (false,
  *  side-effect-free) when the group is missing/underfunded or no land route exists.
  *  Cost = ROAD_E_PER_TILE × tiles WITHOUT an existing segment (idempotent overlap). */
-export function buildRoad(kernel, groupId, from, to, tick) {
+export function buildRoad(kernel, groupId, from, to, tick, opts = {}) {
   const group = kernel.graph.nodes.get(groupId);
   if (!group || group.type !== 'group') return false;
-  const route = planRoute(from, to, kernel.bounds);
+  const route = planRoute(from, to, kernel.bounds, opts);
   if (!route) return false;
   const newTiles = route.filter(t => !roadAt(kernel, t.x, t.y));
   if (newTiles.length === 0) return false;          // nothing to build

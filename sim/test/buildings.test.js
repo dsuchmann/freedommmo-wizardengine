@@ -10,6 +10,7 @@ import { materializeRect } from '../world/wire.js';
 import { constructBuilding, maintainBuilding, buildingStampAt, wallTiles,
          BUILD_E_PER_STAMP, BUILDING_CONDITION_MAX, BUILDING_DECAY_PER_DAY,
          MAINTAIN_COST } from '../world/buildings.js';
+import { planRoute } from '../world/routing.js';
 import { FEATURE_E } from '../world/construct.js';
 import { DAY } from '../time/metabolism.js';
 
@@ -248,4 +249,25 @@ test('walls block move(); doors and floors admit it', () => {
   assert.equal(move(k, p.id, 0, -1, 0), true, 'interior floor admits movement');
   assert.equal(move(k, p.id, -1, 0, 0), true, 'floor to floor');
   assert.equal(move(k, p.id, -1, 0, 0), false, 'interior wall blocks from inside too');
+});
+
+test('planRoute with opts.blocked routes around building walls', () => {
+  const { k, g, s } = scenario();
+  const plot = clearPlot(k, s, g.id);
+  const b = constructBuilding(k, g.id, { plotId: plot.id }, 'hut', 0);
+  assert.ok(b);
+  const fp = b.attrs.footprint;
+  const blocked = wallTiles(k);
+  assert.ok(blocked.size >= 13, 'hut contributes its 13 wall tiles');
+  // Route across the building's row band, wide enough to detour around it.
+  const from = { x: Math.max(RECT.x0, fp.x0 - 3), y: fp.y0 + 1 };
+  const to   = { x: Math.min(RECT.x0 + RECT.w - 1, fp.x0 + fp.w + 2), y: fp.y0 + 1 };
+  const route = planRoute(from, to, RECT, { blocked });
+  assert.ok(route, 'a detour route exists');
+  for (const t of route) {
+    assert.ok(!blocked.has(`${t.x},${t.y}`), `route passes through wall ${t.x},${t.y}`);
+  }
+  // Endpoints inside a wall are refused outright.
+  const wallTile = b.attrs.stamps.find(st => !st.walkable);
+  assert.equal(planRoute({ x: wallTile.x, y: wallTile.y }, to, RECT, { blocked }), null);
 });
