@@ -118,6 +118,11 @@ export class Kernel {
       if (n.attrs?.inventory) {
         for (const item of n.attrs.inventory) s += item.E;
       }
+      // Equipped items are still player-held stock (M5): equip moves items between
+      // containers, never out of the world.
+      if (n.attrs?.equipment) {
+        for (const item of Object.values(n.attrs.equipment)) s += item.E;
+      }
     }
     return s;
   }

@@ -21,6 +21,9 @@ export function initItemIdFromKernel(kernel) {
     for (const item of (n.attrs?.inventory ?? [])) {
       if (item.id > max) max = item.id;
     }
+    for (const item of Object.values(n.attrs?.equipment ?? {})) {
+      if (item.id > max) max = item.id;
+    }
   }
   nextItemId = max + 1;
 }
