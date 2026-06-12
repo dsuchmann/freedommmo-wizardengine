@@ -43,9 +43,15 @@ test('density 0 -> empty; size multiplier flows to sizeTiles', () => {
   setFieldTuning({ f5: { biomes: { grassland: { size: 2 } } } });
   clearClaimCaches();
   const big = scan(grass, 0, 0, 60);
-  assert.equal(base.length, big.length);
-  for (let i = 0; i < base.length; i++)
-    assert.ok(Math.abs(big[i][2].sizeTiles - base[i][2].sizeTiles * 2) < 1e-9);
+  // Footprint exclusion (salt 9806): doubling size doubles footprints, which
+  // can only REMOVE overlapping survivors — never add or move them.
+  assert.ok(big.length > 0 && big.length <= base.length);
+  const baseByTile = new Map(base.map(([wx, wy, p]) => [wx + ',' + wy, p]));
+  for (const [wx, wy, p] of big) {
+    const bp = baseByTile.get(wx + ',' + wy);
+    assert.ok(bp, `scaled placement at ${wx},${wy} must also exist at base size`);
+    assert.ok(Math.abs(p.sizeTiles - bp.sizeTiles * 2) < 1e-9);
+  }
 });
 
 test('state roll respects tuneStateWeights override; URL falls back to base when PNG missing', () => {
@@ -114,6 +120,63 @@ test('F4 grassland lifecycle states: exact golden values (salt 9705 regression p
     const pls = f4Placements(wx, wy, grass);
     assert.equal(pls.length, 1, `expected placement at ${wx},${wy}`);
     assert.equal(pls[0].state, want, `state at ${wx},${wy}`);
+  }
+});
+
+test('adjacent F5 candidates with overlapping footprints: exactly one survives', () => {
+  // density x3 (grassland 2% -> 6%) so a 1000-tile row reliably contains
+  // adjacent tiles that would BOTH roll an F5 candidate.
+  setFieldTuning({ f5: { density: 3 } });
+  clearClaimCaches();
+  try {
+    // scan a row; wherever two consecutive tiles would both place an F5 with
+    // intersecting footprint ellipses, the public API must keep only one.
+    const survivors = [];
+    for (let wx = -500; wx < 500; wx++) {
+      const a = f5Placements(wx, 0, grass)[0];
+      const b = f5Placements(wx + 1, 0, grass)[0];
+      if (a) survivors.push([wx, a.bx, a.by, a.fw, a.fh]);
+      if (a && b) {
+        const dx = a.bx - b.bx, dy = a.by - b.by;
+        const nx = dx / (a.fw + b.fw), ny = dy / (a.fh + b.fh);
+        assert.ok(nx * nx + ny * ny >= 1, `overlap at ${wx},0`);
+      }
+    }
+    assert.ok(survivors.length > 0, 'expected some F5 placements in the row');
+    // determinism: same scan twice -> same survivors
+    clearClaimCaches();
+    setFieldTuning({ f5: { density: 3 } });
+    clearClaimCaches();
+    const again = [];
+    for (let wx = -500; wx < 500; wx++) {
+      const a = f5Placements(wx, 0, grass)[0];
+      if (a) again.push([wx, a.bx, a.by, a.fw, a.fh]);
+    }
+    assert.deepEqual(again, survivors, 'survivors must be deterministic');
+  } finally {
+    setFieldTuning(null);
+    clearClaimCaches();
+  }
+});
+
+test('F4 yields to a neighboring F5 whose footprint covers it', () => {
+  setFieldTuning({ f5: { density: 3 } });
+  clearClaimCaches();
+  try {
+    for (let wx = -500; wx < 500; wx++) {
+      const f5 = f5Placements(wx, 0, grass)[0];
+      if (!f5) continue;
+      for (let nx = -1; nx <= 1; nx++) for (let ny = -1; ny <= 1; ny++) {
+        const f4 = f4Placements(wx + nx, ny, grass)[0];
+        if (!f4) continue;
+        const dx = f4.bx - f5.bx, dy = f4.by - f5.by;
+        const ex = dx / (f4.fw + f5.fw), ey = dy / (f4.fh + f5.fh);
+        assert.ok(ex * ex + ey * ey >= 1, `F4 inside F5 footprint near ${wx},0`);
+      }
+    }
+  } finally {
+    setFieldTuning(null);
+    clearClaimCaches();
   }
 });
 
