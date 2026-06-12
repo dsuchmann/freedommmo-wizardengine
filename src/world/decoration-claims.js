@@ -6,8 +6,10 @@
 import { rand2 } from '../core/random.js';
 import { MF_CATALOG } from './mf-catalog.js';
 import { MO_CATALOG } from './mo-catalog.js';
+import { LG_CATALOG } from './lg-catalog.js';
 import { tuneSize, tuneBiomeDensity, tuneObjDensity, tuneStateWeights, rollWeighted,
-  F4_STATE_ORDER, F4_STATE_DEFAULTS, F5_STATE_ORDER, f5StateDefaults } from './field-tuning.js';
+  F4_STATE_ORDER, F4_STATE_DEFAULTS, F5_STATE_ORDER, f5StateDefaults,
+  F6_STATE_ORDER, F6_STATE_DEFAULTS } from './field-tuning.js';
 
 var MF_BASE_PATH = '/assets/pixelab/landscape_v2/micro/medium_flora/';
 // Per-tile chance of one medium-flora plant (master plan: 3-12% density)
@@ -42,6 +44,24 @@ var _f5Cache = new Map();   // 'wx,wy,biome' -> placements
 // Live-tunable per-biome F5 scale (96px native = 3 tiles at 1.0). The user
 // calibrates in-game; bake final values here afterwards (F4 precedent).
 export var F5_BIOME_SCALE = {
+  grassland: 1.0, forest: 1.0, dense_forest: 1.0, tropical_forest: 1.0,
+  taiga: 1.0, swamp: 1.0, mystic: 1.0, savanna: 1.0, hills: 1.0,
+  steppe: 1.0, beach: 1.0, tundra: 1.0, desert: 1.0, arctic: 1.0,
+  mountains: 1.0, volcanic: 1.0,
+};
+
+var LG_BASE_PATH = '/assets/pixelab/landscape_v2/micro/large_flora/';
+// Per-tile chance of one tree — F6 is the rarest field (192px sprites).
+var F6_TILE_CHANCE = {
+  grassland: 0.006, forest: 0.030, dense_forest: 0.050, tropical_forest: 0.035,
+  taiga: 0.025, swamp: 0.018, mystic: 0.020, savanna: 0.008, hills: 0.010,
+  steppe: 0.004, beach: 0.003, tundra: 0.003, desert: 0.002, arctic: 0.001,
+  mountains: 0.008, volcanic: 0.004,
+};
+var _f6Cache = new Map();   // 'wx,wy,biome' -> placements
+// Live-tunable per-biome F6 scale (192px native = 6 tiles at 1.0). The user
+// calibrates in-game; bake final values here afterwards (F4/F5 precedent).
+export var F6_BIOME_SCALE = {
   grassland: 1.0, forest: 1.0, dense_forest: 1.0, tropical_forest: 1.0,
   taiga: 1.0, swamp: 1.0, mystic: 1.0, savanna: 1.0, hills: 1.0,
   steppe: 1.0, beach: 1.0, tundra: 1.0, desert: 1.0, arctic: 1.0,
@@ -443,8 +463,8 @@ export function f3SpriteUrl(p) {
 }
 
 // 8x8 bitmask of claimed cells for tile (wx,wy). Row r bit c = cell claimed.
-// Scans this tile + neighbors out to ±3: F5 96px objects reach ~2.5 tiles
-// at max tuner scale (fw 0.42 × 192px), hence the ±3 radius.
+// Scans this tile + neighbors out to ±6: F6 192px trees reach ~6 tiles at
+// max tuner scale, hence the ±6 radius (F5 only needed ±3).
 export function getClaimMask(wx, wy, tileInfo) {
   var key = wx + ',' + wy;
   var hit = _maskCache.get(key);
@@ -452,12 +472,13 @@ export function getClaimMask(wx, wy, tileInfo) {
   var mask = new Uint8Array(CELLS);
   var ox = wx * TILE_ART_PX, oy = wy * TILE_ART_PX;
   var complete = true; // any null (unloaded) neighbor -> don't cache the mask
-  for (var ny = -3; ny <= 3; ny++) {
-    for (var nx = -3; nx <= 3; nx++) {
+  for (var ny = -6; ny <= 6; ny++) {
+    for (var nx = -6; nx <= 6; nx++) {
       if (!tileInfo(wx + nx, wy + ny)) { complete = false; continue; }
       var pls = f3Placements(wx + nx, wy + ny, tileInfo)
         .concat(f4Placements(wx + nx, wy + ny, tileInfo),
-                f5Placements(wx + nx, wy + ny, tileInfo));
+                f5Placements(wx + nx, wy + ny, tileInfo),
+                f6Placements(wx + nx, wy + ny, tileInfo));
       for (var i = 0; i < pls.length; i++) {
         var p = pls[i];
         // rasterize the base ellipse into this tile's cells (center test)
@@ -489,9 +510,25 @@ export function isClaimedAt(px, py, tileInfo) {
   return (mask[r] & (1 << c)) !== 0;
 }
 
-export function clearClaimCaches() { _placeCache.clear(); _maskCache.clear(); _f4Cache.clear(); _f5Cache.clear(); }
+export function clearClaimCaches() { _placeCache.clear(); _maskCache.clear(); _f4Cache.clear(); _f5Cache.clear(); _f6Cache.clear(); }
 
 function pad3(v) { return v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v); }
+
+// Claim footprint from the alpha trim: ellipse hugging the visible base of
+// the sprite. cx/cy = sprite draw centre in world art px; size = file px;
+// drawPx = size*scale; trim = [x,y,w,h] in file px or null.
+// wFrac/hFrac shape the ellipse relative to the visible extents.
+function trimFoot(cx, cy, size, drawPx, trim, wFrac, hFrac, legacyW, legacyH) {
+  if (!trim) {           // no trim data -> legacy file-edge footprint
+    return { bx: cx, by: cy + drawPx * 0.30, fw: drawPx * legacyW, fh: drawPx * legacyH };
+  }
+  var s = drawPx / size; // file px -> world art px
+  var visW = trim[2] * s, visH = trim[3] * s;
+  var bottom = cy + (trim[1] + trim[3] - size / 2) * s; // visible bottom edge
+  var fh = Math.max(2, visH * hFrac);
+  return { bx: cx + (trim[0] + trim[2] / 2 - size / 2) * s, // visible centre x
+           by: bottom - fh, fw: Math.max(2, visW * wFrac), fh: fh };
+}
 
 // One medium-flora plant per tile max. Deterministic (seed roots 9700-9713).
 // Placement: { name, biome, size, variant, state, ux, uy, sizeTiles,
@@ -507,7 +544,8 @@ export function f4Placements(wx, wy, tileInfo) {
   var chance = (F4_TILE_CHANCE[t.biome] || 0) * tuneBiomeDensity('f4', t.biome);
   if (!objs || !objs.length || chance === 0) return cachePut(_f4Cache, key, EMPTY);
   if (rand2(wx, wy, 9700) > chance) return cachePut(_f4Cache, key, EMPTY);
-  // Larger objects claim first: a tile F5 claimed never hosts F4.
+  // Larger objects claim first: a tile F6/F5 claimed never hosts F4.
+  if (f6Placements(wx, wy, tileInfo).length) return cachePut(_f4Cache, key, EMPTY);
   if (f5Placements(wx, wy, tileInfo).length) return cachePut(_f4Cache, key, EMPTY);
 
   var obj = objs[Math.floor(rand2(wx, wy, 9701) * objs.length)];
@@ -574,6 +612,8 @@ export function f5Placements(wx, wy, tileInfo) {
   var chance = (F5_TILE_CHANCE[t.biome] || 0) * tuneBiomeDensity('f5', t.biome);
   if (!objs || !objs.length || chance === 0) return cachePut(_f5Cache, key, EMPTY);
   if (rand2(wx, wy, 9800) > chance) return cachePut(_f5Cache, key, EMPTY);
+  // Larger objects claim first: a tile F6 claimed never hosts F5.
+  if (f6Placements(wx, wy, tileInfo).length) return cachePut(_f5Cache, key, EMPTY);
 
   var obj = objs[Math.floor(rand2(wx, wy, 9801) * objs.length)];
   var objD = tuneObjDensity('f5', t.biome, obj.name);
@@ -591,16 +631,19 @@ export function f5Placements(wx, wy, tileInfo) {
     tuneSize('f5', t.biome, obj.name, variant, wx, wy, 9820);
   var sizeTiles = obj.size * scale / TILE_ART_PX; // 96px @ 1.0 -> 3 tiles
   var drawPx = obj.size * scale;
+  // base footprint from the alpha trim (visible extents), not the file edge:
+  // transparent padding goes back to smaller fields. Legacy fractions kept
+  // for trimless art (~2x F4's absolute claim — objects are ground-heavy).
+  var cx = (wx + ux) * TILE_ART_PX, cy = (wy + uy) * TILE_ART_PX;
+  var foot = trimFoot(cx, cy, obj.size, drawPx,
+    (obj.trims && obj.trims[variant]) || null, 0.42, 0.22, 0.42, 0.22);
   var p = {
     name: obj.name, biome: t.biome, size: obj.size, variant: variant,
     state: st, stateOnDisk: stateOnDisk,
     ux: ux, uy: uy, sizeTiles: sizeTiles,
     hasAnim: obj.anims.indexOf(variant) !== -1,
-    // base footprint ~2x F4's absolute claim at equal draw size: F4 uses
-    // 0.30/0.16 of drawPx; objects are ground-heavy so claim wider+deeper.
-    bx: (wx + ux) * TILE_ART_PX,
-    by: (wy + uy) * TILE_ART_PX + drawPx * 0.30,
-    fw: drawPx * 0.42, fh: drawPx * 0.22,
+    trim: (obj.trims && obj.trims[variant]) || null,
+    bx: foot.bx, by: foot.by, fw: foot.fw, fh: foot.fh,
   };
   return cachePut(_f5Cache, key, [p]);
 }
@@ -612,6 +655,63 @@ export function f5SpriteUrl(p) {
   }
   return MO_BASE_PATH + p.biome + '/' + p.name +
     '/mo__' + p.biome + '__' + p.name + '__v' + pad3(p.variant) + '.png';
+}
+
+// One tree per tile max. Deterministic (seed roots 9830-9840). Same contract
+// as f4/f5 placements, plus `trim` ([x,y,w,h] file px) for claims + the
+// future traversal system (Plan B). Claim = trunk base, not canopy: F2/F4
+// may grow under the canopy, just not through the trunk.
+export function f6Placements(wx, wy, tileInfo) {
+  var t = tileInfo(wx, wy);
+  if (!t || t.transition) return EMPTY;
+  var key = wx + ',' + wy + ',' + t.biome;
+  var hit = _f6Cache.get(key);
+  if (hit) return hit;
+  var objs = LG_CATALOG[t.biome];
+  var chance = (F6_TILE_CHANCE[t.biome] || 0) * tuneBiomeDensity('f6', t.biome);
+  if (!objs || !objs.length || chance === 0) return cachePut(_f6Cache, key, EMPTY);
+  if (rand2(wx, wy, 9830) > chance) return cachePut(_f6Cache, key, EMPTY);
+
+  var obj = objs[Math.floor(rand2(wx, wy, 9831) * objs.length)];
+  var objD = tuneObjDensity('f6', t.biome, obj.name);
+  if (objD < 1 && rand2(wx, wy, 9834) > objD) return cachePut(_f6Cache, key, EMPTY);
+
+  var st = rollWeighted(
+    tuneStateWeights('f6', t.biome, obj.name, F6_STATE_DEFAULTS),
+    F6_STATE_ORDER, rand2(wx, wy, 9835));
+  if (st === 'base') st = null;
+  var variant = Math.floor(rand2(wx, wy, 9832) * obj.variants);
+  var stateOnDisk = !!(st && obj.states[st] && obj.states[st].indexOf(variant) !== -1);
+
+  var ux = 0.5 + (rand2(wx, wy, 9833) - 0.5) * 0.5;
+  var uy = 0.5 + (rand2(wx, wy, 9836) - 0.5) * 0.5;
+  var scale = (F6_BIOME_SCALE[t.biome] || 1.0) *
+    tuneSize('f6', t.biome, obj.name, variant, wx, wy, 9840);
+  var sizeTiles = obj.size * scale / TILE_ART_PX; // 192px @ 1.0 -> 6 tiles
+  var drawPx = obj.size * scale;
+  var trim = (obj.trims && obj.trims[variant]) || null;
+  var cx = (wx + ux) * TILE_ART_PX, cy = (wy + uy) * TILE_ART_PX;
+  var foot = trimFoot(cx, cy, obj.size, drawPx, trim, 0.30, 0.10, 0.30, 0.16);
+  var p = {
+    name: obj.name, biome: t.biome, size: obj.size, variant: variant,
+    state: st, stateOnDisk: stateOnDisk, trim: trim,
+    ux: ux, uy: uy, sizeTiles: sizeTiles,
+    hasAnim: obj.anims.indexOf(variant) !== -1,
+    bx: foot.bx, by: foot.by, fw: foot.fw, fh: foot.fh,
+  };
+  return cachePut(_f6Cache, key, [p]);
+}
+
+export function f6SpriteUrl(p) {
+  if (p.state && p.stateOnDisk) {
+    return LG_BASE_PATH + p.biome + '/' + p.name + '/_states/' + p.state +
+      '/v' + pad3(p.variant) + '.png';
+  }
+  return LG_BASE_PATH + p.biome + '/' + p.name + '/v' + pad3(p.variant) + '.png';
+}
+
+export function f6AnimUrlBase(p) {
+  return LG_BASE_PATH + p.biome + '/' + p.name + '/anim/wind_sway/v' + pad3(p.variant) + '/';
 }
 
 // Returns all state sprite URLs for objects in `biome` that have known states.
