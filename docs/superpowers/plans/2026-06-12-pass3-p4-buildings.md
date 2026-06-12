@@ -883,3 +883,18 @@ test('PROBE determinism: identical history on identical seed', () => {
 - `buildingStampAt`/`wallTiles` O(n) scans — index alongside roadAt/crossingAt before Pass-4 scale.
 - `move()` now scans buildings per step — same index fixes it.
 - REMOVAL_KINDS now duplicated in three places (wire.js, sim-world-state.js, and implicitly this plan) — extraction candidate.
+
+---
+
+## Deviations (canonical)
+
+Implemented on branch `pass3-p4-buildings`, commits caf84a623 (Task 1) → c5227e64c (2) → 3675c7fdb (3) → c30bbb959 (4) → 545496459 (5) → da16b013e + fbd67780a (6) → 5f05ebbb3 (7). All tasks spec-reviewed and quality-reviewed (APPROVED).
+
+1. **clearPlot clears with real verbs (Task 3).** The plan assumed a naturally-clear plot might exist; seed-7 geography has NONE in RECT (every plot carries baseline flora placements). `clearPlot` in `sim/test/buildings.test.js` was extended with a `playerId` and a `clearSite` helper that takes matter placements, chops living ones, and takes the chop debris — the "uncleared site refused" test still exercises a genuinely dirty plot (refusal snapshot taken before clearing). This made the experienceable claim STRONGER: clearing is paid for with real verbs everywhere.
+2. **Spec-review fix on Task 6 (fbd67780a):** the routing test originally passed a group id as the clearPlot actor; clearing does run on seed 7, so take/chop executed with a group-node actor (conservation held — take stores into `attrs.inventory` of whatever node — but the pattern was fragile and inconsistent). Fixed to destructure `p` and pass `p.id`.
+3. **Probe adaptations (Task 7, logged A1–A6 in the file header):** all confirmations of plan correctness except A6 — `clearSite`'s cleared-count is not asserted >0 for forge sub-rect scans (some craft-district sub-rects are already clear land). Reviewer audit: honest, non-weakening. Two plan-written `if`-guards noted as non-vacuous today but fragile to geography changes: the routing `if (route)` guard (route is non-null in current geometry) and the plot clearSite count.
+4. **Client movement has NO wall awareness** (`src/physics/movement.js:16-28 canOccupy`): the kernel refuses wall steps authoritatively, but the canvas client will predict into walls → visual ghosting/rubber-band until client integration. Renderer backlog, not a kernel defect.
+5. **Orphaned ruin E is frozen forever** — same semantics as all matter nodes (no flux); declared, matches the existing matter backlog.
+6. **Loose decay assertion:** `decayed >=` bound in the Task 4 test is corroborated by the `building_gone` event + node removal; accepted.
+7. **Review-process deviation:** tests-only Tasks 4 and 7 received a combined spec+quality review (single opus reviewer) instead of two passes — the spec checklist was embedded in the review prompt.
+8. **P2.5 backlog partially closed:** `buildRoad` now accepts `opts` passed through to `planRoute` (so roads can use crossings and avoid walls); the `roadAt`/`pathAt`/`crossingsOf`/`buildingStampAt` O(n)→index item and save/load rehydration remain open (see Quality backlog above).
