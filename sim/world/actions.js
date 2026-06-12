@@ -7,6 +7,8 @@ import { die } from '../time/lifecycle.js';
 import { compositionOf, grainsForBite } from '../matter/composition.js';
 import { defOf, stageFor, damageTaken, OBJECT_DEFS } from '../matter/objects.js';
 import { randRange } from '../kernel/rng.js';
+import { combineOutcome, signatureOf } from '../matter/interaction.js';
+import { canonicalizeRecipe } from '../matter/recipes.js';
 
 // Item id counter. Module-level; starts at 1 for fresh kernels.
 // After loadKernel, call initItemIdFromKernel(kernel) to avoid collisions.
@@ -256,6 +258,32 @@ export function strike(kernel, playerId, targetId, damageType, amount, tick) {
   }
   kernel.graph.removeNode(targetId);
   return { stage: 'shattered', destroyed: true, products };
+}
+
+/** Combine ≥2 inventory items: outcome derived from grain math ALONE (no recipe lookup —
+ *  physics always works; recipe nodes are knowledge, not permission). Conservation by
+ *  construction: output item carries Σ E and merged grains whether it succeeds or ruins.
+ *  First success per signature canonicalizes a recipe node (provenance = this event). */
+export function combine(kernel, playerId, itemIds, tick) {
+  const player = kernel.graph.nodes.get(playerId);
+  const inv = player?.attrs.inventory ?? [];
+  if (!Array.isArray(itemIds) || itemIds.length < 2) return null;
+  if (new Set(itemIds).size !== itemIds.length) return null;
+  const picked = itemIds.map(id => inv.find(it => it.id === id));
+  if (picked.some(it => !it)) return null;            // all-or-nothing: validate before consuming
+  const signature = signatureOf(picked);
+  const out = combineOutcome(picked.map(it => it.grains ?? {}));
+  const E = picked.reduce((s, it) => s + it.E, 0);
+  for (const id of itemIds) inv.splice(inv.findIndex(it => it.id === id), 1);
+  const evId = kernel.ledger.emit({
+    tick, type: 'combine', actor: playerId, targets: [], magnitude: E,
+    attrs: { signature, form: out.form, ok: out.ok },
+  });
+  const recipeId = out.ok ? canonicalizeRecipe(kernel, signature, out.form, playerId, evId, tick) : null;
+  const item = { id: nextItemId++, kind: out.ok ? 'composite' : 'ruined',
+                 archetype: out.form, E, grains: out.merged, tick };
+  inv.push(item);
+  return { ok: out.ok, item, recipeId };
 }
 
 /** Eat an inventory item: converts its E to player R through the harvest transfer channel (lossy). */

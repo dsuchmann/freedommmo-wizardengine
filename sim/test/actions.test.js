@@ -2,7 +2,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Kernel } from '../kernel/kernel.js';
-import { createPlayer, pick, chop, harvest, take, eat, strike } from '../world/actions.js';
+import { createPlayer, pick, chop, harvest, take, eat, strike, combine } from '../world/actions.js';
+import { auditGrains } from '../matter/audit.js';
 import { SPECIES, DAY } from '../time/metabolism.js';
 import { grainsForBite, compositionOf } from '../matter/composition.js';
 import { OBJECT_DEFS, TERMINAL } from '../matter/objects.js';
@@ -374,4 +375,119 @@ test('chop(g): chop grass → no products, unchanged behavior', () => {
   assert.equal(k.graph.nodes.get(grass.id), undefined, 'grass removed');
   const matterNodes = [...k.graph.nodes.values()].filter(n => n.type === 'matter' && n.attrs.noFlux);
   assert.equal(matterNodes.length, 0, 'no matter product nodes spawned for grass');
+});
+
+// ── Task 3 (M3): combine verb ──────────────────────────────────────────────────
+
+test('combine: wood+wood → composite item, Σ E and Σ grains exact, recipe canonicalized', () => {
+  const k = new Kernel({ seed: 11, bounds: { x0: 0, y0: 0, w: 8, h: 8 } });
+  let log1, log2;
+  k.graph.boot(() => {
+    log1 = k.graph.createNode({
+      type: 'matter', tick: 0, x: 1, y: 1, R: null,
+      attrs: { archetype: 'log', E: 40, noFlux: true },
+    });
+    log2 = k.graph.createNode({
+      type: 'matter', tick: 0, x: 2, y: 1, R: null,
+      attrs: { archetype: 'log', E: 60, noFlux: true },
+    });
+  });
+  const player = createPlayer(k, 0);
+  const item1 = take(k, player.id, log1.id, 0);
+  const item2 = take(k, player.id, log2.id, 0);
+  const before = auditGrains(k);
+  assert.equal(before.ok, true);
+  const r = combine(k, player.id, [item1.id, item2.id], 0);
+  assert.equal(r.ok, true);
+  assert.equal(r.item.kind, 'composite');
+  assert.equal(r.item.archetype, 'composite:cellulose+lignin');
+  assert.equal(r.item.E, 100);                                   // exact, === (40 + 60)
+  // grains: 0.006×100 cellulose, 0.004×100 lignin — float addition across two items,
+  // so compare with a tiny epsilon (NOT deepEqual: 0.24+0.36 may not be bitwise 0.6)
+  assert.ok(Math.abs(r.item.grains.cellulose - 0.6) < 1e-12);
+  assert.ok(Math.abs(r.item.grains.lignin - 0.4) < 1e-12);
+  assert.equal(player.attrs.inventory.length, 1);                // inputs consumed
+  assert.ok(r.recipeId && k.graph.nodes.get(r.recipeId).type === 'recipe');
+  assert.equal(auditGrains(k).ok, true);                         // identity untouched
+  const ev = k.ledger.events.at(-1);
+  assert.equal(ev.type, 'combine');
+  assert.equal(ev.attrs.ok, true);
+});
+
+test('combine: stone+stone → ruined item, everything conserved, NO recipe node', () => {
+  const k = new Kernel({ seed: 12, bounds: { x0: 0, y0: 0, w: 8, h: 8 } });
+  let peb1, peb2;
+  k.graph.boot(() => {
+    peb1 = k.graph.createNode({
+      type: 'matter', tick: 0, x: 1, y: 1, R: null,
+      attrs: { archetype: 'pebble', E: 300, noFlux: true },
+    });
+    peb2 = k.graph.createNode({
+      type: 'matter', tick: 0, x: 2, y: 1, R: null,
+      attrs: { archetype: 'pebble', E: 500, noFlux: true },
+    });
+  });
+  const player = createPlayer(k, 0);
+  const p1 = take(k, player.id, peb1.id, 0);
+  const p2 = take(k, player.id, peb2.id, 0);
+  const p1E = p1.E;
+  const p2E = p2.E;
+  const r = combine(k, player.id, [p1.id, p2.id], 0);
+  assert.equal(r.ok, false);
+  assert.equal(r.item.kind, 'ruined');
+  assert.equal(r.item.archetype, 'ruined_mash');
+  assert.equal(r.item.E, p1E + p2E);
+  assert.equal(r.recipeId, null);
+  assert.equal([...k.graph.nodes.values()].filter(n => n.type === 'recipe').length, 0);
+  assert.equal(auditGrains(k).ok, true);
+  // ruined items are still matter: eating one metabolizes its grains and audit still holds
+  eat(k, player.id, r.item.id, 1);
+  assert.equal(auditGrains(k).ok, true);
+});
+
+test('combine: validation — needs ≥2 distinct ids all present in THIS player inventory', () => {
+  const k = new Kernel({ seed: 13, bounds: { x0: 0, y0: 0, w: 8, h: 8 } });
+  let log1, log2;
+  k.graph.boot(() => {
+    log1 = k.graph.createNode({
+      type: 'matter', tick: 0, x: 1, y: 1, R: null,
+      attrs: { archetype: 'log', E: 50, noFlux: true },
+    });
+    log2 = k.graph.createNode({
+      type: 'matter', tick: 0, x: 2, y: 1, R: null,
+      attrs: { archetype: 'log', E: 50, noFlux: true },
+    });
+  });
+  const player = createPlayer(k, 0);
+  const item1 = take(k, player.id, log1.id, 0);
+  const item2 = take(k, player.id, log2.id, 0);
+  const invLenBefore = player.attrs.inventory.length;
+  assert.equal(combine(k, player.id, [item1.id], 0), null);            // too few
+  assert.equal(combine(k, player.id, [item1.id, item1.id], 0), null);  // duplicate id
+  assert.equal(combine(k, player.id, [item1.id, 99999], 0), null);     // missing item
+  assert.equal(player.attrs.inventory.length, invLenBefore, 'failed validation must not consume items');
+});
+
+test('combine: repeat success reuses the canonical recipe node (no duplicates)', () => {
+  const k = new Kernel({ seed: 14, bounds: { x0: 0, y0: 0, w: 8, h: 8 } });
+  let l1, l2, l3, l4;
+  k.graph.boot(() => {
+    l1 = k.graph.createNode({ type: 'matter', tick: 0, x: 1, y: 1, R: null, attrs: { archetype: 'log', E: 10, noFlux: true } });
+    l2 = k.graph.createNode({ type: 'matter', tick: 0, x: 2, y: 1, R: null, attrs: { archetype: 'log', E: 10, noFlux: true } });
+    l3 = k.graph.createNode({ type: 'matter', tick: 0, x: 3, y: 1, R: null, attrs: { archetype: 'log', E: 10, noFlux: true } });
+    l4 = k.graph.createNode({ type: 'matter', tick: 0, x: 4, y: 1, R: null, attrs: { archetype: 'log', E: 10, noFlux: true } });
+  });
+  const player = createPlayer(k, 0);
+  const w1 = take(k, player.id, l1.id, 0);
+  const w2 = take(k, player.id, l2.id, 0);
+  const w3 = take(k, player.id, l3.id, 0);
+  const w4 = take(k, player.id, l4.id, 0);
+  const r1 = combine(k, player.id, [w1.id, w2.id], 0);
+  const r2 = combine(k, player.id, [w3.id, w4.id], 1);
+  assert.equal(r1.ok, true);
+  assert.equal(r2.ok, true);
+  assert.equal(r2.recipeId, r1.recipeId, 'same signature → same canonical node');
+  assert.equal([...k.graph.nodes.values()].filter(n => n.type === 'recipe').length, 1);
+  assert.deepEqual(k.graph.nodes.get(r1.recipeId).attrs.knownBy, [player.id], 'no duplicate knower');
+  assert.equal(player.attrs.inventory.filter(it => it.kind === 'composite').length, 2);
 });
