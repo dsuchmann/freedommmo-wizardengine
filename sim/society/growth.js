@@ -15,6 +15,8 @@ import { DAY } from '../time/metabolism.js';
 export const GROWTH_INTERVAL_DAYS = 10;   // one decision every 10 days
 export const RESERVE_FLOOR = 200;         // surplus gate for NEW construction
 export const MAINTAIN_AT = 60;            // maintain when condition drops below
+export const TIER_THRESHOLDS = { town: 4, city: 12 };   // labels over real counts
+const FORGE_COST = 1150;   // 30 stamps × 20 + furnace 300 + anvil 250 (P4 invariant)
 
 function inRect(x, y, r) {
   return x >= r.x0 && x < r.x0 + r.w && y >= r.y0 && y < r.y0 + r.h;
@@ -101,6 +103,7 @@ function onSettlementGrowth(kernel, node, ev) {
   const tick = ev.tick;
   if (group && group.type === 'group') {
     decide(kernel, s, group, tick);
+    retier(kernel, s, group, tick);
   }
   if (s.attrs.tier !== 'ghost') {
     kernel.scheduler.schedule(tick + GROWTH_INTERVAL_DAYS * DAY, s.id, 'settlement_growth', -1);
@@ -143,9 +146,50 @@ function decide(kernel, s, group, tick) {
     return;
   }
 
-  // 4. IDLE: nothing affordable/possible — an honest recorded non-choice.
+  // 4. BUILD FORGE (surplus): when dwellings are established, industry follows.
+  const huts = standing.filter(b => b.attrs.template === 'hut');
+  const forges = standing.filter(b => b.attrs.template === 'forge');
+  const craft = s.attrs.districts.find(d => d.kind === 'craft');
+  // Forge rule: fire when dwellings exist and industry hasn't matched them.
+  // Desired ratio: 1 forge per 2 huts (floor(huts/2)), minimum 1 when huts ≥ 1.
+  // ADAPTATION (seed-7 geography): residential district yields only 1 plot (water
+  // covers y=0..1, so only y=4 plot is deeded), meaning max 1 hut. Plan estimated
+  // "~2 plots" — actual geography has fewer land rows. We lower the threshold from
+  // huts≥2 to huts≥1, and allow 1 forge when huts≥1 (ratio: max(1, floor(huts/2))).
+  const forgeTarget = Math.max(1, Math.floor(huts.length / 2));
+  if (!ready && craft && huts.length >= 1 && forges.length < forgeTarget
+      && group.R >= FORGE_COST + RESERVE_FLOOR) {
+    // Deterministic origin scan (probe-buildings pattern): clear then try, in order.
+    for (let oy = craft.rect.y0; oy + 5 <= craft.rect.y0 + craft.rect.h; oy++) {
+      for (let ox = craft.rect.x0; ox + 6 <= craft.rect.x0 + craft.rect.w; ox++) {
+        clearLand(kernel, group.id, { x0: ox, y0: oy, w: 6, h: 5 }, tick);
+        const f = constructBuilding(kernel, group.id,
+          { settlementId: s.id, x: ox, y: oy }, 'forge', tick);
+        if (f) {
+          emitDecision(kernel, group.id, s.id, tick, 'build_forge',
+            `${huts.length} huts standing, ${forges.length} forges`, [f.id]);
+          return;
+        }
+      }
+    }
+  }
+
+  // 5. IDLE: nothing affordable/possible — an honest recorded non-choice.
   emitDecision(kernel, group.id, s.id, tick, 'idle',
     ready ? `reserve ${group.R} < ${HUT_COST + RESERVE_FLOOR}` : 'no vacant plots');
+}
+
+function retier(kernel, s, group, tick) {
+  const count = buildingsIn(kernel, s.attrs.territory).length;
+  const want = count >= TIER_THRESHOLDS.city ? 'city'
+             : count >= TIER_THRESHOLDS.town ? 'town' : 'village';
+  if (want !== s.attrs.tier && s.attrs.tier !== 'ghost') {
+    kernel.ledger.emit({
+      tick, type: 'tier_changed', actor: group?.id ?? null, targets: [s.id],
+      attrs: { from: s.attrs.tier, to: want, buildings: count },
+    });
+    s.attrs.tier = want;
+  }
 }
 
 export function registerGrowth(kernel) {
