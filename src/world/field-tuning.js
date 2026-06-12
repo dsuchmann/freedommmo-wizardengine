@@ -13,12 +13,12 @@
 // Density stops at object level (variants keep their catalog weights).
 import { rand2 } from '../core/random.js';
 
-export var FIELD_TUNING = { f2: {}, f3: {}, f4: {}, f5: {} };
+export var FIELD_TUNING = { f2: {}, f3: {}, f4: {}, f5: {}, f6: {} };
 
 export function setFieldTuning(tree) {
   FIELD_TUNING = tree && typeof tree === 'object'
-    ? { f2: tree.f2 || {}, f3: tree.f3 || {}, f4: tree.f4 || {}, f5: tree.f5 || {} }
-    : { f2: {}, f3: {}, f4: {}, f5: {} };
+    ? { f2: tree.f2 || {}, f3: tree.f3 || {}, f4: tree.f4 || {}, f5: tree.f5 || {}, f6: tree.f6 || {} }
+    : { f2: {}, f3: {}, f4: {}, f5: {}, f6: {} };
 }
 
 // One node's size contribution. Range nodes roll deterministically from the
