@@ -1,0 +1,22 @@
+{
+  "id": "f7_canopies",
+  "consuming_plan": "W2",
+  "status": "armed",
+  "category": "object",
+  "size": 192,
+  "variants": 64,
+  "candidates_per_call": 4,
+  "create_calls": 16,
+  "derive_from": "f6_trees",
+  "derive_exclude": ["bald_cypress"],
+  "output_root": "assets/pixelab/landscape_v2/micro/canopy_overlays",
+  "prompt_template": "top-down high fantasy pixel art, only the leafy canopy crown of a {desc}, viewed directly from above, no trunk visible, alpha-transparent background, hyper-detailed foliage, rich saturated colors, Final Fantasy aesthetic",
+  "states": {
+    "wilting": "thinned browned wilting canopy with gaps, desaturated"
+  },
+  "anim": {
+    "states": ["base"],
+    "action": "leafy canopy rippling gently in wind, soft organic motion",
+    "frames": 8
+  }
+}

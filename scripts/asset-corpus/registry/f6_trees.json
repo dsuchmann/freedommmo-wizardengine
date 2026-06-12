@@ -1,0 +1,51 @@
+{
+  "id": "f6_trees",
+  "consuming_plan": "W2",
+  "status": "armed",
+  "category": "object",
+  "size": 192,
+  "variants": 64,
+  "candidates_per_call": 4,
+  "create_calls": 16,
+  "output_root": "assets/pixelab/landscape_v2/micro/large_flora",
+  "prompt_template": "top-down high fantasy pixel art {desc}, jaw-dropping beauty, hyper-detailed, rich saturated colors, Final Fantasy aesthetic, alpha-transparent background, detailed shading, large tree sprite seen from above with visible trunk and full canopy",
+  "archetypes": [
+    { "name": "oak",          "desc": "mighty oak tree with broad gnarled trunk and sprawling green canopy", "biomes": ["forest", "grassland"], "fruit": false },
+    { "name": "birch",        "desc": "slender white-barked birch tree with light airy foliage",             "biomes": ["forest", "taiga"],     "fruit": false },
+    { "name": "beech",        "desc": "smooth grey-barked beech tree with dense oval canopy",                "biomes": ["forest"],              "fruit": false },
+    { "name": "apple",        "desc": "orchard apple tree with rounded canopy",                              "biomes": ["forest", "grassland"], "fruit": true },
+    { "name": "ancient_oak",  "desc": "colossal ancient oak, moss-covered twisted trunk, vast dark canopy",  "biomes": ["dense_forest"],        "fruit": false },
+    { "name": "yew",          "desc": "dark brooding yew tree with deep green needle canopy and red berries","biomes": ["dense_forest"],        "fruit": false },
+    { "name": "hollow_elm",   "desc": "huge old elm tree with a hollow in its trunk and ragged crown",       "biomes": ["dense_forest"],        "fruit": false },
+    { "name": "pine",         "desc": "tall straight pine tree with conical dark green needle canopy",       "biomes": ["taiga", "mountains"],  "fruit": false },
+    { "name": "spruce",       "desc": "frost-dusted spruce tree with tight conical silhouette",              "biomes": ["taiga"],               "fruit": false },
+    { "name": "larch",        "desc": "golden-green larch conifer with soft feathery needles",               "biomes": ["taiga"],               "fruit": false },
+    { "name": "kapok",        "desc": "giant tropical kapok tree with buttress roots and umbrella crown",    "biomes": ["tropical_forest"],     "fruit": false },
+    { "name": "banana_palm",  "desc": "lush banana palm with huge arching fronds",                           "biomes": ["tropical_forest"],     "fruit": true },
+    { "name": "mangrove",     "desc": "tangled mangrove tree with stilt roots",                              "biomes": ["tropical_forest", "swamp"], "fruit": false },
+    { "name": "acacia",       "desc": "flat-topped acacia tree with wide umbrella canopy on slender trunk",  "biomes": ["savanna"],             "fruit": false },
+    { "name": "baobab",       "desc": "massive bulbous-trunked baobab tree with sparse branching crown",     "biomes": ["savanna"],             "fruit": false },
+    { "name": "willow",       "desc": "weeping willow with cascading drooping branches",                     "biomes": ["grassland", "swamp"],  "fruit": false },
+    { "name": "cherry",       "desc": "flowering cherry tree with pink-white blossom canopy",                "biomes": ["grassland"],           "fruit": true },
+    { "name": "bald_cypress", "desc": "swamp bald cypress with flared trunk and wispy hanging moss",         "biomes": ["swamp"],               "fruit": false }
+  ],
+  "states": {
+    "seedling": "tiny young tree sapling, thin stem, few small leaves, just established",
+    "growing":  "young sapling tree, slender trunk, sparse adolescent foliage, half height",
+    "wilting":  "wilting tree, thinned browned canopy, drooping branches, desaturated",
+    "dead":     "dead bare leafless tree, grey brittle branches, no foliage",
+    "stump":    "low cut tree stump with visible growth rings and chopped axe marks",
+    "snag":     "storm-broken tree, trunk snapped partway up, jagged splintered break",
+    "burned":   "burned charred tree, blackened trunk and branches, ash, faint embers"
+  },
+  "fruit_states": {
+    "budding":   "covered in small buds and early blossoms among the leaves",
+    "fruiting":  "laden with ripe colorful fruit visible across the canopy",
+    "harvested": "fruit picked, bare stems and gaps in the foliage where fruit was"
+  },
+  "anim": {
+    "states": ["base"],
+    "action": "canopy swaying gently in wind, branches flexing naturally, trunk steady, rooted",
+    "frames": 8
+  }
+}

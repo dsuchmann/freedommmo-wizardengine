@@ -51,3 +51,16 @@ function enumerateWang(reg) {
     totalSprites: tilesets * WANG_TILESET_TILES * (reg.variants ?? 1),
   };
 }
+
+export function resolveDerived(reg, registryById) {
+  if (!reg.derive_from) return reg;
+  const src = registryById[reg.derive_from];
+  if (!src) throw new Error(`${reg.id}: derive_from ${reg.derive_from} not found`);
+  const exclude = new Set(reg.derive_exclude ?? []);
+  return {
+    ...reg,
+    archetypes: src.archetypes
+      .filter((a) => !exclude.has(a.name))
+      .map((a) => ({ name: a.name, desc: a.desc, biomes: a.biomes, fruit: false })),
+  };
+}

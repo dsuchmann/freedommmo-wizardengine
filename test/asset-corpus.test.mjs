@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { enumerateRegistry } from '../scripts/asset-corpus/lib/enumerate.mjs';
+import { readFileSync } from 'node:fs';
+import { enumerateRegistry, resolveDerived } from '../scripts/asset-corpus/lib/enumerate.mjs';
 
 const FIXTURE = {
   id: 'fixture_flora',
@@ -54,4 +55,27 @@ test('wang enumeration: materials x biomes tilesets', () => {
 
 test('enumeration is deterministic', () => {
   assert.deepEqual(enumerateRegistry(FIXTURE), enumerateRegistry(FIXTURE));
+});
+
+function loadReg(name) {
+  return JSON.parse(readFileSync(new URL(`../scripts/asset-corpus/registry/${name}.json`, import.meta.url), 'utf8'));
+}
+
+test('f6_trees enumerates the W2 burst', () => {
+  const r = enumerateRegistry(loadReg('f6_trees'));
+  // 18 archetypes; biome instances: count pairs in the JSON (24)
+  assert.equal(r.instances, 24);
+  assert.equal(r.baseSprites, 24 * 64);
+  // 7 universal states x 24 + 3 fruit states x fruit instances (apple:2, banana_palm:1, cherry:1 = 4)
+  assert.equal(r.stateSprites, (24 * 7 + 4 * 3) * 64);
+  assert.equal(r.animJobs, 24);
+});
+
+test('f7 derives archetypes from f6 minus exclusions', () => {
+  const f6 = loadReg('f6_trees');
+  const f7 = resolveDerived(loadReg('f7_canopies'), { f6_trees: f6 });
+  assert.equal(f7.archetypes.length, f6.archetypes.length - 1); // bald_cypress excluded
+  assert.ok(f7.archetypes.every((a) => a.fruit === false)); // canopies carry no fruit axis
+  const r = enumerateRegistry(f7);
+  assert.equal(r.instances, 24 - 1); // bald_cypress was swamp-only: 1 instance dropped
 });
