@@ -10,6 +10,7 @@ export const BIOMES = Object.freeze({
   ocean: { material: 'ocean_water', color: '#1c5d8f', walkable: true, movementCost: 3 },
   shallow_water: { material: 'shallow_water', color: '#2f83a7', walkable: true, movementCost: 2 },
   river: { material: 'river_water', color: '#287ca4', walkable: true, movementCost: 2 },
+  stream: { material: 'river_water', color: '#2f8cb4', walkable: true, movementCost: 2 },
   lake: { material: 'lake_water', color: '#236f93', walkable: true, movementCost: 2 },
   beach: { material: 'golden_sand', color: '#d8bd75', walkable: true, movementCost: 1.15 },
   grassland: { material: 'lush_grass', color: '#5fa64b', walkable: true, movementCost: 1 },

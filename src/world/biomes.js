@@ -3,6 +3,10 @@ import { shapeTerrain } from './terrain-shaper.js';
 import { BIOMES, SPEC_BIOME_IDS } from './biome-definitions.js';
 import { sampleRegionalMapChunk } from './regional-map.js';
 import { areBiomeNeighbors, transitionBiome } from './biome-graph.js';
+import { streamAt } from './hydrology.js';
+
+// stream layer is ADDITIVE — basin water wins (channel has ended); cost is a Map lookup after the first regional trace.
+const BASIN_WATER = new Set(['deep_ocean', 'ocean', 'shallow_water', 'river', 'lake']);
 
 export { BIOMES, SPEC_BIOME_IDS };
 
@@ -39,7 +43,13 @@ export function classifyBiome(wx, wy) {
   const id = regionalCandidate;
   const localAllowed = localCandidate !== regionalCandidate && areBiomeNeighbors(regionalCandidate, localCandidate);
 
-  return { id, definition: BIOMES[id], climate: { ...climate, regionalBiome: regionalCandidate, localCandidate, ecotone: localAllowed ? 1 : 0, borderCandidate: localAllowed ? localCandidate : null } };
+  let finalId = id, stream = null;
+  if (!BASIN_WATER.has(id)) {
+    stream = streamAt(wx, wy);
+    if (stream) finalId = 'stream';
+  }
+
+  return { id: finalId, definition: BIOMES[finalId], climate: { ...climate, regionalBiome: regionalCandidate, localCandidate, ecotone: localAllowed ? 1 : 0, borderCandidate: localAllowed ? localCandidate : null, stream } };
 }
 
 function classifyLocalCandidate(climate) {

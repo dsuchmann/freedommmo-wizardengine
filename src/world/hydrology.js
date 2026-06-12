@@ -16,6 +16,10 @@
 import { rand2 } from '../core/random.js';
 import { getWorldSeed } from '../core/world-seed.js';
 import { sampleClimate } from './biomes.js';
+import { sampleRegionalMapChunk } from './regional-map.js';
+
+// Basin-scale water biomes: stream ends when it reaches these (channel absorbed).
+const BASIN_WATER_IDS = new Set(['deep_ocean', 'ocean', 'shallow_water', 'river', 'lake']);
 
 export const SOURCE_CELL = 96;          // jittered-grid cell size (tiles)
 export const SOURCE_MIN_ELEV = 0.62;    // headwaters sit high...
@@ -107,6 +111,8 @@ function ensureCell(cx, cy, seed) {
  *  source cell within MAX_STREAM_LEN Chebyshev of the query (memoized). */
 export function streamAt(x, y, seed = getWorldSeed()) {
   if (sampleClimate(x, y).elevation < SEA_ELEV) return null;
+  // Basin water absorbs the stream — the channel has ended there; don't tag it as 'stream'.
+  if (BASIN_WATER_IDS.has(sampleRegionalMapChunk(x / 64, y / 64).id)) return null;
   const reach = Math.ceil(MAX_STREAM_LEN / SOURCE_CELL) + 1;
   const cx0 = Math.floor(x / SOURCE_CELL), cy0 = Math.floor(y / SOURCE_CELL);
   for (let cy = cy0 - reach; cy <= cy0 + reach; cy++)

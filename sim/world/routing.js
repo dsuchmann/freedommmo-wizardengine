@@ -5,7 +5,7 @@
 // bridges/fords are honestly absent until a hydrology pass. Unreachable → null.
 import { classifyBiome } from '../../src/world/biomes.js';
 
-export const WATER_BIOMES = new Set(['river', 'lake', 'ocean', 'deep_ocean', 'shallow_water']);
+export const WATER_BIOMES = new Set(['river', 'lake', 'ocean', 'deep_ocean', 'shallow_water', 'stream']);
 const MAX_EXPLORE = 20000;   // bounded search — beyond this, refuse (null), never guess
 
 /** Terrain cost to lay/walk a road tile. Infinity = impassable. */
