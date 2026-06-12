@@ -91,15 +91,33 @@ function ensureCell(cx, cy, seed) {
   const src = sourceFor(cx, cy, seed);
   if (!src) return;
   const path = traceStream(src, seed);
+  const claim = (x, y, width, dist) => {
+    const k = `${x},${y}`;
+    const prev = c.tiles.get(k);
+    // widest claim wins (confluences/overlaps deterministic: width, then dist)
+    if (!prev || width > prev.width || (width === prev.width && dist < prev.dist)) {
+      c.tiles.set(k, { width, dist });
+    }
+  };
   for (let i = 0; i < path.length; i++) {
     const p = path[i];
     const r = Math.floor(p.width / 2);
     for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
-      const k = `${p.x + dx},${p.y + dy}`;
-      const prev = c.tiles.get(k);
-      // widest claim wins (confluences/overlaps deterministic: width, then dist)
-      if (!prev || p.width > prev.width || (p.width === prev.width && i < prev.dist)) {
-        c.tiles.set(k, { width: p.width, dist: i });
+      claim(p.x + dx, p.y + dy, p.width, i);
+    }
+    // 4-connectivity: a diagonal flow step leaves the channel corner-connected
+    // (width-1 claims don't overlap), so claim one orthogonal connector tile —
+    // the lower-elevation of the two candidates (deterministic carve choice).
+    // Without this, 1-wide diagonal runs render as pinched checkerboard water
+    // and don't even block movement (walkers pass through the corner).
+    if (i > 0) {
+      const q = path[i - 1];
+      if (p.x !== q.x && p.y !== q.y) {
+        const eA = sampleClimate(p.x, q.y).elevation;
+        const eB = sampleClimate(q.x, p.y).elevation;
+        const mx = eA <= eB ? p.x : q.x;
+        const my = eA <= eB ? q.y : p.y;
+        claim(mx, my, q.width, i);
       }
     }
   }
