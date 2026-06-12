@@ -13,12 +13,12 @@
 // Density stops at object level (variants keep their catalog weights).
 import { rand2 } from '../core/random.js';
 
-export var FIELD_TUNING = { f2: {}, f3: {}, f4: {} };
+export var FIELD_TUNING = { f2: {}, f3: {}, f4: {}, f5: {} };
 
 export function setFieldTuning(tree) {
   FIELD_TUNING = tree && typeof tree === 'object'
-    ? { f2: tree.f2 || {}, f3: tree.f3 || {}, f4: tree.f4 || {} }
-    : { f2: {}, f3: {}, f4: {} };
+    ? { f2: tree.f2 || {}, f3: tree.f3 || {}, f4: tree.f4 || {}, f5: tree.f5 || {} }
+    : { f2: {}, f3: {}, f4: {}, f5: {} };
 }
 
 // One node's size contribution. Range nodes roll deterministically from the
@@ -77,4 +77,62 @@ export function tuneAnimEnabled(field, biome, obj, category) {
   var b = f && f.biomes && f.biomes[biome];
   var o = b && b.objects && b.objects[obj];
   return !(o && o.anims && o.anims[category] === false);
+}
+
+// ---- Lifecycle / condition state mixes ------------------------------------
+// Weights are RELATIVE (normalized at roll). The nearest defined `states`
+// node wins whole-map: object > biome > field master > built-in defaults.
+// f5.biomes.<biome>.objects.<obj>.states = { base: 60, cracked: 10, ... }
+export function tuneStateWeights(field, biome, obj, defaults) {
+  var f = FIELD_TUNING[field];
+  var b = f && f.biomes && f.biomes[biome];
+  var o = b && b.objects && b.objects[obj];
+  if (o && o.states) return o.states;
+  if (b && b.states) return b.states;
+  if (f && f.states) return f.states;
+  return defaults;
+}
+
+// Pick a state name from relative weights, walking `order` cumulatively so
+// default weights reproduce the historical hardcoded thresholds exactly.
+// r in [0,1). Missing keys = 0. Degenerate (all zero) -> order[0].
+export function rollWeighted(weights, order, r) {
+  var total = 0, i;
+  for (i = 0; i < order.length; i++) total += weights[order[i]] || 0;
+  if (!(total > 0)) return order[0];
+  var x = r * total, acc = 0;
+  for (i = 0; i < order.length; i++) {
+    acc += weights[order[i]] || 0;
+    if (x < acc && (weights[order[i]] || 0) > 0) return order[i];
+  }
+  return order[order.length - 1];
+}
+
+// Per-field state rosters + defaults (= the old hardcoded splits).
+// 'base'/'normal' mean "no state sprite" (render the base variant).
+export var F2_STATE_ORDER = ['seedling', 'normal', 'wilting', 'dead'];
+export var F2_STATE_DEFAULTS = { seedling: 15, normal: 55, wilting: 20, dead: 10 };
+export var F4_STATE_ORDER = ['seedling', 'base', 'wilting', 'dead', 'enchanted'];
+export var F4_STATE_DEFAULTS = { seedling: 15, base: 55, wilting: 20, dead: 8, enchanted: 2 };
+export var F5_STATE_ORDER = ['base', 'cracked', 'mossy_overgrown', 'burned', 'frozen', 'destroyed', 'enchanted'];
+
+// F5 defaults: base 60% / weathered 32% (biome-appropriate subset, split
+// evenly) / destroyed 6% / enchanted 2%. (Spec §2.)
+var F5_WEATHERED = {
+  arctic: ['cracked', 'frozen'], tundra: ['cracked', 'frozen'],
+  taiga: ['cracked', 'frozen', 'mossy_overgrown'],
+  desert: ['cracked', 'burned'], savanna: ['cracked', 'burned'], volcanic: ['cracked', 'burned'],
+  swamp: ['mossy_overgrown', 'cracked'], forest: ['mossy_overgrown', 'cracked'],
+  dense_forest: ['mossy_overgrown', 'cracked'], tropical_forest: ['mossy_overgrown', 'cracked'],
+  mystic: ['mossy_overgrown', 'cracked'],
+};
+var F5_WEATHERED_DEFAULT = ['cracked', 'mossy_overgrown'];
+var _f5Defaults = {};
+export function f5StateDefaults(biome) {
+  var hit = _f5Defaults[biome];
+  if (hit) return hit;
+  var w = F5_WEATHERED[biome] || F5_WEATHERED_DEFAULT;
+  var d = { base: 60, destroyed: 6, enchanted: 2 };
+  for (var i = 0; i < w.length; i++) d[w[i]] = 32 / w.length;
+  return _f5Defaults[biome] = d;
 }
