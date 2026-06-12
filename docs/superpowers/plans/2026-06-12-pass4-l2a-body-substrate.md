@@ -743,4 +743,10 @@ git commit -m "test(l2a): probe — rig+plans+composition cohere, nothing stored
 
 ## Deviations (canonical)
 
-(filled at close-out — authoritative over task text above)
+Executed 2026-06-12, commits 91ed73398 → 641cfda0a on `pass4-l2a-body-substrate` (plan self-review before execution corrected the part count: the manifest's "≈13" enumerates to **14 parts** — all assertions use 14).
+
+- **Task 1** (91ed73398): none. Rig JSON + rig.js verbatim; COM landed in bounds without data tuning. Review minors accepted as-is: comOf midpoint uses only y-extent (exact for this symmetric rig; revisit if a tilted-bone rig ever lands), `restPos` returns unused `_len`.
+- **Task 2** (96d37971a): none. Review note accepted: `STAGE_HEIGHT[stage]` has no fallback for stages outside the 9 humanoid names — unreachable today (stageAt only returns SPECIES-table stages); if a 'corpse'-like stage ever flows in, add `?? 1.0`.
+- **Task 3** (76b3b7a19): the plan draft's vestigial `assert.ok(z('head') < z('cap') || true)` line was dropped (always-true noise); dead `north` const dropped per the plan's own NOTE.
+- **Task 4** (641cfda0a): inventory fixture item carries `archetype` BOTH top-level and in `attrs` — equip's ledger emit reads `item.archetype`, composeLayers reads `item.attrs.archetype`; both are real API paths (honest mirroring, reviewer-confirmed). Fixture also carries `kind/E/tick` to match real item shape. Stray `k.graph.boot ? null : null;` removed. Mid-loop note: a parallel session had switched the shared working dir to `pass4-l1-identity`; the implementer switched back before working — no cross-branch contamination (verified: all 4 L2a commits on this branch; parallel client commit 4b73237d7 rides the branch by design).
+- **Hardening backlog (accepted):** worn-layer `archetype` duality (top-level vs attrs) should be unified when items get a real schema pass; equip's ledger emit reads the top-level one.
