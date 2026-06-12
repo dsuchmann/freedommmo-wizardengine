@@ -81,6 +81,18 @@ export function serializeEntity(node, tick) {
   if (node.type === 'corpse') {
     return { id: node.id, type: 'corpse', species: node.attrs.of, x: node.x, y: node.y, body: node.attrs.E, stage: 'corpse' };
   }
+  if (node.type === 'settlement') {
+    // Structure geometry is render truth (debug overlay); founderGroup, scoring
+    // reasons and growth-loop state stay sim-side (privacy rule precedent).
+    const { tier, territory, districts } = node.attrs;
+    return { id: node.id, type: 'settlement', x: node.x, y: node.y, tier, territory,
+             districts: (districts ?? []).map(d => ({ kind: d.kind, rect: d.rect })) };
+  }
+  if (node.type === 'plot') {
+    // owner/settlement are node ids — observable deeds, not private knowledge.
+    const { rect, district, owner, settlement } = node.attrs;
+    return { id: node.id, type: 'plot', x: node.x, y: node.y, rect, district, owner, settlement };
+  }
   if (node.type === 'matter') {
     const { archetype = undefined, E = undefined, placement = undefined, field = undefined, biome = undefined, variant = undefined } = node.attrs ?? {};
     return { id: node.id, type: 'matter', archetype, x: node.x, y: node.y, E, placement, field, biome, variant };
