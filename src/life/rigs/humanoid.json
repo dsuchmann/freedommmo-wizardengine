@@ -1,0 +1,48 @@
+{
+  "id": "humanoid",
+  "bones": {
+    "root":      { "parent": null,      "length": 0,  "pivot": [0, 22],   "mass": 0 },
+    "spine":     { "parent": "root",    "length": 16, "pivot": [0, 0],    "mass": 30 },
+    "head":      { "parent": "spine",   "length": 10, "pivot": [0, 16],   "mass": 8 },
+    "arm_u_l":   { "parent": "spine",   "length": 8,  "pivot": [-6, 14],  "mass": 3 },
+    "arm_f_l":   { "parent": "arm_u_l", "length": 7,  "pivot": [0, -8],   "mass": 2 },
+    "hand_l":    { "parent": "arm_f_l", "length": 3,  "pivot": [0, -7],   "mass": 1 },
+    "arm_u_r":   { "parent": "spine",   "length": 8,  "pivot": [6, 14],   "mass": 3 },
+    "arm_f_r":   { "parent": "arm_u_r", "length": 7,  "pivot": [0, -8],   "mass": 2 },
+    "hand_r":    { "parent": "arm_f_r", "length": 3,  "pivot": [0, -7],   "mass": 1 },
+    "thigh_l":   { "parent": "root",    "length": 11, "pivot": [-3, 0],   "mass": 7 },
+    "shin_l":    { "parent": "thigh_l", "length": 9,  "pivot": [0, -11],  "mass": 4 },
+    "foot_l":    { "parent": "shin_l",  "length": 4,  "pivot": [0, -9],   "mass": 1 },
+    "thigh_r":   { "parent": "root",    "length": 11, "pivot": [3, 0],    "mass": 7 },
+    "shin_r":    { "parent": "thigh_r", "length": 9,  "pivot": [0, -11],  "mass": 4 },
+    "foot_r":    { "parent": "shin_r",  "length": 4,  "pivot": [0, -9],   "mass": 1 }
+  },
+  "joints": {
+    "spine":   { "min": -30,  "max": 30,  "stiffness": 0.8 },
+    "head":    { "min": -60,  "max": 60,  "stiffness": 0.6 },
+    "arm_u_l": { "min": -170, "max": 50,  "stiffness": 0.5 },
+    "arm_f_l": { "min": -140, "max": 0,   "stiffness": 0.5 },
+    "hand_l":  { "min": -45,  "max": 45,  "stiffness": 0.4 },
+    "arm_u_r": { "min": -50,  "max": 170, "stiffness": 0.5 },
+    "arm_f_r": { "min": 0,    "max": 140, "stiffness": 0.5 },
+    "hand_r":  { "min": -45,  "max": 45,  "stiffness": 0.4 },
+    "thigh_l": { "min": -110, "max": 30,  "stiffness": 0.7 },
+    "shin_l":  { "min": 0,    "max": 140, "stiffness": 0.7 },
+    "foot_l":  { "min": -30,  "max": 30,  "stiffness": 0.6 },
+    "thigh_r": { "min": -110, "max": 30,  "stiffness": 0.7 },
+    "shin_r":  { "min": 0,    "max": 140, "stiffness": 0.7 },
+    "foot_r":  { "min": -30,  "max": 30,  "stiffness": 0.6 }
+  },
+  "effectors": {
+    "hand_l": { "bone": "hand_l", "reach": 20 },
+    "hand_r": { "bone": "hand_r", "reach": 20 },
+    "foot_l": { "bone": "foot_l", "reach": 26 },
+    "foot_r": { "bone": "foot_r", "reach": 26 },
+    "mouth":  { "bone": "head",   "reach": 8 }
+  },
+  "lookAt": [["head", 0.7], ["spine", 0.3]],
+  "gaits": {
+    "walk": { "cycleTicks": 40, "strideFactor": 0.5, "bob": 1.0 },
+    "run":  { "cycleTicks": 22, "strideFactor": 0.9, "bob": 2.0 }
+  }
+}
