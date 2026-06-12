@@ -16,7 +16,9 @@ export function rand2(x, y, salt = 0, seed = getWorldSeed()) {
 // Index pick from a [0,1] roll. hash() can return exactly 1.0 (mixed hash
 // 0xFFFFFFFF); Math.floor(r*n) then overflows to n. Clamp — identical to the
 // raw floor for every r < 1, so placement determinism is untouched.
+// n < 1 returns 0 — callers should still guard empty arrays.
 export function pickIndex(r, n) {
+  if (n < 1) return 0;
   var i = Math.floor(r * n);
   return i >= n ? n - 1 : i;
 }

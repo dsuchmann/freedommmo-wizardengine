@@ -13,3 +13,9 @@ test('pickIndex clamps r === 1.0 to n-1', () => {
   assert.equal(pickIndex(1.0, 5), 4);
   assert.equal(pickIndex(1.0, 1), 0);
 });
+
+test('pickIndex edge: n=1 and n=0 never go out of bounds', () => {
+  assert.equal(pickIndex(0, 1), 0);
+  assert.equal(pickIndex(0.5, 1), 0);
+  assert.equal(pickIndex(0.7, 0), 0);
+});
