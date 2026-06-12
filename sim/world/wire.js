@@ -38,7 +38,7 @@ export function materializeRect(kernel, { x0, y0, w, h }, tick) {
   // 'damaged' deltas are scar records for the renderer — they must NOT suppress, otherwise
   // a cracked-but-existing object vanishes when the kernel is reconstructed from seed+deltas.
   // MIRRORED in src/sim/sim-world-state.js REMOVAL_KINDS — update both or the client drifts.
-  const REMOVAL_KINDS = new Set(['taken', 'felled', 'destroyed', 'worn']);
+  const REMOVAL_KINDS = new Set(['taken', 'felled', 'destroyed', 'worn', 'paved']);
   const suppressed = new Set(
     kernel.deltas.list
       .filter(d => d.target?.startsWith('placement:') && REMOVAL_KINDS.has(d.kind))

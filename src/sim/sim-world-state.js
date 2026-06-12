@@ -2,7 +2,7 @@
 import { spineStateOf, visualStateOf } from '../world/asset-state-taxonomy.js';
 
 // Mirrors sim/world/wire.js REMOVAL_KINDS: only these delta kinds hide a placement.
-const REMOVAL_KINDS = new Set(['taken', 'felled', 'destroyed', 'worn']);
+const REMOVAL_KINDS = new Set(['taken', 'felled', 'destroyed', 'worn', 'paved']);
 
 export class SimWorldState {
   constructor() { this._map = new Map(); this.version = 0; }

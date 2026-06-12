@@ -9,6 +9,7 @@
 import { tilePlacements } from './baseline.js';
 import { SPECIES, DAY } from '../time/metabolism.js';
 import { die } from '../time/lifecycle.js';
+import { roadAt } from './roads.js';
 
 export const WEAR_PER_STEP = 1;
 export const WORN_THRESHOLD = 20;   // steps needed to wear a path bare
@@ -26,8 +27,10 @@ export function pathAt(kernel, x, y) {
 
 /** Record one traffic step on (x,y), caused by ledger event `evId` (a 'move').
  *  Lazily creates the tile's path node; adds wear; tramples + suppresses when
- *  the threshold is crossed (idempotent: only on the crossing). */
+ *  the threshold is crossed (idempotent: only on the crossing).
+ *  Roads carry traffic without path wear — skips silently when a road_segment exists. */
 export function recordTraffic(kernel, x, y, evId, tick) {
+  if (roadAt(kernel, x, y)) return null; // roads carry traffic — no path wear
   let path = pathAt(kernel, x, y);
   const isNew = !path;
   if (isNew) {

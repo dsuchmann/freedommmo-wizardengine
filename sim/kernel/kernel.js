@@ -7,6 +7,7 @@ import { SPECIES, materialize, stageAt } from '../time/metabolism.js';
 import { registerLifecycle } from '../time/lifecycle.js';
 import { registerAggregates } from '../lod/aggregate.js';
 import { registerPaths } from '../world/paths.js';
+import { registerRoads } from '../world/roads.js';
 
 export class Kernel {
   constructor({ seed, phi = 4, bounds = null }) {
@@ -22,6 +23,7 @@ export class Kernel {
     registerLifecycle(this);
     registerAggregates(this);
     registerPaths(this);
+    registerRoads(this);
   }
 
   on(kind, fn) { this.handlers.set(kind, fn); }

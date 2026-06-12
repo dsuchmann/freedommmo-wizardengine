@@ -26,6 +26,7 @@ export const ARCHETYPE_YIELD = {
   wood_scrap: { cellulose: 0.006, lignin: 0.004 },
   stump:      { cellulose: 0.005, lignin: 0.005 },
   ore:        { ore: 0.008, stone: 0.004 },
+  road_segment: {},  // labor-only: no grains conjured from time (material construction = backlog)
   default:    { stone: 0.01 },
 };
 
