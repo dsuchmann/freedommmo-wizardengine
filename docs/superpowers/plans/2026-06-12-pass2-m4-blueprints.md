@@ -686,6 +686,19 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 
 ---
 
+## Deviations (canonical — authoritative over task bodies above)
+
+1. **Geography correction (Tasks 3+4):** the plan's example rect `{x0:0,y0:0,w:16,h:16}` with hut at (6,6) lies in OCEAN — zero baseline placements, which would have made the claim tests vacuous. Implemented tests use grassland: Task 3 rect `{x0:930,y0:0,w:16,h:16}`, hut at (936,0) (11 placements inside footprint); Task 4 probe RECT `{x0:930,y0:0,w:24,h:24}`, compound at (936,8). This deviation path was explicitly sanctioned by the plan's vacuity-guard instructions.
+2. **Conservation identity (Task 4):** the probe asserts the suite's standard identity copied from probe-conservation.test.js — `(s1 − s0) == captured − burned − decayed − transferLoss` within relative 1e-9 — replacing the plan's sketch, as instructed.
+3. **ledger API (Task 2):** events are created via `ledger.emit(...)` which returns the event ID (number); `ledger.totals` is a plain object property, not a method. Plan text was corrected before execution.
+
+### Reviewer-noted hardening items (accepted, NOT implemented — future work)
+- blueprints.js: no door-offset bounds validation (door on a corner / outside footprint possible with bad authored data); two doors resolving to the same tile silently collapse; `BLUEPRINT_TEMPLATES` not frozen; feature positions not validated to land on floor tiles. Low risk while templates are hand-authored constants; revisit when the world compiler generates templates (P4).
+- wire.js: no defensive guard if a `building` node lacks `attrs.footprint` (precondition by construction via compileBlueprint); claimed-Set rebuild is O(nodes + footprint area) per materializeRect call — flag as future hotspot at 1M-entity scale.
+- kernel.stocks(): `building` nodes fall through all branches (stock-inert by design — they carry no E/R); documented here rather than adding a no-op branch.
+- protocol.js: serializeEntity returns `stamps`/`footprint` by reference (consistent with every other branch; safe under current stringify-on-send semantics).
+- Order dependence: compileBlueprint must run before materializeRect at boot — documented in code comments, not enforced.
+
 ## Out of scope (honest absences, declared)
 
 - **Settlements/districts/regions**: grammar supports nesting; population of those levels is P4 (roadmap).
