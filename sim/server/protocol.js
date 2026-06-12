@@ -3,7 +3,8 @@
 // Validation lives HERE because client messages are untrusted input.
 import { SPECIES, stageAt, DAY } from '../time/metabolism.js';
 
-const VERBS = new Set(['pick', 'chop', 'harvest', 'take', 'eat']);
+const VERBS = new Set(['pick', 'chop', 'harvest', 'take', 'eat', 'strike']);
+const DAMAGE_TYPES = new Set(['blunt', 'sharp', 'fire', 'frost']);
 const ADMIN_OPS = new Set(['pause', 'resume', 'save', 'ff']);
 
 export function parseClientMsg(raw) {
@@ -18,7 +19,13 @@ export function parseClientMsg(raw) {
       return { type: m.type, viewport: { x: v.x, y: v.y, w: v.w, h: v.h } };
     }
     case 'intent':
-      if (!VERBS.has(m.verb) || !Number.isInteger(m.target)) return null;
+      if (!VERBS.has(m.verb) || !Number.isFinite(m.target) || !Number.isInteger(m.target)) return null;
+      if (m.verb === 'strike') {
+        if (!DAMAGE_TYPES.has(m.damageType)) return null;
+        if (!Number.isFinite(m.amount) || m.amount <= 0) return null;
+        return { type: 'intent', verb: 'strike', target: m.target,
+                 damageType: m.damageType, amount: Math.min(m.amount, 50) };
+      }
       return { type: 'intent', verb: m.verb, target: m.target };
     case 'query':
       if (!Number.isInteger(m.id)) return null;

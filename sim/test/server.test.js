@@ -85,3 +85,30 @@ test('attaching a client promotes the regions around its viewport', async () => 
   ws.close();
   await server.close();
 });
+
+test('strike intent dispatched over protocol → strike ledger event emitted', async () => {
+  // Spawn a server with a boulder matter node in the world
+  const bounds = { x0: 0, y0: 0, w: 16, h: 16 };
+  const kernel = new Kernel({ seed: 77, bounds });
+  let boulder;
+  kernel.graph.boot(() => {
+    boulder = kernel.graph.createNode({
+      type: 'matter', tick: 0, x: 4, y: 4, R: null,
+      attrs: { archetype: 'boulder_small', E: 5000, noFlux: true },
+    });
+  });
+  spawnMeadow(kernel, bounds);
+  const server = new SimServer({ kernel, port: 0, timeScale: 48 });
+  await server.listen();
+  const ws = await connect(server);
+  ws.send(JSON.stringify({ type: 'hello', viewport: { x: 0, y: 0, w: 16, h: 16 } }));
+  await next(ws, 'snapshot');
+  // Send a valid strike intent (amount=30, clamped → 30; blunt against boulder)
+  ws.send(JSON.stringify({ type: 'intent', verb: 'strike', target: boulder.id, damageType: 'blunt', amount: 30 }));
+  // The pump applies the intent and emits events
+  const evMsg = await next(ws, 'events');
+  assert.ok(evMsg.events.some(e => e.type === 'strike' && e.targets.includes(boulder.id)),
+    'strike event emitted for boulder');
+  ws.close();
+  await server.close();
+});
