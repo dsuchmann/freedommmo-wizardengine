@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Kernel } from '../kernel/kernel.js';
 import { createPlayer, pick, chop, harvest, take, eat, strike, combine } from '../world/actions.js';
+import { equip } from '../items/equipment.js';
 import { auditGrains } from '../matter/audit.js';
 import { SPECIES, DAY } from '../time/metabolism.js';
 import { grainsForBite, compositionOf } from '../matter/composition.js';
@@ -490,4 +491,134 @@ test('combine: repeat success reuses the canonical recipe node (no duplicates)',
   assert.equal([...k.graph.nodes.values()].filter(n => n.type === 'recipe').length, 1);
   assert.deepEqual(k.graph.nodes.get(r1.recipeId).attrs.knownBy, [player.id], 'no duplicate knower');
   assert.equal(player.attrs.inventory.filter(it => it.kind === 'composite').length, 2);
+});
+
+// ── M5 Task 3: tool-modulated chop + wear ─────────────────────────────────────
+
+/** A wooden composite tool: cellulose:lignin 108:72 (unit-weighted hardness=0.42, stability → maxHp=62). */
+function woodTool() {
+  return { id: 901, kind: 'composite', archetype: 'composite:cellulose+lignin',
+           E: 100, grains: { cellulose: 108, lignin: 72 }, tick: 0 };
+}
+
+/** Boot a world with one tree (mirrors world() but returns just k+tree, no bush for clarity). */
+function treeWorld() {
+  const k = new Kernel({ seed: 3, bounds: { x0: 0, y0: 0, w: 8, h: 8 } });
+  let tree;
+  k.graph.boot(() => {
+    tree = k.addLiving({ species: 'tree', x: 5, y: 5, R: 20000, body: 30000, tick: 0, age: 400 * DAY });
+  });
+  return { k, tree };
+}
+
+/** Boot a world with two trees at distinct positions. */
+function twoTreeWorld() {
+  const k = new Kernel({ seed: 3, bounds: { x0: 0, y0: 0, w: 8, h: 8 } });
+  let tree1, tree2;
+  k.graph.boot(() => {
+    tree1 = k.addLiving({ species: 'tree', x: 2, y: 2, R: 20000, body: 30000, tick: 0, age: 400 * DAY });
+    tree2 = k.addLiving({ species: 'tree', x: 5, y: 5, R: 20000, body: 30000, tick: 0, age: 400 * DAY });
+  });
+  return { k, tree1, tree2 };
+}
+
+test('M5 chop: wielded wooden composite recovers more product E than bare hands (deterministic)', () => {
+  const run = withTool => {
+    const { k, tree } = treeWorld();
+    const p = createPlayer(k, 0);
+    if (withTool) {
+      p.attrs.inventory = [woodTool()];
+      equip(k, p.id, 901, 'hand_main', 0);
+    }
+    // Snapshot matter nodes that existed BEFORE chop (none in this world — treeWorld has no matter nodes)
+    const preChopMatterIds = new Set(
+      [...k.graph.nodes.values()].filter(n => n.type === 'matter' && n.attrs.noFlux).map(n => n.id)
+    );
+    chop(k, p.id, tree.id, 0);
+    const products = [...k.graph.nodes.values()].filter(n => n.type === 'matter' && n.attrs.noFlux && !preChopMatterIds.has(n.id));
+    const corpse = [...k.graph.nodes.values()].find(n => n.type === 'corpse');
+    return { productE: products.reduce((s, n) => s + n.attrs.E, 0),
+             corpseE: corpse.attrs.E,
+             total: products.reduce((s, n) => s + n.attrs.E, 0) + corpse.attrs.E };
+  };
+  const bare = run(false);
+  const tooled = run(true);
+  assert.ok(tooled.productE > bare.productE, 'tool recovers more product E than bare hands');
+  assert.ok(Math.abs(tooled.total - bare.total) < 1e-6,
+    `corpse+products E is conserved: tooled=${tooled.total} bare=${bare.total}`);
+  // factor for this tool is exactly 1 + toolPower = 1 + 0.42 = 1.42
+  assert.ok(Math.abs(tooled.productE - bare.productE * 1.42) < 1e-6,
+    `factor is exactly 1.42: tooled=${tooled.productE} bare×1.42=${bare.productE * 1.42}`);
+});
+
+test('M5 wear: tool hp decrements per assisted chop; shattered tool gives factor 1 and no wear', () => {
+  // Run A: equip tool, chop tree1 (wear), force hp=0, chop tree2 (shattered → factor 1).
+  const { k, tree1, tree2 } = twoTreeWorld();
+  const p = createPlayer(k, 0);
+  const tool = woodTool();
+  p.attrs.inventory = [tool];
+  equip(k, p.id, 901, 'hand_main', 0);
+
+  // Chop tree1 with the wooden tool to trigger lazy-init and wear.
+  chop(k, p.id, tree1.id, 0);
+  const worn = p.attrs.equipment.hand_main;
+  assert.ok(Math.abs(worn.maxHp - 62) < 1e-9, `maxHp lazy-init: got ${worn.maxHp} expected 62`);
+  assert.ok(Math.abs(worn.hp - 52) < 1e-9, `hp after one use: got ${worn.hp} expected 52 (62 − 10)`);
+
+  // Force tool to shattered state (stageFor(0, 62) = 'shattered').
+  worn.hp = 0;
+
+  // Chop tree2 with the shattered tool — record product E for tree2.
+  const preChop2Ids = new Set(
+    [...k.graph.nodes.values()].filter(n => n.type === 'matter' && n.attrs.noFlux).map(n => n.id)
+  );
+  chop(k, p.id, tree2.id, 0);
+  const products2 = [...k.graph.nodes.values()].filter(n => n.type === 'matter' && n.attrs.noFlux && !preChop2Ids.has(n.id));
+  const shatteredProductE = products2.reduce((s, n) => s + n.attrs.E, 0);
+  // No further wear when shattered.
+  assert.ok(Math.abs(worn.hp - 0) < 1e-9, `shattered tool hp stays 0: got ${worn.hp}`);
+
+  // Run B (reference, bit-identical event history): same two-tree world, same equip call (to match
+  // event ids), but tool is pre-shattered before any chop so ALL chops use factor 1 (bare hands).
+  const { k: kB, tree1: tB1, tree2: tB2 } = twoTreeWorld();
+  const pB = createPlayer(kB, 0);
+  const toolB = woodTool();
+  pB.attrs.inventory = [toolB];
+  equip(kB, pB.id, 901, 'hand_main', 0);  // same event emitted → event IDs match run A
+  // pre-shatter before touching any tree: hp=0, maxHp set to match lazy-init value
+  pB.attrs.equipment.hand_main.maxHp = 62;
+  pB.attrs.equipment.hand_main.hp = 0;
+  chop(kB, pB.id, tB1.id, 0);   // factor 1 (shattered), same causeEventId as run A
+  const preChop2IdsB = new Set(
+    [...kB.graph.nodes.values()].filter(n => n.type === 'matter' && n.attrs.noFlux).map(n => n.id)
+  );
+  chop(kB, pB.id, tB2.id, 0);
+  const products2B = [...kB.graph.nodes.values()].filter(n => n.type === 'matter' && n.attrs.noFlux && !preChop2IdsB.has(n.id));
+  const bareProductE = products2B.reduce((s, n) => s + n.attrs.E, 0);
+
+  // Shattered tool → factor 1 → product E matches bare-hands exactly (bit-identical).
+  assert.ok(Math.abs(shatteredProductE - bareProductE) < 1e-6,
+    `shattered tool gives factor 1: got=${shatteredProductE} bare=${bareProductE}`);
+});
+
+test('M5 chop bare-hands regression: identical to pre-M5 behavior (factor exactly 1)', () => {
+  // Mirrors existing chop(f) test: no equipment → products and conservation identical.
+  const { k, tree } = treeWorld();
+  const player = createPlayer(k, 0);
+  const preChopE = tree.R + tree.attrs.body;
+  chop(k, player.id, tree.id, 0);
+  const corpse = [...k.graph.nodes.values()].find(n => n.type === 'corpse');
+  assert.ok(corpse, 'stump corpse exists');
+  const matterNodes = [...k.graph.nodes.values()].filter(n => n.type === 'matter' && n.attrs.noFlux);
+  const logs = matterNodes.filter(n => n.attrs.archetype === 'log');
+  const branches = matterNodes.filter(n => n.attrs.archetype === 'branch');
+  assert.ok(logs.length >= 1, `≥1 log, got ${logs.length}`);
+  assert.ok(branches.length >= 2, `≥2 branches, got ${branches.length}`);
+  const productSumE = matterNodes.reduce((s, n) => s + n.attrs.E, 0);
+  const totalE = corpse.attrs.E + productSumE;
+  assert.ok(Math.abs(totalE - preChopE) < 1e-6,
+    `E conservation (bare hands): corpse ${corpse.attrs.E} + products ${productSumE} = ${totalE} ≠ preChop ${preChopE}`);
+  for (const n of matterNodes) {
+    assert.ok(n.createdByEvent != null, `chop product ${n.attrs.archetype} has createdByEvent`);
+  }
 });

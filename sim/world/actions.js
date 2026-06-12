@@ -9,6 +9,8 @@ import { defOf, stageFor, damageTaken, OBJECT_DEFS } from '../matter/objects.js'
 import { randRange } from '../kernel/rng.js';
 import { combineOutcome, signatureOf } from '../matter/interaction.js';
 import { canonicalizeRecipe } from '../matter/recipes.js';
+import { toolPowerOf, maxHpOf, WEAR_PER_USE } from '../items/items.js';
+import { wieldedItem } from '../items/equipment.js';
 
 // Item id counter. Module-level; starts at 1 for fresh kernels.
 // After loadKernel, call initItemIdFromKernel(kernel) to avoid collisions.
@@ -88,7 +90,25 @@ export function chop(kernel, playerId, targetId, tick) {
     // spawn them from corpse E and subtract their E from the stump corpse.
     const onChop = OBJECT_DEFS[species]?.onChop;
     if (onChop) {
-      const products = spawnBreakProducts(kernel, corpse, onChop, evId, tick, corpse.attrs.E, false);
+      // Tool modulation (M5): recovery scales with the wielded item's derived hardness.
+      // Bare hands → factor exactly 1 (pre-M5 behavior). Shattered tools assist nothing.
+      const player = kernel.graph.nodes.get(playerId);
+      const tool = wieldedItem(player);
+      let factor = 1;
+      if (tool) {
+        if (tool.maxHp == null) { tool.maxHp = maxHpOf(tool); tool.hp = tool.maxHp; }
+        const broken = tool.maxHp <= 0 || stageFor(tool.hp, tool.maxHp) === 'shattered';
+        if (!broken) {
+          factor = 1 + toolPowerOf(tool);
+          // cap: expanded products must leave the corpse a remainder (Σ eFrac×factor ≤ 0.9)
+          const maxSum = onChop.reduce((s, row) => s + row.count[1] * row.eFrac, 0);
+          if (maxSum * factor > 0.9) factor = 0.9 / maxSum;
+          tool.hp = Math.max(0, tool.hp - WEAR_PER_USE);   // wear: hp is not E, no ledger
+        }
+      }
+      const table = factor === 1 ? onChop
+        : onChop.map(row => ({ ...row, eFrac: row.eFrac * factor }));
+      const products = spawnBreakProducts(kernel, corpse, table, evId, tick, corpse.attrs.E, false);
       const productSumE = products.reduce((s, n) => s + n.attrs.E, 0);
       corpse.attrs.E -= productSumE;
     }
