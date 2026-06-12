@@ -1109,11 +1109,13 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
           if (cSW === cMin) cornerMask |= 2;
           if (cSE === cMin) cornerMask |= 1;
         } else {
-          var fb = tile.transitionPair.from;
-          if (tile.biome === fb) cornerMask |= 8;
-          if (tile.neighborE === fb) cornerMask |= 4;
-          if (tile.neighborS === fb) cornerMask |= 2;
-          if (tile.neighborSE === fb) cornerMask |= 1;
+          // Compare in asset-alias space: stream and river share the same art,
+          // so a 2×2 cell mixing them must put both on the same side of the mask.
+          var fbAsset = wangAssetName(tile.transitionPair.from);
+          if (wangAssetName(tile.biome) === fbAsset) cornerMask |= 8;
+          if (wangAssetName(tile.neighborE) === fbAsset) cornerMask |= 4;
+          if (wangAssetName(tile.neighborS) === fbAsset) cornerMask |= 2;
+          if (wangAssetName(tile.neighborSE) === fbAsset) cornerMask |= 1;
         }
       }
       tile.wangEdgeMask = tile.transitionPair ? CORNER_TO_WANG[cornerMask] : 0;
