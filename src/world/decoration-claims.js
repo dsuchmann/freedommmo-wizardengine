@@ -503,15 +503,19 @@ export function getClaimMask(wx, wy, tileInfo) {
                 f5Placements(wx + nx, wy + ny, tileInfo));
       for (var i = 0; i < pls.length; i++) {
         var p = pls[i];
-        // rasterize the base ellipse into this tile's cells (center test)
-        var c0 = Math.max(0, Math.floor((p.bx - p.fw - ox) / CELL_PX));
-        var c1 = Math.min(CELLS - 1, Math.floor((p.bx + p.fw - ox) / CELL_PX));
-        var r0 = Math.max(0, Math.floor((p.by - p.fh - oy) / CELL_PX));
-        var r1 = Math.min(CELLS - 1, Math.floor((p.by + p.fh - oy) / CELL_PX));
+        // Rasterize the base ellipse into this tile's cells. The ellipse is
+        // inflated by half a cell so a cell is claimed if ANY part of it can
+        // touch the footprint (a center-only test left up to half a cell of
+        // edge unclaimed — F2 blade roots landed there and clipped sprites).
+        var iw = p.fw + CELL_PX * 0.5, ih = p.fh + CELL_PX * 0.5;
+        var c0 = Math.max(0, Math.floor((p.bx - iw - ox) / CELL_PX));
+        var c1 = Math.min(CELLS - 1, Math.floor((p.bx + iw - ox) / CELL_PX));
+        var r0 = Math.max(0, Math.floor((p.by - ih - oy) / CELL_PX));
+        var r1 = Math.min(CELLS - 1, Math.floor((p.by + ih - oy) / CELL_PX));
         for (var r = r0; r <= r1; r++) {
           for (var c = c0; c <= c1; c++) {
             var px = ox + (c + 0.5) * CELL_PX, py = oy + (r + 0.5) * CELL_PX;
-            var ex = (px - p.bx) / p.fw, ey = (py - p.by) / p.fh;
+            var ex = (px - p.bx) / iw, ey = (py - p.by) / ih;
             if (ex * ex + ey * ey < 1.0) mask[r] |= (1 << c);
           }
         }
