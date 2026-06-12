@@ -50,7 +50,7 @@ The sim must enumerate the SAME objects the renderer draws. `classifyBiome(wx, w
 
 **Transition flag decision (declared, not a deviation):** the renderer sets `transition` from `tile.transitionPair`, computed in `worker-chunk-renderer.js:1015–1083` from wang-cell neighbors + terrain levels — renderer-internal and not worth extracting in Pass 1. The sim adapter passes `transition: false` everywhere. Consequence: on biome-transition tiles (where the renderer draws no decorations) the sim may materialize entities the main client never draws — they simulate honestly, are just not visually bound. Non-transition tiles (the overwhelming majority) have exact 1:1 parity because each tile's placements depend only on `(wx, wy, biome)`. Record this in the Canonical deviations section's pre-declared list when committing.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```js
 // sim/test/baseline.test.js — the sim enumerates the renderer's own deterministic placements.
@@ -85,11 +85,11 @@ test('placementKey is the shared contract', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `node --test sim/test/baseline.test.js` → FAIL (module not found).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```js
 // sim/world/baseline.js — Node-side view of the renderer's deterministic placement pipeline.
@@ -124,9 +124,9 @@ function norm(field, wx, wy, i, p) {
 
 Shapes verified against `src/world/decoration-claims.js` (f3: lines 359–392, f4: lines 475–509): placements carry `{ name, biome, variant, ux, uy, ... }`, both functions return `EMPTY` (a shared array) for null/transition/empty tiles, and both are deterministic in `(wx, wy, biome)` (the `tuneBiomeDensity`/`tuneObjDensity` gates are deterministic functions of those + tuner config). One caution for the implementer: the f4 placement carries a renderer-side static lifecycle `state` roll (decoration-claims.js:495–508) — IGNORE it on the sim side; the kernel's own metabolism is the only lifecycle truth (no-mock rule).
 
-- [ ] **Step 4: Run tests** → `node --test sim/test/baseline.test.js` PASS.
+- [x] **Step 4: Run tests** → `node --test sim/test/baseline.test.js` PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add sim/world/baseline.js sim/test/baseline.test.js
@@ -144,7 +144,7 @@ git commit -m "feat(wire): node-side baseline placements — sim enumerates the 
 
 Design: at boot (inside `kernel.graph.boot(...)` — baseline provenance, spec §5.4 case 1), every F4 placement in the start rect becomes a LIVING entity of metabolic class `berry_bush` (the F4 class per `FIELD_SHEETS._meta.SPECIES_CLASS` reversed), carrying `attrs: { placement, field, archetype, biome, variant }`. Every F3 placement becomes a MATTER node: `{ type: 'matter', attrs: { E, placement, field, archetype, biome, variant, noFlux: true } }` — no metabolism, no spine (taxonomy §4). Initial R/body/age are deterministic via `rand(kernel.seed, ...)` salted by a numeric hash of the placement key. Placements that already have a delta (`target === 'placement:'+key`) are NOT materialized — that is baseline suppression (spec §5.2). Grass/grazer/tree baseline spawning (`spawnMeadow`) continues unchanged alongside.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```js
 // sim/test/wire.test.js
@@ -201,9 +201,9 @@ test('a delta-suppressed placement is not materialized', () => {
 
 (Kernel construction verified against `sim/test/kernel.test.js:5–9` — bounded world keeps tests finite. Do NOT invent a new kernel configuration.)
 
-- [ ] **Step 2: Run to verify failure** → module not found.
+- [x] **Step 2: Run to verify failure** → module not found.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```js
 // sim/world/wire.js — the world's decoration objects become kernel entities (Plan E, spec §6.1/§5.x).
@@ -263,11 +263,11 @@ export function materializeRect(kernel, { x0, y0, w, h }, tick) {
 
 Verified facts (no further verification needed): `kernel.addLiving` enters flux, re-rates, and schedules lifecycle (kernel.js:28–37); `graph.createNode({type, tick, x, y, R, attrs, causeEventId})` is provenance-checked and allowed inside `boot()` (graph.js:22–25). Matter nodes must NOT enter flux and must NOT get lifecycle schedules — they are inert embodied time; `createNode` alone gives exactly that.
 
-- [ ] **Step 4: Wire into boot.** In `sim/server/main.js` `bootWorld`, after `spawnWorld(kernel, bounds, start)` and inside the same boot scope if possible (else its own `kernel.graph.boot`), call `materializeRect(kernel, start, 0)`. VERIFY how spawnWorld's boot scoping works and match it.
+- [x] **Step 4: Wire into boot.** In `sim/server/main.js` `bootWorld`, after `spawnWorld(kernel, bounds, start)` and inside the same boot scope if possible (else its own `kernel.graph.boot`), call `materializeRect(kernel, start, 0)`. VERIFY how spawnWorld's boot scoping works and match it.
 
-- [ ] **Step 5: Run tests** → `node --test sim/test/wire.test.js` PASS; also `node --test sim/test/probe-intent-replay.test.js sim/test/main.test.js` still green — boot changes must stay deterministic.
+- [x] **Step 5: Run tests** → `node --test sim/test/wire.test.js` PASS; also `node --test sim/test/probe-intent-replay.test.js sim/test/main.test.js` still green — boot changes must stay deterministic.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add sim/world/wire.js sim/test/wire.test.js sim/server/main.js
@@ -284,7 +284,7 @@ git commit -m "feat(wire): placements materialize as kernel entities at boot —
 
 Design: player keeps `R` (the wallet). NEW: `attrs.inventory = []` of items `{ id, kind, archetype?, species?, E, tick }` — harvested matter as embodied time (roadmap row E). `harvest` = pick-shaped bite that lands in inventory instead of R. `take` = whole F3 matter node into inventory + removal delta keyed by placement. `eat` = inventory item → R via `transfer` (typed channel, loss to dissipation, conserved). All three are ledger events. `pick`/`chop` unchanged (Plan B probes keep passing).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```js
 // sim/test/actions-wire.test.js
@@ -339,9 +339,9 @@ test('eat converts item E to player R through a lossy typed transfer', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure** → named exports missing.
+- [x] **Step 2: Run to verify failure** → named exports missing.
 
-- [ ] **Step 3: Implement** in `sim/world/actions.js` (match the file's existing style — read `pick`/`chop` first; reuse their target-validation and `transfer` usage):
+- [x] **Step 3: Implement** in `sim/world/actions.js` (match the file's existing style — read `pick`/`chop` first; reuse their target-validation and `transfer` usage):
 
 ```js
 let nextItemId = 1;   // VERIFY: persist across checkpoint like other counters (see how nextDeltaId is checkpointed) — follow the same pattern, else derive max+1 on load.
@@ -404,9 +404,9 @@ if (n.attrs?.inventory) for (const it of n.attrs.inventory) s += it.E;
 
 Matter nodes are created at boot, so they appear in both `start` and `end` stocks; `take` is then stock-neutral, and `harvest`/`eat` losses land in `totals.transferLoss` — the existing identity `Δstocks = captured − burned − decayed − transferLoss` holds unchanged. Stage `sim/kernel/kernel.js` in this task's commit. Existing probes have no matter/inventory nodes, so they are unaffected.
 
-- [ ] **Step 4: Run** → `node --test sim/test/actions-wire.test.js` PASS, plus the existing actions/probe-6 test file still green.
+- [x] **Step 4: Run** → `node --test sim/test/actions-wire.test.js` PASS, plus the existing actions/probe-6 test file still green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add sim/world/actions.js sim/kernel/kernel.js sim/test/actions-wire.test.js
@@ -421,7 +421,7 @@ git commit -m "feat(wire): harvest/take/eat — inventory holds harvested matter
 - Modify: `sim/server/protocol.js` (serializeEntity), `sim/server/server.js` (intent switch)
 - Test: `sim/test/protocol-wire.test.js`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```js
 // sim/test/protocol-wire.test.js
@@ -457,13 +457,13 @@ test('serializeEntity stays lean for unwired entities (no placement keys)', () =
 
 (Verified: `serializeEntity(node, tick)` at `sim/server/protocol.js:35` already derives `stage` from `stageAt(species, tick - node.attrs.birthTick)[0]` — reuse `tick - attrs.birthTick` as `ageTicks`. The assertions above define the OUTPUT contract.)
 
-- [ ] **Step 2: Run** → FAIL (fields missing).
+- [x] **Step 2: Run** → FAIL (fields missing).
 
-- [ ] **Step 3: Implement.** In `serializeEntity`: for living entities compute `bufferDays = R / (sp.burn * stageAt(species, ageTicks)[3] * DAY)` (guard burn=0 → `null`), `ageTicks = tick - attrs.birthTick`, and `senescenceStartTicks = SPECIES[species].senescence?.start` (leave `undefined` — i.e. omitted from JSON — when the species has none; the client defaults missing → Infinity, Task 6); spread `placement, field, archetype, biome, variant` from attrs ONLY when `attrs.placement` exists. Matter nodes serialize as `{ id, type: 'matter', archetype, x, y, E, placement, field, biome, variant }`. Extend the `VERBS` set (protocol.js:6) with `'harvest' | 'take' | 'eat'`. In `server.js`'s intent handler add cases `'harvest' | 'take'` (target = node id) and `'eat'` (target = item id), calling the Task 3 verbs with the session's playerId — mirror exactly how `pick`/`chop` intents are dispatched today. Matter nodes must be included in `_bubbleEntities` (VERIFY its filter — it currently excludes aggregates; matter nodes have x/y and should be served).
+- [x] **Step 3: Implement.** In `serializeEntity`: for living entities compute `bufferDays = R / (sp.burn * stageAt(species, ageTicks)[3] * DAY)` (guard burn=0 → `null`), `ageTicks = tick - attrs.birthTick`, and `senescenceStartTicks = SPECIES[species].senescence?.start` (leave `undefined` — i.e. omitted from JSON — when the species has none; the client defaults missing → Infinity, Task 6); spread `placement, field, archetype, biome, variant` from attrs ONLY when `attrs.placement` exists. Matter nodes serialize as `{ id, type: 'matter', archetype, x, y, E, placement, field, biome, variant }`. Extend the `VERBS` set (protocol.js:6) with `'harvest' | 'take' | 'eat'`. In `server.js`'s intent handler add cases `'harvest' | 'take'` (target = node id) and `'eat'` (target = item id), calling the Task 3 verbs with the session's playerId — mirror exactly how `pick`/`chop` intents are dispatched today. Matter nodes must be included in `_bubbleEntities` (VERIFY its filter — it currently excludes aggregates; matter nodes have x/y and should be served).
 
-- [ ] **Step 4: Run** → new test PASS + existing protocol/server tests green: `node --test sim/test/protocol-wire.test.js sim/test/protocol.test.js sim/test/server.test.js`.
+- [x] **Step 4: Run** → new test PASS + existing protocol/server tests green: `node --test sim/test/protocol-wire.test.js sim/test/protocol.test.js sim/test/server.test.js`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add sim/server/protocol.js sim/server/server.js sim/test/protocol-wire.test.js
@@ -478,7 +478,7 @@ git commit -m "feat(wire): protocol serves placement identity + bufferDays; harv
 - Create: `src/sim/sim-client.js`
 - Test: `sim/test/sim-client.test.js` (run the CLIENT class under Node against a real SimServer — the class must not touch `window`; pass a WebSocket factory)
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```js
 // sim/test/sim-client.test.js — the browser client class, exercised against a REAL sim server.
@@ -523,9 +523,9 @@ test('client attaches, receives snapshot, tracks tick-deltas, sends intents', as
 });
 ```
 
-- [ ] **Step 2: Run** → FAIL.
+- [x] **Step 2: Run** → FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```js
 // src/sim/sim-client.js — the renderer is a client of the sim process (CLAUDE.md locked decision 2).
@@ -566,7 +566,7 @@ export class SimClient {
 
 (Match the REAL message field names from `sim/server/protocol.js` — verify `upserts`/`removed`/`deltas`/`player` exactly; adapt.)
 
-- [ ] **Step 4: Run** → PASS. **Step 5: Commit**
+- [x] **Step 4: Run** → PASS. **Step 5: Commit**
 
 ```bash
 git add src/sim/sim-client.js sim/test/sim-client.test.js
@@ -582,7 +582,7 @@ git commit -m "feat(wire): SimClient — the renderer attaches to the sim proces
 - Modify: `src/main.js` (instantiate SimClient + SimWorldState; route the existing interaction key/click to intents), plus the ONE call site where F4 sprite/state selection happens at draw time (find it: `f4SpriteUrl` consumers in `src/render/field2-animator.js` / `src/main.js`) and the F3 chunk-bake path (`applySmallScatterToChunk` in `src/render/worker-chunk-renderer.js`) for taken-suppression.
 - Test: `sim/test/sim-world-state.test.js` (pure logic under Node)
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```js
 // sim/test/sim-world-state.test.js — kernel truth → per-placement render instruction, via Plan D taxonomy.
@@ -612,7 +612,7 @@ test('unknown placement → no override (baseline renders untouched)', () => {
 });
 ```
 
-- [ ] **Step 2: Run** → FAIL. **Step 3: Implement**
+- [x] **Step 2: Run** → FAIL. **Step 3: Implement**
 
 ```js
 // src/sim/sim-world-state.js — placementKey → render override, derived from sim truth alone.
@@ -642,12 +642,12 @@ export class SimWorldState {
 
 (`ageTicks`/`senescenceStartTicks` on serialized entities are delivered by Task 4 — already in its output contract. `senescenceStartTicks` may be absent on the wire (JSON cannot carry Infinity); the `?? Infinity` default above handles that.)
 
-- [ ] **Step 4: Renderer integration (browser-verified by hand, logic already unit-tested).** In `src/main.js`: instantiate `SimClient` (url `ws://127.0.0.1:8787`, viewport = camera tile rect) + `SimWorldState`; on `onState` call `simWorldState.update(client)` and mark affected chunks dirty if your hook point is bake-time. Connection failure → `console.warn('[sim] no sim process — baseline-only world')` and NOTHING else changes (honest absence; never fake a sim). At the F4 draw/state-selection call site: compute the placement key with `placementKey(field, wx, wy, i)` semantics IDENTICAL to `sim/world/baseline.js` (the index `i` must come from the same placement-array order — this is the contract; verify by logging a few keys from both sides in dev), then `const ov = simWorldState.overrideFor(key); if (ov?.removed) skip; if (ov?.visual && ov.visual !== 'normal') use the state sprite for ov.visual (existing _states/ URLs); seedling with no sprite → existing scale-transform path (taxonomy honest-absence rule)`. Same suppression check in `applySmallScatterToChunk` for F3 (pass the override map — or the relevant removed-key set — into the worker with the chunk job; VERIFY how chunk jobs receive parameters and follow that channel). Route the existing interaction input (`src/world/interactions.js` flow) so that when a sim entity override exists near the player, the verb goes to `client.intend({ verb, target: ov.entityId })` — `harvest` for living F4, `take` for matter — instead of the local-only reaction.
+- [x] **Step 4: Renderer integration (browser-verified by hand, logic already unit-tested).** In `src/main.js`: instantiate `SimClient` (url `ws://127.0.0.1:8787`, viewport = camera tile rect) + `SimWorldState`; on `onState` call `simWorldState.update(client)` and mark affected chunks dirty if your hook point is bake-time. Connection failure → `console.warn('[sim] no sim process — baseline-only world')` and NOTHING else changes (honest absence; never fake a sim). At the F4 draw/state-selection call site: compute the placement key with `placementKey(field, wx, wy, i)` semantics IDENTICAL to `sim/world/baseline.js` (the index `i` must come from the same placement-array order — this is the contract; verify by logging a few keys from both sides in dev), then `const ov = simWorldState.overrideFor(key); if (ov?.removed) skip; if (ov?.visual && ov.visual !== 'normal') use the state sprite for ov.visual (existing _states/ URLs); seedling with no sprite → existing scale-transform path (taxonomy honest-absence rule)`. Same suppression check in `applySmallScatterToChunk` for F3 (pass the override map — or the relevant removed-key set — into the worker with the chunk job; VERIFY how chunk jobs receive parameters and follow that channel). Route the existing interaction input (`src/world/interactions.js` flow) so that when a sim entity override exists near the player, the verb goes to `client.intend({ verb, target: ov.entityId })` — `harvest` for living F4, `take` for matter — instead of the local-only reaction.
 - Add npm script if missing: `"sim": "node sim/server/main.js"` (VERIFY against package.json; Plan B may have added it).
 
-- [ ] **Step 5: Manual smoke (document results in the commit message):** `npm run sim` + dev server; walk to a wired F4 plant; observe its state come from the sim (wilting plants are plants the SIM says are starving); harvest it → tick-delta arrives → sprite updates/suppresses; stop the sim process → world still renders baseline with the warn line.
+- [x] **Step 5: Manual smoke (document results in the commit message):** `npm run sim` + dev server; walk to a wired F4 plant; observe its state come from the sim (wilting plants are plants the SIM says are starving); harvest it → tick-delta arrives → sprite updates/suppresses; stop the sim process → world still renders baseline with the warn line.
 
-- [ ] **Step 6: Run unit tests** → `node --test sim/test/sim-world-state.test.js` PASS. **Step 7: Commit**
+- [x] **Step 6: Run unit tests** → `node --test sim/test/sim-world-state.test.js` PASS. **Step 7: Commit**
 
 ```bash
 git add src/sim/sim-world-state.js sim/test/sim-world-state.test.js src/main.js src/render/field2-animator.js src/render/worker-chunk-renderer.js package.json
@@ -665,7 +665,7 @@ git commit -m "feat(wire): renderer binds lifecycle to sprites via taxonomy; int
 
 The Pass 1 closing probe (CLAUDE.md continuous testability + spec §6.2): real placements, real verbs, real deltas, conservation including inventories, determinism.
 
-- [ ] **Step 1: Write the probe**
+- [x] **Step 1: Write the probe**
 
 ```js
 // sim/test/probe-wiring.test.js — Plan E probe: placements are entities; verbs are ledger events;
@@ -726,9 +726,9 @@ test('probe: re-boot from same seed+deltas reproduces the world minus the taken 
 });
 ```
 
-- [ ] **Step 2:** Run `node --test sim/test/probe-wiring.test.js` → green.
-- [ ] **Step 3:** Full suite `npm test` → all green.
-- [ ] **Step 4: Commit**
+- [x] **Step 2:** Run `node --test sim/test/probe-wiring.test.js` → green.
+- [x] **Step 3:** Full suite `npm test` → all green.
+- [x] **Step 4: Commit**
 
 ```bash
 git add sim/test/probe-wiring.test.js
@@ -739,10 +739,10 @@ git commit -m "test(wire): Pass 1 closing probe — placements⇄entities⇄delt
 
 ### Task 8: Close-out — Pass 1 100% DONE
 
-- [ ] **Step 1:** `npm test` final run → all green; note final count.
-- [ ] **Step 2:** Check every box in this plan doc; record all deviations in "Canonical deviations".
-- [ ] **Step 3:** Update `docs/superpowers/plans/2026-06-11-pass1-roadmap.md`: Plan E row → `**DONE**` (cite deviations + scope-reconciliation section), and add a line under the table: `**Pass 1 status: 100% DONE (A–E merged, <N>/<N> tests).**`
-- [ ] **Step 4: Commit**
+- [x] **Step 1:** `npm test` final run → all green; note final count.
+- [x] **Step 2:** Check every box in this plan doc; record all deviations in "Canonical deviations".
+- [x] **Step 3:** Update `docs/superpowers/plans/2026-06-11-pass1-roadmap.md`: Plan E row → `**DONE**` (cite deviations + scope-reconciliation section), and add a line under the table: `**Pass 1 status: 100% DONE (A–E merged, <N>/<N> tests).**`
+- [x] **Step 4: Commit**
 
 ```bash
 git add docs/superpowers/plans/2026-06-11-pass1e-world-wiring.md docs/superpowers/plans/2026-06-11-pass1-roadmap.md
@@ -760,3 +760,17 @@ git commit -m "docs: roadmap — Plan E DONE; Pass 1 100% DONE"
 - F2 per-plant binding, F5–F7 wiring, and fauna rendering in the main client: declared honest absence (see Scope reconciliation).
 - The sim's tileInfo passes `transition: false` everywhere (the renderer's transitionPair derivation is wang-cell/terrain-level internal, worker-chunk-renderer.js:1015–1083). Sim may materialize entities on biome-transition tiles the renderer leaves bare — they simulate honestly, just have no sprite binding. Non-transition tiles have exact parity (placements depend only on wx, wy, biome).
 - Placement parity assumes the BAKED default field-tuning tree (`FIELD_TUNING` empty = defaults). The dev field-tuner's localStorage override (src/dev/field-tuner.js) changes browser-side placements without the sim knowing; that tool's own workflow ("copy JSON → bake into source → clear localStorage") is the reconciliation path. Dev-mode divergence is declared, not defended against.
+
+**Execution deviations:**
+- **(Task 2/7) Test rect relocated to land.** The plan's start rect `{0,0,48,32}` is ocean (zero wired placements). Wiring tests and probes use BOUNDS `{930,0,24,16}` / RECT `{938,0,8,8}` (grassland) — same assertions, real placements.
+- **(Task 3) `initItemIdFromKernel` called on BOTH boot paths** in `bootWorld` (fresh + checkpoint-resume); the plan only mentioned fresh boot. Resume without it would reuse persisted item ids.
+- **(Task 3) Harvest is body-first**: drained energy routes through the actor's reserve before stocks accounting (matches Plan B's pick/eat convention rather than the plan's looser sketch). Species without `pick` return null (no magic bite fallback).
+- **(Task 4) `sim/test/protocol.test.js:29` assertion updated** to include the new `ageTicks`/`bufferDays` fields — an existing-test edit the plan didn't list.
+- **(Task 4) Tick-delta uses the existing `upserts` field name** (protocol already had it); plan text said `entities`.
+- **(Task 6) Intent scan iterates `simClient.entities` directly** (nearest wired entity ≤ 3 tiles, verb by `type`), replacing the plan's placement-key probe sketch — the key-guessing approach could only construct `f4:` keys with indices 0–3, making f3 matter (`take`) unreachable. Spec-reviewed and approved.
+- **(Task 6) Intent block ordering**: runs immediately after `player.update()` and clears `player.interactPressed` when a sim target is found, because `player.update()` unconditionally reassigns the flag — clearing before it would be overwritten (no-mock rule: sim intent must replace, not duplicate, the local reaction).
+- **(Task 6) F3 worker suppression channel**: removed `f3:` keys are pushed via `provider.setF3RemovedKeys(keys)` → postMessage to all chunk workers → module-level Set checked in `applySmallScatterToChunk`; affected chunk bitmaps dropped and re-pumped. Change-detection via sorted-joined string compare in `src/main.js`.
+- **(Task 6) Dev hooks** `window._simWorldState` / `window._simClient` added (existing `_player`/`_debugProvider` pattern).
+- **(Task 6/smoke) Sim CLI gained `--bounds`/`--start` rect args** (defaults identical to prior hardcoded values) so a smoke world can boot on land.
+- **(Task 6 smoke results)**: sim connect banner; 27 wired entities (24 f3 matter + 3 f4 berry_bush) served with placement attrs; starving bush (bufferDays 1.245) → `{visual:'wilting'}` override; 'f' keypress fires `{verb:'take'|'harvest', target}` end-to-end with `interactPressed` suppressed (verified via scripted Playwright — an earlier "no intent" result was test-harness focus, not a code bug); take produces event + `placement:` delta + entity removal + F3 removed-key broadcast; no-sim path prints one warn line, zero behavior change.
+- **(Scale notes, future passes)** `SimWorldState.update()` rebuilds its map per pump and the worker removed-key Set is unbounded; fine at bubble scale, revisit for 1M-entity targets. `eat` targets item ids in a different id namespace than node ids — acceptable while intents are dev-driven; revisit when UI inventories arrive.
