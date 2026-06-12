@@ -35,27 +35,20 @@ function stochRound(seed, a, b, x) {
   return fl + (rand(seed, a, b) < x - fl ? 1 : 0);
 }
 
-/** Senescence multipliers at a mean age, computed analytically (mirrors sen_step compounding). */
-function senMuls(sp, meanAge) {
-  if (meanAge <= sp.senescence.start) return { burnMul: 1, demandMul: 1 };
-  const steps = (meanAge - sp.senescence.start) / sp.senescence.stepEvery;
-  return { burnMul: sp.senescence.burnGrowth ** steps, demandMul: sp.senescence.demandDecay ** steps };
-}
-
 /** Advance one region's populations by dt ticks. Conservation-exact: every stock change
- *  has a matching counter increment in the same call. */
+ *  has a matching counter increment in the same call.
+ *
+ *  Capture rationing (tile-occupancy model): each individual occupies one tile and captures
+ *  at most phi from it. When the region is over-occupied (totalCount > REGION²), tiles are
+ *  shared proportionally by species count, so total captured across all species is bounded
+ *  by regionPhi. In the sparse case every species gets its own occupied-tile budget. */
 export function stepAggregate(kernel, node, tick, dt) {
   const pops = node.attrs.pops;
   for (const p of Object.values(pops)) p.ageSum += p.count * dt;   // aging first
 
-  // Per-species flux rationing: each species competes only with itself for its share of regionPhi.
-  // This mirrors individual simulation where each entity occupies its own tile and only
-  // co-occupants of the same tile compete. Cross-species competition is negligible in
-  // low-density spawns so each species effectively has the full regionPhi available.
-  // Statistical LOD: senescence is not tracked at aggregate tier (individual-tier concern).
-  // Each species is rationed against its own per-region flux budget (not cross-species),
-  // mirroring individual simulation where entities on separate tiles don't compete.
-  const regionPhi = kernel.flux.phi * REGION * REGION;
+  // Compute totalCount once for the tile-occupancy budget (fix 4).
+  const totalCount = Object.values(pops).reduce((s, p) => s + p.count, 0);
+
   const demands = {};
   for (const [species, p] of Object.entries(pops)) {
     if (p.count <= 0) { demands[species] = 0; continue; }
@@ -68,7 +61,10 @@ export function stepAggregate(kernel, node, tick, dt) {
     const sp = SPECIES[species];
     if (p.count > 0) {
       const meanAge = p.ageSum / p.count;
-      const ration = demands[species] > regionPhi ? regionPhi / demands[species] : 1;
+      // Tile-occupancy capture budget: sparse → own tiles; over-occupied → proportional share.
+      const tiles_s = totalCount > REGION * REGION ? REGION * REGION * p.count / totalCount : p.count;
+      const budget_s = kernel.flux.phi * tiles_s;
+      const ration = demands[species] > budget_s ? budget_s / demands[species] : 1;
       const captured = demands[species] * ration * dt;
       const burnDemand = sp.burn * stageAt(species, meanAge)[3] * p.count * dt;
       // Burn only what exists (the individual-tier overdraft rule, applied up front).
@@ -76,7 +72,8 @@ export function stepAggregate(kernel, node, tick, dt) {
       kernel.ledger.count('captured', captured);
       kernel.ledger.count('burned', burned);
       let net = captured - burned;
-      if (net > 0) {
+      // Growth into body only while pre-senescent (mirrors individual-tier lifecycle).
+      if (net > 0 && meanAge <= sp.senescence.start) {
         const grow = Math.min(sp.growFrac * net, Math.max(0, p.count * sp.maxBody - p.sumBody));
         p.sumBody += grow; net -= grow;
       }
@@ -94,10 +91,10 @@ export function stepAggregate(kernel, node, tick, dt) {
           kernel.ledger.emit({ tick, type: 'agg_deaths', targets: [node.id], magnitude: deaths, attrs: { species } });
         }
       }
-      // Births: mature individuals reproduce when per-capita reserves exceed seeding floor.
+      // Births: mature individuals reproduce when per-capita reserves exceed the seeding floor.
       if (p.count > 0) {
         const mAge = p.ageSum / p.count;
-        if (stageAt(species, mAge)[0] === 'mature' && p.sumR >= sp.seed.cost) {
+        if (stageAt(species, mAge)[0] === 'mature' && p.sumR / p.count >= sp.seed.minR) {
           const maxAffordable = Math.floor(p.sumR / sp.seed.cost);
           const births = Math.min(
             stochRound(kernel.seed, node.id, tick + 11, p.count * dt / sp.seed.every),
