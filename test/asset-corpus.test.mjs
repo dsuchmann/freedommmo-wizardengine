@@ -97,8 +97,8 @@ test('emitBatch produces create/state/anim jobs for an armed object registry', (
   const oak = byKind('create').find((j) => j.id === 'forest/oak');
   assert.equal(oak.size, 192);
   assert.equal(oak.keep, 64);
-  assert.equal(oak.calls, 16);
-  assert.equal(oak.candidates, 4);
+  assert.equal(oak.calls, 64);
+  assert.equal(oak.candidates, 1);
   assert.match(oak.prompt, /mighty oak tree/);
   assert.match(oak.prompt, /Final Fantasy aesthetic/);
   assert.equal(oak.out, 'assets/pixelab/landscape_v2/micro/large_flora/forest/oak');

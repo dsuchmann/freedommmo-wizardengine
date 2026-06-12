@@ -22,7 +22,7 @@ function emitObject(reg) {
       jobs.push({
         kind: 'create', id, out,
         size: reg.size, keep: reg.variants,
-        calls: reg.create_calls, candidates: reg.candidates_per_call,
+        calls: reg.create_calls, candidates: reg.candidates_per_call, // live-verified 2026-06-12: create-1-direction-object returns 1 image/call
         prompt: reg.prompt_template.replaceAll('{desc}', a.desc),
       });
       const states = { ...reg.states, ...(a.fruit ? reg.fruit_states : {}) };

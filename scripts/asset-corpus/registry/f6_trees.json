@@ -5,8 +5,8 @@
   "category": "object",
   "size": 192,
   "variants": 64,
-  "candidates_per_call": 4,
-  "create_calls": 16,
+  "candidates_per_call": 1,
+  "create_calls": 64,
   "output_root": "assets/pixelab/landscape_v2/micro/large_flora",
   "prompt_template": "top-down high fantasy pixel art {desc}, jaw-dropping beauty, hyper-detailed, rich saturated colors, Final Fantasy aesthetic, alpha-transparent background, detailed shading, large tree sprite seen from above with visible trunk and full canopy",
   "archetypes": [
