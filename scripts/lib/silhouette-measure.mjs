@@ -13,6 +13,9 @@ export function measureSilhouette(img, trim) {
   if (!img || !trim) return null;
   const [tx, ty, tw, th] = trim;
   if (!(tw > 0) || !(th > 0)) return null;
+  if (tx < 0 || ty < 0 || tx + tw > img.w || ty + th > img.h) {
+    throw new Error(`trim [${tx},${ty},${tw},${th}] outside image ${img.w}x${img.h}`);
+  }
   // per-row widths + centers within the trim window
   const widths = new Array(th).fill(0);
   const centers = new Array(th).fill(0);

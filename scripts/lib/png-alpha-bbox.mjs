@@ -47,9 +47,9 @@ export function decodeAlpha(buf) {
 }
 
 export function alphaBBoxFromBuffer(buf) {
+  if (buf.readUInt32BE(0) !== 0x89504e47) throw new Error('not a PNG');
   const w = buf.readUInt32BE(16), h = buf.readUInt32BE(20);
   const colorType = buf[25];
-  if (buf.readUInt32BE(0) !== 0x89504e47) throw new Error('not a PNG');
   if (colorType === 2 || colorType === 0) {
     // validate header constraints the same way decodeAlpha does
     if (buf[24] !== 8) throw new Error(`unsupported bit depth ${buf[24]}`);
