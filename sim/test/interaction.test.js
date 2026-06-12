@@ -52,3 +52,22 @@ test('signatureOf is order-independent and class-based', () => {
   // archetype CLASS, not instance: boulder_small and boulder_mossy are both 'boulder'
   assert.equal(signatureOf([{ archetype: 'boulder_small' }, { archetype: 'boulder_mossy' }]), 'boulder+boulder');
 });
+
+test('combineOutcome([]) → ruined_mash with empty merged (empty list edge case)', () => {
+  const out = combineOutcome([]);
+  assert.equal(out.ok, false);
+  assert.equal(out.form, 'ruined_mash');
+  assert.deepEqual(out.merged, {});
+});
+
+test('adhesionOf edge cases: empty composition and unknown grain both return 0', () => {
+  assert.equal(adhesionOf({}), 0);
+  assert.equal(adhesionOf({ unknown_grain: 5 }), 0);
+});
+
+test('combineOutcome is insertion-order independent (same result regardless of key order)', () => {
+  assert.deepEqual(
+    combineOutcome([{ cellulose: 6, lignin: 4 }]),
+    combineOutcome([{ lignin: 4, cellulose: 6 }])
+  );
+});
