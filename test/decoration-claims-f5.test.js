@@ -102,6 +102,21 @@ test('F4 default state mix unchanged by the resolver migration (golden threshold
   assert.ok(checked > 0, 'expected F4 placements');
 });
 
+test('F4 grassland lifecycle states: exact golden values (salt 9705 regression pin)', () => {
+  setFieldTuning(null);
+  clearClaimCaches();
+  const GOLDEN = [
+    [2, 0, 'wilting'], [5, 0, 'wilting'], [11, 0, 'dead'], [14, 0, null],
+    [33, 0, 'wilting'], [43, 0, null], [47, 0, 'seedling'], [54, 0, null],
+    [59, 0, 'seedling'], [107, 0, null],
+  ];
+  for (const [wx, wy, want] of GOLDEN) {
+    const pls = f4Placements(wx, wy, grass);
+    assert.equal(pls.length, 1, `expected placement at ${wx},${wy}`);
+    assert.equal(pls[0].state, want, `state at ${wx},${wy}`);
+  }
+});
+
 test('claimScanRadius grows with extreme f5 tuning and resets with caches', () => {
   setFieldTuning(null);
   clearClaimCaches();
