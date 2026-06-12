@@ -73,6 +73,7 @@ const perf = new PerformanceMonitor();
 const simWorldState = new SimWorldState();
 let simClient = null;
 let simConnected = false;
+window._simWorldState = simWorldState; // dev hook (same pattern as _player/_debugProvider)
 // Track last F3 removed set pushed to workers (avoid redundant broadcasts)
 let _lastF3Keys = [];
 
@@ -96,6 +97,7 @@ function _applySimState(client) {
   const VP_HALF = 40;
   const viewport = { x: Math.floor(player.x) - VP_HALF, y: Math.floor(player.y) - VP_HALF, w: VP_HALF * 2, h: VP_HALF * 2 };
   simClient = new SimClient({ url: 'ws://127.0.0.1:8787', viewport, onState: _applySimState });
+  window._simClient = simClient; // dev hook
   simClient.ready.then(() => {
     simConnected = true;
     console.log('[sim] connected — sim-driven world active');
@@ -152,27 +154,17 @@ function update(dt) {
   // When sim is absent or no override is nearby the flag is left untouched and
   // local behaviour is exactly unchanged.
   if (simConnected && simClient && player.interactPressed) {
-    const px = Math.floor(player.x), py = Math.floor(player.y);
-    let bestOv = null, bestDist = 3.0;
-    for (let dy = -2; dy <= 2; dy++) {
-      for (let dx = -2; dx <= 2; dx++) {
-        const wx = px + dx, wy = py + dy;
-        const d = Math.hypot(dx, dy);
-        if (d >= bestDist) continue;
-        for (let fi = 0; fi < 4; fi++) {
-          const key = 'f4:' + wx + ',' + wy + ':' + fi;
-          const ov = simWorldState.overrideFor(key);
-          if (ov && !ov.removed && ov.entityId != null) {
-            bestOv = ov;
-            bestDist = d;
-            break;
-          }
-        }
-      }
+    // Nearest wired sim entity within reach: scan the (bubble-sized) entity map
+    // directly — no placement-key guessing, and matter (take) is reachable too.
+    let best = null, bestDist = 3.0;
+    for (const e of simClient.entities.values()) {
+      if (!e.placement) continue;
+      const d = Math.hypot(e.x - player.x, e.y - player.y);
+      if (d < bestDist) { best = e; bestDist = d; }
     }
-    if (bestOv) {
-      const verb = bestOv.entityType === 'matter' ? 'take' : 'harvest';
-      simClient.intend({ verb, target: bestOv.entityId });
+    if (best) {
+      const verb = best.type === 'matter' ? 'take' : 'harvest';
+      simClient.intend({ verb, target: best.id });
       // Suppress local fake reaction — sim is authoritative for this entity
       player.interactPressed = false;
     }

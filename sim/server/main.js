@@ -35,10 +35,14 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const worldPath = arg('world', 'worlds/dev.db');
   mkdirSync(dirname(worldPath), { recursive: true });
   const db = openDb(worldPath);
+  const rect = (name, dflt) => {
+    const [x0, y0, w, h] = arg(name, dflt).split(',').map(Number);
+    return { x0, y0, w, h };
+  };
   const kernel = bootWorld(db, {
     seed: Number(arg('seed', '42')),
-    bounds: { x0: 0, y0: 0, w: 320, h: 320 },
-    start: { x0: 0, y0: 0, w: 48, h: 32 },
+    bounds: rect('bounds', '0,0,320,320'),
+    start: rect('start', '0,0,48,32'),
   });
   const server = new SimServer({ kernel, port: Number(arg('port', '8787')), db });
   await server.listen();
