@@ -29,6 +29,10 @@ export const ARCHETYPE_YIELD = {
   road_segment: {},  // labor-only: no grains conjured from time (material construction = backlog)
   ford:   {},        // labor-only: longest-prefix fallthrough would conjure stone — must be explicit
   bridge: {},        // labor-only: longest-prefix fallthrough would conjure stone — must be explicit
+  hearth:  {},       // P4 interior features: labor-only construction (roads/crossings precedent)
+  bedroll: {},
+  furnace: {},
+  anvil:   {},
   default:    { stone: 0.01 },
 };
 

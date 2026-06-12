@@ -51,3 +51,11 @@ test('propertiesOf: composition-weighted emergent properties', () => {
   assert.ok(mix.stability > 0.5 && mix.stability < 0.8); // weighted between components
   assert.deepEqual(propertiesOf({}), { totalUnits: 0, energy: 0, purity: 0, resonance: 0, stability: 0 });
 });
+
+test('interior-feature archetypes have explicit EMPTY yields (labor-only, no conjured stone)', () => {
+  for (const arch of ['hearth', 'bedroll', 'furnace', 'anvil']) {
+    const node = { type: 'matter', attrs: { archetype: arch, E: 100 } };
+    assert.deepEqual(compositionOf(node), {},
+      `${arch} must yield no grains — longest-prefix fallthrough to default would conjure stone`);
+  }
+});
