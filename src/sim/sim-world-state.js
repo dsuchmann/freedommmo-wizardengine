@@ -12,10 +12,10 @@ export class SimWorldState {
     }
     for (const e of entities.values()) {
       if (!e.placement) continue;
-      if (e.type === 'matter') { next.set(e.placement, { visual: 'base', removed: false, entityId: e.id }); continue; }
+      if (e.type === 'matter') { next.set(e.placement, { visual: 'base', removed: false, entityId: e.id, entityType: 'matter' }); continue; }
       const spine = spineStateOf({ stage: e.stage, ageTicks: e.ageTicks ?? 0,
         senescenceStartTicks: e.senescenceStartTicks ?? Infinity, bufferDays: e.bufferDays ?? null });
-      next.set(e.placement, { visual: visualStateOf(spine), removed: false, entityId: e.id });
+      next.set(e.placement, { visual: visualStateOf(spine), removed: false, entityId: e.id, entityType: e.type ?? 'flora' });
     }
     this._map = next; this.version++;
   }

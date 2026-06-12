@@ -95,22 +95,16 @@ function _applySimState(client) {
   // Viewport: 40-tile radius around player in each axis
   const VP_HALF = 40;
   const viewport = { x: Math.floor(player.x) - VP_HALF, y: Math.floor(player.y) - VP_HALF, w: VP_HALF * 2, h: VP_HALF * 2 };
-  try {
-    simClient = new SimClient({ url: 'ws://127.0.0.1:8787', viewport, onState: _applySimState });
-    simClient.ready.then(() => {
-      simConnected = true;
-      console.log('[sim] connected — sim-driven world active');
-    }).catch(() => {
-      // Expected when no sim process is running — silent graceful degradation
-      simConnected = false;
-      simClient = null;
-      console.warn('[sim] no sim process — baseline-only world');
-    });
-  } catch (e) {
+  simClient = new SimClient({ url: 'ws://127.0.0.1:8787', viewport, onState: _applySimState });
+  simClient.ready.then(() => {
+    simConnected = true;
+    console.log('[sim] connected — sim-driven world active');
+  }).catch(() => {
+    // Expected when no sim process is running — silent graceful degradation
     simConnected = false;
     simClient = null;
     console.warn('[sim] no sim process — baseline-only world');
-  }
+  });
 })();
 
 let last = performance.now();
@@ -121,8 +115,10 @@ function update(dt) {
     renderer.chunkRenderCache.clear();
   }
   // Sim intent routing: when sim is connected and player presses interact ('f'),
-  // find nearest F4 entity override and dispatch intent. Existing local reaction
-  // is NOT suppressed — sim connected means both paths fire in parallel.
+  // find nearest F4 entity override and dispatch intent to the sim.
+  // When a sim entity is targeted, set player.interactPressed = false to suppress
+  // the local fake reaction — update() runs before renderer.draw() so this flag
+  // is cleared before canvas-renderer.js:355 calls performInteraction.
   if (simConnected && simClient && input.wasPressed('f')) {
     // Find nearest F4 placement with a sim entity near the player
     const px = Math.floor(player.x), py = Math.floor(player.y);
@@ -145,7 +141,10 @@ function update(dt) {
       }
     }
     if (bestOv) {
-      simClient.intend({ verb: 'harvest', target: bestOv.entityId });
+      const verb = bestOv.entityType === 'matter' ? 'take' : 'harvest';
+      simClient.intend({ verb, target: bestOv.entityId });
+      // Suppress local fake reaction — sim is authoritative for this entity
+      player.interactPressed = false;
     }
   }
   if (input.wasPressed('m')) overmap.toggle();

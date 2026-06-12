@@ -9,7 +9,7 @@ test('living wired entity maps through spineStateOf/visualStateOf', () => {
     entities: new Map([[7, { id: 7, placement: 'f4:3,4:0', field: 'f4', stage: 'mature', bufferDays: 1, ageTicks: 0, senescenceStartTicks: 1e12 }]]),
     deltas: [],
   });
-  assert.deepEqual(s.overrideFor('f4:3,4:0'), { visual: 'wilting', removed: false, entityId: 7 });
+  assert.deepEqual(s.overrideFor('f4:3,4:0'), { visual: 'wilting', removed: false, entityId: 7, entityType: 'flora' });
 });
 
 test('taken placement is suppressed even with no entity present', () => {
