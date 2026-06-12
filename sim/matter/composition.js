@@ -29,14 +29,17 @@ export const ARCHETYPE_YIELD = {
   default:    { stone: 0.01 },
 };
 
-function archetypeYield(archetype) {
-  // Sort candidates by length descending so 'stump' beats 'st', 'boulder' beats 'b', etc.
-  // This makes prefix matching robust regardless of object key insertion order.
+/** Canonical archetype CLASS of an instance name ('boulder_small' → 'boulder').
+ *  Same longest-prefix rule the yield tables use. Exported for recipe signatures. */
+export function archetypeClassOf(archetype) {
   const candidates = Object.keys(ARCHETYPE_YIELD)
     .filter(k => k !== 'default')
     .sort((a, b) => b.length - a.length);
-  const key = candidates.find(k => String(archetype ?? '').startsWith(k));
-  return ARCHETYPE_YIELD[key ?? 'default'];
+  return candidates.find(k => String(archetype ?? '').startsWith(k)) ?? String(archetype ?? 'unknown');
+}
+
+function archetypeYield(archetype) {
+  return ARCHETYPE_YIELD[archetypeClassOf(archetype)] ?? ARCHETYPE_YIELD.default;
 }
 
 function scale(tbl, magnitude) {
