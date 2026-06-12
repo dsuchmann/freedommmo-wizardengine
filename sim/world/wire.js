@@ -6,6 +6,7 @@
 import { tilePlacements } from './baseline.js';
 import { rand } from '../kernel/rng.js';
 import { DAY } from '../time/metabolism.js';
+import { START } from './spawn.js';
 
 /** FNV-1a over the key string → 31-bit int for rand() salting (deterministic, order-free). */
 export function keyHash(key) {
@@ -29,6 +30,7 @@ export function materializeRect(kernel, { x0, y0, w, h }, tick) {
       .map(d => d.target.slice('placement:'.length)));
   const existing = new Set(
     [...kernel.graph.nodes.values()].map(n => n.attrs?.placement).filter(Boolean));
+  const st = START[F4_CLASS];
   let made = 0;
   for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) {
     for (const p of tilePlacements(x, y)) {
@@ -40,9 +42,9 @@ export function materializeRect(kernel, { x0, y0, w, h }, tick) {
         // so wired F4 metabolizes identically to spawned entities (no-mock).
         const node = kernel.addLiving({
           species: F4_CLASS, x: p.x, y: p.y, tick,
-          R: 600 + Math.floor(rand(kernel.seed, hh, 1) * 900),
-          body: 200 + Math.floor(rand(kernel.seed, hh, 2) * 400),
-          age: Math.floor(rand(kernel.seed, hh, 3) * 40) * DAY,
+          R: st.R[0] + Math.floor(rand(kernel.seed, hh, 1) * (st.R[1] - st.R[0])),
+          body: st.body[0] + Math.floor(rand(kernel.seed, hh, 2) * (st.body[1] - st.body[0])),
+          age: Math.floor(rand(kernel.seed, hh, 3) * st.maxAgeDays) * DAY,
         });
         Object.assign(node.attrs, meta);
       } else {
