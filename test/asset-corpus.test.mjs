@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { enumerateRegistry, resolveDerived } from '../scripts/asset-corpus/lib/enumerate.mjs';
-import { emitBatch } from '../scripts/asset-corpus/lib/emit.mjs';
+import { emitBatch, emitPilotBatch } from '../scripts/asset-corpus/lib/emit.mjs';
 
 const FIXTURE = {
   id: 'fixture_flora',
@@ -115,4 +115,29 @@ test('emitBatch is deterministic (stable job order)', () => {
 test('emitBatch refuses dormant registries', () => {
   assert.throws(() => emitBatch({ ...loadReg('f6_trees'), status: 'dormant' }, {}),
     /dormant/);
+});
+
+test('roads pilot batch is the declared 1x3 subset', () => {
+  const roads = loadReg('roads_wang');
+  const pilot = emitPilotBatch(roads, {});
+  assert.equal(pilot.burst, 'p2-roads_wang-pilot');
+  assert.equal(pilot.gate, 'pilot');
+  assert.equal(pilot.jobs.length, 3);
+  assert.ok(pilot.jobs.every((j) => j.kind === 'wang' && j.tile_size === 32));
+  assert.deepEqual(pilot.jobs.map((j) => j.id).sort(),
+    ['dirt_road__desert', 'dirt_road__grassland', 'dirt_road__taiga']);
+});
+
+test('pilot_required full batch carries its gate so the runner can refuse it', () => {
+  const batch = emitBatch(loadReg('roads_wang'), {});
+  assert.equal(batch.gate, 'pilot_required');
+  assert.equal(batch.jobs.length, 2 * 16);
+});
+
+test('biome base tile table covers all road biomes', () => {
+  const tiles = loadReg('biome_base_tiles');
+  for (const b of loadReg('roads_wang').biomes) {
+    assert.ok(tiles[b]?.base_tile_id, `missing base tile for ${b}`);
+    assert.ok(tiles[b]?.desc);
+  }
 });

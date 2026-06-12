@@ -1,0 +1,23 @@
+{
+  "arctic":          { "desc": "white snow and ice with subtle blue shadows",                                       "base_tile_id": "2c8a9b01-73c4-4313-b3b3-f239f254dbca" },
+  "beach":           { "desc": "golden sandy beach with fine grain texture",                                       "base_tile_id": "1e408a41-65af-4a42-a719-616b764b2bdd" },
+  "deep_ocean":      { "desc": "dark navy ocean water with deep subtle wave patterns",                             "base_tile_id": "09e824f3-86b5-45b8-9e6f-2f54b8d17ce1" },
+  "dense_forest":    { "desc": "very dark dense forest floor with thick leaf litter, mushrooms, and deep moss",   "base_tile_id": "7a43bd9f-a0a3-4cb1-82f2-0fa56237682c" },
+  "desert":          { "desc": "arid desert sand with subtle wind ripples",                                       "base_tile_id": "f51c6f4a-354e-4dff-a4b1-1ea8b0c66573" },
+  "forest":          { "desc": "dark forest floor with fallen leaves, moss, and exposed roots",                   "base_tile_id": "87973039-3faa-448b-9123-4e64a7c6e932" },
+  "grassland":       { "desc": "lush green grass meadow with individual blades",                                  "base_tile_id": "3d09d189-81b3-4b62-9799-4827bb0495b5" },
+  "hills":           { "desc": "rocky hillside with scattered stones and sparse tough grass",                     "base_tile_id": "7296ae72-e61b-4f0c-bc89-d34f07c3266d" },
+  "lake":            { "desc": "calm still blue-green water with subtle reflections",                             "base_tile_id": "b3c7768c-4611-43d2-92d9-c9dcb35f7fa4" },
+  "mountains":       { "desc": "grey mountain rock with snow patches and exposed stone",                          "base_tile_id": "1439e310-3505-47d1-b32d-79fe9391870b" },
+  "mystic":          { "desc": "glowing purple-pink enchanted ground with crystal fragments",                     "base_tile_id": "4bb937fe-e73f-403f-a06c-3a0d9a801daf" },
+  "ocean":           { "desc": "deep blue ocean water with gentle wave ripples",                                  "base_tile_id": "cb04ad78-c894-4595-be7c-c5e847cd0e1b" },
+  "river":           { "desc": "flowing blue water with gentle current lines",                                    "base_tile_id": "818260d3-6de2-4db1-88f2-8839b44d22c9" },
+  "savanna":         { "desc": "dry golden savanna grass with scattered patches of red earth",                    "base_tile_id": "7fd08ff7-17c4-4139-a6fb-7d014acccca3" },
+  "shallow_water":   { "desc": "light turquoise water with visible sandy bottom",                                 "base_tile_id": "b76c4461-725a-4468-9631-e28b50b76f25" },
+  "steppe":          { "desc": "short windswept dry brown-green grass with hard packed earth",                    "base_tile_id": "fe211bb1-4b99-4e95-a025-a04ce8883d5e" },
+  "swamp":           { "desc": "wet brown swamp mud with murky water patches and peat",                          "base_tile_id": "ebad6623-d862-49e8-9124-8a90f53e1229" },
+  "taiga":           { "desc": "cold taiga floor with pine needles, frost, and sparse lichen",                   "base_tile_id": "aadf3e49-0212-4f21-b853-fde4cbf905f6" },
+  "tropical_forest": { "desc": "lush tropical forest floor with broad leaves, vines, and rich dark soil",        "base_tile_id": "130e304b-a9e8-47b5-bf1d-a1cf43efd9fd" },
+  "tundra":          { "desc": "frozen grey-brown permafrost with sparse lichen and frost",                      "base_tile_id": "4d46ed0d-426d-4325-a5d6-33464ee26297" },
+  "volcanic":        { "desc": "dark charred volcanic rock with glowing orange lava cracks",                     "base_tile_id": "2958e295-1974-4936-aedf-39ceb8b52517" }
+}

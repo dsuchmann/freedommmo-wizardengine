@@ -56,6 +56,20 @@ function emitWang(reg) {
   return batchOf(reg, jobs);
 }
 
+export function emitPilotBatch(regIn, registryById) {
+  const reg = resolveDerived(regIn, registryById);
+  if (!reg.pilot) throw new Error(`${reg.id} declares no pilot subset`);
+  const sub = { ...reg, status: 'armed' };
+  if (reg.category === 'wang') {
+    sub.materials = reg.materials.filter((m) => reg.pilot.materials.includes(m.name));
+    sub.biomes = reg.pilot.biomes;
+  } else {
+    sub.archetypes = reg.archetypes.filter((a) => reg.pilot.archetypes.includes(a.name));
+  }
+  const batch = emitBatch(sub, registryById);
+  return { ...batch, burst: `${batch.burst}-pilot`, gate: 'pilot' };
+}
+
 function batchOf(reg, jobs) {
   jobs.sort((a, b) => a.id.localeCompare(b.id) || a.kind.localeCompare(b.kind));
   return {

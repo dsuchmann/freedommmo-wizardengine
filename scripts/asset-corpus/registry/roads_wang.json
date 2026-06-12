@@ -1,0 +1,19 @@
+{
+  "id": "roads_wang",
+  "consuming_plan": "P2",
+  "status": "pilot_required",
+  "category": "wang",
+  "tile_size": 32,
+  "variants": 1,
+  "transition_size": 0.5,
+  "output_root": "assets/pixelab/landscape_v2/roads",
+  "materials": [
+    { "name": "dirt_road", "desc": "hard-packed dirt road with wheel ruts and scattered small stones" },
+    { "name": "cobble_road", "desc": "grey cobblestone road with fitted rounded stones and moss in the seams" }
+  ],
+  "biomes": ["arctic", "beach", "dense_forest", "desert", "forest", "grassland", "hills", "mountains", "mystic", "savanna", "steppe", "swamp", "taiga", "tropical_forest", "tundra", "volcanic"],
+  "pilot": {
+    "materials": ["dirt_road"],
+    "biomes": ["grassland", "desert", "taiga"]
+  }
+}
