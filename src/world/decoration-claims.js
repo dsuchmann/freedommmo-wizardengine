@@ -646,7 +646,8 @@ export function f4AnimUrlBase(p) {
 // f5Placements resolves footprint conflicts between candidates (below).
 function f5Candidate(wx, wy, tileInfo) {
   var t = tileInfo(wx, wy);
-  if (!t || t.transition) { _provisionalEpoch++; return EMPTY; } // unloaded — provisional
+  if (!t) { _provisionalEpoch++; return EMPTY; } // unloaded — provisional (may load later)
+  if (t.transition) return EMPTY; // transition tiles are PERMANENT no-F5 — final, no epoch bump
   var key = wx + ',' + wy + ',' + t.biome;
   var hit = _f5CandCache.get(key);
   if (hit) return hit;
