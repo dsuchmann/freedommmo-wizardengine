@@ -28,7 +28,7 @@ The repo has many unrelated dirty/untracked asset files. NEVER use `git add -A`,
 **Files:**
 - Create: `docs/superpowers/specs/2026-06-11-asset-state-taxonomy.md`
 
-- [ ] **Step 1: Write the doc** with exactly this content (verbatim; this IS the design):
+- [x] **Step 1: Write the doc** with exactly this content (verbatim; this IS the design):
 
 ````markdown
 # Asset-State Taxonomy — canonical lifecycle states for everything rendered
@@ -111,7 +111,7 @@ via embodied-reserve decay). This is honest absence: a boulder does not pretend 
 
 (Continue the same file with the §6 requirement sheets from Task 2 — Task 2 appends to this doc.)
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add docs/superpowers/specs/2026-06-11-asset-state-taxonomy.md
@@ -125,7 +125,7 @@ git commit -m "docs(taxonomy): canonical lifecycle state machine — spine, visu
 **Files:**
 - Modify: `docs/superpowers/specs/2026-06-11-asset-state-taxonomy.md` (append §6)
 
-- [ ] **Step 1: Append** exactly this content:
+- [x] **Step 1: Append** exactly this content:
 
 ````markdown
 ## 6. Per-archetype requirement sheets (F2–F7 + future fauna/body)
@@ -198,7 +198,7 @@ gone. Marks: all F. Kernel's grazer already walks this spine; only sprites are f
 | grazer | fauna | no |
 ````
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add docs/superpowers/specs/2026-06-11-asset-state-taxonomy.md
@@ -213,7 +213,7 @@ git commit -m "docs(taxonomy): per-archetype requirement sheets F2-F7 + fauna at
 - Create: `src/world/asset-state-taxonomy.js`
 - Test: `sim/test/taxonomy.test.js`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```js
 // sim/test/taxonomy.test.js — the taxonomy module must agree with the kernel's species tables.
@@ -288,14 +288,14 @@ test('kernel species all bind to an archetype class with a sheet', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `node --test sim/test/taxonomy.test.js`
 Expected: FAIL — `Cannot find module '../../src/world/asset-state-taxonomy.js'`.
 
 (Verify first that `sim/time/metabolism.js` exports `DAY` and that `SPECIES[*].senescence.start` exists for every species — adapt the test's kernel imports to the real export names if they differ, and report the deviation.)
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 ```js
 // src/world/asset-state-taxonomy.js — machine form of docs/superpowers/specs/2026-06-11-asset-state-taxonomy.md.
@@ -361,11 +361,11 @@ export const FIELD_SHEETS = {
 
 NOTE: sheets list VISUAL states only, so F2 has no `growing` row (`growing` → visual `normal` via SPINE_TO_VISUAL). The single exception is F6: trees get a DEDICATED sapling sprite, so `growing: 'R'` appears in F6's states and `'growing'` is admitted in the legal-vocabulary set of BOTH test files (with a comment). Doc and module agree on this; keep them identical.
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 Run: `node --test sim/test/taxonomy.test.js` → PASS. Then `npm test` → all green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/world/asset-state-taxonomy.js sim/test/taxonomy.test.js
@@ -381,7 +381,7 @@ git commit -m "feat(taxonomy): machine-readable asset-state taxonomy — spine, 
 
 The probe (CLAUDE.md continuous testability): every state name that EXISTS on disk must be declared in its field's sheet (the taxonomy throws nothing away); required-but-ungenerated states are REPORTED, never failed (generation rides the existing pipeline, later).
 
-- [ ] **Step 1: Write the probe**
+- [x] **Step 1: Write the probe**
 
 ```js
 // sim/test/probe-taxonomy-coverage.test.js — the taxonomy must subsume what the pipeline
@@ -438,7 +438,7 @@ test('probe: sheet vocabularies stay inside the taxonomy', () => {
 });
 ```
 
-- [ ] **Step 2: Run the probe and reconcile reality**
+- [x] **Step 2: Run the probe and reconcile reality**
 
 Run: `node --test sim/test/probe-taxonomy-coverage.test.js`
 
@@ -455,11 +455,11 @@ The first assertion is EXPECTED to surface real on-disk state names the sheets d
    `sheet.layout` hint added to FIELD_SHEETS rather than forking the probe.
 Document every reconciliation in the final report.
 
-- [ ] **Step 3: Run the full suite**
+- [x] **Step 3: Run the full suite**
 
 Run: `npm test` → all green.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add sim/test/probe-taxonomy-coverage.test.js src/world/asset-state-taxonomy.js docs/superpowers/specs/2026-06-11-asset-state-taxonomy.md sim/test/taxonomy.test.js
@@ -472,10 +472,10 @@ git commit -m "test(taxonomy): coverage probe — taxonomy subsumes on-disk stat
 
 ### Task 5: Close-out
 
-- [ ] **Step 1:** `npm test` one final time → all green; note final test count.
-- [ ] **Step 2:** Check every box in this plan doc.
-- [ ] **Step 3:** Update `docs/superpowers/plans/2026-06-11-pass1-roadmap.md`: Plan D row → `**DONE**` (cite this plan doc + any entries in "Canonical deviations" below), Plan E row → `**NEXT**`.
-- [ ] **Step 4:** Commit:
+- [x] **Step 1:** `npm test` one final time → all green; note final test count.
+- [x] **Step 2:** Check every box in this plan doc.
+- [x] **Step 3:** Update `docs/superpowers/plans/2026-06-11-pass1-roadmap.md`: Plan D row → `**DONE**` (cite this plan doc + any entries in "Canonical deviations" below), Plan E row → `**NEXT**`.
+- [x] **Step 4:** Commit:
 
 ```bash
 git add docs/superpowers/plans/2026-06-11-pass1d-asset-state-taxonomy.md docs/superpowers/plans/2026-06-11-pass1-roadmap.md
@@ -487,3 +487,6 @@ git commit -m "docs: roadmap — Plan D DONE, Plan E NEXT"
 ## Canonical deviations (authoritative over task text above)
 
 *Append entries here when execution legitimately diverges from the plan. Each entry: what changed, why, and which task it affects.*
+
+1. **Sheet-overrides-default rule + dailyBurn definition added to the spec doc (Tasks 1–2, commit 234c51776).** Quality review found §2's 1:1 map silently contradicted by F6's dedicated seedling/growing sprites, and `dailyBurn` undefined (kernel burn rates are per-tick). §2 now states the table is the DEFAULT and a field's sheet may promote states to dedicated sprites (authoritative for its field); §1 defines `dailyBurn = perTickBurn × DAY`.
+2. **F3 flat disk layout (Task 4, Rule 3, commit bfc469c17).** F3 stores states as flat files `_states/<biome>/<archetype>/ss__<biome>__<archetype>__state__<name>.png`, not `<biome>/<archetype>/_states/<state>/` dirs. Reconciled via `layout: 'flat'` hint on F3's FIELD_SHEETS entry + a flat branch in the probe's `statesOnDisk`; spec doc §6 F3 documents the layout. No vocabulary changes — all on-disk F3/F4 states were already declared.
