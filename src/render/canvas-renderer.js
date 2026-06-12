@@ -9,6 +9,7 @@ import { AtlasManager } from '../assets/atlas-manager.js';
 import { setChunkStore, getDebugWangData, setDebugWangData } from './wang-terrain-painter.js';
 import { biomeVariantFrameId } from '../assets/variant-selector.js';
 import { drawElevationOverlay } from './elevation-overlay.js';
+import { drawSimDebugOverlay } from './sim-debug-overlay.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations, buildWaveField } from './water-wave-overlay.js';
 import { drawLargeObjects, preloadLargeObjectSprites, setPlayerDrawFn } from './large-object-renderer.js';
 import { drawField2Animations, preloadField2Animations, drawWindWispOverlay, setField2PlayerDraw, setField2PlayerGL } from './field2-animator.js';
@@ -428,6 +429,7 @@ export class CanvasRenderer {
     drawWindWispOverlay(ctx, w, h, player, tilePx);
 
     drawElevationOverlay(ctx, chunkStore, camX, camY, w, h, sun, camera);
+    drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h);
     this.drawContactOverlay(player, w, h, camera.zoom, performance.now() / 1000);
     // this.drawDepthBokeh(chunkStore, player, focusTile, camera, camX, camY, w, h);
     this.drawAtmosphere(sun, w, h);

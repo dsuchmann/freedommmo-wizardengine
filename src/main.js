@@ -16,6 +16,7 @@ import { movementCost, resolveMovement } from './physics/movement.js';
 import { SimClient } from './sim/sim-client.js';
 import { SimWorldState } from './sim/sim-world-state.js';
 import { setField2SimWorldState } from './render/field2-animator.js';
+import { initSimDebugOverlay } from './render/sim-debug-overlay.js';
 
 const canvas = document.getElementById('game');
 const stats = document.getElementById('stats');
@@ -112,6 +113,7 @@ function _onSimClose() {
   const viewport = { x: _simVpCenter.x - VP_HALF, y: _simVpCenter.y - VP_HALF, w: VP_HALF * 2, h: VP_HALF * 2 };
   simClient = new SimClient({ url: 'ws://127.0.0.1:8787', viewport, onState: _applySimState, onClose: _onSimClose });
   window._simClient = simClient; // dev hook
+  initSimDebugOverlay();
   simClient.ready.then(() => {
     simConnected = true;
     console.log('[sim] connected — sim-driven world active');
