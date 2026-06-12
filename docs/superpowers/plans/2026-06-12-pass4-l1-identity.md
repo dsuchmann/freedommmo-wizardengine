@@ -624,4 +624,8 @@ git commit -m "test(l1): probe — four races age through real stages, die of se
 
 ## Deviations (canonical)
 
-(filled at close-out — authoritative over task text above)
+- **Task 2** (42ff32e62): senescence-death test spawn age raised 78→82 `* YEAR` per the plan's own fallback (test ran ~113s otherwise); death assertion unweakened. Review note: the "10-stage burn multipliers" comment is intentional — TIME_SYSTEM has 10 stages, fetus omitted here (honest absence).
+- **Task 3** (9b3c4f583): no deviations. `sim/life/` directory created. Salt audit confirmed 4100–4301 range collision-free (lifecycle 101/102/200/303; spawn/wire/lod use small positional salts).
+- **Task 4** (f05735d44): no deviations. 4 test-file call sites (probe-blueprints, protocol-wire) intentionally omit the seed arg — back-compat path (no seed → no name), not missed updates.
+- **Task 5** (ea3ca9d7a): run window 12y→6y (orc already 2 senescence steps past start at boot; 1.15× compounding kills well inside 6y — halved runtime 256s→149s); grass grid step 2→3 (49→25 nodes); `SPECIES` import dropped (unused), `nameOf` imported for the seed-difference assertion (simplified per the plan's binding adaptation rule). Conservation form copied exactly from probe-growth (stocks(0) + tlStart baseline before runTo, scale = max(|captured|,1)). Reviewer minors accepted as-is: the survival guards around the post-run human-stage and burn-ordering assertions come from the plan's own sketch; boot-stage, orc-death, no-seed, and conservation assertions are unconditional.
+- Probe runtime ~149s (guideline ~120s) — accepted; bottleneck is multi-year humanoid metabolism, world already minimal.
