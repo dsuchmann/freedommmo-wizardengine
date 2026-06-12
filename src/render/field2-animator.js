@@ -408,6 +408,49 @@ function loadFrame(url) {
   return null;
 }
 
+// Pre-downscaled copies for sprites drawn well below native size. Nearest-
+// neighbor minification drops pixels; an area-averaged downscale (stepwise
+// halving) keeps silhouettes readable. Keyed by native img + scale bucket.
+// Upscale / near-native stays nearest-neighbor (crisp pixel art).
+var DOWNSCALE_BUCKETS = [0.5, 0.33, 0.25];
+var _downCache = new Map(); // (img.src + '@' + bucket) -> canvas
+
+function scaledFrame(img, destPx) {
+  var native = img.naturalWidth || img.width;
+  if (!native || destPx >= native * 0.66) return img;
+  var ratio = destPx / native;
+  var bucket = DOWNSCALE_BUCKETS[0];
+  for (var i = 1; i < DOWNSCALE_BUCKETS.length; i++)
+    if (ratio <= DOWNSCALE_BUCKETS[i]) bucket = DOWNSCALE_BUCKETS[i];
+  // All frames from loadFrame are Image elements with .src (either original or
+  // dataURL from denoiseImage/temporalDenoise) — no canvas returns, so img.src
+  // is always a non-empty string; no empty-key collision risk.
+  var key = img.src + '@' + bucket;
+  var hit = _downCache.get(key);
+  if (hit) return hit;
+  // Stepwise halving down to the bucket size (better than one big smooth pass)
+  var src = img, w = native, h = img.naturalHeight || img.height;
+  var target = Math.max(2, Math.round(native * bucket));
+  while (w * 0.5 > target) {
+    var half = document.createElement('canvas');
+    half.width = Math.max(2, Math.round(w * 0.5));
+    half.height = Math.max(2, Math.round(h * 0.5));
+    var hctx = half.getContext('2d');
+    hctx.imageSmoothingEnabled = true;
+    hctx.drawImage(src, 0, 0, half.width, half.height);
+    src = half; w = half.width; h = half.height;
+  }
+  var out = document.createElement('canvas');
+  out.width = target; out.height = Math.max(2, Math.round(h * target / native));
+  var octx = out.getContext('2d');
+  octx.imageSmoothingEnabled = true;
+  octx.drawImage(src, 0, 0, out.width, out.height);
+  out._f2At = img._f2At; // preserve fade-in state (imgFade mutates this copy — fine)
+  out._dnKey = key;      // stable identity for GL atlas keying (no .src on canvas)
+  _downCache.set(key, out);
+  return out;
+}
+
 // Preload wind sway frames AND static sprites for nearby biomes
 var lastPreloadKey = '';
 var _f2Ready = false;
@@ -1023,6 +1066,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         // Sway rotation: rigid objects never sway (frames still animate)
         var sway = bl.isRigid ? 0 : currentEffect.rot * 1.2 * animBlend * bl.lifeSway;
         var drawSize = tilePxSnapped * bl.lifeScale;
+        img = scaledFrame(img, drawSize);
         drawBuffer.push({
           sortY: wy + bl.sortYOff,
           sx: tileSX + bl.offUX * tilePxSnapped,
@@ -1030,7 +1074,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           halfDraw: drawSize * 0.5, drawSize: drawSize,
           baseAngle: bl.baseAngle, sway: sway,
           alpha: edgeFade * imgFade(img, timeMs), img: img,
-          _url: img.src || '',
+          _url: img.src || img._dnKey || '',
           shadowK: biomeShadowK
         });
       }
@@ -1039,6 +1083,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
       if (desc.extra) {
         var exImg = loadFrame(desc.extra.url);
         if (exImg) {
+          exImg = scaledFrame(exImg, tilePxSnapped);
           drawBuffer.push({
             sortY: wy + 0.5,
             sx: tileSX + desc.extra.offUX * tilePxSnapped,
@@ -1046,7 +1091,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
             halfDraw: halfTile, drawSize: tilePxSnapped,
             baseAngle: 0, sway: 0,
             alpha: edgeFade * imgFade(exImg, timeMs), img: exImg,
-            _url: exImg.src || '',
+            _url: exImg.src || exImg._dnKey || '',
             shadowK: biomeShadowK
           });
         }
