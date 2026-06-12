@@ -49,6 +49,9 @@ import('./world/decoration-claims.js').then(function (m) {
     f4: function (wx, wy) { return m.f4Placements(wx, wy, function (x, y) {
       var t = window._dbgChunkStore && window._dbgChunkStore.tileAt(x, y);
       return t ? { biome: t.biome, transition: !!t.transitionPair } : null; }); },
+    f5: function (wx, wy) { return m.f5Placements(wx, wy, function (x, y) {
+      var t = window._dbgChunkStore && window._dbgChunkStore.tileAt(x, y);
+      return t ? { biome: t.biome, transition: !!t.transitionPair } : null; }); },
     clear: m.clearClaimCaches,
   };
 });
