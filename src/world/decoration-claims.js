@@ -7,7 +7,7 @@ import { rand2, pickIndex } from '../core/random.js';
 import { MF_CATALOG } from './mf-catalog.js';
 import { MO_CATALOG } from './mo-catalog.js';
 import { tuneSize, tuneBiomeDensity, tuneObjDensity, tuneStateWeights, rollWeighted,
-  F4_STATE_ORDER, F4_STATE_DEFAULTS, F5_STATE_ORDER, f5StateDefaults } from './field-tuning.js';
+  F4_STATE_ORDER, F4_STATE_DEFAULTS, F5_STATE_ORDER, f5StateDefaults, maxSizeMul } from './field-tuning.js';
 
 var MF_BASE_PATH = '/assets/pixelab/landscape_v2/micro/medium_flora/';
 // Per-tile chance of one medium-flora plant (master plan: 3-12% density)
@@ -369,6 +369,38 @@ var _placeCache = new Map();    // 'wx,wy,biome' -> placements
 var _maskCache = new Map();     // 'wx,wy' -> Uint8Array(8) row bitmasks
 var MAX_CACHE = 20000;
 
+// Claim-scan radius (tiles). ±3 covers default scales; the tuner's
+// multiplicative sliders can push footprints further, so the radius is
+// derived from the tuning tree's worst case. Recomputed lazily after
+// clearClaimCaches() (every tuning apply calls it). Capped at 8 — beyond
+// that the mask loop cost outweighs fidelity at absurd slider combos.
+var _scanR = 3;
+var _scanRDirty = true;
+
+function maxFieldReachTiles(field, basePx, scaleTable, fwK, dropK, fhK) {
+  var maxBiome = 1;
+  for (var k in scaleTable) maxBiome = Math.max(maxBiome, scaleTable[k]);
+  var drawPx = basePx * maxBiome * maxSizeMul(field);
+  // horizontal reach: ux offset (≤0.25 tile) + fw half-width;
+  // vertical reach: uy offset + base drop + fh half-height (the larger wins)
+  var reachPx = drawPx * Math.max(fwK, dropK + fhK);
+  return 0.25 + reachPx / TILE_ART_PX;
+}
+
+function recomputeScanRadius() {
+  _scanRDirty = false;
+  var r = Math.max(
+    maxFieldReachTiles('f3', TILE_ART_PX, { _: 0.5 }, 0.55, 0.32, 0.30),
+    maxFieldReachTiles('f4', 64, F4_BIOME_SCALE, 0.30, 0.30, 0.16),
+    maxFieldReachTiles('f5', 96, F5_BIOME_SCALE, 0.42, 0.30, 0.22));
+  _scanR = Math.min(8, Math.max(3, Math.ceil(r)));
+}
+
+export function claimScanRadius() {
+  if (_scanRDirty) recomputeScanRadius();
+  return _scanR;
+}
+
 function cachePut(map, key, val) {
   if (map.size >= MAX_CACHE) map.clear(); // deterministic — safe to drop wholesale
   map.set(key, val);
@@ -443,8 +475,9 @@ export function f3SpriteUrl(p) {
 }
 
 // 8x8 bitmask of claimed cells for tile (wx,wy). Row r bit c = cell claimed.
-// Scans this tile + neighbors out to ±3: F5 96px objects reach ~2.5 tiles
-// at max tuner scale (fw 0.42 × 192px), hence the ±3 radius.
+// Scans this tile + neighbors out to claimScanRadius() (≥3): radius is
+// derived from the tuning tree's worst-case size multipliers so tuner
+// scales can't push a footprint beyond the scan (see recomputeScanRadius).
 export function getClaimMask(wx, wy, tileInfo) {
   var key = wx + ',' + wy;
   var hit = _maskCache.get(key);
@@ -452,8 +485,9 @@ export function getClaimMask(wx, wy, tileInfo) {
   var mask = new Uint8Array(CELLS);
   var ox = wx * TILE_ART_PX, oy = wy * TILE_ART_PX;
   var complete = true; // any null (unloaded) neighbor -> don't cache the mask
-  for (var ny = -3; ny <= 3; ny++) {
-    for (var nx = -3; nx <= 3; nx++) {
+  var R = claimScanRadius();
+  for (var ny = -R; ny <= R; ny++) {
+    for (var nx = -R; nx <= R; nx++) {
       if (!tileInfo(wx + nx, wy + ny)) { complete = false; continue; }
       var pls = f3Placements(wx + nx, wy + ny, tileInfo)
         .concat(f4Placements(wx + nx, wy + ny, tileInfo),
@@ -489,7 +523,7 @@ export function isClaimedAt(px, py, tileInfo) {
   return (mask[r] & (1 << c)) !== 0;
 }
 
-export function clearClaimCaches() { _placeCache.clear(); _maskCache.clear(); _f4Cache.clear(); _f5Cache.clear(); }
+export function clearClaimCaches() { _placeCache.clear(); _maskCache.clear(); _f4Cache.clear(); _f5Cache.clear(); _scanRDirty = true; }
 
 function pad3(v) { return v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v); }
 

@@ -2,7 +2,7 @@
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { setFieldTuning } from '../src/world/field-tuning.js';
-import { f5Placements, f5SpriteUrl, f4Placements, getClaimMask, clearClaimCaches }
+import { f5Placements, f5SpriteUrl, f4Placements, getClaimMask, clearClaimCaches, claimScanRadius }
   from '../src/world/decoration-claims.js';
 import { MO_CATALOG } from '../src/world/mo-catalog.js';
 
@@ -100,4 +100,17 @@ test('F4 default state mix unchanged by the resolver migration (golden threshold
     }
   }
   assert.ok(checked > 0, 'expected F4 placements');
+});
+
+test('claimScanRadius grows with extreme f5 tuning and resets with caches', () => {
+  setFieldTuning(null);
+  clearClaimCaches();
+  assert.equal(claimScanRadius(), 3);
+  setFieldTuning({ f5: { size: 2, biomes: { grassland: { size: 2, objects: {} } } } });
+  clearClaimCaches();
+  assert.ok(claimScanRadius() > 3, 'radius must widen at 4x scale');
+  assert.ok(claimScanRadius() <= 8, 'radius is capped');
+  setFieldTuning(null);
+  clearClaimCaches();
+  assert.equal(claimScanRadius(), 3);
 });

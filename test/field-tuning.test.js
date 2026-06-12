@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { FIELD_TUNING, setFieldTuning, tuneSize, tuneBiomeDensity, tuneObjDensity, tuneAnimEnabled, tuneStateWeights, rollWeighted, F2_STATE_ORDER, F2_STATE_DEFAULTS,
-  F4_STATE_ORDER, F4_STATE_DEFAULTS, F5_STATE_ORDER, f5StateDefaults } from '../src/world/field-tuning.js';
+  F4_STATE_ORDER, F4_STATE_DEFAULTS, F5_STATE_ORDER, f5StateDefaults, maxSizeMul } from '../src/world/field-tuning.js';
 
 test('defaults are all 1.0', () => {
   setFieldTuning(null);
@@ -114,4 +114,21 @@ test('setFieldTuning normalizes f5', () => {
   assert.equal(FIELD_TUNING.f5.size, 2);
   setFieldTuning(null);
   assert.deepEqual(FIELD_TUNING, { f2: {}, f3: {}, f4: {}, f5: {} });
+});
+
+test('maxSizeMul: empty tree -> 1', () => {
+  setFieldTuning(null);
+  assert.equal(maxSizeMul('f5'), 1);
+});
+
+test('maxSizeMul: multiplies worst-case master/biome/object/variant', () => {
+  setFieldTuning({ f5: { size: 2, biomes: {
+    grassland: { size: 2, objects: {
+      boulder: { sizeMin: 0.5, sizeMax: 2, variants: { 1: { size: 1.5 } } }
+    } },
+    desert: { size: 1.25 }
+  } } });
+  // 2 (master) * 2 (worst biome) * 2 (sizeMax) * 1.5 (variant) = 12
+  assert.equal(maxSizeMul('f5'), 12);
+  setFieldTuning(null);
 });

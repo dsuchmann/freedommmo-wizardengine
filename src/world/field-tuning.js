@@ -108,6 +108,40 @@ export function rollWeighted(weights, order, r) {
   return order[order.length - 1];
 }
 
+// Worst-case node size: range nodes use sizeMax, plain nodes use size.
+function nodeMax(node) {
+  if (!node) return 1;
+  if (node.sizeMax != null) return node.sizeMax;
+  return node.size != null ? node.size : 1;
+}
+
+// Worst-case combined size multiplier for a field across the whole tree —
+// master x max(biome) x max(object) x max(variant). Used to derive the
+// claim-mask scan radius so extreme tuner scales can't out-reach the scan.
+export function maxSizeMul(field) {
+  var f = FIELD_TUNING[field];
+  if (!f) return 1;
+  var m = f.size != null ? f.size : 1;
+  var worst = 1;
+  var biomes = f.biomes || {};
+  for (var bk in biomes) {
+    var b = biomes[bk];
+    var bm = nodeMax(b);
+    var ow = 1;
+    var objs = b.objects || {};
+    for (var ok in objs) {
+      var o = objs[ok];
+      var om = nodeMax(o);
+      var vw = 1;
+      var vars = o.variants || {};
+      for (var vk in vars) vw = Math.max(vw, nodeMax(vars[vk]));
+      ow = Math.max(ow, om * vw);
+    }
+    worst = Math.max(worst, bm * ow);
+  }
+  return m * worst;
+}
+
 // Per-field state rosters + defaults (= the old hardcoded splits).
 // 'base'/'normal' mean "no state sprite" (render the base variant).
 export var F2_STATE_ORDER = ['seedling', 'normal', 'wilting', 'dead'];
