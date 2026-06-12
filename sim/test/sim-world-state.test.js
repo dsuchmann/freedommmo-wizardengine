@@ -18,6 +18,20 @@ test('taken placement is suppressed even with no entity present', () => {
   assert.deepEqual(s.overrideFor('f3:1,1:0'), { visual: null, removed: true, entityId: null });
 });
 
+test('damaged delta does NOT hide a placement; removal kinds DO (mirrors wire.js REMOVAL_KINDS)', () => {
+  // Regression: a cracked-but-existing object must keep rendering from baseline.
+  const d = (key, kind) => ({ target: 'placement:' + key, kind });
+  const s = new SimWorldState();
+  s.update({
+    entities: new Map(),
+    deltas: [d('f3:0,0:0', 'damaged'), d('f3:0,0:1', 'taken'), d('f3:0,0:2', 'felled'), d('f3:0,0:3', 'destroyed')],
+  });
+  assert.equal(s.overrideFor('f3:0,0:0'), null, 'damaged must not produce a removal override');
+  for (const k of ['f3:0,0:1', 'f3:0,0:2', 'f3:0,0:3']) {
+    assert.deepEqual(s.overrideFor(k), { visual: null, removed: true, entityId: null }, k);
+  }
+});
+
 test('unknown placement → no override (baseline renders untouched)', () => {
   const s = new SimWorldState();
   s.update({ entities: new Map(), deltas: [] });

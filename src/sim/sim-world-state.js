@@ -1,13 +1,18 @@
 // src/sim/sim-world-state.js — placementKey → render override, derived from sim truth alone.
 import { spineStateOf, visualStateOf } from '../world/asset-state-taxonomy.js';
 
+// Mirrors sim/world/wire.js REMOVAL_KINDS: only these delta kinds hide a placement.
+const REMOVAL_KINDS = new Set(['taken', 'felled', 'destroyed']);
+
 export class SimWorldState {
   constructor() { this._map = new Map(); this.version = 0; }
   /** Rebuild from a SimClient-shaped {entities, deltas}. Cheap: bubble-sized. */
   update({ entities, deltas }) {
     const next = new Map();
     for (const d of deltas) {
-      if (d.target?.startsWith('placement:'))
+      // Only removal kinds hide a placement; 'damaged' deltas are stage scars, not removals
+      // (mirrors wire.js REMOVAL_KINDS — a cracked rock still exists).
+      if (d.target?.startsWith('placement:') && REMOVAL_KINDS.has(d.kind))
         next.set(d.target.slice('placement:'.length), { visual: null, removed: true, entityId: null });
     }
     for (const e of entities.values()) {
