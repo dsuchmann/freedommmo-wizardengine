@@ -488,11 +488,15 @@ export function f4Placements(wx, wy, tileInfo) {
   var hit = _f4Cache.get(key);
   if (hit) return hit;
   var objs = MF_CATALOG[t.biome];
-  var chance = F4_TILE_CHANCE[t.biome] || 0;
+  var chance = (F4_TILE_CHANCE[t.biome] || 0) * tuneBiomeDensity('f4', t.biome);
   if (!objs || !objs.length || chance === 0) return cachePut(_f4Cache, key, EMPTY);
   if (rand2(wx, wy, 9700) > chance) return cachePut(_f4Cache, key, EMPTY);
 
   var obj = objs[Math.floor(rand2(wx, wy, 9701) * objs.length)];
+  // Object-level density: <1 rejects this tile's pick (1 placement/tile max,
+  // so >1 cannot add more — clamped by construction). NEW salt 9714.
+  var objD = tuneObjDensity('f4', t.biome, obj.name);
+  if (objD < 1 && rand2(wx, wy, 9714) > objD) return cachePut(_f4Cache, key, EMPTY);
   // Lifecycle roll: 15% seedling / 55% normal / 20% wilting / 8% dead / 2% enchanted
   var roll = rand2(wx, wy, 9705);
   var st = null;
@@ -510,7 +514,8 @@ export function f4Placements(wx, wy, tileInfo) {
   }
   var ux = 0.5 + (rand2(wx, wy, 9703) - 0.5) * 0.5;
   var uy = 0.5 + (rand2(wx, wy, 9704) - 0.5) * 0.5;
-  var scale = F4_BIOME_SCALE[t.biome] || 1.0;
+  var scale = (F4_BIOME_SCALE[t.biome] || 1.0) *
+    tuneSize('f4', t.biome, obj.name, variant, wx, wy, 9720);
   var sizeTiles = obj.size * scale / TILE_ART_PX; // 64px @ 1.0 -> 2 tiles
   var drawPx = obj.size * scale;                  // world art px at 1 tile = 32px
   var p = {
