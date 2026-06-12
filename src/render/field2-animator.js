@@ -441,7 +441,7 @@ function scaledFrame(img, destPx) {
     src = half; w = half.width; h = half.height;
   }
   var out = document.createElement('canvas');
-  out.width = target; out.height = Math.max(2, Math.round(h * target / native));
+  out.width = target; out.height = Math.max(2, Math.round(h * target / w));
   var octx = out.getContext('2d');
   octx.imageSmoothingEnabled = true;
   octx.drawImage(src, 0, 0, out.width, out.height);
