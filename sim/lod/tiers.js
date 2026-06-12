@@ -102,7 +102,7 @@ export function promoteRegion(kernel, regionKey, tick) {
       const corpseEv = kernel.ledger.emit({ tick, type: 'corpse', causeEventId: evId });
       const corpse = kernel.graph.createNode({
         type: 'corpse', tick, x: x0 + HALF, y: y0 + HALF, causeEventId: corpseEv,
-        attrs: { E: p.detritusE, decayHalflifeTicks: halflife, of: species },
+        attrs: { E: p.detritusE, decayHalflifeTicks: halflife, of: species, species },
       });
       kernel.scheduler.schedule(tick + halflife * Math.log2(p.detritusE / 0.5), corpse.id, 'decay_gone', -1);
     } else if (p.detritusE > 0) {
