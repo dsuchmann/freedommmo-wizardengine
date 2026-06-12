@@ -3,6 +3,8 @@
 // F3 placements → inert MATTER nodes (noFlux, hold embodied time E, no lifecycle).
 // Delta-suppressed placements (target === 'placement:<key>') are silently skipped —
 // that is how taken/destroyed objects stay gone across re-boots (world = f(seed, deltas)).
+// Only REMOVAL kinds suppress a placement. 'damaged' deltas are intentionally NOT suppressing:
+// they record hp/stage scars for the renderer but the object still exists in the world.
 import { tilePlacements } from './baseline.js';
 import { rand } from '../kernel/rng.js';
 import { DAY } from '../time/metabolism.js';
@@ -25,8 +27,13 @@ const F4_CLASS = 'berry_bush';
  *  (baseline provenance) or with a causal event (promotion — later pass). Skips delta-suppressed
  *  and already-materialized keys. Returns count created. */
 export function materializeRect(kernel, { x0, y0, w, h }, tick) {
+  // Only removal kinds (taken / felled / destroyed) suppress a placement on reboot.
+  // 'damaged' deltas are scar records for the renderer — they must NOT suppress, otherwise
+  // a cracked-but-existing object vanishes when the kernel is reconstructed from seed+deltas.
+  const REMOVAL_KINDS = new Set(['taken', 'felled', 'destroyed']);
   const suppressed = new Set(
-    kernel.deltas.list.filter(d => d.target?.startsWith('placement:'))
+    kernel.deltas.list
+      .filter(d => d.target?.startsWith('placement:') && REMOVAL_KINDS.has(d.kind))
       .map(d => d.target.slice('placement:'.length)));
   const existing = new Set(
     [...kernel.graph.nodes.values()].map(n => n.attrs?.placement).filter(Boolean));

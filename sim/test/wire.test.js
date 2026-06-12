@@ -50,3 +50,35 @@ test('a delta-suppressed placement is not materialized', () => {
     assert.ok(true, 'no placements on probed tiles — biome empty, acceptable');
   }
 });
+
+test('damaged delta does NOT suppress the placement on reboot; taken/destroyed DO suppress', () => {
+  // Regression for Issue 1: a cracked-but-existing object must survive reboot.
+  // wire.js must only suppress on removal kinds (taken / felled / destroyed).
+  const victim = tilePlacements(938, 0).concat(tilePlacements(939, 0), tilePlacements(940, 0))[0];
+  if (!victim) { assert.ok(true, 'no placements on probed tiles — acceptable'); return; }
+
+  // Case A: 'damaged' kind — object must still materialize
+  const kA = makeKernel();
+  kA.deltas.push({ tick: 0, x: 0, y: 0, target: 'placement:' + victim.key, kind: 'damaged',
+    attrs: { stage: 'cracked', hp: 60 } });
+  kA.graph.boot(() => materializeRect(kA, RECT, 0));
+  assert.ok(
+    [...kA.graph.nodes.values()].some(n => n.attrs?.placement === victim.key),
+    'damaged delta must NOT suppress the placement — object still exists in the world');
+
+  // Case B: 'taken' kind — object must be absent
+  const kB = makeKernel();
+  kB.deltas.push({ tick: 0, x: 0, y: 0, target: 'placement:' + victim.key, kind: 'taken', attrs: {} });
+  kB.graph.boot(() => materializeRect(kB, RECT, 0));
+  assert.equal(
+    [...kB.graph.nodes.values()].some(n => n.attrs?.placement === victim.key), false,
+    'taken delta must suppress the placement');
+
+  // Case C: 'destroyed' kind — object must be absent
+  const kC = makeKernel();
+  kC.deltas.push({ tick: 0, x: 0, y: 0, target: 'placement:' + victim.key, kind: 'destroyed', attrs: {} });
+  kC.graph.boot(() => materializeRect(kC, RECT, 0));
+  assert.equal(
+    [...kC.graph.nodes.values()].some(n => n.attrs?.placement === victim.key), false,
+    'destroyed delta must suppress the placement');
+});

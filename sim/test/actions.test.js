@@ -275,6 +275,10 @@ test('strike(b): shatter → parent removed, products Σ E == parent E, all in c
   for (const n of result.products) {
     assert.ok(n.createdByEvent != null, `product has createdByEvent`);
   }
+  // all products are inert matter (noFlux)
+  for (const n of result.products) {
+    assert.equal(n.attrs.noFlux, true, `product ${n.attrs.archetype} has noFlux`);
+  }
 });
 
 // (c) strike on terminal and unknown-def archetype returns null
@@ -348,6 +352,10 @@ test('chop(f): chop tree → corpse + ≥1 log + ≥2 branches; E conservation',
   const totalE = corpse.attrs.E + productSumE;
   assert.ok(Math.abs(totalE - preChopE) < 1e-6,
     `E conservation: corpse ${corpse.attrs.E} + products ${productSumE} = ${totalE} ≠ preChop ${preChopE}`);
+  // every product matter node carries provenance
+  for (const n of matterNodes) {
+    assert.ok(n.createdByEvent != null, `chop product ${n.attrs.archetype} has createdByEvent`);
+  }
   // existing probe-6 seam: felled delta + healDeltaId
   const felledDelta = k.deltas.list.find(d => d.kind === 'felled');
   assert.ok(felledDelta, 'felled delta still exists');
