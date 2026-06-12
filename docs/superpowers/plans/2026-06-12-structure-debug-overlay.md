@@ -324,3 +324,13 @@ No unit test (DOM-bound draw code, same as the rest of OvermapController — the
 - District `reason` text is wire-stripped (privacy precedent kept conservative); hover-inspection of reasons would need a query round-trip — backlog.
 - `window._simClient` / `window._simDebugOverlay` dev hooks are the access path (existing precedent, sim-debug-overlay.js:38) — fine for a debug overlay, not for gameplay UI.
 - Client `canOccupy` wall-awareness (src/physics/movement.js) remains open — overlay visualizes walls, doesn't enforce them.
+
+---
+
+## Deviations (canonical)
+
+None substantive — all three tasks applied the plan code verbatim. Review notes accepted as backlog:
+
+1. **Settlement `territory` crosses the wire by reference** (protocol.js) — safe today because the server JSON.stringifies synchronously; defensive-copy if wire objects ever outlive the send.
+2. **Pre-existing: `group` nodes still leak through the generic living branch** as malformed living-shaped wire objects (species undefined). Not worsened by this branch; a non-renderable-type guard is a future protocol commit.
+3. **Tier label clips when territory hugs the viewport top** (label drawn at y−5) — cosmetic debug nit.
