@@ -5,6 +5,7 @@
 // worker and main thread compute identical results independently.
 import { rand2 } from '../core/random.js';
 import { MF_CATALOG } from './mf-catalog.js';
+import { tuneSize, tuneBiomeDensity, tuneObjDensity } from './field-tuning.js';
 
 var MF_BASE_PATH = '/assets/pixelab/landscape_v2/micro/medium_flora/';
 // Per-tile chance of one medium-flora plant (master plan: 3-12% density)
@@ -374,16 +375,21 @@ export function f3Placements(wx, wy, tileInfo) {
     var allowed = _ssAllowed[t.biome + '/' + obj.name];
     if (allowed && allowed.length === 0) continue; // all variants corrupt/boxy
     var sparsity = obj.sparsity || 0.93;
-    if (rand2(wx, wy, 9500 + oi) > (1.0 - sparsity)) continue; // SAME seeds as today
-    var scale = obj.scale || 0.32;
+    // Density tuning scales the acceptance probability (same roll/seed as today)
+    var dMul = tuneBiomeDensity('f3', t.biome) * tuneObjDensity('f3', t.biome, obj.name);
+    if (rand2(wx, wy, 9500 + oi) > (1.0 - sparsity) * dMul) continue; // SAME seeds as today
+    // Variant must be known before size (per-variant tuning) — same roll as before
+    var variant = allowed
+      ? allowed[Math.floor(rand2(wx, wy, 9510 + oi) * allowed.length)]
+      : Math.floor(rand2(wx, wy, 9510 + oi) * SS_VARIANT_COUNT);
+    var scale = (obj.scale || 0.32) *
+      tuneSize('f3', t.biome, obj.name, variant, wx, wy, 9570 + oi * 4);
     var ux = 0.5 + (rand2(wx, wy, 9520 + oi) - 0.5) * 0.6;     // tile units
     var uy = 0.5 + (rand2(wx, wy, 9530 + oi) - 0.5) * 0.6;
     var drawPx = TILE_ART_PX * scale;
     var p = {
       name: obj.name, biome: t.biome,
-      variant: allowed
-        ? allowed[Math.floor(rand2(wx, wy, 9510 + oi) * allowed.length)]
-        : Math.floor(rand2(wx, wy, 9510 + oi) * SS_VARIANT_COUNT),
+      variant: variant,
       ux: ux, uy: uy, scale: scale,
       angle: (rand2(wx, wy, 9540 + oi) - 0.5) * 0.5,
       alpha: 0.85 + rand2(wx, wy, 9550 + oi) * 0.15,
