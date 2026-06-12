@@ -31,15 +31,18 @@ test('client attaches, receives snapshot, tracks tick-deltas, sends intents', as
     viewport: { x: 938, y: 0, w: 16, h: 16 },
     onState: s => states.push(s),
   });
-  await client.ready;                                          // resolves after snapshot
-  assert.ok(client.tick >= 0);
-  assert.ok(client.entities instanceof Map);
-  const wired = [...client.entities.values()].find(e => e.placement);
-  if (wired) {
-    client.intend({ verb: wired.type === 'matter' ? 'take' : 'harvest', target: wired.id });
-    await new Promise(r => setTimeout(r, 300));                // one pump
-    assert.ok(client.deltas.length >= 0);                      // deltas list mirrored
+  try {
+    await client.ready;                                          // resolves after snapshot
+    assert.ok(client.tick >= 0);
+    assert.ok(client.entities instanceof Map);
+    const wired = [...client.entities.values()].find(e => e.placement);
+    if (wired) {
+      client.intend({ verb: wired.type === 'matter' ? 'take' : 'harvest', target: wired.id });
+      await new Promise(r => setTimeout(r, 300));                // one pump
+      assert.ok(client.deltas.length >= 0);                      // deltas list mirrored
+    }
+  } finally {
+    client.close();
+    await server.close();
   }
-  client.close();
-  await server.close();
 });

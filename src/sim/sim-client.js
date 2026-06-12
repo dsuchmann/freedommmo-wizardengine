@@ -19,8 +19,14 @@ export class SimClient {
     this.ready = new Promise((res, rej) => { this._readyRes = res; this._readyRej = rej; });
     this.ws = wsFactory(url);
     this.ws.onopen = () => this._send({ type: 'hello', viewport });
-    this.ws.onmessage = m => this._onMsg(JSON.parse(typeof m.data === 'string' ? m.data : m.data.toString()));
+    this.ws.onmessage = m => {
+      let msg;
+      try { msg = JSON.parse(typeof m.data === 'string' ? m.data : m.data.toString()); }
+      catch { return; } // ignore unparseable frames
+      this._onMsg(msg);
+    };
     this.ws.onerror = e => this._readyRej?.(e);
+    this.ws.onclose = () => this._readyRej?.(new Error('closed before snapshot'));
   }
 
   _send(msg) { this.ws.send(JSON.stringify(msg)); }
@@ -37,6 +43,7 @@ export class SimClient {
       this.deltas = msg.deltas ?? [];
       this._readyRes?.();
       this._readyRes = null;
+      this._readyRej = null;
     } else if (msg.type === 'tick-delta') {
       // NOTE: tick-delta uses 'upserts' (not 'entities') — verified in protocol.js tickDeltaMsg
       this.tick = msg.tick;
