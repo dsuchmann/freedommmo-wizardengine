@@ -1,7 +1,7 @@
 // sim/test/protocol.test.js
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseClientMsg, serializeEntity, snapshotMsg, tickDeltaMsg, eventsMsg, timeMsg } from '../server/protocol.js';
+import { parseClientMsg, serializeEntity, serializeItem, snapshotMsg, tickDeltaMsg, eventsMsg, timeMsg } from '../server/protocol.js';
 
 test('parseClientMsg accepts the four client message types', () => {
   assert.deepEqual(parseClientMsg(JSON.stringify({ type: 'hello', viewport: { x: 0, y: 0, w: 40, h: 25 } })),
@@ -109,6 +109,32 @@ test('serializeEntity: building → id/type/x/y/template/footprint/stamps; npcSl
     stamps: [{ x: 4, y: 4, piece: 'wall', material: 'wattle', walkable: false }],
   });
   assert.equal(s.npcSlots, undefined, 'npc slots are sim-internal, not render-relevant');
+});
+
+test('parseClientMsg: equip intent needs positive int item + known-shaped slot string', () => {
+  assert.deepEqual(parseClientMsg(JSON.stringify({ type: 'intent', verb: 'equip', item: 3, slot: 'hand_main' })),
+    { type: 'intent', verb: 'equip', item: 3, slot: 'hand_main' });
+  assert.equal(parseClientMsg(JSON.stringify({ type: 'intent', verb: 'equip', item: 0, slot: 'hand_main' })), null);
+  assert.equal(parseClientMsg(JSON.stringify({ type: 'intent', verb: 'equip', item: 1.5, slot: 'hand_main' })), null);
+  assert.equal(parseClientMsg(JSON.stringify({ type: 'intent', verb: 'equip', item: 3, slot: 42 })), null);
+  assert.equal(parseClientMsg(JSON.stringify({ type: 'intent', verb: 'equip', item: 3 })), null);
+});
+
+test('parseClientMsg: unequip intent needs slot string', () => {
+  assert.deepEqual(parseClientMsg(JSON.stringify({ type: 'intent', verb: 'unequip', slot: 'hand_main' })),
+    { type: 'intent', verb: 'unequip', slot: 'hand_main' });
+  assert.equal(parseClientMsg(JSON.stringify({ type: 'intent', verb: 'unequip' })), null);
+});
+
+test('serializeItem: id/kind/archetype/E/stage only — grains stay sim-side', () => {
+  // hp=30, maxHp=62: ratio ≈ 0.484, which is > 0.40 and ≤ 0.75 → 'cracked'
+  const item = { id: 7, kind: 'composite', archetype: 'composite:cellulose+lignin',
+                 E: 100, grains: { cellulose: 108, lignin: 72 }, tick: 3, hp: 30, maxHp: 62 };
+  assert.deepEqual(serializeItem(item),
+    { id: 7, kind: 'composite', archetype: 'composite:cellulose+lignin', E: 100, stage: 'cracked' });
+  // undamaged item (no hp tracking yet): stage 'intact'
+  const fresh = { id: 8, kind: 'matter', archetype: 'pebble', E: 200, grains: { stone: 2 }, tick: 0 };
+  assert.equal(serializeItem(fresh).stage, 'intact');
 });
 
 test('message builders stamp type and tick', () => {

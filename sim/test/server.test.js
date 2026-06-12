@@ -114,6 +114,61 @@ test('strike intent dispatched over protocol → strike ledger event emitted', a
   await server.close();
 });
 
+test('equip/unequip intents: player wire carries equipment, inventory shrinks; grains never cross the wire', async () => {
+  const bounds = { x0: 0, y0: 0, w: 16, h: 16 };
+  const kernel = new Kernel({ seed: 33, bounds });
+  let log1, log2;
+  kernel.graph.boot(() => {
+    log1 = kernel.graph.createNode({
+      type: 'matter', tick: 0, x: 2, y: 2, R: null,
+      attrs: { archetype: 'log', E: 50, noFlux: true },
+    });
+    log2 = kernel.graph.createNode({
+      type: 'matter', tick: 0, x: 3, y: 2, R: null,
+      attrs: { archetype: 'log', E: 50, noFlux: true },
+    });
+  });
+  const server = new SimServer({ kernel, port: 0, timeScale: 48 });
+  await server.listen();
+  const ws = await connect(server);
+
+  const allMsgs = [];
+  ws.on('message', data => allMsgs.push(String(data)));
+
+  ws.send(JSON.stringify({ type: 'hello', viewport: { x: 0, y: 0, w: 16, h: 16 } }));
+  const snap = await next(ws, 'snapshot');
+  const playerId = snap.playerId;
+
+  // Give the player a composite item directly (mimics a combine result)
+  const player = kernel.graph.nodes.get(playerId);
+  const toolItem = { id: 5001, kind: 'composite', archetype: 'composite:cellulose+lignin',
+                     E: 100, grains: { cellulose: 108, lignin: 72 }, tick: 0 };
+  player.attrs.inventory = [toolItem];
+
+  // Send equip intent — pump applies it
+  ws.send(JSON.stringify({ type: 'intent', verb: 'equip', item: 5001, slot: 'hand_main' }));
+  // Wait for a tick-delta that includes the equipment field
+  const td = await next(ws, 'tick-delta');
+  assert.ok(td.player.equipment.hand_main, 'equipment.hand_main present after equip');
+  assert.equal(td.player.equipment.hand_main.id, 5001, 'equipment item id matches');
+  assert.equal(td.player.inventory.length, 0, 'inventory empty after equip');
+
+  // No grains in any message
+  for (const msg of allMsgs) {
+    assert.ok(!msg.includes('"grains"'), `grains key must not appear in wire message: ${msg.slice(0, 120)}`);
+  }
+
+  // Unequip: item returns to inventory
+  ws.send(JSON.stringify({ type: 'intent', verb: 'unequip', slot: 'hand_main' }));
+  const td2 = await next(ws, 'tick-delta');
+  assert.equal(Object.keys(td2.player.equipment).length, 0, 'equipment empty after unequip');
+  assert.equal(td2.player.inventory.length, 1, 'item back in inventory after unequip');
+  assert.equal(td2.player.inventory[0].id, 5001, 'returned item id matches');
+
+  ws.close();
+  await server.close();
+});
+
 test('combine intent dispatched over protocol → combine ledger event emitted', async () => {
   // Boot a world with two log matter nodes; take them into inventory before server starts,
   // then send a combine intent and confirm the combine event arrives via the events stream.

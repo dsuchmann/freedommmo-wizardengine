@@ -42,10 +42,16 @@ export function auditGrains(kernel) {
     }
   }
 
-  // --- 2. Held: sum grains in all inventory items across all nodes ---
+  // --- 2. Held: sum grains in all inventory + equipment items across all nodes ---
   const held = {};
   for (const node of kernel.graph.nodes.values()) {
     for (const item of (node.attrs?.inventory ?? [])) {
+      if (!item.grains) continue;
+      for (const [g, u] of Object.entries(item.grains)) {
+        if (u > 0) held[g] = (held[g] ?? 0) + u;
+      }
+    }
+    for (const item of Object.values(node.attrs?.equipment ?? {})) {
       if (!item.grains) continue;
       for (const [g, u] of Object.entries(item.grains)) {
         if (u > 0) held[g] = (held[g] ?? 0) + u;

@@ -2,8 +2,9 @@
 // Spec §3. The ONLY file in sim/ allowed to read the wall clock — and only to
 // decide how far to advance sim-time. The kernel itself never sees real time.
 import { WebSocketServer } from 'ws';
-import { parseClientMsg, serializeEntity, snapshotMsg, tickDeltaMsg, eventsMsg, timeMsg } from './protocol.js';
+import { parseClientMsg, serializeEntity, serializeItem, snapshotMsg, tickDeltaMsg, eventsMsg, timeMsg } from './protocol.js';
 import { createPlayer, pick, chop, harvest, take, eat, strike, combine } from '../world/actions.js';
+import { equip, unequip } from '../items/equipment.js';
 import { checkpoint } from '../store/checkpoint.js';
 import { TierManager } from '../lod/tiers.js';
 
@@ -111,6 +112,8 @@ export class SimServer {
         else if (it.verb === 'eat') eat(this.kernel, it.session.playerId, it.target, this.kernel.tick);
         else if (it.verb === 'strike') strike(this.kernel, it.session.playerId, it.target, it.damageType, it.amount, this.kernel.tick);
         else if (it.verb === 'combine') combine(this.kernel, it.session.playerId, it.items, this.kernel.tick);
+        else if (it.verb === 'equip') equip(this.kernel, it.session.playerId, it.item, it.slot, this.kernel.tick);
+        else if (it.verb === 'unequip') unequip(this.kernel, it.session.playerId, it.slot, this.kernel.tick);
       } catch {
         // node died between snapshot and pump — drop the intent silently
       }
@@ -137,7 +140,12 @@ export class SimServer {
       const removed = [...s.knownIds].filter(id => !curIds.has(id));
       s.knownIds = curIds;
       const player = this.kernel.materialized(s.playerId);
-      s.ws.send(JSON.stringify(tickDeltaMsg(this.kernel.tick, entities, removed, { R: player?.R ?? 0 }, this.kernel.deltas.list)));
+      s.ws.send(JSON.stringify(tickDeltaMsg(this.kernel.tick, entities, removed, {
+        R: player?.R ?? 0,
+        inventory: (player?.attrs.inventory ?? []).map(serializeItem),
+        equipment: Object.fromEntries(Object.entries(player?.attrs.equipment ?? {})
+          .map(([slot, it]) => [slot, serializeItem(it)])),
+      }, this.kernel.deltas.list)));
       if (fresh.length) s.ws.send(JSON.stringify(eventsMsg(this.kernel.tick, fresh)));
       s.ws.send(JSON.stringify(timeMsg(this.kernel.tick)));
     }

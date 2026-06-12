@@ -2,8 +2,9 @@
 // Spec §3.2. JSON now; binary framing later if profiling demands.
 // Validation lives HERE because client messages are untrusted input.
 import { SPECIES, stageAt, DAY } from '../time/metabolism.js';
+import { stageFor } from '../matter/objects.js';
 
-const VERBS = new Set(['pick', 'chop', 'harvest', 'take', 'eat', 'strike', 'combine']);
+const VERBS = new Set(['pick', 'chop', 'harvest', 'take', 'eat', 'strike', 'combine', 'equip', 'unequip']);
 const DAMAGE_TYPES = new Set(['blunt', 'sharp', 'fire', 'frost']);
 const ADMIN_OPS = new Set(['pause', 'resume', 'save', 'ff']);
 
@@ -26,6 +27,15 @@ export function parseClientMsg(raw) {
         if (!m.items.every(x => Number.isInteger(x) && x > 0)) return null;   // ids are positive
         if (new Set(m.items).size !== m.items.length) return null;
         return { type: 'intent', verb: 'combine', items: m.items.slice() };
+      }
+      if (m.verb === 'equip') {
+        if (!Number.isInteger(m.item) || m.item <= 0) return null;
+        if (typeof m.slot !== 'string' || m.slot.length > 32 || !/^[a-z_0-9]+$/.test(m.slot)) return null;
+        return { type: 'intent', verb: 'equip', item: m.item, slot: m.slot };
+      }
+      if (m.verb === 'unequip') {
+        if (typeof m.slot !== 'string' || m.slot.length > 32 || !/^[a-z_0-9]+$/.test(m.slot)) return null;
+        return { type: 'intent', verb: 'unequip', slot: m.slot };
       }
       if (!Number.isFinite(m.target) || !Number.isInteger(m.target)) return null;
       if (m.verb === 'strike') {
@@ -95,6 +105,12 @@ export function serializeEntity(node, tick) {
     }
   }
   return base;
+}
+
+/** Wire form of an inventory/equipment item. Grains and raw hp stay sim-side. */
+export function serializeItem(item) {
+  const stage = item.maxHp != null ? stageFor(item.hp, item.maxHp) : 'intact';
+  return { id: item.id, kind: item.kind, archetype: item.archetype ?? null, E: item.E, stage };
 }
 
 export const snapshotMsg = (tick, playerId, entities, deltas) =>
