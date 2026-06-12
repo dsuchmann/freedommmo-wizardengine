@@ -43,6 +43,7 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
   const d = collectDebugDrawables(sim);
   const onScreen = (sx, sy) => sx > -tilePx && sy > -tilePx && sx < w + tilePx && sy < h + tilePx;
 
+  ctx.save();
   for (const p of d.paths) {                       // worn-path intensity: amber, alpha by wear
     const sx = Math.floor(p.x * tilePx - camX), sy = Math.floor(p.y * tilePx - camY);
     if (!onScreen(sx, sy)) continue;
@@ -74,12 +75,13 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
     ctx.fillStyle = e.type === 'settlement_founded' ? '#ffd24a' : '#ccc';
     ctx.fillText(`[${e.tick}] ${e.type}`, w - 14, 38 + 16 * i);
   });
-  ctx.textAlign = 'left';                          // restore default for other draw code
+  ctx.restore();
 }
 
 export function initSimDebugOverlay() {
   window.addEventListener('keydown', (e) => {
-    if (e.key !== '9' || e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
+    if (e.key !== '9' || e.ctrlKey || e.altKey || e.metaKey) return;
+    if (e.target instanceof Element && e.target.closest('input,textarea,select,[contenteditable]')) return;
     enabled = !enabled;
   });
   window._simDebugOverlay = { toggle: () => { enabled = !enabled; }, isEnabled: () => enabled }; // probe hook
