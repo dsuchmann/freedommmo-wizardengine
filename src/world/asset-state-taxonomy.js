@@ -40,7 +40,7 @@ export function visualStateOf(spineState) {
 export const FIELD_SHEETS = {
   _meta: {
     marks: { E: 'exists', R: 'required', T: 'transform', F: 'future' },
-    SPECIES_CLASS: { grass: 'F2', berry_bush: 'F4', tree: 'F6', grazer: 'fauna' },
+    SPECIES_CLASS: { grass: 'F2', berry_bush: 'F4', tree: 'F6', grazer: 'fauna', rabbit: 'fauna', deer: 'fauna', wolf: 'fauna' },
     // Pass 4 L1: humanoid races live in the sim but have NO bodies until L2 —
     // honest absence: they are not rendered at all (no placeholder capsules),
     // so they bind to no sheet and their life stages (infant…elderly) are not

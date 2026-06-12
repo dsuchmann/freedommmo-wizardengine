@@ -34,6 +34,26 @@ function humanoid({ lifespan, demand, burn, maxBody, forageBite }) {
   };
 }
 
+// — Pass 4 L4: fauna builder. Same Life stack as flora/humanoids; the `instinct`
+// block is rule-weighted agency (no LLM, no Mind — L6/L8 honest absences):
+//   every: decision cadence (ticks); speed: max move() steps per decision;
+//   forage { bite, radius }: bite nearest flora in radius (graze mechanics);
+//   hunt { bite, radius, prey: [species] }: approach + bite via violence channel;
+//   flee { radius }: step away from any predator-of-me in radius (priority over eating);
+//   tame { minOffer }: domestication seam (L4 verb `tame`).
+function fauna({ demand, burn, maxBody, growDays, matureDays, senYears, seed, instinct, decayDays }) {
+  return {
+    demand, burn, growFrac: 0.4, maxBody,
+    stages: [
+      ['seedling', 0,                0.5, 0.5],
+      ['growing',  growDays * DAY,   0.8, 0.8],
+      ['mature',   matureDays * DAY, 1.0, 1.0],
+    ],
+    senescence: { start: senYears * YEAR, stepEvery: 60 * DAY, burnGrowth: 1.12, demandDecay: 0.95 },
+    seed, instinct, embodiedDecayDays: decayDays,
+  };
+}
+
 // Initial tunables. Stages: [name, startAgeTicks, demandFactor, burnFactor].
 // senescence: { start, stepEvery, burnGrowth, demandDecay } — applied per step event.
 // seed: { every, cost, minR, jitter } — reproduction (Task 10).
@@ -84,8 +104,31 @@ export const SPECIES = {
     senescence: { start: 6 * YEAR, stepEvery: 60 * DAY, burnGrowth: 1.12, demandDecay: 0.95 },
     seed: { every: YEAR, cost: 20000, minR: 60000, jitter: 0.2 },
     embodiedDecayDays: 20,
-    graze: { every: 6 * 3600, bite: 600, radius: 3 },   // every 6 sim-hours
+    instinct: { every: 6 * 3600, speed: 2, forage: { bite: 600, radius: 3 }, flee: { radius: 4 } },
   },
+
+  // — Pass 4 L4 fauna. Numbers are initial tunables (grazer precedent).
+  rabbit: fauna({
+    demand: 0.05, burn: 0.25, maxBody: 1500, growDays: 15, matureDays: 45, senYears: 2,
+    seed: { every: 90 * DAY, cost: 4000, minR: 8000, jitter: 0.3 },
+    instinct: { every: 6 * 3600, speed: 3, forage: { bite: 250, radius: 3 },
+                flee: { radius: 4 }, tame: { minOffer: 2000 } },
+    decayDays: 10,
+  }),
+  deer: fauna({
+    demand: 0.12, burn: 0.45, maxBody: 9000, growDays: 45, matureDays: 150, senYears: 5,
+    seed: { every: 300 * DAY, cost: 15000, minR: 30000, jitter: 0.25 },
+    instinct: { every: 6 * 3600, speed: 3, forage: { bite: 700, radius: 3 },
+                flee: { radius: 5 }, tame: { minOffer: 6000 } },
+    decayDays: 20,
+  }),
+  wolf: fauna({
+    demand: 0.15, burn: 0.60, maxBody: 7000, growDays: 40, matureDays: 140, senYears: 5,
+    seed: { every: 360 * DAY, cost: 18000, minR: 36000, jitter: 0.25 },
+    instinct: { every: 12 * 3600, speed: 4,
+                hunt: { bite: 1200, radius: 6, prey: ['rabbit', 'deer', 'grazer'] } },
+    decayDays: 20,
+  }),
 
   // — Pass 4 L1: humanoid races. Same kernel machinery as all life; stages carry
   // the TIME_SYSTEM 10-stage burn multipliers (fetus omitted: gestation is L5's
