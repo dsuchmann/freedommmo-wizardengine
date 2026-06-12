@@ -9,6 +9,8 @@
 // verbs with the group as actor (chop reads only the wielded tool; take stores
 // into attrs.inventory, which stocks() counts) — conserving, bodies come later.
 import { chop, take } from '../world/actions.js';
+import { constructBuilding, maintainBuilding, MAINTAIN_COST } from '../world/buildings.js';
+import { DAY } from '../time/metabolism.js';
 
 export const GROWTH_INTERVAL_DAYS = 10;   // one decision every 10 days
 export const RESERVE_FLOOR = 200;         // surplus gate for NEW construction
@@ -44,4 +46,108 @@ export function clearPlot(kernel, groupId, plotId, tick) {
   if (!group || group.type !== 'group' || !plot || plot.type !== 'plot') return null;
   if (plot.attrs.owner !== groupId) return null;
   return clearLand(kernel, groupId, plot.attrs.rect, tick);
+}
+
+const HUT_COST = 610;   // 20 stamps × 20 + hearth 150 + bedroll 60 (P4 invariant)
+
+function emitDecision(kernel, groupId, settlementId, tick, decision, reason, targets = []) {
+  return kernel.ledger.emit({
+    tick, type: 'growth_decision', actor: groupId, targets: [settlementId, ...targets],
+    attrs: { decision, reason },
+  });
+}
+
+function buildingsIn(kernel, territory) {
+  return [...kernel.graph.nodes.values()]
+    .filter(n => n.type === 'building' && inRect(n.x, n.y, territory))
+    .sort((a, b) => a.id - b.id);
+}
+
+function settlementPlots(kernel, settlementId) {
+  return [...kernel.graph.nodes.values()]
+    .filter(n => n.type === 'plot' && n.attrs.settlement === settlementId)
+    .sort((a, b) => a.id - b.id);
+}
+
+function plotIsBuilt(kernel, plot) {
+  return [...kernel.graph.nodes.values()].some(n =>
+    n.type === 'building' && inRect(n.x, n.y, plot.attrs.rect));
+}
+
+function plotIsDirty(kernel, plot) {
+  const r = plot.attrs.rect;
+  for (const n of kernel.graph.nodes.values()) {
+    if (n.attrs?.placement && inRect(n.x, n.y, r)) return true;
+  }
+  return false;
+}
+
+/** Begin the growth loop for a settlement: one decision per interval, forever
+ *  (until ghost). Returns false on non-settlement or already-enabled. */
+export function enableGrowth(kernel, settlementId, tick) {
+  const s = kernel.graph.nodes.get(settlementId);
+  if (!s || s.type !== 'settlement' || s.attrs.growthEnabled) return false;
+  s.attrs.growthEnabled = true;
+  s.attrs.peakBuildings = 0;
+  kernel.scheduler.schedule(tick + GROWTH_INTERVAL_DAYS * DAY, settlementId, 'settlement_growth', -1);
+  return true;
+}
+
+/** One decision per interval, fixed priority. Module-private handler. */
+function onSettlementGrowth(kernel, node, ev) {
+  if (!node || node.type !== 'settlement') return;   // settlement gone: loop ends
+  const s = node;
+  const group = kernel.graph.nodes.get(s.attrs.founderGroup);
+  const tick = ev.tick;
+  if (group && group.type === 'group') {
+    decide(kernel, s, group, tick);
+  }
+  if (s.attrs.tier !== 'ghost') {
+    kernel.scheduler.schedule(tick + GROWTH_INTERVAL_DAYS * DAY, s.id, 'settlement_growth', -1);
+  }
+}
+
+function decide(kernel, s, group, tick) {
+  const standing = buildingsIn(kernel, s.attrs.territory);
+  s.attrs.peakBuildings = Math.max(s.attrs.peakBuildings ?? 0, standing.length);
+
+  // 1. MAINTAIN (survival): worst-condition building below threshold.
+  const worst = standing.filter(b => (b.attrs.condition ?? 100) < MAINTAIN_AT)
+                        .sort((a, b) => a.attrs.condition - b.attrs.condition)[0];
+  if (worst && group.R >= MAINTAIN_COST) {
+    emitDecision(kernel, group.id, s.id, tick, 'maintain',
+      `condition ${worst.attrs.condition} < ${MAINTAIN_AT}`, [worst.id]);
+    maintainBuilding(kernel, group.id, worst.id, tick);
+    return;
+  }
+
+  const plots = settlementPlots(kernel, s.id)
+    .filter(p => p.attrs.owner === group.id && !plotIsBuilt(kernel, p));
+
+  // 2. CLEAR (free labor): first vacant dirty plot.
+  const dirty = plots.find(p => plotIsDirty(kernel, p));
+  if (dirty) {
+    emitDecision(kernel, group.id, s.id, tick, 'clear',
+      'vacant plot carries wild growth', [dirty.id]);
+    clearLand(kernel, group.id, dirty.attrs.rect, tick);
+    return;
+  }
+
+  // 3. BUILD HUT (surplus): first vacant cleared plot.
+  const ready = plots[0];
+  if (ready && group.R >= HUT_COST + RESERVE_FLOOR) {
+    const evId = emitDecision(kernel, group.id, s.id, tick, 'build_hut',
+      `surplus ${group.R} ≥ ${HUT_COST + RESERVE_FLOOR}`, [ready.id]);
+    const b = constructBuilding(kernel, group.id, { plotId: ready.id }, 'hut', tick);
+    if (b) kernel.ledger.events[evId - 1].targets.push(b.id);
+    return;
+  }
+
+  // 4. IDLE: nothing affordable/possible — an honest recorded non-choice.
+  emitDecision(kernel, group.id, s.id, tick, 'idle',
+    ready ? `reserve ${group.R} < ${HUT_COST + RESERVE_FLOOR}` : 'no vacant plots');
+}
+
+export function registerGrowth(kernel) {
+  kernel.on('settlement_growth', onSettlementGrowth);
 }
