@@ -1072,11 +1072,13 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
     }
   }
 
-  // Debug: press 9 to dump all drawn sprite URLs to console
+  // Debug: press 8 to dump all drawn sprite URLs to console
+  // ('9' belongs to the sim debug overlay — sharing it froze the game for
+  // seconds when DevTools was open, masking the overlay toggle entirely)
   if (!self._f2DebugListener) {
     self._f2DebugListener = true;
     window.addEventListener('keydown', function(e) {
-      if (e.key === '9') {
+      if (e.key === '8') {
         self._f2DumpNext = true;
       }
     });
