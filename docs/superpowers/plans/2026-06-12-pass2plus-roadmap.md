@@ -1,0 +1,144 @@
+# Pass 2+ Roadmap — Everything Remaining in the World
+
+**Date:** 2026-06-12
+**Status:** Charted (overnight planning mandate, 2026-06-11). Authoritative multi-pass implementation map for all remaining atlas systems.
+**Prerequisite:** Pass 1 is 100% DONE (Plans A–E merged, 118/118 tests — `2026-06-11-pass1-roadmap.md`). The kernel, sim process/protocol, LOD tiers, determinism/deltas/claims, asset-state taxonomy, and F3/F4 world wiring all exist.
+
+**Rule (same as Pass 1):** this file is the single source of truth for Pass 2+ implementation status. Update the status column whenever a plan starts, completes, or changes scope. Each plan gets a dated plan doc (writing-plans skill) when its turn arrives — informed by what its predecessors taught. Plan rows declare: atlas stratum, edges (reads/writes), governing spec sections, and **honest absence** (what the world looks like before the plan lands — per the no-mock rule, absence is fine, fakery never).
+
+**Authority chain:** `2026-06-11-system-atlas-design.md` (the map; §3 system contract, §5 dependency hypergraph) → `2026-06-11-pass1-time-metabolism-simulation-kernel-design.md` (kernel seams: §2.5 subjective layers, §2.6 goal/plan/prediction shapes, §2.7 ledger, §5.4 provenance) → `2026-06-11-asset-state-taxonomy.md` (per-archetype sheets incl. F6/F7/fauna, already declared) → this doc.
+
+**Design archaeology** (engine code dead, designs live — mined for each plan below): world-compiler pipeline L10–L14 (roads/settlements/farms/POIs/event-log), 14-layer master architecture (grains L0–L2, body L9, NPCBrain L10), terrain-object 3-axis model, TIME_SYSTEM_ARCHITECTURE (life stages, transfer efficiencies, group multipliers — reference, not canon), CAUSAL_TRACKING (DecisionRecord/ImpactMatrix), SCI_FI_FANTASY_SYSTEMS (grains/items/crafting/morality/gods), WORLD_STREAMING/ARCHITECTURE_PLAN (cells/AOI/handoff). Full paths in CLAUDE.md.
+
+---
+
+## Pass ordering (derived from atlas §5 edges, not guessed)
+
+```
+Pass 1.5 (deferred wiring, trigger-driven, interleaves with everything)
+Pass 2  S3 Matter & Made Things   — grains, objects, recipes, blueprints, items
+Pass 3  S2/S5 Paths & Settlements — pathways, roads, settlement seed/zoning/growth, buildings
+Pass 4  S4 Life                   — identity, body, motion DSL, fauna, lifecycles, agency, goals, mind
+Pass 5  S5 Society                — relationships, families, groups/culture, economy, governance
+Pass 6  S6 Story                  — ledger deepening, lore, quests, history generation
+Pass 7  S7 Shapers                — gods, moral cosmology, loremaster, hero function (charted; specs at their pass)
+```
+
+Cross-pass constraints the order honors: Blueprints (S3) and Pathways (S5) plug into existing claims machinery and unblock Settlements; Mind and Agency require Identity; Settlements require Blueprints + Pathways + Economy *primitives* (ownership nodes ship in Pass 3 P3 as data shapes; the market logic is Pass 5 V4); each pass ends experienceable (probe or in-game). Round-robin methodology per atlas §6: never deepen a system beyond what the atlas shows anything consuming.
+
+---
+
+## Pass 1.5 — Deferred wiring (trigger-driven; no fixed order)
+
+Closes the honest absences Plan E declared. Each row activates when its trigger condition is met — these interleave with Passes 2–4 rather than blocking them.
+
+| Plan | Scope | Trigger condition | Atlas / spec | Honest absence until then | Status |
+|---|---|---|---|---|---|
+| **W1** | F5 medium-objects wiring: Geological/Relic as MATTER entities (no spine; cracked/destroyed damage deltas), Organic (stumps/logs/hay) with decaying-tail E; same baseline.js placement-key pattern as F3/F4 | F5 generation pipeline produces placements consumed by the renderer (generation in progress per taxonomy sheet) | S3 Object edge into S1 claims; taxonomy §4, §6-F5 | F5 objects render baseline-only, not interactable | charted |
+| **W2** | F6/F7 trees: generate the full F6 sheet (seedling/growing/normal/wilting/dead/stump/snag/burned + fruiting for fruit-bearers, 192px) + F7 canopy overlays slaved to trunk state; wire `tree` species (already in kernel, chop→stump delta proven in probe 6) via the same pattern | F6 archetype generation begins (asset work; kernel side is ready NOW) | S3/S4 edge; taxonomy §6-F6/F7 | no large trees in the world at all (F6 never generated) — absent, not fake | charted |
+| **W3** | F2 per-plant binding: grass placements as kernel entities (or per-tile cohort nodes if 1:1 is too hot) with wilting/dead visuals from sim | profiling proves bubble-scale entity count affordable (F2 density is ~10× F4) | S4 Life edge; taxonomy §6-F2 | F2 renders baseline lifecycle distribution (15/55/20/10 transform approach), not sim-driven | charted |
+| **W4** | Fauna rendering: `grazer` kernel species (already simulated) gets sprites (64px taxonomy sheet: juvenile/adult/elderly/corpse) + rendering in the entity layer; movement rendering may pull motion-DSL plan L3 forward | first fauna sprite sheet generated, OR Pass 4 L4 begins — whichever first | S4 Fauna; taxonomy fauna sheet | grazers simulate invisibly (honest: simulation without presentation is absence of rendering, not fakery — but flag it in HUD/dev tools so nobody mistakes emptiness for absence of simulation) | charted |
+| **W5** | Placement-pinned promotion: Plan C's accepted deviation closed — statistical-tier promotion re-binds to placement keys instead of sampling positions from aggregate stats, so a promoted region's flora lands exactly on baseline placements | first time a player-visible promotion pops flora into non-placement positions (or Pass 3 P5 settlement growth needs it) | S1 LOD §4.3 + §5.3 "materializes into the claim map" | promotion places entities at statistically-correct but key-unbound positions | charted |
+| **W6** | Mid-session reconnect: SimClient retries with backoff after `onClose`, re-attaches via hello, reconciles overrides (today: one-shot degrade to baseline) | first long-session playtest where sim restarts are routine | S1 protocol §3.4 | sim death = baseline world until page reload | charted |
+
+---
+
+## Pass 2 — S3 Matter & Made Things
+
+The stratum between substrate and life: what things are made of, how they break, how making is discovered. Unblocks Settlements (blueprints), Body Assembly (same blueprint machinery), Economy (items).
+
+| Plan | Scope | Atlas edges (reads → writes) | Spec / archaeology | Honest absence | Status |
+|---|---|---|---|---|---|
+| **M1** | **Material System (grains).** Atomic matter nodes with property bags (physical/magical/spiritual/technical axes; purity/stability/energy). Conservation: nothing destroyed, only transformed — grains ride the same ledger/transfer discipline as time. Every existing matter entity (F3/F5) gets a grain composition. | hypergraph store → Object System, Recipes, Items | atlas S3; SCI_FI grain schema + master-arch L0–L2 (mine the property list, drop the Python shapes) | objects have no composition; "what is this made of" unanswerable | charted |
+| **M2** | **Object System.** Instances with durability stages (intact→cracked→fractured→shattered), resistances, **break_products** (closed transformation graph — terrain-object 3-axis model), lifecycle for animate objects already covered by kernel. F2–F7 decorations become full citizens: damage verbs write deltas, products spawn as matter nodes with provenance. | M1, S1 deltas/claims → claims, break products, world objects | atlas S3; terrain-object doc axes 1–2 | breaking something just removes it (Pass 1 behavior: take/chop delete + matter E) | charted |
+| **M3** | **Emergent Recipes.** NO predefined recipes (locked decision 5): minimal interaction/assembly rules over grain properties → an entity tries a combination (Agency seam — until Pass 4, a dev-probe "experimenter" drives discovery headlessly) → outcome derived from grain math → **discovered recipes become canonical nodes**: teachable, repeatable, propagating via Lore (S6 seam: recipe nodes carry owner-scoped knowledge until taught). | M1, M2, Agency (later), Lore (later) → canonical recipe nodes | atlas S3 (recipes row); SCI_FI crafting (mine intents/specializations, NOT its predefined recipe list) | nothing can be crafted; combinations do nothing yet (rules absent, never stubbed) | charted |
+| **M4** | **Blueprints.** Nested spatial structure grammar: region → settlement → district → building → wall-section, quantized into generatable sprite pieces. **Buildings are walls/floors/doors/interiors/NPC-slots on the world grid, never house-sprites** (locked decision 6). Blueprint nodes are data; compilation stamps claims + tile overrides. Same machinery later composes bodies (Pass 4 L2). Mine world-compiler building-template schema (footprint/walls/doors/interior_features/requires/npc_slots) wholesale. | M2, M1 → Settlements (P4), Body Assembly (L2), asset pipeline | atlas S3 blueprints row; world-compiler building compilation; town-layout plan doc | no buildings exist anywhere | charted |
+| **M5** | **Items & Equipment.** Item nodes (grain composition via M1, durability via M2) + equipment slots (25+ incl. layering priority), synergies, sentimental value/memories-attached (edges into Mind later). Inventory generalizes Plan E's `inventory_item`. | M1, M2 → Body Assembly (worn layers), Economy | atlas S3; SCI_FI item system | only raw harvested matter exists (Pass 1 inventory) | charted |
+
+**Pass-2 probe:** headless — an experimenter entity discovers a recipe (stone + branch → axe), crafts it, the axe exists with provenance + grain composition, chopping with it writes different break products than bare hands; conservation audit still balances (grains + time).
+
+---
+
+## Pass 3 — S2/S5 Paths & Settlements
+
+Society's first writing into the substrate. Roads and settlements are **simulated outcomes** (traffic wears paths; suitability + growth builds towns), not placed decorations — but the *seeding* of historical settlements is History Generation's job (Pass 6 T4); Pass 3 builds the machinery and exercises it with headless-simulated founders.
+
+| Plan | Scope | Atlas edges | Spec / archaeology | Honest absence | Status |
+|---|---|---|---|---|---|
+| **P1** | **Pathways — worn paths.** Traffic records (entity movement events aggregate per tile-segment) → flora suppression via claims/deltas (the F0/F1 ground shows through; the kernel delta heals when traffic stops — ghost paths regrow). Pure consumption of existing machinery: claims + delta decay + F-field suppression (Plan E's F3 channel generalizes). | Agency traffic (until Pass 4: probe-driven walkers), S1 deltas → claims, settlement connectivity | atlas S5 pathways row | nobody walks, so no paths — fine | charted |
+| **P2** | **Roads & bridges.** Least-cost routing on terrain cost (slope/marsh/forest/river penalties — world-compiler L10's AStarGrid2D approach, ours over Wang tile costs) for *deliberate* road-building: a group spends time (the metabolism pays for infrastructure) to place road objects/Wang strips + bridge/ford objects at crossings. Roads are maintained deltas — unmaintained roads decay. | P1, M2 (road objects), group reserves → claims, permanent deltas | world-compiler L10; atlas pathways "paved roads where warranted" | only worn paths exist | charted |
+| **P3** | **Settlement seeding & zoning.** Suitability scoring (water access, fertility, defensibility, trade centrality — world-compiler L11, recomputed over our biome/elevation data), founding as a **ledger event by a real group node** (provenance rule: no town without a founder), territory claim, district zoning (region→territory→city→district), ownership *primitive* nodes (plot/structure owner edges — the data shape Economy V4 later animates). Reason codes on every placement (world-compiler discipline). | M4 blueprints, P1/P2 connectivity, group nodes → permanent deltas, claims, ownership nodes | atlas S5 settlements row; world-compiler L11–L12 | no settlements; wilderness everywhere (current state) | charted |
+| **P4** | **Buildings as structures.** Blueprint compilation onto the grid: stamp walls (impassable claims), floors, door gaps, interior features (forge/bed/table/chest as M2 objects with provenance), roof canopy (alpha-fade on entry), **NPC slots** (role + workplace tile + sleep tile — Agency's landing pad). PixelLab generates wall/floor/roof *pieces* per the blueprint quantization (manifest plan X1). | M4, P3 → renderer, claims, NPC home/work slots | world-compiler building compilation; locked decision 6 | settlements are zoned empty land | charted |
+| **P5** | **Settlement growth.** Villages grow: population pressure + group reserve surplus → new buildings (blueprint instantiation as scheduled group decisions), farms expand into fertile reachable land (world-compiler L12), decline → unmaintained decay → ghost town (deltas stop being paid). Village→town→city→metropolis is this loop compounding, never a placed tier. LOD: growth runs at statistical tier via aggregate group decisions (W5 placement-pinned promotion matters here). | P3, P4, group Agency (until Pass 5: rule-based group decisions only — declared limitation, not fake politics) → deltas, claims | atlas settlements "growth over time"; metabolism §1.6 antennas | settlements are static after founding | charted |
+
+**Pass-3 probe:** headless 50-sim-year run — founders found a village at a scored site (reason codes verifiable), worn paths appear between village/water/farm, a road gets built and maintained, population growth adds buildings, abandoning the village lets paths/buildings decay back. In-game: walk a real path into a real village with enterable buildings.
+
+---
+
+## Pass 4 — S4 Life
+
+Conscious entities on a continuum of mind. Largest pass; internal order is L1 → L2/L3 (parallel) → L4/L5 → L6 → L7 → L8 (each consumes its predecessor).
+
+| Plan | Scope | Atlas edges | Spec / archaeology | Honest absence | Status |
+|---|---|---|---|---|---|
+| **L1** | **Identity.** Attribute + personality-trait bags (empathy/aggression/curiosity/loyalty/greed/courage/patience… on signed scales — TIME_SYSTEM list as starting vocabulary), name, race (humans/elves/dwarves/orcs/… per SCI_FI roster, each a species params row in the metabolism), life stage derived from kernel age (10-stage consumption multipliers from TIME_SYSTEM as initial burn-curve tuning). Pure data + derivation; no behavior yet. | Time Metabolism → Mind, Agency, Relationships | atlas S4 identity row | entities have species + age, no personhood | charted |
+| **L2** | **Body Assembly.** Nested-blueprint composition (M4 machinery): feet→…→head part graph, part variants generated per-race at fauna/body quantization (64px), composed into a seamless entity sprite + **rig skeleton** (joint hierarchy the motion DSL drives). Worn items (M5) layer onto slots. | M4 blueprints, M5 items, asset pipeline → Identity embodiment, entity renderer | atlas S4 body row; master-arch L9 slots | NPCs have no bodies — and therefore are not rendered at all (no placeholder capsules) | charted |
+| **L3** | **Generative Motion DSL.** No preloaded/prerendered animations: a body-control language (bones/joints/center-of-mass/reach/look-at primitives) executed by the runtime rig; choreography *programs* (not frames) produced by planner/LLM; physical-sanity validator; cache only if profiling demands. Full architecture in `2026-06-12-generative-motion-dsl-design.md` (companion spec, this date). Pipeline: NL → Action Planner → Behavior System → Animation Controller. | L2 rig → all rendered behavior; Agency expresses through it | companion spec; locked user architecture (2026-06-11 conversation) | entities don't move visibly (W4 note: simulation without rendering is honest) | charted |
+| **L4** | **Fauna.** Animals = same Life stack, thinner mind: instinct-weighted rule Agency (no LLM), predation/grazing/flight as metabolism strategies, domestication edges, ecology feeding the time economy. Kernel grazer generalizes into a fauna species table. | Time Metabolism, M2 → ecology, Economy resources | atlas S4 fauna row | one invisible grazer species (current) | charted |
+| **L5** | **Entity lifecycles & reproduction (people).** Birth as parental reserve *investment* (metabolism §1.1 — no minting), nurture channel (~95%), childhood stages gating capability, inheritance at death (who reaches E first — formalizing probe-6 mechanics socially), family edges created at birth. The kernel already does flora reproduction; this is the same machinery + kinship edges + Agency hooks. | Time Metabolism, L1, Relationships (V1 seam) → family edges, ledger | metabolism §1.1–1.5 | nobody is born or related; population static | charted |
+| **L6** | **Agency.** Game-theoretic decision core: utility over goals given personality (L1) + time budget (metabolism) + relationships; **every action including refusal/absence is a recorded choice** (DecisionRecord with options-considered/reasoning/expected-outcome — CAUSAL_TRACKING shape, lands on kernel §2.6 prediction records). Three horizons mapped to kernel: reaction = bubble sampler, short plan = scheduled events, long goal = goal nodes. Rule-based only at procedural tier. | Mind (L8, later — until then Agency runs on graph state alone), Time Metabolism, Goals → ledger, all action systems | atlas S4 agency row; kernel §2.6 | entities metabolize but never decide (current) | charted |
+| **L7** | **Goals & long-term plans.** Goal nodes (owned + shared/joint — the quest shape), plan-step chains as scheduled events, reconsideration events, prediction→outcome divergence records (the mechanized learning loop). This is the kernel §2.6 landing pad becoming load-bearing; S6 T3 later adds the social quest layer. | L6, kernel §2.6 → Agency utilities, ledger | kernel §2.6; atlas S6 goals row (kernel half) | decisions are momentary; nobody plans ahead | charted |
+| **L8** | **Mind.** Private semantic memory graph (owner-scoped subgraph, §2.5), embedding retrieval (sqlite-vec column exists), **deterministic context-assembly compiling tight prompts for small/cheap LLMs** (locked decision 3), conversation: exploration of the shared goal-hypergraph, decomposed back into both parties' graphs afterward. LLM outputs enter the world ONLY as ledger-recorded intents (determinism rule §5.5). Memory tiering (24h detail / 30d summary / aggregate beyond — TIME_SYSTEM reference). Bubble-only (LOD: full tier eligible for LLM; procedural tier uses L6 rules). | L1, V1 relationships, S6 lore, embeddings → conversation channel, memory graph | atlas S4 mind row; locked decisions 3–5 | NPCs act (L6) but cannot converse or remember conversations | charted |
+
+**Pass-4 probe:** in-game — meet an assembled NPC; it's doing something (motion DSL); talk to it; it remembers the conversation next meeting (decomposed into its graph, retrieved by embedding); ask it to do something in two days; it does (or chooses not to — and the refusal is in the ledger with reasoning). Headless: prediction-divergence records accumulate; personality measurably shifts utilities.
+
+---
+
+## Pass 5 — S5 Society
+
+| Plan | Scope | Atlas edges | Spec / archaeology | Honest absence | Status |
+|---|---|---|---|---|---|
+| **V1** | **Relationship hypergraph.** Typed weighted n-ary edges (social/familial/sexual/employment/commercial/rivalry/communal), history-bearing (formed/strained/broken by ledger events), formation rules (proximity + shared goals + compatibility — TIME_SYSTEM reference). Bond weights feed group capture (metabolism §1.6 made real). | L1, ledger → Mind context, group capture, Groups | atlas S5 relationships row | entities co-exist without relating (family edges from L5 only) | charted |
+| **V2** | **Families & communities.** Households (co-residence + shared reserve flows), kinship depth (L5 edges compound generationally), neighborhood/village communal edges; family group nodes with the 2.0x-class capture bonus (tuned, not copied). | V1, L5, group nodes → Groups, Settlements occupancy | metabolism §1.6; TIME_SYSTEM groups | families are bare birth edges | charted |
+| **V3** | **Groups & culture.** Group Agency: groups DECIDE (the §6.4 deferral lands here) — distribution of group reserve is decided by member Agency (politics for free, per metabolism §1.6), values/norms as pressure on member utilities, norm propagation + drift = cultural evolution, guild/village/nation tiers. | V1/V2, L6 Agency, group nodes → norm pressure on Agency, Settlements | atlas S5 groups row; kernel §1.6 | groups hold reserves but never decide (Pass 1 state) | charted |
+| **V4** | **Economy & ownership.** Markets as recurring group events, price discovery from real scarcity (time-cost of goods), trade channel transfers (~85%), property/debt edges animating P3's ownership primitives, employment edges (NPC slots → jobs with wages). | M5 items, Time Metabolism, L6 → markets, property, Governance triggers | atlas S5 economy row | barter-less world; ownership nodes inert | charted |
+| **V5** | **Governance & conflict.** Law as group norms with enforcement Agency, factions, territory disputes, war as group-level decisions cascading to statistical-tier battles (real ledger events + group reserve transfers — LOD §4.2's distant-war story made real), justice/criminal records (morality seam → Pass 7 moral cosmology). | V3, V4, moral cosmology (S7, later — until then: norms only) → ledger wars/laws, territory claims | atlas S5 governance row | disputes fizzle; no law, no war | charted |
+| **V6** | **Politics & succession.** Leadership edges within groups (emergent from V1 weights + L1 traits), elections/succession/coups as group decision events, policy = group goal nodes steering V3 norms + V4 taxation + V5 enforcement. (Split from V5 so each plan stays executable.) | V3, V5, L7 goals → group leadership, ledger | atlas S5 (governance row, political half) | groups decide by flat member vote (V3 default) | charted |
+
+**Pass-5 probe:** headless 100-sim-year region — families form/compound, a village develops norms measurably different from a neighbor, markets clear at scarcity-driven prices, a territory dispute escalates to a real (statistical-tier) conflict with ledger trail; the player arrives later and finds the consequences (V5 + LOD honesty).
+
+---
+
+## Pass 6 — S6 Story & Meaning
+
+| Plan | Scope | Atlas edges | Spec / archaeology | Honest absence | Status |
+|---|---|---|---|---|---|
+| **T1** | **Causal ledger deepening.** Ripple chains queryable to depth N, impact matrix (source→target magnitude/type/persistence — CAUSAL_TRACKING), decision records joined to outcomes (closing L7's learning loop), ledger compaction strategy (events → aggregate historical records at demotion). | everything that acts → History, Lore, Relationships | kernel §2.7 + §6.4; CAUSAL_TRACKING | cause chains exist but only 1 link deep is used | charted |
+| **T2** | **Lore & knowledge.** What each entity KNOWS vs what happened: owner-scoped knowledge nodes (§2.5), rumor propagation at physical travel speed (conversation + observation only — locked decision: no telepathy), distortion per hop, discovered recipes (M3) propagate as teachable lore, renown salience (Hero Function seam). | T1, L8 conversations → Mind knowledge, recipe canon | atlas S6 lore row | everyone knows only what they witnessed | charted |
+| **T3** | **Goals & quests.** Shared intention nodes between entities incl. the player ("kill the bandit in two days" as a joint goal node driving BOTH parties' scheduled behavior), outcome remembered by all parties, betrayal possible (divergent owner-scoped beliefs about the shared goal), consequences ripple via V1 relationship edges. | L7 goals, V1, Loremaster (S7 seam) → joint intentions, Agency utilities | atlas S6 quests row | no shared goals; cooperation is incidental | charted |
+| **T4** | **History generation.** Headless world boot: generations of REAL simulation (Passes 2–5 machinery at statistical tier + LOD) before the player's first step — founding myths, wars, migrations as genuine causal chains; ruins/items/settlements all carry provenance (§5.4's "total discovery" promise fulfilled). Boot-time budget engineering (this is a compute problem as much as a design problem). | the full stack, headless → pre-player world state + ledger | atlas S6 history row; kernel §5.4 | worlds begin at tick 0 with no past (current) | charted |
+
+**Pass-6 probe:** boot a world with 200 years of history; walk to a ruin; trace why it's ruined through lore (ask an elder, find a chronicle) and verify the answer against the actual ledger chain — the story the world tells matches what actually happened.
+
+---
+
+## Pass 7 — S7 Shapers (charted; design at their own pass)
+
+Gods & Domains (faith power from V3 worship; interventions as ledger events), Moral Cosmology (morality as regional/cultural force field modulating sanctioned time-acquisition — SCI_FI morality system as reference), Loremaster Function (dramaturgy: pacing latent conflicts, possibly LLM-assisted), Hero Function (the four tendrils: openness bias, renown propagation, resurrection, dramaturgy bias — atlas §2; PC entity definition lives here). **Constraint carried from the atlas: Shapers only ever re-weight real simulation — never fabricate.** These get plan rows when Pass 5/6 give them something to shape.
+
+---
+
+## Cross-cutting plans (no pass; scheduled by demand)
+
+| Plan | Scope | Trigger | Status |
+|---|---|---|---|
+| **X1** | **PixelLab asset manifest.** Companion doc `2026-06-12-pixellab-asset-manifest.md` (this date) assembles every asset the passes above demand — species bodies/parts, building pieces, fauna, F6/F7 trees, item sprites — with quantizations, counts, and which plan consumes them. Manifest is maintained as plans land; generation rides the existing pipeline + per-field size tuners. | maintained continuously; first big burst = W2 (F6) + P4 (building pieces) | charted |
+| **X2** | **Generative motion DSL spec.** Companion doc `2026-06-12-generative-motion-dsl-design.md` — full architecture (rig primitives, choreography program format, validator, planner pipeline, action vocabulary). Implementation is Pass 4 L3; the spec exists now so L2's rig is designed against it. | spec done with this roadmap; implementation at L3 | charted |
+
+---
+
+## Status legend & bookkeeping
+
+`charted` → `planned` (plan doc written) → `executing` → `DONE (deviations cited)`. Plan docs go to `docs/superpowers/plans/YYYY-MM-DD-<plan-id>-<name>.md`; execution via subagent-driven development with the Pass 1 review discipline (spec review + quality review per task, final whole-branch review — it caught real integration gaps in every Pass 1 plan). Each plan's "Canonical deviations" section is authoritative over its task text. NEVER push to origin.
+
+**Plan count: 30** (6 wiring + 5 matter + 5 settlements + 8 life + 6 society + 4 story — exceeding the 20-plan mandate; Pass 7 and X-plans additional).
