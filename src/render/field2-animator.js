@@ -690,7 +690,7 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
       baseAngle: 0,
       offUX: gp.ux - 0.5,
       offUY: gp.uy - 0.5,
-      sortYOff: gp.uy + gp.sizeTiles * 0.30, // sort by sprite base (same rule as F4)
+      sortYOff: gp.uy - 0.5 + gp.sizeTiles * 0.40, // sort at sprite visual base (bottom edge = uy-0.5+sizeTiles*0.5; 0.40 coeff = 0.5 minus ~0.1-tile ground-contact inset; 3-tile boulders were anchored mid-sprite at 0.30)
       ambientPeriod: 0,
       ambientPhase: 0,
       startDelay: 0,
