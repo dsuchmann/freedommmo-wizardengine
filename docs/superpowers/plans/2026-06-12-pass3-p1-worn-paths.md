@@ -487,3 +487,17 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 - `path.attrs.wear` + WORN_THRESHOLD generalize to road-grade tiers in P2 (worn → paved upgrade consumes the same tile state).
 - `tramplable` species flag is the seam for crop trampling (P5 farms).
 - The move event {fromX,fromY,toX,toY} is the traffic record History Generation (Pass 6) will mine for settlement connectivity.
+
+---
+
+## Deviations (canonical — authoritative over task bodies above)
+
+1. **Trample/conservation tests run all moves at tick=0** (paths.test.js, probe-paths.test.js). The plan's pacing (`i*2, i*2+1` ticks) made `stocks()` before/after comparisons inconsistent: `die()`/`reRateTileOf` close segments and advance node `lastTick` past the comparison tick (stocks' own docstring warns against this). At tick=0 all segment closures are dt=0 no-ops, so the comparison isolates exactly the trample → corpse transfer. Threshold crossing and die() are still genuinely exercised.
+2. **Reboot-orphan worn deltas documented as a save/load contract** (paths.js header TODO, commit a06ac041f): path nodes are runtime state; worn deltas persist. On a future kernel *load*, path nodes must be rehydrated from worn deltas or they can never heal. Real defect at save/load scope, not reachable in P1 (no persistence of the graph yet). Backlog.
+3. **Reciprocal mirror comment added to wire.js REMOVAL_KINDS** (a60449997) — the client copy (src/sim/sim-world-state.js) already pointed at wire.js; now both directions are marked (drift guard, quality-review recommendation).
+4. **Probe route-tile search extracted to a shared `findRouteTile(k)` helper** (be078cdd7) after review found a harmless-but-confusing dead condition in the vacuity guard and a duplicated search in the determinism sub-test. Guards assert (fail when unmet), never skip.
+5. **Wire wear defaults to 0** (`wear: node.attrs.wear ?? 0`, be078cdd7) — defensive only; recordTraffic always sets wear today.
+6. **ev.attrs deepEqual relaxed to four targeted equals** in the Task 1 move-event test (ledger may attach extra attrs keys); all four of fromX/fromY/toX/toY are still asserted.
+7. **server.test.js positions the player by direct kernel access** as test arrangement (no spawn-position wire feature — out of scope as planned); the move itself travels the full wire path (intent → dispatch → move() → tick delta).
+
+**Hardening backlog (accepted, P2+/save-load):** rehydrate path nodes from worn deltas on load (deviation 2); pathAt O(n) → tile-key index when traffic scales (P4); negative-origin bounds test for move(); unbounded-world (`bounds: null`) contract test; spawn-position validation in createPlayer (trusted today).
