@@ -24,7 +24,8 @@ Derivation from kernel truth (all inputs already exist in Pass 1):
 | decaying | corpse node exists, `attrs.E > GONE_THRESHOLD (0.5)` |
 | gone | corpse removed (decay_gone) — nothing rendered |
 
-**buffer** = `R / dailyBurn` — how many days of burn the entity's reserve covers. It is the
+**buffer** = `R / dailyBurn` where `dailyBurn = perTickBurn × DAY` (the kernel's burn rates are
+per-tick) — how many days of burn the entity's reserve covers. It is the
 metabolism speaking: a plant that cannot cover ~2 days wilts visibly; one holding >10 days
 flourishes. The thresholds are taxonomy constants (`CONDITION` in the module), not per-species
 knobs. The protocol's `stage` field carries seedling/growing/mature/corpse today; Plan E extends
@@ -47,6 +48,11 @@ Continuous ramps (growth scale within `growing`, decay fade within `decaying`, f
 `flourishing`) are renderer transforms over these sprites, never new sprite states. The
 user-approved transform approach (15/55/20/10 distribution, seedling = scaled base) remains valid
 wherever a dedicated sprite is not required by a sheet (§3 of the sheets doc section).
+
+This table is the DEFAULT map. A field's requirement sheet (§6) may promote a state to a
+dedicated sprite (T → R, or a spine state out of `normal`) where the quantization affords it —
+F6 trees promote both `seedling` and `growing` to dedicated sapling sprites at 192px. The sheet
+is authoritative for its field; the default applies wherever the sheet is silent.
 
 ## 3. Orthogonal axes
 
