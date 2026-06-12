@@ -10,7 +10,8 @@ const exe = process.env.LOCALAPPDATA + '/ms-playwright/chromium-1217/chrome-win6
 const browser = await chromium.launch({ executablePath: exe, headless: true, args: ['--use-angle=swiftshader'] });
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 800 } })).newPage();
 page.on('console', m => { if (/fieldTuning|error/i.test(m.text())) console.log('[page]', m.text()); });
-await page.goto('http://localhost:8741/?x=1312&y=1312', { waitUntil: 'domcontentloaded' });
+const PORT = process.env.PROBE_PORT || 8741;
+await page.goto(`http://localhost:${PORT}/?x=1312&y=1312`, { waitUntil: 'domcontentloaded' });
 await page.waitForFunction(() => window._fieldTuning && window._dbgRenderer && window._lighting
   && window._debugProvider && window._debugProvider.getBitmap(20, 20), null, { timeout: 240000 });
 await page.waitForTimeout(5000); // let painting + F2 preload settle

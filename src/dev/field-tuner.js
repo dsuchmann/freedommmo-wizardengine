@@ -1,19 +1,16 @@
-// Unified dev tuner for decoration fields F2/F3/F4 (F5 joins when its
-// placement lands). Toggle with backtick (`). Tree: field tabs -> current
-// biome -> collapsible object rows -> variant rows. Size + density combine
+// Unified dev tuner for decoration fields. Field tabs come from
+// src/dev/field-registry.js — adding a field there adds its tab here.
+// Toggle with backtick (`). Tree: field tabs -> current biome -> collapsible
+// object rows -> state-weight rows -> variant rows. Size + density combine
 // multiplicatively (see src/world/field-tuning.js). Edits persist in
 // localStorage ('fieldTuning'); "copy JSON" exports the tree for baking
 // into source defaults, after which localStorage should be cleared.
 import { setFieldTuning } from '../world/field-tuning.js';
-import { clearClaimCaches, SS_BIOME_OBJECTS, ssAllowedVariants } from '../world/decoration-claims.js';
-import { MF_CATALOG } from '../world/mf-catalog.js';
-import { SF_BIOME_OBJECTS_LIST, SF_VARIANT_COUNT, sfVariantsFor } from '../render/wang-image-list.js';
+import { clearClaimCaches } from '../world/decoration-claims.js';
 import { clearF2TileDescriptors } from '../render/field2-animator.js';
+import { FIELD_REGISTRY, regFor, emptyTree } from './field-registry.js';
 
 var LS_KEY = 'fieldTuning';
-var FIELDS = ['f2', 'f3', 'f4'];
-var FIELD_LABEL = { f2: 'F2 small flora', f3: 'F3 small scatter', f4: 'F4 medium flora' };
-var FIELD_PATH = { f2: 'micro/small_flora', f3: 'micro/small_scatter', f4: 'micro/medium_flora' };
 
 // Teleport spots (same as the old F4 tuner)
 var BIOME_SPOTS = {
@@ -27,29 +24,16 @@ var BIOME_SPOTS = {
   volcanic: { x: 7712, y: -224 }, mystic: { x: -8672, y: 6688 },
 };
 
-var TREE = { f2: {}, f3: {}, f4: {} };
+var TREE = emptyTree();
 var activeField = 'f4';
 var expanded = {};   // 'field/biome/obj' -> true (variant rows visible)
 var checked = {};    // rowKey 'field/biome/obj' or 'field/biome/obj/v' -> true
 
-function range(n) { var a = []; for (var i = 0; i < n; i++) a.push(i); return a; }
-
-// Enumerate { name, variants[] } for a field+biome from the live catalogs.
-function objectsFor(field, biome) {
-  if (field === 'f2') {
-    return (SF_BIOME_OBJECTS_LIST[biome] || []).map(function (n) {
-      return { name: n, variants: sfVariantsFor(biome, n) || range(SF_VARIANT_COUNT) };
-    });
-  }
-  if (field === 'f3') {
-    return (SS_BIOME_OBJECTS[biome] || []).map(function (o) {
-      var allowed = ssAllowedVariants(biome, o.name);
-      return { name: o.name, variants: allowed || range(64), disabled: allowed && allowed.length === 0 };
-    });
-  }
-  return (MF_CATALOG[biome] || []).map(function (o) {
-    return { name: o.name, variants: range(o.variants) };
-  });
+// Worst-case apply target for global ops: any repaint-bitmaps field.
+function repaintFieldId() {
+  for (var i = 0; i < FIELD_REGISTRY.length; i++)
+    if (FIELD_REGISTRY[i].applyKind === 'repaint-bitmaps') return FIELD_REGISTRY[i].id;
+  return null;
 }
 
 // Get-or-create a tree node. Call with fewer args for shallower nodes.
@@ -94,32 +78,31 @@ function save() {
   try { localStorage.setItem(LS_KEY, JSON.stringify(TREE)); } catch (e) { /* private mode */ }
 }
 
-// Apply live: rebuild placement caches; for F3 also resync workers + repaint
-// chunk bitmaps (F3 is baked into them). Always pushes the tree to workers so
-// they stay in sync for newly compiled chunks.
+// Apply live: rebuild placement caches; repaint-bitmaps fields (F3) also
+// resync workers + repaint chunk bitmaps (they're baked into them). Always
+// pushes the tree to workers so they stay in sync for newly compiled chunks.
 function apply(field) {
   setFieldTuning(TREE);
   save();
   clearClaimCaches();
   clearF2TileDescriptors();
   var prov = window._debugProvider;
-  if (prov && prov.applyFieldTuning) prov.applyFieldTuning(TREE, field === 'f3');
+  var repaint = regFor(field) && regFor(field).applyKind === 'repaint-bitmaps';
+  if (prov && prov.applyFieldTuning) prov.applyFieldTuning(TREE, repaint);
 }
 
-// Sliders fire oninput continuously during a drag; each apply() drops every
-// chunk bitmap and triggers a full repaint (F3 is baked into bitmaps), which
-// floods the workers. Debounce so only the resting value repaints.
-// The debounce coalesces by field — if an f3 edit lands in the window, the
-// final apply MUST run as 'f3' (it's the only field that purges bitmaps),
-// even when a later f2/f4 edit would otherwise win the timer.
+// Debounce (sliders fire continuously). Coalesce by applyKind — if a
+// repaint-bitmaps edit lands in the window, the final apply MUST run as that
+// field (it's the only kind that purges chunk bitmaps).
 var applyTimer = 0;
-var applyF3Pending = false;
+var applyRepaintPending = null;
 function applySoon(field) {
-  if (field === 'f3') applyF3Pending = true;
+  var reg = regFor(field);
+  if (reg && reg.applyKind === 'repaint-bitmaps') applyRepaintPending = field;
   clearTimeout(applyTimer);
   applyTimer = setTimeout(function () {
-    var f = applyF3Pending ? 'f3' : field;
-    applyF3Pending = false;
+    var f = applyRepaintPending || field;
+    applyRepaintPending = null;
     apply(f);
   }, 200);
 }
@@ -211,7 +194,7 @@ function rebuild() {
 
   // --- header: biome name + teleport + master/biome rows ---
   var head = el('div', 'margin-bottom:6px');
-  head.appendChild(el('div', 'color:#ffd97a;font-weight:bold', FIELD_LABEL[field] + ' — biome: ' + (biome || '?')));
+  head.appendChild(el('div', 'color:#ffd97a;font-weight:bold', regFor(field).label + ' — biome: ' + (biome || '?')));
   var tp = el('select', 'font:11px monospace;background:#16203a;color:#cfe0ff;margin:3px 0;width:100%');
   tp.appendChild(el('option', '', 'teleport to biome…'));
   Object.keys(BIOME_SPOTS).sort().forEach(function (b) { tp.appendChild(el('option', '', b)).value = b; });
@@ -230,7 +213,7 @@ function rebuild() {
   if (!biome) return;
 
   // --- object rows ---
-  objectsFor(field, biome).forEach(function (o) {
+  regFor(field).objectsFor(biome).forEach(function (o) {
     var key = field + '/' + biome + '/' + o.name;
     var wrap = el('div', 'border-top:1px solid #243250;padding:2px 0' + (o.disabled ? ';opacity:0.4' : ''));
     var row = tuneRow(o.name, '#cfe0ff', key, function () { return node(field, biome, o.name); }, 'size', 0.25, 2.0, field);
@@ -240,13 +223,14 @@ function rebuild() {
     row.appendChild(arrow);
     wrap.appendChild(row);
     wrap.appendChild(tuneRow('  density', '#9fb6dd', null, function () { return node(field, biome, o.name); }, 'density', 0, 3.0, field));
-    // Per-category animation toggles (F2/F4 only — F3 has no anims).
+    // Per-category animation toggles from the registry (F3 has none).
     // Categories: wind_sway (live in renderer) + player_walk (generated on
     // disk; gates future renderer wiring + generation). Unchecked = disabled.
-    if (field !== 'f3') {
+    var animCats = regFor(field).animCategories;
+    if (animCats.length) {
       var animRow = el('div', 'display:flex;align-items:center;gap:8px;margin:1px 0 1px 18px;color:#9fb6dd');
       animRow.appendChild(el('span', '', 'anim:'));
-      [['wind_sway', 'wind'], ['player_walk', 'walk']].forEach(function (pair) {
+      animCats.forEach(function (pair) {
         var cat = pair[0];
         var lbl = el('label', 'display:flex;align-items:center;gap:2px;cursor:pointer');
         var acb = el('input'); acb.type = 'checkbox';
@@ -265,9 +249,32 @@ function rebuild() {
       });
       wrap.appendChild(animRow);
     }
-    var path = el('div', 'color:#5e729a;font-size:10px;margin-left:18px', FIELD_PATH[field] + '/' + biome + '/' + o.name + '  (' + o.variants.length + ' variants, eff ' + effSize(field, biome, o.name).toFixed(2) + ')');
+    var path = el('div', 'color:#5e729a;font-size:10px;margin-left:18px', regFor(field).path + '/' + biome + '/' + o.name + '  (' + o.variants.length + ' variants, eff ' + effSize(field, biome, o.name).toFixed(2) + ')');
     wrap.appendChild(path);
     if (expanded[key]) {
+      var stNames = regFor(field).stateNames(biome, o.name);
+      if (stNames.length) {
+        var defaults = regFor(field).stateDefaults(biome, o.name);
+        var cur = (peek(field, biome, o.name) || {}).states;
+        stNames.forEach(function (sn) {
+          var row = el('div', 'display:flex;align-items:center;gap:4px;margin:1px 0 1px 18px');
+          row.appendChild(el('span', 'width:96px;overflow:hidden;white-space:nowrap;color:#b8a3e0', 'state ' + sn));
+          var v = cur && cur[sn] != null ? cur[sn] : (defaults[sn] || 0);
+          var val = el('span', 'width:34px;text-align:right', v.toFixed(0));
+          row.appendChild(slider(0, 100, 1, v, function (x) {
+            var t = node(field, biome, o.name);
+            if (!t.states) { // first edit: materialize the full default map
+              t.states = {};
+              stNames.forEach(function (k) { t.states[k] = defaults[k] || 0; });
+            }
+            t.states[sn] = x;
+            val.textContent = x.toFixed(0);
+            applySoon(field);
+          }));
+          row.appendChild(val);
+          wrap.appendChild(row);
+        });
+      }
       o.variants.forEach(function (v) { wrap.appendChild(variantRow(field, biome, o.name, v)); });
     }
     body.appendChild(wrap);
@@ -307,9 +314,9 @@ function rebuild() {
   };
   var reset = el('button', 'font:11px monospace;cursor:pointer', 'reset all');
   reset.onclick = function () {
-    TREE = { f2: {}, f3: {}, f4: {} };
+    TREE = emptyTree();
     checked = {};
-    apply('f3'); // worst case: repaint chunks too
+    apply(repaintFieldId() || activeField); // worst case: repaint chunks too
     rebuild();
   };
   foot.appendChild(copy); foot.appendChild(reset);
@@ -322,9 +329,9 @@ function buildPanel() {
     'color:#cfe0ff;font:12px monospace;padding:8px 10px;border:1px solid #3a4a6a;' +
     'border-radius:6px;max-height:70vh;display:flex;flex-direction:column;width:360px');
   var tabs = el('div', 'display:flex;gap:4px;margin-bottom:6px');
-  FIELDS.forEach(function (f) {
-    var b = el('button', 'font:12px monospace;cursor:pointer;flex:1', f.toUpperCase());
-    b.onclick = function () { activeField = f; rebuild(); };
+  FIELD_REGISTRY.forEach(function (reg) {
+    var b = el('button', 'font:12px monospace;cursor:pointer;flex:1', reg.id.toUpperCase());
+    b.onclick = function () { activeField = reg.id; rebuild(); };
     tabs.appendChild(b);
   });
   panel.appendChild(tabs);
@@ -340,17 +347,24 @@ export function initFieldTuner() {
   try { localStorage.removeItem('f4BiomeScale'); } catch (e) { /* private mode */ }
   try {
     var saved = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
-    if (saved) TREE = { f2: saved.f2 || {}, f3: saved.f3 || {}, f4: saved.f4 || {} };
+    if (saved) {
+      TREE = emptyTree();
+      FIELD_REGISTRY.forEach(function (r) { if (saved[r.id]) TREE[r.id] = saved[r.id]; });
+    }
   } catch (e) { /* corrupt -> defaults */ }
   setFieldTuning(TREE);
-  // If saved F3 tuning exists, chunks may already have been painted with the
-  // default tree before this module loaded — drop bitmaps so they repaint.
-  var hasF3 = !!(TREE.f3 && (TREE.f3.size != null || TREE.f3.density != null || TREE.f3.biomes));
+  // If saved tuning exists for a repaint-bitmaps field (F3), chunks may
+  // already have been painted with the default tree before this module
+  // loaded — drop bitmaps so they repaint.
+  var rf = repaintFieldId();
+  var rt = rf && TREE[rf];
+  var hasRepaintTuning = !!(rt && (rt.size != null || rt.density != null || rt.biomes));
   var prov = window._debugProvider;
-  if (prov && prov.applyFieldTuning) prov.applyFieldTuning(TREE, hasF3);
-  if (hasF3) clearClaimCaches();
+  if (prov && prov.applyFieldTuning) prov.applyFieldTuning(TREE, hasRepaintTuning);
+  if (hasRepaintTuning) clearClaimCaches();
 
-  window._fieldTuning = { tree: function () { return TREE; }, set: function (t) { TREE = t; apply('f3'); }, apply: apply };
+  window._fieldTuning = { tree: function () { return TREE; }, set: function (t) { TREE = emptyTree(); FIELD_REGISTRY.forEach(function (r) { if (t && t[r.id]) TREE[r.id] = t[r.id]; }); apply(repaintFieldId() || activeField); }, apply: apply };
+  window._fieldRegistry = FIELD_REGISTRY.map(function (r) { return r.id; });
 
   window.addEventListener('keydown', function (e) {
     if (e.key !== '`' || e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;

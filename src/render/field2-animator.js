@@ -9,8 +9,9 @@ import { clearBorderLines } from './sprite-denoise.js';
 import { floorDiv } from '../world/chunk.js';
 import { SPRITE_FLOATS } from './gl-compositor.js';
 import { getAtmosphere } from '../world/biome-atmosphere.js';
-import { isClaimedAt, f4Placements, f4SpriteUrl, f4AnimUrlBase } from '../world/decoration-claims.js';
-import { tuneSize, tuneBiomeDensity, tuneObjDensity, tuneAnimEnabled } from '../world/field-tuning.js';
+import { isClaimedAt, f4Placements, f4SpriteUrl, f4AnimUrlBase, f5Placements, f5SpriteUrl } from '../world/decoration-claims.js';
+import { tuneSize, tuneBiomeDensity, tuneObjDensity, tuneAnimEnabled, tuneStateWeights, rollWeighted,
+  F2_STATE_ORDER, F2_STATE_DEFAULTS } from '../world/field-tuning.js';
 
 var ANIM_RADIUS = 40; // tiles around player — large enough to cover full screen at any zoom
 var FADE_INNER = 34; // fully opaque inside this radius
@@ -626,6 +627,36 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
     });
   }
 
+  // ---- Field 5 medium objects (static, y-sorted with F2/F4/player) ----
+  var f5pls = f5Placements(wx, wy, _claimTileInfo(chunkStore));
+  for (var gi = 0; gi < f5pls.length; gi++) {
+    var gp = f5pls[gi];
+    f4Blades.push({
+      bi: 80 + gi, // distinct trigger-key space from F2 (0-19) and F4 (90+)
+      stateUrl: null,
+      // No F5 anim frames exist on disk yet; the tuner gate is honored here
+      // so playback lights up when art lands + catalog regenerates.
+      animUrlBase: (gp.hasAnim && !gp.state
+        && tuneAnimEnabled('f5', gp.biome, gp.name, 'wind_sway'))
+        ? '/assets/pixelab/landscape_v2/micro/medium_objects/' + gp.biome + '/' +
+          gp.name + '/anim/wind_sway/v' + (gp.variant < 10 ? '00' + gp.variant : gp.variant < 100 ? '0' + gp.variant : '' + gp.variant) + '/'
+        : null,
+      staticUrl: f5SpriteUrl(gp),
+      isRigid: true,                       // objects never sway-rotate
+      lifeScale: gp.sizeTiles,             // 96px @ 1.0 -> 3 tiles
+      lifeSway: 0,
+      baseAngle: 0,
+      offUX: gp.ux - 0.5,
+      offUY: gp.uy - 0.5,
+      sortYOff: gp.uy + gp.sizeTiles * 0.30, // sort by sprite base (same rule as F4)
+      ambientPeriod: 0,
+      ambientPhase: 0,
+      startDelay: 0,
+      loopCount: 0,
+      restFrame: 0
+    });
+  }
+
   // Density driven by biome + tile fertility/vegetation
   var vegDensity = tile.layers && tile.layers[6] ? tile.layers[6].vegetationDensity : 0.5;
   var fertility = tile.layers && tile.layers[6] ? tile.layers[6].fertility : 0.5;
@@ -700,13 +731,11 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
       : Math.floor(rand2(wx, wy, 7035 + bi) * SF_VARIANT_COUNT);
     var vStr = variantIdx < 10 ? '00' + variantIdx : (variantIdx < 100 ? '0' + variantIdx : '' + variantIdx);
 
-    // Lifecycle: seedling 15%, normal 55%, wilting 20%, dead 10%
-    var stateRoll = rand2(wx, wy, 7100 + bi);
-    var lifecycleState = 'normal';
-    if (stateRoll < 0.15) lifecycleState = 'seedling';
-    else if (stateRoll < 0.70) lifecycleState = 'normal';
-    else if (stateRoll < 0.90) lifecycleState = 'wilting';
-    else lifecycleState = 'dead';
+    // Lifecycle via the tunable state-weight resolver. Defaults reproduce the
+    // historical 15/55/20/10 split exactly (same salt, same thresholds).
+    var lifecycleState = rollWeighted(
+      tuneStateWeights('f2', biome, objName, F2_STATE_DEFAULTS),
+      F2_STATE_ORDER, rand2(wx, wy, 7100 + bi));
 
     var lifeScale = 1.0;
     var lifeAngle = 0;

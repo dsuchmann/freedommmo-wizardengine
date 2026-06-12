@@ -5,7 +5,9 @@
 // worker and main thread compute identical results independently.
 import { rand2 } from '../core/random.js';
 import { MF_CATALOG } from './mf-catalog.js';
-import { tuneSize, tuneBiomeDensity, tuneObjDensity } from './field-tuning.js';
+import { MO_CATALOG } from './mo-catalog.js';
+import { tuneSize, tuneBiomeDensity, tuneObjDensity, tuneStateWeights, rollWeighted,
+  F4_STATE_ORDER, F4_STATE_DEFAULTS, F5_STATE_ORDER, f5StateDefaults } from './field-tuning.js';
 
 var MF_BASE_PATH = '/assets/pixelab/landscape_v2/micro/medium_flora/';
 // Per-tile chance of one medium-flora plant (master plan: 3-12% density)
@@ -26,6 +28,24 @@ export var F4_BIOME_SCALE = {
   taiga: 0.4, swamp: 0.35, mystic: 0.55, savanna: 0.4, hills: 0.5,
   steppe: 0.6, beach: 0.5, tundra: 0.55, desert: 0.45, arctic: 0.65,
   mountains: 0.5, volcanic: 0.5,
+};
+
+var MO_BASE_PATH = '/assets/pixelab/landscape_v2/micro/medium_objects/';
+// Per-tile chance of one medium object — rarer than F4 (spec: ~1-3%)
+var F5_TILE_CHANCE = {
+  grassland: 0.020, forest: 0.025, dense_forest: 0.025, tropical_forest: 0.022,
+  taiga: 0.020, swamp: 0.022, mystic: 0.030, savanna: 0.018, hills: 0.025,
+  steppe: 0.015, beach: 0.012, tundra: 0.012, desert: 0.010, arctic: 0.010,
+  mountains: 0.028, volcanic: 0.022,
+};
+var _f5Cache = new Map();   // 'wx,wy,biome' -> placements
+// Live-tunable per-biome F5 scale (96px native = 3 tiles at 1.0). The user
+// calibrates in-game; bake final values here afterwards (F4 precedent).
+export var F5_BIOME_SCALE = {
+  grassland: 1.0, forest: 1.0, dense_forest: 1.0, tropical_forest: 1.0,
+  taiga: 1.0, swamp: 1.0, mystic: 1.0, savanna: 1.0, hills: 1.0,
+  steppe: 1.0, beach: 1.0, tundra: 1.0, desert: 1.0, arctic: 1.0,
+  mountains: 1.0, volcanic: 1.0,
 };
 
 export var SS_BASE_PATH = '/assets/pixelab/landscape_v2/micro/small_scatter/';
@@ -423,8 +443,8 @@ export function f3SpriteUrl(p) {
 }
 
 // 8x8 bitmask of claimed cells for tile (wx,wy). Row r bit c = cell claimed.
-// Scans this tile + 8 neighbors (F3 max reach: jitter 0.3 tile + half base
-// width ~6px well under one tile). Raise the radius when F4+ register.
+// Scans this tile + neighbors out to ±3: F5 96px objects reach ~2.5 tiles
+// at max tuner scale (fw 0.42 × 192px), hence the ±3 radius.
 export function getClaimMask(wx, wy, tileInfo) {
   var key = wx + ',' + wy;
   var hit = _maskCache.get(key);
@@ -432,11 +452,12 @@ export function getClaimMask(wx, wy, tileInfo) {
   var mask = new Uint8Array(CELLS);
   var ox = wx * TILE_ART_PX, oy = wy * TILE_ART_PX;
   var complete = true; // any null (unloaded) neighbor -> don't cache the mask
-  for (var ny = -2; ny <= 2; ny++) {
-    for (var nx = -2; nx <= 2; nx++) {
+  for (var ny = -3; ny <= 3; ny++) {
+    for (var nx = -3; nx <= 3; nx++) {
       if (!tileInfo(wx + nx, wy + ny)) { complete = false; continue; }
       var pls = f3Placements(wx + nx, wy + ny, tileInfo)
-        .concat(f4Placements(wx + nx, wy + ny, tileInfo));
+        .concat(f4Placements(wx + nx, wy + ny, tileInfo),
+                f5Placements(wx + nx, wy + ny, tileInfo));
       for (var i = 0; i < pls.length; i++) {
         var p = pls[i];
         // rasterize the base ellipse into this tile's cells (center test)
@@ -468,7 +489,7 @@ export function isClaimedAt(px, py, tileInfo) {
   return (mask[r] & (1 << c)) !== 0;
 }
 
-export function clearClaimCaches() { _placeCache.clear(); _maskCache.clear(); _f4Cache.clear(); }
+export function clearClaimCaches() { _placeCache.clear(); _maskCache.clear(); _f4Cache.clear(); _f5Cache.clear(); }
 
 function pad3(v) { return v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v); }
 
@@ -486,20 +507,20 @@ export function f4Placements(wx, wy, tileInfo) {
   var chance = (F4_TILE_CHANCE[t.biome] || 0) * tuneBiomeDensity('f4', t.biome);
   if (!objs || !objs.length || chance === 0) return cachePut(_f4Cache, key, EMPTY);
   if (rand2(wx, wy, 9700) > chance) return cachePut(_f4Cache, key, EMPTY);
+  // Larger objects claim first: a tile F5 claimed never hosts F4.
+  if (f5Placements(wx, wy, tileInfo).length) return cachePut(_f4Cache, key, EMPTY);
 
   var obj = objs[Math.floor(rand2(wx, wy, 9701) * objs.length)];
   // Object-level density: <1 rejects this tile's pick (1 placement/tile max,
   // so >1 cannot add more — clamped by construction). NEW salt 9714.
   var objD = tuneObjDensity('f4', t.biome, obj.name);
   if (objD < 1 && rand2(wx, wy, 9714) > objD) return cachePut(_f4Cache, key, EMPTY);
-  // Lifecycle roll: 15% seedling / 55% normal / 20% wilting / 8% dead / 2% enchanted
-  var roll = rand2(wx, wy, 9705);
-  var st = null;
-  if (roll < 0.15) st = 'seedling';
-  else if (roll < 0.70) st = null;
-  else if (roll < 0.90) st = 'wilting';
-  else if (roll < 0.98) st = 'dead';
-  else st = 'enchanted';
+  // Lifecycle roll via the tunable state-weight resolver. Defaults reproduce
+  // the historical 15/55/20/8/2 split exactly (same salt, same thresholds).
+  var st = rollWeighted(
+    tuneStateWeights('f4', t.biome, obj.name, F4_STATE_DEFAULTS),
+    F4_STATE_ORDER, rand2(wx, wy, 9705));
+  if (st === 'base') st = null;
   var variant;
   if (st && obj.statePool.length) {
     variant = obj.statePool[Math.floor(rand2(wx, wy, 9706) * obj.statePool.length)];
@@ -536,6 +557,61 @@ export function f4SpriteUrl(p) {
 
 export function f4AnimUrlBase(p) {
   return MF_BASE_PATH + p.biome + '/' + p.name + '/anim/wind_sway/v' + pad3(p.variant) + '/';
+}
+
+// One medium object per tile max. Deterministic (seed roots 9800-9820).
+// Same placement contract as f4: { name, biome, size, variant, state,
+// stateOnDisk, ux, uy, sizeTiles, hasAnim, bx, by, fw, fh }.
+// States roll from day one (spec: honest roll); a state whose PNG hasn't
+// landed renders the base variant — f5SpriteUrl checks stateOnDisk.
+export function f5Placements(wx, wy, tileInfo) {
+  var t = tileInfo(wx, wy);
+  if (!t || t.transition) return EMPTY;
+  var key = wx + ',' + wy + ',' + t.biome;
+  var hit = _f5Cache.get(key);
+  if (hit) return hit;
+  var objs = MO_CATALOG[t.biome];
+  var chance = (F5_TILE_CHANCE[t.biome] || 0) * tuneBiomeDensity('f5', t.biome);
+  if (!objs || !objs.length || chance === 0) return cachePut(_f5Cache, key, EMPTY);
+  if (rand2(wx, wy, 9800) > chance) return cachePut(_f5Cache, key, EMPTY);
+
+  var obj = objs[Math.floor(rand2(wx, wy, 9801) * objs.length)];
+  var objD = tuneObjDensity('f5', t.biome, obj.name);
+  if (objD < 1 && rand2(wx, wy, 9814) > objD) return cachePut(_f5Cache, key, EMPTY);
+
+  var weights = tuneStateWeights('f5', t.biome, obj.name, f5StateDefaults(t.biome));
+  var st = rollWeighted(weights, F5_STATE_ORDER, rand2(wx, wy, 9805));
+  if (st === 'base') st = null;
+  var variant = Math.floor(rand2(wx, wy, 9802) * obj.variants);
+  var stateOnDisk = !!(st && obj.states[st] && obj.states[st].indexOf(variant) !== -1);
+
+  var ux = 0.5 + (rand2(wx, wy, 9803) - 0.5) * 0.5;
+  var uy = 0.5 + (rand2(wx, wy, 9804) - 0.5) * 0.5;
+  var scale = (F5_BIOME_SCALE[t.biome] || 1.0) *
+    tuneSize('f5', t.biome, obj.name, variant, wx, wy, 9820);
+  var sizeTiles = obj.size * scale / TILE_ART_PX; // 96px @ 1.0 -> 3 tiles
+  var drawPx = obj.size * scale;
+  var p = {
+    name: obj.name, biome: t.biome, size: obj.size, variant: variant,
+    state: st, stateOnDisk: stateOnDisk,
+    ux: ux, uy: uy, sizeTiles: sizeTiles,
+    hasAnim: obj.anims.indexOf(variant) !== -1,
+    // base footprint ~2x F4's absolute claim at equal draw size: F4 uses
+    // 0.30/0.16 of drawPx; objects are ground-heavy so claim wider+deeper.
+    bx: (wx + ux) * TILE_ART_PX,
+    by: (wy + uy) * TILE_ART_PX + drawPx * 0.30,
+    fw: drawPx * 0.42, fh: drawPx * 0.22,
+  };
+  return cachePut(_f5Cache, key, [p]);
+}
+
+export function f5SpriteUrl(p) {
+  if (p.state && p.stateOnDisk) {
+    return MO_BASE_PATH + p.biome + '/' + p.name + '/_states/' + p.state +
+      '/mo__' + p.biome + '__' + p.name + '__' + p.state + '__v' + pad3(p.variant) + '.png';
+  }
+  return MO_BASE_PATH + p.biome + '/' + p.name +
+    '/mo__' + p.biome + '__' + p.name + '__v' + pad3(p.variant) + '.png';
 }
 
 // Returns all state sprite URLs for objects in `biome` that have known states.
