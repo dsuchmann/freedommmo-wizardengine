@@ -128,7 +128,6 @@ test('probe M2 step 4: chop tree + take log → auditGrains ok', () => {
 test('probe M2 step 5: determinism — two identical seeds yield bit-identical results', () => {
   function runFullScenario(seed) {
     const { k, boulder, tree, player } = bootWorld(seed);
-    const boulderE = boulder.attrs.E;
 
     // Shatter boulder + closure walk
     for (let i = 0; i < 100; i++) {
