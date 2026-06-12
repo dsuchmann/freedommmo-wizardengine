@@ -78,6 +78,10 @@ test('probe M: planner path is ledger-identical to hand-written verbs', () => {
 
   const actions = plan('pick the berry and eat it', { bush: { id: B.bush.id, x: B.bush.x, y: B.bush.y } });
   assert.ok(actions, 'canonical intent resolves');
+  // spec §10: assert the action list itself, not just its existence
+  assert.deepEqual(actions.map(a => a.verb), ['move_to', 'pick_up', 'use'], 'planned action list');
+  assert.equal(actions[1].target, B.bush.id);
+  assert.equal(actions[2].mode, 'eat');
   let tick = 1, last = null;
   for (const action of actions) {
     const r = performAction(B.k, B.player.id, action, tick, last);
