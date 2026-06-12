@@ -677,11 +677,13 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
       offUX: hp.ux - 0.5,
       offUY: hp.uy - 0.5,
       sortYOff: hp.uy + hp.sizeTiles * 0.30, // sort by sprite base (F4/F5 rule)
-      ambientPeriod: 0,
-      ambientPhase: 0,
-      startDelay: 0,
-      loopCount: 0,
-      restFrame: 0
+      // Same ambient/trigger treatment as F4 wind-sway blades (fresh salts):
+      // trees sway in periodic gusts and settle back to restFrame.
+      ambientPeriod: 6000 + rand2(wx, wy, 9837) * 9000,
+      ambientPhase: rand2(wx, wy, 9838) * 9000,
+      startDelay: rand2(wx, wy, 9839) * 300,
+      loopCount: 4,
+      restFrame: Math.floor(rand2(wx, wy, 9838) * 8) // 8-frame anims
     });
   }
 
@@ -948,11 +950,14 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
 
       for (var b = 0; b < desc.blades.length; b++) {
         var bl = desc.blades[b];
+        // Per-blade cycle duration: 8-frame F6 anims must end loops on a
+        // frame boundary. Blades without frameCount keep the 9-frame default.
+        var blCycle = (bl.frameCount || FRAME_COUNT) * FRAME_DURATION;
 
         // Wind impulse triggers animation for a few cycles then settles.
         var impulse = baseImpulse;
         // ~7% of sprites randomly animate on their own (ambient life)
-        if (bl.ambientPeriod && (timeMs + bl.ambientPhase) % bl.ambientPeriod < CYCLE_DURATION * 4) {
+        if (bl.ambientPeriod && (timeMs + bl.ambientPhase) % bl.ambientPeriod < blCycle * 4) {
           impulse = 0.2; // gentle ambient trigger
         }
 
@@ -961,12 +966,12 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         if (impulse > 0.08) {
           var existing = triggerTimes.get(triggerKey);
           // Only re-trigger if not currently animating (prevent restart flicker)
-          if (!existing || timeMs - existing.time > CYCLE_DURATION * 2) {
+          if (!existing || timeMs - existing.time > blCycle * 2) {
             triggerTimes.set(triggerKey, { time: timeMs + bl.startDelay, ext: 0 });
           }
         }
 
-        var triggerDuration = CYCLE_DURATION * bl.loopCount;
+        var triggerDuration = blCycle * bl.loopCount;
         var triggerData = triggerTimes.get(triggerKey);
         var triggerTime = triggerData ? triggerData.time : -99999;
         var extensions = triggerData ? triggerData.ext : 0;
@@ -985,8 +990,8 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
             }
           }
           if (shouldExtend) {
-            triggerTimes.set(triggerKey, { time: triggerTime + CYCLE_DURATION, ext: extensions + 1 });
-            elapsed = timeMs - triggerTime - CYCLE_DURATION;
+            triggerTimes.set(triggerKey, { time: triggerTime + blCycle, ext: extensions + 1 });
+            elapsed = timeMs - triggerTime - blCycle;
           }
         }
 
@@ -1004,7 +1009,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         } else {
           frameIdx = Math.floor((elapsed / FRAME_DURATION + bl.restFrame) % (bl.frameCount || FRAME_COUNT));
           // Smooth blend for sway: ease in first cycle, ease out last cycle
-          var cycleProgress = elapsed / CYCLE_DURATION;
+          var cycleProgress = elapsed / blCycle;
           if (cycleProgress < 1) animBlend = Math.min(1, cycleProgress * 2);
           else if (cycleProgress > bl.loopCount - 1) animBlend = Math.max(0, (bl.loopCount - cycleProgress) * 2);
           else animBlend = 1;
