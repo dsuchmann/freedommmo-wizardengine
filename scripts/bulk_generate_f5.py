@@ -46,7 +46,8 @@ API_BASE = "https://api.pixellab.ai/v2"
 MAX_INFLIGHT = 6            # F4 anim run is consuming the rest of the 20-job account limit
 POLL_INTERVAL = 20          # seconds between scheduler ticks
 SUBMIT_DELAY = 2            # seconds between submissions
-JOB_TIMEOUT = 1800          # 30 min -> requeue
+JOB_TIMEOUT = 10800         # 3h — PixelLab queue can back up badly; early
+                            # requeues spawn duplicate jobs that clog it worse
 MAX_RETRIES = 3
 CREDITS_FLOOR = 3.00        # pause below this
 CREDITS_CHECK_EVERY = 600   # seconds
@@ -666,10 +667,14 @@ def run(phases, only_type, dry_run):
             if not credits_ok(state):
                 time.sleep(60)
                 continue
+            # 429-starvation is transient (account slots held by the F4 run /
+            # server queue) — wait it out instead of exiting with work pending.
             idle_ticks += 1
-            if idle_ticks > 3:
-                log.warning("No inflight jobs and nothing submittable; stopping.")
+            if idle_ticks > 40:  # ~80+ min of continuous starvation
+                log.warning("Starved of submit capacity for too long; stopping.")
                 break
+            log.info(f"Submit-starved (tick {idle_ticks}/40) — sleeping 120s")
+            time.sleep(120)
             continue
         idle_ticks = 0
 
@@ -726,11 +731,11 @@ def run(phases, only_type, dry_run):
             except Exception as e:
                 log.error(f"poll {ikey}: {e}")
             if ikey in inflight and ikey not in done_keys and age > JOB_TIMEOUT:
-                log.warning(f"{ikey}: stuck {int(age)}s -> requeue")
+                # A slow server queue is not the task's fault: requeue WITHOUT
+                # a retry penalty so timeouts can never mark a task failed.
+                log.warning(f"{ikey}: stuck {int(age)}s -> requeue (no retry penalty)")
                 t["status"] = "pending"
-                t["retries"] = t.get("retries", 0) + 1
-                if t["retries"] >= MAX_RETRIES:
-                    t["status"] = "failed"
+                t["job_id"] = None
                 done_keys.append(ikey)
         for k in done_keys:
             inflight.pop(k, None)

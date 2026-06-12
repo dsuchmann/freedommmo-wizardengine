@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** One in-game overlay (backtick key) that tunes size and density of every F2/F3/F4 decoration object — down to per-variant size ranges — multiplying down a master × biome × object × variant tree, with localStorage persistence and Copy-JSON export.
+**Goal:** One in-game overlay (backtick key) that tunes size and density of every F2/F3/F4 decoration object — down to per-variant size ranges — plus per-object animation-category toggles (wind_sway, player_walk), multiplying down a master × biome × object × variant tree, with localStorage persistence and Copy-JSON export.
 
 **Architecture:** New pure module `src/world/field-tuning.js` holds the tuning tree + resolvers (`tuneSize`, `tuneBiomeDensity`, `tuneObjDensity`). Placement code calls the resolvers where hardcoded constants live today; defaults (all 1.0) are byte-identical to current behavior because `rand2` is stateless. F3 is painted by chunk workers, so the tree is postMessage'd to workers and chunk bitmaps are invalidated (existing repaint path repaints them). New UI `src/dev/field-tuner.js` replaces `src/dev/f4-tuner.js`.
 
@@ -73,7 +73,20 @@ test('setFieldTuning replaces tree and live-binding updates', () => {
   setFieldTuning(null);
   assert.deepEqual(FIELD_TUNING, { f2: {}, f3: {}, f4: {} });
 });
+
+test('anim categories default enabled, disable per object x category', () => {
+  setFieldTuning({ f2: { biomes: { forest: { objects: {
+    tree_stump: { anims: { wind_sway: false } } } } } } });
+  assert.equal(tuneAnimEnabled('f2', 'forest', 'tree_stump', 'wind_sway'), false);
+  assert.equal(tuneAnimEnabled('f2', 'forest', 'tree_stump', 'player_walk'), true);
+  assert.equal(tuneAnimEnabled('f2', 'forest', 'fern_patch', 'wind_sway'), true);
+  assert.equal(tuneAnimEnabled('f4', 'forest', 'tree_stump', 'wind_sway'), true);
+  setFieldTuning(null);
+  assert.equal(tuneAnimEnabled('f2', 'forest', 'tree_stump', 'wind_sway'), true);
+});
 ```
+
+(Also add `tuneAnimEnabled` to the import line at the top of the test.)
 
 - [ ] **Step 2: Run test to verify it fails**
 
@@ -152,12 +165,22 @@ export function tuneObjDensity(field, biome, obj) {
   var o = b && b.objects && b.objects[obj];
   return o && o.density != null ? o.density : 1;
 }
+
+// Per-object, per-category animation toggle. Categories today: 'wind_sway'
+// (consumed by field2-animator) and 'player_walk' (generated on disk;
+// renderer wiring pending). Missing node/key = enabled (true).
+export function tuneAnimEnabled(field, biome, obj, category) {
+  var f = FIELD_TUNING[field];
+  var b = f && f.biomes && f.biomes[biome];
+  var o = b && b.objects && b.objects[obj];
+  return !(o && o.anims && o.anims[category] === false);
+}
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `node --test test/field-tuning.test.js`
-Expected: PASS, 5 tests. (If `src/core/random.js` pulls in a browser-only import chain via `world-seed.js`, the test will throw on import — in that case read those two files; they are expected to be pure JS with no DOM access, fix is NOT needed unless proven otherwise.)
+Expected: PASS, 6 tests. (If `src/core/random.js` pulls in a browser-only import chain via `world-seed.js`, the test will throw on import — in that case read those two files; they are expected to be pure JS with no DOM access, fix is NOT needed unless proven otherwise.)
 
 - [ ] **Step 5: Commit**
 
@@ -368,7 +391,7 @@ git commit -m "feat(tuner): F4 placements consume size/density tuning (salts 971
 Add to the imports at the top of `src/render/field2-animator.js`:
 
 ```js
-import { tuneSize, tuneBiomeDensity, tuneObjDensity } from '../world/field-tuning.js';
+import { tuneSize, tuneBiomeDensity, tuneObjDensity, tuneAnimEnabled } from '../world/field-tuning.js';
 ```
 
 - [ ] **Step 2: Biome-level density**
@@ -404,13 +427,46 @@ Right after the lifecycle `if/else if` chain that sets `lifeScale` (currently en
     lifeScale *= tuneSize('f2', biome, objName, variantIdx, wx, wy, 7600 + bi * 4);
 ```
 
-- [ ] **Step 5: Verify defaults unchanged + commit**
+- [ ] **Step 5: Anim toggles — F2 wind_sway gate**
 
-Empty tree: `f2bd === 1` skips both branches, `f2od < 1` never rolls, `tuneSize` returns 1. No existing salt usage touched.
+In `buildTileDescriptor`, line ~727 currently reads:
+
+```js
+    var animWl = sfAnimVariantsFor(biome, objName);
+    var animAvail = !animWl || animWl.indexOf(variantIdx) !== -1;
+```
+
+Replace the second line with:
+
+```js
+    var animAvail = (!animWl || animWl.indexOf(variantIdx) !== -1)
+      && tuneAnimEnabled('f2', biome, objName, 'wind_sway');
+```
+
+(`animAvail === false` makes `animUrlBase` null a few lines down → static sprite drawn, wind_sway frames never load. The `player_walk` category has no renderer consumer yet — its toggle is stored in the tree and exported; it gates generation and will gate the walk-disturbance renderer when that lands.)
+
+- [ ] **Step 6: Anim toggles — F4 wind_sway gate**
+
+In the F4 blade-building loop (~line 608), replace:
+
+```js
+      animUrlBase: (!fp.state && fp.hasAnim) ? f4AnimUrlBase(fp) : null,
+```
+
+with:
+
+```js
+      animUrlBase: (!fp.state && fp.hasAnim
+        && tuneAnimEnabled('f4', fp.biome, fp.name, 'wind_sway')) ? f4AnimUrlBase(fp) : null,
+```
+
+- [ ] **Step 7: Verify defaults unchanged + commit**
+
+Empty tree: `f2bd === 1` skips both branches, `f2od < 1` never rolls, `tuneSize` returns 1, `tuneAnimEnabled` returns true. No existing salt usage touched.
 
 ```bash
 git add src/render/field2-animator.js
-git commit -m "feat(tuner): F2 blades consume size/density tuning (salts 7400+, 7600+)"
+git commit -m "feat(tuner): F2/F4 blades consume size/density tuning + per-object anim toggles"
 ```
 
 ---
@@ -650,6 +706,31 @@ function rebuild() {
     row.appendChild(arrow);
     wrap.appendChild(row);
     wrap.appendChild(tuneRow('  density', '#9fb6dd', null, function () { return node(field, biome, o.name); }, 'density', 0, 3.0, field));
+    // Per-category animation toggles (F2/F4 only — F3 has no anims).
+    // Categories: wind_sway (live in renderer) + player_walk (generated on
+    // disk; gates future renderer wiring + generation). Unchecked = disabled.
+    if (field !== 'f3') {
+      var animRow = el('div', 'display:flex;align-items:center;gap:8px;margin:1px 0 1px 18px;color:#9fb6dd');
+      animRow.appendChild(el('span', '', 'anim:'));
+      [['wind_sway', 'wind'], ['player_walk', 'walk']].forEach(function (pair) {
+        var cat = pair[0];
+        var lbl = el('label', 'display:flex;align-items:center;gap:2px;cursor:pointer');
+        var acb = el('input'); acb.type = 'checkbox';
+        var an = peek(field, biome, o.name);
+        acb.checked = !(an && an.anims && an.anims[cat] === false);
+        acb.onchange = function () {
+          var t = node(field, biome, o.name);
+          t.anims = t.anims || {};
+          if (acb.checked) delete t.anims[cat]; else t.anims[cat] = false;
+          if (!Object.keys(t.anims).length) delete t.anims;
+          apply(field);
+        };
+        lbl.appendChild(acb);
+        lbl.appendChild(el('span', '', pair[1]));
+        animRow.appendChild(lbl);
+      });
+      wrap.appendChild(animRow);
+    }
     var path = el('div', 'color:#5e729a;font-size:10px;margin-left:18px', FIELD_PATH[field] + '/' + biome + '/' + o.name + '  (' + o.variants.length + ' variants, eff ' + effSize(field, biome, o.name).toFixed(2) + ')');
     wrap.appendChild(path);
     if (expanded[key]) {
@@ -896,6 +977,6 @@ git commit -m "test(tuner): headless probe — density-0 hides F3, size x2 doubl
 
 ### Task 8: F2 visual verification + handoff
 
-- [ ] **Step 1: Manual F2 check** — teleport to grassland, open tuner, F2 tab: set `tall_grass_blade` density to 0.3 (blades thin out), size to 1.8 (blades grow), then a variant range 0.5–1.5 on one variant (mixed sizes appear, stable on reload because rolls are seeded). Reset all.
+- [ ] **Step 1: Manual F2 check** — teleport to grassland, open tuner, F2 tab: set `tall_grass_blade` density to 0.3 (blades thin out), size to 1.8 (blades grow), then a variant range 0.5–1.5 on one variant (mixed sizes appear, stable on reload because rolls are seeded). Uncheck `wind` on `tall_grass_blade` — blades go static (no sway frames). Re-check — sway returns. Reset all.
 
 - [ ] **Step 2: Tell the user** the tuner is live on F2/F3/F4 with the backtick key, and that "copy JSON" output should be pasted back for baking into source defaults (F4_BIOME_SCALE-style) once calibration is done.

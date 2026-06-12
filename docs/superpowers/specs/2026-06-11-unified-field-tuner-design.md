@@ -23,6 +23,7 @@ This replaces the F4-only tuner (`f4-tuner.js`, key '4').
 3. **Persistence**: localStorage scratchpad + Copy-JSON export; Claude bakes exported values into source constants, after which localStorage resets to all-1.0.
 4. **UI**: one unified panel with field tabs, not per-field panels.
 5. **Architecture**: central tuning store + thin per-field hooks (approach A below).
+6. **Per-object, per-category animation toggles** (added 2026-06-11, user request): some objects (tree stumps, logs) must never wind-sway, and Claude can't always guess which — the user controls it per object in the same panel. Not a blanket on/off: each generated animation **category** gets its own toggle. Current categories: `wind_sway` (consumed by the renderer) and `player_walk` (generated on disk for small_flora; renderer wiring pending — its toggle takes effect when that lands, and meanwhile gates future generation). Object node gains `anims: { wind_sway: false, player_walk: false }` — missing key = enabled. Per-object only, not per-variant (variants of one plant sway or don't together). F2 and F4 only — F3 has no animations. A disabled category falls back to the static sprite. Exported disables get baked as permanent catalog entries, and those object×category pairs stop being sent to PixelLab.
 
 ## Architecture (Approach A — chosen)
 
@@ -42,6 +43,7 @@ Alternatives considered: (B) extending each field's own constant tables — reje
 ```
 
 - Every node has optional `size` (scalar) or `sizeMin`/`sizeMax` (range) and `density`. Missing node ⇒ 1.0. All-defaults must produce placements byte-identical to current master.
+- `tuneAnimEnabled(field, biome, obj, category) → boolean` — false only when the object node has `anims: { [category]: false }`. F2 hook: gates `animUrlBase` (wind_sway) in `buildTileDescriptor`; same gate point covers F4 blades (descriptor's `animUrlBase` for `hasAnim` placements). `player_walk` is queried by the walk-disturbance renderer when it lands.
 - `resolveTuning(field, biome, obj, variantIdx, seed) → { sizeMul, densityMul }`
   - sizeMul = master × biome × object × variant. A range node contributes a deterministic roll in [min, max] hashed from the placement seed (same large-prime XOR hash style as existing placement) — stable across frames and reloads.
   - densityMul = master × biome × object.
