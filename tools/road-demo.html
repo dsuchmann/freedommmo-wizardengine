@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Road Wang Pilot — Seam Demo</title>
+<style>
+  body { background:#1a1a22; color:#ddd; font:13px monospace; margin:16px; }
+  h1 { font-size:16px; }
+  .bar { display:flex; gap:16px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
+  select, input { font:13px monospace; background:#2a2a35; color:#ddd; border:1px solid #555; }
+  canvas { image-rendering: pixelated; border:1px solid #444; display:block; }
+  #status { color:#fa5; }
+  .hint { color:#888; }
+</style>
+</head>
+<body>
+<h1>Road Wang Pilot — seam inspection (dual-grid, 16 tiles)</h1>
+<div class="bar">
+  <label>Tileset <select id="tileset">
+    <option>dirt_road__grassland</option>
+    <option>dirt_road__desert</option>
+    <option>dirt_road__taiga</option>
+  </select></label>
+  <label>Layout <select id="layout">
+    <option>winding</option>
+    <option>crossroads</option>
+    <option>village_grid</option>
+    <option>diagonal_steps</option>
+    <option>all_16_tiles</option>
+  </select></label>
+  <label>Zoom <input id="zoom" type="range" min="1" max="8" value="3" style="width:120px"> <span id="zoomv">3x</span></label>
+  <span id="status"></span>
+</div>
+<canvas id="c"></canvas>
+<p class="hint">Tiles load live from assets/pixelab/landscape_v2/roads/&lt;tileset&gt;/&lt;tileset&gt;__wang_&lt;0-15&gt;.png — re-pick the tileset to refresh after the burst writes more files. Base tiles are the real per-biome 32px bases.</p>
+<script type="module">
+const TILE = 32;
+// corner bitmask (NW=8, NE=4, SW=2, SE=1; 1 = road) -> wang tile index
+const CORNER_TO_WANG = [12,13,0,3,8,1,14,5,15,4,11,2,9,7,10,6];
+const BIOME_OF = { dirt_road__grassland:'grassland', dirt_road__desert:'desert', dirt_road__taiga:'taiga' };
+
+const loadImg = (src) => new Promise((res) => {
+  const i = new Image();
+  i.onload = () => res(i);
+  i.onerror = () => res(null);
+  i.src = src + '?t=' + Date.now();   // no-cache: burst writes files while page is open
+});
+
+// road cell grids per layout (1 = road). Render grid is (w-1)x(h-1) dual-grid.
+function cells(layout) {
+  const W = 26, H = 15, g = Array.from({length:H}, () => Array(W).fill(0));
+  const set = (x,y) => { if (y>=0 && y<H && x>=0 && x<W) g[y][x] = 1; };
+  if (layout === 'winding') {
+    let y = 11;
+    for (let x = 1; x < W-1; x++) {
+      set(x,y); set(x,y-1);                    // 2-cell-wide road reads better
+      if (x === 5 || x === 6) y--; if (x === 7) y -= 2;
+      if (x === 13 || x === 14) y++; if (x === 19) y -= 2; if (x === 20) y--;
+    }
+  } else if (layout === 'crossroads') {
+    for (let x = 1; x < W-1; x++) { set(x,7); set(x,8); }
+    for (let y = 1; y < H-1; y++) { set(12,y); set(13,y); }
+  } else if (layout === 'village_grid') {
+    for (let x = 2; x < W-2; x++) { set(x,3); set(x,11); }
+    for (let y = 3; y <= 11; y++) { set(4,y); set(12,y); set(20,y); }
+    set(8,7); set(8,8); set(9,7); set(9,8);    // small plaza
+  } else if (layout === 'diagonal_steps') {
+    let y = 12;
+    for (let x = 2; x < W-2; x++) { set(x,y); set(x+1,y); if (x % 2 === 0) y--; }
+  }
+  return g;
+}
+
+async function draw() {
+  const ts = document.getElementById('tileset').value;
+  const layout = document.getElementById('layout').value;
+  const zoom = +document.getElementById('zoom').value;
+  document.getElementById('zoomv').textContent = zoom + 'x';
+  const status = document.getElementById('status');
+  status.textContent = 'loading…';
+
+  const biome = BIOME_OF[ts];
+  const wang = await Promise.all(Array.from({length:16}, (_, i) =>
+    loadImg(`/assets/pixelab/landscape_v2/roads/${ts}/${ts}__wang_${i}.png`)));
+  const bases = (await Promise.all(Array.from({length:8}, (_, i) =>
+    loadImg(`/assets/pixelab/landscape_v2/base/${biome}/tiles/${biome}__tile__v00${i}.png`)))).filter(Boolean);
+  const missing = wang.map((m,i) => m ? null : i).filter(v => v !== null);
+  status.textContent = missing.length === 16 ? `tileset not on disk yet (burst still generating ${ts})`
+    : missing.length ? `partial: missing wang ${missing.join(',')}` : '';
+
+  const c = document.getElementById('c'), ctx = c.getContext('2d');
+
+  if (layout === 'all_16_tiles') {              // contact sheet: each tile on base, labeled
+    const cols = 8, rows = 2, pad = 14;
+    c.width = (cols*(TILE+pad)+pad)*zoom; c.height = (rows*(TILE+pad+12)+pad)*zoom;
+    c.style.width = c.width+'px';
+    ctx.imageSmoothingEnabled = false; ctx.scale(zoom, zoom);
+    ctx.fillStyle = '#1a1a22'; ctx.fillRect(0,0,c.width,c.height);
+    ctx.font = '8px monospace'; ctx.fillStyle = '#aaa';
+    for (let i = 0; i < 16; i++) {
+      const x = pad+(i%cols)*(TILE+pad), y = pad+Math.floor(i/cols)*(TILE+pad+12);
+      if (bases.length) ctx.drawImage(bases[i % bases.length], x, y, TILE, TILE);
+      if (wang[i]) ctx.drawImage(wang[i], x, y, TILE, TILE);
+      ctx.fillStyle = '#aaa'; ctx.fillText('w'+i, x, y+TILE+9);
+    }
+    return;
+  }
+
+  const g = cells(layout);
+  const RW = g[0].length-1, RH = g.length-1;    // dual-grid render dims
+  c.width = RW*TILE*zoom; c.height = RH*TILE*zoom;
+  c.style.width = c.width+'px';
+  ctx.imageSmoothingEnabled = false; ctx.scale(zoom, zoom);
+  const hash = (x,y) => ((x*73856093) ^ (y*19349663)) >>> 0;
+  for (let ry = 0; ry < RH; ry++) for (let rx = 0; rx < RW; rx++) {
+    if (bases.length) ctx.drawImage(bases[hash(rx,ry) % bases.length], rx*TILE, ry*TILE, TILE, TILE);
+    const mask = (g[ry][rx]<<3) | (g[ry][rx+1]<<2) | (g[ry+1][rx]<<1) | g[ry+1][rx+1];
+    if (mask !== 0) {
+      const w = wang[CORNER_TO_WANG[mask]];
+      if (w) ctx.drawImage(w, rx*TILE, ry*TILE, TILE, TILE);
+      else { ctx.fillStyle = 'rgba(255,0,255,0.4)'; ctx.fillRect(rx*TILE, ry*TILE, TILE, TILE); }
+    }
+  }
+}
+for (const id of ['tileset','layout','zoom']) document.getElementById(id).addEventListener('input', draw);
+draw();
+</script>
+</body>
+</html>
