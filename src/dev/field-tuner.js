@@ -363,7 +363,7 @@ export function initFieldTuner() {
   if (prov && prov.applyFieldTuning) prov.applyFieldTuning(TREE, hasRepaintTuning);
   if (hasRepaintTuning) clearClaimCaches();
 
-  window._fieldTuning = { tree: function () { return TREE; }, set: function (t) { TREE = t; apply(repaintFieldId() || activeField); }, apply: apply };
+  window._fieldTuning = { tree: function () { return TREE; }, set: function (t) { TREE = emptyTree(); FIELD_REGISTRY.forEach(function (r) { if (t && t[r.id]) TREE[r.id] = t[r.id]; }); apply(repaintFieldId() || activeField); }, apply: apply };
   window._fieldRegistry = FIELD_REGISTRY.map(function (r) { return r.id; });
 
   window.addEventListener('keydown', function (e) {
