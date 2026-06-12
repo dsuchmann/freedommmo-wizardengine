@@ -112,3 +112,54 @@ export function promoteRegion(kernel, regionKey, tick) {
   kernel.graph.removeNode(agg.id);                         // pending agg_step goes stale
   return made;
 }
+
+/** Reconciles region tiers around attention-bubble centers (spec §4.2).
+ *  full ≤ fullR regions (Chebyshev), procedural ≤ ringR, statistical beyond.
+ *  Demotion only beyond demoteR (> ringR) — hysteresis prevents boundary thrash.
+ *  Full and procedural tiers run identical dynamics in Pass 1: the differences the
+ *  spec assigns (LLM vs rule-based Agency, coarser Agency events) have no consumer
+ *  yet — Agency is honestly absent (§6.1). The tier labels are the seam. */
+export class TierManager {
+  constructor(kernel, { fullR = 2, ringR = 4, demoteR = 5 } = {}) {
+    this.kernel = kernel;
+    this.fullR = fullR; this.ringR = ringR; this.demoteR = demoteR;
+    this.tiers = new Map();   // regionKey -> 'full' | 'procedural'; absent = statistical
+    for (const n of kernel.graph.nodes.values()) {       // seed from boot-time individuals
+      if (n.R != null && n.x != null && !n.attrs.noFlux) this.tiers.set(regionKeyOf(n.x, n.y), 'procedural');
+    }
+  }
+
+  _dist(regionKey, centers) {
+    const [rx, ry] = regionKey.split(',').map(Number);
+    let best = Infinity;
+    for (const c of centers) {
+      const d = Math.max(Math.abs(rx - Math.floor(c.x / REGION)), Math.abs(ry - Math.floor(c.y / REGION)));
+      if (d < best) best = d;
+    }
+    return best;
+  }
+
+  /** Reconcile around centers ([{x,y}] in tile coords). Safe to call every pump. */
+  update(centers, tick) {
+    if (centers.length === 0) return;
+    for (const c of centers) {                            // promote the ring
+      const cx = Math.floor(c.x / REGION), cy = Math.floor(c.y / REGION);
+      for (let ry = cy - this.ringR; ry <= cy + this.ringR; ry++) {
+        for (let rx = cx - this.ringR; rx <= cx + this.ringR; rx++) {
+          const key = `${rx},${ry}`;
+          if (aggregateOf(this.kernel, key)) promoteRegion(this.kernel, key, tick);
+          this.tiers.set(key, 'procedural');              // label refined below
+        }
+      }
+    }
+    for (const key of [...this.tiers.keys()]) {           // re-label + demote stragglers
+      const d = this._dist(key, centers);
+      if (d > this.demoteR) {
+        demoteRegion(this.kernel, key, tick);             // null when only pinned/empty — fine
+        this.tiers.delete(key);
+      } else {
+        this.tiers.set(key, d <= this.fullR ? 'full' : 'procedural');
+      }
+    }
+  }
+}

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { Kernel } from '../kernel/kernel.js';
 import { spawnMeadow, spawnWorld } from '../world/spawn.js';
 import { aggregateOf, REGION, regionKeyOf } from '../lod/aggregate.js';
-import { demoteRegion, promoteRegion } from '../lod/tiers.js';
+import { demoteRegion, promoteRegion, TierManager } from '../lod/tiers.js';
 import { createPlayer, pick } from '../world/actions.js';
 
 const meadowKernel = (seed = 42) => {
@@ -112,4 +112,40 @@ test('demote → promote round trip conserves and repopulates', () => {
 test('promoting a region with no aggregate is a no-op', () => {
   const k = meadowKernel();
   assert.deepEqual(promoteRegion(k, '0,0', 0), []);
+});
+
+test('TierManager promotes the ring around a center and demotes beyond it', () => {
+  const k = new Kernel({ seed: 42, bounds: { x0: 0, y0: 0, w: 160, h: 160 } });
+  spawnWorld(k, { x0: 0, y0: 0, w: 160, h: 160 }, { x0: 0, y0: 0, w: 16, h: 16 });
+  const tm = new TierManager(k);
+  tm.update([{ x: 8, y: 8 }], 0);                       // center in region 0,0
+  assert.equal(aggregateOf(k, '2,2'), undefined, 'inside ring → individuals');
+  assert.equal(tm.tiers.get('0,0'), 'full');
+  assert.equal(tm.tiers.get('4,0'), 'procedural');
+  assert.ok(aggregateOf(k, '9,9'), 'far region stays statistical');
+  // move the bubble far away: old regions demote (beyond demoteR)
+  tm.update([{ x: 152, y: 152 }], 86400);
+  assert.ok(aggregateOf(k, '0,0'), 'left-behind region demoted');
+  assert.equal(tm.tiers.get('0,0'), undefined);
+});
+
+test('TierManager hysteresis: oscillating across a region boundary never thrashes', () => {
+  const k = new Kernel({ seed: 42, bounds: { x0: 0, y0: 0, w: 160, h: 160 } });
+  spawnWorld(k, { x0: 0, y0: 0, w: 160, h: 160 }, { x0: 0, y0: 0, w: 0, h: 0 });
+  const tm = new TierManager(k);
+  // warm-up: visit both sides once (advancing the ring legitimately promotes new regions)
+  tm.update([{ x: 15, y: 8 }], 0);
+  tm.update([{ x: 17, y: 8 }], 1);
+  const events0 = k.ledger.events.filter(e => e.type === 'promote' || e.type === 'demote').length;
+  for (let i = 0; i < 10; i++) tm.update([{ x: i % 2 ? 15 : 17, y: 8 }], i + 2);  // hop the 0,0/1,0 line
+  const events1 = k.ledger.events.filter(e => e.type === 'promote' || e.type === 'demote').length;
+  assert.equal(events1, events0, 'no promote/demote churn from a 2-tile wobble (demoteR > ringR)');
+});
+
+test('TierManager seeds itself from existing individual regions at construction', () => {
+  const k = meadowKernel();                              // individuals in 0,0, no TierManager yet
+  const tm = new TierManager(k);
+  assert.ok(tm.tiers.has('0,0'));
+  tm.update([{ x: 200, y: 200 }], 0);                    // bubble far away
+  assert.ok(aggregateOf(k, '0,0'), 'boot-time individual region demotes once the bubble leaves');
 });
