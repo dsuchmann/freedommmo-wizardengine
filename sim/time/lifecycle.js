@@ -16,8 +16,10 @@ export function registerLifecycle(kernel) {
       const senJit = 1 + (rand(kernel.seed, node.id, 303) - 0.5) * 0.40;
       kernel.scheduler.schedule(birth + sp.senescence.start * senJit, node.id, 'sen_step', -1);
     }
-    const jit = 1 + (rand(kernel.seed, node.id, 101) - 0.5) * 2 * sp.seed.jitter;
-    kernel.scheduler.schedule(tick + sp.seed.every * jit, node.id, 'seed', -1);
+    if (sp.seed) {
+      const jit = 1 + (rand(kernel.seed, node.id, 101) - 0.5) * 2 * sp.seed.jitter;
+      kernel.scheduler.schedule(tick + sp.seed.every * jit, node.id, 'seed', -1);
+    }
     if (sp.graze) {
       kernel.scheduler.schedule(tick + sp.graze.every, node.id, 'graze', -1);
     }
@@ -53,6 +55,7 @@ export function registerLifecycle(kernel) {
 
   kernel.on('seed', (k, node, ev) => {
     const sp = SPECIES[node.attrs.species];
+    if (!sp.seed) return;
     k.closeSegment(node, ev.tick);
     const age = ev.tick - node.attrs.birthTick;
     const mature = stageAt(node.attrs.species, age)[0] === 'mature';

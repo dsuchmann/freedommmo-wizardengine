@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Kernel } from '../kernel/kernel.js';
-import { DAY, YEAR } from '../time/metabolism.js';
+import { DAY, YEAR, SPECIES } from '../time/metabolism.js';
 
 test('grass dies of old age and leaves a decaying corpse with cause chain', () => {
   const k = new Kernel({ seed: 7, phi: 4, bounds: { x0: 0, y0: 0, w: 8, h: 8 } });
@@ -43,4 +43,24 @@ test('corpse decays to gone and writes a delta', () => {
   const gone = k.ledger.events.filter(e => e.type === 'decay_gone');
   assert.ok(gone.length > 0, 'some corpses fully decayed');
   assert.ok(k.deltas?.length > 0 || gone.length > 0, 'decay recorded');
+});
+
+test('L1: species without seed param spawns without crashing and never seeds', () => {
+  const k = new Kernel({ seed: 7, phi: 4, bounds: { x0: 0, y0: 0, w: 16, h: 16 } });
+  SPECIES.__seedless_test = {
+    demand: 0.4, burn: 0.2, growFrac: 0.5, maxBody: 100,
+    stages: [['mature', 0, 1.0, 1.0]],
+    senescence: { start: 400 * DAY, stepEvery: 5 * DAY, burnGrowth: 1.1, demandDecay: 0.95 },
+    embodiedDecayDays: 5,
+  };
+  try {
+    let n;
+    k.graph.boot(() => { n = k.addLiving({ species: '__seedless_test', x: 2, y: 2, R: 500, body: 10, tick: 0 }); });
+    k.runTo(30 * DAY);
+    // Node may have died of starvation — that's fine. Assert no crash + no seed events.
+    assert.ok(!k.ledger.events.some(e => e.type === 'seed' && e.actor === n.id),
+      'seedless species must never emit a seed event');
+  } finally {
+    delete SPECIES.__seedless_test;
+  }
 });
