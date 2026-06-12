@@ -54,6 +54,11 @@ export function serializeEntity(node, tick) {
     // Knowledge stays private: knownBy is NOT serialized to clients.
     return { id: node.id, type: 'recipe', signature: node.attrs.signature, form: node.attrs.form };
   }
+  if (node.type === 'building') {
+    // Stamps are the render truth: walls/floors/doors on the grid, never sprites (locked decision 6).
+    const { template, footprint, stamps } = node.attrs;
+    return { id: node.id, type: 'building', x: node.x, y: node.y, template, footprint, stamps };
+  }
   if (node.type === 'corpse') {
     return { id: node.id, type: 'corpse', species: node.attrs.of, x: node.x, y: node.y, body: node.attrs.E, stage: 'corpse' };
   }

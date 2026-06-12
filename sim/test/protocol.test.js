@@ -92,6 +92,25 @@ test('serializeEntity handles recipe nodes without leaking knownBy', () => {
   assert.equal(wire.knownBy, undefined, 'knownBy must NOT be serialized to clients');
 });
 
+test('serializeEntity: building → id/type/x/y/template/footprint/stamps; npcSlots stay private', () => {
+  const node = {
+    id: 9, type: 'building', x: 4, y: 4,
+    attrs: {
+      template: 'hut', footprint: { x0: 4, y0: 4, w: 5, h: 4 },
+      stamps: [{ x: 4, y: 4, piece: 'wall', material: 'wattle', walkable: false }],
+      npcSlots: [{ role: 'resident', workplace: null, sleep: 'bedroll' }],
+      noFlux: true,
+    },
+  };
+  const s = serializeEntity(node, 0);
+  assert.deepEqual(s, {
+    id: 9, type: 'building', x: 4, y: 4, template: 'hut',
+    footprint: { x0: 4, y0: 4, w: 5, h: 4 },
+    stamps: [{ x: 4, y: 4, piece: 'wall', material: 'wattle', walkable: false }],
+  });
+  assert.equal(s.npcSlots, undefined, 'npc slots are sim-internal, not render-relevant');
+});
+
 test('message builders stamp type and tick', () => {
   assert.equal(snapshotMsg(5, 1, [], []).type, 'snapshot');
   assert.equal(tickDeltaMsg(5, [], [], { R: 0 }).type, 'tick-delta');
