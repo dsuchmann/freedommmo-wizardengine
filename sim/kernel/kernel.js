@@ -6,6 +6,7 @@ import { Scheduler } from './scheduler.js';
 import { SPECIES, materialize, stageAt } from '../time/metabolism.js';
 import { registerLifecycle } from '../time/lifecycle.js';
 import { registerAggregates } from '../lod/aggregate.js';
+import { registerPaths } from '../world/paths.js';
 
 export class Kernel {
   constructor({ seed, phi = 4, bounds = null }) {
@@ -20,6 +21,7 @@ export class Kernel {
     this.handlers = new Map();   // kind -> (kernel, node, ev) => void
     registerLifecycle(this);
     registerAggregates(this);
+    registerPaths(this);
   }
 
   on(kind, fn) { this.handlers.set(kind, fn); }

@@ -14,6 +14,7 @@ export const CHANNEL_EFF = {          // spec §1.5
 // seed: { every, cost, minR, jitter } — reproduction (Task 10).
 export const SPECIES = {
   grass: {
+    tramplable: true,
     demand: 0.45, burn: 0.30, growFrac: 0.6, maxBody: 200,
     stages: [
       ['seedling', 0,        0.5, 0.6],
@@ -25,6 +26,7 @@ export const SPECIES = {
     embodiedDecayDays: 5,
   },
   berry_bush: {
+    tramplable: true,
     demand: 0.60, burn: 0.10, growFrac: 0.6, maxBody: 8000,
     stages: [
       ['seedling', 0,         0.4, 0.5],

@@ -3,6 +3,7 @@
 // Matter seam: every harvest event records species + magnitude so the future
 // S3 Matter pass can derive grain yields from the causal ledger.
 import { SPECIES, transfer } from '../time/metabolism.js';
+import { recordTraffic } from './paths.js';
 import { die } from '../time/lifecycle.js';
 import { compositionOf, grainsForBite } from '../matter/composition.js';
 import { defOf, stageFor, damageTaken, OBJECT_DEFS } from '../matter/objects.js';
@@ -321,12 +322,12 @@ export function move(kernel, actorId, dx, dy, tick) {
   const toX = actor.x + dx, toY = actor.y + dy;
   const b = kernel.bounds;
   if (b && (toX < b.x0 || toX >= b.x0 + b.w || toY < b.y0 || toY >= b.y0 + b.h)) return false;
-  kernel.ledger.emit({
+  const evId = kernel.ledger.emit({
     tick, type: 'move', actor: actorId, targets: [],
     attrs: { fromX: actor.x, fromY: actor.y, toX, toY },
   });
   actor.x = toX; actor.y = toY;
-  // P1 Task 2 seam: recordTraffic(kernel, toX, toY, evId, tick) wears a path on the destination tile.
+  recordTraffic(kernel, toX, toY, evId, tick);
   return true;
 }
 
