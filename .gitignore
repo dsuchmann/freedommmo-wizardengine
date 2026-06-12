@@ -11,8 +11,12 @@ reference_inventory.txt
 specs_combined.tmp.txt
 .wizardgenie/tool-output/  
 .wizardgenie/logs/  
-_*.txt  
-_*.js  
-_*.mjs  
+_*.txt
+_*.js
+_*.mjs
 
 worlds/
+
+scripts/asset-corpus/out/batches/
+scripts/.bursts/
+scripts/.pixellab_inflight.json

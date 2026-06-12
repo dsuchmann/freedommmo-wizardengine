@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync, mkdtempSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { enumerateRegistry, resolveDerived } from '../scripts/asset-corpus/lib/enumerate.mjs';
 import { emitBatch, emitPilotBatch } from '../scripts/asset-corpus/lib/emit.mjs';
 
@@ -151,4 +154,19 @@ test('matrix pilot_required registries refuse full emission but the corpus enume
   assert.throws(() => emitBatch(loadReg('fauna'), {}), /dormant/);
   assert.throws(() => emitBatch(loadReg('items'), {}), /dormant/);
   assert.throws(() => emitBatch(loadReg('elevation_wang'), {}), /dormant/);
+});
+
+test('compile.mjs writes counts.md and one batch per armed/pilot registry', () => {
+  const out = mkdtempSync(join(tmpdir(), 'corpus-'));
+  execFileSync('node', ['scripts/asset-corpus/compile.mjs', '--out', out]);
+  const counts = readFileSync(join(out, 'counts.md'), 'utf8');
+  assert.match(counts, /f6_trees/);
+  assert.match(counts, /body_parts/);
+  assert.match(counts, /GRAND TOTAL/);
+  assert.ok(existsSync(join(out, 'batches', 'w2-f6_trees.json')));
+  assert.ok(existsSync(join(out, 'batches', 'w2-f7_canopies.json')));
+  assert.ok(existsSync(join(out, 'batches', 'p2-roads_wang.json')));
+  assert.ok(existsSync(join(out, 'batches', 'p2-roads_wang-pilot.json')));
+  // dormant rows emit no batch
+  assert.ok(!existsSync(join(out, 'batches', 'l4-fauna.json')));
 });

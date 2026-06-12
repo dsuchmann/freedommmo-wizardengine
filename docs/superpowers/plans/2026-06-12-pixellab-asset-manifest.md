@@ -24,6 +24,8 @@ First big burst (kernel `tree` species is wired and waiting).
 
 Per-biome size tuner: required before mass generation (F4-style slider).
 
+> counts now compiled — see `scripts/asset-corpus/out/counts.md` (flat 64 variants, user decision 2026-06-12)
+
 ## 2. Fauna sheets (64px) — consumed by W4, L4
 
 | Asset | States | Species | Est. count |
@@ -32,6 +34,8 @@ Per-biome size tuner: required before mass generation (F4-style slider).
 | Fauna roster (L4) | same 4 lifecycle states × 4 directions | ~12 species across biomes (deer/boar/wolf/rabbit/goat/sheep/cow/horse/fox/bear/bird/fish classes) | ≈ **192 sprites** |
 
 Movement rendering is the motion DSL's job (L3) — fauna sheets are *static poses per state/direction*, not walk cycles. If L3 lands first, fauna migrate to part-based rigs and this row shrinks to part sets.
+
+> counts now compiled — see `scripts/asset-corpus/out/counts.md` (flat 64 variants, user decision 2026-06-12)
 
 ## 3. Species body parts (64px) — consumed by L2 (Body Assembly)
 
@@ -44,6 +48,8 @@ Part graphs, per-race, per-direction. NO whole-body sprites; the rig composes.
 
 This is the largest category; the L2 plan doc owns the wave schedule. First wave = 1 race × 1 body type × adult.
 
+> counts now compiled — see `scripts/asset-corpus/out/counts.md` (flat 64 variants, user decision 2026-06-12)
+
 ## 4. Building pieces (blueprint quantization, M4) — consumed by P4
 
 Wall/floor/door/roof *pieces* on the world grid (32px grid cells; pieces may span cells per blueprint grammar). Mined from world-compiler building templates.
@@ -55,6 +61,8 @@ Wall/floor/door/roof *pieces* on the world grid (32px grid cells; pieces may spa
 | Doors | closed/open/broken × orientations | 4 styles | ~24 |
 | Roof canopy pieces | edge/ridge/hip/full segments (alpha-fade on entry handled in renderer) | 4 styles | ~48 |
 | Interior features | forge, bed, table, chair, chest, shelf, hearth, loom, anvil, barrel (M2 objects with damage states intact/cracked/broken) | ~10 features × 3 states | ~30 |
+
+> counts now compiled — see `scripts/asset-corpus/out/counts.md` (flat 64 variants, user decision 2026-06-12)
 
 ## 5. F5 medium objects (96px) — consumed by W1
 
@@ -70,6 +78,8 @@ Generation pipeline already in progress (see F5 archive/regeneration). Taxonomy 
 
 Discovered-recipe icons are the one runtime-adjacent generation path: queue jobs as recipes canonicalize, placeholder = the dominant ingredient's icon until the job lands (honest: it *is* mostly that ingredient).
 
+> counts now compiled — see `scripts/asset-corpus/out/counts.md` (flat 64 variants, user decision 2026-06-12)
+
 ## 7. Road / path / bridge objects — consumed by P1, P2
 
 | Asset | Est. count |
@@ -77,6 +87,8 @@ Discovered-recipe icons are the one runtime-adjacent generation path: queue jobs
 | Worn-path: none needed — paths are flora suppression revealing F0/F1 ground (zero assets, by design) | 0 |
 | Road Wang strips (dirt road, cobble) 32×32 Wang tilesets | 2 tilesets |
 | Bridges/fords (wood bridge, stone bridge, ford stones) 96px objects with intact/damaged/collapsed states | ~9 |
+
+> counts now compiled — see `scripts/asset-corpus/out/counts.md` (flat 64 variants, user decision 2026-06-12)
 
 ---
 
