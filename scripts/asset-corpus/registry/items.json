@@ -1,0 +1,11 @@
+{
+  "id": "items",
+  "consuming_plan": "M5",
+  "status": "dormant",
+  "category": "matrix",
+  "size": 32,
+  "variants": 64,
+  "axes": {
+    "icons": 90
+  }
+}

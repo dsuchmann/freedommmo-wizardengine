@@ -1,0 +1,13 @@
+{
+  "id": "fauna",
+  "consuming_plan": "L4",
+  "status": "dormant",
+  "category": "matrix",
+  "size": 64,
+  "variants": 64,
+  "axes": {
+    "species": 12,
+    "lifecycle_states": 4,
+    "directions": 4
+  }
+}

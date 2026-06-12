@@ -5,6 +5,10 @@ import { resolveDerived } from './enumerate.mjs';
 export function emitBatch(regIn, registryById) {
   const reg = resolveDerived(regIn, registryById);
   if (reg.status === 'dormant') throw new Error(`${reg.id} is dormant — not emittable`);
+  if (reg.category === 'matrix') {
+    return { burst: `${reg.consuming_plan.toLowerCase()}-${reg.id}`, registry: reg.id,
+             gate: reg.status, jobs: [], note: 'matrix registry: counts only until consuming plan defines descriptors' };
+  }
   if (reg.category === 'wang') return emitWang(reg);
   return emitObject(reg);
 }

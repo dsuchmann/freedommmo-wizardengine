@@ -1,0 +1,17 @@
+{
+  "id": "elevation_wang",
+  "consuming_plan": "P2.5",
+  "status": "dormant",
+  "category": "wang",
+  "tile_size": 32,
+  "variants": 1,
+  "transition_size": 0.5,
+  "output_root": "assets/pixelab/landscape_v2/elevation_roads",
+  "materials": [
+    {
+      "name": "cliff_edge",
+      "desc": "PLACEHOLDER-BY-DESIGN: dormant until elevation design exists"
+    }
+  ],
+  "biomes": ["forest", "grassland", "hills", "mountains"]
+}

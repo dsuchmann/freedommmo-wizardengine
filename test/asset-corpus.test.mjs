@@ -141,3 +141,14 @@ test('biome base tile table covers all road biomes', () => {
     assert.ok(tiles[b]?.desc);
   }
 });
+
+test('matrix pilot_required registries refuse full emission but the corpus enumerates them', () => {
+  const bp = loadReg('body_parts');
+  assert.equal(enumerateRegistry(bp).totalSprites, 13 * 4 * 6 * 3 * 3 * 64);
+  const batch = emitBatch(bp, {});
+  assert.equal(batch.gate, 'pilot_required');
+  assert.equal(batch.jobs.length, 0);
+  assert.throws(() => emitBatch(loadReg('fauna'), {}), /dormant/);
+  assert.throws(() => emitBatch(loadReg('items'), {}), /dormant/);
+  assert.throws(() => emitBatch(loadReg('elevation_wang'), {}), /dormant/);
+});

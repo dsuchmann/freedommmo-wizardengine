@@ -1,0 +1,16 @@
+{
+  "id": "body_parts",
+  "consuming_plan": "L2",
+  "status": "pilot_required",
+  "category": "matrix",
+  "size": 64,
+  "variants": 64,
+  "axes": {
+    "parts": 13,
+    "directions": 4,
+    "races": 6,
+    "body_types": 3,
+    "age_bands": 3
+  },
+  "pilot_note": "13 humanoid parts x 1 direction x adult human x few variants; assembly probe must prove seams/palette/joint alignment against the X2 rig vocabulary before any wave fires. Fallback: PixelLab character tools (full bodies + skeleton anim)."
+}

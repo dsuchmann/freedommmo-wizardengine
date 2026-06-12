@@ -1,0 +1,13 @@
+{
+  "id": "building_pieces",
+  "consuming_plan": "P4",
+  "status": "pilot_required",
+  "category": "matrix",
+  "size": 32,
+  "variants": 64,
+  "axes": {
+    "pieces": 50,
+    "styles": 4
+  },
+  "pilot_note": "wall straight + corner + floor in one style; grid assembly probe before burst."
+}
