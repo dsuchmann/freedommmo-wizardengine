@@ -438,4 +438,13 @@ Per-part generation judged unworkable → STOP this plan's remaining art tasks, 
 
 ## Deviations
 
-(filled during execution; canonical over the task text above)
+(canonical over the task text above)
+
+1. **Task 1 — 8 unique generations, not 14**: mirror pairs (arm_upper/arm_fore/hand/thigh/shin/foot) generated once and flipped horizontally on save. Hand pivots are per-side (38.5 vs 25.5) because the flip mirrors the bbox.
+2. **Task 1 — thigh/shin prompts rewritten**: the original "trouser fabric …segment" prompts produced FULL TROUSERS (both legs, waist to ankle) in all 16 candidates, twice. Dismissed both packs; re-queued with geometry-first prompts ("isolated single severed mannequin upper/lower-leg piece, ONE narrow vertical cylinder/column … no second leg"). Those worked first try. Lesson for the X1 wave: name the GEOMETRY, not the garment.
+3. **Task 3 — palette quantization post-process**: raw PixelLab output is unquantized true-color (palette union 301 > 96 gate; seams all passed on first run). All 14 sprites were quantized to ONE shared 64-color palette (median-cut over the union of visible pixels, alpha binarized at 128) as a one-time authoring post-process. Result: union 62, skin_shared 12, verdict PASS. The wave pipeline must include this step.
+4. **Task 2 — meta generated, not eyeballed per-part**: pivot/ppu computed from measured alpha bboxes + rig bone lengths (bottom-center for head/torso, top-center for limbs), then validated visually via the probe composite. Zero manual pivot iteation was needed — composite read as a coherent humanoid on the first assembly.
+5. **Task ordering**: probe script (Task 3 file) was committed before the meta (Task 2) because art generation stalled on PixelLab rate limits (20-job pool shared with the parallel session); Task 5 ran as a background subagent during art selection. All plan content landed verbatim.
+6. **Task 6 — browser verification tooling**: no playwright MCP in this session; used repo-local `playwright-core` + system Chrome headless. The page's `load` event never fires (continuous chunk streaming) → `domcontentloaded` + fixed waits; `page.screenshot` hangs on `document.fonts.ready` → raw CDP `Page.captureScreenshot`. Verified: assembled humanoid (tunic/skin/trousers/boots) at center, NO red fallback dot, world scrolls while walking with the body still drawn. Screenshots in `assets/pixelab/body_parts/_probe/browser_{idle,walk}.png` (untracked).
+7. **dodge_roll/glide_loop** render at rest pose via the humanoid renderer (the doodle's ctx-rotation trick not replicated) — accepted pilot scope as planned.
+8. **pilot_pass.json** (scripts/.bursts/body_parts_pilot/, untracked) carries the probe numbers + the four wave-pipeline notes (mirror-flip, geometry-first prompts, shared-palette quantization, size-64 create_1_direction_object).
