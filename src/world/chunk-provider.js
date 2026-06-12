@@ -59,6 +59,21 @@ export class ChunkProvider {
     }
   }
 
+  // Push the field-tuning tree to every worker. When repaintChunks is true
+  // (F3 edits — F3 is baked into chunk bitmaps), drop all bitmaps; pumpQueue
+  // already repaints any ready chunk that lacks a bitmap.
+  applyFieldTuning(tuning, repaintChunks) {
+    for (const worker of this.workers) {
+      worker.postMessage({ type: 'setFieldTuning', tuning });
+    }
+    if (repaintChunks) {
+      for (const bmp of this.bitmaps.values()) bmp.close();
+      this.bitmaps.clear();
+      if (this._repaintPending) this._repaintPending.clear();
+      this.schedulePump();
+    }
+  }
+
   // Called by ChunkStore.streamAround every frame: lets the queue re-sort by
   // CURRENT distance (priorities assigned at request time go stale as the
   // player walks) and tightens the adoption budget while moving.

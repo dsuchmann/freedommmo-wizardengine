@@ -1,5 +1,7 @@
 import { setWorldSeed } from '../core/world-seed.js';
 import { WORLD } from '../core/constants.js';
+import { setFieldTuning } from './field-tuning.js';
+import { clearClaimCaches } from './decoration-claims.js';
 import { ChunkCompiler } from './chunk-compiler.js';
 import { getAllWangImageURLs, getWangImageURLsForBiomes, getSoilImageURLs, getGroundCoverImageURLs, getSmallFloraImageURLs, getSmallScatterImageURLs } from '../render/wang-image-list.js';
 import { renderChunkToBitmap } from '../render/worker-chunk-renderer.js';
@@ -202,6 +204,12 @@ function evictNeighborCache() {
 
 self.onmessage = function(event) {
   var data = event.data;
+
+  if (data.type === 'setFieldTuning') {
+    setFieldTuning(data.tuning);
+    clearClaimCaches(); // F3 placements/masks derive from the tree
+    return;
+  }
 
   if (data.type === 'preloadBiomes') {
     // Load wang + soil + ground cover together. Wait for all before rendering chunks.
