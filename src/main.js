@@ -114,39 +114,6 @@ function update(dt) {
   if (input.wasPressed('r')) {
     renderer.chunkRenderCache.clear();
   }
-  // Sim intent routing: when sim is connected and player presses interact ('f'),
-  // find nearest F4 entity override and dispatch intent to the sim.
-  // When a sim entity is targeted, set player.interactPressed = false to suppress
-  // the local fake reaction — update() runs before renderer.draw() so this flag
-  // is cleared before canvas-renderer.js:355 calls performInteraction.
-  if (simConnected && simClient && input.wasPressed('f')) {
-    // Find nearest F4 placement with a sim entity near the player
-    const px = Math.floor(player.x), py = Math.floor(player.y);
-    let bestOv = null, bestDist = 3.0;
-    for (let dy = -2; dy <= 2; dy++) {
-      for (let dx = -2; dx <= 2; dx++) {
-        const wx = px + dx, wy = py + dy;
-        const d = Math.hypot(dx, dy);
-        if (d >= bestDist) continue;
-        // Check all f4 placement indices for this tile (max a few per tile)
-        for (let fi = 0; fi < 4; fi++) {
-          const key = 'f4:' + wx + ',' + wy + ':' + fi;
-          const ov = simWorldState.overrideFor(key);
-          if (ov && !ov.removed && ov.entityId != null) {
-            bestOv = ov;
-            bestDist = d;
-            break;
-          }
-        }
-      }
-    }
-    if (bestOv) {
-      const verb = bestOv.entityType === 'matter' ? 'take' : 'harvest';
-      simClient.intend({ verb, target: bestOv.entityId });
-      // Suppress local fake reaction — sim is authoritative for this entity
-      player.interactPressed = false;
-    }
-  }
   if (input.wasPressed('m')) overmap.toggle();
   if (input.wasPressed('f')) overmap.toggleExpand();
   if (input.wasPressed('escape') && overmap.expanded) overmap.toggleExpand();
@@ -175,6 +142,41 @@ function update(dt) {
   lighting.update(dt);
   weather.update(dt, chunks.tileAt(player.x, player.y));
   player.update(input, dt, chunks, { movementCost, resolveMovement });
+  // Sim intent routing: runs AFTER player.update() so player.interactPressed is
+  // the single authoritative source for the 'f' press (player.update() sets it
+  // unconditionally from input.wasPressed, so reading input.wasPressed here a
+  // second time would be fine too, but using player.interactPressed is cleaner
+  // and avoids any double-read confusion).  When a sim entity is targeted we
+  // clear player.interactPressed before renderer.draw() inspects it at
+  // canvas-renderer.js:355, so the local performInteraction does NOT fire.
+  // When sim is absent or no override is nearby the flag is left untouched and
+  // local behaviour is exactly unchanged.
+  if (simConnected && simClient && player.interactPressed) {
+    const px = Math.floor(player.x), py = Math.floor(player.y);
+    let bestOv = null, bestDist = 3.0;
+    for (let dy = -2; dy <= 2; dy++) {
+      for (let dx = -2; dx <= 2; dx++) {
+        const wx = px + dx, wy = py + dy;
+        const d = Math.hypot(dx, dy);
+        if (d >= bestDist) continue;
+        for (let fi = 0; fi < 4; fi++) {
+          const key = 'f4:' + wx + ',' + wy + ':' + fi;
+          const ov = simWorldState.overrideFor(key);
+          if (ov && !ov.removed && ov.entityId != null) {
+            bestOv = ov;
+            bestDist = d;
+            break;
+          }
+        }
+      }
+    }
+    if (bestOv) {
+      const verb = bestOv.entityType === 'matter' ? 'take' : 'harvest';
+      simClient.intend({ verb, target: bestOv.entityId });
+      // Suppress local fake reaction — sim is authoritative for this entity
+      player.interactPressed = false;
+    }
+  }
   chunks.streamAround(player.x, player.y);
   // Re-run biome preload as the player travels — no-ops until they've moved
   // ~15 chunks from the last preload center (kills sprite pop-in on new biomes)
