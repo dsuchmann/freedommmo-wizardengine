@@ -4,6 +4,7 @@
 // S3 Matter pass can derive grain yields from the causal ledger.
 import { SPECIES, transfer } from '../time/metabolism.js';
 import { die } from '../time/lifecycle.js';
+import { compositionOf, grainsForBite } from '../matter/composition.js';
 
 // Item id counter. Module-level; starts at 1 for fresh kernels.
 // After loadKernel, call initItemIdFromKernel(kernel) to avoid collisions.
@@ -51,6 +52,8 @@ export function pick(kernel, playerId, targetId, tick) {
   prey.R -= (bite - fromBody);
   const gained = transfer(bite, 'harvest', kernel.ledger);
   player.R += gained;
+  for (const [g, u] of Object.entries(grainsForBite(prey.attrs.species, bite)))
+    kernel.ledger.count('grain:metabolized:' + g, u);
   const evId = kernel.ledger.emit({
     tick, type: 'pick', actor: playerId, targets: [targetId], magnitude: bite,
     attrs: { species: prey.attrs.species },
@@ -99,8 +102,9 @@ export function harvest(kernel, playerId, targetId, tick) {
   prey.attrs.body -= fromBody;
   prey.R -= (bite - fromBody);
   const delivered = transfer(bite, 'harvest', kernel.ledger);
+  const grains = grainsForBite(prey.attrs.species, bite);
   const item = { id: nextItemId++, kind: 'harvest', species: prey.attrs.species ?? null,
-                 archetype: prey.attrs.archetype ?? null, E: delivered, tick };
+                 archetype: prey.attrs.archetype ?? null, E: delivered, grains, tick };
   (player.attrs.inventory ??= []).push(item);
   const harvestEvId = kernel.ledger.emit({
     tick, type: 'harvest', actor: playerId, targets: [targetId], magnitude: bite,
@@ -117,8 +121,10 @@ export function take(kernel, playerId, targetId, tick) {
   const player = kernel.graph.nodes.get(playerId);
   const node = kernel.graph.nodes.get(targetId);
   if (!player || !node || node.type !== 'matter') return null;
+  const grains = compositionOf(node);   // snapshot BEFORE removeNode
   const evId = kernel.ledger.emit({
     tick, type: 'take', actor: playerId, targets: [targetId], magnitude: node.attrs.E,
+    attrs: { archetype: node.attrs.archetype ?? null },
   });
   if (node.attrs.placement) {
     kernel.deltas.push({ tick, x: node.x, y: node.y,
@@ -126,7 +132,7 @@ export function take(kernel, playerId, targetId, tick) {
                          kind: 'taken', attrs: { archetype: node.attrs.archetype ?? null } });
   }
   const item = { id: nextItemId++, kind: 'matter', archetype: node.attrs.archetype ?? null,
-                 E: node.attrs.E, tick };
+                 E: node.attrs.E, grains, tick };
   (player.attrs.inventory ??= []).push(item);
   kernel.graph.removeNode(targetId);
   return item;
@@ -141,6 +147,10 @@ export function eat(kernel, playerId, itemId, tick) {
   const [item] = inv.splice(i, 1);
   const gained = transfer(item.E, 'harvest', kernel.ledger);
   player.R += gained;
+  if (item.grains) {
+    for (const [g, u] of Object.entries(item.grains))
+      kernel.ledger.count('grain:metabolized:' + g, u);
+  }
   kernel.ledger.emit({ tick, type: 'eat', actor: playerId, targets: [], magnitude: item.E });
   return gained;
 }

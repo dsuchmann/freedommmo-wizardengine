@@ -1,5 +1,6 @@
 // The Time Metabolism (spec §1). Lazy stocks: R (linear), body (linear),
 // corpse E (exponential, decay counted incrementally on materialization).
+import { yieldOf } from '../matter/composition.js';
 
 export const DAY = 86_400;            // ticks (1 tick = 1 sim-second)
 export const YEAR = 360 * DAY;
@@ -68,7 +69,11 @@ export function materialize(node, tick, ledger) {
     const h = node.attrs.decayHalflifeTicks;
     const before = node.attrs.E;
     node.attrs.E = before * Math.pow(2, -dt / h);
-    ledger.count('decayed', before - node.attrs.E);
+    const lost = before - node.attrs.E;
+    ledger.count('decayed', lost);
+    const yieldTbl = yieldOf(node);
+    for (const [g, perTu] of Object.entries(yieldTbl))
+      ledger.count('grain:decayed:' + g, perTu * lost);
   } else if (node.R != null) {
     node.R += node.r * dt;
     node.attrs.body += (node.attrs.bodyRate ?? 0) * dt;

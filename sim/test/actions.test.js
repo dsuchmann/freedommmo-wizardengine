@@ -2,8 +2,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Kernel } from '../kernel/kernel.js';
-import { createPlayer, pick, chop } from '../world/actions.js';
+import { createPlayer, pick, chop, harvest, take, eat } from '../world/actions.js';
 import { SPECIES, DAY } from '../time/metabolism.js';
+import { grainsForBite, compositionOf } from '../matter/composition.js';
 
 function world() {
   const k = new Kernel({ seed: 3, bounds: { x0: 0, y0: 0, w: 8, h: 8 } });
@@ -108,4 +109,100 @@ test('pick with overdrafted prey.R mints no phantom time', () => {
     - (t1.transferLoss - t0.transferLoss);
   assert.ok(Math.abs(lhs - rhs) < 1e-9,
     `conservation violated after pick with negative R: Δstocks=${lhs} flows=${rhs}`);
+});
+
+// ── Task 4: grain transfer wiring ─────────────────────────────────────────────
+
+// (a) harvest item grains proportional to bite
+test('harvest item carries grains proportional to bite magnitude', () => {
+  const { k, bush } = world();
+  const player = createPlayer(k, 0);
+  const item = harvest(k, player.id, bush.id, 0);
+  assert.ok(item, 'harvest returned an item');
+  assert.ok(item.grains, 'item.grains present');
+  const bite = SPECIES.berry_bush.pick.bite;
+  const expected = grainsForBite('berry_bush', bite);
+  for (const [g, u] of Object.entries(expected)) {
+    assert.ok(Math.abs(item.grains[g] - u) < 1e-9, `grain ${g}: got ${item.grains[g]} expected ${u}`);
+  }
+  // cellulose and sugar are both in berry_bush yield
+  assert.ok(item.grains.cellulose > 0, 'item has cellulose');
+  assert.ok(item.grains.sugar > 0, 'item has sugar');
+});
+
+// (b) take item grains equal compositionOf the node pre-removal
+test('take item grains equal compositionOf the matter node before removal', () => {
+  const k = new Kernel({ seed: 3, bounds: { x0: 0, y0: 0, w: 8, h: 8 } });
+  let rock;
+  k.graph.boot(() => {
+    rock = k.graph.createNode({
+      type: 'matter', tick: 0, x: 3, y: 3, R: null,
+      attrs: { archetype: 'boulder_small', E: 1000, noFlux: true },
+    });
+  });
+  const player = createPlayer(k, 0);
+  const expectedGrains = compositionOf(rock);   // snapshot before take
+  const item = take(k, player.id, rock.id, 0);
+  assert.ok(item, 'take returned item');
+  assert.ok(item.grains, 'item.grains present');
+  assert.deepEqual(item.grains, expectedGrains);
+  // rock node must be removed
+  assert.equal(k.graph.nodes.has(rock.id), false);
+});
+
+// (c) pick increments grain:metabolized:* by grainsForBite amounts
+test('pick increments grain:metabolized counters by grainsForBite amounts', () => {
+  const { k, bush } = world();
+  const player = createPlayer(k, 0);
+  const bite = SPECIES.berry_bush.pick.bite;
+  const expected = grainsForBite('berry_bush', bite);
+  pick(k, player.id, bush.id, 0);
+  for (const [g, u] of Object.entries(expected)) {
+    const counterKey = 'grain:metabolized:' + g;
+    assert.ok(counterKey in k.ledger.totals, `counter ${counterKey} exists`);
+    assert.ok(Math.abs(k.ledger.totals[counterKey] - u) < 1e-9,
+      `${counterKey}: got ${k.ledger.totals[counterKey]} expected ${u}`);
+  }
+});
+
+// (d) eat moves item grains into grain:metabolized:*
+test('eat moves item grains into grain:metabolized counters', () => {
+  const { k } = world();
+  const player = createPlayer(k, 0);
+  const grains = { cellulose: 1.5, sugar: 0.9 };
+  player.attrs.inventory ??= [];
+  player.attrs.inventory.push({ id: 99, kind: 'harvest', E: 200, grains, tick: 0 });
+  eat(k, player.id, 99, 0);
+  assert.ok(Math.abs(k.ledger.totals['grain:metabolized:cellulose'] - 1.5) < 1e-9);
+  assert.ok(Math.abs(k.ledger.totals['grain:metabolized:sugar'] - 0.9) < 1e-9);
+});
+
+// (e) corpse decay over sim-days increments grain:decayed:* proportional to E lost
+test('corpse decay increments grain:decayed counters proportional to E lost', () => {
+  const k = new Kernel({ seed: 3, bounds: { x0: 0, y0: 0, w: 8, h: 8 } });
+  let corpse;
+  const HALFLIFE = 7 * DAY;
+  const GONE_THRESHOLD = 0.5;
+  k.graph.boot(() => {
+    corpse = k.graph.createNode({
+      type: 'corpse', tick: 0, x: 3, y: 3, R: null, r: 0,
+      attrs: { species: 'tree', E: 10000, decayHalflifeTicks: HALFLIFE },
+    });
+    // Schedule the decay_gone event so the scheduler can fire and materialize will be called.
+    const goneTick = HALFLIFE * Math.log2(10000 / GONE_THRESHOLD);
+    k.scheduler.schedule(goneTick, corpse.id, 'decay_gone', -1);
+  });
+  const E0 = corpse.attrs.E;
+  k.runTo(7 * DAY);   // one half-life: decay_gone not yet (fires much later); force materialization
+  // materialize directly to advance E and count grain:decayed
+  k.materialized(corpse.id);
+  const lost = E0 - corpse.attrs.E;
+  assert.ok(lost > 0, 'E decreased');
+  // tree species: cellulose 0.006 + lignin 0.004 per tu
+  const expectedCellulose = 0.006 * lost;
+  const expectedLignin = 0.004 * lost;
+  assert.ok(Math.abs(k.ledger.totals['grain:decayed:cellulose'] - expectedCellulose) < 1e-6,
+    `cellulose decayed: got ${k.ledger.totals['grain:decayed:cellulose']} expected ~${expectedCellulose}`);
+  assert.ok(Math.abs(k.ledger.totals['grain:decayed:lignin'] - expectedLignin) < 1e-6,
+    `lignin decayed: got ${k.ledger.totals['grain:decayed:lignin']} expected ~${expectedLignin}`);
 });

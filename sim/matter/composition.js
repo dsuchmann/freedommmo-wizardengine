@@ -26,7 +26,12 @@ export const ARCHETYPE_YIELD = {
 };
 
 function archetypeYield(archetype) {
-  const key = Object.keys(ARCHETYPE_YIELD).find(k => k !== 'default' && String(archetype ?? '').startsWith(k));
+  // Sort candidates by length descending so 'stump' beats 'st', 'boulder' beats 'b', etc.
+  // This makes prefix matching robust regardless of object key insertion order.
+  const candidates = Object.keys(ARCHETYPE_YIELD)
+    .filter(k => k !== 'default')
+    .sort((a, b) => b.length - a.length);
+  const key = candidates.find(k => String(archetype ?? '').startsWith(k));
   return ARCHETYPE_YIELD[key ?? 'default'];
 }
 
@@ -51,6 +56,15 @@ export function compositionOf(node) {
 /** Grains leaving a living node when `bite` tu of body+R is taken (transfer point). */
 export function grainsForBite(species, bite) {
   return scale(SPECIES_YIELD[species] ?? {}, bite);
+}
+
+/** Per-tu yield table for a node: species table if species known, else archetype prefix-match,
+ *  else default. Used by metabolism.js to count grain:decayed:* sinks during corpse decay.
+ *  NOTE: composition.js must NOT import metabolism.js (no cycle). */
+export function yieldOf(node) {
+  const a = node.attrs ?? {};
+  if (a.species && SPECIES_YIELD[a.species]) return SPECIES_YIELD[a.species];
+  return archetypeYield(a.archetype);
 }
 
 /** Composition-weighted emergent properties (M2 durability + M3 recipe math consume this). */

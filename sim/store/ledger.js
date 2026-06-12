@@ -16,7 +16,11 @@ export class Ledger {
   }
 
   count(counter, amount) {
-    if (!(counter in this.totals)) throw new Error(`unknown counter ${counter}`);
+    // Named counters are whitelisted; grain:* counters are auto-registered on first use.
+    if (!(counter in this.totals)) {
+      if (counter.startsWith('grain:')) this.totals[counter] = 0;
+      else throw new Error(`unknown counter ${counter}`);
+    }
     this.totals[counter] += amount;
   }
 
