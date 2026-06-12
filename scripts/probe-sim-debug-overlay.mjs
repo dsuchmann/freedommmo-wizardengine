@@ -10,17 +10,27 @@ const browser = await chromium.launch({ executablePath: exe, headless: true, arg
 const page = await (await browser.newContext({ viewport: { width: 1280, height: 800 } })).newPage();
 page.on('console', m => { if (/error/i.test(m.text())) console.log('[page]', m.text()); });
 await page.goto('http://localhost:8741/?x=1312&y=1312', { waitUntil: 'domcontentloaded' });
-await page.waitForFunction(() => window._simDebugOverlay && window._dbgRenderer && window._lighting, null, { timeout: 60000 });
+await page.waitForFunction(() => window._simDebugOverlay && window._dbgRenderer && window._lighting && window._fieldTuning, null, { timeout: 60000 });
 await page.waitForTimeout(4000); // let chunks render
 
-const result = await page.evaluate(async () => {
+const GRASSLAND_F2 = ['tall_grass_blade', 'dandelion_stem', 'wild_herb'];
+
+const result = await page.evaluate(async (objNames) => {
   const wait = ms => new Promise(r => setTimeout(r, ms));
-  // Force Canvas 2D so the overlay lands on the readable #game canvas, and
-  // freeze the day/night cycle (ambient drift would pollute the diffs).
+  // Force Canvas 2D so the overlay lands on the readable #game canvas,
+  // freeze the day/night cycle, and disable F2 wind_sway (ambient drift
+  // and flora animation would pollute the pixel diffs).
   window._dbgRenderer.useGL = false;
   window._lighting.paused = true;
   window._lighting.time = 0.5; // midday
-  await wait(800);
+  {
+    const objects = {};
+    for (const name of objNames) objects[name] = { anims: { wind_sway: false } };
+    const t = window._fieldTuning.tree();
+    t.f2 = { biomes: { grassland: { objects } } };
+    window._fieldTuning.apply('f2');
+  }
+  await wait(4000); // let the f2 re-tune's chunk repaint fully settle
 
   // fake sim state centered on the player so shapes land on screen
   const px = 1312, py = 1312;
@@ -43,11 +53,11 @@ const result = await page.evaluate(async () => {
   await wait(500);
   const restored = grab();
   return { enabledDiff: diffCount(before, after), restoredDiff: diffCount(before, restored), enabled: window._simDebugOverlay.isEnabled() };
-});
+}, GRASSLAND_F2);
 
 console.log(JSON.stringify(result));
-// overlay must change a meaningful pixel area when on, and (modulo ambient animation) mostly restore when off
+await browser.close();
+// overlay must change a meaningful pixel area when on, and mostly restore when off
 if (result.enabledDiff < 500) { console.error('FAIL: overlay drew almost nothing'); process.exit(1); }
 if (result.restoredDiff > result.enabledDiff * 0.5) { console.error('FAIL: overlay did not clear on toggle-off'); process.exit(1); }
 console.log('PROBE PASS: overlay draws and clears');
-await browser.close();
