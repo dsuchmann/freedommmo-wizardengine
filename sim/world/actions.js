@@ -5,6 +5,8 @@
 import { SPECIES, transfer } from '../time/metabolism.js';
 import { die } from '../time/lifecycle.js';
 import { compositionOf, grainsForBite } from '../matter/composition.js';
+import { defOf, stageFor, damageTaken, OBJECT_DEFS } from '../matter/objects.js';
+import { randRange } from '../kernel/rng.js';
 
 // Item id counter. Module-level; starts at 1 for fresh kernels.
 // After loadKernel, call initItemIdFromKernel(kernel) to avoid collisions.
@@ -136,6 +138,103 @@ export function take(kernel, playerId, targetId, tick) {
   (player.attrs.inventory ??= []).push(item);
   kernel.graph.removeNode(targetId);
   return item;
+}
+
+/**
+ * Module-private: spawn break products from a parent matter node (or corpse), partitioning
+ * parentE exactly across all products. Counts resolved via kernel seeded RNG keyed to
+ * ('break', causeEventId, productIndex) — deterministic, no Math.random.
+ * Location: module-private in actions.js (design choice recorded per M2 plan).
+ * @param {object} kernel
+ * @param {object} parent  — the node being destroyed (must have .x, .y, .attrs.E)
+ * @param {Array}  table   — breakProducts or onChop array: [{class, count:[lo,hi], eFrac}]
+ * @param {number} causeEventId
+ * @param {number} tick
+ * @param {number} [parentEOverride] — if provided, use instead of parent.attrs.E
+ * @returns {Array} created nodes
+ */
+function spawnBreakProducts(kernel, parent, table, causeEventId, tick, parentEOverride) {
+  const parentE = parentEOverride != null ? parentEOverride : parent.attrs.E;
+  const { x, y } = parent;
+  // Expand table to (class, count, eFrac) rows, resolving counts via RNG.
+  const expanded = [];  // { class, eFrac }
+  for (let pi = 0; pi < table.length; pi++) {
+    const p = table[pi];
+    const [lo, hi] = p.count;
+    // RNG: randRange(seed, a, b, lo, hi) — we use causeEventId and pi as the id keys.
+    const count = lo === hi ? lo : Math.floor(randRange(kernel.seed, causeEventId, pi, lo, hi + 1));
+    for (let ci = 0; ci < count; ci++) {
+      expanded.push({ cls: p.class, eFrac: p.eFrac });
+    }
+  }
+  if (expanded.length === 0) return [];
+
+  // Assign E: all-but-last get eFrac * parentE; last gets remainder.
+  // Skip products with E <= 1e-9 (tiny parents break straight to terminal).
+  const assigned = [];
+  let sumAssigned = 0;
+  for (let i = 0; i < expanded.length - 1; i++) {
+    const e = expanded[i].eFrac * parentE;
+    if (e <= 1e-9) continue;
+    assigned.push({ cls: expanded[i].cls, E: e });
+    sumAssigned += e;
+  }
+  // Last product (remainder product)
+  const lastIdx = expanded.length - 1;
+  const remainder = parentE - sumAssigned;
+  if (remainder > 1e-9) {
+    assigned.push({ cls: expanded[lastIdx].cls, E: remainder });
+  } else if (assigned.length > 0) {
+    // remainder ≤ 0: fold into previous
+    assigned[assigned.length - 1].E += remainder;
+  }
+
+  // Create matter nodes
+  const nodes = [];
+  for (const a of assigned) {
+    const node = kernel.graph.createNode({
+      type: 'matter', tick, x, y,
+      causeEventId,
+      attrs: { archetype: a.cls, E: a.E, noFlux: true },
+    });
+    nodes.push(node);
+  }
+  return nodes;
+}
+
+/** Strike a matter node with typed damage. Stage changes write a 'damaged' delta;
+ *  shatter partitions E into break products (closed graph) and removes the parent. */
+export function strike(kernel, playerId, targetId, damageType, amount, tick) {
+  const node = kernel.graph.nodes.get(targetId);
+  if (!node || node.type !== 'matter') return null;
+  const def = defOf(node.attrs.archetype);
+  if (!def?.maxHp) return null;                       // terminal or undamageable: honest no-op
+  if (node.attrs.hp == null) node.attrs.hp = def.maxHp;   // lazy init
+  const before = stageFor(node.attrs.hp, def.maxHp);
+  const taken = damageTaken(def, damageType, amount);
+  if (taken <= 0) return { stage: before, destroyed: false, products: [] };
+  node.attrs.hp = Math.max(0, node.attrs.hp - taken);
+  const after = stageFor(node.attrs.hp, def.maxHp);
+  const evId = kernel.ledger.emit({
+    tick, type: 'strike', actor: playerId, targets: [targetId], magnitude: taken,
+    attrs: { archetype: node.attrs.archetype ?? null, damageType, stage: after },
+  });
+  if (after === before && after !== 'shattered') return { stage: after, destroyed: false, products: [] };
+  if (after !== 'shattered') {
+    // stage changed: persistent visual delta (renderer binds when damage sprites exist — W1)
+    kernel.deltas.push({ tick, x: node.x, y: node.y,
+      target: node.attrs.placement ? 'placement:' + node.attrs.placement : `node:${targetId}`,
+      kind: 'damaged', attrs: { stage: after, archetype: node.attrs.archetype ?? null } });
+    return { stage: after, destroyed: false, products: [] };
+  }
+  // SHATTER: spawn products partitioning E exactly, then remove parent.
+  const products = spawnBreakProducts(kernel, node, def.breakProducts, evId, tick);
+  if (node.attrs.placement) {
+    kernel.deltas.push({ tick, x: node.x, y: node.y, target: 'placement:' + node.attrs.placement,
+      kind: 'destroyed', attrs: { archetype: node.attrs.archetype ?? null } });
+  }
+  kernel.graph.removeNode(targetId);
+  return { stage: 'shattered', destroyed: true, products };
 }
 
 /** Eat an inventory item: converts its E to player R through the harvest transfer channel (lossy). */

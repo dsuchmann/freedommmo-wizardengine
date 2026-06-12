@@ -2,9 +2,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Kernel } from '../kernel/kernel.js';
-import { createPlayer, pick, chop, harvest, take, eat } from '../world/actions.js';
+import { createPlayer, pick, chop, harvest, take, eat, strike } from '../world/actions.js';
 import { SPECIES, DAY } from '../time/metabolism.js';
 import { grainsForBite, compositionOf } from '../matter/composition.js';
+import { OBJECT_DEFS, TERMINAL } from '../matter/objects.js';
 
 function world() {
   const k = new Kernel({ seed: 3, bounds: { x0: 0, y0: 0, w: 8, h: 8 } });
@@ -204,4 +205,165 @@ test('corpse decay increments grain:decayed counters proportional to E lost', ()
   // stone must NOT appear (default yield fall-through would produce it before the fix)
   assert.ok(!k.ledger.totals['grain:decayed:stone'],
     `stone should not appear for a tree corpse, got ${k.ledger.totals['grain:decayed:stone']}`);
+});
+
+// ── Task 2: strike verb ────────────────────────────────────────────────────────
+
+function strikeWorld() {
+  const k = new Kernel({ seed: 42, bounds: { x0: 0, y0: 0, w: 8, h: 8 } });
+  let boulder, stoneNode, dustNode;
+  k.graph.boot(() => {
+    boulder = k.graph.createNode({
+      type: 'matter', tick: 0, x: 2, y: 2, R: null,
+      attrs: { archetype: 'boulder', E: 5000, noFlux: true },
+    });
+    stoneNode = k.graph.createNode({
+      type: 'matter', tick: 0, x: 3, y: 3, R: null,
+      attrs: { archetype: 'stone_dust', E: 100, noFlux: true },
+    });
+    dustNode = k.graph.createNode({
+      type: 'matter', tick: 0, x: 4, y: 4, R: null,
+      attrs: { archetype: 'totally_unknown', E: 100, noFlux: true },
+    });
+  });
+  const player = createPlayer(k, 0);
+  return { k, boulder, stoneNode, dustNode, player };
+}
+
+// (a) strike below stage boundary → stage 'cracked', damaged delta written, hp persisted
+test('strike(a): strike below stage boundary → cracked, damaged delta, hp persisted', () => {
+  const { k, boulder, player } = strikeWorld();
+  // boulder maxHp=100; sharp resistance=0.2. To land in cracked (hp <=75 but >40):
+  // need taken = 0.2 * amount; to go just below 75 from 100: need taken > 25 → amount > 125
+  // Use amount=200: taken = 40; hp after = 60 → cracked
+  const result = strike(k, player.id, boulder.id, 'sharp', 200, 0);
+  assert.ok(result, 'strike returned result');
+  assert.equal(result.stage, 'cracked');
+  assert.equal(result.destroyed, false);
+  assert.deepEqual(result.products, []);
+  // hp persisted on node
+  assert.ok(boulder.attrs.hp != null, 'hp initialized');
+  assert.ok(boulder.attrs.hp < 75, 'hp below 75 → cracked');
+  // damaged delta written
+  const damaged = k.deltas.list.find(d => d.kind === 'damaged');
+  assert.ok(damaged, 'damaged delta exists');
+  assert.equal(damaged.attrs.stage, 'cracked');
+});
+
+// (b) repeated strikes to shatter → parent removed, products with Σ E == parent E, provenance
+test('strike(b): shatter → parent removed, products Σ E == parent E, all in catalog', () => {
+  const { k, boulder, player } = strikeWorld();
+  const parentE = boulder.attrs.E;
+  // Keep striking until destroyed (blunt at high amount)
+  let result;
+  for (let i = 0; i < 50; i++) {
+    result = strike(k, player.id, boulder.id, 'blunt', 100, i);
+    if (result?.destroyed) break;
+  }
+  assert.ok(result?.destroyed, 'boulder was destroyed');
+  assert.equal(k.graph.nodes.get(boulder.id), undefined, 'parent node removed');
+  assert.ok(result.products.length > 0, 'products spawned');
+  // Σ E == parent E
+  const sumE = result.products.reduce((s, n) => s + n.attrs.E, 0);
+  assert.ok(Math.abs(sumE - parentE) < 1e-9, `Σ E ${sumE} == parent E ${parentE}`);
+  // all products have catalog def or terminal
+  for (const n of result.products) {
+    const cls = n.attrs.archetype;
+    assert.ok(OBJECT_DEFS[cls] || TERMINAL.has(cls), `product ${cls} in catalog or terminal`);
+  }
+  // all products carry createdByEvent
+  for (const n of result.products) {
+    assert.ok(n.createdByEvent != null, `product has createdByEvent`);
+  }
+});
+
+// (c) strike on terminal and unknown-def archetype returns null
+test('strike(c): terminal and unknown-def archetype returns null', () => {
+  const { k, stoneNode, dustNode, player } = strikeWorld();
+  const r1 = strike(k, player.id, stoneNode.id, 'blunt', 50, 0);
+  assert.equal(r1, null, 'terminal returns null');
+  const r2 = strike(k, player.id, dustNode.id, 'blunt', 50, 0);
+  assert.equal(r2, null, 'unknown-def returns null');
+});
+
+// (d) unknown damage type → zero damage, no stage change, no delta
+test('strike(d): unknown damage type → zero damage, no stage change, no delta', () => {
+  const { k, boulder, player } = strikeWorld();
+  const result = strike(k, player.id, boulder.id, 'poison', 100, 0);
+  assert.ok(result, 'result returned');
+  assert.equal(result.stage, 'intact', 'still intact');
+  assert.equal(result.destroyed, false);
+  assert.deepEqual(result.products, []);
+  const damaged = k.deltas.list.find(d => d.kind === 'damaged');
+  assert.equal(damaged, undefined, 'no damaged delta');
+});
+
+// (e) determinism: same scenario twice → identical product counts and E values
+test('strike(e): determinism — identical product counts and E across fresh kernels', () => {
+  function runScenario(seed) {
+    const k = new Kernel({ seed, bounds: { x0: 0, y0: 0, w: 8, h: 8 } });
+    let boulder;
+    k.graph.boot(() => {
+      boulder = k.graph.createNode({
+        type: 'matter', tick: 0, x: 2, y: 2, R: null,
+        attrs: { archetype: 'boulder', E: 5000, noFlux: true },
+      });
+    });
+    const player = createPlayer(k, 0);
+    let result;
+    for (let i = 0; i < 50; i++) {
+      result = strike(k, player.id, boulder.id, 'blunt', 100, i);
+      if (result?.destroyed) break;
+    }
+    return result.products.map(n => ({ archetype: n.attrs.archetype, E: n.attrs.E }))
+      .sort((a, b) => a.archetype.localeCompare(b.archetype) || a.E - b.E);
+  }
+  const run1 = runScenario(42);
+  const run2 = runScenario(42);
+  assert.deepEqual(run1, run2, 'determinism: two runs with same seed produce identical products');
+});
+
+// ── Task 3: chop yields products (trees) ─────────────────────────────────────
+
+// (f) chop a mature tree → corpse + ≥1 log + ≥2 branches; corpse.E + Σ product E == pre-chop E
+test('chop(f): chop tree → corpse + ≥1 log + ≥2 branches; E conservation', () => {
+  const { k, tree } = world();
+  const player = createPlayer(k, 0);
+  // Pre-chop E = body + R (what die() will compute as corpse E before products)
+  // die() does: closeSegment + R correction, then E = R + body; corpse.attrs.E = E.
+  // We call closeSegment at tick=0 (no accrual) so E = tree.R + tree.attrs.body.
+  const preChopE = tree.R + tree.attrs.body;
+  chop(k, player.id, tree.id, 0);
+  // stump corpse
+  const corpse = [...k.graph.nodes.values()].find(n => n.type === 'corpse');
+  assert.ok(corpse, 'stump corpse exists');
+  // product matter nodes
+  const matterNodes = [...k.graph.nodes.values()].filter(n => n.type === 'matter' && n.attrs.noFlux);
+  const logs = matterNodes.filter(n => n.attrs.archetype === 'log');
+  const branches = matterNodes.filter(n => n.attrs.archetype === 'branch');
+  assert.ok(logs.length >= 1, `≥1 log, got ${logs.length}`);
+  assert.ok(branches.length >= 2, `≥2 branches, got ${branches.length}`);
+  // conservation: corpse.E + Σ product E == preChopE
+  const productSumE = matterNodes.reduce((s, n) => s + n.attrs.E, 0);
+  const totalE = corpse.attrs.E + productSumE;
+  assert.ok(Math.abs(totalE - preChopE) < 1e-6,
+    `E conservation: corpse ${corpse.attrs.E} + products ${productSumE} = ${totalE} ≠ preChop ${preChopE}`);
+  // existing probe-6 seam: felled delta + healDeltaId
+  const felledDelta = k.deltas.list.find(d => d.kind === 'felled');
+  assert.ok(felledDelta, 'felled delta still exists');
+  assert.ok(corpse.attrs.healDeltaId === felledDelta.id, 'healDeltaId wired');
+});
+
+// (g) chop grass → no products, unchanged behavior
+test('chop(g): chop grass → no products, unchanged behavior', () => {
+  const k = new Kernel({ seed: 5, bounds: { x0: 0, y0: 0, w: 8, h: 8 } });
+  let grass;
+  k.graph.boot(() => {
+    grass = k.addLiving({ species: 'grass', x: 1, y: 1, R: 2000, body: 1000, tick: 0, age: 50 * DAY });
+  });
+  const player = createPlayer(k, 0);
+  chop(k, player.id, grass.id, 0);
+  assert.equal(k.graph.nodes.get(grass.id), undefined, 'grass removed');
+  const matterNodes = [...k.graph.nodes.values()].filter(n => n.type === 'matter' && n.attrs.noFlux);
+  assert.equal(matterNodes.length, 0, 'no matter product nodes spawned for grass');
 });
