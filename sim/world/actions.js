@@ -22,6 +22,7 @@ export function pick(kernel, playerId, targetId, tick) {
   if (!player || !prey || prey.R == null) return 0;
   const sp = SPECIES[prey.attrs.species];
   if (!sp?.pick) return 0;
+  prey.attrs.pinned = true;   // named in a player ledger event → pinned individual (spec §4.3)
   kernel.closeSegment(prey, tick);
   // Correct any scheduler-ceil overdraft before computing bite (prevents phantom time minting).
   if (prey.R < 0) {
