@@ -30,10 +30,10 @@ export function initItemIdFromKernel(kernel) {
   nextItemId = max + 1;
 }
 
-export function createPlayer(kernel, tick) {
+export function createPlayer(kernel, tick, pos = null) {
   const evId = kernel.ledger.emit({ tick, type: 'player_join' });
   const player = kernel.graph.createNode({
-    type: 'player', tick, x: null, y: null, R: 0, causeEventId: evId,
+    type: 'player', tick, x: pos?.x ?? null, y: pos?.y ?? null, R: 0, causeEventId: evId,
     attrs: { body: 0, cap: 0, burn: 0, noFlux: true },
   });
   kernel.ledger.events[evId - 1].targets.push(player.id);
@@ -307,6 +307,27 @@ export function combine(kernel, playerId, itemIds, tick) {
                  archetype: out.form, E, grains: out.merged, tick };
   inv.push(item);
   return { ok: out.ok, item, recipeId };
+}
+
+/** One-tile step for a positioned actor. Refuses (false) when the actor is missing,
+ *  unpositioned, the step is not exactly one tile (Chebyshev 1), or it exits bounds.
+ *  Position is spatial state, not embodiment (S4 honestly absent): zero time cost in P1 —
+ *  movement metabolism is the Time Metabolism's job in a later pass, declared, not faked. */
+export function move(kernel, actorId, dx, dy, tick) {
+  const actor = kernel.graph.nodes.get(actorId);
+  if (!actor || actor.x == null || actor.y == null) return false;
+  if (!Number.isInteger(dx) || !Number.isInteger(dy)) return false;
+  if (Math.max(Math.abs(dx), Math.abs(dy)) !== 1) return false;
+  const toX = actor.x + dx, toY = actor.y + dy;
+  const b = kernel.bounds;
+  if (b && (toX < b.x0 || toX >= b.x0 + b.w || toY < b.y0 || toY >= b.y0 + b.h)) return false;
+  kernel.ledger.emit({
+    tick, type: 'move', actor: actorId, targets: [],
+    attrs: { fromX: actor.x, fromY: actor.y, toX, toY },
+  });
+  actor.x = toX; actor.y = toY;
+  // P1 Task 2 seam: recordTraffic(kernel, toX, toY, evId, tick) wears a path on the destination tile.
+  return true;
 }
 
 /** Eat an inventory item: converts its E to player R through the harvest transfer channel (lossy). */

@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Kernel } from '../kernel/kernel.js';
-import { createPlayer, pick, chop, harvest, take, eat, strike, combine } from '../world/actions.js';
+import { createPlayer, pick, chop, harvest, take, eat, strike, combine, move } from '../world/actions.js';
 import { equip } from '../items/equipment.js';
 import { auditGrains } from '../matter/audit.js';
 import { SPECIES, DAY } from '../time/metabolism.js';
@@ -621,4 +621,38 @@ test('M5 chop bare-hands regression: identical to pre-M5 behavior (factor exactl
   for (const n of matterNodes) {
     assert.ok(n.createdByEvent != null, `chop product ${n.attrs.archetype} has createdByEvent`);
   }
+});
+
+// ── P1 Task 1: move verb + player positions ────────────────────────────────────
+
+test('P1 createPlayer: optional spawn position; default stays null (back-compat)', () => {
+  const k = new Kernel({ seed: 3, bounds: { x0: 0, y0: 0, w: 8, h: 8 } });
+  const p0 = createPlayer(k, 0);
+  assert.equal(p0.x, null);
+  const p1 = createPlayer(k, 0, { x: 5, y: 6 });
+  assert.equal(p1.x, 5);
+  assert.equal(p1.y, 6);
+});
+
+test('P1 move: one-tile steps update position and emit move events; invalid moves refused', () => {
+  const k = new Kernel({ seed: 3, bounds: { x0: 0, y0: 0, w: 8, h: 8 } });
+  const p = createPlayer(k, 0, { x: 5, y: 6 });
+  assert.equal(move(k, p.id, 1, 0, 0), true);
+  assert.equal(p.x, 6); assert.equal(p.y, 6);
+  const ev = k.ledger.events.at(-1);
+  assert.equal(ev.type, 'move');
+  assert.equal(ev.actor, p.id);
+  assert.equal(ev.attrs.fromX, 5);
+  assert.equal(ev.attrs.fromY, 6);
+  assert.equal(ev.attrs.toX, 6);
+  assert.equal(ev.attrs.toY, 6);
+  // refusals: zero step, >1 step (Chebyshev), unpositioned actor
+  assert.equal(move(k, p.id, 0, 0, 1), false, 'zero step');
+  assert.equal(move(k, p.id, 2, 0, 1), false, 'step >1');
+  const limbo = createPlayer(k, 1);
+  assert.equal(move(k, limbo.id, 1, 0, 1), false, 'unpositioned actor cannot move');
+  // bounds: player is at (6,6), step right to x=7 is valid (w=8 → x0=0..7),
+  // step to x=8 would exit bounds — need two steps right first
+  assert.equal(move(k, p.id, 1, 0, 1), true, 'step to (7,6) valid');  // now at (7,6)
+  assert.equal(move(k, p.id, 1, 0, 1), false, 'step to x=8 exits bounds');
 });
