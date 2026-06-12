@@ -252,8 +252,8 @@ test('walls block move(); doors and floors admit it', () => {
 });
 
 test('planRoute with opts.blocked routes around building walls', () => {
-  const { k, g, s } = scenario();
-  const plot = clearPlot(k, s, g.id);
+  const { k, p, g, s } = scenario();
+  const plot = clearPlot(k, s, p.id);
   const b = constructBuilding(k, g.id, { plotId: plot.id }, 'hut', 0);
   assert.ok(b);
   const fp = b.attrs.footprint;
