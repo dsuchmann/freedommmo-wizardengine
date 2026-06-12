@@ -38,9 +38,9 @@ export const SLOTS = {
  *  (kernel.stocks counts equipment — conservation). */
 export function equip(kernel, playerId, itemId, slot, tick) {
   const player = kernel.graph.nodes.get(playerId);
-  if (!player || !SLOTS[slot]) return false;
+  if (!player || !Object.hasOwn(SLOTS, slot)) return false;
   const eq = (player.attrs.equipment ??= {});
-  if (eq[slot]) return false;
+  if (Object.hasOwn(eq, slot)) return false;
   const inv = player.attrs.inventory ?? [];
   const i = inv.findIndex(it => it.id === itemId);
   if (i < 0) return false;
@@ -55,9 +55,10 @@ export function equip(kernel, playerId, itemId, slot, tick) {
 
 /** Move an equipped item back to inventory. False if slot empty/unknown. */
 export function unequip(kernel, playerId, slot, tick) {
+  if (!Object.hasOwn(SLOTS, slot)) return false;
   const player = kernel.graph.nodes.get(playerId);
   const eq = player?.attrs.equipment;
-  if (!eq?.[slot]) return false;
+  if (!eq || !Object.hasOwn(eq, slot)) return false;
   const item = eq[slot];
   delete eq[slot];
   (player.attrs.inventory ??= []).push(item);

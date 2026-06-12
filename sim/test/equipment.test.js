@@ -70,3 +70,23 @@ test('CONSERVATION: stocks unchanged across equip/unequip (equipped E still coun
   unequip(k, p.id, 'hand_main', 1);
   assert.equal(k.stocks(0), before, 'unequip must not change world stocks');
 });
+
+test('re-equip round-trip: equip → unequip → equip same slot succeeds', () => {
+  const { k, p, item } = playerWithItem();
+  assert.equal(equip(k, p.id, item.id, 'hand_main', 0), true, 'first equip');
+  assert.equal(unequip(k, p.id, 'hand_main', 1), true, 'unequip');
+  assert.equal(equip(k, p.id, item.id, 'hand_main', 2), true, 're-equip succeeds');
+  assert.equal(p.attrs.equipment.hand_main.id, item.id, 'item back in slot');
+  assert.equal(p.attrs.inventory.length, 0, 'inventory empty after re-equip');
+});
+
+test('prototype-pollution guard: constructor slot is rejected', () => {
+  const { k, p, item } = playerWithItem();
+  const invBefore = [...(p.attrs.inventory ?? [])];
+  // unequip with 'constructor' must return false and leave inventory unchanged
+  assert.equal(unequip(k, p.id, 'constructor', 0), false, 'unequip constructor returns false');
+  assert.deepEqual(p.attrs.inventory ?? [], invBefore, 'inventory unchanged after bad unequip');
+  // equip with 'constructor' must also return false (not in SLOTS)
+  assert.equal(equip(k, p.id, item.id, 'constructor', 0), false, 'equip constructor returns false');
+  assert.equal(p.attrs.inventory.length, invBefore.length, 'inventory unchanged after bad equip');
+});
