@@ -314,7 +314,7 @@ function applySoilFieldToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imag
 
           // Use random sampling for land biomes to break diagonal sprite patterns
           var currentBiome = isTransition ? (blobSet === blobSetA ? biomeA : biomeB) : biomeA;
-          var isWaterOrBeach = currentBiome === 'beach' || currentBiome.includes('ocean') || currentBiome === 'shallow_water' || currentBiome === 'river' || currentBiome === 'lake';
+          var isWaterOrBeach = currentBiome === 'beach' || currentBiome.includes('ocean') || currentBiome === 'shallow_water' || currentBiome === 'river' || currentBiome === 'lake' || currentBiome === 'stream';
           var sample = sampleSoilPixel(px, py, wx, wy, blobSet, !isWaterOrBeach);
           if (!sample) continue;
 

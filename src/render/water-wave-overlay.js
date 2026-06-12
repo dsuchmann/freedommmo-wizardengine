@@ -39,7 +39,7 @@ export function preloadSeaweedAnimations() {
 }
 
 function isWaterBiome(b) {
-  return b && (b.includes('ocean') || b === 'shallow_water' || b === 'river' || b === 'lake');
+  return b && (b.includes('ocean') || b === 'shallow_water' || b === 'river' || b === 'lake' || b === 'stream');
 }
 
 // Ocean current is a fixed slow drift — not driven by weather wind.

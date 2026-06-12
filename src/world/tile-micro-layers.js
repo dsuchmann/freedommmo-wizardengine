@@ -30,7 +30,7 @@ function layer(kind, material, coverage, extra) {
 }
 
 function isWater(biome) {
-  return biome.includes('ocean') || biome === 'shallow_water' || biome === 'river' || biome === 'lake';
+  return biome.includes('ocean') || biome === 'shallow_water' || biome === 'river' || biome === 'lake' || biome === 'stream';
 }
 
 function waterMaterial(biome) {
