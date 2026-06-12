@@ -591,6 +591,22 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 - **Client rendering of equipment/inventory**: wire only.
 - **Stone axe storyline**: emergent-feasibility documented above (needs cordage mass); deferred until shaping/grinding verbs exist.
 
+## Deviations (canonical — authoritative over task bodies above)
+
+1. **Prototype-chain slot injection fixed (Task 2 fix commit b9c14783f).** The plan's `!SLOTS[slot]` guard was bypassable: `SLOTS['constructor']` resolves truthy through the prototype chain, and `'constructor'` passes the protocol slot regex. Both `equip` and `unequip` now validate with `Object.hasOwn(SLOTS, slot)` and check occupancy with `Object.hasOwn(eq, slot)`. Two extra tests (re-equip round trip; 'constructor' rejected by both verbs). equipment.test.js is 8 tests, not the plan's 6.
+2. **`sim/matter/audit.js` extended (Task 4, pre-authorized in-flight).** `auditGrains` only scanned `attrs.inventory`; equipped items' grains vanished from "held". One loop added scanning `Object.values(node.attrs.equipment ?? {})` — symmetric with the kernel.stocks() fix. Without it the probe's audit step fails with anything equipped.
+3. **serializeItem 'cracked' test uses hp 30 / maxHp 62, not hp 52.** Real stageFor thresholds make 52/62 (0.84) 'intact' (intact > 0.75). Plan's sketch value corrected; assertion strength unchanged.
+4. **Probe World B uses seed 3 (actions.test.js pattern), not seed 99.** Two reasons: seed-99 single tree yields only 1 log (combine needs 2 — World A therefore boots TWO trees at (4,4)/(8,8)); and bare-vs-tooled runs have different chop event IDs (equip emits an event first), and spawnBreakProducts keys product COUNTS on causeEventId — the exact-1.42 assertion requires equal counts. Seed 3 gives equal counts for both event IDs. This is by design, not a bug: the 1.42 factor applies to eFrac per product row; counts are RNG-determined by causal history.
+5. **Wear test bit-identity trick (Task 3).** The shattered-tool-equals-bare-hands comparison world also calls `equip()` (same ledger event sequence → same causeEventId at the chop) but pre-sets hp=0, isolating the factor difference from RNG divergence.
+
+**Accepted hardening backlog (revisit P4, none load-bearing now):**
+- Weighted-mean helper now has 3 copies (items.js `weighted`, interaction.js `adhesionOf`, composition.js `propertiesOf`) with inconsistent null-handling — extract shared `weightedMean` into grains.js before a 4th copy appears.
+- No test exercises the chop factor CLAMP path (needs toolPower high enough that maxSum×factor > 0.9, e.g. pure-stone tool); math verified in review only.
+- `serializeItem`: `stageFor(undefined, maxHp)` → 'shattered' if an item ever has maxHp without hp; add `item.hp != null` guard when hardening.
+- equip/unequip don't capture their ledger event id (other verbs do, for causal chaining) — add when equipment-triggered effects need causal links.
+- Tool lazy-init hp/maxHp mutates items without ledger trace — fine (hp is not E) but check when save/load persistence is built.
+- SLOTS layer numbering is intentionally sparse (gaps for future insertion); note when body rendering consumes it.
+
 ## Seams for later plans
 
 - Tool factor pattern (wieldedItem → derived factor → table scaling) generalizes to strike damage and harvest yields.
