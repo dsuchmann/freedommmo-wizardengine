@@ -10,6 +10,7 @@ import { floorDiv } from '../world/chunk.js';
 import { SPRITE_FLOATS } from './gl-compositor.js';
 import { getAtmosphere } from '../world/biome-atmosphere.js';
 import { isClaimedAt, f4Placements, f4SpriteUrl, f4AnimUrlBase } from '../world/decoration-claims.js';
+import { tuneSize, tuneBiomeDensity, tuneObjDensity, tuneAnimEnabled } from '../world/field-tuning.js';
 
 var ANIM_RADIUS = 40; // tiles around player — large enough to cover full screen at any zoom
 var FADE_INNER = 34; // fully opaque inside this radius
@@ -605,7 +606,8 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
     f4Blades.push({
       bi: 90 + fi, // distinct trigger-key space from F2 blades
       stateUrl: fp.state ? f4SpriteUrl(fp) : null,
-      animUrlBase: (!fp.state && fp.hasAnim) ? f4AnimUrlBase(fp) : null,
+      animUrlBase: (!fp.state && fp.hasAnim
+        && tuneAnimEnabled('f4', fp.biome, fp.name, 'wind_sway')) ? f4AnimUrlBase(fp) : null,
       staticUrl: fp.state ? f4SpriteUrl(fp) : f4SpriteUrl({ name: fp.name, biome: fp.biome, variant: fp.variant, state: null }),
       isRigid: false,
       lifeScale: fp.sizeTiles,         // 64px -> 2 tiles, 80px -> 2.5 tiles
@@ -647,6 +649,14 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
   else if (biome === 'desert') { baseDensity = 1; tileChance = 0.35; }
   else if (biome === 'beach') { baseDensity = 1; tileChance = 0.175; }
 
+  // F2 biome density tuning: sparse biomes (tileChance<1) scale the tile
+  // chance; dense biomes scale the blade count. Default 1.0 = no change.
+  var f2bd = tuneBiomeDensity('f2', biome);
+  if (f2bd !== 1) {
+    if (tileChance < 1.0) tileChance = Math.min(1, tileChance * f2bd);
+    else baseDensity = Math.max(0, Math.round(baseDensity * f2bd));
+  }
+
   if (tileChance < 1.0 && rand2(wx, wy, 6999) > tileChance) {
     if (!f4Blades.length) return { desc: null, cacheable: cacheable };
     bladeCountOverride = 0;
@@ -678,6 +688,10 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
       objName = objects[0];
     }
 
+    // Object-level density: <1 culls this blade (NEW salt 7400+bi)
+    var f2od = tuneObjDensity('f2', biome, objName);
+    if (f2od < 1 && rand2(wx, wy, 7400 + bi) > f2od) continue;
+
     var variantWl = sfVariantsFor(biome, objName);
     var variantIdx = variantWl
       ? variantWl[Math.floor(rand2(wx, wy, 7035 + bi) * variantWl.length)]
@@ -708,6 +722,9 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
       lifeSway = 0;
     }
 
+    // Size tuning folds into lifecycle scale (NEW salts 7600+bi*4..+2)
+    lifeScale *= tuneSize('f2', biome, objName, variantIdx, wx, wy, 7600 + bi * 4);
+
     // Ambient self-trigger (~7% of sprites animate on their own)
     var ambient = rand2(wx, wy, 7080 + bi) < 0.07;
     var ambientPeriod = 0;
@@ -724,7 +741,8 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
     // rigid objects DO play their wind_sway frames when available — rigidity
     // only zeroes the sway *rotation*, never the frame animation.
     var animWl = sfAnimVariantsFor(biome, objName);
-    var animAvail = !animWl || animWl.indexOf(variantIdx) !== -1;
+    var animAvail = (!animWl || animWl.indexOf(variantIdx) !== -1)
+      && tuneAnimEnabled('f2', biome, objName, 'wind_sway');
 
     var offUX = (rand2(wx, wy, 7030 + bi) - 0.5) * 1.1;
     var offUY = (rand2(wx, wy, 7031 + bi) - 0.5) * 1.1;
