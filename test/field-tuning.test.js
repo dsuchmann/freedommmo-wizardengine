@@ -46,7 +46,7 @@ test('setFieldTuning replaces tree and live-binding updates', () => {
   setFieldTuning({ f4: { size: 5 } });
   assert.equal(FIELD_TUNING.f4.size, 5);
   setFieldTuning(null);
-  assert.deepEqual(FIELD_TUNING, { f2: {}, f3: {}, f4: {}, f5: {} });
+  assert.deepEqual(FIELD_TUNING, { f2: {}, f3: {}, f4: {}, f5: {}, f6: {} });
 });
 
 test('anim categories default enabled, disable per object x category', () => {
@@ -113,5 +113,5 @@ test('setFieldTuning normalizes f5', () => {
   setFieldTuning({ f5: { size: 2 } });
   assert.equal(FIELD_TUNING.f5.size, 2);
   setFieldTuning(null);
-  assert.deepEqual(FIELD_TUNING, { f2: {}, f3: {}, f4: {}, f5: {} });
+  assert.deepEqual(FIELD_TUNING, { f2: {}, f3: {}, f4: {}, f5: {}, f6: {} });
 });
