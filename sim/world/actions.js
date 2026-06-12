@@ -79,6 +79,14 @@ export function chop(kernel, playerId, targetId, tick) {
   if (corpse) {
     const deltaId = kernel.deltas.push({ tick, x, y, target: `node:${targetId}`, kind: 'felled', attrs: { species } });
     corpse.attrs.healDeltaId = deltaId;
+    // If this species has onChop products (e.g. tree → logs + branches),
+    // spawn them from corpse E and subtract their E from the stump corpse.
+    const onChop = OBJECT_DEFS[species]?.onChop;
+    if (onChop) {
+      const products = spawnBreakProducts(kernel, corpse, onChop, evId, tick, corpse.attrs.E, false);
+      const productSumE = products.reduce((s, n) => s + n.attrs.E, 0);
+      corpse.attrs.E -= productSumE;
+    }
   }
   return true;
 }
@@ -141,27 +149,30 @@ export function take(kernel, playerId, targetId, tick) {
 }
 
 /**
- * Module-private: spawn break products from a parent matter node (or corpse), partitioning
- * parentE exactly across all products. Counts resolved via kernel seeded RNG keyed to
- * ('break', causeEventId, productIndex) — deterministic, no Math.random.
+ * Module-private: spawn break products from a parent matter node (or corpse).
+ * Counts resolved via kernel seeded RNG keyed to (causeEventId, productIndex) — deterministic.
  * Location: module-private in actions.js (design choice recorded per M2 plan).
- * @param {object} kernel
- * @param {object} parent  — the node being destroyed (must have .x, .y, .attrs.E)
- * @param {Array}  table   — breakProducts or onChop array: [{class, count:[lo,hi], eFrac}]
- * @param {number} causeEventId
- * @param {number} tick
- * @param {number} [parentEOverride] — if provided, use instead of parent.attrs.E
- * @returns {Array} created nodes
+ *
+ * Two modes controlled by `remainderToLast`:
+ *   true  (breakProducts) — all-but-last get eFrac * parentE; last gets parentE − Σ others (exact partition).
+ *   false (onChop)        — every product gets exactly eFrac * parentE; caller keeps the remainder.
+ *
+ * @param {object}  kernel
+ * @param {object}  parent            — must have .x, .y
+ * @param {Array}   table             — [{class, count:[lo,hi], eFrac}]
+ * @param {number}  causeEventId
+ * @param {number}  tick
+ * @param {number}  parentE           — E to partition
+ * @param {boolean} remainderToLast   — true for breakProducts, false for onChop
+ * @returns {Array} created matter nodes
  */
-function spawnBreakProducts(kernel, parent, table, causeEventId, tick, parentEOverride) {
-  const parentE = parentEOverride != null ? parentEOverride : parent.attrs.E;
+function spawnBreakProducts(kernel, parent, table, causeEventId, tick, parentE, remainderToLast) {
   const { x, y } = parent;
-  // Expand table to (class, count, eFrac) rows, resolving counts via RNG.
-  const expanded = [];  // { class, eFrac }
+  // Expand table rows, resolving count ranges via RNG.
+  const expanded = [];  // { cls, eFrac }
   for (let pi = 0; pi < table.length; pi++) {
     const p = table[pi];
     const [lo, hi] = p.count;
-    // RNG: randRange(seed, a, b, lo, hi) — we use causeEventId and pi as the id keys.
     const count = lo === hi ? lo : Math.floor(randRange(kernel.seed, causeEventId, pi, lo, hi + 1));
     for (let ci = 0; ci < count; ci++) {
       expanded.push({ cls: p.class, eFrac: p.eFrac });
@@ -169,24 +180,34 @@ function spawnBreakProducts(kernel, parent, table, causeEventId, tick, parentEOv
   }
   if (expanded.length === 0) return [];
 
-  // Assign E: all-but-last get eFrac * parentE; last gets remainder.
-  // Skip products with E <= 1e-9 (tiny parents break straight to terminal).
   const assigned = [];
   let sumAssigned = 0;
-  for (let i = 0; i < expanded.length - 1; i++) {
-    const e = expanded[i].eFrac * parentE;
-    if (e <= 1e-9) continue;
-    assigned.push({ cls: expanded[i].cls, E: e });
-    sumAssigned += e;
-  }
-  // Last product (remainder product)
-  const lastIdx = expanded.length - 1;
-  const remainder = parentE - sumAssigned;
-  if (remainder > 1e-9) {
-    assigned.push({ cls: expanded[lastIdx].cls, E: remainder });
-  } else if (assigned.length > 0) {
-    // remainder ≤ 0: fold into previous
-    assigned[assigned.length - 1].E += remainder;
+
+  if (remainderToLast) {
+    // breakProducts mode: all-but-last get eFrac * parentE; last gets remainder.
+    for (let i = 0; i < expanded.length - 1; i++) {
+      const e = expanded[i].eFrac * parentE;
+      if (e <= 1e-9) continue;
+      assigned.push({ cls: expanded[i].cls, E: e });
+      sumAssigned += e;
+    }
+    const remainder = parentE - sumAssigned;
+    const lastIdx = expanded.length - 1;
+    if (remainder > 1e-9) {
+      assigned.push({ cls: expanded[lastIdx].cls, E: remainder });
+    } else if (assigned.length > 0) {
+      // remainder ≤ 0: fold into previous
+      assigned[assigned.length - 1].E += remainder;
+    }
+  } else {
+    // onChop mode: every product gets exactly eFrac * parentE; stump keeps the rest.
+    for (const row of expanded) {
+      const e = row.eFrac * parentE;
+      if (e <= 1e-9) continue;
+      assigned.push({ cls: row.cls, E: e });
+      sumAssigned += e;
+    }
+    // (caller subtracts sumAssigned from corpse.attrs.E)
   }
 
   // Create matter nodes
@@ -228,7 +249,7 @@ export function strike(kernel, playerId, targetId, damageType, amount, tick) {
     return { stage: after, destroyed: false, products: [] };
   }
   // SHATTER: spawn products partitioning E exactly, then remove parent.
-  const products = spawnBreakProducts(kernel, node, def.breakProducts, evId, tick);
+  const products = spawnBreakProducts(kernel, node, def.breakProducts, evId, tick, node.attrs.E, true);
   if (node.attrs.placement) {
     kernel.deltas.push({ tick, x: node.x, y: node.y, target: 'placement:' + node.attrs.placement,
       kind: 'destroyed', attrs: { archetype: node.attrs.archetype ?? null } });
