@@ -50,7 +50,7 @@
 - Modify: `sim/world/spawn.js` (export tables; `spawnRegionAggregate`; `spawnWorld`)
 - Test: `sim/test/aggregate.test.js`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```js
 // sim/test/aggregate.test.js
@@ -115,12 +115,12 @@ test('nested boot scopes stay baseline (re-entrant)', () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `node --test sim/test/aggregate.test.js`
 Expected: FAIL — `Cannot find module '../lod/aggregate.js'`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `sim/lod/aggregate.js` (creation half — `stepAggregate`/`registerAggregates` arrive in Task 2):
 
@@ -211,11 +211,11 @@ export function spawnWorld(kernel, bounds, fullRect) {
 
 (`rand` and `DAY` are already imported at the top of spawn.js.)
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `node --test sim/test/aggregate.test.js` → PASS (5 tests). Then the full suite: `npm test` → all green (no regressions; nothing yet consumes aggregates).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add sim/lod/aggregate.js sim/store/graph.js sim/world/spawn.js sim/test/aggregate.test.js
@@ -231,7 +231,7 @@ git commit -m "feat(lod): aggregate node shape + statistical baseline spawn (spe
 - Modify: `sim/kernel/kernel.js` (register handler; `stocks()` aggregate branch)
 - Test: `sim/test/aggregate.test.js` (append)
 
-- [ ] **Step 1: Write the failing tests** (append to `sim/test/aggregate.test.js`)
+- [x] **Step 1: Write the failing tests** (append to `sim/test/aggregate.test.js`)
 
 ```js
 function flows(k) {
@@ -283,12 +283,12 @@ test('stocks() counts aggregate mass', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `node --test sim/test/aggregate.test.js`
 Expected: FAIL — `stocks()` returns 0 for aggregate-only worlds; no `agg_step` handler ('agg_step' events pop with no handler, populations never change → conservation trivially passes but population/stocks tests fail).
 
-- [ ] **Step 3: Implement dynamics** (append to `sim/lod/aggregate.js`)
+- [x] **Step 3: Implement dynamics** (append to `sim/lod/aggregate.js`)
 
 ```js
 import { SPECIES, stageAt, transfer } from '../time/metabolism.js';
@@ -416,11 +416,11 @@ export function registerAggregates(kernel) {
 
 (Final branch order: `corpse` → `aggregate` → `R != null`.)
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 Run: `node --test sim/test/aggregate.test.js` → PASS. Then `npm test` → all green. If the population-band test fails (extinction/explosion), the dynamics constants are NOT to be tuned — the same SPECIES tables drive both tiers; investigate the math instead (likely a dt or per-capita error).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add sim/lod/aggregate.js sim/kernel/kernel.js sim/test/aggregate.test.js
@@ -436,7 +436,7 @@ git commit -m "feat(lod): agg_step statistical dynamics — conservation-exact, 
 - Modify: `sim/world/actions.js` (pick pins)
 - Test: `sim/test/tiers.test.js`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```js
 // sim/test/tiers.test.js
@@ -503,12 +503,12 @@ test('demoting an already-aggregated or empty region is a no-op', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `node --test sim/test/tiers.test.js`
 Expected: FAIL — `Cannot find module '../lod/tiers.js'`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `sim/lod/tiers.js`:
 
@@ -574,11 +574,11 @@ export function demoteRegion(kernel, regionKey, tick) {
   prey.attrs.pinned = true;   // named in a player ledger event → pinned individual (spec §4.3)
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 Run: `node --test sim/test/tiers.test.js` → PASS. Then `npm test` → all green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add sim/lod/tiers.js sim/world/actions.js sim/test/tiers.test.js
@@ -593,7 +593,7 @@ git commit -m "feat(lod): demotion — individuals fold into aggregates; pinning
 - Modify: `sim/lod/tiers.js` (append `promoteRegion`)
 - Test: `sim/test/tiers.test.js` (append)
 
-- [ ] **Step 1: Write the failing tests** (append to `sim/test/tiers.test.js`; extend the import from `../lod/tiers.js` with `promoteRegion`, and add `import { spawnWorld } from '../world/spawn.js';` plus `REGION` to the aggregate import if not present)
+- [x] **Step 1: Write the failing tests** (append to `sim/test/tiers.test.js`; extend the import from `../lod/tiers.js` with `promoteRegion`, and add `import { spawnWorld } from '../world/spawn.js';` plus `REGION` to the aggregate import if not present)
 
 ```js
 test('promotion materializes exactly the aggregate truth (counts + mass), deterministically', () => {
@@ -651,12 +651,12 @@ test('promoting a region with no aggregate is a no-op', () => {
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `node --test sim/test/tiers.test.js`
 Expected: FAIL — `promoteRegion` is not exported.
 
-- [ ] **Step 3: Implement** (append to `sim/lod/tiers.js`; add imports `SPECIES, DAY` from `'../time/metabolism.js'` and `rand` from `'../kernel/rng.js'`)
+- [x] **Step 3: Implement** (append to `sim/lod/tiers.js`; add imports `SPECIES, DAY` from `'../time/metabolism.js'` and `rand` from `'../kernel/rng.js'`)
 
 ```js
 const SPECIES_IDX = Object.fromEntries(Object.keys(SPECIES).map((s, i) => [s, i + 1]));
@@ -718,11 +718,11 @@ export function promoteRegion(kernel, regionKey, tick) {
 }
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 Run: `node --test sim/test/tiers.test.js` → PASS. Then `npm test` → all green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add sim/lod/tiers.js sim/test/tiers.test.js
@@ -737,7 +737,7 @@ git commit -m "feat(lod): promotion — aggregates materialize deterministically
 - Modify: `sim/lod/tiers.js` (append `TierManager`)
 - Test: `sim/test/tiers.test.js` (append)
 
-- [ ] **Step 1: Write the failing tests** (append; extend the tiers import with `TierManager`)
+- [x] **Step 1: Write the failing tests** (append; extend the tiers import with `TierManager`)
 
 ```js
 test('TierManager promotes the ring around a center and demotes beyond it', () => {
@@ -777,12 +777,12 @@ test('TierManager seeds itself from existing individual regions at construction'
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `node --test sim/test/tiers.test.js`
 Expected: FAIL — `TierManager` is not exported.
 
-- [ ] **Step 3: Implement** (append to `sim/lod/tiers.js`)
+- [x] **Step 3: Implement** (append to `sim/lod/tiers.js`)
 
 ```js
 /** Reconciles region tiers around attention-bubble centers (spec §4.2).
@@ -837,11 +837,11 @@ export class TierManager {
 }
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 Run: `node --test sim/test/tiers.test.js` → PASS. Then `npm test` → all green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add sim/lod/tiers.js sim/test/tiers.test.js
@@ -857,7 +857,7 @@ git commit -m "feat(lod): TierManager — bubble-driven promote/demote with hyst
 - Modify: `sim/server/main.js` (statistical world with individual start area)
 - Test: `sim/test/server.test.js` (append), `sim/test/main.test.js` (verify still green)
 
-- [ ] **Step 1: Write the failing test** (append to `sim/test/server.test.js`, following its existing setup pattern — it already builds kernels and SimServers with `port: 0`; reuse its helpers/imports, adding `import { spawnWorld } from '../world/spawn.js';` and `import { aggregateOf } from '../lod/aggregate.js';` as needed)
+- [x] **Step 1: Write the failing test** (append to `sim/test/server.test.js`, following its existing setup pattern — it already builds kernels and SimServers with `port: 0`; reuse its helpers/imports, adding `import { spawnWorld } from '../world/spawn.js';` and `import { aggregateOf } from '../lod/aggregate.js';` as needed)
 
 ```js
 test('attaching a client promotes the regions around its viewport', async () => {
@@ -879,12 +879,12 @@ test('attaching a client promotes the regions around its viewport', async () => 
 });
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `node --test sim/test/server.test.js`
 Expected: the new test FAILS (regions stay aggregated; snapshot may even contain `aggregate` entries).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `sim/server/server.js`:
 1. Add import: `import { TierManager } from '../lod/tiers.js';`
@@ -947,11 +947,11 @@ export function bootWorld(db, { seed, bounds, start = bounds, phi = 4 }) {
   });
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 Run: `node --test sim/test/server.test.js sim/test/main.test.js` → PASS (existing `bootWorld` tests keep passing because `start` defaults to `bounds`, i.e. all-individual — same behavior as before). Then `npm test` → all green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add sim/server/server.js sim/server/main.js sim/test/server.test.js
@@ -967,7 +967,7 @@ git commit -m "feat(lod): server pump drives tier reconciliation; statistical wo
 
 This is Plan C's experienceable probe (CLAUDE.md continuous-testability): a distant region lives a real year statistically; arriving promotes it into real individuals with real history; the whole journey is conservation-exact, replayable bit-identically, and resumable from a checkpoint.
 
-- [ ] **Step 1: Write the probe**
+- [x] **Step 1: Write the probe**
 
 ```js
 // sim/test/probe-lod.test.js — Plan C probe (spec §4.2–4.3, §5.1).
@@ -1073,16 +1073,16 @@ test('probe LOD: a 1600×1600-tile statistical world runs a year cheaply', () =>
 });
 ```
 
-- [ ] **Step 2: Run the probe**
+- [x] **Step 2: Run the probe**
 
 Run: `node --test sim/test/probe-lod.test.js`
 Expected: PASS (everything was built in Tasks 1–6; this validates the integration). If the checkpoint test fails, the likely cause is non-JSON-stable `attrs.pops` ordering — object key order survives `JSON.parse(JSON.stringify(…))`, so investigate what actually diverged (diff the two dumps) rather than papering over it.
 
-- [ ] **Step 3: Run the full suite**
+- [x] **Step 3: Run the full suite**
 
 Run: `npm test` → all green.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add sim/test/probe-lod.test.js
@@ -1093,10 +1093,10 @@ git commit -m "test(sim): probe LOD — distance defers resolution, never causat
 
 ### Task 8: Close-out
 
-- [ ] **Step 1:** `npm test` one final time → all green; note final test count.
-- [ ] **Step 2:** Check every box in this plan doc.
-- [ ] **Step 3:** Update `docs/superpowers/plans/2026-06-11-pass1-roadmap.md`: Plan C row → `**DONE**` (cite this plan doc + any entries in "Canonical deviations" below), Plan D row → `**NEXT**`.
-- [ ] **Step 4:** Commit:
+- [x] **Step 1:** `npm test` one final time → all green; note final test count.
+- [x] **Step 2:** Check every box in this plan doc.
+- [x] **Step 3:** Update `docs/superpowers/plans/2026-06-11-pass1-roadmap.md`: Plan C row → `**DONE**` (cite this plan doc + any entries in "Canonical deviations" below), Plan D row → `**NEXT**`.
+- [x] **Step 4:** Commit:
 
 ```bash
 git add docs/superpowers/plans/2026-06-11-pass1c-simulation-lod.md docs/superpowers/plans/2026-06-11-pass1-roadmap.md
@@ -1115,3 +1115,4 @@ git commit -m "docs: roadmap — Plan C DONE, Plan D NEXT"
 4. **Tile-occupancy capture budget instead of pooled cross-species ration** — Task 2. The plan rationed all species against one pooled `totalDemand / regionPhi`. At the individual tier each entity occupies its own tile and captures at most phi from it, so the faithful statistical model is per-species: `tiles_s = totalCount > 256 ? 256·count_s/totalCount : count_s`, `budget_s = phi·tiles_s` — total capture never exceeds regionPhi, and a sparse species can't draw more than its occupied tiles supply. Flagged by spec review (the first per-species attempt gave every species the full 256-tile budget); committed daed88bc7.
 5. **Deaths/births stochRound salts 7/23 (plan: 7/11)** — Task 2. Salt spacing 4 could collide two draws when `stepAggregateTo` runs at ticks 4 apart during promote/demote merges. Flagged by quality review; committed 43a9557a0.
 6. **`promoteRegion` detritus block: local `SPECIES[species]` lookup** — Task 4. The plan code referenced `SPECIES[species].embodiedDecayDays` without binding it; implementation adds the lookup inside the detritus branch. Plan omission, no semantic change. Committed e9c8ce0a3.
+7. **Flux per-tile sums made canonical (`_resum`)** — Task 7, unplanned production fix in `sim/time/flux.js`. The probe's checkpoint test exposed that incremental ±demand float accumulation made tile sums history-order-dependent: restore re-enters nodes in sorted-id order and drifted ~1e-11, breaking bit-identical resume. Fix recomputes each mutated tile's sum from its occupants in ascending node-id order — sums are now a pure function of the occupant set. Public API unchanged. Committed e62ae8493.
