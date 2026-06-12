@@ -2,15 +2,15 @@
 import { openDb } from '../store/db.js';
 import { checkpoint, loadKernel } from '../store/checkpoint.js';
 import { Kernel } from '../kernel/kernel.js';
-import { spawnMeadow } from '../world/spawn.js';
+import { spawnWorld } from '../world/spawn.js';
 import { SimServer } from './server.js';
 
 /** Open-or-create: a db with a saved tick resumes; an empty one gets the baseline. */
-export function bootWorld(db, { seed, bounds, phi = 4 }) {
+export function bootWorld(db, { seed, bounds, start = bounds, phi = 4 }) {
   const saved = db.prepare('SELECT value FROM meta WHERE key=?').get('tick');
   if (saved != null) return loadKernel(db);
   const kernel = new Kernel({ seed, phi, bounds });
-  spawnMeadow(kernel, bounds);
+  spawnWorld(kernel, bounds, start);
   checkpoint(kernel, db);          // birth certificate: baseline is durable immediately
   return kernel;
 }
@@ -29,7 +29,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const db = openDb(worldPath);
   const kernel = bootWorld(db, {
     seed: Number(arg('seed', '42')),
-    bounds: { x0: 0, y0: 0, w: 40, h: 25 },
+    bounds: { x0: 0, y0: 0, w: 320, h: 320 },
+    start: { x0: 0, y0: 0, w: 48, h: 32 },
   });
   const server = new SimServer({ kernel, port: Number(arg('port', '8787')), db });
   await server.listen();

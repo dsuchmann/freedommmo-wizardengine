@@ -4,7 +4,8 @@ import assert from 'node:assert/strict';
 import WebSocket from 'ws';
 import { SimServer } from '../server/server.js';
 import { Kernel } from '../kernel/kernel.js';
-import { spawnMeadow } from '../world/spawn.js';
+import { spawnMeadow, spawnWorld } from '../world/spawn.js';
+import { aggregateOf } from '../lod/aggregate.js';
 import { DAY } from '../time/metabolism.js';
 
 function makeServer() {
@@ -65,4 +66,22 @@ test('admin ff advances sim weeks instantly; admin pause freezes the clock', asy
   const t = await next(ws, 'time');
   assert.ok(t.tick >= 14 * DAY);
   ws.close(); await server.close();
+});
+
+test('attaching a client promotes the regions around its viewport', async () => {
+  const kernel = new Kernel({ seed: 42, bounds: { x0: 0, y0: 0, w: 160, h: 160 } });
+  spawnWorld(kernel, { x0: 0, y0: 0, w: 160, h: 160 }, { x0: 160, y0: 160, w: 0, h: 0 }); // all statistical
+  const server = new SimServer({ kernel, port: 0 });
+  await server.listen();
+  const ws = new WebSocket(`ws://127.0.0.1:${server.port}`);
+  await new Promise(res => ws.on('open', res));
+  ws.send(JSON.stringify({ type: 'hello', viewport: { x: 0, y: 0, w: 40, h: 25 } }));
+  const snap = await new Promise(res => ws.on('message', d => { const m = JSON.parse(d); if (m.type === 'snapshot') res(m); }));
+  // wait one pump so the tier manager has run
+  await new Promise(res => setTimeout(res, 250));
+  assert.equal(aggregateOf(kernel, '1,0'), undefined, 'viewport region promoted to individuals');
+  assert.ok(aggregateOf(kernel, '9,9'), 'distant region still statistical');
+  assert.ok(snap.entities.every(e => e.type !== 'aggregate'), 'aggregates never serialized to clients');
+  ws.close();
+  await server.close();
 });

@@ -5,6 +5,7 @@ import { WebSocketServer } from 'ws';
 import { parseClientMsg, serializeEntity, snapshotMsg, tickDeltaMsg, eventsMsg, timeMsg } from './protocol.js';
 import { createPlayer, pick, chop } from '../world/actions.js';
 import { checkpoint } from '../store/checkpoint.js';
+import { TierManager } from '../lod/tiers.js';
 
 const PUMP_MS = 100;   // ~10 Hz (spec §3.2)
 
@@ -17,6 +18,7 @@ export class SimServer {
     this.paused = false;
     this.sessions = new Set();    // { ws, viewport, playerId, knownIds:Set }
     this.pendingIntents = [];     // applied at next pump boundary, in arrival order
+    this.tiers = new TierManager(kernel);
     this._lastReal = null;
     this._eventCursor = 0;        // ledger index already broadcast
   }
@@ -51,6 +53,7 @@ export class SimServer {
         const player = createPlayer(this.kernel, this.kernel.tick);
         session = { ws, viewport: m.viewport, playerId: player.id, knownIds: new Set() };
         this.sessions.add(session);
+        this.tiers.update(this._centers(), this.kernel.tick);   // promote before first snapshot
         this._sendSnapshot(session);
       } else if (!session) {
         // ignore everything before hello
@@ -73,7 +76,15 @@ export class SimServer {
     const cx = viewport.x + viewport.w / 2, cy = viewport.y + viewport.h / 2;
     const radius = Math.hypot(viewport.w, viewport.h) / 2;
     return this.kernel.graph.nodesNear(cx, cy, radius)
+      .filter(n => n.type !== 'aggregate')
       .map(n => serializeEntity(n, this.kernel.tick));
+  }
+
+  _centers() {
+    return [...this.sessions].map(s => ({
+      x: s.viewport.x + s.viewport.w / 2,
+      y: s.viewport.y + s.viewport.h / 2,
+    }));
   }
 
   _sendSnapshot(session) {
@@ -97,6 +108,9 @@ export class SimServer {
         // node died between snapshot and pump — drop the intent silently
       }
     }
+    // reconcile simulation LOD around the attention bubbles (spec §4.2)
+    const centers = this._centers();
+    if (centers.length) this.tiers.update(centers, this.kernel.tick);
     // 2. advance sim-time
     if (!this.paused && elapsed > 0) {
       this.kernel.runTo(this.kernel.tick + Math.max(1, Math.round(elapsed * this.timeScale)));
