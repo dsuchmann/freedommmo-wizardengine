@@ -1,0 +1,9 @@
+{
+  "id": "sit_down", "kind": "sit",
+  "variant": { "time": [0.9, 1.1], "amplitude": [1, 1] },
+  "root": { "op": "sequence", "children": [
+    { "op": "balance", "on": false },
+    { "op": "pose", "joints": { "thigh_l": -90, "thigh_r": -90, "shin_l": 85, "shin_r": 85, "spine": -10 }, "ticks": 4 },
+    { "op": "emit", "event": "sat_down" }
+  ] }
+}

@@ -1,0 +1,12 @@
+{
+  "id": "wave", "kind": "gesture",
+  "variant": { "time": [0.9, 1.15], "amplitude": [0.85, 1.1] },
+  "root": { "op": "sequence", "children": [
+    { "op": "pose", "joints": { "arm_u_r": 150 }, "ticks": 6 },
+    { "op": "pose", "joints": { "arm_u_r": 150, "arm_f_r": 40 }, "ticks": 3 },
+    { "op": "pose", "joints": { "arm_u_r": 150, "arm_f_r": 10 }, "ticks": 2 },
+    { "op": "pose", "joints": { "arm_u_r": 150, "arm_f_r": 40 }, "ticks": 2 },
+    { "op": "pose", "joints": { "arm_u_r": 150, "arm_f_r": 10 }, "ticks": 2 },
+    { "op": "pose", "joints": { "arm_u_r": 0, "arm_f_r": 0 }, "ticks": 6 }
+  ] }
+}

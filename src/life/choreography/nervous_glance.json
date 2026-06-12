@@ -1,0 +1,11 @@
+{
+  "id": "nervous_glance", "kind": "emote",
+  "variant": { "time": [0.85, 1.2], "amplitude": [0.9, 1.1] },
+  "root": { "op": "sequence", "children": [
+    { "op": "pose", "joints": { "head": -40 }, "ticks": 2 },
+    { "op": "wait", "ticks": 3 },
+    { "op": "pose", "joints": { "head": 45 }, "ticks": 4 },
+    { "op": "wait", "ticks": 2 },
+    { "op": "pose", "joints": { "head": 0 }, "ticks": 2 }
+  ] }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "dance_improvised", "kind": "dance",
+  "variant": { "time": [0.8, 1.25], "amplitude": [0.7, 1.1] },
+  "root": { "op": "sequence", "children": [
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -90, "arm_u_r": 90, "spine": 15 }, "ticks": 4 },
+      { "op": "pose", "joints": { "head": 20 }, "ticks": 4 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -20, "arm_u_r": 20, "spine": -15 }, "ticks": 4 },
+      { "op": "pose", "joints": { "head": -20 }, "ticks": 4 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -90, "arm_u_r": 90, "spine": 15 }, "ticks": 4 },
+      { "op": "pose", "joints": { "head": 20 }, "ticks": 4 }
+    ] },
+    { "op": "pose", "joints": { "arm_u_l": 0, "arm_u_r": 0, "spine": 0, "head": 0 }, "ticks": 4 }
+  ] }
+}
