@@ -117,7 +117,7 @@ for (var bk in BIOME_CLIFF) {
 }
 
 // Water biomes — excluded from cliff rendering, treated as flat level 0
-var WATER_BIOMES = { ocean: 1, deep_ocean: 1, shallow_water: 1, river: 1, lake: 1 };
+var WATER_BIOMES = { ocean: 1, deep_ocean: 1, shallow_water: 1, river: 1, lake: 1, stream: 1 };
 
 function getWangSrc(tile) {
   var mask = tile.wangEdgeMask;

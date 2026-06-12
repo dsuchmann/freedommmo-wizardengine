@@ -12,7 +12,7 @@ const terrain = {
     terrainAsset('forest_floor', ['forest', 'dense_forest', 'taiga', 'tropical_forest'], ['base', 'leaf_litter', 'roots', 'moss', 'fungi', 'shadow_mask']),
     terrainAsset('sand_ground', ['beach', 'desert'], ['base', 'grain', 'ripple', 'pebbles', 'shells', 'shadow_mask']),
     terrainAsset('stone_ground', ['hills', 'mountains', 'volcanic', 'tundra', 'arctic'], ['base', 'strata', 'cracks', 'pebbles', 'snow_overlay', 'shadow_mask']),
-    terrainAsset('water_surface', ['deep_ocean', 'ocean', 'shallow_water', 'river', 'lake', 'swamp'], ['base', 'flow', 'sparkle', 'foam', 'depth_shadow', 'moon_reflection'], {
+    terrainAsset('water_surface', ['deep_ocean', 'ocean', 'shallow_water', 'river', 'lake', 'swamp', 'stream'], ['base', 'flow', 'sparkle', 'foam', 'depth_shadow', 'moon_reflection'], {
       animations: {
         calm: stateAnimation(8, 6, true, DIRECTION_OMNI, ['flow', 'sparkle']),
         wind: stateAnimation(12, 10, true, DIRECTIONS_8, ['flow', 'foam', 'sparkle']),

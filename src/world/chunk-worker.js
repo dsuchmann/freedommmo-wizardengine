@@ -152,7 +152,7 @@ function computeShoreDataForChunk(chunk, chunkSize) {
   // Pass 1: mark water tiles as 0
   for (var i = 0; i < size; i++) {
     var b = chunk.tiles[i].biome;
-    if (b.includes('ocean') || b === 'shallow_water' || b === 'river' || b === 'lake') dist[i] = 0;
+    if (b.includes('ocean') || b === 'shallow_water' || b === 'river' || b === 'lake' || b === 'stream') dist[i] = 0;
   }
 
   // Pass 2: forward sweep

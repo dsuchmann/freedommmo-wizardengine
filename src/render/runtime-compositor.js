@@ -7,7 +7,7 @@ export class RuntimeCompositor {
   }
 
   terrainSignature(tile) {
-    const water = ['deep_ocean', 'ocean', 'shallow_water', 'river', 'lake', 'swamp'].includes(tile.biome);
+    const water = ['deep_ocean', 'ocean', 'shallow_water', 'river', 'lake', 'swamp', 'stream'].includes(tile.biome);
     const asset = water ? this.catalog.waterForBiome(tile.biome) : this.catalog.terrainForBiome(tile.biome);
     return {
       assetId: asset?.id ?? 'unknown_ground',

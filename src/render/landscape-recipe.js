@@ -1,6 +1,6 @@
 import { LAYERS } from '../core/constants.js';
 
-const WATER_BIOMES = new Set(['river', 'lake', 'ocean', 'deep_ocean', 'shallow_water']);
+const WATER_BIOMES = new Set(['river', 'lake', 'ocean', 'deep_ocean', 'shallow_water', 'stream']);
 const DRY_BIOMES = new Set(['savanna', 'steppe', 'desert', 'beach']);
 const FOREST_BIOMES = new Set(['forest', 'dense_forest', 'tropical_forest', 'taiga', 'swamp']);
 const COLD_BIOMES = new Set(['tundra', 'arctic']);

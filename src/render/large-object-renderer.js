@@ -8,7 +8,7 @@ import { LG_BIOME_OBJECTS_LIST, LG_BASE_PATH, LG_VARIANT_COUNT } from './wang-im
 import { floorDiv } from '../world/chunk.js';
 
 // Water biomes don't get large objects
-var WATER_BIOMES = { ocean: 1, deep_ocean: 1, shallow_water: 1, river: 1, lake: 1 };
+var WATER_BIOMES = { ocean: 1, deep_ocean: 1, shallow_water: 1, river: 1, lake: 1, stream: 1 };
 
 // Per-object sizing in WORLD TILES (uniform square — sprites are 64x64).
 var OBJECT_SIZE = {
