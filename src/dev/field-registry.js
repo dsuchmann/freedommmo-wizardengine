@@ -8,7 +8,8 @@ import { SS_BIOME_OBJECTS, ssAllowedVariants } from '../world/decoration-claims.
 import { MF_CATALOG } from '../world/mf-catalog.js';
 import { MO_CATALOG } from '../world/mo-catalog.js';
 import { F2_STATE_ORDER, F2_STATE_DEFAULTS, F4_STATE_ORDER, F4_STATE_DEFAULTS,
-  F5_STATE_ORDER, f5StateDefaults } from '../world/field-tuning.js';
+  F5_STATE_ORDER, f5StateDefaults, F6_STATE_ORDER, F6_STATE_DEFAULTS } from '../world/field-tuning.js';
+import { LG_CATALOG } from '../world/lg-catalog.js';
 
 function range(n) { var a = []; for (var i = 0; i < n; i++) a.push(i); return a; }
 function none() { return []; }
@@ -58,6 +59,17 @@ export var FIELD_REGISTRY = [
     },
     stateNames: function () { return F5_STATE_ORDER; },
     stateDefaults: function (biome) { return f5StateDefaults(biome); },
+  },
+  {
+    id: 'f6', label: 'F6 large flora', path: 'micro/large_flora', applyKind: 'live',
+    animCategories: [['wind_sway', 'wind']],
+    objectsFor: function (biome) {
+      return (LG_CATALOG[biome] || []).map(function (o) {
+        return { name: o.name, variants: range(o.variants) };
+      });
+    },
+    stateNames: function () { return F6_STATE_ORDER; },
+    stateDefaults: function () { return F6_STATE_DEFAULTS; },
   },
 ];
 
