@@ -3,17 +3,17 @@
 // 2/0 (no alpha -> full extent). node:zlib only; no deps.
 import zlib from 'node:zlib';
 
-export function alphaBBoxFromBuffer(buf) {
+// Decode a PNG's alpha channel: { w, h, alpha: Uint8Array(w*h) }.
+// Color types 2/0 (no alpha) -> all 255. Same support matrix as alphaBBoxFromBuffer.
+export function decodeAlpha(buf) {
   if (buf.readUInt32BE(0) !== 0x89504e47) throw new Error('not a PNG');
   const w = buf.readUInt32BE(16), h = buf.readUInt32BE(20);
   const bitDepth = buf[24], colorType = buf[25], interlace = buf[28];
   if (bitDepth !== 8) throw new Error(`unsupported bit depth ${bitDepth}`);
   if (interlace !== 0) throw new Error('interlaced PNG unsupported');
-  if (colorType === 2 || colorType === 0) return { x: 0, y: 0, w, h }; // no alpha channel
+  if (colorType === 2 || colorType === 0) return { w, h, alpha: new Uint8Array(w * h).fill(255) };
   if (colorType !== 6 && colorType !== 4) throw new Error(`unsupported color type ${colorType}`);
-  const bpp = colorType === 6 ? 4 : 2; // bytes/pixel; alpha is the last byte
-
-  // concat IDAT chunks
+  const bpp = colorType === 6 ? 4 : 2;
   let off = 8, idat = [];
   while (off < buf.length) {
     const len = buf.readUInt32BE(off), type = buf.toString('latin1', off + 4, off + 8);
@@ -22,11 +22,9 @@ export function alphaBBoxFromBuffer(buf) {
     off += 12 + len;
   }
   const raw = zlib.inflateSync(Buffer.concat(idat));
-
-  // unfilter scanlines (filters 0-4) and scan alpha in one pass
   const stride = w * bpp;
+  const alpha = new Uint8Array(w * h);
   let prev = Buffer.alloc(stride);
-  let minX = w, minY = h, maxX = -1, maxY = -1;
   for (let y = 0; y < h; y++) {
     const fOff = y * (stride + 1), filter = raw[fOff];
     const line = raw.subarray(fOff + 1, fOff + 1 + stride);
@@ -42,17 +40,33 @@ export function alphaBBoxFromBuffer(buf) {
       }
       line[i] = v;
     }
-    for (let x = 0; x < w; x++) {
-      if (line[x * bpp + bpp - 1] > 0) {
-        if (x < minX) minX = x;
-        if (x > maxX) maxX = x;
-        if (y < minY) minY = y;
-        if (y > maxY) maxY = y;
-      }
-    }
+    for (let x = 0; x < w; x++) alpha[y * w + x] = line[x * bpp + bpp - 1];
     prev = line;
   }
-  if (maxX < 0) return null; // fully transparent
+  return { w, h, alpha };
+}
+
+export function alphaBBoxFromBuffer(buf) {
+  const w = buf.readUInt32BE(16), h = buf.readUInt32BE(20);
+  const colorType = buf[25];
+  if (buf.readUInt32BE(0) !== 0x89504e47) throw new Error('not a PNG');
+  if (colorType === 2 || colorType === 0) {
+    // validate header constraints the same way decodeAlpha does
+    if (buf[24] !== 8) throw new Error(`unsupported bit depth ${buf[24]}`);
+    if (buf[28] !== 0) throw new Error('interlaced PNG unsupported');
+    return { x: 0, y: 0, w, h };
+  }
+  const d = decodeAlpha(buf);
+  let minX = d.w, minY = d.h, maxX = -1, maxY = -1;
+  for (let y = 0; y < d.h; y++) for (let x = 0; x < d.w; x++) {
+    if (d.alpha[y * d.w + x] > 0) {
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  }
+  if (maxX < 0) return null;
   return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
 }
 
