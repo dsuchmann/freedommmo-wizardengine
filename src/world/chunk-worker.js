@@ -4,7 +4,7 @@ import { setFieldTuning } from './field-tuning.js';
 import { clearClaimCaches } from './decoration-claims.js';
 import { ChunkCompiler } from './chunk-compiler.js';
 import { getAllWangImageURLs, getWangImageURLsForBiomes, getSoilImageURLs, getGroundCoverImageURLs, getSmallFloraImageURLs, getSmallScatterImageURLs } from '../render/wang-image-list.js';
-import { renderChunkToBitmap } from '../render/worker-chunk-renderer.js';
+import { renderChunkToBitmap, setF3RemovedKeys } from '../render/worker-chunk-renderer.js';
 import { denoiseBitmap } from '../render/sprite-denoise.js';
 
 var compiler = new ChunkCompiler();
@@ -212,6 +212,11 @@ self.onmessage = function(event) {
     setFieldTuning(data.tuning);
     clearClaimCaches(); // F3 placements/masks derive from the tree
     if (data.gen != null) tuneGen = data.gen;
+    return;
+  }
+
+  if (data.type === 'setF3RemovedKeys') {
+    setF3RemovedKeys(data.keys ?? []);
     return;
   }
 

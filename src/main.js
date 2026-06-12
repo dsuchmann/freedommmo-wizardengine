@@ -13,6 +13,9 @@ import { PerformanceMonitor } from './core/performance.js';
 import { defaultAssetCatalog } from './assets/default-catalog.js';
 import { RuntimeCompositor } from './render/runtime-compositor.js';
 import { movementCost, resolveMovement } from './physics/movement.js';
+import { SimClient } from './sim/sim-client.js';
+import { SimWorldState } from './sim/sim-world-state.js';
+import { setField2SimWorldState } from './render/field2-animator.js';
 
 const canvas = document.getElementById('game');
 const stats = document.getElementById('stats');
@@ -66,12 +69,84 @@ const camera = new Camera();
 window._camera = camera; // test/dev hook: set zoom via manualZoom
 const perf = new PerformanceMonitor();
 
+// ---- Sim process connection (honest-absence: no-sim path changes ZERO behaviour) ----
+const simWorldState = new SimWorldState();
+let simClient = null;
+let simConnected = false;
+// Track last F3 removed set pushed to workers (avoid redundant broadcasts)
+let _lastF3Keys = [];
+
+function _applySimState(client) {
+  simWorldState.update(client);
+  setField2SimWorldState(simWorldState);
+  // Collect F3 removed placement keys and push to workers when the set changes
+  const newF3Keys = [];
+  for (const [key, ov] of simWorldState._map) {
+    if (ov.removed && key.startsWith('f3:')) newF3Keys.push(key);
+  }
+  const newF3Str = newF3Keys.sort().join(',');
+  if (newF3Str !== _lastF3Keys) {
+    _lastF3Keys = newF3Str;
+    provider.setF3RemovedKeys(newF3Keys);
+  }
+}
+
+(function _connectSim() {
+  // Viewport: 40-tile radius around player in each axis
+  const VP_HALF = 40;
+  const viewport = { x: Math.floor(player.x) - VP_HALF, y: Math.floor(player.y) - VP_HALF, w: VP_HALF * 2, h: VP_HALF * 2 };
+  try {
+    simClient = new SimClient({ url: 'ws://127.0.0.1:8787', viewport, onState: _applySimState });
+    simClient.ready.then(() => {
+      simConnected = true;
+      console.log('[sim] connected — sim-driven world active');
+    }).catch(() => {
+      // Expected when no sim process is running — silent graceful degradation
+      simConnected = false;
+      simClient = null;
+      console.warn('[sim] no sim process — baseline-only world');
+    });
+  } catch (e) {
+    simConnected = false;
+    simClient = null;
+    console.warn('[sim] no sim process — baseline-only world');
+  }
+})();
+
 let last = performance.now();
 let frame = 0;
 
 function update(dt) {
   if (input.wasPressed('r')) {
     renderer.chunkRenderCache.clear();
+  }
+  // Sim intent routing: when sim is connected and player presses interact ('f'),
+  // find nearest F4 entity override and dispatch intent. Existing local reaction
+  // is NOT suppressed — sim connected means both paths fire in parallel.
+  if (simConnected && simClient && input.wasPressed('f')) {
+    // Find nearest F4 placement with a sim entity near the player
+    const px = Math.floor(player.x), py = Math.floor(player.y);
+    let bestOv = null, bestDist = 3.0;
+    for (let dy = -2; dy <= 2; dy++) {
+      for (let dx = -2; dx <= 2; dx++) {
+        const wx = px + dx, wy = py + dy;
+        const d = Math.hypot(dx, dy);
+        if (d >= bestDist) continue;
+        // Check all f4 placement indices for this tile (max a few per tile)
+        for (let fi = 0; fi < 4; fi++) {
+          const key = 'f4:' + wx + ',' + wy + ':' + fi;
+          const ov = simWorldState.overrideFor(key);
+          if (ov && !ov.removed && ov.entityId != null) {
+            bestOv = ov;
+            bestDist = d;
+            break;
+          }
+        }
+      }
+    }
+    if (bestOv) {
+      simClient.intend({ verb: 'harvest', target: bestOv.entityId });
+    }
   }
   if (input.wasPressed('m')) overmap.toggle();
   if (input.wasPressed('f')) overmap.toggleExpand();

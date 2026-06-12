@@ -605,6 +605,8 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
     var fp = f4pls[fi];
     f4Blades.push({
       bi: 90 + fi, // distinct trigger-key space from F2 blades
+      // Cached for sim override URL construction at draw time
+      _f4Name: fp.name, _f4Biome: fp.biome, _f4Variant: fp.variant,
       stateUrl: fp.state ? f4SpriteUrl(fp) : null,
       animUrlBase: (!fp.state && fp.hasAnim
         && tuneAnimEnabled('f4', fp.biome, fp.name, 'wind_sway')) ? f4AnimUrlBase(fp) : null,
@@ -951,8 +953,23 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           else animBlend = 1;
         }
 
+        // Sim override (F4 only — bi >= 90, fi = bi - 90): takes precedence over static lifecycle roll.
+        // When sim is absent (_simWorldState === null) this block is a no-op, preserving baseline.
+        var simStateUrl = null;
+        if (bl.bi >= 90 && _simWorldState) {
+          var _simKey = 'f4:' + wx + ',' + wy + ':' + (bl.bi - 90);
+          var _ov = _simWorldState.overrideFor(_simKey);
+          if (_ov) {
+            if (_ov.removed) continue;
+            if (_ov.visual && _ov.visual !== 'normal') {
+              // Build state URL using same path as f4SpriteUrl with state override
+              simStateUrl = f4SpriteUrl({ name: bl._f4Name, biome: bl._f4Biome, variant: bl._f4Variant, state: _ov.visual });
+            }
+          }
+        }
+
         // Sprite: state override > per-variant animation > static fallback
-        var img = bl.stateUrl ? loadFrame(bl.stateUrl) : null;
+        var img = (simStateUrl || bl.stateUrl) ? loadFrame(simStateUrl || bl.stateUrl) : null;
         if (!img && bl.animUrlBase) {
           img = loadFrame(bl.animUrlBase + 'frame_' + String(frameIdx).padStart(3, '0') + '.png');
         }
@@ -1173,6 +1190,11 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
 
   ctx.restore();
 }
+
+// Sim world state — overrides static lifecycle roll for F4 placements when sim is connected.
+// null when sim is absent (honest-absence: no behaviour change).
+var _simWorldState = null;
+export function setField2SimWorldState(s) { _simWorldState = s; }
 
 // Allow canvas-renderer to register the player draw function for depth sorting
 var _playerDrawFn = null;

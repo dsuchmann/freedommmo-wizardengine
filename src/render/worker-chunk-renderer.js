@@ -1,6 +1,11 @@
 // Worker-compatible chunk renderer. Takes chunk data + neighbor tiles,
 // paints to OffscreenCanvas, returns ImageBitmap.
 
+// F3 suppression: placement keys that have been taken (sim truth). Set from chunk-worker via
+// setF3RemovedKeys(). When sim is absent this stays empty and behaviour is unchanged.
+var _f3RemovedKeys = new Set();
+export function setF3RemovedKeys(keys) { _f3RemovedKeys = keys instanceof Set ? keys : new Set(keys); }
+
 import { WORLD } from '../core/constants.js';
 import { paintTerrainTile, paintCliffOverlay, getWangSrc } from './worker-tile-painter.js';
 import { cliffLevel } from '../world/terrain-shaper.js';
@@ -902,6 +907,8 @@ function applySmallScatterToChunk(ctx, chunk, tileSize, chunkSize, imageCache, m
       var wx2 = chunk.cx * chunkSize + tx2, wy2 = chunk.cy * chunkSize + ty2;
       var pls = f3Placements(wx2, wy2, tileInfo);
       for (var pi = 0; pi < pls.length; pi++) {
+        // Skip placements that the sim has marked as taken (honest removal, no pop)
+        if (_f3RemovedKeys.size > 0 && _f3RemovedKeys.has('f3:' + wx2 + ',' + wy2 + ':' + pi)) continue;
         var p = pls[pi];
         all.push({
           p: p,

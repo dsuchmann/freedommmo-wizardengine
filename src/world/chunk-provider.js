@@ -80,6 +80,33 @@ export class ChunkProvider {
     }
   }
 
+  // Push updated F3 removed-keys set to every worker and repaint affected chunk bitmaps.
+  // Called from main.js whenever simWorldState changes and removal set differs.
+  setF3RemovedKeys(keysArray) {
+    for (const worker of this.workers) {
+      worker.postMessage({ type: 'setF3RemovedKeys', keys: keysArray });
+    }
+    // Compute which chunk bitmaps are stale (contain at least one removed placement tile)
+    const dirtyChunks = new Set();
+    for (const key of keysArray) {
+      // key format: 'f3:wx,wy:i' — extract wx,wy
+      const m = key.match(/^f3:(-?\d+),(-?\d+):/);
+      if (!m) continue;
+      const wx = parseInt(m[1], 10);
+      const wy = parseInt(m[2], 10);
+      // chunkSize = 64 (matches WORLD.chunkSize constant)
+      const cx = Math.floor(wx / 64);
+      const cy = Math.floor(wy / 64);
+      dirtyChunks.add(cx + ',' + cy);
+    }
+    // Drop stale bitmaps so pumpQueue repaints them
+    for (const bk of dirtyChunks) {
+      const bmp = this.bitmaps.get(bk);
+      if (bmp) { bmp.close(); this.bitmaps.delete(bk); }
+    }
+    if (dirtyChunks.size > 0) this.schedulePump();
+  }
+
   // Called by ChunkStore.streamAround every frame: lets the queue re-sort by
   // CURRENT distance (priorities assigned at request time go stale as the
   // player walks) and tightens the adoption budget while moving.
