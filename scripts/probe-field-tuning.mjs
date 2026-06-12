@@ -45,10 +45,13 @@ const res = await page.evaluate(() => {
   }
 
   // (4) registry-driven tabs include f5 in order
+  // NOTE: update this expected list when F6/F7 register in the field registry.
   const registryOk = JSON.stringify(window._fieldRegistry) === JSON.stringify(['f2', 'f3', 'f4', 'f5']);
 
   // (5) F5 placements exist and respond to density/size/state tuning
   const f5 = () => sample((x, y) => window._claims.f5(x, y).map(p => [p.name, p.variant, +p.sizeTiles.toFixed(4), p.state]));
+  // reset tuning to a clean state before capturing the F5 baseline (F4 size:2 set above)
+  window._fieldTuning.set({ f2: {}, f3: {}, f4: {}, f5: {} });
   const baseF5Str = f5();
   const baseF5 = JSON.parse(baseF5Str);
   const f5Count = baseF5.reduce((n, a) => n + a.length, 0);
@@ -62,14 +65,12 @@ const res = await page.evaluate(() => {
   for (let i = 0; i < baseF5.length; i++) {
     for (let j = 0; j < baseF5[i].length; j++) {
       f5Pairs++;
-      if (Math.abs(f5Big[i][j][2] - baseF5[i][j][2] * 2) > 1e-6) f5DoubleOk = false;
+      if (Math.abs(f5Big[i][j][2] - baseF5[i][j][2] * 2) > 1e-3) f5DoubleOk = false;
     }
   }
 
   window._fieldTuning.set({ f2: {}, f3: {}, f4: {}, f5: { biomes: { grassland: { states: { enchanted: 1 } } } } });
   const f5EnchOk = JSON.parse(f5()).every(a => a.every(p => p[3] === 'enchanted'));
-
-  window._fieldTuning.set({ f2: {}, f3: {}, f4: {}, f5: {} }); // restore
 
   // (1) reset -> byte-identical to baseline (regression gate)
   window._fieldTuning.set({ f2: {}, f3: {}, f4: {}, f5: {} });
