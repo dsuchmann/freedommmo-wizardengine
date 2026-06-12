@@ -15,6 +15,9 @@ var backgroundLoadingDone = false;
 var chunksNeedingRepaint = [];
 var neighborCache = new Map();
 var MAX_NEIGHBOR_CACHE = 50;
+// Field-tuning generation — stamped onto every painted bitmap so the main
+// thread can discard paints that were in flight when the tuning tree changed.
+var tuneGen = 0;
 
 // URLs matching these patterns get denoised at load time
 function shouldDenoise(url) {
@@ -133,7 +136,7 @@ async function runRepaintPass() {
         chunksNeedingRepaint.push({ key: rchunk.key, cx: rchunk.cx, cy: rchunk.cy, attempts: (rchunk.attempts || 0) + 1 });
       }
     }
-    self.postMessage({ type: 'chunkRepainted', key: rchunk.key, cx: rchunk.cx, cy: rchunk.cy, bitmap: result.bitmap, wangDebug: result.debug }, [result.bitmap]);
+    self.postMessage({ type: 'chunkRepainted', key: rchunk.key, cx: rchunk.cx, cy: rchunk.cy, gen: tuneGen, bitmap: result.bitmap, wangDebug: result.debug }, [result.bitmap]);
   }
   scheduleRepaintPass();
 }
@@ -208,6 +211,7 @@ self.onmessage = function(event) {
   if (data.type === 'setFieldTuning') {
     setFieldTuning(data.tuning);
     clearClaimCaches(); // F3 placements/masks derive from the tree
+    if (data.gen != null) tuneGen = data.gen;
     return;
   }
 
@@ -272,7 +276,7 @@ self.onmessage = function(event) {
     }
 
     // Transfer bitmap to main thread (zero-copy)
-    self.postMessage({ type: 'chunkPainted', key: key, cx: cx, cy: cy, bitmap: result.bitmap, wangDebug: result.debug }, [result.bitmap]);
+    self.postMessage({ type: 'chunkPainted', key: key, cx: cx, cy: cy, gen: tuneGen, bitmap: result.bitmap, wangDebug: result.debug }, [result.bitmap]);
   } else if (data.type === 'repaintChunk') {
     if (!imagesReady) return;
     var key = data.key;
@@ -289,10 +293,25 @@ self.onmessage = function(event) {
     var chunk = { cx: cx, cy: cy, tiles: tiles };
     var sun = { height: 0.5, ambient: 0.85 };
     var result = renderChunkToBitmap(chunk, neighborCache, sun, imageCache);
+    if (result.scatterMissingUrls) {
+      // F3 sprites this chunk needs aren't cached yet (background load still
+      // running in this worker). Fetch just those, then repaint once — tuner
+      // repaints must never ship F3-less bitmaps that look "final".
+      result.bitmap.close();
+      loadImageBatch(result.scatterMissingUrls, 20).then(function() {
+        var r2 = renderChunkToBitmap(chunk, neighborCache, sun, imageCache);
+        if (r2.needsRepaint) {
+          chunksNeedingRepaint.push({ key: key, cx: cx, cy: cy, attempts: 0 });
+          scheduleRepaintPass();
+        }
+        self.postMessage({ type: 'chunkRepainted', key: key, cx: cx, cy: cy, gen: tuneGen, bitmap: r2.bitmap, wangDebug: r2.debug }, [r2.bitmap]);
+      });
+      return;
+    }
     if (result.needsRepaint) {
       chunksNeedingRepaint.push({ key: key, cx: cx, cy: cy, attempts: 0 });
       scheduleRepaintPass();
     }
-    self.postMessage({ type: 'chunkRepainted', key: key, cx: cx, cy: cy, bitmap: result.bitmap, wangDebug: result.debug }, [result.bitmap]);
+    self.postMessage({ type: 'chunkRepainted', key: key, cx: cx, cy: cy, gen: tuneGen, bitmap: result.bitmap, wangDebug: result.debug }, [result.bitmap]);
   }
 };

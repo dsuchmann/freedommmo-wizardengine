@@ -881,7 +881,7 @@ function applySmallFloraToChunk(ctx, chunk, tileSize, chunkSize, imageCache) {
 // Objects are static — no animation. Uses occupancy grid to avoid overlaps.
 // SS_BIOME_OBJECTS, SS_BASE_PATH, SS_VARIANT_COUNT imported from decoration-claims.js above.
 
-function applySmallScatterToChunk(ctx, chunk, tileSize, chunkSize, imageCache) {
+function applySmallScatterToChunk(ctx, chunk, tileSize, chunkSize, imageCache, missingOut) {
   // Quick check: does any tile in this chunk have small scatter defined?
   var hasSS = false;
   for (var i = 0; i < chunk.tiles.length; i++) {
@@ -918,12 +918,14 @@ function applySmallScatterToChunk(ctx, chunk, tileSize, chunkSize, imageCache) {
   var missed = 0;
   for (var di = 0; di < all.length; di++) {
     var e = all[di], pl = e.p;
-    var bmp = imageCache.get(f3SpriteUrl(pl));
+    var url = f3SpriteUrl(pl);
+    var bmp = imageCache.get(url);
     if (!bmp && pl.state) { // state PNG missing -> fall back to base variant
       var base = Object.assign({}, pl); base.state = null;
-      bmp = imageCache.get(f3SpriteUrl(base));
+      url = f3SpriteUrl(base);
+      bmp = imageCache.get(url);
     }
-    if (!bmp) { missed++; continue; }
+    if (!bmp) { missed++; if (missingOut) missingOut.add(url); continue; }
     var half = e.drawSize * 0.5;
     ctx.save();
     ctx.translate(e.cx, e.cy);
@@ -1181,7 +1183,8 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
   applyGroundCoverToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache, occupancy, cellsPerTile, cellPx, gridW);
   // Field 2 rendered entirely on main thread via GPU instancing (field2-gpu.js)
   // applySmallFloraToChunk(ctx, chunk, tileSize, chunkSize, imageCache);
-  var scatterMissed = applySmallScatterToChunk(ctx, chunk, tileSize, chunkSize, imageCache) || 0;
+  var scatterMissing = new Set();
+  var scatterMissed = applySmallScatterToChunk(ctx, chunk, tileSize, chunkSize, imageCache, scatterMissing) || 0;
 
   // Check if any wang tiles failed to load
   var wangMissing = 0;
@@ -1194,6 +1197,7 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
     bitmap: bitmap,
     hasSoil: hasSoil,
     needsRepaint: soilResult.missedSoil || wangMissing > 0 || scatterMissed > 0,
+    scatterMissingUrls: scatterMissing.size > 0 ? [...scatterMissing] : null,
     debug: {
       masks: debugMasks, successes: debugSuccesses, srcs: debugSrcs, biomes: debugBiomes,
       neighbors: debugNeighbors, transitionDirs: debugTransitionDirs, transitionSides: debugTransitionSides,

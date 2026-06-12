@@ -106,6 +106,15 @@ function apply(field) {
   if (prov && prov.applyFieldTuning) prov.applyFieldTuning(TREE, field === 'f3');
 }
 
+// Sliders fire oninput continuously during a drag; each apply() drops every
+// chunk bitmap and triggers a full repaint (F3 is baked into bitmaps), which
+// floods the workers. Debounce so only the resting value repaints.
+var applyTimer = 0;
+function applySoon(field) {
+  clearTimeout(applyTimer);
+  applyTimer = setTimeout(function () { apply(field); }, 200);
+}
+
 function currentBiome() {
   var p = window._player, cs = window._dbgChunkStore;
   if (!p || !cs) return null;
@@ -153,7 +162,7 @@ function tuneRow(label, color, key, getN, prop, min, max, field) {
     if (prop === 'size') { delete t.sizeMin; delete t.sizeMax; t.size = v; }
     else t.density = v;
     val.textContent = v.toFixed(2);
-    apply(field);
+    applySoon(field);
   }));
   row.appendChild(val);
   return row;

@@ -25,6 +25,11 @@ export class ChunkProvider {
     this.pumpScheduled = false;
     this.wangDebug = new Map();
     this.workersReady = 0;
+    // Field-tuning generation. Bumped on every F3-affecting tuning change;
+    // workers stamp painted bitmaps with the gen they painted under, and
+    // stale-gen bitmaps are discarded (fixes in-flight paints from the old
+    // tree landing AFTER the purge and blocking the real repaint).
+    this.tuneGen = 0;
 
     if (this.workerSupported) {
       for (let i = 0; i < workerCount; i++) this.createWorker();
@@ -63,8 +68,9 @@ export class ChunkProvider {
   // (F3 edits — F3 is baked into chunk bitmaps), drop all bitmaps; pumpQueue
   // already repaints any ready chunk that lacks a bitmap.
   applyFieldTuning(tuning, repaintChunks) {
+    if (repaintChunks) this.tuneGen++;
     for (const worker of this.workers) {
-      worker.postMessage({ type: 'setFieldTuning', tuning });
+      worker.postMessage({ type: 'setFieldTuning', tuning, gen: this.tuneGen });
     }
     if (repaintChunks) {
       for (const bmp of this.bitmaps.values()) bmp.close();
@@ -111,10 +117,16 @@ export class ChunkProvider {
         } else if (msg.type === 'chunkPainted') {
           // Bitmap arrived — store it. Also finalize chunk data assembly.
           const bitmapKey = msg.cx + ',' + msg.cy;
-          const old = this.bitmaps.get(bitmapKey);
-          if (old) old.close();
-          this.bitmaps.set(bitmapKey, msg.bitmap);
-          if (msg.wangDebug) this.wangDebug.set(bitmapKey, msg.wangDebug);
+          if (msg.gen != null && msg.gen !== this.tuneGen) {
+            // Painted under an old tuning tree — drop the bitmap (chunk stays
+            // bitmap-less so pumpQueue repaints it under the current tree)
+            msg.bitmap.close();
+          } else {
+            const old = this.bitmaps.get(bitmapKey);
+            if (old) old.close();
+            this.bitmaps.set(bitmapKey, msg.bitmap);
+            if (msg.wangDebug) this.wangDebug.set(bitmapKey, msg.wangDebug);
+          }
           // chunkPainted replaces chunkDone — finalize assembly
           const partial = this.assembling.get(key);
           this.assembling.delete(key);
@@ -131,11 +143,17 @@ export class ChunkProvider {
           }
         } else if (msg.type === 'chunkRepainted') {
           const bitmapKey = msg.cx + ',' + msg.cy;
-          const old = this.bitmaps.get(bitmapKey);
-          if (old) old.close();
-          this.bitmaps.set(bitmapKey, msg.bitmap);
-          if (msg.wangDebug) this.wangDebug.set(bitmapKey, msg.wangDebug);
           if (this._repaintPending) this._repaintPending.delete(bitmapKey);
+          if (msg.gen != null && msg.gen !== this.tuneGen) {
+            // Stale-tree repaint — discard; pumpQueue re-requests it fresh
+            msg.bitmap.close();
+            this.schedulePump();
+          } else {
+            const old = this.bitmaps.get(bitmapKey);
+            if (old) old.close();
+            this.bitmaps.set(bitmapKey, msg.bitmap);
+            if (msg.wangDebug) this.wangDebug.set(bitmapKey, msg.wangDebug);
+          }
         } else if (msg.type === 'chunkDone') {
           // Legacy fallback — shouldn't fire with new worker but handle gracefully
           const partial = this.assembling.get(key);
