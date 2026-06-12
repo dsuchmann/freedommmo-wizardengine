@@ -806,15 +806,23 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
     });
   }
 
-  // Rare static decor objects (e.g., tundra fish piles, snow sculptures)
+  // Rare static decor objects (e.g., tundra fish piles, snow sculptures).
+  // Same claim-cull as regular blades: decor inside an F3/F4/F5 footprint
+  // never existed (root = tile center + offset, drawn 1 tile @ sortY +0.5).
   var extra = null;
   var extraObjs = SF_EXTRA_OBJECTS[biome];
   if (extraObjs && rand2(wx, wy, 7300) < 0.012) {
-    extra = {
-      url: extraObjs[pickIndex(rand2(wx, wy, 7301), extraObjs.length)],
-      offUX: (rand2(wx, wy, 7302) - 0.5) * 0.6,
-      offUY: (rand2(wx, wy, 7303) - 0.5) * 0.6
-    };
+    var exOffUX = (rand2(wx, wy, 7302) - 0.5) * 0.6;
+    var exOffUY = (rand2(wx, wy, 7303) - 0.5) * 0.6;
+    var exRootPx = (wx + 0.5 + exOffUX) * 32;
+    var exRootPy = (wy + 0.5 + exOffUY) * 32 + 0.35 * 32;
+    if (!isClaimedAt(exRootPx, exRootPy, _claimTileInfo(chunkStore))) {
+      extra = {
+        url: extraObjs[pickIndex(rand2(wx, wy, 7301), extraObjs.length)],
+        offUX: exOffUX,
+        offUY: exOffUY
+      };
+    }
   }
 
   for (var fbi = 0; fbi < f4Blades.length; fbi++) blades.push(f4Blades[fbi]);
