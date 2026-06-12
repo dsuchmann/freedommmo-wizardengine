@@ -7,6 +7,14 @@ var TRANSITIONS_BASE = '/assets/pixelab/landscape_v2/transitions/';
 var WANG_VARIANTS = ['wang', 'wang_25', 'wang_50', 'wang_100'];
 var WANG_VARIANT_TILE_COUNTS = { wang: 16, wang_25: 16, wang_50: 16, wang_100: 25 };
 
+// Biomes with no dedicated Wang tileset that reuse another biome's art.
+// 'stream' is the same river_water substance as 'river' — alias, not a fake.
+// Applied ONLY when constructing asset dir names; biome ids stay real elsewhere.
+var WANG_ASSET_ALIAS = { stream: 'river' };
+export function wangAssetName(biome) {
+  return WANG_ASSET_ALIAS[biome] || biome;
+}
+
 // PixelLab wang index: 0 = all lower biome, 15 = all upper biome.
 // mask: 0 means this biome IS the lower terrain in the pair dir.
 // mask: 15 means this biome IS the upper terrain in the pair dir.
@@ -32,6 +40,7 @@ var BIOME_INTERIOR = {
   deep_ocean:    { dir: 'deep_ocean_to_ocean',     mask: 0 },
   shallow_water: { dir: 'ocean_to_shallow_water',  mask: 15 },
   lake:          { dir: 'lake_to_river',           mask: 0 },
+  stream:        { dir: 'beach_to_river',          mask: 15 },
 };
 
 var BIOME_CLIFF = {
@@ -42,6 +51,7 @@ var BIOME_CLIFF = {
   hills: 'hills_cliff', mountains: 'stone_cliff', volcanic: 'volcanic_cliff',
   mystic: 'mystic_cliff', ocean: 'cliff_overlay', deep_ocean: 'cliff_overlay',
   shallow_water: 'cliff_overlay', river: 'cliff_overlay', lake: 'cliff_overlay',
+  stream: 'cliff_overlay',
 };
 
 // All 21 biomes — used to generate all possible pair URLs dynamically
@@ -57,7 +67,9 @@ export { WANG_SUFFIX, TRANSITIONS_BASE, BIOME_INTERIOR, BIOME_CLIFF, ALL_BIOMES,
 // biomes: array of biome IDs present nearby.
 export function getWangImageURLsForBiomes(biomes) {
   var urls = [];
-  var biomeSet = new Set(biomes);
+  // Map through asset aliases (e.g. stream → river) so aliased biomes
+  // preload the tilesets they actually draw from, then dedupe.
+  biomes = Array.from(new Set(biomes.map(wangAssetName)));
   var seenDirs = new Set();
 
   // Interior tiles for each biome
@@ -154,6 +166,7 @@ var SOIL_MATERIALS = {
   deep_ocean: 'deep_water',
   shallow_water: 'shallow_water',
   river: 'flowing_water',
+  stream: 'flowing_water',
   lake: 'still_water'
 };
 var SOIL_BASE_PATH = '/assets/pixelab/landscape_v2/micro/soil/';

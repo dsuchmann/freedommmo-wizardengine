@@ -4,7 +4,7 @@
 import { rand2, smoothNoise } from '../core/random.js';
 import { paletteFor } from './palette.js';
 import { cliffLevel } from '../world/terrain-shaper.js';
-import { WANG_SUFFIX, TRANSITIONS_BASE, BIOME_INTERIOR, BIOME_CLIFF } from './wang-image-list.js';
+import { WANG_SUFFIX, TRANSITIONS_BASE, BIOME_INTERIOR, BIOME_CLIFF, wangAssetName } from './wang-image-list.js';
 
 // Cliff overlay wang index mapping — matches PixelLab's cliff tile ordering.
 // Derived from visual inspection of all 16 grass_cliff tiles.
@@ -23,12 +23,15 @@ function getWangSrc(tile, variant) {
     // For flat wang, use alphabetical dir (only one direction on disk for s0.0)
     // and adjust mask if from biome is alphabetically second
     if (variant === 'wang') {
-      var sorted = [pair.from, pair.to].sort();
+      // Sort the ASSET names (stream aliases to river) — the alphabetical
+      // dir on disk is built from asset names, not biome ids.
+      var fromAsset = wangAssetName(pair.from);
+      var sorted = [fromAsset, wangAssetName(pair.to)].sort();
       dir = sorted[0] + '_to_' + sorted[1];
       // wangEdgeMask was computed with 1=upper-elevation biome.
       // If from(lower-elev) is alphabetically second, the mask is inverted
       // relative to the alphabetical dir where 1=upper=second biome.
-      if (pair.from !== sorted[0]) {
+      if (fromAsset !== sorted[0]) {
         mask = 15 - mask;
       }
     }
@@ -38,10 +41,10 @@ function getWangSrc(tile, variant) {
   }
   if (tile.nearestTransitionPair) {
     var np = tile.nearestTransitionPair;
-    var npDir = [np.from, np.to].sort();
+    var npDir = [wangAssetName(np.from), wangAssetName(np.to)].sort();
     var nearDir = npDir[0] + '_to_' + npDir[1];
     // Use tile's biome position in the alphabetical pair
-    var intMask2 = tile.biome === npDir[0] ? 0 : 15;
+    var intMask2 = wangAssetName(tile.biome) === npDir[0] ? 0 : 15;
     return TRANSITIONS_BASE + nearDir + '/wang/' + nearDir + '__wang_' + intMask2 + WANG_SUFFIX;
   }
   var interior = BIOME_INTERIOR[tile.biome];

@@ -578,7 +578,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 
 - **Erosion, seasons, flow volume physics**: width is a declared downstream-progress signal.
 - **Lakes from endorheic dead-ends**: a boxed-in trace just stops — declared (future hydrology deepening).
-- **Stream-specific art**: reuses river_water material; distinct color only. Wang stream tileset = asset backlog X1.
+- **Stream-specific art**: reuses river_water material. Post-merge follow-up: 'stream' aliased to river's Wang tilesets (WANG_ASSET_ALIAS in wang-image-list.js, applied at every dir-construction site in worker-chunk-renderer/worker-tile-painter/tile-painter) — proper shorelines with zero new assets, honest because it's the same substance. Dedicated stream art remains asset backlog X1.
 - **Confluence merging into wider unified channels**: overlapping traces resolve by widest-claim-wins on shared tiles; true tributary accumulation = backlog.
 - **Navigation/ports** (world-compiler L11): still absent.
 - **Save/load**: crossing nodes join the roads/paths/settlements rehydration backlog.

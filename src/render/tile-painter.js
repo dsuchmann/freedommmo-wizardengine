@@ -6,6 +6,13 @@ var WANG_SUFFIX = '__v000.png';
 var TRANSITIONS_BASE = 'assets/pixelab/landscape_v2/transitions/';
 var wangImgCache = {};
 
+// Biomes with no dedicated Wang tileset that reuse another biome's art.
+// Mirrors WANG_ASSET_ALIAS in wang-image-list.js (this file is self-contained).
+var WANG_ASSET_ALIAS = { stream: 'river' };
+function wangAssetName(biome) {
+  return WANG_ASSET_ALIAS[biome] || biome;
+}
+
 // Wang tile lookup: corner mask → tile index (0-15)
 // Entries at indices 5 and 10 swapped for vertical cliff alignment.
 var CLIFF_CORNER_TO_WANG = [6,13,0,3,8,1,14,5,15,4,11,2,9,10,7,12];
@@ -33,6 +40,7 @@ var BIOME_CLIFF = {
   shallow_water: 'cliff_overlay',
   river: 'cliff_overlay',
   lake: 'cliff_overlay',
+  stream: 'cliff_overlay',
 };
 
 export function preloadWangImage(src) {
@@ -67,6 +75,7 @@ var BIOME_INTERIOR = {
   deep_ocean:    { dir: 'deep_ocean_to_ocean',     mask: 0 },
   shallow_water: { dir: 'ocean_to_shallow_water',  mask: 15 },
   lake:          { dir: 'lake_to_river',           mask: 0 },
+  stream:        { dir: 'beach_to_river',          mask: 15 },
 };
 
 // Preload interior tiles for all biomes
@@ -124,12 +133,14 @@ function getWangSrc(tile) {
   if (mask === undefined) mask = 0;
   if (tile.transitionPair) {
     var pair = tile.transitionPair;
-    // For flat wang, use alphabetical dir and adjust mask if needed
-    var sorted = [pair.from, pair.to].sort();
+    // For flat wang, use alphabetical dir (of ASSET names — stream aliases
+    // to river) and adjust mask if needed
+    var fromAsset = wangAssetName(pair.from);
+    var sorted = [fromAsset, wangAssetName(pair.to)].sort();
     var dir = sorted[0] + '_to_' + sorted[1];
     // wangEdgeMask: 1=upper-elevation. If from is alphabetically second,
     // the mask is inverted relative to the alphabetical dir.
-    if (pair.from !== sorted[0]) {
+    if (fromAsset !== sorted[0]) {
       mask = 15 - mask;
     }
     // No water/cliff suppression — let wang transition tiles render naturally.
@@ -137,9 +148,9 @@ function getWangSrc(tile) {
   }
   // Interior tile — use same tileset as nearest transition for consistency
   if (tile.nearestTransitionPair) {
-    var npDir = [tile.nearestTransitionPair.from, tile.nearestTransitionPair.to].sort();
+    var npDir = [wangAssetName(tile.nearestTransitionPair.from), wangAssetName(tile.nearestTransitionPair.to)].sort();
     var nearDir = npDir[0] + '_to_' + npDir[1];
-    var intMask = tile.biome === npDir[0] ? 0 : 15;
+    var intMask = wangAssetName(tile.biome) === npDir[0] ? 0 : 15;
     return TRANSITIONS_BASE + nearDir + '/wang/' + nearDir + '__wang_' + intMask + WANG_SUFFIX;
   }
   // Deep interior with no nearby transition

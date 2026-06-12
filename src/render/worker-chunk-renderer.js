@@ -9,7 +9,7 @@ export function setF3RemovedKeys(keys) { _f3RemovedKeys = keys instanceof Set ? 
 import { WORLD } from '../core/constants.js';
 import { paintTerrainTile, paintCliffOverlay, getWangSrc } from './worker-tile-painter.js';
 import { cliffLevel } from '../world/terrain-shaper.js';
-import { soilMaterialForBiome, sfVariantsFor } from './wang-image-list.js';
+import { soilMaterialForBiome, sfVariantsFor, wangAssetName } from './wang-image-list.js';
 import { rand2 } from '../core/random.js';
 import { SS_BIOME_OBJECTS, f3Placements, f3SpriteUrl } from '../world/decoration-claims.js';
 
@@ -23,6 +23,9 @@ var CORNER_TO_WANG = [15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0];
 // For s0.25/s0.5/s1.0, lower-elevation biome is 'from', higher is 'to'.
 function transitionPairFor(a, b, elevA, elevB) {
   if (a === b) return null;
+  // Biomes sharing the same Wang art (e.g. stream/river) draw no transition
+  // between each other — visually they're the same substance.
+  if (wangAssetName(a) === wangAssetName(b)) return null;
   var lower, upper;
   if (elevA !== undefined && elevB !== undefined && elevA !== elevB) {
     // Elevation-aware: lower elevation biome is 'from'
@@ -34,7 +37,8 @@ function transitionPairFor(a, b, elevA, elevB) {
     lower = sorted[0];
     upper = sorted[1];
   }
-  return { from: lower, to: upper, dir: lower + '_to_' + upper };
+  // dir uses asset-aliased names (stream draws river art); from/to stay real.
+  return { from: lower, to: upper, dir: wangAssetName(lower) + '_to_' + wangAssetName(upper) };
 }
 
 function elevationVariant(tile) {
@@ -1080,7 +1084,8 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
           Math.abs(selfSLevel - selfSELevel)
         );
         if (selfMaxDelta >= 1) {
-          var selfDir = tile.biome + '_to_' + tile.biome;
+          var selfAsset = wangAssetName(tile.biome);
+          var selfDir = selfAsset + '_to_' + selfAsset;
           tile.transitionPair = { from: tile.biome, to: tile.biome, dir: selfDir };
           var selfMinLevel = Math.min(selfMyLevel, selfELevel, selfSLevel, selfSELevel);
           tile.transitionSide = selfMyLevel === selfMinLevel ? 'from' : 'to';
