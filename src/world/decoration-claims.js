@@ -40,6 +40,11 @@ var F5_TILE_CHANCE = {
 };
 var _f5Cache = new Map();     // 'wx,wy,res' -> resolved (post-exclusion) placements
 var _f5CandCache = new Map(); // 'wx,wy,biome' -> candidate placements (no neighbor knowledge)
+// Epoch counter: bumped every time a query returns a provisional result (one
+// that could change when more tiles load). Consumers snapshot this before
+// computing derived results; if it changed they skip caching — preventing
+// stale EMPTY or false-survivor entries from surviving a tile-load event.
+var _provisionalEpoch = 0;
 // Live-tunable per-biome F5 scale (96px native = 3 tiles at 1.0). The user
 // calibrates in-game; bake final values here afterwards (F4 precedent).
 export var F5_BIOME_SCALE = {
@@ -487,6 +492,9 @@ export function getClaimMask(wx, wy, tileInfo) {
   var ox = wx * TILE_ART_PX, oy = wy * TILE_ART_PX;
   var complete = true; // any null (unloaded) neighbor -> don't cache the mask
   var R = claimScanRadius();
+  // Epoch guard: if any f4/f5 call inside returns a provisional result (bumps
+  // _provisionalEpoch), skip caching the mask — it may change when tiles load.
+  var ep = _provisionalEpoch;
   for (var ny = -R; ny <= R; ny++) {
     for (var nx = -R; nx <= R; nx++) {
       if (!tileInfo(wx + nx, wy + ny)) { complete = false; continue; }
@@ -510,7 +518,7 @@ export function getClaimMask(wx, wy, tileInfo) {
       }
     }
   }
-  return complete ? cachePut(_maskCache, key, mask) : mask;
+  return (complete && _provisionalEpoch === ep) ? cachePut(_maskCache, key, mask) : mask;
 }
 
 // Point test in world art px — used by F2 to cull blades.
@@ -524,7 +532,7 @@ export function isClaimedAt(px, py, tileInfo) {
   return (mask[r] & (1 << c)) !== 0;
 }
 
-export function clearClaimCaches() { _placeCache.clear(); _maskCache.clear(); _f4Cache.clear(); _f5Cache.clear(); _f5CandCache.clear(); _scanRDirty = true; }
+export function clearClaimCaches() { _placeCache.clear(); _maskCache.clear(); _f4Cache.clear(); _f5Cache.clear(); _f5CandCache.clear(); _scanRDirty = true; _provisionalEpoch = 0; }
 
 // Footprint ellipses a,b (bx,by,fw,fh) intersect? Conservative sum-of-radii
 // test on each axis — exact for circles, slightly loose for ellipses (good:
@@ -593,19 +601,23 @@ export function f4Placements(wx, wy, tileInfo) {
   // intersects ANY nearby F5 footprint never existed. Checks final (post-
   // exclusion) F5 placements — F5 never consults F4, so no recursion. The
   // own tile (nx5=ny5=0) is covered too (early-out above already handles it).
+  // Epoch guard: if any f5Placements call returns provisional (bumps
+  // _provisionalEpoch), the derived F4 result must not be cached — a later
+  // tile load could promote or kill a provisional F5, invalidating the result.
   var R5 = claimScanRadius();
-  var complete5 = true; // any null (unloaded) neighbor -> don't cache
+  var ep = _provisionalEpoch; // snapshot before the F5-yield loop
   for (var ny5 = -R5; ny5 <= R5; ny5++) {
     for (var nx5 = -R5; nx5 <= R5; nx5++) {
-      if (!tileInfo(wx + nx5, wy + ny5)) { complete5 = false; continue; }
       var f5n = f5Placements(wx + nx5, wy + ny5, tileInfo);
-      if (f5n.length && footprintsOverlap(p, f5n[0]))
-        // provisional F5s can shift while neighbors load — cache only when
-        // every tile scanned so far was loaded
-        return complete5 ? cachePut(_f4Cache, key, EMPTY) : EMPTY;
+      if (f5n.length && footprintsOverlap(p, f5n[0])) {
+        // Neighbor F5 wins — cache only if no provisional answers were seen.
+        // If epoch changed the EMPTY result might later flip to [p], so skip
+        // caching and let the next call re-evaluate when tiles are loaded.
+        return _provisionalEpoch === ep ? cachePut(_f4Cache, key, EMPTY) : EMPTY;
+      }
     }
   }
-  return complete5 ? cachePut(_f4Cache, key, [p]) : [p];
+  return _provisionalEpoch === ep ? cachePut(_f4Cache, key, [p]) : [p];
 }
 
 export function f4SpriteUrl(p) {
@@ -634,7 +646,7 @@ export function f4AnimUrlBase(p) {
 // f5Placements resolves footprint conflicts between candidates (below).
 function f5Candidate(wx, wy, tileInfo) {
   var t = tileInfo(wx, wy);
-  if (!t || t.transition) return EMPTY;
+  if (!t || t.transition) { _provisionalEpoch++; return EMPTY; } // unloaded — provisional
   var key = wx + ',' + wy + ',' + t.biome;
   var hit = _f5CandCache.get(key);
   if (hit) return hit;
@@ -674,10 +686,11 @@ function f5Candidate(wx, wy, tileInfo) {
 }
 
 // Public F5 placements: a candidate survives unless a HIGHER-priority
-// overlapping neighbor candidate exists (F5 beats F5 — exactly one of any
-// overlapping pair renders). Priority = rand2(wx, wy, 9806), ties broken by
-// (wy, wx) lexicographic so two tiles can never both survive. Candidates are
-// pure per-tile rolls, so this terminates (no recursion through neighbors).
+// overlapping neighbor candidate exists (F5 beats F5 — at most one of any
+// overlapping pair renders; a pair can both die to third parties). Priority =
+// rand2(wx, wy, 9806), ties broken by (wy, wx) lexicographic so two tiles can
+// never both survive. Candidates are pure per-tile rolls, so this terminates
+// (no recursion through neighbors).
 export function f5Placements(wx, wy, tileInfo) {
   var cand = f5Candidate(wx, wy, tileInfo);
   if (!cand.length) return cand;
@@ -706,7 +719,8 @@ export function f5Placements(wx, wy, tileInfo) {
   }
   // Survival can be retracted by an unloaded neighbor's candidate, so only
   // cache when the whole scan ring was loaded (getClaimMask's rule).
-  return complete ? cachePut(_f5Cache, key, cand) : cand;
+  if (!complete) { _provisionalEpoch++; return cand; }
+  return cachePut(_f5Cache, key, cand);
 }
 
 export function f5SpriteUrl(p) {

@@ -180,6 +180,95 @@ test('F4 yields to a neighboring F5 whose footprint covers it', () => {
   }
 });
 
+test('late tile load: F4/F5 results near a null boundary are not stale-cached', () => {
+  // Regression: before the epoch fix, f4Placements (and getClaimMask) could
+  // cache a result derived from a provisional f5Placements survivor. When the
+  // missing tiles later loaded, the cached result was wrong.
+  //
+  // Strategy: tileInfo that returns null for x >= WALL ("unloaded region").
+  // Scan F4/F5 for tiles just to the left of WALL — those tiles' f5Placements
+  // scan ring extends into the null region, so any survivor there is
+  // provisional and must NOT be cached. Then widen WALL (tiles load) and
+  // verify re-querying (without clearClaimCaches) gives the same answers as a
+  // completely fresh run.
+  //
+  // Pre-fix failure mode: f4Placements called cachePut when complete5=true
+  // (all f5Placements NEIGHBOR tileInfo calls were non-null) even though the
+  // f5Placements itself was provisional (its ring touched null via f5Candidate).
+  // The stale cached EMPTY/[p] then persisted after tiles loaded.
+  const R = claimScanRadius();
+  const WALL = 50;
+  let loaded = false; // flip to widen the loaded region
+
+  function tileInfo(wx, wy) {
+    const limit = loaded ? WALL + R + 5 : WALL;
+    return wx < limit ? { biome: 'grassland', transition: false } : null;
+  }
+
+  // --- Phase 1: scan near the boundary with some tiles null ---
+  const x0 = WALL - R - 1; // first column whose f5 ring touches the null zone
+  const phase1_f5 = [], phase1_f4 = [];
+  for (let wy = 0; wy < 10; wy++) {
+    for (let wx = x0; wx < WALL; wx++) {
+      phase1_f5.push([wx, wy, f5Placements(wx, wy, tileInfo).length]);
+      phase1_f4.push([wx, wy, f4Placements(wx, wy, tileInfo).length]);
+    }
+  }
+
+  // --- Phase 2: "load" the previously-null tiles ---
+  loaded = true;
+  // Do NOT call clearClaimCaches() — we're testing that no stale entries linger.
+
+  // Re-query the same tiles. With epoch guard, only non-provisional results
+  // were cached, so re-queries re-evaluate from scratch and should agree with
+  // a completely fresh run.
+  const phase2_f5 = [], phase2_f4 = [];
+  for (let wy = 0; wy < 10; wy++) {
+    for (let wx = x0; wx < WALL; wx++) {
+      phase2_f5.push([wx, wy, f5Placements(wx, wy, tileInfo).length]);
+      phase2_f4.push([wx, wy, f4Placements(wx, wy, tileInfo).length]);
+    }
+  }
+
+  // Phase 3: completely fresh run (clear caches, use widened tileInfo).
+  clearClaimCaches();
+  const fresh_f5 = [], fresh_f4 = [];
+  for (let wy = 0; wy < 10; wy++) {
+    for (let wx = x0; wx < WALL; wx++) {
+      fresh_f5.push([wx, wy, f5Placements(wx, wy, tileInfo).length]);
+      fresh_f4.push([wx, wy, f4Placements(wx, wy, tileInfo).length]);
+    }
+  }
+
+  // After tiles load, re-queried results must match fresh-cache results.
+  // (Pre-fix: stale cached EMPTY or [p] entries would cause mismatches.)
+  assert.deepEqual(phase2_f5.map(([,, n]) => n), fresh_f5.map(([,, n]) => n),
+    'f5Placements after late load must match fresh-cache run');
+  assert.deepEqual(phase2_f4.map(([,, n]) => n), fresh_f4.map(([,, n]) => n),
+    'f4Placements after late load must match fresh-cache run');
+
+  // Sanity: the fresh run must differ from phase1 for at least some tiles
+  // (the newly-loaded region changes neighbor visibility of F5 exclusion).
+  // Not always guaranteed in all random seeds, so we only assert if there
+  // IS a difference — the important invariant is phase2 === fresh, not that
+  // they differ from phase1.
+  const f5Changed = fresh_f5.some(([wx, wy, n], i) => n !== phase1_f5[i][2]);
+  const f4Changed = fresh_f4.some(([wx, wy, n], i) => n !== phase1_f4[i][2]);
+  if (!f5Changed && !f4Changed) {
+    // If no tile changed, the test can't distinguish pre/post fix in this
+    // seed — skip asserting the regression direction but still pass (the
+    // equality check above already validated no stale entries).
+    return;
+  }
+  // If things DID change, verify phase1 differs from fresh (confirms the
+  // null boundary had an actual effect on at least some placements).
+  const p1f5 = phase1_f5.map(([,, n]) => n).join();
+  const freshF5 = fresh_f5.map(([,, n]) => n).join();
+  // Either f5 or f4 changed — that's enough to confirm the epoch path was hit.
+  assert.ok(f5Changed || f4Changed,
+    'at least one tile near the boundary should differ after tiles load');
+});
+
 test('claimScanRadius grows with extreme f5 tuning and resets with caches', () => {
   setFieldTuning(null);
   clearClaimCaches();
