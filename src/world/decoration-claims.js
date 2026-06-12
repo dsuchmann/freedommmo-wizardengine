@@ -3,7 +3,7 @@
 // cross-field claim masks that stop lower fields (F2 flora) from spawning
 // inside higher-field objects' base footprints. Pure + deterministic:
 // worker and main thread compute identical results independently.
-import { rand2 } from '../core/random.js';
+import { rand2, pickIndex } from '../core/random.js';
 import { MF_CATALOG } from './mf-catalog.js';
 import { MO_CATALOG } from './mo-catalog.js';
 import { tuneSize, tuneBiomeDensity, tuneObjDensity, tuneStateWeights, rollWeighted,
@@ -395,8 +395,8 @@ export function f3Placements(wx, wy, tileInfo) {
     if (rand2(wx, wy, 9500 + oi) > (1.0 - sparsity) * dMul) continue; // SAME seeds as today
     // Variant must be known before size (per-variant tuning) — same roll as before
     var variant = allowed
-      ? allowed[Math.floor(rand2(wx, wy, 9510 + oi) * allowed.length)]
-      : Math.floor(rand2(wx, wy, 9510 + oi) * SS_VARIANT_COUNT);
+      ? allowed[pickIndex(rand2(wx, wy, 9510 + oi), allowed.length)]
+      : pickIndex(rand2(wx, wy, 9510 + oi), SS_VARIANT_COUNT);
     var scale = (obj.scale || 0.32) *
       tuneSize('f3', t.biome, obj.name, variant, wx, wy, 9570 + oi * 4);
     var ux = 0.5 + (rand2(wx, wy, 9520 + oi) - 0.5) * 0.6;     // tile units
@@ -416,7 +416,7 @@ export function f3Placements(wx, wy, tileInfo) {
     };
     var states = SS_STATES[t.biome + '/' + obj.name];
     if (states && states.length && rand2(wx, wy, 9560 + oi) < STATE_CHANCE) {
-      p.state = states[Math.floor(rand2(wx, wy, 9561 + oi) * states.length)];
+      p.state = states[pickIndex(rand2(wx, wy, 9561 + oi), states.length)];
     }
     // self-spacing within the tile: reject if base centers closer than the
     // sum of half-widths (looser than ellipse-touch — debris may abut)
@@ -510,7 +510,7 @@ export function f4Placements(wx, wy, tileInfo) {
   // Larger objects claim first: a tile F5 claimed never hosts F4.
   if (f5Placements(wx, wy, tileInfo).length) return cachePut(_f4Cache, key, EMPTY);
 
-  var obj = objs[Math.floor(rand2(wx, wy, 9701) * objs.length)];
+  var obj = objs[pickIndex(rand2(wx, wy, 9701), objs.length)];
   // Object-level density: <1 rejects this tile's pick (1 placement/tile max,
   // so >1 cannot add more — clamped by construction). NEW salt 9714.
   var objD = tuneObjDensity('f4', t.biome, obj.name);
@@ -523,10 +523,10 @@ export function f4Placements(wx, wy, tileInfo) {
   if (st === 'base') st = null;
   var variant;
   if (st && obj.statePool.length) {
-    variant = obj.statePool[Math.floor(rand2(wx, wy, 9706) * obj.statePool.length)];
+    variant = obj.statePool[pickIndex(rand2(wx, wy, 9706), obj.statePool.length)];
   } else {
     st = null; // no pool -> render base
-    variant = Math.floor(rand2(wx, wy, 9702) * obj.variants);
+    variant = pickIndex(rand2(wx, wy, 9702), obj.variants);
   }
   var ux = 0.5 + (rand2(wx, wy, 9703) - 0.5) * 0.5;
   var uy = 0.5 + (rand2(wx, wy, 9704) - 0.5) * 0.5;
@@ -575,14 +575,14 @@ export function f5Placements(wx, wy, tileInfo) {
   if (!objs || !objs.length || chance === 0) return cachePut(_f5Cache, key, EMPTY);
   if (rand2(wx, wy, 9800) > chance) return cachePut(_f5Cache, key, EMPTY);
 
-  var obj = objs[Math.floor(rand2(wx, wy, 9801) * objs.length)];
+  var obj = objs[pickIndex(rand2(wx, wy, 9801), objs.length)];
   var objD = tuneObjDensity('f5', t.biome, obj.name);
   if (objD < 1 && rand2(wx, wy, 9814) > objD) return cachePut(_f5Cache, key, EMPTY);
 
   var weights = tuneStateWeights('f5', t.biome, obj.name, f5StateDefaults(t.biome));
   var st = rollWeighted(weights, F5_STATE_ORDER, rand2(wx, wy, 9805));
   if (st === 'base') st = null;
-  var variant = Math.floor(rand2(wx, wy, 9802) * obj.variants);
+  var variant = pickIndex(rand2(wx, wy, 9802), obj.variants);
   var stateOnDisk = !!(st && obj.states[st] && obj.states[st].indexOf(variant) !== -1);
 
   var ux = 0.5 + (rand2(wx, wy, 9803) - 0.5) * 0.5;

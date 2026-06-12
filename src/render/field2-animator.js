@@ -3,7 +3,7 @@
 // frame sequences that sway in the wind.
 
 import { WORLD } from '../core/constants.js';
-import { rand2 } from '../core/random.js';
+import { rand2, pickIndex } from '../core/random.js';
 import { SF_BIOME_OBJECTS_LIST, SF_BASE_PATH, SF_VARIANT_COUNT, SF_EXTRA_OBJECTS, sfVariantsFor, sfAnimVariantsFor } from './wang-image-list.js';
 import { clearBorderLines } from './sprite-denoise.js';
 import { floorDiv } from '../world/chunk.js';
@@ -727,8 +727,8 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
 
     var variantWl = sfVariantsFor(biome, objName);
     var variantIdx = variantWl
-      ? variantWl[Math.floor(rand2(wx, wy, 7035 + bi) * variantWl.length)]
-      : Math.floor(rand2(wx, wy, 7035 + bi) * SF_VARIANT_COUNT);
+      ? variantWl[pickIndex(rand2(wx, wy, 7035 + bi), variantWl.length)]
+      : pickIndex(rand2(wx, wy, 7035 + bi), SF_VARIANT_COUNT);
     var vStr = variantIdx < 10 ? '00' + variantIdx : (variantIdx < 100 ? '0' + variantIdx : '' + variantIdx);
 
     // Lifecycle via the tunable state-weight resolver. Defaults reproduce the
@@ -811,7 +811,7 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
   var extraObjs = SF_EXTRA_OBJECTS[biome];
   if (extraObjs && rand2(wx, wy, 7300) < 0.012) {
     extra = {
-      url: extraObjs[Math.floor(rand2(wx, wy, 7301) * extraObjs.length)],
+      url: extraObjs[pickIndex(rand2(wx, wy, 7301), extraObjs.length)],
       offUX: (rand2(wx, wy, 7302) - 0.5) * 0.6,
       offUY: (rand2(wx, wy, 7303) - 0.5) * 0.6
     };
