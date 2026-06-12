@@ -33,6 +33,51 @@ BIOME_TILES = REPO_ROOT / "scripts" / "asset-corpus" / "registry" / "biome_base_
 MCP_JSON = REPO_ROOT / ".mcp.json"
 ACCOUNT_LIMIT = 20
 
+LEDGER = REPO_ROOT / "scripts" / ".pixellab_inflight.json"
+STALE_S = 600  # entries without heartbeat for 10 min are dead runners
+
+
+class InflightLedger:
+    """Cooperative inflight accounting across bulk_generate.py instances.
+    Lockfile-free best-effort: read-modify-write with atomic replace; collisions
+    only ever overcount briefly, which is safe (we submit fewer, never more)."""
+
+    def __init__(self, burst: str):
+        self.key = f"{burst}:{os.getpid()}"
+
+    def _read(self) -> dict:
+        try:
+            with open(LEDGER) as f:
+                data = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            return {}
+        now = time.time()
+        return {k: v for k, v in data.items() if now - v.get("ts", 0) < STALE_S}
+
+    def publish(self, count: int):
+        data = self._read()
+        data[self.key] = {"count": count, "ts": time.time()}
+        tmp = LEDGER.with_suffix(".tmp")
+        with open(tmp, "w") as f:
+            json.dump(data, f)
+        tmp.replace(LEDGER)
+
+    def others(self) -> int:
+        return sum(v["count"] for k, v in self._read().items() if k != self.key)
+
+    def headroom(self, my_cap: int, my_inflight: int) -> int:
+        budget = min(my_cap, ACCOUNT_LIMIT - self.others())
+        return max(0, budget - my_inflight)
+
+    def clear(self):
+        data = self._read()
+        data.pop(self.key, None)
+        tmp = LEDGER.with_suffix(".tmp")
+        with open(tmp, "w") as f:
+            json.dump(data, f)
+        tmp.replace(LEDGER)
+
+
 API_BASE = "https://api.pixellab.ai/v2"
 POLL_INTERVAL = 20          # seconds between scheduler ticks
 SUBMIT_DELAY = 2            # seconds between submissions
