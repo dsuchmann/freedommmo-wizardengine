@@ -1,20 +1,36 @@
 // src/render/humanoid-player-renderer.js — Pass 4 L2b: the first living-entity
-// renderer. Assembles the player avatar from pilot part sprites at the FK rest
-// pose (walk = simple limb swing from rig gait params). Replays one-time-authored
-// art + pivot meta — nothing is generated at runtime.
-// HONEST ABSENCES: south direction only (pilot scope); no equipment layers
-// (client has no equipment state); no hair/face layers; humanoid NPCs are not
-// rendered (none exist until L5). When sprites/meta are absent the caller falls
-// back to the legacy doodle (pre-L2b status quo, not a mock).
+// renderer. Assembles the player avatar from directional part sprites at the FK
+// rest pose (walk = simple limb swing from rig gait params). Replays one-time-
+// authored art + pivot meta — nothing is generated at runtime.
+// 8-DIRECTION: assets + pivot meta load lazily PER DIRECTION; until a
+// direction's set is ready we draw the south set (honest absence — the avatar
+// is never invisible, it just hasn't turned yet). w/sw/nw are mirrored art of
+// e/se/ne (flipped PNGs on disk, pilot convention).
+// HONEST ABSENCES: no equipment layers (client has no equipment state); no
+// hair/face layers; humanoid NPCs are not rendered (none exist until L5).
+// When sprites/meta are absent the caller falls back to the legacy doodle.
 import { PARTS, PART_BONE, partKey, composeLayers } from '../../sim/life/body.js';
 import { solvePose } from '../life/pose.js';
 
 const BP_BASE = '/assets/pixelab/body_parts/';
 const RIG_URL = '/src/life/rigs/humanoid.json';
-const META_URL = '/src/life/rigs/humanoid-parts-south.json';
 const DEG = Math.PI / 180;
 const RIG_UNIT_PX = 1.4;    // ~58-unit body ≈ 81px (~2.5 tiles) at zoom 1 (user: 1-tile avatar far too small)
 const FEET_OFFSET = 15;     // legacy doodle feet line: py + 15*zoom (keep continuity)
+
+// Per-direction render params. xProj: rig x is the body's frontal plane — a
+// profile view collapses it, diagonals partially. xSign: south view mirrors
+// anatomical x (left limbs appear viewer-right); n/w/sw/nw un-mirror/flip.
+const DIRS = {
+  s:  { meta: 'south', xProj: 1,    xSign: -1 },
+  n:  { meta: 'n',     xProj: 1,    xSign: +1 },
+  e:  { meta: 'e',     xProj: 0.25, xSign: -1 },
+  w:  { meta: 'w',     xProj: 0.25, xSign: +1 },
+  se: { meta: 'se',    xProj: 0.75, xSign: -1 },
+  sw: { meta: 'sw',    xProj: 0.75, xSign: +1 },
+  ne: { meta: 'ne',    xProj: 0.75, xSign: -1 },
+  nw: { meta: 'nw',    xProj: 0.75, xSign: +1 },
+};
 
 // Avatar body plan is CLIENT CONFIG (player node has no species; presentation choice).
 const AVATAR = {
@@ -22,41 +38,62 @@ const AVATAR = {
   parts: Object.fromEntries(PARTS.map(p => [p, { scale: 1 }])),
 };
 
-let rig = null, meta = null, layers = null;
-const images = new Map();   // part -> HTMLImageElement | null(failed)
-let started = false, failed = false;
+let rig = null, rigStarted = false, rigFailed = false;
+// dir -> { meta, layers, images: Map(part -> Image|null), started, failed }
+const dirState = new Map();
 
-function startLoading() {
-  started = true;
-  Promise.all([fetch(RIG_URL), fetch(META_URL)])
-    .then(rs => Promise.all(rs.map(r => { if (!r.ok) throw new Error(r.status); return r.json(); })))
-    .then(([r, m]) => {
-      rig = r; meta = m;
-      layers = composeLayers(AVATAR, null, 's').filter(l => l.part);
-      for (const l of layers) {
+function loadDir(d) {
+  const st = { meta: null, layers: null, images: new Map(), started: true, failed: false };
+  dirState.set(d, st);
+  fetch(`/src/life/rigs/humanoid-parts-${DIRS[d].meta}.json`)
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(m => {
+      st.meta = m;
+      st.layers = composeLayers(AVATAR, null, d).filter(l => l.part);
+      for (const l of st.layers) {
         const img = new Image();
-        img.src = BP_BASE + partKey(AVATAR.race, AVATAR.bodyType, AVATAR.ageBand, l.part, 's') + '.png';
-        img.onload = () => images.set(l.part, img);
-        img.onerror = () => images.set(l.part, null);
+        img.src = BP_BASE + partKey(AVATAR.race, AVATAR.bodyType, AVATAR.ageBand, l.part, d) + '.png';
+        img.onload = () => st.images.set(l.part, img);
+        img.onerror = () => { st.failed = true; };
       }
     })
-    .catch(() => { failed = true; });
+    .catch(() => { st.failed = true; });
+  return st;
 }
 
-function ready() {
-  return rig && meta && layers && layers.every(l => images.get(l.part));
+function dirReady(st) {
+  return st && !st.failed && st.meta && st.layers && st.layers.every(l => st.images.get(l.part));
+}
+
+/** Resolve the direction to draw: requested if its assets are ready, else
+ *  south (the pilot set — always attempted first). Kicks off lazy loads. */
+function resolveDir(d) {
+  if (!DIRS[d]) d = 's';
+  let st = dirState.get(d);
+  if (!st) st = loadDir(d);
+  if (dirReady(st)) return [d, st];
+  const south = dirState.get('s') ?? loadDir('s');
+  return dirReady(south) ? ['s', south] : [null, null];
 }
 
 /** Walk/sprint limb swing from gait params; idle = rest. frame matches the
  *  legacy doodle's 8-frame cycle (phase = frame * PI/4).
- *  South view faces the camera, so the stride is in DEPTH — a screen-plane leg
- *  rotation reads as sideways scissoring. Legs stay at rest here; the step is
- *  rendered as alternating leg lift/foreshortening in drawHumanoidPlayer.
- *  Arms keep a subtle planar counter-swing (visible silhouette motion). */
-function jointsFor(frame, animation) {
+ *  Front/back views (s/n + diagonals): stride is in DEPTH — rendered as
+ *  alternating leg lift/foreshortening in drawHumanoidPlayer; arms keep a
+ *  subtle planar counter-swing. Profile views (e/w): the stride IS planar —
+ *  real thigh/arm swing reads correctly. */
+function jointsFor(frame, animation, d) {
   if (animation !== 'walk' && animation !== 'sprint') return {};
   const gait = rig.gaits[animation === 'sprint' ? 'run' : 'walk'];
   const phase = frame * Math.PI / 4;
+  if (d === 'e' || d === 'w') {
+    const leg = Math.sin(phase) * 22 * gait.strideFactor;
+    const arm = -Math.sin(phase) * 14 * gait.strideFactor;
+    return {
+      thigh_l: leg, thigh_r: -leg, shin_l: Math.max(0, -leg) * 0.6, shin_r: Math.max(0, leg) * 0.6,
+      arm_u_l: arm, arm_u_r: -arm,
+    };
+  }
   const arm = -Math.sin(phase) * 5 * gait.strideFactor;
   return { arm_u_l: arm, arm_u_r: -arm };
 }
@@ -64,12 +101,12 @@ function jointsFor(frame, animation) {
 // Per-part pre-downscale (stepwise halving, area-averaged). NEAREST minification
 // at k«1 drops most source pixels — this is what made the GL-composited player
 // (rasterized at zoom 1, k≈0.07–0.24) look shredded. Residual scale stays ~1.
-const _scaledParts = new Map(); // part@steps -> canvas
-function partFrame(part, img, k) {
+const _scaledParts = new Map(); // part|dir@steps -> canvas
+function partFrame(part, d, img, k) {
   let steps = 0;
   while (k * (1 << (steps + 1)) <= 1.1) steps++;
   if (steps === 0) return img;
-  const key = part + '@' + steps;
+  const key = part + '|' + d + '@' + steps;
   let c = _scaledParts.get(key);
   if (!c) {
     let src = img, w = img.width, h = img.height;
@@ -91,31 +128,40 @@ function partFrame(part, img, k) {
 const LEG_SIDE = { thigh_l: 'l', shin_l: 'l', foot_l: 'l', thigh_r: 'r', shin_r: 'r', foot_r: 'r' };
 
 /** Draw the assembled avatar. Returns false when not ready (caller falls back).
- *  (x, y) matches drawPlayerAt's doodle anchor: feet at y + FEET_OFFSET*zoom. */
-export function drawHumanoidPlayer(ctx, x, y, zoom, frame, animation) {
-  if (failed) return false;
-  if (!started) { startLoading(); return false; }
-  if (!ready()) return false;
-  const pose = solvePose(rig, jointsFor(frame, animation));
+ *  (x, y) matches drawPlayerAt's doodle anchor: feet at y + FEET_OFFSET*zoom.
+ *  direction: 8-way facing code ('S','NE',... case-insensitive); defaults south. */
+export function drawHumanoidPlayer(ctx, x, y, zoom, frame, animation, direction = 'S') {
+  if (rigFailed) return false;
+  if (!rigStarted) {
+    rigStarted = true;
+    fetch(RIG_URL).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(r => { rig = r; }).catch(() => { rigFailed = true; });
+  }
+  if (!rig) return false;
+  const [d, st] = resolveDir(String(direction).toLowerCase());
+  if (!d) return false;
+  const cfg = DIRS[d];
+  const pose = solvePose(rig, jointsFor(frame, animation, d));
   const gait = rig.gaits[animation === 'sprint' ? 'run' : 'walk'];
   const bob = (animation === 'walk' || animation === 'sprint')
     ? Math.abs(Math.sin(frame * Math.PI / 4)) * gait.bob * RIG_UNIT_PX * zoom : 0;
   const S = RIG_UNIT_PX * zoom;
   const groundY = y + FEET_OFFSET * zoom - bob;
-  // Front-view step: each leg alternately lifts (foreshortens toward the hip)
-  // — the depth-stride equivalent for a camera-facing view.
+  // Front/back-view step: each leg alternately lifts (foreshortens toward the
+  // hip) — the depth-stride equivalent. Profile views use real planar swing.
+  const planar = d === 'e' || d === 'w';
   const moving = animation === 'walk' || animation === 'sprint';
   const phase = frame * Math.PI / 4;
-  const stepAmp = moving ? (animation === 'sprint' ? 0.22 : 0.14) : 0;
+  const stepAmp = moving && !planar ? (animation === 'sprint' ? 0.22 : 0.14) : 0;
   const lift = {
     l: Math.max(0, Math.sin(phase)) * stepAmp,
     r: Math.max(0, -Math.sin(phase)) * stepAmp,
   };
   ctx.save();
   ctx.imageSmoothingEnabled = false;
-  for (const l of layers) {
-    const img = images.get(l.part);
-    const m = meta.parts[l.part];
+  for (const l of st.layers) {
+    const img = st.images.get(l.part);
+    const m = st.meta.parts[l.part];
     const b = pose[PART_BONE[l.part]];
     const k = (S / m.ppu) * l.scale;
     const side = LEG_SIDE[PART_BONE[l.part]];
@@ -123,13 +169,13 @@ export function drawHumanoidPlayer(ctx, x, y, zoom, frame, animation) {
     // Hip anchor for the leg foreshortening (thigh origin of this side)
     const hipY = side ? groundY - pose[side === 'l' ? 'thigh_l' : 'thigh_r'].origin.y * S : 0;
     ctx.save();
-    // South view faces the camera: anatomical left appears on the viewer's RIGHT.
-    // Rig x is anatomical (left limbs at -x), so mirror x for this direction; the
-    // mirror flips angular direction, cancelling the y-down rotation negation.
+    // xSign mirrors anatomical x per direction (south: left limbs appear on the
+    // viewer's RIGHT). The mirror flips angular direction; with xSign=-1 that
+    // cancels the y-down rotation negation, with +1 it doesn't.
     const ty = groundY - b.origin.y * S;
-    ctx.translate(x - b.origin.x * S, side ? hipY + (ty - hipY) * squash : ty);
-    ctx.rotate(b.worldDeg * DEG);
-    const src = partFrame(l.part, img, k);
+    ctx.translate(x + cfg.xSign * b.origin.x * cfg.xProj * S, side ? hipY + (ty - hipY) * squash : ty);
+    ctx.rotate(-cfg.xSign * b.worldDeg * DEG);
+    const src = partFrame(l.part, d, img, k);
     ctx.drawImage(src, -m.pivot[0] * k, -m.pivot[1] * k * squash, img.width * k, img.height * k * squash);
     ctx.restore();
   }

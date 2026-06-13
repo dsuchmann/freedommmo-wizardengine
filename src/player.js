@@ -58,7 +58,7 @@ export class Player {
 }
 
 function directionFromAxis(axis) {
-  if (!axis.x && !axis.y) return 'S';
+  if (!axis.x && !axis.y) return undefined;   // setMotion holds last facing
   if (axis.y < -0.4 && axis.x > 0.4) return 'NE';
   if (axis.y < -0.4 && axis.x < -0.4) return 'NW';
   if (axis.y > 0.4 && axis.x > 0.4) return 'SE';
