@@ -19,7 +19,7 @@ const WORLD_SEED = 42;  // must match sim seed
 /** Discover all settlements visible on screen by evaluating the chronicle directly.
  *  Pure function — no sim needed. Returns [{x, y, tier, race, state, chronicleAge}]. */
 function discoverSettlements(camX, camY, w, h, tilePx) {
-  const margin = MACRO_TILES * tilePx; // scan one macro-cell beyond screen
+  const margin = MACRO_TILES * tilePx * 3; // scan 3 macro-cells beyond screen
   const tileX0 = Math.floor((camX - margin) / tilePx);
   const tileY0 = Math.floor((camY - margin) / tilePx);
   const tileX1 = Math.ceil((camX + w + margin) / tilePx);

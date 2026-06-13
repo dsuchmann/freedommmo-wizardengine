@@ -388,12 +388,14 @@ export class CanvasRenderer {
     }
 
     // === FIELD 2: ANIMATED WIND SWAY ===
-    // In art-scene mode the grid is in art pixels (so all sprite instances
-    // land on the same integer-snapped pixel grid as the terrain).
-    const chunkArtPx = WORLD.chunkSize * ts;
-    // Always CSS-pixel grid — full-resolution FBO matches the 2D path's scale.
-    const f2Grid = { baseSX, baseSY, minCX, minCY, chunkPx };
-    drawField2Animations(ctx, chunkStore, player, camera, w, h, f2Grid, performance.now(), weather, sun, glOn ? this.glc : null);
+    // Skip F2 when civilization overlay is active — thousands of animated sprites
+    // kill FPS at zoom-out, and the overlay needs to show settlements clearly.
+    const civOverlay = window._simDebugOverlay?.isEnabled?.();
+    if (!civOverlay) {
+      const chunkArtPx = WORLD.chunkSize * ts;
+      const f2Grid = { baseSX, baseSY, minCX, minCY, chunkPx };
+      drawField2Animations(ctx, chunkStore, player, camera, w, h, f2Grid, performance.now(), weather, sun, glOn ? this.glc : null);
+    }
 
     // Weather AFTER all sprites — in GL mode most F2 sprites live on the GL
     // canvas (below this one), so fog/precip drawn earlier would cover them
