@@ -72,6 +72,7 @@ import('./dev/field-tuner.js').then(m => m.initFieldTuner()); // field tuner (ke
 const weather = new WeatherSystem(lighting);
 const overmap = new OvermapController(overmapCanvas, player, chunks);
 const camera = new Camera();
+camera.setCanvas(canvas);
 window._camera = camera; // test/dev hook: set zoom via manualZoom
 const perf = new PerformanceMonitor();
 
