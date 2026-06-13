@@ -16,9 +16,9 @@ export class Camera {
     // The old system caused jitter as each tile's different values
     // micro-adjusted the zoom while walking.
     this.targetZoom = clamp(this.manualZoom, 0.32, 2.4);
-    var lerpSpeed = Math.min(1, dt * 4.0);
-    this.zoom += (this.targetZoom - this.zoom) * lerpSpeed;
-    if (Math.abs(this.targetZoom - this.zoom) < 0.0005) this.zoom = this.targetZoom;
+    // Snap zoom instantly — smooth lerp caused 10fps drops because the entire
+    // renderer (chunks, decorations, tiles) recalculates on every zoom change.
+    this.zoom = this.targetZoom;
     this.elevationOffsetY = 0;
   }
 }
