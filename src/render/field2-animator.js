@@ -1122,6 +1122,7 @@ function _poolRebuild(chunkStore, player, glc, tilePxSnapped, radiusX, radiusY) 
   }
   _f2Stats.rebuilds++;
   _f2Stats.lastRebuildMs = performance.now() - t0;
+  if (typeof window !== 'undefined') window._f2PoolN = _pool.n;
 }
 
 function _poolKey(chunkStore, px, py, tilePxSnapped, radiusX, radiusY) {
@@ -1227,6 +1228,172 @@ function _poolTick(timeMs, timeSec, glc, tilePxSnapped) {
   }
 }
 
+function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, weather, sun, glc) {
+  var tilePxSnapped = chunkGrid.chunkPx / WORLD.chunkSize;
+  var visibleTilesX = Math.ceil(w / tilePxSnapped / 2) + 2;
+  var visibleTilesY = Math.ceil(h / tilePxSnapped / 2) + 2;
+  var radiusX = Math.min(ANIM_RADIUS, visibleTilesX);
+  var radiusY = Math.min(ANIM_RADIUS, visibleTilesY);
+  var px = Math.floor(player.x);
+  var py = Math.floor(player.y);
+  var timeSec = timeMs * 0.001;
+
+  // Wind currents advance per frame (cheap; ≤4 currents).
+  var wind = weather ? weather.wind() : { direction: 0.3, intensity: 0.3 };
+  updateCurrents(timeSec, wind.direction, wind.intensity, player.x, player.y);
+
+  // Rebuild on key change (tile window, zoom, chunk readiness, tuner clear).
+  var key = _poolKey(chunkStore, px, py, tilePxSnapped, radiusX, radiusY);
+  if (key !== _pool.key || !_pool.uploaded) {
+    _pool.key = key;
+    _poolRebuild(chunkStore, player, glc, tilePxSnapped, radiusX, radiusY);
+    if (!_pool.uploaded) return false; // GL not ready — caller falls back to legacy path
+  }
+
+  // 10Hz trigger tick.
+  if (timeMs - _pool.lastTickMs >= 100) {
+    _pool.lastTickMs = timeMs;
+    _poolTick(timeMs, timeSec, glc, tilePxSnapped);
+  }
+
+  // Per-frame: animate only the active list.
+  var m = _pool.mirror;
+  var sm = _pool.shadowMirror;
+  var doneKeys = null;
+  _pool.active.forEach(function (_v, i) {
+    var meta = _pool.meta[i];
+    var bl = meta.bl;
+    var o = i * SPRITE_FLOATS;
+    var stillActive = false;
+
+    var frameIdx = bl ? bl.restFrame : 0;
+    var animBlend = 0;
+    if (bl) {
+      var blCycle = (bl.frameCount || FRAME_COUNT) * FRAME_DURATION;
+      var triggerKey = meta.wx * 10000 + meta.wy * 100 + bl.bi;
+      var triggerData = triggerTimes.get(triggerKey);
+      var triggerTime = triggerData ? triggerData.time : -99999;
+      var triggerDuration = blCycle * bl.loopCount;
+      var elapsed = timeMs - triggerTime;
+      var isAnimating = elapsed >= 0 && elapsed <= triggerDuration;
+      if (isAnimating) {
+        frameIdx = Math.floor((elapsed / FRAME_DURATION + bl.restFrame) % (bl.frameCount || FRAME_COUNT));
+        var cycleProgress = elapsed / blCycle;
+        if (cycleProgress < 1) animBlend = Math.min(1, cycleProgress * 2);
+        else if (cycleProgress > bl.loopCount - 1) animBlend = Math.max(0, (bl.loopCount - cycleProgress) * 2);
+        else animBlend = 1;
+        stillActive = true;
+      } else if (triggerData && triggerTime > -99999) {
+        // Freeze on the frame the animation ended on (ambient-life design).
+        frameIdx = Math.floor((triggerDuration / FRAME_DURATION + bl.restFrame) % (bl.frameCount || FRAME_COUNT));
+      }
+    }
+
+    // Resolve image: sim state > lifecycle state > anim frame > static.
+    var img = null;
+    if (bl && meta.simState === 'REMOVED') { img = null; }
+    else if (bl) {
+      var simUrl = (meta.simState && meta.simState !== 'REMOVED')
+        ? f4SpriteUrl({ name: bl._f4Name, biome: bl._f4Biome, variant: bl._f4Variant, state: meta.simState })
+        : null;
+      img = (simUrl || bl.stateUrl) ? loadFrame(simUrl || bl.stateUrl) : null;
+      if (!img && bl.animUrlBase) {
+        img = loadFrame(bl.animUrlBase + 'frame_' + String(frameIdx).padStart(3, '0') + '.png', bl.frameCount);
+      }
+      if (!img) img = loadFrame(bl.staticUrl);
+    } else {
+      img = meta.img; // extra decor: static, only fades
+    }
+
+    var rect = null, alpha = 0, sway = 0;
+    if (img) {
+      img = scaledFrame(img, meta.drawSizePx);
+      rect = glc.atlasRect(img, img.src || img._dnKey || '');
+      var fade = imgFade(img, timeMs);
+      if (fade < 1) stillActive = true; // keep fading
+      alpha = meta.edgeFade * fade;
+      if (bl && !bl.isRigid) {
+        sway = (meta.tileRotCached || 0) * 1.2 * animBlend * bl.lifeSway;
+      }
+    }
+    // Write floats + mark dirty.
+    m[o + 3] = (bl ? bl.baseAngle : 0) + sway;
+    m[o + 4] = rect ? alpha : 0;
+    if (rect) { m[o + 5] = rect.u0; m[o + 6] = rect.v0; m[o + 7] = rect.du; m[o + 8] = rect.dv; }
+    _pool.dirty.add(i);
+    var sIdx = _pool.shadowOf[i];
+    if (sIdx >= 0) {
+      var so = sIdx * SPRITE_FLOATS;
+      var tier = 1.0 - sm[so + 3]; // diffusion slot was set at rebuild
+      sm[so + 4] = (rect ? alpha : 0) * meta.biomeShadowK * (0.30 + 0.70 * tier);
+      if (rect) { sm[so + 5] = rect.u0; sm[so + 6] = rect.v0; sm[so + 7] = rect.du; sm[so + 8] = rect.dv; }
+      _pool.shadowDirty.add(sIdx);
+    }
+    if (!stillActive) { if (!doneKeys) doneKeys = []; doneKeys.push(i); }
+  });
+  if (doneKeys) for (var d = 0; d < doneKeys.length; d++) _pool.active.delete(doneKeys[d]);
+
+  // Upload dirty ranges (full upload if heavily fragmented).
+  var FULL_FRACTION = 0.30, GAP = 8;
+  if (_pool.dirty.size > 0) {
+    if (_pool.dirty.size > _pool.n * FULL_FRACTION) {
+      glc.uploadPoolRange('sprite', m, 0, _pool.n);
+    } else {
+      var ranges = coalesceDirty(Array.from(_pool.dirty), GAP);
+      for (var r = 0; r < ranges.length; r++) glc.uploadPoolRange('sprite', m, ranges[r].start, ranges[r].count);
+    }
+  }
+  if (_pool.shadowDirty.size > 0) {
+    if (_pool.shadowDirty.size > _pool.shadowN * FULL_FRACTION) {
+      glc.uploadPoolRange('shadow', sm, 0, _pool.shadowN);
+    } else {
+      var sRanges = coalesceDirty(Array.from(_pool.shadowDirty), GAP);
+      for (var sr = 0; sr < sRanges.length; sr++) glc.uploadPoolRange('shadow', sm, sRanges[sr].start, sRanges[sr].count);
+    }
+  }
+  _f2Stats.dirtyInstances = _pool.dirty.size;
+  _f2Stats.activeCount = _pool.active.size;
+  _pool.dirty.clear();
+  _pool.shadowDirty.clear();
+
+  // Camera uniform.
+  var cam = {
+    x: chunkGrid.baseSX - chunkGrid.minCX * chunkGrid.chunkPx,
+    y: chunkGrid.baseSY - chunkGrid.minCY * chunkGrid.chunkPx,
+    scale: tilePxSnapped,
+  };
+
+  // Shadows first (under sprites), as today.
+  var sunH = sun ? sun.sunHeight : 1;
+  var sunUp = sunH < 0.08 ? (sunH / 0.08) * (sunH / 0.08) * (3 - 2 * (sunH / 0.08)) : 1;
+  if (glc.shadowOk && sun && sunH > 0.001 && _pool.shadowN > 0) {
+    var shVec = { x: sun.shadowX * sun.shadowLength * 0.9, y: sun.shadowLength * 0.35 };
+    var shStrength = 0.50 * (0.62 + (1 - sunH) * 0.38) * sunUp;
+    glc.drawPoolShadows(0, _pool.shadowN, w, h, cam, shVec, shStrength);
+  }
+
+  // Player: uploaded per frame, drawn as a 1-instance range between the two
+  // halves of the pool split at the player's sortY.
+  var pRect = _playerGL ? glc.uploadPlayerSprite(_playerGL.canvas) : null;
+  var split = _pool.n;
+  if (pRect && _playerGL) {
+    split = lowerBound(_pool.sortY, player.y + 0.4, _pool.n);
+    var tail = _pool.n; // player instance lives at slot n (capacity is n+1)
+    var to = tail * SPRITE_FLOATS;
+    m[to] = (_playerGL.pivotX - cam.x) / cam.scale;
+    m[to + 1] = (_playerGL.pivotY - cam.y) / cam.scale;
+    m[to + 2] = _playerGL.size / cam.scale;
+    m[to + 3] = 0;
+    m[to + 4] = 1;
+    m[to + 5] = pRect.u0; m[to + 6] = pRect.v0; m[to + 7] = pRect.du; m[to + 8] = pRect.dv;
+    glc.uploadPoolRange('sprite', m, tail, 1);
+  }
+  glc.drawPoolSprites(0, split, w, h, cam);
+  if (pRect && _playerGL) glc.drawPoolSprites(_pool.n, 1, w, h, cam);
+  if (split < _pool.n) glc.drawPoolSprites(split, _pool.n - split, w, h, cam);
+  return true;
+}
+
 // Draw animated Field 2 sprites near the player.
 // Called per-frame from canvas-renderer after chunk drawing.
 // When `glc` is provided (GL mode), most sprites render as GPU instances;
@@ -1234,6 +1401,14 @@ function _poolTick(timeMs, timeSec, glc, tilePxSnapped) {
 export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, weather, sun, glc) {
   // Don't render until all sprites are loaded — prevents cascading pops
   if (!_f2Ready) return;
+
+  if (glc && glc.spritesOk) {
+    var usedPool = _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, weather, sun, glc);
+    if (usedPool) {
+      _prevPlayerX = player.x; _prevPlayerY = player.y;
+      return;
+    }
+  }
 
   var tilePx = WORLD.tileSize * camera.zoom;
   var chunkPx = chunkGrid.chunkPx;
