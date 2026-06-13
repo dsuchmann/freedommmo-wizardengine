@@ -372,15 +372,15 @@
       for (const name of DRAW_ORDER) {
         const b = solved[name];
         const col = BONE_COLORS[name] || '#fff';
-        const o = toCP(project(b.origin)));
-        const t = toCP(project(b.tip)));
+        const o = toCP(project(b.origin));
+        const t = toCP(project(b.tip));
         ctx.beginPath(); ctx.strokeStyle = col; ctx.lineWidth = 3;
         ctx.moveTo(o.cx, o.cy); ctx.lineTo(t.cx, t.cy); ctx.stroke();
         ctx.beginPath(); ctx.fillStyle = col;
         ctx.arc(o.cx, o.cy, 4, 0, Math.PI*2); ctx.fill();
       }
       // Head
-      const ht = toCP(project(solved.head.tip)));
+      const ht = toCP(project(solved.head.tip));
       ctx.beginPath(); ctx.strokeStyle = '#f0d060'; ctx.lineWidth = 2;
       ctx.arc(ht.cx, ht.cy, 8, 0, Math.PI*2); ctx.stroke();
     }
