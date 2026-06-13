@@ -24,10 +24,10 @@ import { macroCellPeoples } from '../chronicle/races.js';
 import { regionChronicle, settlementState } from '../chronicle/chronicle.js';
 import { classifyBiome } from '../../src/world/biomes.js';
 
-export const MACRO = 4;                      // macro-cell = 4×4 regions
-const MACRO_TILES = MACRO * REGION;          // 64 tiles per side
+export const MACRO = 8;                      // macro-cell = 8×8 regions = 128×128 tiles
+const MACRO_TILES = MACRO * REGION;          // 128 tiles per side
 const STRIDE = 8;                            // sample every 8th tile (fast)
-const TERRITORY_W = 12, TERRITORY_H = 10;   // settlement footprint
+const TERRITORY_W = 48, TERRITORY_H = 40;   // settlement footprint (~proportional to F6 trees)
 const GENESIS_GROUP_R = 50000;
 
 /** Map a region key to the macro-cell key that contains it. */
@@ -38,8 +38,22 @@ export function macroKeyOf(regionKey) {
 
 // ── Pure settlement placement (no kernel, no graph) ─────────────────
 
+/** Check that most of a territory rect is on land. Pure. */
+function territoryLandFraction(x, y) {
+  const x0 = x - Math.floor(TERRITORY_W / 2), y0 = y - Math.floor(TERRITORY_H / 2);
+  let land = 0, total = 0;
+  for (let dy = 0; dy < TERRITORY_H; dy += 4) {
+    for (let dx = 0; dx < TERRITORY_W; dx += 4) {
+      total++;
+      if (tileCost(x0 + dx, y0 + dy) !== Infinity) land++;
+    }
+  }
+  return land / total;
+}
+
 /** Find the best settlement site in a macro-cell. Pure f(seed, mx, my, terrain).
- *  Fast: samples at STRIDE, picks the land tile with best water proximity. */
+ *  Fast: samples at STRIDE, picks the land tile with best water proximity.
+ *  Rejects sites where the territory would be < 70% land. */
 function findSiteInMacro(seed, mx, my) {
   const x0 = mx * MACRO_TILES, y0 = my * MACRO_TILES;
   let bestScore = -1, bestX = x0, bestY = y0;
@@ -59,7 +73,10 @@ function findSiteInMacro(seed, mx, my) {
       if (quality > bestScore) { bestScore = quality; bestX = tx; bestY = ty; }
     }
   }
-  return bestScore > 0 ? { x: bestX, y: bestY } : null;
+  if (bestScore <= 0) return null;
+  // Verify the territory footprint is mostly land
+  if (territoryLandFraction(bestX, bestY) < 0.7) return null;
+  return { x: bestX, y: bestY };
 }
 
 /** Territory rect centered on site. Spacing is guaranteed by macro-cell grid
