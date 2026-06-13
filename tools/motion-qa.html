@@ -526,8 +526,8 @@ Now return the CORRECTED joint angles that fix the critique. Start from the curr
           : { 'Content-Type': 'application/json', 'x-api-key': cfg.key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' };
 
         const body = isOpenAI
-          ? { model, max_tokens: 500, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userMsg }] }
-          : { model, max_tokens: 500, system: systemPrompt, messages: [{ role: 'user', content: userMsg.map(p => p.type === 'image_url' ? { type: 'image', source: { type: 'base64', media_type: 'image/png', data: base64 } } : p) }] };
+          ? { model, max_completion_tokens: 500, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userMsg }] }
+          : { model, max_completion_tokens: 500, system: systemPrompt, messages: [{ role: 'user', content: userMsg.map(p => p.type === 'image_url' ? { type: 'image', source: { type: 'base64', media_type: 'image/png', data: base64 } } : p) }] };
 
         document.getElementById('critique-status').textContent = `Sending to ${model}...`;
         console.log(`[QA] Sending critique to ${model}...`, { poseId, critique, allJoints });
@@ -637,8 +637,8 @@ Respond with ONLY the JSON.`;
           ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.key}` }
           : { 'Content-Type': 'application/json', 'x-api-key': cfg.key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' };
         const body = isOpenAI
-          ? { model, max_tokens: 1024, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: `Choreograph: "${cmd}", id="${id}"` }] }
-          : { model, max_tokens: 1024, system: systemPrompt, messages: [{ role: 'user', content: `Choreograph: "${cmd}", id="${id}"` }] };
+          ? { model, max_completion_tokens: 1024, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: `Choreograph: "${cmd}", id="${id}"` }] }
+          : { model, max_completion_tokens: 1024, system: systemPrompt, messages: [{ role: 'user', content: `Choreograph: "${cmd}", id="${id}"` }] };
 
         document.getElementById('status').textContent = `Generating "${cmd}" via ${model}...`;
         const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
