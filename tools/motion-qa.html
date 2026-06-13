@@ -23,6 +23,7 @@
     .controls button { background: #333; color: #ddd; border: 1px solid #555; border-radius: 4px; padding: 4px 12px; cursor: pointer; font-size: 16px; }
     .controls button:hover { background: #444; }
     .controls button.active { background: #446; border-color: #66a; }
+    .dir-btn { font-size: 11px !important; padding: 2px 6px !important; min-width: 28px; }
     #details { width: 340px; padding: 12px; overflow-y: auto; }
     #details h3 { color: #9af; margin: 12px 0 6px; }
     #details h3:first-child { margin-top: 0; }
@@ -64,6 +65,17 @@
         <button id="btn-loop" title="Toggle loop">&#8635;</button>
         <span class="status" id="frame-info">-</span>
       </div>
+      <div class="controls" id="dir-bar">
+        <span style="font-size:11px;color:#666">DIR:</span>
+        <button class="dir-btn active" data-dir="s">S</button>
+        <button class="dir-btn" data-dir="sw">SW</button>
+        <button class="dir-btn" data-dir="w">W</button>
+        <button class="dir-btn" data-dir="nw">NW</button>
+        <button class="dir-btn" data-dir="n">N</button>
+        <button class="dir-btn" data-dir="ne">NE</button>
+        <button class="dir-btn" data-dir="e">E</button>
+        <button class="dir-btn" data-dir="se">SE</button>
+      </div>
     </div>
     <div class="panel" id="details">
       <h3 id="detail-title">Select a pose</h3>
@@ -88,7 +100,11 @@
     <button id="btn-generate">Generate</button>
   </div>
   <script type="module">
+    import { solvePose } from '/src/life/pose.js';
     import { drawPose } from '/src/life/eval/stick-renderer.js';
+
+    const DRAW_ORDER = ['thigh_l','shin_l','foot_l','thigh_r','shin_r','foot_r','spine','arm_u_l','arm_f_l','hand_l','arm_u_r','arm_f_r','hand_r','head'];
+    const BONE_COLORS = { spine:'#e0e0e0',head:'#f0d060',arm_u_l:'#6090e0',arm_f_l:'#6090e0',hand_l:'#6090e0',arm_u_r:'#4070c0',arm_f_r:'#4070c0',hand_r:'#4070c0',thigh_l:'#50b050',shin_l:'#50b050',foot_l:'#50b050',thigh_r:'#308030',shin_r:'#308030',foot_r:'#308030' };
 
     let rig = null;
     let poses = [];
@@ -153,7 +169,9 @@
     function selectPose(p) {
       selectedPose = p;
       pendingFix = null;
-      choreoFrames = null;
+      // Build choreoFrames from ALL poses so play/step navigates the library
+      choreoFrames = poses.map(pp => ({ joints: pp.joints, label: pp.id, ticks: 5, _poseRef: pp }));
+      choreoIdx = poses.indexOf(p);
       document.querySelectorAll('.pose-item').forEach(el => el.classList.toggle('selected', el.dataset.id === p.id));
       document.getElementById('detail-title').textContent = p.id;
       document.getElementById('detail-desc').textContent = p.desc;
@@ -162,7 +180,7 @@
       document.getElementById('critique-box').value = '';
       document.getElementById('critique-status').textContent = '';
       document.getElementById('btn-approve').style.display = 'none';
-      document.getElementById('frame-info').textContent = 'pose';
+      document.getElementById('frame-info').textContent = `${choreoIdx + 1}/${poses.length} poses`;
       drawPreview(p.joints);
     }
 
@@ -229,6 +247,16 @@
       drawPreview(f.joints);
       document.getElementById('detail-json').textContent = JSON.stringify(f.joints, null, 2);
       document.getElementById('frame-info').textContent = `${choreoIdx + 1}/${choreoFrames.length} (${f.label})`;
+      // If stepping through pose library, update the details panel + selection
+      if (f._poseRef) {
+        selectedPose = f._poseRef;
+        document.getElementById('detail-title').textContent = f._poseRef.id;
+        document.getElementById('detail-desc').textContent = f._poseRef.desc;
+        document.getElementById('detail-tags').textContent = f._poseRef.tags.join(', ');
+        document.querySelectorAll('.pose-item').forEach(el => el.classList.toggle('selected', el.dataset.id === f._poseRef.id));
+        // Scroll selected into view
+        document.querySelector('.pose-item.selected')?.scrollIntoView({ block: 'nearest' });
+      }
     }
 
     // ── Playback controls ───────────────────────────────────────────────────
@@ -269,13 +297,92 @@
       document.getElementById('btn-loop').classList.toggle('active', looping);
     };
 
+    // ── Direction projection (matches game renderer DIRS table) ────────────
+    const DIRS = {
+      s:  { xProj: 1,    xSign: -1, label: 'South (front)' },
+      n:  { xProj: 1,    xSign: +1, label: 'North (back)' },
+      e:  { xProj: 0.25, xSign: -1, label: 'East (profile R)' },
+      w:  { xProj: 0.25, xSign: +1, label: 'West (profile L)' },
+      se: { xProj: 0.75, xSign: -1, label: 'SE (3/4 front-right)' },
+      sw: { xProj: 0.75, xSign: +1, label: 'SW (3/4 front-left)' },
+      ne: { xProj: 0.75, xSign: -1, label: 'NE (3/4 back-right)' },
+      nw: { xProj: 0.75, xSign: +1, label: 'NW (3/4 back-left)' },
+    };
+    let currentDir = 's';
+
+    document.querySelectorAll('.dir-btn').forEach(btn => {
+      btn.onclick = () => {
+        currentDir = btn.dataset.dir;
+        document.querySelectorAll('.dir-btn').forEach(b => b.classList.toggle('active', b === btn));
+        // Redraw current view
+        const joints = selectedPose ? selectedPose.joints : (choreoFrames ? choreoFrames[choreoIdx]?.joints : {});
+        if (joints) drawPreview(joints);
+      };
+    });
+
     // ── Drawing ─────────────────────────────────────────────────────────────
     function drawPreview(joints) {
       const canvas = document.getElementById('preview');
       const ctx = canvas.getContext('2d');
       ctx.fillStyle = '#1a1a1a';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      drawPose(ctx, rig, joints, 0, 0, canvas.width, canvas.height, {});
+
+      const dir = DIRS[currentDir];
+      // Apply directional projection: scale x by xProj, flip x by xSign
+      // This simulates how the game renderer shows the avatar from different angles
+      const projectedJoints = { ...joints };
+      drawPoseDirectional(ctx, rig, projectedJoints, 0, 0, canvas.width, canvas.height, dir);
+
+      // Direction label
+      ctx.fillStyle = '#555';
+      ctx.font = '11px monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText(dir.label, canvas.width - 8, 16);
+    }
+
+    /** Draw pose with directional x-projection (xProj flattens depth, xSign mirrors). */
+    function drawPoseDirectional(ctx, rig, joints, x, y, w, h, dir) {
+      const solved = solvePose(rig, joints);
+
+      // Compute bounds with projection applied
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      const project = (pt) => ({ x: dir.xSign * pt.x * dir.xProj, y: pt.y });
+      for (const name of DRAW_ORDER) {
+        const b = solved[name];
+        for (const pt of [project(b.origin), project(b.tip)]) {
+          if (pt.x < minX) minX = pt.x; if (pt.x > maxX) maxX = pt.x;
+          if (pt.y < minY) minY = pt.y; if (pt.y > maxY) maxY = pt.y;
+        }
+      }
+      const rigW = maxX - minX || 1, rigH = maxY - minY || 1;
+      const scale = Math.min(w * 0.7 / rigW, h * 0.7 / rigH);
+      const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+      const ocx = x + w / 2, ocy = y + h / 2;
+      const toC = (rx, ry) => ({ cx: ocx + (rx - cx) * scale, cy: ocy - (ry - cy) * scale });
+      const toCP = (pt) => toC(pt.x, pt.y);
+
+      // Ground line
+      const footY = Math.min(project(solved.foot_l.tip).y, project(solved.foot_r.tip).y);
+      const gnd = toC(cx, footY);
+      ctx.save(); ctx.strokeStyle = '#555'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+      ctx.beginPath(); ctx.moveTo(x, gnd.cy); ctx.lineTo(x+w, gnd.cy); ctx.stroke();
+      ctx.setLineDash([]); ctx.restore();
+
+      // Bones
+      for (const name of DRAW_ORDER) {
+        const b = solved[name];
+        const col = BONE_COLORS[name] || '#fff';
+        const o = toCP(project(b.origin)));
+        const t = toCP(project(b.tip)));
+        ctx.beginPath(); ctx.strokeStyle = col; ctx.lineWidth = 3;
+        ctx.moveTo(o.cx, o.cy); ctx.lineTo(t.cx, t.cy); ctx.stroke();
+        ctx.beginPath(); ctx.fillStyle = col;
+        ctx.arc(o.cx, o.cy, 4, 0, Math.PI*2); ctx.fill();
+      }
+      // Head
+      const ht = toCP(project(solved.head.tip)));
+      ctx.beginPath(); ctx.strokeStyle = '#f0d060'; ctx.lineWidth = 2;
+      ctx.arc(ht.cx, ht.cy, 8, 0, Math.PI*2); ctx.stroke();
     }
 
     // ── Critique → Fix → Learn ──────────────────────────────────────────────
