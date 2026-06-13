@@ -49,12 +49,24 @@
     <span class="status" id="status">Loading...</span>
     <label style="font-size:11px;color:#888;margin-left:auto">Model:
       <select id="model-select" style="background:#222;color:#ddd;border:1px solid #444;border-radius:3px;padding:2px 4px;font:11px monospace">
-        <option value="gpt-4o-mini">gpt-4o-mini</option>
-        <option value="gpt-4o">gpt-4o</option>
-        <option value="gpt-4.1-mini">gpt-4.1-mini</option>
-        <option value="gpt-4.1">gpt-4.1</option>
-        <option value="o3-mini">o3-mini</option>
-        <option value="o4-mini">o4-mini</option>
+        <optgroup label="Flagship (newest)">
+          <option value="gpt-4.5">gpt-4.5</option>
+          <option value="gpt-4o">gpt-4o</option>
+        </optgroup>
+        <optgroup label="Reasoning (o-series)">
+          <option value="o3-pro">o3-pro</option>
+          <option value="o3">o3</option>
+          <option value="o3-mini">o3-mini</option>
+          <option value="o1">o1</option>
+        </optgroup>
+        <optgroup label="GPT-4.1 family">
+          <option value="gpt-4.1">gpt-4.1</option>
+          <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+          <option value="gpt-4.1-nano">gpt-4.1-nano</option>
+        </optgroup>
+        <optgroup label="Budget">
+          <option value="gpt-4o-mini" selected>gpt-4o-mini</option>
+        </optgroup>
       </select>
     </label>
   </header>
