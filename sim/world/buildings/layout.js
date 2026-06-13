@@ -5,6 +5,7 @@
 import { rand, mix } from '../../kernel/rng.js';
 import { typesForTier, typesInCategory } from './taxonomy.js';
 import { generateFootprint } from './footprints.js';
+import { specializeBuilding } from './specializations.js';
 
 // ── District configurations by tier ──────────────────────────────────
 
@@ -202,6 +203,7 @@ export function placeBuildings(seed, site, tier, race, districts, spines) {
   const budget = BUDGET[tier] ?? BUDGET.village;
   const placed = [];
   const occupiedTiles = new Set();  // "wx,wy" keys for collision detection
+  const communitySpecs = new Set(); // track assigned specializations to avoid duplicates
 
   /** Check if a footprint at (wx, wy) collides with already-placed buildings.
    *  Includes a 3-tile gap for walkable paths between buildings. */
@@ -226,6 +228,16 @@ export function placeBuildings(seed, site, tier, race, districts, spines) {
     }
   }
 
+  /** Assign specialization, brand, owner, and inventory to a placed building. */
+  function assignIdentity(b, bSeed) {
+    const typeId = b.footprint.typeId;
+    const result = specializeBuilding(bSeed, typeId, tier, communitySpecs);
+    b.specialization = result.specialization;
+    b.brand = result.brand;
+    b.owner = result.owner;
+    b.inventory = result.inventory;
+  }
+
   /** Pick a building type from the allowed categories for this district kind. */
   function pickType(districtKind, idx) {
     const cats = DISTRICT_CATEGORIES[districtKind] ?? ['residential'];
@@ -245,7 +257,9 @@ export function placeBuildings(seed, site, tier, race, districts, spines) {
     const fp = generateFootprint(mix(ps, 0xBA00, ax, ay), d.anchor, race);
     if (!wouldCollide(ax, ay, fp)) {
       markOccupied(ax, ay, fp);
-      placed.push({ x: ax, y: ay, footprint: fp, district: d.kind, isAnchor: true });
+      const b = { x: ax, y: ay, footprint: fp, district: d.kind, isAnchor: true };
+      assignIdentity(b, mix(ps, 0xBA01, ax, ay));
+      placed.push(b);
     }
   }
 
@@ -288,7 +302,9 @@ export function placeBuildings(seed, site, tier, race, districts, spines) {
           const fp = generateFootprint(mix(ps, 0xBF00, wx, wy, globalIdx), type.id, race);
           if (!wouldCollide(wx, wy, fp)) {
             markOccupied(wx, wy, fp);
-            placed.push({ x: wx, y: wy, footprint: fp, district: d.kind, isAnchor: false });
+            const b = { x: wx, y: wy, footprint: fp, district: d.kind, isAnchor: false };
+            assignIdentity(b, mix(ps, 0xBF01, wx, wy, globalIdx));
+            placed.push(b);
             placedInDistrict++;
           }
           globalIdx++;
@@ -316,7 +332,9 @@ export function placeBuildings(seed, site, tier, race, districts, spines) {
       const fp = generateFootprint(mix(ps, 0xBD10, wx, wy, scatterIdx), type.id, race);
       if (!wouldCollide(wx, wy, fp)) {
         markOccupied(wx, wy, fp);
-        placed.push({ x: wx, y: wy, footprint: fp, district: d.kind, isAnchor: false });
+        const b = { x: wx, y: wy, footprint: fp, district: d.kind, isAnchor: false };
+        assignIdentity(b, mix(ps, 0xBD11, wx, wy, scatterIdx));
+        placed.push(b);
         placedInDistrict++;
       }
     }
