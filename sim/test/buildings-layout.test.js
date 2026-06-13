@@ -1,7 +1,7 @@
 // sim/test/buildings-layout.test.js
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { assignDistricts, DISTRICT_CONFIGS, generateRoadSpines, placeBuildings } from '../world/buildings/layout.js';
+import { assignDistricts, DISTRICT_CONFIGS, generateRoadSpines, placeBuildings, layoutSettlement } from '../world/buildings/layout.js';
 
 test('village gets 2 districts (residential + craft)', () => {
   const districts = assignDistricts(42, { x: 500, y: 500 }, 'village', 'human', 'grassland');
@@ -188,4 +188,60 @@ test('placeBuildings: buildings within settlement radius', () => {
     const dist = Math.sqrt(dx * dx + dy * dy);
     assert.ok(dist <= maxR + 20, `building at distance ${dist} exceeds radius ${maxR}`);
   }
+});
+
+// ── Task 4: layoutSettlement ─────────────────────────────────────────
+
+test('layoutSettlement returns complete catalog', () => {
+  const layout = layoutSettlement(42, { x: 500, y: 500 }, 'town', 'human', 'grassland');
+  assert.ok(layout.districts.length > 0, 'has districts');
+  assert.ok(layout.buildings.length > 0, 'has buildings');
+  assert.ok(layout.spines.length > 0, 'has road spines');
+  assert.ok(layout.site, 'has site');
+  assert.equal(layout.tier, 'town');
+  assert.equal(layout.race, 'human');
+});
+
+test('layoutSettlement is deterministic', () => {
+  const a = layoutSettlement(42, { x: 500, y: 500 }, 'town', 'human', 'grassland');
+  const b = layoutSettlement(42, { x: 500, y: 500 }, 'town', 'human', 'grassland');
+  assert.equal(a.buildings.length, b.buildings.length);
+  for (let i = 0; i < a.buildings.length; i++) {
+    assert.equal(a.buildings[i].x, b.buildings[i].x);
+    assert.equal(a.buildings[i].y, b.buildings[i].y);
+    assert.equal(a.buildings[i].footprint.typeId, b.buildings[i].footprint.typeId);
+  }
+});
+
+test('layoutSettlement can be queried by tile', () => {
+  const layout = layoutSettlement(42, { x: 500, y: 500 }, 'village', 'human', 'grassland');
+  // Pick a known building position and query it
+  if (layout.buildings.length > 0) {
+    const b = layout.buildings[0];
+    const result = layout.queryTile(b.x, b.y);
+    assert.ok(result, 'tile query returns something at building position');
+    assert.equal(result.type, 'building');
+    assert.equal(result.building.footprint.typeId, b.footprint.typeId);
+  }
+});
+
+test('layoutSettlement queryTile returns null for empty tile', () => {
+  const layout = layoutSettlement(42, { x: 500, y: 500 }, 'village', 'human', 'grassland');
+  // Far from settlement -- should be null
+  const result = layout.queryTile(0, 0);
+  assert.equal(result, null);
+});
+
+test('layoutSettlement queryTile identifies road tiles', () => {
+  const layout = layoutSettlement(42, { x: 500, y: 500 }, 'town', 'human', 'grassland');
+  // Walk along a spine and check that at least one tile returns road
+  let foundRoad = false;
+  if (layout.spines.length > 0) {
+    const spine = layout.spines[0];
+    for (const p of spine.points) {
+      const r = layout.queryTile(p.x, p.y);
+      if (r && r.type === 'road') { foundRoad = true; break; }
+    }
+  }
+  assert.ok(foundRoad, 'at least one spine waypoint is a road tile');
 });

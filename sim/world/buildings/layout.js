@@ -323,3 +323,86 @@ export function placeBuildings(seed, site, tier, race, districts, spines) {
 
   return placed;
 }
+
+// ── Layout cache ─────────────────────────────────────────────────────
+
+const _layoutCache = new Map();  // "seed,mx,my" -> layout
+
+/**
+ * The public entry point: generate a complete settlement layout.
+ * Pure f(seed, site, tier, race, biome) -> {districts, buildings, spines, queryTile}.
+ * Cached per call-signature (intended: one per macro-cell).
+ *
+ * @param {number} seed
+ * @param {{x,y}} site
+ * @param {string} tier  'village' | 'town' | 'city'
+ * @param {string} race
+ * @param {string} biome
+ * @returns {{districts, buildings, spines, site, tier, race, queryTile(x,y)}}
+ */
+export function layoutSettlement(seed, site, tier, race, biome) {
+  const cacheKey = `${seed},${site.x},${site.y},${tier}`;
+  if (_layoutCache.has(cacheKey)) return _layoutCache.get(cacheKey);
+
+  const districts = assignDistricts(seed, site, tier, race, biome);
+  const spines = generateRoadSpines(seed, site, districts);
+  const buildings = placeBuildings(seed, site, tier, race, districts, spines);
+
+  // Build spatial index for tile queries: Map<"x,y" -> building>
+  const tileIndex = new Map();
+  for (const b of buildings) {
+    const bb = b.footprint.boundingBox;
+    for (let dy = 0; dy < bb.h; dy++) {
+      for (let dx = 0; dx < bb.w; dx++) {
+        tileIndex.set(`${b.x + dx},${b.y + dy}`, b);
+      }
+    }
+  }
+
+  // Road tile index: tiles within 1 tile of any spine segment
+  const roadTiles = new Set();
+  for (const spine of spines) {
+    for (let i = 0; i < spine.points.length - 1; i++) {
+      const p0 = spine.points[i], p1 = spine.points[i + 1];
+      const steps = Math.ceil(Math.sqrt((p1.x - p0.x) ** 2 + (p1.y - p0.y) ** 2));
+      for (let s = 0; s <= steps; s++) {
+        const t = steps > 0 ? s / steps : 0;
+        const rx = Math.round(p0.x + (p1.x - p0.x) * t);
+        const ry = Math.round(p0.y + (p1.y - p0.y) * t);
+        roadTiles.add(`${rx},${ry}`);
+        // Width of 2 for streets
+        if (spine.tier === 'street') {
+          roadTiles.add(`${rx + 1},${ry}`);
+          roadTiles.add(`${rx},${ry + 1}`);
+        }
+      }
+    }
+  }
+
+  /** Query what's at a specific tile. Returns null if nothing. */
+  function queryTile(x, y) {
+    const key = `${x},${y}`;
+    const building = tileIndex.get(key);
+    if (building) {
+      // Determine if this tile is a wall, door, or floor within the footprint
+      const lx = x - building.x, ly = y - building.y;
+      const isWall = building.footprint.walls.some(w => w.x === lx && w.y === ly);
+      const isDoor = building.footprint.doors.some(d => d.x === lx && d.y === ly);
+      return { type: 'building', building, tileKind: isDoor ? 'door' : isWall ? 'wall' : 'floor' };
+    }
+    if (roadTiles.has(key)) {
+      return { type: 'road', tier: 'street' };
+    }
+    return null;
+  }
+
+  const layout = { districts, buildings, spines, site, tier, race, queryTile };
+
+  _layoutCache.set(cacheKey, layout);
+  if (_layoutCache.size > 200) _layoutCache.clear();
+
+  return layout;
+}
+
+/** Clear the layout cache (for testing). */
+export function clearLayoutCache() { _layoutCache.clear(); }
