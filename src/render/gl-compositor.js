@@ -871,7 +871,8 @@ export class GLCompositor {
     if (rect !== undefined) return rect;
     var w = img.naturalWidth || img.width;
     var h = img.naturalHeight || img.height;
-    if (!w || !h || !img.complete) return null; // not decoded yet — retry later
+    // Canvases (downscale cache) have no .complete — only gate Images on decode
+    if (!w || !h || img.complete === false) return null; // not decoded yet — retry later
     var A = this.atlasSize;
     if (w + 2 > A || h + 2 > A) {
       this.atlasRects.set(url, null); // sprite larger than the whole atlas

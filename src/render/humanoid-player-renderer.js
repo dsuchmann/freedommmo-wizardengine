@@ -48,15 +48,47 @@ function ready() {
 }
 
 /** Walk/sprint limb swing from gait params; idle = rest. frame matches the
- *  legacy doodle's 8-frame cycle (phase = frame * PI/4). */
+ *  legacy doodle's 8-frame cycle (phase = frame * PI/4).
+ *  South view faces the camera, so the stride is in DEPTH — a screen-plane leg
+ *  rotation reads as sideways scissoring. Legs stay at rest here; the step is
+ *  rendered as alternating leg lift/foreshortening in drawHumanoidPlayer.
+ *  Arms keep a subtle planar counter-swing (visible silhouette motion). */
 function jointsFor(frame, animation) {
   if (animation !== 'walk' && animation !== 'sprint') return {};
   const gait = rig.gaits[animation === 'sprint' ? 'run' : 'walk'];
   const phase = frame * Math.PI / 4;
-  const leg = Math.sin(phase) * 18 * gait.strideFactor;   // walk ±9°, run ±16.2°
-  const arm = -Math.sin(phase) * 12 * gait.strideFactor;  // counter-swing
-  return { thigh_l: leg, thigh_r: -leg, arm_u_l: arm, arm_u_r: -arm };
+  const arm = -Math.sin(phase) * 5 * gait.strideFactor;
+  return { arm_u_l: arm, arm_u_r: -arm };
 }
+
+// Per-part pre-downscale (stepwise halving, area-averaged). NEAREST minification
+// at k«1 drops most source pixels — this is what made the GL-composited player
+// (rasterized at zoom 1, k≈0.07–0.24) look shredded. Residual scale stays ~1.
+const _scaledParts = new Map(); // part@steps -> canvas
+function partFrame(part, img, k) {
+  let steps = 0;
+  while (k * (1 << (steps + 1)) <= 1.1) steps++;
+  if (steps === 0) return img;
+  const key = part + '@' + steps;
+  let c = _scaledParts.get(key);
+  if (!c) {
+    let src = img, w = img.width, h = img.height;
+    for (let i = 0; i < steps; i++) {
+      const half = document.createElement('canvas');
+      half.width = Math.max(1, Math.round(w / 2));
+      half.height = Math.max(1, Math.round(h / 2));
+      const hc = half.getContext('2d');
+      hc.imageSmoothingEnabled = true;
+      hc.drawImage(src, 0, 0, half.width, half.height);
+      src = half; w = half.width; h = half.height;
+    }
+    c = src;
+    _scaledParts.set(key, c);
+  }
+  return c;
+}
+
+const LEG_SIDE = { thigh_l: 'l', shin_l: 'l', foot_l: 'l', thigh_r: 'r', shin_r: 'r', foot_r: 'r' };
 
 /** Draw the assembled avatar. Returns false when not ready (caller falls back).
  *  (x, y) matches drawPlayerAt's doodle anchor: feet at y + FEET_OFFSET*zoom. */
@@ -70,6 +102,15 @@ export function drawHumanoidPlayer(ctx, x, y, zoom, frame, animation) {
     ? Math.abs(Math.sin(frame * Math.PI / 4)) * gait.bob * RIG_UNIT_PX * zoom : 0;
   const S = RIG_UNIT_PX * zoom;
   const groundY = y + FEET_OFFSET * zoom - bob;
+  // Front-view step: each leg alternately lifts (foreshortens toward the hip)
+  // — the depth-stride equivalent for a camera-facing view.
+  const moving = animation === 'walk' || animation === 'sprint';
+  const phase = frame * Math.PI / 4;
+  const stepAmp = moving ? (animation === 'sprint' ? 0.22 : 0.14) : 0;
+  const lift = {
+    l: Math.max(0, Math.sin(phase)) * stepAmp,
+    r: Math.max(0, -Math.sin(phase)) * stepAmp,
+  };
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   for (const l of layers) {
@@ -77,13 +118,19 @@ export function drawHumanoidPlayer(ctx, x, y, zoom, frame, animation) {
     const m = meta.parts[l.part];
     const b = pose[PART_BONE[l.part]];
     const k = (S / m.ppu) * l.scale;
+    const side = LEG_SIDE[PART_BONE[l.part]];
+    const squash = side ? 1 - lift[side] : 1;
+    // Hip anchor for the leg foreshortening (thigh origin of this side)
+    const hipY = side ? groundY - pose[side === 'l' ? 'thigh_l' : 'thigh_r'].origin.y * S : 0;
     ctx.save();
     // South view faces the camera: anatomical left appears on the viewer's RIGHT.
     // Rig x is anatomical (left limbs at -x), so mirror x for this direction; the
     // mirror flips angular direction, cancelling the y-down rotation negation.
-    ctx.translate(x - b.origin.x * S, groundY - b.origin.y * S);
+    const ty = groundY - b.origin.y * S;
+    ctx.translate(x - b.origin.x * S, side ? hipY + (ty - hipY) * squash : ty);
     ctx.rotate(b.worldDeg * DEG);
-    ctx.drawImage(img, -m.pivot[0] * k, -m.pivot[1] * k, img.width * k, img.height * k);
+    const src = partFrame(l.part, img, k);
+    ctx.drawImage(src, -m.pivot[0] * k, -m.pivot[1] * k * squash, img.width * k, img.height * k * squash);
     ctx.restore();
   }
   ctx.restore();
