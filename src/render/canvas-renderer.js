@@ -430,10 +430,11 @@ export class CanvasRenderer {
     drawWindWispOverlay(ctx, w, h, player, tilePx);
 
     drawElevationOverlay(ctx, chunkStore, camX, camY, w, h, sun, camera);
-    drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h);
     this.drawContactOverlay(player, w, h, camera.zoom, performance.now() / 1000);
     // this.drawDepthBokeh(chunkStore, player, focusTile, camera, camX, camY, w, h);
     this.drawAtmosphere(sun, w, h);
+    // Sim debug overlay draws LAST (on top of atmosphere/lighting)
+    drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h);
 
     if (glScene) {
       // Stage 4: per-tile water wave field, soft-light blended in the present

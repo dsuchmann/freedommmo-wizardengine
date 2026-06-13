@@ -7,7 +7,12 @@ import { materializeRect } from '../world/wire.js';
 import { SimServer } from './server.js';
 import { initItemIdFromKernel } from '../world/actions.js';
 
-/** Open-or-create: a db with a saved tick resumes; an empty one gets a land start near `spawn`. */
+/** Open-or-create: a db with a saved tick resumes; an empty one is a blank canvas.
+ *  The world has always existed everywhere — there is no special "start area."
+ *  findLandStart picks WHERE the player enters, but the world at that location
+ *  is identical to every other location: lazily materialized via the attention
+ *  bubble (TierManager → ensureRegionBaseline → ensureGenesisSettlements).
+ *  The player discovers a world that was always there, not one that bootstraps. */
 export function bootWorld(db, { seed, spawn = { x: 0, y: 0 }, phi = 4 }) {
   const saved = db.prepare('SELECT value FROM meta WHERE key=?').get('tick');
   let kernel;
@@ -17,12 +22,12 @@ export function bootWorld(db, { seed, spawn = { x: 0, y: 0 }, phi = 4 }) {
     kernel = new Kernel({ seed, phi });
     const start = findLandStart(spawn);
     if (!start) throw new Error(`no land within ${256 * 16} tiles of spawn ${spawn.x},${spawn.y}`);
-    spawnStart(kernel, start);
-    kernel.graph.boot(() => materializeRect(kernel, start, 0));
-    console.log('sim: start area ' + start.x0 + ',' + start.y0 + ' ' + start.w + 'x' + start.h);
-    checkpoint(kernel, db);          // birth certificate: baseline is durable immediately
+    // No spawnStart — the world materializes uniformly through attention.
+    // The start rect is just WHERE the player appears, not a special bootstrap.
+    console.log('sim: player enters at ' + start.x0 + ',' + start.y0);
+    checkpoint(kernel, db);          // birth certificate: empty canvas, world materializes on attention
   }
-  initItemIdFromKernel(kernel);    // derive nextItemId past max persisted item id (both paths)
+  initItemIdFromKernel(kernel);
   return kernel;
 }
 
