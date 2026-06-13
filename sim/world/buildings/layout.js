@@ -100,3 +100,61 @@ export function assignDistricts(seed, site, tier, race, biome) {
 
   return districts;
 }
+
+// ── Road spines ──────────────────────────────────────────────────────
+
+/**
+ * Generate road spines through districts.
+ * A primary street runs through center; secondary streets branch into each district.
+ * Each spine is a sequence of waypoints (not per-tile -- queried via distance check).
+ *
+ * @param {number} seed
+ * @param {{x,y}} site  Settlement center
+ * @param {Array} districts  From assignDistricts
+ * @returns {Array<{tier, district, points: Array<{x,y}>}>}
+ */
+export function generateRoadSpines(seed, site, districts) {
+  const rs = mix(seed, site.x, site.y, 0xAB01);
+  const spines = [];
+  const maxR = Math.max(...districts.map(d => d.radius));
+
+  // Primary street: noise-displaced line through center, running at a seeded angle.
+  const primaryAngle = rand(rs, 0xAB02) * Math.PI;  // 0..PI (a line, not a ray)
+  const primaryLen = maxR * 0.9;
+  const primaryPoints = [];
+  const NUM_PRI_PTS = 9;  // odd count ensures one waypoint is exactly at center (t=0)
+  for (let i = 0; i < NUM_PRI_PTS; i++) {
+    const t = (i / (NUM_PRI_PTS - 1)) * 2 - 1;  // -1..+1 along the line
+    const baseX = site.x + Math.cos(primaryAngle) * primaryLen * t;
+    const baseY = site.y + Math.sin(primaryAngle) * primaryLen * t;
+    // Noise displacement perpendicular to the line (skip at center for accuracy)
+    const isCenter = Math.abs(t) < 0.01;
+    const noiseAmp = isCenter ? 0 : maxR * 0.08;
+    const nx = (rand(rs, 0xAB10, i) - 0.5) * noiseAmp;
+    const ny = (rand(rs, 0xAB11, i) - 0.5) * noiseAmp;
+    primaryPoints.push({ x: Math.round(baseX + nx), y: Math.round(baseY + ny) });
+  }
+  spines.push({ tier: 'street', district: null, points: primaryPoints });
+
+  // Secondary streets: one per outer district, branching from center toward district midpoint.
+  const outerDistricts = districts.filter(d => d.innerRadius > 0 || !districts.some(d2 => d2.kind === 'civic'));
+  for (let i = 0; i < outerDistricts.length; i++) {
+    const d = outerDistricts[i];
+    const midAngle = (d.angleStart + d.angleEnd) / 2;
+    const secPoints = [];
+    const NUM_SEC_PTS = 5;
+    for (let j = 0; j < NUM_SEC_PTS; j++) {
+      const t = j / (NUM_SEC_PTS - 1);  // 0..1 from center outward
+      const r = d.innerRadius + (d.radius - d.innerRadius) * t;
+      const baseX = site.x + Math.cos(midAngle) * r;
+      const baseY = site.y + Math.sin(midAngle) * r;
+      const noiseAmp = maxR * 0.05;
+      const nx = (rand(rs, 0xAB20, i, j) - 0.5) * noiseAmp;
+      const ny = (rand(rs, 0xAB21, i, j) - 0.5) * noiseAmp;
+      secPoints.push({ x: Math.round(baseX + nx), y: Math.round(baseY + ny) });
+    }
+    spines.push({ tier: 'alley', district: d.kind, points: secPoints });
+  }
+
+  return spines;
+}

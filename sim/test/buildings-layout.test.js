@@ -1,7 +1,7 @@
 // sim/test/buildings-layout.test.js
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { assignDistricts, DISTRICT_CONFIGS } from '../world/buildings/layout.js';
+import { assignDistricts, DISTRICT_CONFIGS, generateRoadSpines } from '../world/buildings/layout.js';
 
 test('village gets 2 districts (residential + craft)', () => {
   const districts = assignDistricts(42, { x: 500, y: 500 }, 'village', 'human', 'grassland');
@@ -57,4 +57,50 @@ test('different seeds produce different district angles', () => {
   const anglesA = a.map(d => d.angleStart).join(',');
   const anglesB = b.map(d => d.angleStart).join(',');
   assert.notEqual(anglesA, anglesB, 'different seeds -> different angles');
+});
+
+// ── Task 2: Road spines ──────────────────────────────────────────────
+
+test('road spines: village has at least 1 spine', () => {
+  const districts = assignDistricts(42, { x: 500, y: 500 }, 'village', 'human', 'grassland');
+  const spines = generateRoadSpines(42, { x: 500, y: 500 }, districts);
+  assert.ok(spines.length >= 1, 'at least 1 road spine');
+});
+
+test('road spines: town has at least 3 spines', () => {
+  const districts = assignDistricts(42, { x: 500, y: 500 }, 'town', 'human', 'grassland');
+  const spines = generateRoadSpines(42, { x: 500, y: 500 }, districts);
+  assert.ok(spines.length >= 3, `only ${spines.length} spines`);
+});
+
+test('each spine is an array of {x,y} waypoints', () => {
+  const districts = assignDistricts(42, { x: 500, y: 500 }, 'village', 'human', 'grassland');
+  const spines = generateRoadSpines(42, { x: 500, y: 500 }, districts);
+  for (const spine of spines) {
+    assert.ok(Array.isArray(spine.points), 'spine has points array');
+    assert.ok(spine.points.length >= 2, 'spine has at least 2 waypoints');
+    for (const p of spine.points) {
+      assert.ok(typeof p.x === 'number' && typeof p.y === 'number', 'waypoint has x,y');
+    }
+    assert.ok(spine.tier, 'spine has tier (street/alley)');
+  }
+});
+
+test('primary spine passes through settlement center', () => {
+  const site = { x: 500, y: 500 };
+  const districts = assignDistricts(42, site, 'town', 'human', 'grassland');
+  const spines = generateRoadSpines(42, site, districts);
+  const primary = spines.find(s => s.tier === 'street');
+  assert.ok(primary, 'has a primary street');
+  // At least one waypoint should be at or near center
+  const nearCenter = primary.points.some(p =>
+    Math.abs(p.x - site.x) <= 3 && Math.abs(p.y - site.y) <= 3);
+  assert.ok(nearCenter, 'primary street passes near center');
+});
+
+test('road spines are deterministic', () => {
+  const districts = assignDistricts(42, { x: 500, y: 500 }, 'town', 'human', 'grassland');
+  const a = generateRoadSpines(42, { x: 500, y: 500 }, districts);
+  const b = generateRoadSpines(42, { x: 500, y: 500 }, districts);
+  assert.deepEqual(a, b);
 });
