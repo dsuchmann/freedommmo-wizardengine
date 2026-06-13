@@ -602,96 +602,164 @@ Now return the CORRECTED joint angles that fix the critique. Start from the curr
     };
 
     // ── Generate command ────────────────────────────────────────────────────
+    // ── LLM call helper ───────────────────────────────────────────────────
+    async function callLLM(systemPrompt, userContent, cfg) {
+      const isOpenAI = !cfg.key.startsWith('sk-ant-');
+      const url = cfg.url || (isOpenAI ? 'https://api.openai.com/v1/chat/completions' : 'https://api.anthropic.com/v1/messages');
+      const model = document.getElementById('model-select').value;
+      const headers = isOpenAI
+        ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.key}` }
+        : { 'Content-Type': 'application/json', 'x-api-key': cfg.key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' };
+      const body = isOpenAI
+        ? { model, max_completion_tokens: 1024, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userContent }] }
+        : { model, max_completion_tokens: 1024, system: systemPrompt, messages: [{ role: 'user', content: userContent }] };
+      const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error(`API ${res.status}: ${(await res.text()).slice(0, 200)}`);
+      const data = await res.json();
+      const text = isOpenAI ? (data.choices?.[0]?.message?.content || '') : (data.content?.[0]?.text || '');
+      return text;
+    }
+
+    function parseJSON(text) {
+      return JSON.parse(text.replace(/^```json?\s*/m, '').replace(/\s*```$/m, '').trim());
+    }
+
+    // ── Generate: decompose → create missing poses → compose ────────────────
     document.getElementById('btn-generate').onclick = async () => {
       const cmd = document.getElementById('command').value.trim();
       if (!cmd) return;
       const cfg = getLLMConfig();
       if (!cfg?.key) { document.getElementById('status').textContent = 'No LLM key configured'; return; }
-
-      document.getElementById('status').textContent = `Generating "${cmd}"...`;
-
-      // Build pose summary for composition
-      const poseSummary = poses.map(p => `  ${p.id} -- ${p.desc}`).join('\n');
-      const rulesText = rules.length ? '\n\nRULES TO FOLLOW:\n' + rules.map((r, i) => `${i + 1}. ${r.rule}`).join('\n') : '';
-
-      const systemPrompt = `You compose motion choreographies by picking from verified poses and specifying timing.
-
-AVAILABLE POSES:
-${poseSummary}
-
-RULES:
-1. Output JSON: {"id":"<id>","kind":"gesture","steps":[{"pose":"<pose_id>","ticks":<N>},...]}
-2. ONLY use pose ids from the AVAILABLE POSES list above. Do NOT invent new pose names.
-3. If no pose in the list matches what you need, use the CLOSEST available pose.
-4. Start and end with "rest"
-5. Use 2-6 ticks per step (10 ticks = 1 second)
-6. Think about the full motion arc — preparation, action, recovery${rulesText}
-
-Respond with ONLY the JSON.`;
-
+      const model = document.getElementById('model-select').value;
       const id = cmd.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 40);
+      const setStatus = (msg) => { document.getElementById('status').textContent = msg; };
 
       try {
-        const isOpenAI = !cfg.key.startsWith('sk-ant-');
-        const url = cfg.url || (isOpenAI ? 'https://api.openai.com/v1/chat/completions' : 'https://api.anthropic.com/v1/messages');
-        const model = document.getElementById('model-select').value;
-        const headers = isOpenAI
-          ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.key}` }
-          : { 'Content-Type': 'application/json', 'x-api-key': cfg.key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' };
-        const body = isOpenAI
-          ? { model, max_completion_tokens: 1024, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: `Choreograph: "${cmd}", id="${id}"` }] }
-          : { model, max_completion_tokens: 1024, system: systemPrompt, messages: [{ role: 'user', content: `Choreograph: "${cmd}", id="${id}"` }] };
+        // ── STEP 1: Decompose the motion into keyframe descriptions ─────
+        setStatus(`Step 1/3: Decomposing "${cmd}" into keyframes...`);
+        const poseSummary = poses.map(p => `  ${p.id} — ${p.desc}`).join('\n');
+        const rulesText = rules.length ? '\nRULES:\n' + rules.map((r, i) => `${i+1}. ${r.rule}`).join('\n') : '';
 
-        document.getElementById('status').textContent = `Generating "${cmd}" via ${model}...`;
-        const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
-        if (!res.ok) throw new Error(`API ${res.status}: ${(await res.text()).slice(0, 200)}`);
-        const data = await res.json();
-        const text = isOpenAI ? (data.choices?.[0]?.message?.content || '') : (data.content?.[0]?.text || '');
-        console.log('[QA] Generate raw:', text);
-        const plan = JSON.parse(text.replace(/^```json?\s*/m, '').replace(/\s*```$/m, '').trim());
+        const decomposePrompt = `You decompose human motions into a sequence of keyframe body positions.
 
-        // Compile plan to frames — flag unknown poses
+EXISTING POSES (use these when possible):
+${poseSummary}
+
+For each keyframe, specify:
+- "pose": an existing pose id if one matches, OR "NEW:<snake_case_id>:<description of the body position>"
+- "ticks": duration (2-6, where 10 ticks = 1 second)
+
+RULES:
+1. Start and end with "rest"
+2. Break the motion into 4-10 distinct body positions
+3. Use existing poses whenever they fit. Only use NEW for positions not in the list.
+4. NEW descriptions must be specific about body part positions (e.g. "both arms extended forward, torso bent forward 30 degrees, legs straight")
+5. Think anatomically — where is each limb at this moment?${rulesText}
+
+Output JSON: {"id":"<id>","kind":"gesture","steps":[{"pose":"<id or NEW:id:desc>","ticks":<N>},...]}
+No markdown.`;
+
+        const decomposeText = await callLLM(decomposePrompt, `Decompose: "${cmd}", id="${id}"`, cfg);
+        console.log('[QA] Decompose raw:', decomposeText);
+        const plan = parseJSON(decomposeText);
+        console.log('[QA] Plan:', plan);
+
+        // ── STEP 2: Create any missing poses ────────────────────────────
         const poseMap = new Map(poses.map(p => [p.id, p]));
-        const unknown = [];
+        const newPoses = [];
+        for (const step of plan.steps) {
+          if (step.pose.startsWith('NEW:')) {
+            const parts = step.pose.slice(4);
+            const colonIdx = parts.indexOf(':');
+            const newId = colonIdx >= 0 ? parts.slice(0, colonIdx).trim() : parts.replace(/\s+/g, '_');
+            const newDesc = colonIdx >= 0 ? parts.slice(colonIdx + 1).trim() : parts;
+
+            if (poseMap.has(newId)) { step.pose = newId; continue; }
+
+            setStatus(`Step 2/3: Creating pose "${newId}"...`);
+            console.log(`[QA] Generating new pose: ${newId} — ${newDesc}`);
+
+            const poseGenPrompt = `You set joint angles for a 2D humanoid stick figure to match a described body position.
+
+JOINTS and their effects:
+- spine: [-30, 30] — negative=lean forward, positive=lean back
+- head: [-60, 60] — negative=look down, positive=look up
+- arm_u_l: [-170, 50] — LEFT upper arm. -90=horizontal forward, -170=overhead
+- arm_f_l: [-140, 0] — LEFT forearm bend. More negative=more bent
+- hand_l: [-45, 45]
+- arm_u_r: [-50, 170] — RIGHT upper arm. 90=horizontal forward, 170=overhead
+- arm_f_r: [0, 140] — RIGHT forearm bend. More positive=more bent
+- hand_r: [-45, 45]
+- thigh_l: [-110, 30] — LEFT thigh. -90=horizontal forward, negative=lift up
+- shin_l: [0, 140] — LEFT knee bend. 130+=shin folds against thigh (kneeling)
+- foot_l: [-30, 30]
+- thigh_r, shin_r, foot_r: same as left side
+
+At rest (all 0): standing upright, arms hanging, legs straight.
+
+Return ALL 14 joints. Think carefully about what EACH body part does in this position.
+
+Respond: {"joints":{"spine":_,"head":_,"arm_u_l":_,"arm_f_l":_,"hand_l":_,"arm_u_r":_,"arm_f_r":_,"hand_r":_,"thigh_l":_,"thigh_r":_,"shin_l":_,"shin_r":_,"foot_l":_,"foot_r":_}}
+No markdown.`;
+
+            const poseText = await callLLM(poseGenPrompt, `Create pose for: "${newDesc}"`, cfg);
+            console.log(`[QA] Pose gen raw for ${newId}:`, poseText);
+            const poseResult = parseJSON(poseText);
+
+            // Add to dictionary
+            const newPose = {
+              id: newId, joints: poseResult.joints, desc: newDesc,
+              tags: newDesc.toLowerCase().split(/\s+/).filter(w => w.length > 2),
+              category: 'generated', verified: false,
+            };
+            poses.push(newPose);
+            poseMap.set(newId, newPose);
+            newPoses.push(newId);
+            step.pose = newId;
+
+            await new Promise(r => setTimeout(r, 300)); // rate limit
+          }
+        }
+
+        if (newPoses.length) {
+          savePoses();
+          renderList(document.getElementById('filter').value);
+          console.log(`[QA] Created ${newPoses.length} new poses:`, newPoses);
+        }
+
+        // ── STEP 3: Compile and display ─────────────────────────────────
+        setStatus(`Step 3/3: Composing choreography...`);
         const frames = plan.steps.map(s => {
           const p = poseMap.get(s.pose);
-          if (!p) unknown.push(s.pose);
-          return { joints: p ? { ...p.joints } : {}, label: p ? s.pose : `?${s.pose}`, ticks: s.ticks };
+          return { joints: p ? { ...p.joints } : {}, label: s.pose, ticks: s.ticks };
         });
-        if (unknown.length) {
-          console.warn('[QA] Unknown poses (not in dictionary):', unknown);
-          document.getElementById('critique-status').textContent = `Warning: ${unknown.length} unknown pose(s): ${unknown.join(', ')}`;
-        }
 
         choreoFrames = frames;
         choreoIdx = 0;
         selectedPose = null;
         pendingFix = null;
-        document.getElementById('detail-title').textContent = plan.id;
-        document.getElementById('detail-desc').textContent = `Generated: ${frames.length} keyframes`;
+        document.getElementById('detail-title').textContent = plan.id || id;
+        document.getElementById('detail-desc').textContent = `Generated: ${frames.length} keyframes` + (newPoses.length ? ` (${newPoses.length} new poses created)` : '');
         document.getElementById('detail-tags').textContent = plan.steps.map(s => s.pose).join(' -> ');
         document.getElementById('critique-box').value = '';
         document.getElementById('critique-status').textContent = '';
         document.getElementById('btn-approve').style.display = 'none';
         showFrame(0);
 
-        // Save to generated choreographies list (persists in localStorage)
+        // Save to generated list
         const generated = JSON.parse(localStorage.getItem('motion_generated_choreos') || '[]');
-        // Build the full program for storage
         const program = {
           id: plan.id || id, kind: plan.kind || 'gesture',
           variant: { time: [0.9, 1.1], amplitude: [0.9, 1.1] },
           root: { op: 'sequence', children: frames.map(f => ({ op: 'pose', joints: f.joints, ticks: f.ticks || 4 })) },
         };
-        generated.push({ id: plan.id || id, command: cmd, model, plan, program, date: new Date().toISOString().slice(0, 10) });
+        generated.push({ id: plan.id || id, command: cmd, model, plan, program, newPoses, date: new Date().toISOString().slice(0, 10) });
         localStorage.setItem('motion_generated_choreos', JSON.stringify(generated));
-
-        // Add to the choreo list UI
         addGeneratedToList(plan.id || id);
 
-        document.getElementById('status').textContent = `Generated "${cmd}" via ${model} (${frames.length} frames) — saved`;
+        setStatus(`Generated "${cmd}" via ${model} — ${frames.length} frames, ${newPoses.length} new poses`);
       } catch (e) {
-        document.getElementById('status').textContent = `Error: ${e.message}`;
+        setStatus(`Error: ${e.message}`);
         console.error('[QA] Generate error:', e);
       }
     };
