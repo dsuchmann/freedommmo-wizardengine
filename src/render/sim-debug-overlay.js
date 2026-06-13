@@ -166,7 +166,7 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
   const d = collectDebugDrawables(sim);
   // Discover ALL settlements on screen from the chronicle (pure, no sim needed)
   // Cache aggressively: only recompute on large camera jumps (1000px+) to avoid per-frame layout generation
-  const cacheKey = `${Math.floor(camX / 1000)},${Math.floor(camY / 1000)}`;
+  const cacheKey = `${Math.floor(camX / 500)},${Math.floor(camY / 500)},${Math.floor(tilePx * 10)}`;
   if (_discoveredCache.key !== cacheKey) {
     _discoveredCache = { key: cacheKey, settlements: discoverSettlements(camX, camY, w, h, tilePx) };
   }
