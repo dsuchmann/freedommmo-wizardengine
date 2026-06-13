@@ -5,7 +5,9 @@
 import { parseCommand, matchMotion } from '../life/motion-match.js';
 import { MOTION_MANIFEST } from '../life/choreography/manifest.js';
 import { playMotion } from '../render/humanoid-player-renderer.js';
-import { isLLMConfigured, generateMotion } from '../life/motion-llm.js';
+import { isLLMConfigured } from '../life/motion-llm.js';
+import { composeSpatial } from '../life/eval/spatial-compose.js';
+import { compileSpatialProgram } from '../life/eval/spatial-compiler.js';
 
 let _container = null;
 let _input = null;
@@ -105,19 +107,26 @@ async function submitCommand() {
       showFeedback(`failed to load ${match.id}: ${err.message}`, '#ffaaaa');
     }
   } else if (isLLMConfigured()) {
-    // No dictionary match — generate via LLM
+    // No dictionary match — compose via spatial pipeline
+    const cfg = JSON.parse(localStorage.getItem('motion_llm'));
+    const rules = JSON.parse(localStorage.getItem('motion_eval_rules') || '[]');
     showFeedback(`generating "${text}"...`, '#aaccff');
     closeChat();
-    const { program, error } = await generateMotion(text);
-    if (program) {
-      playMotion(program, { count });
-      showFeedback(`generated: ${program.id} ×${count}`);
-      // Append to runtime manifest so repeats are instant
-      MOTION_MANIFEST.push({ id: program.id, kind: program.kind || 'gesture',
-        tags: tokens, desc: text });
-    } else {
-      showFeedback(error, '#ffaaaa');
-    }
+
+    // Fetch the rig (needed for compiler)
+    const rigRes = await fetch('/src/life/rigs/humanoid.json');
+    const rig = await rigRes.json();
+
+    const { choreography, error } = await composeSpatial(text, cfg, { rules });
+    if (error) { showFeedback(error, '#ffaaaa'); return; }
+
+    const program = compileSpatialProgram(choreography, rig);
+    playMotion(program, { count });
+    showFeedback(`${choreography.id} ×${count} (spatial)`, '#aaffaa');
+
+    // Append to runtime manifest for instant replay
+    MOTION_MANIFEST.push({ id: choreography.id, kind: choreography.kind || 'gesture',
+      tags: tokens, desc: text });
     return;
   } else {
     // No match, no LLM — find closest guess
