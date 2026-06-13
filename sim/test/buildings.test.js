@@ -5,7 +5,6 @@ import { Kernel } from '../kernel/kernel.js';
 import { createPlayer, pick, move, take, chop } from '../world/actions.js';
 import { createGroup, contribute } from '../society/groups.js';
 import { foundSettlement } from '../society/settlements.js';
-import { findSettlementSite } from '../society/suitability.js';
 import { materializeRect } from '../world/wire.js';
 import { constructBuilding, maintainBuilding, buildingStampAt, wallTiles,
          BUILD_E_PER_STAMP, BUILDING_CONDITION_MAX, BUILDING_DECAY_PER_DAY,
@@ -34,8 +33,10 @@ function scenario(fund = 2000) {
   assert.equal(contribute(k, p.id, g.id, Math.ceil(fund / 0.9), 0), true, 'funding contribute');
   const group = k.graph.nodes.get(g.id);
   assert.ok(group.R >= fund, `group must hold ≥${fund}, has ${group.R}`);
-  const site = findSettlementSite(k, RECT);
-  const s = foundSettlement(k, g.id, site, 0);
+  // P1 unbounded world: territories are no longer clipped to bounds, so the rect's
+  // water-hugging argmax site deeds zero land plots. This test is about construction,
+  // not site selection — found at a known plot-viable land site (settlements.test site).
+  const s = foundSettlement(k, g.id, { x: 940, y: 8 }, 0);
   assert.ok(s, 'settlement founded');
   return { k, p, g, s };
 }

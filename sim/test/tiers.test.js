@@ -15,7 +15,10 @@ const meadowKernel = (seed = 42) => {
 test('demotion folds individuals into an aggregate, conserving count and mass exactly', () => {
   const k = meadowKernel();
   k.runTo(30 * 86400);
-  const living = [...k.graph.nodes.values()].filter(n => n.R != null);
+  // P1 unbounded world: seeds now establish past the meadow edge, so individuals exist
+  // outside region 0,0. Demotion folds exactly the region's residents — scope the
+  // expectation (and the loose-individual check) to region 0,0.
+  const living = [...k.graph.nodes.values()].filter(n => n.R != null && regionKeyOf(n.x, n.y) === '0,0');
   const expect = {};
   for (const n of living) {
     k.closeSegment(n, k.tick);
@@ -30,7 +33,9 @@ test('demotion folds individuals into an aggregate, conserving count and mass ex
     assert.equal(p.count, e.count, species);
     assert.ok(Math.abs(p.sumR + p.sumBody - e.mass) < 1e-6, species);
   }
-  assert.ok([...k.graph.nodes.values()].every(n => n.R == null || n.attrs.noFlux), 'no loose individuals');
+  assert.ok([...k.graph.nodes.values()].every(
+    n => n.R == null || n.attrs.noFlux || regionKeyOf(n.x, n.y) !== '0,0'),
+    'no loose individuals left inside the demoted region');
   // demotion moves mass between tiers; it must not create or destroy any
   assert.ok(Math.abs(k.stocks(k.tick) - before) / Math.max(before, 1) < 1e-9);
   assert.ok(k.ledger.events.some(e => e.type === 'demote' && e.targets.includes(agg.id)));

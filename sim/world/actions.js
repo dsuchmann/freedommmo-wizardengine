@@ -312,7 +312,7 @@ export function combine(kernel, playerId, itemIds, tick) {
 }
 
 /** One-tile step for a positioned actor. Refuses (false) when the actor is missing,
- *  unpositioned, the step is not exactly one tile (Chebyshev 1), or it exits bounds.
+ *  unpositioned, or the step is not exactly one tile (Chebyshev 1).
  *  Position is spatial state, not embodiment (S4 honestly absent): zero time cost in P1 —
  *  movement metabolism is the Time Metabolism's job in a later pass, declared, not faked. */
 export function move(kernel, actorId, dx, dy, tick) {
@@ -321,8 +321,6 @@ export function move(kernel, actorId, dx, dy, tick) {
   if (!Number.isInteger(dx) || !Number.isInteger(dy)) return false;
   if (Math.max(Math.abs(dx), Math.abs(dy)) !== 1) return false;
   const toX = actor.x + dx, toY = actor.y + dy;
-  const b = kernel.bounds;
-  if (b && (toX < b.x0 || toX >= b.x0 + b.w || toY < b.y0 || toY >= b.y0 + b.h)) return false;
   // Walls are impassable claims (P4): a non-walkable building stamp refuses the step.
   const stamp = buildingStampAt(kernel, toX, toY);
   if (stamp && !stamp.walkable) return false;

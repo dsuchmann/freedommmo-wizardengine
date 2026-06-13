@@ -25,7 +25,6 @@ import { Kernel } from '../kernel/kernel.js';
 import { createPlayer, pick, move, take, chop } from '../world/actions.js';
 import { createGroup, contribute } from '../society/groups.js';
 import { foundSettlement } from '../society/settlements.js';
-import { findSettlementSite } from '../society/suitability.js';
 import { materializeRect } from '../world/wire.js';
 import { constructBuilding, wallTiles, BUILD_E_PER_STAMP } from '../world/buildings.js';
 import { FEATURE_E } from '../world/construct.js';
@@ -83,9 +82,11 @@ function runScenario() {
   const stocks0 = k.stocks(0);
   const tl0 = k.ledger.totals.transferLoss;
 
-  // ── Found the settlement at the scored site ──
-  const site = findSettlementSite(k, RECT);
-  const settlement = foundSettlement(k, g.id, site, 0);
+  // ── Found the settlement at a scored, plot-viable land site ──
+  // [A7] P1 unbounded world: territories are no longer clipped to bounds, so the rect's
+  // water-hugging argmax site deeds zero land plots. The argmax identity is probe-settlements'
+  // claim; this probe needs a deeded plot — found at the settlements.test land site.
+  const settlement = foundSettlement(k, g.id, { x: 940, y: 8 }, 0);
   assert.ok(settlement, 'settlement founded');
   const plots = [...k.graph.nodes.values()].filter(
     n => n.type === 'plot' && n.attrs.settlement === settlement.id);
@@ -146,7 +147,7 @@ function runScenario() {
     'all claims healed — flora regrows on the next reboot');
 
   return {
-    site: { x: site.x, y: site.y },
+    site: { x: 940, y: 8 },
     hut: { x0: fp.x0, y0: fp.y0, cost: hutCost },
     forge: { x0: forge.attrs.footprint.x0, y0: forge.attrs.footprint.y0 },
     events: k.ledger.events.map(e => e.type),

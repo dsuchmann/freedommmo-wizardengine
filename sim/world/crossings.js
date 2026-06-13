@@ -35,7 +35,6 @@ function crossingAt(kernel, x, y) {
  *  - tile not a stream (streamAt returns null)
  *  - kind 'ford' and stream width > FORD_MAX_WIDTH
  *  - kind not 'ford' or 'bridge'
- *  - tile outside kernel.bounds
  *  - a live crossing already exists on this tile
  *  - group.R < cost
  *  Returns the matter node on success. */
@@ -46,10 +45,6 @@ export function buildCrossing(kernel, groupId, tile, kind, tick) {
   const stream = streamAt(tile.x, tile.y);
   if (!stream) return null;
   if (kind === 'ford' && stream.width > FORD_MAX_WIDTH) return null;
-  if (kernel.bounds) {
-    const { x0, y0, w, h } = kernel.bounds;
-    if (tile.x < x0 || tile.x >= x0 + w || tile.y < y0 || tile.y >= y0 + h) return null;
-  }
   if (crossingAt(kernel, tile.x, tile.y)) return null;
   const cost = kind === 'ford' ? FORD_COST : BRIDGE_COST;
   if (group.R < cost) return null;

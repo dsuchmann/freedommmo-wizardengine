@@ -20,18 +20,20 @@ test('forage: grazer instinct bites nearest flora exactly like legacy graze', ()
   assert.equal(grazes[0].magnitude, 600);   // full bite — grass had body+R >= bite
 });
 
-test('hunt: wolf approaches and bites deer through the violence channel; kill is causal', () => {
+test('hunt: wolf approaches and bites prey through the violence channel; kill is causal', () => {
   const k = mk();
-  let wolf, deer;
+  let wolf, prey;
   k.graph.boot(() => {
-    // Deer against the west wall (x=1) so flee attempts hit the boundary and wolf can close in.
-    deer = k.addLiving({ species: 'deer', x: 1, y: 10, R: 20000, body: 6000, tick: 0 });
-    wolf = k.addLiving({ species: 'wolf', x: 3, y: 10, R: 40000, body: 5000, tick: 0 });
+    // P1 unbounded world: there is no world edge to trap prey against. Grazer prey
+    // (speed 2 per 6h = 4 tiles/12h) cannot outrun the wolf (speed 4 per 12h decision,
+    // hunt radius 6 > grazer flee radius 4), so the chase resolves in open terrain.
+    prey = k.addLiving({ species: 'grazer', x: 10, y: 10, R: 20000, body: 6000, tick: 0 });
+    wolf = k.addLiving({ species: 'wolf', x: 13, y: 10, R: 40000, body: 5000, tick: 0 });
   });
-  k.runTo(80 * 3600);   // several 12h wolf decisions; deer trapped against wall, wolf closes in
+  k.runTo(80 * 3600);   // several 12h wolf decisions; wolf closes in and bites
   const hunts = k.ledger.events.filter(e => e.type === 'hunt' && e.actor === wolf.id);
   assert.ok(hunts.length >= 1, 'wolf hunted');
-  const death = k.ledger.events.find(e => e.type === 'death' && e.actor === deer.id);
+  const death = k.ledger.events.find(e => e.type === 'death' && e.actor === prey.id);
   if (death && death.causeEventId != null) {   // assert causality when the kill happened (starvation deaths have null cause)
     assert.ok(hunts.some(h => h.id === death.causeEventId), 'death caused by a hunt event');
   }
