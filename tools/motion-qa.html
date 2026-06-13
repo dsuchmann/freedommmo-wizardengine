@@ -325,14 +325,15 @@
     }
 
     function tick() {
-      if (!playing || !choreoFrames) return;
-      const f = choreoFrames[choreoIdx];
-      const ms = (f.ticks || 3) * 100; // 10 ticks/sec
-      showFrame(choreoIdx);
-      choreoIdx++;
+      if (!playing || !choreoFrames || !choreoFrames.length) { stopPlayback(); return; }
       if (choreoIdx >= choreoFrames.length) {
         if (looping) { choreoIdx = 0; } else { stopPlayback(); return; }
       }
+      const f = choreoFrames[choreoIdx];
+      if (!f) { stopPlayback(); return; }
+      const ms = (f.ticks || 3) * 100; // 10 ticks/sec
+      showFrame(choreoIdx);
+      choreoIdx++;
       playTimer = setTimeout(tick, ms);
     }
 
@@ -537,8 +538,12 @@ Now return the CORRECTED joint angles that fix the critique. Start from the curr
         const data = await res.json();
         const text = isOpenAI ? (data.choices?.[0]?.message?.content || '') : (data.content?.[0]?.text || '');
         console.log('[QA] Raw LLM response:', text);
+        if (!text || text.startsWith("I'm sorry") || text.startsWith("I cannot")) {
+          throw new Error(`Model refused or returned empty: "${text.slice(0, 80)}"`);
+        }
         const jsonStr = text.replace(/^```json?\s*/m, '').replace(/\s*```$/m, '').trim();
         const result = JSON.parse(jsonStr);
+        if (!result.joints) throw new Error('LLM response missing "joints" field');
         console.log('[QA] Parsed result:', result);
         console.log('[QA] New joints:', result.joints);
 
