@@ -28,6 +28,8 @@ export const COMPOUND_GROUPS = {
   both_legs:      ['left_leg', 'right_leg'],
   both_shoulders: ['left_shoulder', 'right_shoulder'],
   both_hips:      ['left_hip', 'right_hip'],
+  both_hands:     ['left_hand', 'right_hand'],
+  both_feet:      ['left_foot', 'right_foot'],
   upper_body:     ['torso', 'head', 'left_arm', 'right_arm'],
   lower_body:     ['left_leg', 'right_leg'],
   full_body:      ['torso', 'head', 'left_arm', 'right_arm', 'left_leg', 'right_leg'],
@@ -56,7 +58,9 @@ export function resolveBones(groupName) {
     }
     return bones;
   }
-  throw new Error(`Unknown body group: "${groupName}"`);
+  // Gracefully handle unknown groups
+  console.warn?.(`[spatial] Unknown body group: "${groupName}" — skipping`);
+  return [];
 }
 
 /**
@@ -73,7 +77,9 @@ export function expandCompound(groupName) {
   if (BODY_GROUPS[groupName]) {
     return [groupName];
   }
-  throw new Error(`Unknown body group: "${groupName}"`);
+  // Gracefully handle unknown groups — log warning, return empty
+  console.warn?.(`[spatial] Unknown body group: "${groupName}" — skipping`);
+  return [];
 }
 
 /**
