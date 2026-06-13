@@ -12,13 +12,40 @@
 //       variants: { 3: { size|sizeMin+sizeMax } } } } } } }, f3: {...}, f4: {...} }
 // Density stops at object level (variants keep their catalog weights).
 import { rand2 } from '../core/random.js';
+import { DEFAULT_FIELD_TUNING } from './field-tuning-defaults.js';
 
-export var FIELD_TUNING = { f2: {}, f3: {}, f4: {}, f5: {}, f6: {} };
+// Deep-merge two plain-object nodes: default values are overridden key-by-key
+// by the live tree. Non-object (scalar) values from live always win outright.
+function mergeNode(def, live) {
+  if (!def) return live; if (!live) return def;
+  var out = {}, k;
+  for (k in def) out[k] = def[k];
+  for (k in live) {
+    out[k] = (live[k] && typeof live[k] === 'object' && def[k] && typeof def[k] === 'object')
+      ? mergeNode(def[k], live[k]) : live[k];
+  }
+  return out;
+}
+
+// Module-init: start with baked defaults so workers that import this module
+// before any setFieldTuning call already see the calibrated values.
+export var FIELD_TUNING = {
+  f2: mergeNode(DEFAULT_FIELD_TUNING.f2, {}),
+  f3: mergeNode(DEFAULT_FIELD_TUNING.f3, {}),
+  f4: mergeNode(DEFAULT_FIELD_TUNING.f4, {}),
+  f5: mergeNode(DEFAULT_FIELD_TUNING.f5, {}),
+  f6: mergeNode(DEFAULT_FIELD_TUNING.f6 || {}, {})
+};
 
 export function setFieldTuning(tree) {
-  FIELD_TUNING = tree && typeof tree === 'object'
-    ? { f2: tree.f2 || {}, f3: tree.f3 || {}, f4: tree.f4 || {}, f5: tree.f5 || {}, f6: tree.f6 || {} }
-    : { f2: {}, f3: {}, f4: {}, f5: {}, f6: {} };
+  var t = (tree && typeof tree === 'object') ? tree : {};
+  FIELD_TUNING = {
+    f2: mergeNode(DEFAULT_FIELD_TUNING.f2, t.f2 || {}),
+    f3: mergeNode(DEFAULT_FIELD_TUNING.f3, t.f3 || {}),
+    f4: mergeNode(DEFAULT_FIELD_TUNING.f4, t.f4 || {}),
+    f5: mergeNode(DEFAULT_FIELD_TUNING.f5, t.f5 || {}),
+    f6: mergeNode(DEFAULT_FIELD_TUNING.f6 || {}, t.f6 || {})
+  };
 }
 
 // One node's size contribution. Range nodes roll deterministically from the
@@ -106,6 +133,40 @@ export function rollWeighted(weights, order, r) {
     if (x < acc && (weights[order[i]] || 0) > 0) return order[i];
   }
   return order[order.length - 1];
+}
+
+// Worst-case node size: range nodes use sizeMax, plain nodes use size.
+function nodeMax(node) {
+  if (!node) return 1;
+  if (node.sizeMax != null) return node.sizeMax;
+  return node.size != null ? node.size : 1;
+}
+
+// Worst-case combined size multiplier for a field across the whole tree —
+// master x max(biome) x max(object) x max(variant). Used to derive the
+// claim-mask scan radius so extreme tuner scales can't out-reach the scan.
+export function maxSizeMul(field) {
+  var f = FIELD_TUNING[field];
+  if (!f) return 1;
+  var m = f.size != null ? f.size : 1;
+  var worst = 1;
+  var biomes = f.biomes || {};
+  for (var bk in biomes) {
+    var b = biomes[bk];
+    var bm = nodeMax(b);
+    var ow = 1;
+    var objs = b.objects || {};
+    for (var ok in objs) {
+      var o = objs[ok];
+      var om = nodeMax(o);
+      var vw = 1;
+      var vars = o.variants || {};
+      for (var vk in vars) vw = Math.max(vw, nodeMax(vars[vk]));
+      ow = Math.max(ow, om * vw);
+    }
+    worst = Math.max(worst, bm * ow);
+  }
+  return m * worst;
 }
 
 // Per-field state rosters + defaults (= the old hardcoded splits).

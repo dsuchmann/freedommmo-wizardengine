@@ -3,13 +3,13 @@
 // frame sequences that sway in the wind.
 
 import { WORLD } from '../core/constants.js';
-import { rand2 } from '../core/random.js';
+import { rand2, pickIndex } from '../core/random.js';
 import { SF_BIOME_OBJECTS_LIST, SF_BASE_PATH, SF_VARIANT_COUNT, SF_EXTRA_OBJECTS, sfVariantsFor, sfAnimVariantsFor } from './wang-image-list.js';
 import { clearBorderLines } from './sprite-denoise.js';
 import { floorDiv } from '../world/chunk.js';
 import { SPRITE_FLOATS } from './gl-compositor.js';
 import { getAtmosphere } from '../world/biome-atmosphere.js';
-import { isClaimedAt, f4Placements, f4SpriteUrl, f4AnimUrlBase, f5Placements, f5SpriteUrl, f6Placements, f6SpriteUrl, f6AnimUrlBase } from '../world/decoration-claims.js';
+import { isClaimedAt, f4Placements, f4SpriteUrl, f4AnimUrlBase, f5Placements, f5SpriteUrl, f5AnimUrlBase, f6Placements, f6SpriteUrl, f6AnimUrlBase } from '../world/decoration-claims.js';
 import { tuneSize, tuneBiomeDensity, tuneObjDensity, tuneAnimEnabled, tuneStateWeights, rollWeighted,
   F2_STATE_ORDER, F2_STATE_DEFAULTS } from '../world/field-tuning.js';
 
@@ -409,6 +409,49 @@ function loadFrame(url, frameCount) {
   return null;
 }
 
+// Pre-downscaled copies for sprites drawn well below native size. Nearest-
+// neighbor minification drops pixels; an area-averaged downscale (stepwise
+// halving) keeps silhouettes readable. Keyed by native img + scale bucket.
+// Upscale / near-native stays nearest-neighbor (crisp pixel art).
+var DOWNSCALE_BUCKETS = [0.5, 0.33, 0.25];
+var _downCache = new Map(); // (img.src + '@' + bucket) -> canvas
+
+function scaledFrame(img, destPx) {
+  var native = img.naturalWidth || img.width;
+  if (!native || destPx >= native * 0.66) return img;
+  var ratio = destPx / native;
+  var bucket = DOWNSCALE_BUCKETS[0];
+  for (var i = 1; i < DOWNSCALE_BUCKETS.length; i++)
+    if (ratio <= DOWNSCALE_BUCKETS[i]) bucket = DOWNSCALE_BUCKETS[i];
+  // All frames from loadFrame are Image elements with .src (either original or
+  // dataURL from denoiseImage/temporalDenoise) — no canvas returns, so img.src
+  // is always a non-empty string; no empty-key collision risk.
+  var key = img.src + '@' + bucket;
+  var hit = _downCache.get(key);
+  if (hit) return hit;
+  // Stepwise halving down to the bucket size (better than one big smooth pass)
+  var src = img, w = native, h = img.naturalHeight || img.height;
+  var target = Math.max(2, Math.round(native * bucket));
+  while (w * 0.5 > target) {
+    var half = document.createElement('canvas');
+    half.width = Math.max(2, Math.round(w * 0.5));
+    half.height = Math.max(2, Math.round(h * 0.5));
+    var hctx = half.getContext('2d');
+    hctx.imageSmoothingEnabled = true;
+    hctx.drawImage(src, 0, 0, half.width, half.height);
+    src = half; w = half.width; h = half.height;
+  }
+  var out = document.createElement('canvas');
+  out.width = target; out.height = Math.max(2, Math.round(h * target / w));
+  var octx = out.getContext('2d');
+  octx.imageSmoothingEnabled = true;
+  octx.drawImage(src, 0, 0, out.width, out.height);
+  out._f2At = img._f2At; // preserve fade-in state (imgFade mutates this copy — fine)
+  out._dnKey = key;      // stable identity for GL atlas keying (no .src on canvas)
+  _downCache.set(key, out);
+  return out;
+}
+
 // Preload wind sway frames AND static sprites for nearby biomes
 var lastPreloadKey = '';
 var _f2Ready = false;
@@ -639,8 +682,7 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
       // so playback lights up when art lands + catalog regenerates.
       animUrlBase: (gp.hasAnim && !gp.state
         && tuneAnimEnabled('f5', gp.biome, gp.name, 'wind_sway'))
-        ? '/assets/pixelab/landscape_v2/micro/medium_objects/' + gp.biome + '/' +
-          gp.name + '/anim/wind_sway/v' + (gp.variant < 10 ? '00' + gp.variant : gp.variant < 100 ? '0' + gp.variant : '' + gp.variant) + '/'
+        ? f5AnimUrlBase(gp)
         : null,
       staticUrl: f5SpriteUrl(gp),
       isRigid: true,                       // objects never sway-rotate
@@ -649,7 +691,13 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
       baseAngle: 0,
       offUX: gp.ux - 0.5,
       offUY: gp.uy - 0.5,
-      sortYOff: gp.uy + gp.sizeTiles * 0.30, // sort by sprite base (same rule as F4)
+      // Sort at the sprite's visual base: bottom edge (uy - 0.5 + sizeTiles*0.5)
+      // minus a FIXED 0.1-tile ground-contact inset. A proportional inset
+      // (0.1*sizeTiles) drifts the anchor up toward mid-sprite as objects grow —
+      // big sprites are exactly where base-accurate sorting matters most.
+      // At sizeTiles=3 this equals the old 0.30 formula (no resort churn);
+      // at 6 tiles it sits at the trunk base instead of 0.7 tiles above it.
+      sortYOff: gp.uy + gp.sizeTiles * 0.5 - 0.6,
       ambientPeriod: 0,
       ambientPhase: 0,
       startDelay: 0,
@@ -676,7 +724,11 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
       baseAngle: 0,
       offUX: hp.ux - 0.5,
       offUY: hp.uy - 0.5,
-      sortYOff: hp.uy + hp.sizeTiles * 0.30, // sort by sprite base (F4/F5 rule)
+      // Sort at the visual base: bottom edge minus a FIXED 0.1-tile ground-
+      // contact inset (same formula as F5). The old 0.30 proportional form
+      // drifted the anchor ~0.7 tiles above the trunk base at 6 tiles —
+      // nearby F5 logs drew in front of trees they stood behind.
+      sortYOff: hp.uy + hp.sizeTiles * 0.5 - 0.6,
       // Same ambient/trigger treatment as F4 wind-sway blades (fresh salts):
       // trees sway in periodic gusts and settle back to restFrame.
       ambientPeriod: 6000 + rand2(wx, wy, 9837) * 9000,
@@ -757,8 +809,8 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
 
     var variantWl = sfVariantsFor(biome, objName);
     var variantIdx = variantWl
-      ? variantWl[Math.floor(rand2(wx, wy, 7035 + bi) * variantWl.length)]
-      : Math.floor(rand2(wx, wy, 7035 + bi) * SF_VARIANT_COUNT);
+      ? variantWl[pickIndex(rand2(wx, wy, 7035 + bi), variantWl.length)]
+      : pickIndex(rand2(wx, wy, 7035 + bi), SF_VARIANT_COUNT);
     var vStr = variantIdx < 10 ? '00' + variantIdx : (variantIdx < 100 ? '0' + variantIdx : '' + variantIdx);
 
     // Lifecycle via the tunable state-weight resolver. Defaults reproduce the
@@ -836,15 +888,23 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
     });
   }
 
-  // Rare static decor objects (e.g., tundra fish piles, snow sculptures)
+  // Rare static decor objects (e.g., tundra fish piles, snow sculptures).
+  // Same claim-cull as regular blades: decor inside an F3/F4/F5 footprint
+  // never existed (root = tile center + offset, drawn 1 tile @ sortY +0.5).
   var extra = null;
   var extraObjs = SF_EXTRA_OBJECTS[biome];
   if (extraObjs && rand2(wx, wy, 7300) < 0.012) {
-    extra = {
-      url: extraObjs[Math.floor(rand2(wx, wy, 7301) * extraObjs.length)],
-      offUX: (rand2(wx, wy, 7302) - 0.5) * 0.6,
-      offUY: (rand2(wx, wy, 7303) - 0.5) * 0.6
-    };
+    var exOffUX = (rand2(wx, wy, 7302) - 0.5) * 0.6;
+    var exOffUY = (rand2(wx, wy, 7303) - 0.5) * 0.6;
+    var exRootPx = (wx + 0.5 + exOffUX) * 32;
+    var exRootPy = (wy + 0.5 + exOffUY) * 32 + 0.35 * 32;
+    if (!isClaimedAt(exRootPx, exRootPy, _claimTileInfo(chunkStore))) {
+      extra = {
+        url: extraObjs[pickIndex(rand2(wx, wy, 7301), extraObjs.length)],
+        offUX: exOffUX,
+        offUY: exOffUY
+      };
+    }
   }
 
   for (var fbi = 0; fbi < f4Blades.length; fbi++) blades.push(f4Blades[fbi]);
@@ -954,65 +1014,73 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         // frame boundary. Blades without frameCount keep the 9-frame default.
         var blCycle = (bl.frameCount || FRAME_COUNT) * FRAME_DURATION;
 
-        // Wind impulse triggers animation for a few cycles then settles.
-        var impulse = baseImpulse;
-        // ~7% of sprites randomly animate on their own (ambient life)
-        if (bl.ambientPeriod && (timeMs + bl.ambientPhase) % bl.ambientPeriod < blCycle * 4) {
-          impulse = 0.2; // gentle ambient trigger
-        }
-
-        // Track trigger per sprite — stagger start with per-sprite random delay
-        var triggerKey = wx * 10000 + wy * 100 + bl.bi;
-        if (impulse > 0.08) {
-          var existing = triggerTimes.get(triggerKey);
-          // Only re-trigger if not currently animating (prevent restart flicker)
-          if (!existing || timeMs - existing.time > blCycle * 2) {
-            triggerTimes.set(triggerKey, { time: timeMs + bl.startDelay, ext: 0 });
+        var frameIdx = bl.restFrame;
+        var animBlend = 0;
+        // Sprites that can never frame-animate (no anim frames, no ambient
+        // trigger) nor sway-rotate (rigid, or lifeSway 0) skip trigger
+        // tracking entirely — avoids triggerTimes Map churn on every wind
+        // gust for static objects (all of F5, rigid F2 decor).
+        var canAnimate = !!bl.animUrlBase || !!bl.ambientPeriod
+          || (!bl.isRigid && bl.lifeSway !== 0);
+        if (canAnimate) {
+          // Wind impulse triggers animation for a few cycles then settles.
+          var impulse = baseImpulse;
+          // ~7% of sprites randomly animate on their own (ambient life)
+          if (bl.ambientPeriod && (timeMs + bl.ambientPhase) % bl.ambientPeriod < blCycle * 4) {
+            impulse = 0.2; // gentle ambient trigger
           }
-        }
 
-        var triggerDuration = blCycle * bl.loopCount;
-        var triggerData = triggerTimes.get(triggerKey);
-        var triggerTime = triggerData ? triggerData.time : -99999;
-        var extensions = triggerData ? triggerData.ext : 0;
-        var elapsed = timeMs - triggerTime;
-
-        // Neighbor contagion: extend while neighbors still animate (≤MAX_EXTENSIONS)
-        if (elapsed > triggerDuration * 0.8 && extensions < MAX_EXTENSIONS) {
-          var shouldExtend = false;
-          for (var nd = -1; nd <= 1 && !shouldExtend; nd++) {
-            for (var ne = -1; ne <= 1 && !shouldExtend; ne++) {
-              if (nd === 0 && ne === 0) continue;
-              var nData = triggerTimes.get((wx + ne) * 10000 + (wy + nd) * 100);
-              if (!nData) continue;
-              var nElapsed = timeMs - nData.time;
-              if (nElapsed < triggerDuration * 0.6 && nData.ext < MAX_EXTENSIONS) shouldExtend = true;
+          // Track trigger per sprite — stagger start with per-sprite random delay
+          var triggerKey = wx * 10000 + wy * 100 + bl.bi;
+          if (impulse > 0.08) {
+            var existing = triggerTimes.get(triggerKey);
+            // Only re-trigger if not currently animating (prevent restart flicker)
+            if (!existing || timeMs - existing.time > blCycle * 2) {
+              triggerTimes.set(triggerKey, { time: timeMs + bl.startDelay, ext: 0 });
             }
           }
-          if (shouldExtend) {
-            triggerTimes.set(triggerKey, { time: triggerTime + blCycle, ext: extensions + 1 });
-            elapsed = timeMs - triggerTime - blCycle;
-          }
-        }
 
-        // Each sprite rests at a random frame and cycles from it while animating
-        var isAnimating = elapsed >= 0 && elapsed <= triggerDuration;
-        var frameIdx;
-        var animBlend = 0;
-        if (!isAnimating) {
-          if (triggerData && triggerTime > -99999) {
-            // Frozen at whatever frame the last animation ended on
-            frameIdx = Math.floor((triggerDuration / FRAME_DURATION + bl.restFrame) % (bl.frameCount || FRAME_COUNT));
-          } else {
-            frameIdx = bl.restFrame;
+          var triggerDuration = blCycle * bl.loopCount;
+          var triggerData = triggerTimes.get(triggerKey);
+          var triggerTime = triggerData ? triggerData.time : -99999;
+          var extensions = triggerData ? triggerData.ext : 0;
+          var elapsed = timeMs - triggerTime;
+
+          // Neighbor contagion: extend while neighbors still animate (≤MAX_EXTENSIONS)
+          if (elapsed > triggerDuration * 0.8 && extensions < MAX_EXTENSIONS) {
+            var shouldExtend = false;
+            for (var nd = -1; nd <= 1 && !shouldExtend; nd++) {
+              for (var ne = -1; ne <= 1 && !shouldExtend; ne++) {
+                if (nd === 0 && ne === 0) continue;
+                var nData = triggerTimes.get((wx + ne) * 10000 + (wy + nd) * 100);
+                if (!nData) continue;
+                var nElapsed = timeMs - nData.time;
+                if (nElapsed < triggerDuration * 0.6 && nData.ext < MAX_EXTENSIONS) shouldExtend = true;
+              }
+            }
+            if (shouldExtend) {
+              triggerTimes.set(triggerKey, { time: triggerTime + blCycle, ext: extensions + 1 });
+              elapsed = timeMs - triggerTime - blCycle;
+            }
           }
-        } else {
-          frameIdx = Math.floor((elapsed / FRAME_DURATION + bl.restFrame) % (bl.frameCount || FRAME_COUNT));
-          // Smooth blend for sway: ease in first cycle, ease out last cycle
-          var cycleProgress = elapsed / blCycle;
-          if (cycleProgress < 1) animBlend = Math.min(1, cycleProgress * 2);
-          else if (cycleProgress > bl.loopCount - 1) animBlend = Math.max(0, (bl.loopCount - cycleProgress) * 2);
-          else animBlend = 1;
+
+          // Each sprite rests at a random frame and cycles from it while animating
+          var isAnimating = elapsed >= 0 && elapsed <= triggerDuration;
+          if (!isAnimating) {
+            if (triggerData && triggerTime > -99999) {
+              // Frozen at whatever frame the last animation ended on
+              frameIdx = Math.floor((triggerDuration / FRAME_DURATION + bl.restFrame) % (bl.frameCount || FRAME_COUNT));
+            } else {
+              frameIdx = bl.restFrame;
+            }
+          } else {
+            frameIdx = Math.floor((elapsed / FRAME_DURATION + bl.restFrame) % (bl.frameCount || FRAME_COUNT));
+            // Smooth blend for sway: ease in first cycle, ease out last cycle
+            var cycleProgress = elapsed / blCycle;
+            if (cycleProgress < 1) animBlend = Math.min(1, cycleProgress * 2);
+            else if (cycleProgress > bl.loopCount - 1) animBlend = Math.max(0, (bl.loopCount - cycleProgress) * 2);
+            else animBlend = 1;
+          }
         }
 
         // Sim override (F4 only — bi >= 90, fi = bi - 90): takes precedence over static lifecycle roll.
@@ -1041,6 +1109,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         // Sway rotation: rigid objects never sway (frames still animate)
         var sway = bl.isRigid ? 0 : currentEffect.rot * 1.2 * animBlend * bl.lifeSway;
         var drawSize = tilePxSnapped * bl.lifeScale;
+        img = scaledFrame(img, drawSize);
         drawBuffer.push({
           sortY: wy + bl.sortYOff,
           sx: tileSX + bl.offUX * tilePxSnapped,
@@ -1048,7 +1117,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
           halfDraw: drawSize * 0.5, drawSize: drawSize,
           baseAngle: bl.baseAngle, sway: sway,
           alpha: edgeFade * imgFade(img, timeMs), img: img,
-          _url: img.src || '',
+          _url: img.src || img._dnKey || '',
           shadowK: biomeShadowK
         });
       }
@@ -1057,6 +1126,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
       if (desc.extra) {
         var exImg = loadFrame(desc.extra.url);
         if (exImg) {
+          exImg = scaledFrame(exImg, tilePxSnapped);
           drawBuffer.push({
             sortY: wy + 0.5,
             sx: tileSX + desc.extra.offUX * tilePxSnapped,
@@ -1064,7 +1134,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
             halfDraw: halfTile, drawSize: tilePxSnapped,
             baseAngle: 0, sway: 0,
             alpha: edgeFade * imgFade(exImg, timeMs), img: exImg,
-            _url: exImg.src || '',
+            _url: exImg.src || exImg._dnKey || '',
             shadowK: biomeShadowK
           });
         }

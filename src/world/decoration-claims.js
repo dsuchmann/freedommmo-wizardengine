@@ -3,13 +3,13 @@
 // cross-field claim masks that stop lower fields (F2 flora) from spawning
 // inside higher-field objects' base footprints. Pure + deterministic:
 // worker and main thread compute identical results independently.
-import { rand2 } from '../core/random.js';
+import { rand2, pickIndex } from '../core/random.js';
 import { MF_CATALOG } from './mf-catalog.js';
 import { MO_CATALOG } from './mo-catalog.js';
 import { LG_CATALOG } from './lg-catalog.js';
 import { tuneSize, tuneBiomeDensity, tuneObjDensity, tuneStateWeights, rollWeighted,
   F4_STATE_ORDER, F4_STATE_DEFAULTS, F5_STATE_ORDER, f5StateDefaults,
-  F6_STATE_ORDER, F6_STATE_DEFAULTS } from './field-tuning.js';
+  F6_STATE_ORDER, F6_STATE_DEFAULTS, maxSizeMul } from './field-tuning.js';
 
 var MF_BASE_PATH = '/assets/pixelab/landscape_v2/micro/medium_flora/';
 // Per-tile chance of one medium-flora plant (master plan: 3-12% density)
@@ -40,7 +40,13 @@ var F5_TILE_CHANCE = {
   steppe: 0.015, beach: 0.012, tundra: 0.012, desert: 0.010, arctic: 0.010,
   mountains: 0.028, volcanic: 0.022,
 };
-var _f5Cache = new Map();   // 'wx,wy,biome' -> placements
+var _f5Cache = new Map();     // 'wx,wy,res' -> resolved (post-exclusion) placements
+var _f5CandCache = new Map(); // 'wx,wy,biome' -> candidate placements (no neighbor knowledge)
+// Epoch counter: bumped every time a query returns a provisional result (one
+// that could change when more tiles load). Consumers snapshot this before
+// computing derived results; if it changed they skip caching — preventing
+// stale EMPTY or false-survivor entries from surviving a tile-load event.
+var _provisionalEpoch = 0;
 // Live-tunable per-biome F5 scale (96px native = 3 tiles at 1.0). The user
 // calibrates in-game; bake final values here afterwards (F4 precedent).
 export var F5_BIOME_SCALE = {
@@ -389,6 +395,39 @@ var _placeCache = new Map();    // 'wx,wy,biome' -> placements
 var _maskCache = new Map();     // 'wx,wy' -> Uint8Array(8) row bitmasks
 var MAX_CACHE = 20000;
 
+// Claim-scan radius (tiles). ±3 covers default scales; the tuner's
+// multiplicative sliders can push footprints further, so the radius is
+// derived from the tuning tree's worst case. Recomputed lazily after
+// clearClaimCaches() (every tuning apply calls it). Capped at 8 — beyond
+// that the mask loop cost outweighs fidelity at absurd slider combos.
+var _scanR = 3;
+var _scanRDirty = true;
+
+function maxFieldReachTiles(field, basePx, scaleTable, fwK, dropK, fhK) {
+  var maxBiome = 1;
+  for (var k in scaleTable) maxBiome = Math.max(maxBiome, scaleTable[k]);
+  var drawPx = basePx * maxBiome * maxSizeMul(field);
+  // horizontal reach: ux offset (≤0.25 tile) + fw half-width;
+  // vertical reach: uy offset + base drop + fh half-height (the larger wins)
+  var reachPx = drawPx * Math.max(fwK, dropK + fhK);
+  return 0.25 + reachPx / TILE_ART_PX;
+}
+
+function recomputeScanRadius() {
+  _scanRDirty = false;
+  var r = Math.max(
+    maxFieldReachTiles('f3', TILE_ART_PX, { _: 0.5 }, 0.55, 0.32, 0.30),
+    maxFieldReachTiles('f4', 64, F4_BIOME_SCALE, 0.30, 0.30, 0.16),
+    maxFieldReachTiles('f5', 96, F5_BIOME_SCALE, 0.42, 0.30, 0.22),
+    maxFieldReachTiles('f6', 192, F6_BIOME_SCALE, 0.30, 0.30, 0.16));
+  _scanR = Math.min(8, Math.max(3, Math.ceil(r)));
+}
+
+export function claimScanRadius() {
+  if (_scanRDirty) recomputeScanRadius();
+  return _scanR;
+}
+
 function cachePut(map, key, val) {
   if (map.size >= MAX_CACHE) map.clear(); // deterministic — safe to drop wholesale
   map.set(key, val);
@@ -415,8 +454,8 @@ export function f3Placements(wx, wy, tileInfo) {
     if (rand2(wx, wy, 9500 + oi) > (1.0 - sparsity) * dMul) continue; // SAME seeds as today
     // Variant must be known before size (per-variant tuning) — same roll as before
     var variant = allowed
-      ? allowed[Math.floor(rand2(wx, wy, 9510 + oi) * allowed.length)]
-      : Math.floor(rand2(wx, wy, 9510 + oi) * SS_VARIANT_COUNT);
+      ? allowed[pickIndex(rand2(wx, wy, 9510 + oi), allowed.length)]
+      : pickIndex(rand2(wx, wy, 9510 + oi), SS_VARIANT_COUNT);
     var scale = (obj.scale || 0.32) *
       tuneSize('f3', t.biome, obj.name, variant, wx, wy, 9570 + oi * 4);
     var ux = 0.5 + (rand2(wx, wy, 9520 + oi) - 0.5) * 0.6;     // tile units
@@ -436,7 +475,7 @@ export function f3Placements(wx, wy, tileInfo) {
     };
     var states = SS_STATES[t.biome + '/' + obj.name];
     if (states && states.length && rand2(wx, wy, 9560 + oi) < STATE_CHANCE) {
-      p.state = states[Math.floor(rand2(wx, wy, 9561 + oi) * states.length)];
+      p.state = states[pickIndex(rand2(wx, wy, 9561 + oi), states.length)];
     }
     // self-spacing within the tile: reject if base centers closer than the
     // sum of half-widths (looser than ellipse-touch — debris may abut)
@@ -463,8 +502,9 @@ export function f3SpriteUrl(p) {
 }
 
 // 8x8 bitmask of claimed cells for tile (wx,wy). Row r bit c = cell claimed.
-// Scans this tile + neighbors out to ±6: F6 192px trees reach ~6 tiles at
-// max tuner scale, hence the ±6 radius (F5 only needed ±3).
+// Scans this tile + neighbors out to claimScanRadius() (≥3): radius is
+// derived from the tuning tree's worst-case size multipliers (incl. F6
+// 192px trees) so tuner scales can't push a footprint beyond the scan.
 export function getClaimMask(wx, wy, tileInfo) {
   var key = wx + ',' + wy;
   var hit = _maskCache.get(key);
@@ -472,8 +512,12 @@ export function getClaimMask(wx, wy, tileInfo) {
   var mask = new Uint8Array(CELLS);
   var ox = wx * TILE_ART_PX, oy = wy * TILE_ART_PX;
   var complete = true; // any null (unloaded) neighbor -> don't cache the mask
-  for (var ny = -6; ny <= 6; ny++) {
-    for (var nx = -6; nx <= 6; nx++) {
+  var R = claimScanRadius();
+  // Epoch guard: if any f4/f5 call inside returns a provisional result (bumps
+  // _provisionalEpoch), skip caching the mask — it may change when tiles load.
+  var ep = _provisionalEpoch;
+  for (var ny = -R; ny <= R; ny++) {
+    for (var nx = -R; nx <= R; nx++) {
       if (!tileInfo(wx + nx, wy + ny)) { complete = false; continue; }
       var pls = f3Placements(wx + nx, wy + ny, tileInfo)
         .concat(f4Placements(wx + nx, wy + ny, tileInfo),
@@ -481,22 +525,26 @@ export function getClaimMask(wx, wy, tileInfo) {
                 f6Placements(wx + nx, wy + ny, tileInfo));
       for (var i = 0; i < pls.length; i++) {
         var p = pls[i];
-        // rasterize the base ellipse into this tile's cells (center test)
-        var c0 = Math.max(0, Math.floor((p.bx - p.fw - ox) / CELL_PX));
-        var c1 = Math.min(CELLS - 1, Math.floor((p.bx + p.fw - ox) / CELL_PX));
-        var r0 = Math.max(0, Math.floor((p.by - p.fh - oy) / CELL_PX));
-        var r1 = Math.min(CELLS - 1, Math.floor((p.by + p.fh - oy) / CELL_PX));
+        // Rasterize the base ellipse into this tile's cells. The ellipse is
+        // inflated by half a cell so a cell is claimed if ANY part of it can
+        // touch the footprint (a center-only test left up to half a cell of
+        // edge unclaimed — F2 blade roots landed there and clipped sprites).
+        var iw = p.fw + CELL_PX * 0.5, ih = p.fh + CELL_PX * 0.5;
+        var c0 = Math.max(0, Math.floor((p.bx - iw - ox) / CELL_PX));
+        var c1 = Math.min(CELLS - 1, Math.floor((p.bx + iw - ox) / CELL_PX));
+        var r0 = Math.max(0, Math.floor((p.by - ih - oy) / CELL_PX));
+        var r1 = Math.min(CELLS - 1, Math.floor((p.by + ih - oy) / CELL_PX));
         for (var r = r0; r <= r1; r++) {
           for (var c = c0; c <= c1; c++) {
             var px = ox + (c + 0.5) * CELL_PX, py = oy + (r + 0.5) * CELL_PX;
-            var ex = (px - p.bx) / p.fw, ey = (py - p.by) / p.fh;
+            var ex = (px - p.bx) / iw, ey = (py - p.by) / ih;
             if (ex * ex + ey * ey < 1.0) mask[r] |= (1 << c);
           }
         }
       }
     }
   }
-  return complete ? cachePut(_maskCache, key, mask) : mask;
+  return (complete && _provisionalEpoch === ep) ? cachePut(_maskCache, key, mask) : mask;
 }
 
 // Point test in world art px — used by F2 to cull blades.
@@ -510,7 +558,16 @@ export function isClaimedAt(px, py, tileInfo) {
   return (mask[r] & (1 << c)) !== 0;
 }
 
-export function clearClaimCaches() { _placeCache.clear(); _maskCache.clear(); _f4Cache.clear(); _f5Cache.clear(); _f6Cache.clear(); }
+export function clearClaimCaches() { _placeCache.clear(); _maskCache.clear(); _f4Cache.clear(); _f5Cache.clear(); _f5CandCache.clear(); _f6Cache.clear(); _scanRDirty = true; _provisionalEpoch = 0; }
+
+// Footprint ellipses a,b (bx,by,fw,fh) intersect? Conservative sum-of-radii
+// test on each axis — exact for circles, slightly loose for ellipses (good:
+// large objects should never visually kiss).
+function footprintsOverlap(a, b) {
+  var nx = (a.bx - b.bx) / (a.fw + b.fw);
+  var ny = (a.by - b.by) / (a.fh + b.fh);
+  return nx * nx + ny * ny < 1;
+}
 
 function pad3(v) { return v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v); }
 
@@ -544,11 +601,15 @@ export function f4Placements(wx, wy, tileInfo) {
   var chance = (F4_TILE_CHANCE[t.biome] || 0) * tuneBiomeDensity('f4', t.biome);
   if (!objs || !objs.length || chance === 0) return cachePut(_f4Cache, key, EMPTY);
   if (rand2(wx, wy, 9700) > chance) return cachePut(_f4Cache, key, EMPTY);
-  // Larger objects claim first: a tile F6/F5 claimed never hosts F4.
+  // Larger objects claim first: a tile F6 claimed never hosts F4. F6 is
+  // own-tile deterministic (no neighbor dependence) — safe to cache.
   if (f6Placements(wx, wy, tileInfo).length) return cachePut(_f4Cache, key, EMPTY);
-  if (f5Placements(wx, wy, tileInfo).length) return cachePut(_f4Cache, key, EMPTY);
+  // Cheap early-out: a tile hosting a final F5 never hosts F4. Uncached —
+  // the authoritative neighbor-aware footprint check below owns caching
+  // (an own-tile F5 may be uncached-provisional while neighbors load).
+  if (f5Placements(wx, wy, tileInfo).length) return EMPTY;
 
-  var obj = objs[Math.floor(rand2(wx, wy, 9701) * objs.length)];
+  var obj = objs[pickIndex(rand2(wx, wy, 9701), objs.length)];
   // Object-level density: <1 rejects this tile's pick (1 placement/tile max,
   // so >1 cannot add more — clamped by construction). NEW salt 9714.
   var objD = tuneObjDensity('f4', t.biome, obj.name);
@@ -561,10 +622,10 @@ export function f4Placements(wx, wy, tileInfo) {
   if (st === 'base') st = null;
   var variant;
   if (st && obj.statePool.length) {
-    variant = obj.statePool[Math.floor(rand2(wx, wy, 9706) * obj.statePool.length)];
+    variant = obj.statePool[pickIndex(rand2(wx, wy, 9706), obj.statePool.length)];
   } else {
     st = null; // no pool -> render base
-    variant = Math.floor(rand2(wx, wy, 9702) * obj.variants);
+    variant = pickIndex(rand2(wx, wy, 9702), obj.variants);
   }
   var ux = 0.5 + (rand2(wx, wy, 9703) - 0.5) * 0.5;
   var uy = 0.5 + (rand2(wx, wy, 9704) - 0.5) * 0.5;
@@ -581,7 +642,27 @@ export function f4Placements(wx, wy, tileInfo) {
     by: (wy + uy) * TILE_ART_PX + drawPx * 0.30,
     fw: drawPx * 0.30, fh: drawPx * 0.16,
   };
-  return cachePut(_f4Cache, key, [p]);
+  // Larger objects claim first (locked decision #7): an F4 whose footprint
+  // intersects ANY nearby F5 footprint never existed. Checks final (post-
+  // exclusion) F5 placements — F5 never consults F4, so no recursion. The
+  // own tile (nx5=ny5=0) is covered too (early-out above already handles it).
+  // Epoch guard: if any f5Placements call returns provisional (bumps
+  // _provisionalEpoch), the derived F4 result must not be cached — a later
+  // tile load could promote or kill a provisional F5, invalidating the result.
+  var R5 = claimScanRadius();
+  var ep = _provisionalEpoch; // snapshot before the F5-yield loop
+  for (var ny5 = -R5; ny5 <= R5; ny5++) {
+    for (var nx5 = -R5; nx5 <= R5; nx5++) {
+      var f5n = f5Placements(wx + nx5, wy + ny5, tileInfo);
+      if (f5n.length && footprintsOverlap(p, f5n[0])) {
+        // Neighbor F5 wins — cache only if no provisional answers were seen.
+        // If epoch changed the EMPTY result might later flip to [p], so skip
+        // caching and let the next call re-evaluate when tiles are loaded.
+        return _provisionalEpoch === ep ? cachePut(_f4Cache, key, EMPTY) : EMPTY;
+      }
+    }
+  }
+  return _provisionalEpoch === ep ? cachePut(_f4Cache, key, [p]) : [p];
 }
 
 export function f4SpriteUrl(p) {
@@ -597,32 +678,40 @@ export function f4AnimUrlBase(p) {
   return MF_BASE_PATH + p.biome + '/' + p.name + '/anim/wind_sway/v' + pad3(p.variant) + '/';
 }
 
-// One medium object per tile max. Deterministic (seed roots 9800-9820).
+// One medium object per tile max. Deterministic. Salt registry 9800-9820:
+// 9800 tile chance, 9801 obj pick, 9802 variant, 9803/9804 jitter,
+// 9805 state roll, 9806 neighbor-exclusion priority (f5Placements),
+// 9814 obj density, 9820 tuneSize (consumes 9820-9822).
 // Same placement contract as f4: { name, biome, size, variant, state,
 // stateOnDisk, ux, uy, sizeTiles, hasAnim, bx, by, fw, fh }.
 // States roll from day one (spec: honest roll); a state whose PNG hasn't
 // landed renders the base variant — f5SpriteUrl checks stateOnDisk.
-export function f5Placements(wx, wy, tileInfo) {
+//
+// f5Candidate = the raw per-tile roll, NO neighbor knowledge. Public
+// f5Placements resolves footprint conflicts between candidates (below).
+function f5Candidate(wx, wy, tileInfo) {
   var t = tileInfo(wx, wy);
-  if (!t || t.transition) return EMPTY;
+  if (!t) { _provisionalEpoch++; return EMPTY; } // unloaded — provisional (may load later)
+  if (t.transition) return EMPTY; // transition tiles are PERMANENT no-F5 — final, no epoch bump
   var key = wx + ',' + wy + ',' + t.biome;
-  var hit = _f5Cache.get(key);
+  var hit = _f5CandCache.get(key);
   if (hit) return hit;
   var objs = MO_CATALOG[t.biome];
   var chance = (F5_TILE_CHANCE[t.biome] || 0) * tuneBiomeDensity('f5', t.biome);
-  if (!objs || !objs.length || chance === 0) return cachePut(_f5Cache, key, EMPTY);
-  if (rand2(wx, wy, 9800) > chance) return cachePut(_f5Cache, key, EMPTY);
-  // Larger objects claim first: a tile F6 claimed never hosts F5.
-  if (f6Placements(wx, wy, tileInfo).length) return cachePut(_f5Cache, key, EMPTY);
+  if (!objs || !objs.length || chance === 0) return cachePut(_f5CandCache, key, EMPTY);
+  if (rand2(wx, wy, 9800) > chance) return cachePut(_f5CandCache, key, EMPTY);
+  // Larger objects claim first: a tile F6 claimed never hosts F5. F6 is
+  // own-tile deterministic (no neighbor dependence) — safe to cache.
+  if (f6Placements(wx, wy, tileInfo).length) return cachePut(_f5CandCache, key, EMPTY);
 
-  var obj = objs[Math.floor(rand2(wx, wy, 9801) * objs.length)];
+  var obj = objs[pickIndex(rand2(wx, wy, 9801), objs.length)];
   var objD = tuneObjDensity('f5', t.biome, obj.name);
-  if (objD < 1 && rand2(wx, wy, 9814) > objD) return cachePut(_f5Cache, key, EMPTY);
+  if (objD < 1 && rand2(wx, wy, 9814) > objD) return cachePut(_f5CandCache, key, EMPTY);
 
   var weights = tuneStateWeights('f5', t.biome, obj.name, f5StateDefaults(t.biome));
   var st = rollWeighted(weights, F5_STATE_ORDER, rand2(wx, wy, 9805));
   if (st === 'base') st = null;
-  var variant = Math.floor(rand2(wx, wy, 9802) * obj.variants);
+  var variant = pickIndex(rand2(wx, wy, 9802), obj.variants);
   var stateOnDisk = !!(st && obj.states[st] && obj.states[st].indexOf(variant) !== -1);
 
   var ux = 0.5 + (rand2(wx, wy, 9803) - 0.5) * 0.5;
@@ -646,7 +735,45 @@ export function f5Placements(wx, wy, tileInfo) {
     sil: (obj.sil && obj.sil[variant]) || null,
     bx: foot.bx, by: foot.by, fw: foot.fw, fh: foot.fh,
   };
-  return cachePut(_f5Cache, key, [p]);
+  return cachePut(_f5CandCache, key, [p]);
+}
+
+// Public F5 placements: a candidate survives unless a HIGHER-priority
+// overlapping neighbor candidate exists (F5 beats F5 — at most one of any
+// overlapping pair renders; a pair can both die to third parties). Priority =
+// rand2(wx, wy, 9806), ties broken by (wy, wx) lexicographic so two tiles can
+// never both survive. Candidates are pure per-tile rolls, so this terminates
+// (no recursion through neighbors).
+export function f5Placements(wx, wy, tileInfo) {
+  var cand = f5Candidate(wx, wy, tileInfo);
+  if (!cand.length) return cand;
+  var key = wx + ',' + wy + ',res';
+  var hit = _f5Cache.get(key);
+  if (hit) return hit;
+  var p = cand[0];
+  var myPri = rand2(wx, wy, 9806);
+  // Neighbor radius: footprints reach ~1.3 tiles at default scale; use the
+  // claim scan radius so extreme tuner scales stay covered.
+  var R = claimScanRadius();
+  var complete = true; // any null (unloaded) neighbor -> don't cache survival
+  for (var ny = -R; ny <= R; ny++) {
+    for (var nx = -R; nx <= R; nx++) {
+      if (!nx && !ny) continue;
+      if (!tileInfo(wx + nx, wy + ny)) { complete = false; continue; }
+      var nc = f5Candidate(wx + nx, wy + ny, tileInfo);
+      if (!nc.length || !footprintsOverlap(p, nc[0])) continue;
+      var nPri = rand2(wx + nx, wy + ny, 9806);
+      if (nPri > myPri || (nPri === myPri && (ny < 0 || (ny === 0 && nx < 0))))
+        // neighbor wins — this object never existed. Candidates are pure, so
+        // a found winner can never be retracted: safe to cache even when
+        // other neighbors are still unloaded.
+        return cachePut(_f5Cache, key, EMPTY);
+    }
+  }
+  // Survival can be retracted by an unloaded neighbor's candidate, so only
+  // cache when the whole scan ring was loaded (getClaimMask's rule).
+  if (!complete) { _provisionalEpoch++; return cand; }
+  return cachePut(_f5Cache, key, cand);
 }
 
 export function f5SpriteUrl(p) {
@@ -656,6 +783,10 @@ export function f5SpriteUrl(p) {
   }
   return MO_BASE_PATH + p.biome + '/' + p.name +
     '/mo__' + p.biome + '__' + p.name + '__v' + pad3(p.variant) + '.png';
+}
+
+export function f5AnimUrlBase(p) {
+  return MO_BASE_PATH + p.biome + '/' + p.name + '/anim/wind_sway/v' + pad3(p.variant) + '/';
 }
 
 // One tree per tile max. Deterministic (seed roots 9830-9840). Same contract
