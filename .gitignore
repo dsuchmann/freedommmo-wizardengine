@@ -20,3 +20,4 @@ worlds/
 scripts/asset-corpus/out/batches/
 scripts/.bursts/
 scripts/.pixellab_inflight.json
+.worktrees/
