@@ -4,8 +4,63 @@
 
 import { layoutSettlement } from '../../sim/world/buildings/layout.js';
 import { computeTerritory } from '../../sim/world/territory.js';
+import { MACRO } from '../../sim/world/genesis.js';
+import { REGION } from '../../sim/lod/aggregate.js';
+import { worldEpochs } from '../../sim/chronicle/epochs.js';
+import { macroCellPeoples } from '../../sim/chronicle/races.js';
+import { regionChronicle, settlementState } from '../../sim/chronicle/chronicle.js';
+import { classifyBiome } from '../world/biomes.js';
+import { rand } from '../../sim/kernel/rng.js';
 
 const EVENT_CAP = 50;
+const MACRO_TILES = MACRO * REGION;
+const WORLD_SEED = 42;  // must match sim seed
+
+/** Discover all settlements visible on screen by evaluating the chronicle directly.
+ *  Pure function — no sim needed. Returns [{x, y, tier, race, state, chronicleAge}]. */
+function discoverSettlements(camX, camY, w, h, tilePx) {
+  const margin = MACRO_TILES * tilePx; // scan one macro-cell beyond screen
+  const tileX0 = Math.floor((camX - margin) / tilePx);
+  const tileY0 = Math.floor((camY - margin) / tilePx);
+  const tileX1 = Math.ceil((camX + w + margin) / tilePx);
+  const tileY1 = Math.ceil((camY + h + margin) / tilePx);
+  const mx0 = Math.floor(tileX0 / MACRO_TILES), mx1 = Math.ceil(tileX1 / MACRO_TILES);
+  const my0 = Math.floor(tileY0 / MACRO_TILES), my1 = Math.ceil(tileY1 / MACRO_TILES);
+
+  const epochs = worldEpochs(WORLD_SEED);
+  const settlements = [];
+  for (let my = my0; my <= my1; my++) {
+    for (let mx = mx0; mx <= mx1; mx++) {
+      const mk = `${mx},${my}`;
+      const cx = mx * MACRO_TILES + Math.floor(MACRO_TILES / 2);
+      const cy = my * MACRO_TILES + Math.floor(MACRO_TILES / 2);
+      const biome = classifyBiome(cx, cy);
+      const peoples = macroCellPeoples(WORLD_SEED, mk, epochs, biome);
+      const chronicle = regionChronicle(WORLD_SEED, mk, peoples, biome.climate);
+      const state = settlementState(chronicle);
+      if (state === 'wilderness') continue;
+
+      // Same position logic as genesis
+      const ox = Math.floor((rand(WORLD_SEED, mx * 7 + 1, my * 13 + 2) - 0.5) * MACRO_TILES * 0.5);
+      const oy = Math.floor((rand(WORLD_SEED, mx * 11 + 3, my * 17 + 4) - 0.5) * MACRO_TILES * 0.5);
+      const x = cx + ox, y = cy + oy;
+
+      const foundingEv = chronicle.find(e => e.type === 'ancient_founding' || e.type === 'founding');
+      const race = foundingEv?.raceId ?? peoples[0]?.raceId ?? 'human';
+      const chronicleAge = chronicle.length > 0 ? Math.max(...chronicle.map(e => e.age ?? 0)) : 0;
+      const hasFlourishing = chronicle.some(e => e.type === 'flourishing');
+      const hasTrade = chronicle.some(e => e.type === 'trade_route');
+      const tier = state === 'ruined' ? 'ruins'
+        : (chronicleAge >= 4 && hasFlourishing && hasTrade) ? 'city'
+        : (chronicleAge >= 3 && hasFlourishing) ? 'town' : 'village';
+
+      settlements.push({ x, y, tier, race, state, chronicleAge, biome: biome.id });
+    }
+  }
+  return settlements;
+}
+
+let _discoveredCache = { key: '', settlements: [] };
 
 // ── Race colors (distinct per race for visual identification) ───────
 const RACE_COLORS = {
@@ -67,7 +122,13 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
     lastEventsRef = sim.events;
   }
   const d = collectDebugDrawables(sim);
-  _lastDrawState = { camX, camY, tilePx, settlements: d.settlements };
+  // Discover ALL settlements on screen from the chronicle (pure, no sim needed)
+  const cacheKey = `${Math.floor(camX / 200)},${Math.floor(camY / 200)},${Math.floor(tilePx)}`;
+  if (_discoveredCache.key !== cacheKey) {
+    _discoveredCache = { key: cacheKey, settlements: discoverSettlements(camX, camY, w, h, tilePx) };
+  }
+  const allSettlements = _discoveredCache.settlements;
+  _lastDrawState = { camX, camY, tilePx, settlements: allSettlements };
   const onScreen = (sx, sy) => sx > -tilePx && sy > -tilePx && sx < w + tilePx && sy < h + tilePx;
   const px = v => Math.ceil(v * tilePx);
   const rectPx = r => [Math.floor(r.x0 * tilePx - camX), Math.floor(r.y0 * tilePx - camY), px(r.w), px(r.h)];
@@ -84,14 +145,14 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
   }
 
   // ── Road network lines: draw connections between settlements ──────
-  if (d.settlements.length > 1) {
+  if (allSettlements.length > 1) {
     ctx.lineWidth = Math.max(2, tilePx * 0.15);
     ctx.setLineDash([]);
-    for (let i = 0; i < d.settlements.length; i++) {
-      const a = d.settlements[i];
+    for (let i = 0; i < allSettlements.length; i++) {
+      const a = allSettlements[i];
       if (a.state === 'ruined') continue;
-      for (let j = i + 1; j < d.settlements.length; j++) {
-        const b = d.settlements[j];
+      for (let j = i + 1; j < allSettlements.length; j++) {
+        const b = allSettlements[j];
         if (b.state === 'ruined') continue;
         const dist = Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
         if (dist > 100) continue; // only draw nearby connections
@@ -123,7 +184,7 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
   const BUILDING_COLORS = {
     wall: 'rgba(70,80,95,0.7)', door: 'rgba(160,110,60,0.8)', floor: 'rgba(200,190,170,0.25)',
   };
-  for (const s of d.settlements) {
+  for (const s of allSettlements) {
     const rc = RACE_COLORS[s.race] ?? DEFAULT_RACE;
     const isRuin = s.state === 'ruined' || s.tier === 'ruins';
 
@@ -285,8 +346,8 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
   ctx.fillStyle = 'rgba(0,0,0,0.65)';
   ctx.fillRect(w - 340, 8, 332, 16 * 9 + 10);
   ctx.fillStyle = '#9ad';
-  const active = d.settlements.filter(s => s.state !== 'ruined').length;
-  const ruined = d.settlements.filter(s => s.state === 'ruined').length;
+  const active = allSettlements.filter(s => s.state !== 'ruined').length;
+  const ruined = allSettlements.filter(s => s.state === 'ruined').length;
   ctx.fillText(`CIV OVERLAY  tick=${d.tick}  stl=${active}+${ruined}r  roads=${d.roads.length}  plots=${d.plots.length}`, w - 14, 22);
   seenEvents.slice(-8).forEach((e, i) => {
     const isChronicle = e.type?.startsWith('chronicle_') || e.type === 'settlement_founded';

@@ -138,9 +138,10 @@ export function generateFootprint(seed, typeId, race, tier) {
   const type = typeById(typeId);
   if (!type) return null;
 
-  // 1. Determine size within type's range
-  const w = type.minW + Math.floor(rand(seed, 0x5001) * (type.maxW - type.minW + 1));
-  const h = type.minH + Math.floor(rand(seed, 0x5002) * (type.maxH - type.minH + 1));
+  // 1. Determine size within type's range (scaled up 1.5× for visual presence on terrain)
+  const SCALE = 1.5;
+  const w = Math.round((type.minW + Math.floor(rand(seed, 0x5001) * (type.maxW - type.minW + 1))) * SCALE);
+  const h = Math.round((type.minH + Math.floor(rand(seed, 0x5002) * (type.maxH - type.minH + 1))) * SCALE);
 
   // 2. Pick pattern from type's allowed patterns
   const patIdx = Math.floor(rand(seed, 0x5003) * type.patterns.length);
