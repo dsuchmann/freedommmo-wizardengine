@@ -19,15 +19,21 @@ const WATER = new Set(['ocean', 'deep_ocean', 'lake', 'river', 'shallow_water', 
 const MAX_BUILDINGS = 80;
 const CLAIM_MARGIN = 2;
 
-// ── Floor tile images ──────────────────────────────────────────────
-// Only solid interior tiles needed (wang_15 = all floor, no edges).
-// Edges only needed for floor-to-floor transitions (different materials).
+// ── Floor + wall tile images ────────────────────────────────────────
 const _floorImgs = {};  // material id -> HTMLImageElement
+const _wallImgs = { plain: null, window: null, door: null };
 let _floorReady = false;
 
 function ensureFloorImages() {
   if (_floorReady) return;
-  _floorReady = true;  // only try once
+  _floorReady = true;
+  // Wall sprites (256×256 each)
+  const wallBase = '/assets/pixelab/buildings/walls/stone_brick/';
+  for (const [key, file] of [['plain', 'wall_plain.png'], ['window', 'wall_window.png'], ['door', 'wall_door.png']]) {
+    const img = new Image();
+    img.src = wallBase + file;
+    img.onload = () => { _wallImgs[key] = img; };
+  }
   // Solid interior tile per material (wang_15 = all corners upper = full floor)
   const mats = {
     wood_plank:   'wood_plank__wang_7.png',
@@ -153,6 +159,58 @@ export function drawBuildingFloors(ctx, camX, camY, tilePx, w, h) {
           // Draw solid interior tile with slight overlap to kill seams
           ctx.drawImage(img, sx, sy, t + pad, t + pad);
         }
+      }
+    }
+  }
+
+  ctx.restore();
+}
+
+/** Draw building walls (south-facing face sprites) AFTER F2 sprites.
+ *  Walls render as tall sprites at the south edge of each building section,
+ *  drawn in front of everything (like cliff faces). */
+export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
+  const buildings = _cache.buildings;
+  if (!buildings || buildings.length === 0) return;
+  if (!_wallImgs.plain) return;
+
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+
+  // Wall face height in pixels (proportional to tile size)
+  // 256px sprite covers 8 tiles worth of wall face
+  const WALL_TILES = 8;  // how many tiles tall the wall face appears
+  const wallH = Math.ceil(tilePx * WALL_TILES);
+  const segW = Math.ceil(tilePx);  // each wall segment = 1 tile wide
+
+  for (const b of buildings) {
+    const fp = b.footprint;
+    const hasDoor = fp.doors && fp.doors.length > 0;
+    const hasWindow = fp.interior?.walls?.some(w2 => w2.kind === 'window');
+
+    for (const sec of fp.sections) {
+      // South edge of this section: y = sec.y0 + sec.h (bottom row)
+      const southY = b.y + sec.y0 + sec.h;
+      const westX = b.x + sec.x0;
+
+      for (let dx = 0; dx < sec.w; dx++) {
+        const wx = westX + dx;
+        const sx = Math.floor(wx * tilePx - camX);
+        // Wall face hangs DOWN from the south edge
+        const sy = Math.floor(southY * tilePx - camY);
+
+        if (sx + segW < 0 || sx > w || sy + wallH < 0 || sy > h) continue;
+
+        // Pick wall variant: door at the door position, window every few tiles
+        let img = _wallImgs.plain;
+        if (hasDoor && dx === Math.floor(sec.w / 2)) {
+          img = _wallImgs.door || _wallImgs.plain;
+        } else if (hasWindow && dx % 4 === 2 && dx > 0 && dx < sec.w - 1) {
+          img = _wallImgs.window || _wallImgs.plain;
+        }
+
+        // Draw wall face sprite: 1 tile wide, WALL_TILES tiles tall
+        ctx.drawImage(img, sx, sy, segW, wallH);
       }
     }
   }
