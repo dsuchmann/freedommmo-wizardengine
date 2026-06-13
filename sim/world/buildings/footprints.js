@@ -5,6 +5,7 @@
 import { rand, mix } from '../../kernel/rng.js';
 import { typeById } from './taxonomy.js';
 import { generatePattern } from './patterns.js';
+import { generateInterior } from './interiors.js';
 
 // ── tile math ─────────────────────────────────────────────────────────
 
@@ -193,6 +194,9 @@ export function generateFootprint(seed, typeId, race, tier) {
   // 8. Bounding box
   const bbox = boundingBox(sections);
 
+  // 9. Generate interior (I0-I6 fields)
+  const interior = generateInterior(mix(seed, 0x5050), typeId, race, tier, { sections, walls, doors, floors });
+
   return {
     typeId,
     typeName: type.name,
@@ -205,6 +209,7 @@ export function generateFootprint(seed, typeId, race, tier) {
     doors,
     floors,
     features,
+    interior,
     boundingBox: bbox,
   };
 }

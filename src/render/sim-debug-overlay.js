@@ -520,16 +520,49 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
         lines.push({ text: `  [spec] ${item}`, color: '#adf' });
       }
     }
-    if (fp.features?.length) {
+    if (fp.interior) {
+      const int = fp.interior;
       lines.push({ text: ``, color: '#666' });
-      lines.push({ text: `INTERIOR:`, color: '#aaa' });
-      const MAX_CHARS = 38;
-      let iLine = '  ';
-      for (const f of fp.features) {
-        if ((iLine + f.type + ', ').length > MAX_CHARS) { lines.push({ text: iLine, color: '#888' }); iLine = '  '; }
-        iLine += (iLine.length > 2 ? ', ' : '') + f.type;
+      lines.push({ text: `INTERIOR (${int.condition?.name ?? '?'}):`, color: '#da8' });
+      lines.push({ text: `  Floor: ${int.floor?.name ?? '?'}`, color: '#aaa' });
+      if (int.walls?.length) {
+        const wCounts = {};
+        for (const w2 of int.walls) wCounts[w2.name] = (wCounts[w2.name] ?? 0) + 1;
+        let wLine = '  Walls: ';
+        for (const [n, c] of Object.entries(wCounts)) wLine += `${c}× ${n}, `;
+        lines.push({ text: wLine.slice(0, -2), color: '#aaa' });
       }
-      if (iLine.length > 2) lines.push({ text: iLine, color: '#888' });
+      if (int.structure?.length) {
+        lines.push({ text: `  Structure:`, color: '#aaa' });
+        for (const s2 of int.structure) {
+          const dir = s2.direction ? ` (${s2.direction})` : '';
+          lines.push({ text: `    ${s2.name}${dir}`, color: '#888' });
+        }
+      }
+      if (int.furniture?.length) {
+        lines.push({ text: `  Furniture:`, color: '#aaa' });
+        const fCounts = {};
+        for (const f2 of int.furniture) fCounts[f2.name] = (fCounts[f2.name] ?? 0) + 1;
+        for (const [n, c] of Object.entries(fCounts)) {
+          lines.push({ text: `    ${c > 1 ? c + '× ' : ''}${n}`, color: '#888' });
+        }
+      }
+      if (int.objects?.length) {
+        const MAX_C = 36;
+        lines.push({ text: `  Objects:`, color: '#aaa' });
+        let oLine = '    ';
+        for (const o of int.objects) {
+          if ((oLine + o.name + ', ').length > MAX_C) { lines.push({ text: oLine, color: '#888' }); oLine = '    '; }
+          oLine += (oLine.length > 4 ? ', ' : '') + o.name;
+        }
+        if (oLine.length > 4) lines.push({ text: oLine, color: '#888' });
+      }
+      if (int.decorative?.length) {
+        lines.push({ text: `  Decor:`, color: '#aaa' });
+        for (const dec of int.decorative) {
+          lines.push({ text: `    ${dec.name} (${dec.placement})`, color: '#888' });
+        }
+      }
     }
     lines.push({ text: ``, color: '#666' });
     lines.push({ text: `[click elsewhere to close · click settlement label for overview]`, color: '#666' });
