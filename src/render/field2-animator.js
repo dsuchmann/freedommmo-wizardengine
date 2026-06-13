@@ -1104,6 +1104,9 @@ function _poolRebuild(chunkStore, player, glc, tilePxSnapped, radiusX, radiusY) 
       biomeShadowK: e.biomeShadowK, sizeTiles: e.sizeTiles,
       drawSizePx: drawSizePx, img: img || null,
       lastFrameIdx: restFrame, frozen: false,
+      extraUrl: e.extraUrl || null,
+      simState: null,
+      tileRotCached: 0,
     });
   }
   _pool.n = n;
@@ -1131,6 +1134,97 @@ function _poolKey(chunkStore, px, py, tilePxSnapped, radiusX, radiusY) {
     for (var cx = minCX; cx <= maxCX; cx++)
       if (chunkStore.getIfReady(cx, cy)) ready++;
   return px + '|' + py + '|' + tilePxSnapped.toFixed(4) + '|' + radiusX + '|' + radiusY + '|' + ready;
+}
+
+function _poolTick(timeMs, timeSec, glc, tilePxSnapped) {
+  _f2Stats.ticks++;
+  // 1) Wind + ambient triggers, per tile then per blade (arithmetic only).
+  for (var t = 0; t < _pool.tiles.length; t++) {
+    var tg = _pool.tiles[t];
+    var currentEffect = sampleCurrents(tg.wx, tg.wy, timeSec);
+    tg.rot = currentEffect.rot; // cached for per-frame sway math
+    var baseImpulse = Math.abs(currentEffect.rot) * 12;
+    for (var i = tg.first; i < tg.first + tg.count; i++) {
+      var meta = _pool.meta[i];
+      meta.tileRotCached = tg.rot;
+      var bl = meta.bl;
+      if (!bl) continue;
+      var canAnimate = !!bl.animUrlBase || !!bl.ambientPeriod || (!bl.isRigid && bl.lifeSway !== 0);
+      if (!canAnimate) continue;
+      var blCycle = (bl.frameCount || FRAME_COUNT) * FRAME_DURATION;
+      var impulse = baseImpulse;
+      if (bl.ambientPeriod && (timeMs + bl.ambientPhase) % bl.ambientPeriod < blCycle * 4) {
+        impulse = 0.2;
+      }
+      var triggerKey = meta.wx * 10000 + meta.wy * 100 + bl.bi;
+      if (impulse > 0.08) {
+        var existing = triggerTimes.get(triggerKey);
+        if (!existing || timeMs - existing.time > blCycle * 2) {
+          triggerTimes.set(triggerKey, { time: timeMs + bl.startDelay, ext: 0 });
+          _pool.active.set(i, true);
+        } else if (existing) {
+          _pool.active.set(i, true);
+        }
+      }
+      var triggerData = triggerTimes.get(triggerKey);
+      if (triggerData) {
+        var triggerDuration = blCycle * bl.loopCount;
+        var elapsed = timeMs - triggerData.time;
+        if (elapsed > triggerDuration * 0.8 && triggerData.ext < MAX_EXTENSIONS) {
+          var shouldExtend = false;
+          for (var nd = -1; nd <= 1 && !shouldExtend; nd++) {
+            for (var ne = -1; ne <= 1 && !shouldExtend; ne++) {
+              if (nd === 0 && ne === 0) continue;
+              var nData = triggerTimes.get((meta.wx + ne) * 10000 + (meta.wy + nd) * 100);
+              if (!nData) continue;
+              var nElapsed = timeMs - nData.time;
+              if (nElapsed < triggerDuration * 0.6 && nData.ext < MAX_EXTENSIONS) shouldExtend = true;
+            }
+          }
+          if (shouldExtend) {
+            triggerTimes.set(triggerKey, { time: triggerData.time + blCycle, ext: triggerData.ext + 1 });
+            _pool.active.set(i, true);
+          }
+        }
+        if (elapsed >= 0 && elapsed <= triggerDuration) _pool.active.set(i, true);
+      }
+    }
+  }
+
+  // 2) Sim overrides (F4 entries, bi >= 90). At most 100ms latency.
+  if (_simWorldState) {
+    for (var j = 0; j < _pool.n; j++) {
+      var m2 = _pool.meta[j];
+      if (!m2.bl || m2.bl.bi < 90) continue;
+      var key = 'f4:' + m2.wx + ',' + m2.wy + ':' + (m2.bl.bi - 90);
+      var ov = _simWorldState.overrideFor(key);
+      var want = null;
+      if (ov && ov.removed) want = 'REMOVED';
+      else if (ov && ov.visual && ov.visual !== 'normal') want = ov.visual;
+      if (want !== m2.simState) {
+        m2.simState = want;
+        _pool.active.set(j, true);
+      }
+    }
+  }
+
+  // 3) Pending images: retry load/atlas.
+  for (var pIdx = _pool.pending.length - 1; pIdx >= 0; pIdx--) {
+    var k = _pool.pending[pIdx];
+    var pm = _pool.meta[k];
+    var img = pm.bl
+      ? ((pm.bl.stateUrl ? loadFrame(pm.bl.stateUrl) : null)
+        || (pm.bl.animUrlBase ? loadFrame(pm.bl.animUrlBase + 'frame_' + String(pm.bl.restFrame).padStart(3, '0') + '.png', pm.bl.frameCount) : null)
+        || loadFrame(pm.bl.staticUrl))
+      : loadFrame(pm.extraUrl || '');
+    if (!img) continue;
+    img = scaledFrame(img, pm.drawSizePx);
+    var rect = glc.atlasRect(img, img.src || img._dnKey || '');
+    if (!rect) continue;
+    pm.img = img;
+    _pool.active.set(k, true);
+    _pool.pending.splice(pIdx, 1);
+  }
 }
 
 // Draw animated Field 2 sprites near the player.
