@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Motion QA Workbench</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+    body { background: #111; color: #ddd; font: 14px/1.5 monospace; display: flex; flex-direction: column; height: 100vh; }
+    header { background: #1a1a2a; padding: 8px 16px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #333; }
+    header h1 { font-size: 16px; color: #9af; }
+    main { display: flex; flex: 1; overflow: hidden; }
+    .panel { border-right: 1px solid #333; overflow-y: auto; }
+    #library { width: 220px; padding: 8px; }
+    #library input { width: 100%; padding: 4px 8px; background: #222; color: #ddd; border: 1px solid #444; border-radius: 4px; margin-bottom: 8px; }
+    .pose-item { padding: 4px 8px; cursor: pointer; border-radius: 4px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pose-item:hover { background: #2a2a3a; }
+    .pose-item.selected { background: #335; }
+    .pose-item .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+    .dot.pass { background: #5b5; } .dot.fail { background: #b55; } .dot.untested { background: #555; }
+    #canvas-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #1a1a1a; }
+    #canvas-wrap canvas { border: 1px solid #333; }
+    .controls { padding: 8px; display: flex; gap: 8px; align-items: center; }
+    .controls button { background: #333; color: #ddd; border: 1px solid #555; border-radius: 4px; padding: 4px 12px; cursor: pointer; }
+    .controls button:hover { background: #444; }
+    #details { width: 300px; padding: 12px; overflow-y: auto; }
+    #details h3 { color: #9af; margin-bottom: 8px; }
+    #details pre { background: #1a1a1a; padding: 8px; border-radius: 4px; font-size: 11px; overflow-x: auto; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+    #command-bar { background: #1a1a2a; padding: 8px 16px; border-top: 1px solid #333; display: flex; gap: 8px; }
+    #command-bar input { flex: 1; padding: 6px 10px; background: #222; color: #ddd; border: 1px solid #444; border-radius: 4px; }
+    #command-bar button { background: #446; color: #ddd; border: 1px solid #556; border-radius: 4px; padding: 6px 16px; cursor: pointer; }
+    .status { padding: 4px 8px; font-size: 12px; color: #888; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Motion QA Workbench</h1>
+    <span class="status" id="status">Loading...</span>
+  </header>
+  <main>
+    <div class="panel" id="library">
+      <input type="text" id="filter" placeholder="Filter poses..." />
+      <div id="pose-list"></div>
+    </div>
+    <div id="canvas-wrap">
+      <canvas id="preview" width="400" height="600"></canvas>
+      <div class="controls">
+        <button id="btn-prev">&#9198;</button>
+        <button id="btn-play">&#9654;</button>
+        <button id="btn-next">&#9197;</button>
+        <button id="btn-loop">&#128257;</button>
+        <span class="status" id="frame-info">-</span>
+      </div>
+    </div>
+    <div class="panel" id="details">
+      <h3 id="detail-title">Select a pose</h3>
+      <div id="detail-desc"></div>
+      <h3 style="margin-top:12px">Joints</h3>
+      <pre id="detail-json">{}</pre>
+      <h3 style="margin-top:12px">Tags</h3>
+      <div id="detail-tags"></div>
+    </div>
+  </main>
+  <div id="command-bar">
+    <input type="text" id="command" placeholder="Type a motion command to generate..." />
+    <button id="btn-generate">Generate</button>
+  </div>
+  <script type="module">
+    import { solvePose } from '/src/life/pose.js';
+    import { drawPose } from '/src/life/eval/stick-renderer.js';
+
+    let rig = null;
+    let poses = [];
+    let selectedPose = null;
+
+    async function init() {
+      rig = await (await fetch('/src/life/rigs/humanoid.json')).json();
+      poses = await (await fetch('/src/life/choreography/poses.json')).json();
+      document.getElementById('status').textContent = `${poses.length} poses loaded`;
+      renderList();
+      if (poses.length) selectPose(poses[0]);
+    }
+
+    function renderList(filter = '') {
+      const list = document.getElementById('pose-list');
+      const f = filter.toLowerCase();
+      list.innerHTML = poses
+        .filter(p => !f || p.id.includes(f) || p.tags.some(t => t.includes(f)))
+        .map(p => {
+          const cls = p.verified ? 'pass' : 'untested';
+          return `<div class="pose-item" data-id="${p.id}"><span class="dot ${cls}"></span>${p.id}</div>`;
+        }).join('');
+      list.querySelectorAll('.pose-item').forEach(el => {
+        el.onclick = () => selectPose(poses.find(p => p.id === el.dataset.id));
+      });
+    }
+
+    function selectPose(p) {
+      selectedPose = p;
+      document.querySelectorAll('.pose-item').forEach(el => el.classList.toggle('selected', el.dataset.id === p.id));
+      document.getElementById('detail-title').textContent = p.id;
+      document.getElementById('detail-desc').textContent = p.desc;
+      document.getElementById('detail-json').textContent = JSON.stringify(p.joints, null, 2);
+      document.getElementById('detail-tags').textContent = p.tags.join(', ');
+      drawPreview(p.joints);
+    }
+
+    function drawPreview(joints) {
+      const canvas = document.getElementById('preview');
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      drawPose(ctx, rig, joints, 0, 0, canvas.width, canvas.height, {});
+    }
+
+    document.getElementById('filter').oninput = (e) => renderList(e.target.value);
+    document.getElementById('btn-generate').onclick = () => {
+      const cmd = document.getElementById('command').value.trim();
+      if (!cmd) return;
+      document.getElementById('status').textContent = 'Run: MOTION_LLM_KEY=... node src/life/eval/generate-motion.js "' + cmd + '"';
+    };
+
+    init();
+  </script>
+</body>
+</html>
