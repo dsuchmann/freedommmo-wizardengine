@@ -266,9 +266,14 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
         const fp = b.footprint;
         const bb = fp.boundingBox;
 
-        // Skip buildings on water
-        const bBiome = classifyBiome(b.x + Math.floor(bb.w / 2), b.y + Math.floor(bb.h / 2));
-        if (['ocean', 'deep_ocean', 'lake', 'river', 'shallow_water', 'stream'].includes(bBiome.id)) continue;
+        // Skip buildings touching any water (check corners + center)
+        const WATER = new Set(['ocean', 'deep_ocean', 'lake', 'river', 'shallow_water', 'stream']);
+        const checkPoints = [
+          [b.x, b.y], [b.x + bb.w - 1, b.y],
+          [b.x, b.y + bb.h - 1], [b.x + bb.w - 1, b.y + bb.h - 1],
+          [b.x + Math.floor(bb.w / 2), b.y + Math.floor(bb.h / 2)],
+        ];
+        if (checkPoints.some(([px, py]) => WATER.has(classifyBiome(px, py).id))) continue;
 
         // Cross-settlement overlap check: skip if any tile already occupied
         let overlaps = false;
