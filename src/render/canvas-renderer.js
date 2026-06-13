@@ -16,7 +16,8 @@ import { drawField2Animations, preloadField2Animations, drawWindWispOverlay, set
 import { findNearbyInteraction, objectReaction, performInteraction } from '../world/interactions.js';
 import { GLCompositor } from './gl-compositor.js';
 import { buildAtmoField } from './atmosphere-pass.js';
-import { drawHumanoidPlayer } from './humanoid-player-renderer.js';
+import { drawHumanoidPlayer, playMotion, stopMotion } from './humanoid-player-renderer.js';
+if (typeof window !== 'undefined') { window.playMotion = playMotion; window.stopMotion = stopMotion; }
 
 function drawPrecipitation(ctx, w, h, precip, wind, time, tint) {
   if (precip.type === 'none' || precip.intensity < 0.01) return;

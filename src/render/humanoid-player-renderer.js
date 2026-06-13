@@ -11,6 +11,8 @@
 // When sprites/meta are absent the caller falls back to the legacy doodle.
 import { PARTS, PART_BONE, partKey, composeLayers } from '../../sim/life/body.js';
 import { solvePose } from '../life/pose.js';
+import { setMotionRig, currentJoints, isMotionActive, stopMotion, playMotion } from './motion-player.js';
+export { playMotion, stopMotion, isMotionActive };
 
 const BP_BASE = '/assets/pixelab/body_parts/';
 const RIG_URL = '/src/life/rigs/humanoid.json';
@@ -135,13 +137,18 @@ export function drawHumanoidPlayer(ctx, x, y, zoom, frame, animation, direction 
   if (!rigStarted) {
     rigStarted = true;
     fetch(RIG_URL).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then(r => { rig = r; }).catch(() => { rigFailed = true; });
+      .then(r => { rig = r; setMotionRig(r); }).catch(() => { rigFailed = true; });
   }
   if (!rig) return false;
   const [d, st] = resolveDir(String(direction).toLowerCase());
   if (!d) return false;
   const cfg = DIRS[d];
-  const pose = solvePose(rig, jointsFor(frame, animation, d));
+  // Motion override: active choreography joints take priority over walk cycle.
+  // Movement input hard-stops any active performance.
+  const moving = animation === 'walk' || animation === 'sprint';
+  if (moving && isMotionActive()) stopMotion(true);
+  const motionJoints = !moving ? currentJoints(performance.now()) : null;
+  const pose = solvePose(rig, motionJoints ?? jointsFor(frame, animation, d));
   const gait = rig.gaits[animation === 'sprint' ? 'run' : 'walk'];
   const bob = (animation === 'walk' || animation === 'sprint')
     ? Math.abs(Math.sin(frame * Math.PI / 4)) * gait.bob * RIG_UNIT_PX * zoom : 0;
@@ -150,7 +157,6 @@ export function drawHumanoidPlayer(ctx, x, y, zoom, frame, animation, direction 
   // Front/back-view step: each leg alternately lifts (foreshortens toward the
   // hip) — the depth-stride equivalent. Profile views use real planar swing.
   const planar = d === 'e' || d === 'w';
-  const moving = animation === 'walk' || animation === 'sprint';
   const phase = frame * Math.PI / 4;
   const stepAmp = moving && !planar ? (animation === 'sprint' ? 0.22 : 0.14) : 0;
   const lift = {
