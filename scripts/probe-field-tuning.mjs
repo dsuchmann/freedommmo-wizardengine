@@ -46,7 +46,7 @@ const res = await page.evaluate(() => {
 
   // (4) registry-driven tabs include f5 in order
   // NOTE: update this expected list when F6/F7 register in the field registry.
-  const registryOk = JSON.stringify(window._fieldRegistry) === JSON.stringify(['f2', 'f3', 'f4', 'f5']);
+  const registryOk = JSON.stringify(window._fieldRegistry) === JSON.stringify(['f2', 'f3', 'f4', 'f5', 'f6']);
 
   // (5) F5 placements exist and respond to density/size/state tuning
   const f5 = () => sample((x, y) => window._claims.f5(x, y).map(p => [p.name, p.variant, +p.sizeTiles.toFixed(4), p.state]));
