@@ -12,7 +12,7 @@ import { composeSpatial } from './spatial-compose.js';
 import { compileSpatialProgram } from './spatial-compiler.js';
 import { renderStrip } from './stick-renderer.js';
 import { solvePose } from '../pose.js';
-import { ALL_COMMANDS } from './motion-taxonomy.js';
+import { ALL_COMMANDS, LOOP_COMMANDS, HOLD_COMMANDS } from './motion-taxonomy.js';
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 
 const rig = JSON.parse(readFileSync('src/life/rigs/humanoid.json', 'utf8'));
@@ -51,13 +51,29 @@ function structuralCheck(frames, command) {
   const hasMovement = frames.some(f => Object.values(f.joints).some(v => Math.abs(v) > 5));
   if (!hasMovement) issues.push('no visible movement — all frames near rest');
 
-  // Return to rest check (skip for terminal poses like sit, lie, kneel)
-  const terminal = /sit|lie|kneel|crouch|meditate|lotus|child pose/i.test(command);
-  if (!terminal) {
+  // Return-to-rest / loop-continuity / hold checks based on playback type
+  const isLoop = LOOP_COMMANDS.has(command);
+  const isHold = HOLD_COMMANDS.has(command);
+
+  if (isLoop) {
+    // Loop: last frame must be close to first frame (cycle continuity)
+    const first = frames[0]?.joints || {};
+    const last = frames[frames.length - 1]?.joints || {};
+    const allKeys = new Set([...Object.keys(first), ...Object.keys(last)]);
+    for (const k of allKeys) {
+      const delta = Math.abs((first[k] || 0) - (last[k] || 0));
+      if (delta > 20) {
+        issues.push(`loop discontinuity: ${k} differs by ${delta}° between first and last frame`);
+        break;
+      }
+    }
+  } else if (!isHold) {
+    // One-shot: must return to rest
     const last = frames[frames.length - 1]?.joints || {};
     const lastActive = Object.entries(last).filter(([k, v]) => Math.abs(v) > 15);
     if (lastActive.length > 2) issues.push('does not return to rest — ' + lastActive.map(([k,v]) => k+':'+v).join(', '));
   }
+  // Hold: no return-to-rest check — stays in final position
 
   // Hand distance for close/clap motions
   if (/clap|pray|close/i.test(command)) {
@@ -165,7 +181,12 @@ for (const { command, category } of commands) {
 
   for (let attempt = 0; attempt < 3 && totalReviews < 15; attempt++) {
     // ── Generate ────────────────────────────────────────────────────
-    const { choreography, error } = await composeSpatial(command, { key, model: MODEL });
+    const isLoop = LOOP_COMMANDS.has(command);
+    const isHold = HOLD_COMMANDS.has(command);
+    const hint = isLoop ? ' (THIS IS A LOOP ANIMATION — the last frame must seamlessly connect back to the first frame. Do NOT return to rest at the end.)'
+      : isHold ? ' (THIS IS A HOLD POSE — play into the final position and STAY there. Do NOT return to rest.)'
+      : '';
+    const { choreography, error } = await composeSpatial(command + hint, { key, model: MODEL });
     if (error) {
       console.log(`  gen ${attempt+1}: error — ${error}`);
       report.reviews.push({ pass: 0, type: 'generate', result: 'error', detail: error });
@@ -272,6 +293,8 @@ for (const { command, category } of commands) {
 
   // ── Save best result ──────────────────────────────────────────────
   if (bestProgram && bestScore >= 6) {
+    // Tag program with playback type
+    bestProgram.playback = LOOP_COMMANDS.has(command) ? 'loop' : HOLD_COMMANDS.has(command) ? 'hold' : 'oneshot';
     writeFileSync(`${outDir}/${id}.json`, JSON.stringify(bestProgram, null, 2));
     writeFileSync(`${outDir}/${id}_spatial.json`, JSON.stringify(bestSpatial, null, 2));
 

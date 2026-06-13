@@ -308,10 +308,61 @@ export const TAXONOMY = {
   ],
 };
 
-// Flatten to a single array of commands
+// ── LOOP vs ONE-SHOT classification ─────────────────────────────────────
+// Loops play continuously while an input state is active (walking, running).
+// One-shots play once and return to rest (wave, bow).
+// Some are "hold" — play once and stay in final position (sit, kneel).
+export const LOOP_COMMANDS = new Set([
+  // Locomotion loops
+  'march in place', 'march in place high knees',
+  'tiptoe forward', 'tiptoe carefully',
+  'sneak crouch walk', 'sneak look both ways',
+  'skip happily', 'gallop',
+  'hop on one foot', 'hop on other foot',
+  'power walk', 'strut confidently', 'swagger walk', 'creep forward',
+  'stagger', 'limp walk', 'hobble',
+  // Exercise loops
+  'high knees', 'butt kicks', 'jump rope', 'boxer shuffle',
+  'mountain climber',
+  // Dance loops
+  'simple dance', 'energetic dance', 'slow dance alone',
+  'head bob to music', 'shoulder shimmy', 'hip sway',
+  'two step', 'side step', 'grapevine step',
+  'running man', 'bounce dance', 'groove with snapping',
+  'step touch',
+  // Idle loops
+  'breathe slowly', 'sway side to side', 'shift weight back and forth',
+  'hum and sway', 'bounce on heels',
+  // Work loops
+  'sweep floor', 'sweep vigorously', 'mop floor',
+  'stir pot', 'scrub surface',
+  'saw wood', 'sand surface',
+  // Combat loops
+  'guard up', 'fighting stance', 'boxer shuffle',
+]);
+
+export const HOLD_COMMANDS = new Set([
+  // Terminal poses — play once, stay in position
+  'sit down', 'sit down slowly', 'sit cross legged', 'sit with legs extended',
+  'lie down on back', 'lie down on belly', 'lie on side',
+  'kneel', 'kneel on one knee', 'genuflect',
+  'crouch down', 'crouch_ready',
+  'meditate seated', 'meditate standing',
+  'plank hold', 'side plank',
+  'lotus position', 'half lotus', 'child pose',
+  'cross arms', 'hands behind back', 'put hands on hips',
+  'fighting stance', 'ready stance', 'wide stance',
+  'at attention military', 'at ease military', 'parade rest',
+]);
+
+// Flatten to a single array of commands with metadata
 export const ALL_COMMANDS = Object.entries(TAXONOMY)
-  .flatMap(([category, commands]) => commands.map(cmd => ({ command: cmd, category })));
+  .flatMap(([category, commands]) => commands.map(cmd => ({
+    command: cmd,
+    category,
+    playback: LOOP_COMMANDS.has(cmd) ? 'loop' : HOLD_COMMANDS.has(cmd) ? 'hold' : 'oneshot',
+  })));
 
 export const IDLE_COMMANDS = TAXONOMY.idle;
 
-console.log?.(`Taxonomy: ${ALL_COMMANDS.length} commands across ${Object.keys(TAXONOMY).length} categories`);
+console.log?.(`Taxonomy: ${ALL_COMMANDS.length} commands (${[...LOOP_COMMANDS].length} loops, ${[...HOLD_COMMANDS].length} holds) across ${Object.keys(TAXONOMY).length} categories`);
