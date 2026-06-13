@@ -53,6 +53,20 @@
 - [ ] Success → cache program in-memory + `localStorage 'motion_cache'` keyed by id; manifest entry appended at runtime (tags from command tokens) so repeats are instant dictionary hits; play it.
 - [ ] Commit.
 
-### Task 5: Close-out
+### Task 5: Motif layer + posture graph (taxonomy spec `2026-06-12-motion-taxonomy.md`)
 
-- [ ] Full suite green; roadmap/memory note; browser-verify: "do five jumping jacks" instant, novel command generates (with key) or refuses honestly (without).
+**Files:** Create `src/life/choreography/motifs.js` (~32 named fragments → program sub-trees, params {scale, ticks}); Create `src/life/choreography/postures.js` (14 validated postures + transition-edge table + `pathBetween(from, to)`); Modify `sim/life/motion/program.js` (allow `{op:'motif', id, params}` expanded at load); Test: `sim/test/motion-motifs.test.js` (every motif + posture + transition validates; pathBetween finds lie_back→handstand chain).
+
+- [ ] Choreography JSONs gain `from`/`to` posture fields (default stand/stand); player chains transitions before playing.
+
+### Task 6: Taxonomy authoring waves (~190 ids per spec catalog)
+
+- [ ] Wave A communication (40) → Wave B exercise/work (48) → Wave C reactions+idles+transitions (51) → Wave D duets (30, headless-validated both roles; duet schema `{roles:{actor,partner}}`, posture-gated). Each wave: author over MOTIFS (raw joints only in motifs), library test green, commit.
+
+### Task 7: Idle layers + gait rows
+
+- [ ] 10 idle loop programs layered in `parallel` by motion-player when no performance is active; gait param rows (12) extend `rig.gaits`; renderer maps gait → existing front-view step parameters.
+
+### Task 8: Close-out
+
+- [ ] Full suite green; roadmap/memory note; browser-verify: "do five jumping jacks" instant from any posture (auto-chains get_up first), novel command generates (with key) or refuses honestly (without).
