@@ -1031,6 +1031,7 @@ export class GLCompositor {
       gl.bindBuffer(gl.ARRAY_BUFFER, p.vbo);
       p.capBytes = bytes * 2;
       gl.bufferData(gl.ARRAY_BUFFER, p.capBytes, gl.DYNAMIC_DRAW);
+      gl.bindBuffer(gl.ARRAY_BUFFER, null);
     }
     return true;
   }
@@ -1042,6 +1043,7 @@ export class GLCompositor {
     var gl = this.gl;
     var p = this._pool && this._pool[kind];
     if (!p) return;
+    if ((start + count) * SPRITE_STRIDE > p.capBytes) return;
     gl.bindBuffer(gl.ARRAY_BUFFER, p.vbo);
     gl.bufferSubData(gl.ARRAY_BUFFER, start * SPRITE_STRIDE,
       mirror, start * SPRITE_FLOATS, count * SPRITE_FLOATS);
@@ -1073,15 +1075,18 @@ export class GLCompositor {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.atlasTex);
     gl.uniform1i(this.sUAtlas, 0);
-    this._pointPoolAttribs(p.vbo, this._spriteAttribLocs, start);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
+    try {
+      this._pointPoolAttribs(p.vbo, this._spriteAttribLocs, start);
+      gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
+    } finally {
+      // Restore VAO's default pointers (offset 0 into the legacy instVbo) so
+      // legacy drawSpriteInstances callers are unaffected.
+      this._pointPoolAttribs(this.instVbo, this._spriteAttribLocs, 0);
+      gl.bindVertexArray(null);
+    }
     gl.disable(gl.BLEND);
-    // Restore VAO's default pointers (offset 0 into the legacy instVbo) so
-    // legacy drawSpriteInstances callers are unaffected.
-    this._pointPoolAttribs(this.instVbo, this._spriteAttribLocs, 0);
-    gl.bindVertexArray(null);
   }
 
   drawPoolShadows(start, count, cssW, cssH, cam, shadowVec, strength) {
@@ -1100,13 +1105,16 @@ export class GLCompositor {
     gl.uniform2f(this.shUShadowVec, shadowVec.x, shadowVec.y);
     gl.uniform1f(this.shUShadowAlpha, strength);
     gl.uniform1f(this.shUAtlasTexel, 1 / (this.atlasSize || 1));
-    this._pointPoolAttribs(p.vbo, this._shadowAttribLocs, start);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
+    try {
+      this._pointPoolAttribs(p.vbo, this._shadowAttribLocs, start);
+      gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
+    } finally {
+      this._pointPoolAttribs(this.shadowVbo, this._shadowAttribLocs, 0);
+      gl.bindVertexArray(null);
+    }
     gl.disable(gl.BLEND);
-    this._pointPoolAttribs(this.shadowVbo, this._shadowAttribLocs, 0);
-    gl.bindVertexArray(null);
   }
 
   endFrame() {
