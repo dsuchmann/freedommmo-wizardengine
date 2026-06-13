@@ -93,6 +93,10 @@
 
       <h3>Learned Rules</h3>
       <div id="rules-list"></div>
+      <div style="margin-top:12px;display:flex;gap:4px">
+        <button onclick="navigator.clipboard.writeText(JSON.stringify(poses,null,2)).then(()=>document.getElementById('critique-status').textContent='Copied poses JSON to clipboard — paste into poses.json')" style="flex:1;font-size:10px;padding:4px;background:#333;color:#aaa;border:1px solid #444;border-radius:3px;cursor:pointer">Copy poses</button>
+        <button onclick="localStorage.removeItem('motion_poses_override');location.reload()" style="flex:1;font-size:10px;padding:4px;background:#333;color:#aaa;border:1px solid #444;border-radius:3px;cursor:pointer">Reset to file</button>
+      </div>
     </div>
   </main>
   <div id="command-bar">
@@ -127,13 +131,28 @@
     // ── Init ────────────────────────────────────────────────────────────────
     async function init() {
       rig = await (await fetch('/src/life/rigs/humanoid.json')).json();
-      poses = await (await fetch('/src/life/choreography/poses.json')).json();
+      // Load poses from localStorage override if available, else from file
+      const savedPoses = localStorage.getItem('motion_poses_override');
+      if (savedPoses) {
+        try { poses = JSON.parse(savedPoses); } catch { poses = []; }
+        console.log('[QA] Loaded poses from localStorage override');
+      }
+      if (!poses.length) {
+        poses = await (await fetch('/src/life/choreography/poses.json')).json();
+      }
       loadRules();
       document.getElementById('status').textContent = `${poses.length} poses, ${rules.length} rules`;
       renderList();
       renderRules();
       if (poses.length) selectPose(poses[0]);
       loadChoreoList();
+    }
+
+    function savePoses() {
+      localStorage.setItem('motion_poses_override', JSON.stringify(poses));
+      console.log('[QA] Poses saved to localStorage. To write to disk, run in console:');
+      console.log('copy(localStorage.getItem("motion_poses_override"))');
+      console.log('Then paste into src/life/choreography/poses.json');
     }
 
     // ── Rules persistence ───────────────────────────────────────────────────
@@ -408,23 +427,38 @@
       const rulesText = rules.length ? '\n\nLEARNED RULES (follow these):\n' + rules.map((r, i) => `${i + 1}. ${r.rule}`).join('\n') : '';
 
       const systemPrompt = `You are a pose correction expert for a 2D humanoid stick figure rig.
+The stick figure is viewed from the SIDE. The colored lines represent bones:
+- White = spine (vertical trunk)
+- Yellow = head (on top of spine)
+- Blue = left arm bones (viewer's right side), darker blue = right arm bones (viewer's left side)
+- Green = left leg bones (viewer's right side), darker green = right leg bones (viewer's left side)
+- Circles = joints, dashed line = ground level
 
-JOINTS and their limits:
-spine: [-30, 30] (negative = lean forward), head: [-60, 60] (negative = look down),
-arm_u_l: [-170, 50] (negative = raise up), arm_f_l: [-140, 0] (negative = bend),
-hand_l: [-45, 45], arm_u_r: [-50, 170] (positive = raise up),
-arm_f_r: [0, 140] (positive = bend), hand_r: [-45, 45],
-thigh_l: [-110, 30] (negative = lift forward), shin_l: [0, 140] (positive = bend knee),
-foot_l: [-30, 30], thigh_r: [-110, 30], shin_r: [0, 140], foot_r: [-30, 30]
+JOINTS, their limits, and what they DO:
+- spine: [-30, 30] — negative leans the TORSO forward, positive leans back
+- head: [-60, 60] — negative tilts head down, positive tilts up
+- arm_u_l: [-170, 50] — the LEFT upper arm. Negative raises it UP/FORWARD. At -90 it's horizontal forward. At -170 it's overhead.
+- arm_f_l: [-140, 0] — LEFT forearm bend. More negative = more bent at elbow.
+- hand_l: [-45, 45] — LEFT wrist
+- arm_u_r: [-50, 170] — the RIGHT upper arm. POSITIVE raises it UP/FORWARD. At 90 it's horizontal. At 170 it's overhead.
+- arm_f_r: [0, 140] — RIGHT forearm bend. More positive = more bent at elbow.
+- hand_r: [-45, 45] — RIGHT wrist
+- thigh_l: [-110, 30] — LEFT thigh. Negative lifts the leg UP/FORWARD. At -90 the thigh is horizontal.
+- shin_l: [0, 140] — LEFT shin/knee bend. More positive = more bent. At 130+ the shin folds back against the thigh (kneeling).
+- foot_l: [-30, 30] — LEFT ankle
+- thigh_r, shin_r, foot_r: same as left side
 
-You will see a stick figure image of the current pose and a critique from the user.
-Fix the joint angles to address the critique.
+CRITICAL: At rest (all joints = 0), the figure stands upright with arms hanging down and legs straight.
 
-Also extract a GENERAL RULE from this critique that would help avoid similar issues in future poses.
-The rule should be universal, not specific to this one pose.${rulesText}
+You will see the stick figure image AND the current joint angles. The user's critique tells you what's wrong.
+Fix the joint angles to match what the pose SHOULD look like based on the critique.
 
-Respond in EXACTLY this JSON format:
-{"joints": {<corrected joint angles>}, "rule": "<general rule for future poses>"}
+IMPORTANT: Return ALL 14 joint values in your response, not just the ones you changed. Joints you don't mention will be set to 0 (rest), which will reset limbs to hanging straight down. Always include every joint.
+
+Also extract a GENERAL RULE from this critique that would help avoid similar issues in ALL future poses.${rulesText}
+
+Respond in EXACTLY this JSON format (include ALL joints):
+{"joints": {"spine":0,"head":0,"arm_u_l":0,"arm_f_l":0,"hand_l":0,"arm_u_r":0,"arm_f_r":0,"hand_r":0,"thigh_l":0,"thigh_r":0,"shin_l":0,"shin_r":0,"foot_l":0,"foot_r":0}, "rule": "<general rule>"}
 
 No markdown, no explanation. Just the JSON.`;
 
@@ -469,10 +503,15 @@ No markdown, no explanation. Just the JSON.`;
     document.getElementById('btn-approve').onclick = () => {
       if (!pendingFix) return;
 
-      // Update the pose in memory
+      // Update the pose in the poses array (in-place mutation)
       if (selectedPose) {
-        selectedPose.joints = pendingFix.newJoints;
+        selectedPose.joints = { ...pendingFix.newJoints };
         selectedPose.verified = true;
+        // Also update the choreoFrames entry if we're in pose-browse mode
+        if (choreoFrames) {
+          const frame = choreoFrames.find(f => f._poseRef === selectedPose);
+          if (frame) frame.joints = { ...pendingFix.newJoints };
+        }
       }
 
       // Save the rule
@@ -483,18 +522,15 @@ No markdown, no explanation. Just the JSON.`;
       });
       saveRules();
 
+      // Persist poses to localStorage so changes survive navigation/reload
+      savePoses();
+
       // Update UI
       document.getElementById('btn-approve').style.display = 'none';
-      document.getElementById('critique-status').textContent = `Saved! Rule #${rules.length} learned.`;
+      document.getElementById('critique-status').textContent = `Saved! Rule #${rules.length} learned. Pose persisted.`;
       document.getElementById('critique-box').value = '';
       renderList(document.getElementById('filter').value);
       pendingFix = null;
-
-      // Note: poses.json on disk isn't updated (browser can't write files).
-      // The user can export via console: copy(JSON.stringify(poses, null, 2))
-      // Or the verify-poses.js Node script handles disk writes.
-      console.log('[QA] Updated poses in memory. To persist, run in console: copy(JSON.stringify(poses, null, 2))');
-      console.log('[QA] Then paste into src/life/choreography/poses.json');
     };
 
     // ── Generate command ────────────────────────────────────────────────────
