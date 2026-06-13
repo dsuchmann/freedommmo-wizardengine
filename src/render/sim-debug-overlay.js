@@ -241,12 +241,13 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
           ctx.fillStyle = BUILDING_COLORS.door;
           ctx.fillRect(dsx, dsy, Math.ceil(tilePx), Math.ceil(tilePx));
         }
-        // Type label
+        // Building label: show brand name if available, otherwise type name
         if (tilePx >= 6) {
           ctx.font = '9px monospace';
           ctx.textAlign = 'left';
           ctx.fillStyle = 'rgba(255,255,255,0.85)';
-          ctx.fillText(fp.typeName || fp.typeId, bsx + 2, bsy - 2);
+          const label = b.brand?.name || fp.typeName || fp.typeId;
+          ctx.fillText(label, bsx + 2, bsy - 2);
         }
       }
 
