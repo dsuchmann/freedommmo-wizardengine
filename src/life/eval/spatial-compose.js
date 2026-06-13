@@ -42,16 +42,20 @@ const BODY_PARTS_DOC = `
 // ── spatial primitives ────────────────────────────────────────────────────────
 
 const PRIMITIVES_DOC = `
-## Spatial primitives (8 total)
+## Spatial primitives (10 total)
 
 - raise      — move the part upward / lift it (arms go up, head tilts up, torso straightens)
 - lower      — move the part downward / drop it (arms go down, head tilts down, torso bends)
-- extend     — push the part away from the body / straighten it outward
+- extend     — push the part away from the body / reach forward (direction-aware: foreshortens on front views)
 - retract    — pull the part toward the body / fold it inward
 - bend       — flex a joint (elbows, knees) — folds limb segments toward each other
 - straighten — un-flex a joint — returns bent segments to straight
-- turn_in    — rotate part inward toward the body centerline
-- turn_out   — rotate part outward away from the body centerline
+- close      — bring part toward body centerline (arms come together in front of chest, legs come together). For clapping: close both_arms brings hands together.
+- open       — spread part away from centerline (arms spread wide, legs spread apart)
+- turn_in    — rotate hand/foot inward toward the body centerline
+- turn_out   — rotate hand/foot outward away from the body centerline
+
+IMPORTANT: Use "close" to bring arms/hands together (clap, pray, hug). Use "raise" + "bend" to position arms, then "close" to bring them to center.
 `.trim();
 
 // ── instruction format ────────────────────────────────────────────────────────
@@ -117,7 +121,31 @@ ${JSON.stringify({
   ],
 }, null, 2)}
 
-Example 3 — point forward:
+Example 3 — clap hands (arms come together at chest, then apart, repeat):
+${JSON.stringify({
+  id: 'clap',
+  kind: 'gesture',
+  steps: [
+    { type: 'parallel', steps: [
+      { part: 'both_arms', action: 'close', amount: 1.0, ticks: 3 },
+    ]},
+    { type: 'parallel', steps: [
+      { part: 'both_arms', action: 'open', amount: 0.4, ticks: 2 },
+    ]},
+    { type: 'parallel', steps: [
+      { part: 'both_arms', action: 'close', amount: 1.0, ticks: 2 },
+    ]},
+    { type: 'parallel', steps: [
+      { part: 'both_arms', action: 'open', amount: 0.4, ticks: 2 },
+    ]},
+    { type: 'parallel', steps: [
+      { part: 'both_arms', action: 'close', amount: 1.0, ticks: 2 },
+    ]},
+    { part: 'both_arms', action: 'lower', amount: 1.0, ticks: 3 },
+  ],
+}, null, 2)}
+
+Example 4 — point forward:
 ${JSON.stringify({
   id: 'point_forward',
   kind: 'gesture',
