@@ -321,9 +321,11 @@ export class CanvasRenderer {
     // Update building claims (suppresses F2+ at building positions).
     updateBuildingClaims(camX, camY, tilePx, w, h);
 
-    // Draw building floors OVER terrain, BEFORE F2 sprites.
-    // Same pixel grid and coordinate system as terrain chunks — no jitter.
-    drawBuildingFloors(ctx, camX, camY, tilePx, w, h);
+    // Building floor drawing disabled — the separate-pass approach causes z-order
+    // (player under floor) and lighting (bright at night) issues. Floors need to be
+    // integrated into the chunk compilation pipeline (worker-chunk-renderer.js) so they
+    // share the same lighting, z-order, and pixel grid as terrain. TODO: chunk integration.
+    // drawBuildingFloors(ctx, camX, camY, tilePx, w, h);
 
     // Wang debug overlay (toggle with D key)
     if (this.debugWang) {
