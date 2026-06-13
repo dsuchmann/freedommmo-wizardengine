@@ -49,9 +49,15 @@
     <span class="status" id="status">Loading...</span>
     <label style="font-size:11px;color:#888;margin-left:auto">Model:
       <select id="model-select" style="background:#222;color:#ddd;border:1px solid #444;border-radius:3px;padding:2px 4px;font:11px monospace">
-        <optgroup label="Flagship (newest)">
+        <optgroup label="GPT-5 (newest)">
+          <option value="gpt-5.5">gpt-5.5</option>
+          <option value="gpt-5">gpt-5</option>
+          <option value="gpt-5-mini">gpt-5-mini</option>
+        </optgroup>
+        <optgroup label="GPT-4.5 / 4o">
           <option value="gpt-4.5">gpt-4.5</option>
-          <option value="gpt-4o">gpt-4o</option>
+          <option value="gpt-4o" selected>gpt-4o</option>
+          <option value="gpt-4o-mini">gpt-4o-mini</option>
         </optgroup>
         <optgroup label="Reasoning (o-series)">
           <option value="o3-pro">o3-pro</option>
@@ -63,9 +69,6 @@
           <option value="gpt-4.1">gpt-4.1</option>
           <option value="gpt-4.1-mini">gpt-4.1-mini</option>
           <option value="gpt-4.1-nano">gpt-4.1-nano</option>
-        </optgroup>
-        <optgroup label="Budget">
-          <option value="gpt-4o-mini" selected>gpt-4o-mini</option>
         </optgroup>
       </select>
     </label>
@@ -168,6 +171,7 @@
       renderRules();
       if (poses.length) selectPose(poses[0]);
       loadChoreoList();
+      loadSavedGenerations();
     }
 
     function savePoses() {
@@ -451,8 +455,14 @@
       const canvas = document.getElementById('preview');
       const base64 = canvas.toDataURL('image/png').split(',')[1];
 
-      // Build rules context
-      const rulesText = rules.length ? '\n\nLEARNED RULES (follow these):\n' + rules.map((r, i) => `${i + 1}. ${r.rule}`).join('\n') : '';
+      // Build rules context — only include rules that seem relevant to this pose
+      // (filter by checking if any rule keywords overlap with the pose's tags/id/desc)
+      const poseContext = `${poseId} ${poseDesc} ${(selectedPose?.tags || []).join(' ')}`.toLowerCase();
+      const relevantRules = rules.filter(r => {
+        const rWords = r.rule.toLowerCase().split(/\s+/);
+        return rWords.some(w => w.length > 3 && poseContext.includes(w));
+      });
+      const rulesText = relevantRules.length ? '\n\nRELEVANT LEARNED RULES:\n' + relevantRules.map((r, i) => `${i + 1}. ${r.rule}`).join('\n') : '';
 
       const systemPrompt = `You are a pose correction expert for a 2D humanoid stick figure rig.
 The stick figure is viewed from the SIDE. The colored lines represent bones:
@@ -622,7 +632,7 @@ Respond with ONLY the JSON.`;
       try {
         const isOpenAI = !cfg.key.startsWith('sk-ant-');
         const url = cfg.url || (isOpenAI ? 'https://api.openai.com/v1/chat/completions' : 'https://api.anthropic.com/v1/messages');
-        const model = cfg.model || (isOpenAI ? 'gpt-4o-mini' : 'claude-haiku-4-5-20251001');
+        const model = document.getElementById('model-select').value;
         const headers = isOpenAI
           ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.key}` }
           : { 'Content-Type': 'application/json', 'x-api-key': cfg.key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' };
@@ -630,10 +640,12 @@ Respond with ONLY the JSON.`;
           ? { model, max_tokens: 1024, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: `Choreograph: "${cmd}", id="${id}"` }] }
           : { model, max_tokens: 1024, system: systemPrompt, messages: [{ role: 'user', content: `Choreograph: "${cmd}", id="${id}"` }] };
 
+        document.getElementById('status').textContent = `Generating "${cmd}" via ${model}...`;
         const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
-        if (!res.ok) throw new Error(`API ${res.status}`);
+        if (!res.ok) throw new Error(`API ${res.status}: ${(await res.text()).slice(0, 200)}`);
         const data = await res.json();
         const text = isOpenAI ? (data.choices?.[0]?.message?.content || '') : (data.content?.[0]?.text || '');
+        console.log('[QA] Generate raw:', text);
         const plan = JSON.parse(text.replace(/^```json?\s*/m, '').replace(/\s*```$/m, '').trim());
 
         // Compile plan to frames
@@ -646,15 +658,75 @@ Respond with ONLY the JSON.`;
         choreoFrames = frames;
         choreoIdx = 0;
         selectedPose = null;
+        pendingFix = null;
         document.getElementById('detail-title').textContent = plan.id;
         document.getElementById('detail-desc').textContent = `Generated: ${frames.length} keyframes`;
         document.getElementById('detail-tags').textContent = plan.steps.map(s => s.pose).join(' -> ');
+        document.getElementById('critique-box').value = '';
+        document.getElementById('critique-status').textContent = '';
+        document.getElementById('btn-approve').style.display = 'none';
         showFrame(0);
-        document.getElementById('status').textContent = `Generated "${cmd}" (${frames.length} frames)`;
+
+        // Save to generated choreographies list (persists in localStorage)
+        const generated = JSON.parse(localStorage.getItem('motion_generated_choreos') || '[]');
+        // Build the full program for storage
+        const program = {
+          id: plan.id || id, kind: plan.kind || 'gesture',
+          variant: { time: [0.9, 1.1], amplitude: [0.9, 1.1] },
+          root: { op: 'sequence', children: frames.map(f => ({ op: 'pose', joints: f.joints, ticks: f.ticks || 4 })) },
+        };
+        generated.push({ id: plan.id || id, command: cmd, model, plan, program, date: new Date().toISOString().slice(0, 10) });
+        localStorage.setItem('motion_generated_choreos', JSON.stringify(generated));
+
+        // Add to the choreo list UI
+        addGeneratedToList(plan.id || id);
+
+        document.getElementById('status').textContent = `Generated "${cmd}" via ${model} (${frames.length} frames) — saved`;
       } catch (e) {
         document.getElementById('status').textContent = `Error: ${e.message}`;
+        console.error('[QA] Generate error:', e);
       }
     };
+
+    // ── Generated choreo list management ──────────────────────────────────
+    function addGeneratedToList(id) {
+      const list = document.getElementById('choreo-list');
+      const el = document.createElement('div');
+      el.className = 'pose-item';
+      el.dataset.genId = id;
+      el.innerHTML = `<span class="dot pass"></span>${id}`;
+      el.onclick = () => loadGeneratedChoreo(id);
+      list.prepend(el);
+    }
+
+    function loadGeneratedChoreo(id) {
+      const generated = JSON.parse(localStorage.getItem('motion_generated_choreos') || '[]');
+      const entry = generated.find(g => g.id === id);
+      if (!entry) return;
+      const poseMap = new Map(poses.map(p => [p.id, p]));
+      const frames = entry.plan.steps.map(s => {
+        const p = poseMap.get(s.pose);
+        return { joints: p ? { ...p.joints } : {}, label: s.pose, ticks: s.ticks };
+      });
+      choreoFrames = frames;
+      choreoIdx = 0;
+      selectedPose = null;
+      pendingFix = null;
+      document.querySelectorAll('.pose-item').forEach(el => el.classList.remove('selected'));
+      document.querySelector(`[data-gen-id="${id}"]`)?.classList.add('selected');
+      document.getElementById('detail-title').textContent = id;
+      document.getElementById('detail-desc').textContent = `Generated: ${frames.length} keyframes (${entry.model})`;
+      document.getElementById('detail-tags').textContent = entry.plan.steps.map(s => s.pose).join(' -> ');
+      document.getElementById('critique-box').value = '';
+      document.getElementById('critique-status').textContent = '';
+      document.getElementById('btn-approve').style.display = 'none';
+      showFrame(0);
+    }
+
+    function loadSavedGenerations() {
+      const generated = JSON.parse(localStorage.getItem('motion_generated_choreos') || '[]');
+      for (const g of generated) addGeneratedToList(g.id);
+    }
 
     // ── Filter ──────────────────────────────────────────────────────────────
     document.getElementById('filter').oninput = (e) => renderList(e.target.value);
