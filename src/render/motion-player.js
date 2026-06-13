@@ -49,7 +49,8 @@ function hashProgram(program) {
 }
 function variantOf(seed, entityId, program) {
   const h = hashProgram(program);
-  const vt = program.variant ?? { time: [1, 1], amplitude: [1, 1] };
+  const vt = (program.variant && typeof program.variant === 'object' && program.variant.time)
+    ? program.variant : { time: [1, 1], amplitude: [1, 1] };
   const lerp = (r, t) => r[0] + (r[1] - r[0]) * t;
   return {
     timeScale: lerp(vt.time, rand(seed, entityId, VARIANT_TIME_SALT, h)),
