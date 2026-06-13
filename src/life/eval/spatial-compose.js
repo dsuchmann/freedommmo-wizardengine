@@ -218,7 +218,6 @@ async function callOpenAI(system, userText, apiKey, model, url) {
         { role: 'user',   content: userText },
       ],
       max_completion_tokens: 800,
-      temperature: 0.7,
     }),
   });
 
