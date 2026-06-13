@@ -47,6 +47,16 @@
   <header>
     <h1>Motion QA Workbench</h1>
     <span class="status" id="status">Loading...</span>
+    <label style="font-size:11px;color:#888;margin-left:auto">Model:
+      <select id="model-select" style="background:#222;color:#ddd;border:1px solid #444;border-radius:3px;padding:2px 4px;font:11px monospace">
+        <option value="gpt-4o-mini">gpt-4o-mini</option>
+        <option value="gpt-4o">gpt-4o</option>
+        <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+        <option value="gpt-4.1">gpt-4.1</option>
+        <option value="o3-mini">o3-mini</option>
+        <option value="o4-mini">o4-mini</option>
+      </select>
+    </label>
   </header>
   <main>
     <div class="panel" id="library">
@@ -230,11 +240,15 @@
         choreoFrames = frames;
         choreoIdx = 0;
         selectedPose = null;
+        pendingFix = null;
         document.querySelectorAll('.pose-item').forEach(el => el.classList.remove('selected'));
         document.querySelectorAll(`[data-choreo="${id}"]`).forEach(el => el.classList.add('selected'));
         document.getElementById('detail-title').textContent = id;
         document.getElementById('detail-desc').textContent = `Choreography: ${frames.length} keyframes`;
         document.getElementById('detail-tags').textContent = '';
+        document.getElementById('critique-box').value = '';
+        document.getElementById('critique-status').textContent = '';
+        document.getElementById('btn-approve').style.display = 'none';
         showFrame(0);
       } catch (e) {
         document.getElementById('critique-status').textContent = `Load error: ${e.message}`;
@@ -410,9 +424,11 @@
       if (!critique) { document.getElementById('critique-status').textContent = 'Type a critique first'; return; }
 
       const cfg = getLLMConfig();
-      if (!cfg?.key) { document.getElementById('critique-status').textContent = 'No LLM key. Run in console: localStorage.setItem("motion_llm", JSON.stringify({key:"sk-..."}))'; return; }
+      if (!cfg?.key) { document.getElementById('critique-status').textContent = 'No LLM key configured'; return; }
 
-      const currentJoints = selectedPose ? selectedPose.joints : (choreoFrames ? choreoFrames[choreoIdx].joints : {});
+      // Use the LATEST joints — from pending fix if we're iterating, else from the pose
+      const currentJoints = pendingFix ? pendingFix.newJoints
+        : (selectedPose ? selectedPose.joints : (choreoFrames ? choreoFrames[choreoIdx].joints : {}));
       const poseId = selectedPose?.id || 'unknown';
       const poseDesc = selectedPose?.desc || '';
 
@@ -481,7 +497,7 @@ Now return the CORRECTED joint angles that fix the critique. Start from the curr
       try {
         const isOpenAI = !cfg.key.startsWith('sk-ant-');
         const url = cfg.url || (isOpenAI ? 'https://api.openai.com/v1/chat/completions' : 'https://api.anthropic.com/v1/messages');
-        const model = cfg.model || (isOpenAI ? 'gpt-4o-mini' : 'claude-haiku-4-5-20251001');
+        const model = document.getElementById('model-select').value;
 
         const headers = isOpenAI
           ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.key}` }
@@ -491,7 +507,8 @@ Now return the CORRECTED joint angles that fix the critique. Start from the curr
           ? { model, max_tokens: 500, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userMsg }] }
           : { model, max_tokens: 500, system: systemPrompt, messages: [{ role: 'user', content: userMsg.map(p => p.type === 'image_url' ? { type: 'image', source: { type: 'base64', media_type: 'image/png', data: base64 } } : p) }] };
 
-        console.log('[QA] Sending critique to LLM...', { poseId, critique, allJoints });
+        document.getElementById('critique-status').textContent = `Sending to ${model}...`;
+        console.log(`[QA] Sending critique to ${model}...`, { poseId, critique, allJoints });
         const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
         if (!res.ok) throw new Error(`API ${res.status}: ${(await res.text()).slice(0, 200)}`);
         const data = await res.json();
@@ -510,8 +527,17 @@ Now return the CORRECTED joint angles that fix the critique. Start from the curr
         pendingFix = { originalJoints: { ...allJoints }, newJoints: result.joints, critique, rule: result.rule };
         drawPreview(result.joints);
         document.getElementById('detail-json').textContent = JSON.stringify(result.joints, null, 2);
-        document.getElementById('critique-status').textContent = `Rule: "${result.rule}" (${changed.length} joints changed)`;
         document.getElementById('btn-approve').style.display = 'block';
+
+        // Auto-learn the rule immediately (don't wait for Approve)
+        if (result.rule && result.rule !== '___') {
+          rules.push({ rule: result.rule, source: `${model} critique of ${poseId}: "${critique}"`, date: new Date().toISOString().slice(0, 10) });
+          saveRules();
+          renderRules();
+        }
+        document.getElementById('critique-status').textContent = `${model}: ${changed.length} joints changed. Rule: "${result.rule}"`;
+        // Clear the critique box so next critique is fresh
+        document.getElementById('critique-box').value = '';
       } catch (e) {
         document.getElementById('critique-status').textContent = `Error: ${e.message}`;
       }
