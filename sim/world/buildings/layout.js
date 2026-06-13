@@ -204,11 +204,12 @@ export function placeBuildings(seed, site, tier, race, districts, spines) {
   const occupiedTiles = new Set();  // "wx,wy" keys for collision detection
 
   /** Check if a footprint at (wx, wy) collides with already-placed buildings.
-   *  Includes a 1-tile gap for breathing room. */
+   *  Includes a 3-tile gap for walkable paths between buildings. */
   function wouldCollide(wx, wy, fp) {
+    const GAP = 3;
     const bb = fp.boundingBox;
-    for (let dy = -1; dy <= bb.h; dy++) {
-      for (let dx = -1; dx <= bb.w; dx++) {
+    for (let dy = -GAP; dy <= bb.h + GAP - 1; dy++) {
+      for (let dx = -GAP; dx <= bb.w + GAP - 1; dx++) {
         if (occupiedTiles.has(`${wx + dx},${wy + dy}`)) return true;
       }
     }

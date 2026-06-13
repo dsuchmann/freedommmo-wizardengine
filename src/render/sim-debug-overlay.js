@@ -123,7 +123,8 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
   }
   const d = collectDebugDrawables(sim);
   // Discover ALL settlements on screen from the chronicle (pure, no sim needed)
-  const cacheKey = `${Math.floor(camX / 200)},${Math.floor(camY / 200)},${Math.floor(tilePx)}`;
+  // Cache aggressively: only recompute on large camera jumps (1000px+) to avoid per-frame layout generation
+  const cacheKey = `${Math.floor(camX / 1000)},${Math.floor(camY / 1000)}`;
   if (_discoveredCache.key !== cacheKey) {
     _discoveredCache = { key: cacheKey, settlements: discoverSettlements(camX, camY, w, h, tilePx) };
   }
@@ -210,38 +211,42 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
         ctx.stroke();
       }
 
-      // Buildings: colored footprints with type labels
+      // Buildings: draw as filled bounding-box outlines (fast) with type labels
       for (const b of layout.buildings) {
         const fp = b.footprint;
-        // Walls
-        for (const w of fp.walls) {
-          const sx = Math.floor((b.x + w.x) * tilePx - camX), sy = Math.floor((b.y + w.y) * tilePx - camY);
-          if (!onScreen(sx, sy)) continue;
-          ctx.fillStyle = BUILDING_COLORS.wall;
-          ctx.fillRect(sx, sy, Math.ceil(tilePx), Math.ceil(tilePx));
+        const bb = fp.boundingBox;
+        const bsx = Math.floor(b.x * tilePx - camX), bsy = Math.floor(b.y * tilePx - camY);
+        const bw = Math.ceil(bb.w * tilePx), bh = Math.ceil(bb.h * tilePx);
+        if (bsx > w || bsy > h || bsx + bw < 0 || bsy + bh < 0) continue;
+
+        // Fill
+        ctx.fillStyle = BUILDING_COLORS.floor;
+        ctx.fillRect(bsx, bsy, bw, bh);
+        // Outline (walls)
+        ctx.strokeStyle = BUILDING_COLORS.wall;
+        ctx.lineWidth = Math.max(1, tilePx * 0.1);
+        ctx.strokeRect(bsx + 0.5, bsy + 0.5, bw - 1, bh - 1);
+        // Non-rect sections: draw additional section outlines for L/T/compound shapes
+        if (fp.sections.length > 1) {
+          for (const sec of fp.sections) {
+            const ssx = Math.floor((b.x + sec.x0) * tilePx - camX);
+            const ssy = Math.floor((b.y + sec.y0) * tilePx - camY);
+            ctx.strokeRect(ssx + 0.5, ssy + 0.5, Math.ceil(sec.w * tilePx) - 1, Math.ceil(sec.h * tilePx) - 1);
+          }
         }
-        // Floors
-        for (const f of fp.floors) {
-          const sx = Math.floor((b.x + f.x) * tilePx - camX), sy = Math.floor((b.y + f.y) * tilePx - camY);
-          if (!onScreen(sx, sy)) continue;
-          ctx.fillStyle = BUILDING_COLORS.floor;
-          ctx.fillRect(sx, sy, Math.ceil(tilePx), Math.ceil(tilePx));
-        }
-        // Doors
+        // Doors: small colored marks
         for (const d2 of fp.doors) {
-          const sx = Math.floor((b.x + d2.x) * tilePx - camX), sy = Math.floor((b.y + d2.y) * tilePx - camY);
-          if (!onScreen(sx, sy)) continue;
+          const dsx = Math.floor((b.x + d2.x) * tilePx - camX);
+          const dsy = Math.floor((b.y + d2.y) * tilePx - camY);
           ctx.fillStyle = BUILDING_COLORS.door;
-          ctx.fillRect(sx, sy, Math.ceil(tilePx), Math.ceil(tilePx));
+          ctx.fillRect(dsx, dsy, Math.ceil(tilePx), Math.ceil(tilePx));
         }
         // Type label
-        if (tilePx >= 8) {
-          const lx = Math.floor(b.x * tilePx - camX);
-          const ly = Math.floor(b.y * tilePx - camY) - 2;
+        if (tilePx >= 6) {
           ctx.font = '9px monospace';
           ctx.textAlign = 'left';
-          ctx.fillStyle = 'rgba(255,255,255,0.8)';
-          ctx.fillText(fp.typeName || fp.typeId, lx, ly);
+          ctx.fillStyle = 'rgba(255,255,255,0.85)';
+          ctx.fillText(fp.typeName || fp.typeId, bsx + 2, bsy - 2);
         }
       }
 
