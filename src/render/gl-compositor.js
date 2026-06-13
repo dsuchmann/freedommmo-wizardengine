@@ -389,7 +389,7 @@ export class GLCompositor {
       antialias: false,
       depth: false,
       stencil: false,
-      preserveDrawingBuffer: false,
+      preserveDrawingBuffer: true,
       powerPreference: 'high-performance'
     });
     if (!gl) {
@@ -441,6 +441,9 @@ export class GLCompositor {
 
     this.ok = true;
     console.log('[GL] WebGL2 terrain compositor ready:', gl.getParameter(gl.VERSION));
+    console.log('[GL] dpr:', window.devicePixelRatio, 'innerW:', window.innerWidth,
+      'canvasW:', this.canvas.width, 'drawBufW:', gl.drawingBufferWidth,
+      'cssW:', this.canvas.style.width);
   }
 
   _buildProgram(vsSrc, fsSrc) {
@@ -502,6 +505,8 @@ export class GLCompositor {
   beginScene(skyColorCss, artW, artH) {
     if (!this.ok || !this._ensureScene(artW, artH)) return false;
     var gl = this.gl;
+    // Canvas = art resolution; CSS image-rendering:pixelated does the upscale.
+    // This avoids GL-side upscaling that Chrome on Windows filters incorrectly.
     if (skyColorCss !== this._lastSkyCss) {
       this._lastSkyCss = skyColorCss;
       this._skyRGB = parseColor(skyColorCss);
@@ -600,7 +605,8 @@ export class GLCompositor {
       this._sceneAllocH = Math.max(this._sceneAllocH, Math.ceil(artH / 64) * 64);
       gl.bindTexture(gl.TEXTURE_2D, this.sceneTex);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, this._sceneAllocW, this._sceneAllocH, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-      // LINEAR — the present shader does the sharp-bilinear math itself
+      // LINEAR — the present pass samples 1:1 (no upscale) so filtering is
+      // irrelevant; LINEAR is kept for the fractional-offset sub-pixel scroll.
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -679,7 +685,7 @@ export class GLCompositor {
     this._atmoOn = false;
   }
 
-  // Upscale the art-res scene to the full canvas with sharp-bilinear sampling.
+  // Present the art-res scene with atmosphere/CRT post-processing.
   presentScene(cssW, cssH, zoom, fracX, fracY) {
     if (!this.ok || !this.sceneActive) return;
     var gl = this.gl;
@@ -693,10 +699,9 @@ export class GLCompositor {
     gl.uniform4f(this.pUArt, this._artW, this._artH, this._sceneAllocW, this._sceneAllocH);
     gl.uniform2f(this.pUView, cssW / zoom, cssH / zoom);
     gl.uniform2f(this.pUOff, fracX, fracY);
-    // Sharp-bilinear crispness: base = device px per art px.  The 8×
-    // multiplier shrinks the blend band from 1 device px to ~0.125, matching
-    // nearest-neighbour pixel clarity while keeping smooth sub-pixel scrolling.
-    gl.uniform1f(this.pUSharp, zoom * (this.canvas.width / Math.max(1, cssW)) * 8);
+    // 1:1 art-resolution output — no upscaling. uSharp > 1 ensures the
+    // sharp-bilinear math pins every sample to the texel center.
+    gl.uniform1f(this.pUSharp, 100);
     gl.uniform1f(this.pUCrt, this.crt ? 1 : 0);
     gl.uniform1f(this.pUCrtK, zoom / 1.84);
     if (this._waveOn) {

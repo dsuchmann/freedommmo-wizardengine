@@ -188,9 +188,10 @@ export class CanvasRenderer {
     this.glc = new GLCompositor();
     this.useGL = this.glc.ok; // A/B toggle with G key (main.js)
     if (this.glc.ok) {
-      this.glc.canvas.style.cssText = 'position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:0;pointer-events:none;';
-      canvas.style.position = 'relative';
-      canvas.style.zIndex = '1';
+      // GL canvas is hidden — we blit its output onto the 2D canvas each
+      // frame. Chrome's GPU compositor blurs WebGL canvases on Windows;
+      // the 2D canvas composites crisply.
+      this.glc.canvas.style.cssText = 'display:none;';
       canvas.parentNode.insertBefore(this.glc.canvas, canvas);
     }
     this.ctx.imageSmoothingEnabled = false;
@@ -249,8 +250,6 @@ export class CanvasRenderer {
       camYi = Math.floor(camYa);
       fracX = camXa - camXi;
       fracY = camYa - camYi;
-      // GL canvas underneath draws sky + terrain; this canvas only carries overlays.
-      ctx.clearRect(0, 0, w, h);
       glScene = this.glc.beginScene(sun.skyColor || '#18262b', artW, artH);
       if (!glScene) this.glc.beginFrame(sun.skyColor || '#18262b', w, h); // stage-2 fallback
     } else {
@@ -474,6 +473,15 @@ export class CanvasRenderer {
         playerLight: 1,
       });
       this.glc.presentScene(w, h, camera.zoom, fracX, fracY);
+      // Blit GL output onto the 2D canvas — bypasses Chrome's blurry WebGL
+      // canvas compositing. Both canvases are the same backing-store size
+      // (innerWidth × innerHeight at dpr 1), so this is a 1:1 pixel copy.
+      ctx.save();
+      ctx.resetTransform();
+      ctx.globalCompositeOperation = 'copy';
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(this.glc.canvas, 0, 0);
+      ctx.restore();
     }
     if (glOn) this.glc.endFrame();
   }
