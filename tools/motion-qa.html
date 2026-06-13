@@ -131,6 +131,8 @@
   <script type="module">
     import { solvePose } from '/src/life/pose.js';
     import { drawPose } from '/src/life/eval/stick-renderer.js';
+    import { compileInstruction, compileSpatialProgram } from '/src/life/eval/spatial-compiler.js';
+    import { composeSpatial } from '/src/life/eval/spatial-compose.js';
 
     const DRAW_ORDER = ['thigh_l','shin_l','foot_l','thigh_r','shin_r','foot_r','spine','arm_u_l','arm_f_l','hand_l','arm_u_r','arm_f_r','hand_r','head'];
     const BONE_COLORS = { spine:'#e0e0e0',head:'#f0d060',arm_u_l:'#6090e0',arm_f_l:'#6090e0',hand_l:'#6090e0',arm_u_r:'#4070c0',arm_f_r:'#4070c0',hand_r:'#4070c0',thigh_l:'#50b050',shin_l:'#50b050',foot_l:'#50b050',thigh_r:'#308030',shin_r:'#308030',foot_r:'#308030' };
@@ -273,18 +275,42 @@
 
     function extractFrames(node) {
       if (!node) return [];
-      if (node.op === 'pose') return [{ joints: node.joints || {}, label: `${node.ticks}t`, ticks: node.ticks }];
-      if (node.op === 'wait') return [{ joints: {}, label: `wait ${node.ticks}t`, ticks: node.ticks }];
+      if (node.op === 'pose') return [{ joints: node.joints || {}, label: `${node.ticks}t`, ticks: node.ticks, zHints: node.zHints || {} }];
+      if (node.op === 'wait') return [{ joints: {}, label: `wait ${node.ticks}t`, ticks: node.ticks, zHints: {} }];
       if (node.op === 'sequence') return node.children.flatMap(c => extractFrames(c));
       if (node.op === 'parallel') {
         // Merge parallel children into combined frame
-        const merged = {};
+        const merged = {}; const mergedZ = {};
         let maxTicks = 1;
         for (const c of node.children) {
           const sub = extractFrames(c);
-          for (const f of sub) { Object.assign(merged, f.joints); maxTicks = Math.max(maxTicks, f.ticks || 1); }
+          for (const f of sub) {
+            Object.assign(merged, f.joints);
+            Object.assign(mergedZ, f.zHints || {});
+            maxTicks = Math.max(maxTicks, f.ticks || 1);
+          }
         }
-        return [{ joints: merged, label: `par ${maxTicks}t`, ticks: maxTicks }];
+        return [{ joints: merged, label: `par ${maxTicks}t`, ticks: maxTicks, zHints: mergedZ }];
+      }
+      return [];
+    }
+
+    function extractDSLFrames(node) {
+      if (!node) return [];
+      if (node.op === 'pose') return [{ joints: node.joints || {}, label: `${node.ticks}t`, ticks: node.ticks, zHints: node.zHints || {} }];
+      if (node.op === 'sequence') return node.children.flatMap(c => extractDSLFrames(c));
+      if (node.op === 'parallel') {
+        const merged = {}; const mergedZ = {};
+        let maxTicks = 1;
+        for (const c of node.children) {
+          const sub = extractDSLFrames(c);
+          for (const f of sub) {
+            Object.assign(merged, f.joints);
+            Object.assign(mergedZ, f.zHints || {});
+            maxTicks = Math.max(maxTicks, f.ticks || 1);
+          }
+        }
+        return [{ joints: merged, label: `par ${maxTicks}t`, ticks: maxTicks, zHints: mergedZ }];
       }
       return [];
     }
@@ -629,143 +655,60 @@ Now return the CORRECTED joint angles that fix the critique. Start from the curr
       return JSON.parse(text.replace(/^```json?\s*/m, '').replace(/\s*```$/m, '').trim());
     }
 
-    // ── Generate: decompose → create missing poses → compose ────────────────
+    // ── Generate: spatial composer → compiler → display ─────────────────────
     document.getElementById('btn-generate').onclick = async () => {
+      const setStatus = (msg) => document.getElementById('status').textContent = msg;
       const cmd = document.getElementById('command').value.trim();
       if (!cmd) return;
       const cfg = getLLMConfig();
-      if (!cfg?.key) { document.getElementById('status').textContent = 'No LLM key configured'; return; }
+      if (!cfg?.key) { setStatus('No LLM key configured'); return; }
       const model = document.getElementById('model-select').value;
+      cfg.model = model;
       const id = cmd.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 40);
-      const setStatus = (msg) => { document.getElementById('status').textContent = msg; };
 
       try {
-        // ── STEP 1: Decompose the motion into keyframe descriptions ─────
-        setStatus(`Step 1/3: Decomposing "${cmd}" into keyframes...`);
-        const poseSummary = poses.map(p => `  ${p.id} — ${p.desc}`).join('\n');
-        const rulesText = rules.length ? '\nRULES:\n' + rules.map((r, i) => `${i+1}. ${r.rule}`).join('\n') : '';
+        setStatus(`Composing "${cmd}" via ${model} (spatial)...`);
 
-        const decomposePrompt = `You decompose human motions into a sequence of keyframe body positions.
+        // Step 1: LLM composes spatial instructions
+        const { choreography, error } = await composeSpatial(cmd, cfg, { rules });
+        if (error) throw new Error(error);
+        console.log('[QA] Spatial choreography:', choreography);
 
-EXISTING POSES (use these when possible):
-${poseSummary}
+        // Step 2: Compile to joints + zHints
+        const program = compileSpatialProgram(choreography, rig);
+        console.log('[QA] Compiled program:', program);
 
-For each keyframe, specify:
-- "pose": an existing pose id if one matches, OR "NEW:<snake_case_id>:<description of the body position>"
-- "ticks": duration (2-6, where 10 ticks = 1 second)
-
-RULES:
-1. Start and end with "rest"
-2. Break the motion into 4-10 distinct body positions
-3. Use existing poses whenever they fit. Only use NEW for positions not in the list.
-4. NEW descriptions must be specific about body part positions (e.g. "both arms extended forward, torso bent forward 30 degrees, legs straight")
-5. Think anatomically — where is each limb at this moment?${rulesText}
-
-Output JSON: {"id":"<id>","kind":"gesture","steps":[{"pose":"<id or NEW:id:desc>","ticks":<N>},...]}
-No markdown.`;
-
-        const decomposeText = await callLLM(decomposePrompt, `Decompose: "${cmd}", id="${id}"`, cfg);
-        console.log('[QA] Decompose raw:', decomposeText);
-        const plan = parseJSON(decomposeText);
-        console.log('[QA] Plan:', plan);
-
-        // ── STEP 2: Create any missing poses ────────────────────────────
-        const poseMap = new Map(poses.map(p => [p.id, p]));
-        const newPoses = [];
-        for (const step of plan.steps) {
-          if (step.pose.startsWith('NEW:')) {
-            const parts = step.pose.slice(4);
-            const colonIdx = parts.indexOf(':');
-            const newId = colonIdx >= 0 ? parts.slice(0, colonIdx).trim() : parts.replace(/\s+/g, '_');
-            const newDesc = colonIdx >= 0 ? parts.slice(colonIdx + 1).trim() : parts;
-
-            if (poseMap.has(newId)) { step.pose = newId; continue; }
-
-            setStatus(`Step 2/3: Creating pose "${newId}"...`);
-            console.log(`[QA] Generating new pose: ${newId} — ${newDesc}`);
-
-            const poseGenPrompt = `You set joint angles for a 2D humanoid stick figure to match a described body position.
-
-JOINTS and their effects:
-- spine: [-30, 30] — negative=lean forward, positive=lean back
-- head: [-60, 60] — negative=look down, positive=look up
-- arm_u_l: [-170, 50] — LEFT upper arm. -90=horizontal forward, -170=overhead
-- arm_f_l: [-140, 0] — LEFT forearm bend. More negative=more bent
-- hand_l: [-45, 45]
-- arm_u_r: [-50, 170] — RIGHT upper arm. 90=horizontal forward, 170=overhead
-- arm_f_r: [0, 140] — RIGHT forearm bend. More positive=more bent
-- hand_r: [-45, 45]
-- thigh_l: [-110, 30] — LEFT thigh. -90=horizontal forward, negative=lift up
-- shin_l: [0, 140] — LEFT knee bend. 130+=shin folds against thigh (kneeling)
-- foot_l: [-30, 30]
-- thigh_r, shin_r, foot_r: same as left side
-
-At rest (all 0): standing upright, arms hanging, legs straight.
-
-Return ALL 14 joints. Think carefully about what EACH body part does in this position.
-
-Respond: {"joints":{"spine":_,"head":_,"arm_u_l":_,"arm_f_l":_,"hand_l":_,"arm_u_r":_,"arm_f_r":_,"hand_r":_,"thigh_l":_,"thigh_r":_,"shin_l":_,"shin_r":_,"foot_l":_,"foot_r":_}}
-No markdown.`;
-
-            const poseText = await callLLM(poseGenPrompt, `Create pose for: "${newDesc}"`, cfg);
-            console.log(`[QA] Pose gen raw for ${newId}:`, poseText);
-            const poseResult = parseJSON(poseText);
-
-            // Add to dictionary
-            const newPose = {
-              id: newId, joints: poseResult.joints, desc: newDesc,
-              tags: newDesc.toLowerCase().split(/\s+/).filter(w => w.length > 2),
-              category: 'generated', verified: false,
-            };
-            poses.push(newPose);
-            poseMap.set(newId, newPose);
-            newPoses.push(newId);
-            step.pose = newId;
-
-            await new Promise(r => setTimeout(r, 300)); // rate limit
-          }
-        }
-
-        if (newPoses.length) {
-          savePoses();
-          renderList(document.getElementById('filter').value);
-          console.log(`[QA] Created ${newPoses.length} new poses:`, newPoses);
-        }
-
-        // ── STEP 3: Compile and display ─────────────────────────────────
-        setStatus(`Step 3/3: Composing choreography...`);
-        const frames = plan.steps.map(s => {
-          const p = poseMap.get(s.pose);
-          return { joints: p ? { ...p.joints } : {}, label: s.pose, ticks: s.ticks };
-        });
+        // Step 3: Extract frames for display
+        const frames = program.root.children ? extractDSLFrames(program.root) : [];
 
         choreoFrames = frames;
         choreoIdx = 0;
         selectedPose = null;
         pendingFix = null;
-        document.getElementById('detail-title').textContent = plan.id || id;
-        document.getElementById('detail-desc').textContent = `Generated: ${frames.length} keyframes` + (newPoses.length ? ` (${newPoses.length} new poses created)` : '');
-        document.getElementById('detail-tags').textContent = plan.steps.map(s => s.pose).join(' -> ');
+
+        // Show spatial instructions in detail panel
+        document.getElementById('detail-title').textContent = choreography.id || id;
+        document.getElementById('detail-desc').textContent = `Spatial: ${choreography.steps?.length || 0} instructions → ${frames.length} keyframes`;
+        document.getElementById('detail-tags').textContent = (choreography.steps || [])
+          .filter(s => s.part)
+          .map(s => `${s.part}:${s.action}`)
+          .join(' → ');
+        document.getElementById('detail-json').textContent = JSON.stringify(choreography.steps || choreography, null, 2);
         document.getElementById('critique-box').value = '';
         document.getElementById('critique-status').textContent = '';
         document.getElementById('btn-approve').style.display = 'none';
         showFrame(0);
 
-        // Save to generated list
+        // Save
         const generated = JSON.parse(localStorage.getItem('motion_generated_choreos') || '[]');
-        const program = {
-          id: plan.id || id, kind: plan.kind || 'gesture',
-          variant: { time: [0.9, 1.1], amplitude: [0.9, 1.1] },
-          root: { op: 'sequence', children: frames.map(f => ({ op: 'pose', joints: f.joints, ticks: f.ticks || 4 })) },
-        };
-        generated.push({ id: plan.id || id, command: cmd, model, plan, program, newPoses, date: new Date().toISOString().slice(0, 10) });
+        generated.push({ id: choreography.id || id, command: cmd, model, spatial: choreography, program, date: new Date().toISOString().slice(0, 10) });
         localStorage.setItem('motion_generated_choreos', JSON.stringify(generated));
-        addGeneratedToList(plan.id || id);
+        addGeneratedToList(choreography.id || id);
 
-        setStatus(`Generated "${cmd}" via ${model} — ${frames.length} frames, ${newPoses.length} new poses`);
+        setStatus(`Generated "${cmd}" via ${model} — ${frames.length} frames (spatial)`);
       } catch (e) {
-        setStatus(`Error: ${e.message}`);
-        console.error('[QA] Generate error:', e);
+        document.getElementById('status').textContent = `Error: ${e.message}`;
+        console.error('[QA] Spatial generate error:', e);
       }
     };
 
@@ -784,11 +727,31 @@ No markdown.`;
       const generated = JSON.parse(localStorage.getItem('motion_generated_choreos') || '[]');
       const entry = generated.find(g => g.id === id);
       if (!entry) return;
-      const poseMap = new Map(poses.map(p => [p.id, p]));
-      const frames = entry.plan.steps.map(s => {
-        const p = poseMap.get(s.pose);
-        return { joints: p ? { ...p.joints } : {}, label: s.pose, ticks: s.ticks };
-      });
+
+      let frames;
+      let descText;
+      let tagsText;
+      let jsonText;
+
+      if (entry.spatial) {
+        // New spatial entry — re-compile from stored spatial choreography
+        const program = entry.program || compileSpatialProgram(entry.spatial, rig);
+        frames = program.root.children ? extractDSLFrames(program.root) : [];
+        descText = `Spatial: ${entry.spatial.steps?.length || 0} instructions → ${frames.length} keyframes (${entry.model})`;
+        tagsText = (entry.spatial.steps || []).filter(s => s.part).map(s => `${s.part}:${s.action}`).join(' → ');
+        jsonText = JSON.stringify(entry.spatial.steps || entry.spatial, null, 2);
+      } else {
+        // Legacy plan-based entry
+        const poseMap = new Map(poses.map(p => [p.id, p]));
+        frames = entry.plan.steps.map(s => {
+          const p = poseMap.get(s.pose);
+          return { joints: p ? { ...p.joints } : {}, label: s.pose, ticks: s.ticks };
+        });
+        descText = `Generated: ${frames.length} keyframes (${entry.model})`;
+        tagsText = entry.plan.steps.map(s => s.pose).join(' -> ');
+        jsonText = JSON.stringify(entry.plan, null, 2);
+      }
+
       choreoFrames = frames;
       choreoIdx = 0;
       selectedPose = null;
@@ -796,8 +759,9 @@ No markdown.`;
       document.querySelectorAll('.pose-item').forEach(el => el.classList.remove('selected'));
       document.querySelector(`[data-gen-id="${id}"]`)?.classList.add('selected');
       document.getElementById('detail-title').textContent = id;
-      document.getElementById('detail-desc').textContent = `Generated: ${frames.length} keyframes (${entry.model})`;
-      document.getElementById('detail-tags').textContent = entry.plan.steps.map(s => s.pose).join(' -> ');
+      document.getElementById('detail-desc').textContent = descText;
+      document.getElementById('detail-tags').textContent = tagsText;
+      document.getElementById('detail-json').textContent = jsonText;
       document.getElementById('critique-box').value = '';
       document.getElementById('critique-status').textContent = '';
       document.getElementById('btn-approve').style.display = 'none';
