@@ -1139,56 +1139,66 @@ function _poolKey(chunkStore, px, py, tilePxSnapped, radiusX, radiusY) {
 
 function _poolTick(timeMs, timeSec, glc, tilePxSnapped) {
   _f2Stats.ticks++;
-  // 1) Wind + ambient triggers, per tile then per blade (arithmetic only).
+  // Phase 1: sample wind per tile (one sampleCurrents per tile, not per blade).
+  // Tile groups can be non-contiguous in the y-sorted meta array (entries from
+  // different tiles interleave by sortY), so we cache rot per tile here and
+  // look it up per blade in Phase 2.
+  var tileRotMap = new Map();
+  var tileImpulseMap = new Map();
   for (var t = 0; t < _pool.tiles.length; t++) {
     var tg = _pool.tiles[t];
     var currentEffect = sampleCurrents(tg.wx, tg.wy, timeSec);
-    tg.rot = currentEffect.rot; // cached for per-frame sway math
-    var baseImpulse = Math.abs(currentEffect.rot) * 12;
-    for (var i = tg.first; i < tg.first + tg.count; i++) {
-      var meta = _pool.meta[i];
-      meta.tileRotCached = tg.rot;
-      var bl = meta.bl;
-      if (!bl) continue;
-      var canAnimate = !!bl.animUrlBase || !!bl.ambientPeriod || (!bl.isRigid && bl.lifeSway !== 0);
-      if (!canAnimate) continue;
-      var blCycle = (bl.frameCount || FRAME_COUNT) * FRAME_DURATION;
-      var impulse = baseImpulse;
-      if (bl.ambientPeriod && (timeMs + bl.ambientPhase) % bl.ambientPeriod < blCycle * 4) {
-        impulse = 0.2;
+    tg.rot = currentEffect.rot;
+    var tk = tg.wx * 10000 + tg.wy;
+    tileRotMap.set(tk, currentEffect.rot);
+    tileImpulseMap.set(tk, Math.abs(currentEffect.rot) * 12);
+  }
+
+  // Phase 2: iterate all blades linearly through the meta array.
+  for (var i = 0; i < _pool.n; i++) {
+    var meta = _pool.meta[i];
+    var tileKey = meta.wx * 10000 + meta.wy;
+    meta.tileRotCached = tileRotMap.get(tileKey) || 0;
+    var bl = meta.bl;
+    if (!bl) continue;
+    var canAnimate = !!bl.animUrlBase || !!bl.ambientPeriod || (!bl.isRigid && bl.lifeSway !== 0);
+    if (!canAnimate) continue;
+    var blCycle = (bl.frameCount || FRAME_COUNT) * FRAME_DURATION;
+    var impulse = tileImpulseMap.get(tileKey) || 0;
+    if (bl.ambientPeriod && (timeMs + bl.ambientPhase) % bl.ambientPeriod < blCycle * 4) {
+      impulse = 0.2;
+    }
+    var triggerKey = meta.wx * 10000 + meta.wy * 100 + bl.bi;
+    if (impulse > 0.08) {
+      var existing = triggerTimes.get(triggerKey);
+      if (!existing || timeMs - existing.time > blCycle * 2) {
+        triggerTimes.set(triggerKey, { time: timeMs + bl.startDelay, ext: 0 });
+        _pool.active.set(i, true);
+      } else if (existing) {
+        _pool.active.set(i, true);
       }
-      var triggerKey = meta.wx * 10000 + meta.wy * 100 + bl.bi;
-      if (impulse > 0.08) {
-        var existing = triggerTimes.get(triggerKey);
-        if (!existing || timeMs - existing.time > blCycle * 2) {
-          triggerTimes.set(triggerKey, { time: timeMs + bl.startDelay, ext: 0 });
-          _pool.active.set(i, true);
-        } else if (existing) {
+    }
+    var triggerData = triggerTimes.get(triggerKey);
+    if (triggerData) {
+      var triggerDuration = blCycle * bl.loopCount;
+      var elapsed = timeMs - triggerData.time;
+      if (elapsed > triggerDuration * 0.8 && triggerData.ext < MAX_EXTENSIONS) {
+        var shouldExtend = false;
+        for (var nd = -1; nd <= 1 && !shouldExtend; nd++) {
+          for (var ne = -1; ne <= 1 && !shouldExtend; ne++) {
+            if (nd === 0 && ne === 0) continue;
+            var nData = triggerTimes.get((meta.wx + ne) * 10000 + (meta.wy + nd) * 100);
+            if (!nData) continue;
+            var nElapsed = timeMs - nData.time;
+            if (nElapsed < triggerDuration * 0.6 && nData.ext < MAX_EXTENSIONS) shouldExtend = true;
+          }
+        }
+        if (shouldExtend) {
+          triggerTimes.set(triggerKey, { time: triggerData.time + blCycle, ext: triggerData.ext + 1 });
           _pool.active.set(i, true);
         }
       }
-      var triggerData = triggerTimes.get(triggerKey);
-      if (triggerData) {
-        var triggerDuration = blCycle * bl.loopCount;
-        var elapsed = timeMs - triggerData.time;
-        if (elapsed > triggerDuration * 0.8 && triggerData.ext < MAX_EXTENSIONS) {
-          var shouldExtend = false;
-          for (var nd = -1; nd <= 1 && !shouldExtend; nd++) {
-            for (var ne = -1; ne <= 1 && !shouldExtend; ne++) {
-              if (nd === 0 && ne === 0) continue;
-              var nData = triggerTimes.get((meta.wx + ne) * 10000 + (meta.wy + nd) * 100);
-              if (!nData) continue;
-              var nElapsed = timeMs - nData.time;
-              if (nElapsed < triggerDuration * 0.6 && nData.ext < MAX_EXTENSIONS) shouldExtend = true;
-            }
-          }
-          if (shouldExtend) {
-            triggerTimes.set(triggerKey, { time: triggerData.time + blCycle, ext: triggerData.ext + 1 });
-            _pool.active.set(i, true);
-          }
-        }
-        if (elapsed >= 0 && elapsed <= triggerDuration) _pool.active.set(i, true);
-      }
+      if (elapsed >= 0 && elapsed <= triggerDuration) _pool.active.set(i, true);
     }
   }
 
