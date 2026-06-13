@@ -17,11 +17,13 @@ import { SimClient } from './sim/sim-client.js';
 import { SimWorldState } from './sim/sim-world-state.js';
 import { setField2SimWorldState } from './render/field2-animator.js';
 import { initSimDebugOverlay } from './render/sim-debug-overlay.js';
+import { initCommandChat, isCommandChatOpen } from './ui/command-chat.js';
 
 const canvas = document.getElementById('game');
 const stats = document.getElementById('stats');
 const overmapCanvas = document.getElementById('overmap');
 const input = new InputState();
+initCommandChat(input);
 const params = new URLSearchParams(window.location.search);
 const spawnX = params.has('x') ? parseFloat(params.get('x')) : null;
 const spawnY = params.has('y') ? parseFloat(params.get('y')) : null;
