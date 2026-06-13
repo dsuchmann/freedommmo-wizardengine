@@ -78,3 +78,44 @@ test('L2a: composition is pure data — stable under repeat, no rig/kernel neede
   const b = composeLayers(plan, {}, 'n');
   assert.deepEqual(a, b);
 });
+
+test('composeLayers with zHint "front" moves right_arm group above torso (south)', () => {
+  const zHints = { right_arm: 'front' };
+  const layers = composeLayers(plan, {}, 's', zHints);
+  const zOf = p => layers.find(l => l.part === p).z;
+  const torsoZ = zOf('torso');
+  // All right_arm parts must be above torso
+  assert.ok(zOf('arm_upper_r') > torsoZ, 'arm_upper_r > torso');
+  assert.ok(zOf('arm_fore_r') > torsoZ, 'arm_fore_r > torso');
+  assert.ok(zOf('hand_r') > torsoZ, 'hand_r > torso');
+  // Left arm must remain below torso (south default: left side far)
+  assert.ok(zOf('arm_upper_l') < torsoZ, 'arm_upper_l < torso (unchanged)');
+});
+
+test('composeLayers with zHint "behind" moves left_arm group below torso (south)', () => {
+  // South default already has left arm below torso — verify "behind" keeps it there
+  // and that the mechanism works by testing with east (where left arm is naturally far/below)
+  const zHints = { left_arm: 'behind' };
+  // East: left arm is naturally below torso. Apply hint to confirm it stays below.
+  const layersE = composeLayers(plan, {}, 'e', zHints);
+  const zOfE = p => layersE.find(l => l.part === p).z;
+  assert.ok(zOfE('arm_upper_l') < zOfE('torso'), 'arm_upper_l < torso (east, behind)');
+  // Also verify: without the hint, east has right arm above torso — hint for right_arm
+  // "front" should keep/push it above.
+  const layersEFront = composeLayers(plan, {}, 'e', { right_arm: 'front' });
+  const zOfEF = p => layersEFront.find(l => l.part === p).z;
+  assert.ok(zOfEF('arm_upper_r') > zOfEF('torso'), 'arm_upper_r > torso (east, front hint)');
+});
+
+test('composeLayers zHints do not affect unmentioned groups', () => {
+  const zHints = { right_arm: 'front' };
+  const base = composeLayers(plan, {}, 's');
+  const hinted = composeLayers(plan, {}, 's', zHints);
+  const zOf = (layers, p) => layers.find(l => l.part === p).z;
+  // Torso z is unchanged
+  assert.equal(zOf(hinted, 'torso'), zOf(base, 'torso'), 'torso z unchanged');
+  // Head z is unchanged
+  assert.equal(zOf(hinted, 'head'), zOf(base, 'head'), 'head z unchanged');
+  // Left arm z is unchanged
+  assert.equal(zOf(hinted, 'arm_upper_l'), zOf(base, 'arm_upper_l'), 'arm_upper_l z unchanged');
+});

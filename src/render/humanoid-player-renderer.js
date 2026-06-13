@@ -11,7 +11,7 @@
 // When sprites/meta are absent the caller falls back to the legacy doodle.
 import { PARTS, PART_BONE, partKey, composeLayers } from '../../sim/life/body.js';
 import { solvePose } from '../life/pose.js';
-import { setMotionRig, currentJoints, isMotionActive, stopMotion, playMotion } from './motion-player.js';
+import { setMotionRig, currentJoints, currentZHints, isMotionActive, stopMotion, playMotion } from './motion-player.js';
 export { playMotion, stopMotion, isMotionActive };
 
 const BP_BASE = '/assets/pixelab/body_parts/';
@@ -163,9 +163,16 @@ export function drawHumanoidPlayer(ctx, x, y, zoom, frame, animation, direction 
     l: Math.max(0, Math.sin(phase)) * stepAmp,
     r: Math.max(0, -Math.sin(phase)) * stepAmp,
   };
+  // Dynamic layer order: when a motion pose carries zHints, recompute the painter
+  // order for this frame rather than using the cached static order.
+  const zHints = isMotionActive() ? currentZHints() : {};
+  const layers = Object.keys(zHints).length > 0
+    ? composeLayers(AVATAR, null, d, zHints).filter(l => l.part)
+    : st.layers;
+
   ctx.save();
   ctx.imageSmoothingEnabled = false;
-  for (const l of st.layers) {
+  for (const l of layers) {
     const img = st.images.get(l.part);
     const m = st.meta.parts[l.part];
     const b = pose[PART_BONE[l.part]];

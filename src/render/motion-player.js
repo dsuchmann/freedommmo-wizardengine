@@ -85,7 +85,14 @@ function solveProgramTrack(rig, program, { seed, entityId, startTick }) {
   }
   function walk(node) {
     switch (node.op) {
-      case 'pose': glideTo(node.joints, node.ticks); break;
+      case 'pose': {
+        glideTo(node.joints, node.ticks);
+        // Tag the last generated frame with zHints when present (discrete, not lerped)
+        if (node.zHints && frames.length > 0) {
+          frames[frames.length - 1].zHints = node.zHints;
+        }
+        break;
+      }
       case 'ik_reach': {
         const angles = ikReach2(rig, node.effector, node.target);
         if (angles) {
@@ -198,6 +205,16 @@ export function stopMotion(hard = false) {
 
 export function isMotionActive() { return _active !== null; }
 
+/** Find the frame index bracket for the given relative tick. Returns [lo, hi]. */
+function _findFrameBracket(frames, rel) {
+  let lo = 0, hi = frames.length - 1;
+  for (let i = 0; i < frames.length - 1; i++) {
+    if (frames[i].tick <= rel && frames[i + 1].tick > rel) { lo = i; hi = i + 1; break; }
+  }
+  if (frames[hi].tick <= rel) { lo = hi; }
+  return [lo, hi];
+}
+
 export function currentJoints(nowMs) {
   if (!_active) return null;
   const elapsed = nowMs - _active.startMs;
@@ -211,11 +228,7 @@ export function currentJoints(nowMs) {
 
   if (_active.stopping && _active.track.loopStart < 0) { _active = null; return null; }
 
-  let lo = 0, hi = frames.length - 1;
-  for (let i = 0; i < frames.length - 1; i++) {
-    if (frames[i].tick <= rel && frames[i + 1].tick > rel) { lo = i; hi = i + 1; break; }
-  }
-  if (frames[hi].tick <= rel) { lo = hi; }
+  const [lo, hi] = _findFrameBracket(frames, rel);
 
   const a = frames[lo], b = frames[hi];
   const span = b.tick - a.tick;
@@ -229,4 +242,20 @@ export function currentJoints(nowMs) {
     joints[k] = va + (vb - va) * t;
   }
   return joints;
+}
+
+/**
+ * Returns the zHints from the current frame (no interpolation — z ordering is
+ * discrete). Falls back to {} when no motion is active or the current frame
+ * carries no hints.
+ */
+export function currentZHints() {
+  if (!_active) return {};
+  const frames = _active.track.frames;
+  const elapsed = performance.now() - _active.startMs;
+  const tickF = elapsed / MS_PER_TICK;
+  const baseTick = frames[0]?.tick ?? 0;
+  const rel = tickF + baseTick;
+  const [lo] = _findFrameBracket(frames, rel);
+  return frames[lo].zHints ?? {};
 }

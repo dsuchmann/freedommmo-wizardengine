@@ -123,14 +123,26 @@ const PART_Z = (() => {
   return table;
 })();
 
+// zHints group name → the body PARTS that belong to that group
+const ZHINT_GROUPS = {
+  left_arm:  ['arm_upper_l', 'arm_fore_l', 'hand_l'],
+  right_arm: ['arm_upper_r', 'arm_fore_r', 'hand_r'],
+  left_leg:  ['thigh_l', 'shin_l', 'foot_l'],
+  right_leg: ['thigh_r', 'shin_r', 'foot_r'],
+};
+
 /**
  * Compose a body plan + worn equipment map (node.attrs.equipment shape:
  * { <slot>: item }) into an ordered draw list for one facing direction.
  * Returns [{ z, part?, slot?, item?, key?, scale }] sorted ascending by z.
  * Worn layers: z = anchor part z + SLOTS[slot].layer (layer ints are < 100,
  * so items always sit between their anchor and the next part).
+ *
+ * zHints (optional): { [group]: 'front' | 'behind' } — dynamically adjusts
+ * the z values of part groups relative to the torso AFTER the initial sort.
+ * Groups: left_arm, right_arm, left_leg, right_leg.
  */
-export function composeLayers(plan, equipment, direction) {
+export function composeLayers(plan, equipment, direction, zHints = {}) {
   const zTable = PART_Z[direction];
   const out = [];
   for (const p of PARTS) {
@@ -148,5 +160,31 @@ export function composeLayers(plan, equipment, direction) {
     });
   }
   out.sort((a, b) => a.z - b.z);
+
+  // Apply zHints: move whole groups in front of or behind the torso.
+  if (Object.keys(zHints).length > 0) {
+    const torsoEntry = out.find(e => e.part === 'torso');
+    if (torsoEntry) {
+      const torsoZ = torsoEntry.z;
+      for (const [group, hint] of Object.entries(zHints)) {
+        const parts = ZHINT_GROUPS[group];
+        if (!parts) continue;
+        const partSet = new Set(parts);
+        // Assign z offsets in group order so parts within the group keep relative ordering
+        let offset = 0;
+        for (const e of out) {
+          if (!e.part || !partSet.has(e.part)) continue;
+          if (hint === 'front') {
+            e.z = torsoZ + 50 + offset;
+          } else if (hint === 'behind') {
+            e.z = torsoZ - 50 - offset;
+          }
+          offset += 1;
+        }
+      }
+      out.sort((a, b) => a.z - b.z);
+    }
+  }
+
   return out;
 }
