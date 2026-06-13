@@ -1062,20 +1062,40 @@ function _poolRebuild(chunkStore, player, glc, tilePxSnapped, radiusX, radiusY) 
     e.tileRef.count++;
 
     var url, img, frameCount = null, restFrame = 0, baseAngle = 0;
+    var frameIdx = 0;
+    var isActive = false;
     if (e.bl) {
       var bl = e.bl;
       baseAngle = bl.baseAngle;
       restFrame = bl.restFrame;
+      frameIdx = restFrame;
       frameCount = bl.frameCount || null;
+      // Preserve animation continuity: check triggerTimes for active triggers
+      var triggerKey = e.wx * 10000 + e.wy * 100 + bl.bi;
+      var triggerData = triggerTimes.get(triggerKey);
+      if (triggerData) {
+        var blCycle = (bl.frameCount || FRAME_COUNT) * FRAME_DURATION;
+        var elapsed = timeMs - triggerData.time;
+        var triggerDuration = blCycle * bl.loopCount;
+        if (elapsed >= 0 && elapsed <= triggerDuration) {
+          frameIdx = Math.floor((elapsed / FRAME_DURATION + bl.restFrame) % (bl.frameCount || FRAME_COUNT));
+          isActive = true;
+        } else if (triggerData.time > -99999) {
+          // Freeze on the frame the animation ended on
+          frameIdx = Math.floor((triggerDuration / FRAME_DURATION + bl.restFrame) % (bl.frameCount || FRAME_COUNT));
+        }
+      }
       img = (bl.stateUrl) ? loadFrame(bl.stateUrl) : null;
       if (!img && bl.animUrlBase) {
-        img = loadFrame(bl.animUrlBase + 'frame_' + String(bl.restFrame).padStart(3, '0') + '.png', bl.frameCount);
+        img = loadFrame(bl.animUrlBase + 'frame_' + String(frameIdx).padStart(3, '0') + '.png', bl.frameCount);
       }
       if (!img) img = loadFrame(bl.staticUrl);
     } else {
       img = loadFrame(e.extraUrl);
     }
-    var drawSizePx = tilePxSnapped * e.sizeTiles;
+    // Art-pixel size for atlas — the shader upscales via uCam.z.
+    // CSS-pixel scaledFrame would overflow the 4096² atlas at high zoom.
+    var drawSizePx = WORLD.tileSize * e.sizeTiles;
     var rect = null, alpha = 0;
     if (img) {
       img = scaledFrame(img, drawSizePx);
@@ -1084,12 +1104,12 @@ function _poolRebuild(chunkStore, player, glc, tilePxSnapped, radiusX, radiusY) 
     }
     _poolWriteStatic(i, _pool.mirror, e.worldX, e.worldPivotY, e.sizeTiles, baseAngle, rect ? alpha : 0, rect);
     if (!rect || (img && img._f2At)) _pool.pending.push(i);
-    if (img && img._f2At) _pool.active.set(i, true);
+    if (isActive || (img && img._f2At)) _pool.active.set(i, true);
 
     var sIdx = -1;
     if (e.sizeTiles >= minShadowTiles) {
       sIdx = shCount++;
-      var tier = (drawSizePx - tilePxSnapped * minShadowTiles) / (tilePxSnapped * 1.2);
+      var tier = (drawSizePx - WORLD.tileSize * minShadowTiles) / (WORLD.tileSize * 1.2);
       tier = tier < 0 ? 0 : tier > 1 ? 1 : tier;
       var diffuseK = 0.30 + 0.70 * tier;
       _poolWriteStatic(sIdx, _pool.shadowMirror, e.worldX, e.worldPivotY, e.sizeTiles,
@@ -1133,7 +1153,8 @@ function _poolKey(chunkStore, px, py, tilePxSnapped, radiusX, radiusY) {
   for (var cy = minCY; cy <= maxCY; cy++)
     for (var cx = minCX; cx <= maxCX; cx++)
       if (chunkStore.getIfReady(cx, cy)) ready++;
-  return px + '|' + py + '|' + tilePxSnapped.toFixed(4) + '|' + radiusX + '|' + radiusY + '|' + ready;
+  // Round tilePxSnapped to integer so smooth zoom doesn't trigger per-frame rebuilds
+  return px + '|' + py + '|' + Math.round(tilePxSnapped) + '|' + radiusX + '|' + radiusY + '|' + ready;
 }
 
 function _poolTick(timeMs, timeSec, glc, tilePxSnapped) {
