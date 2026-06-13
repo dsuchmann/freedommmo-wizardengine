@@ -13,10 +13,10 @@ import { resolveBones, expandCompound, isCompound, BODY_GROUPS } from './spatial
 // How much of the "forward/backward" axis maps to the rig's 2D X plane
 // per facing direction. Profile = 1 (forward IS sideways), front = 0 (forward is depth).
 export const DIR_DEPTH_FACTOR = {
-  s: 0.15, n: 0.15,              // front/back: forward is almost entirely depth
+  s: 0.0,  n: 0.0,               // front/back: forward is PURE depth — zero horizontal
   e: 1.0,  w: 1.0,               // profile: forward is fully in-plane
-  se: 0.55, sw: 0.55,            // diagonal: partial
-  ne: 0.55, nw: 0.55,
+  se: 0.45, sw: 0.45,            // diagonal: partial
+  ne: 0.45, nw: 0.45,
 };
 
 // ---------------------------------------------------------------------------
@@ -100,20 +100,18 @@ function computeBoneAngle(boneName, action, amount, currentAngles, depthFactor =
     if (role === 'middle') {
       switch (action) {
         case 'extend':
-          return 0;
+          // Front-facing: slight forearm bend suggests reaching toward camera
+          if (depthFactor < 0.1) return lerp(0, isLeft ? -30 : 30, amount);
+          return 0; // profile: forearm straightens
         case 'retract':
-          // max bend: arm_f_l min=-140, arm_f_r max=140
           return lerp(0, isLeft ? -140 : 140, amount);
         case 'bend':
           return lerp(0, isLeft ? -140 : 140, amount);
         case 'straighten':
           return 0;
         case 'close':
-          // Bend forearm inward — left: toward 0 (less bent), right: toward 0 (less bent)
-          // At close amount 1.0 with upper at 40/-40, forearm at -35/35 makes hands touch
           return lerp(0, isLeft ? -35 : 35, amount);
         case 'open':
-          // Bend forearm outward — spread hands apart
           return lerp(0, isLeft ? -120 : 120, amount);
         default:
           return null;
