@@ -259,7 +259,7 @@ test('P2 probe step 5: traffic on road creates no path nodes; bare tile still we
   const offRoadY = rowY + 1;
   const offRoadX = rowEnd;
   // p3 is at (rowEnd, rowY) — move south.
-  assert.ok(offRoadY < k.bounds.y0 + k.bounds.h, 'off-road tile must be within bounds');
+  assert.ok(offRoadY < RECT.y0 + RECT.h, 'off-road tile must be within test rect');
   move(k, p3.id, 0, 1, 0);   // step south
   assert.ok(pathAt(k, offRoadX, offRoadY) !== undefined,
     `bare tile (${offRoadX},${offRoadY}) must have a path node after one step`);

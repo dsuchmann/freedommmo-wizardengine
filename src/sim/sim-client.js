@@ -40,6 +40,15 @@ export class SimClient {
 
   setViewport(v) { this._send({ type: 'viewport', viewport: v }); }
 
+  /** Ask "why is this here?" for a node. Resolves with {summary, events, node} or null. */
+  inspect(nodeId) {
+    return new Promise(resolve => {
+      this._pendingInspect = { nodeId, resolve };
+      this._send({ type: 'inspect', nodeId });
+      setTimeout(() => { if (this._pendingInspect?.nodeId === nodeId) { this._pendingInspect = null; resolve(null); } }, 5000);
+    });
+  }
+
   close() { this.ws.close(); }
 
   _onMsg(msg) {
@@ -64,6 +73,11 @@ export class SimClient {
       this.tick = msg.tick;
       this.day = msg.day;
     }
+    } else if (msg.type === 'inspect_result') {
+      if (this._pendingInspect?.nodeId === msg.nodeId) {
+        this._pendingInspect.resolve(msg);
+        this._pendingInspect = null;
+      }
     // unknown message types are silently ignored (future-proofing)
     this.onState(this);
   }

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Kernel } from '../kernel/kernel.js';
-import { spawnMeadow, spawnWorld } from '../world/spawn.js';
+import { spawnMeadow, spawnStart, ensureRegionBaseline } from '../world/spawn.js';
 import { aggregateOf, REGION, regionKeyOf } from '../lod/aggregate.js';
 import { demoteRegion, promoteRegion, TierManager } from '../lod/tiers.js';
 import { createPlayer, pick } from '../world/actions.js';
@@ -15,7 +15,10 @@ const meadowKernel = (seed = 42) => {
 test('demotion folds individuals into an aggregate, conserving count and mass exactly', () => {
   const k = meadowKernel();
   k.runTo(30 * 86400);
-  const living = [...k.graph.nodes.values()].filter(n => n.R != null);
+  // P1 unbounded world: seeds now establish past the meadow edge, so individuals exist
+  // outside region 0,0. Demotion folds exactly the region's residents — scope the
+  // expectation (and the loose-individual check) to region 0,0.
+  const living = [...k.graph.nodes.values()].filter(n => n.R != null && regionKeyOf(n.x, n.y) === '0,0');
   const expect = {};
   for (const n of living) {
     k.closeSegment(n, k.tick);
@@ -30,7 +33,9 @@ test('demotion folds individuals into an aggregate, conserving count and mass ex
     assert.equal(p.count, e.count, species);
     assert.ok(Math.abs(p.sumR + p.sumBody - e.mass) < 1e-6, species);
   }
-  assert.ok([...k.graph.nodes.values()].every(n => n.R == null || n.attrs.noFlux), 'no loose individuals');
+  assert.ok([...k.graph.nodes.values()].every(
+    n => n.R == null || n.attrs.noFlux || regionKeyOf(n.x, n.y) !== '0,0'),
+    'no loose individuals left inside the demoted region');
   // demotion moves mass between tiers; it must not create or destroy any
   assert.ok(Math.abs(k.stocks(k.tick) - before) / Math.max(before, 1) < 1e-9);
   assert.ok(k.ledger.events.some(e => e.type === 'demote' && e.targets.includes(agg.id)));
@@ -61,8 +66,8 @@ test('demoting an already-aggregated or empty region is a no-op', () => {
 });
 
 test('promotion materializes exactly the aggregate truth (counts + mass), deterministically', () => {
-  const k = new Kernel({ seed: 42, bounds: { x0: 0, y0: 0, w: 16, h: 16 } });
-  spawnWorld(k, { x0: 0, y0: 0, w: 16, h: 16 }, { x0: 16, y0: 16, w: 0, h: 0 });  // all statistical
+  const k = new Kernel({ seed: 42 });
+  ensureRegionBaseline(k, '0,0', 0);  // all statistical
   k.runTo(100 * 86400);
   const agg = aggregateOf(k, '0,0');
   assert.ok(agg);
@@ -87,8 +92,8 @@ test('promotion materializes exactly the aggregate truth (counts + mass), determ
 
 test('promotion is deterministic: same world, same tick → identical individuals', () => {
   const run = () => {
-    const k = new Kernel({ seed: 7, bounds: { x0: 0, y0: 0, w: 16, h: 16 } });
-    spawnWorld(k, { x0: 0, y0: 0, w: 16, h: 16 }, { x0: 16, y0: 16, w: 0, h: 0 });
+    const k = new Kernel({ seed: 7 });
+    ensureRegionBaseline(k, '0,0', 0);
     k.runTo(50 * 86400);
     return JSON.stringify(promoteRegion(k, '0,0', k.tick)
       .map(n => [n.attrs.species, n.x, n.y, n.R, n.attrs.body, n.attrs.birthTick]));
@@ -115,8 +120,9 @@ test('promoting a region with no aggregate is a no-op', () => {
 });
 
 test('TierManager promotes the ring around a center and demotes beyond it', () => {
-  const k = new Kernel({ seed: 42, bounds: { x0: 0, y0: 0, w: 160, h: 160 } });
-  spawnWorld(k, { x0: 0, y0: 0, w: 160, h: 160 }, { x0: 0, y0: 0, w: 16, h: 16 });
+  const k = new Kernel({ seed: 42 });
+  spawnStart(k, { x0: 0, y0: 0, w: 16, h: 16 });
+  for (let ry = 0; ry < 10; ry++) for (let rx = 0; rx < 10; rx++) ensureRegionBaseline(k, `${rx},${ry}`, 0);
   const tm = new TierManager(k);
   tm.update([{ x: 8, y: 8 }], 0);                       // center in region 0,0
   assert.equal(aggregateOf(k, '2,2'), undefined, 'inside ring → individuals');
@@ -130,8 +136,8 @@ test('TierManager promotes the ring around a center and demotes beyond it', () =
 });
 
 test('TierManager hysteresis: oscillating across a region boundary never thrashes', () => {
-  const k = new Kernel({ seed: 42, bounds: { x0: 0, y0: 0, w: 160, h: 160 } });
-  spawnWorld(k, { x0: 0, y0: 0, w: 160, h: 160 }, { x0: 0, y0: 0, w: 0, h: 0 });
+  const k = new Kernel({ seed: 42 });
+  for (let ry = 0; ry < 10; ry++) for (let rx = 0; rx < 10; rx++) ensureRegionBaseline(k, `${rx},${ry}`, 0);
   const tm = new TierManager(k);
   // warm-up: visit both sides once (advancing the ring legitimately promotes new regions)
   tm.update([{ x: 15, y: 8 }], 0);

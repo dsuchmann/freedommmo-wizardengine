@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import WebSocket from 'ws';
 import { SimServer } from '../server/server.js';
 import { Kernel } from '../kernel/kernel.js';
-import { spawnMeadow, spawnWorld } from '../world/spawn.js';
+import { spawnMeadow, spawnStart, ensureRegionBaseline } from '../world/spawn.js';
 import { take } from '../world/actions.js';
 import { aggregateOf } from '../lod/aggregate.js';
 import { DAY } from '../time/metabolism.js';
@@ -70,8 +70,8 @@ test('admin ff advances sim weeks instantly; admin pause freezes the clock', asy
 });
 
 test('attaching a client promotes the regions around its viewport', async () => {
-  const kernel = new Kernel({ seed: 42, bounds: { x0: 0, y0: 0, w: 160, h: 160 } });
-  spawnWorld(kernel, { x0: 0, y0: 0, w: 160, h: 160 }, { x0: 160, y0: 160, w: 0, h: 0 }); // all statistical
+  const kernel = new Kernel({ seed: 42 });
+  for (let ry = 0; ry < 10; ry++) for (let rx = 0; rx < 10; rx++) ensureRegionBaseline(kernel, `${rx},${ry}`, 0);
   const server = new SimServer({ kernel, port: 0 });
   await server.listen();
   const ws = new WebSocket(`ws://127.0.0.1:${server.port}`);

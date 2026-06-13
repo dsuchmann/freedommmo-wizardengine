@@ -100,22 +100,17 @@ export function registerLifecycle(kernel) {
       const dx = Math.floor(randRange(k.seed, node.id, ev.tick, -2, 3));
       const dy = Math.floor(randRange(k.seed, node.id, ev.tick + 1, -2, 3));
       const cx = node.x + dx, cy = node.y + dy;
-      const b = k.bounds;
-      const inBounds = b == null ||
-        (cx >= b.x0 && cx < b.x0 + b.w && cy >= b.y0 && cy < b.y0 + b.h);
-      if (inBounds) {   // seeds landing outside the world fail to establish (no spend)
-        // Direct R mutation is conservation-safe ONLY because closeSegment ran above
-        // at this same tick (dt=0 inside the reRateTileOf below). Keep them same-tick.
-        node.R -= sp.seed.cost;
-        const delivered = transfer(sp.seed.cost, 'nurture', k.ledger);
-        const evId = k.ledger.emit({ tick: ev.tick, type: 'seed', actor: node.id, magnitude: sp.seed.cost });
-        const child = k.addLiving({
-          species: node.attrs.species, x: cx, y: cy,
-          R: delivered * 0.7, body: delivered * 0.3, tick: ev.tick, causeEventId: evId,
-        });
-        k.ledger.events[evId - 1].targets.push(child.id);   // events array is id-ordered
-        k.reRateTileOf(node.id, ev.tick);
-      }
+      // Direct R mutation is conservation-safe ONLY because closeSegment ran above
+      // at this same tick (dt=0 inside the reRateTileOf below). Keep them same-tick.
+      node.R -= sp.seed.cost;
+      const delivered = transfer(sp.seed.cost, 'nurture', k.ledger);
+      const evId = k.ledger.emit({ tick: ev.tick, type: 'seed', actor: node.id, magnitude: sp.seed.cost });
+      const child = k.addLiving({
+        species: node.attrs.species, x: cx, y: cy,
+        R: delivered * 0.7, body: delivered * 0.3, tick: ev.tick, causeEventId: evId,
+      });
+      k.ledger.events[evId - 1].targets.push(child.id);   // events array is id-ordered
+      k.reRateTileOf(node.id, ev.tick);
     }
     const jit = 1 + (rand(k.seed, node.id, 102 + ev.tick % 7) - 0.5) * 2 * sp.seed.jitter;
     k.scheduler.schedule(ev.tick + sp.seed.every * jit, node.id, 'seed', -1);

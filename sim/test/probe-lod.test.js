@@ -6,8 +6,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Kernel } from '../kernel/kernel.js';
-import { spawnWorld } from '../world/spawn.js';
-import { aggregateOf } from '../lod/aggregate.js';
+import { spawnStart, ensureRegionBaseline } from '../world/spawn.js';
+import { aggregateOf, REGION } from '../lod/aggregate.js';
 import { TierManager } from '../lod/tiers.js';
 import { openDb } from '../store/db.js';
 import { checkpoint, loadKernel } from '../store/checkpoint.js';
@@ -15,6 +15,15 @@ import { checkpoint, loadKernel } from '../store/checkpoint.js';
 const DAY = 86400;
 const BOUNDS = { x0: 0, y0: 0, w: 160, h: 160 };
 const START = { x0: 0, y0: 0, w: 16, h: 16 };
+
+/** Pre-populate all regions in a rect with lazy baselines (replaces the old spawnWorld aggregate loop). */
+function ensureAllBaselines(k, rect, tick) {
+  const r0x = Math.floor(rect.x0 / REGION), r1x = Math.ceil((rect.x0 + rect.w) / REGION);
+  const r0y = Math.floor(rect.y0 / REGION), r1y = Math.ceil((rect.y0 + rect.h) / REGION);
+  for (let ry = r0y; ry < r1y; ry++) for (let rx = r0x; rx < r1x; rx++) {
+    ensureRegionBaseline(k, `${rx},${ry}`, tick);
+  }
+}
 
 function canonicalDump(k) {
   const nodes = [...k.graph.nodes.values()].sort((a, b) => a.id - b.id)
@@ -24,8 +33,9 @@ function canonicalDump(k) {
 }
 
 function journey(seed) {
-  const k = new Kernel({ seed, bounds: BOUNDS });
-  spawnWorld(k, BOUNDS, START);
+  const k = new Kernel({ seed });
+  spawnStart(k, START);
+  ensureAllBaselines(k, BOUNDS, 0);
   // small radii keep the probe fast (fewer individuals to full-sim for a year); semantics identical
   const tm = new TierManager(k, { fullR: 0, ringR: 1, demoteR: 2 });
   tm.update([{ x: 8, y: 8 }], 0);            // player starts at home
@@ -52,8 +62,9 @@ test('probe LOD: a distant region lives a real year, arrival materializes real h
 });
 
 test('probe LOD: conservation identity holds across tiers and transitions', () => {
-  const seedK = new Kernel({ seed: 42, bounds: BOUNDS });
-  spawnWorld(seedK, BOUNDS, START);
+  const seedK = new Kernel({ seed: 42 });
+  spawnStart(seedK, START);
+  ensureAllBaselines(seedK, BOUNDS, 0);
   const start = seedK.stocks(0);
   const f0 = (t => t.captured - t.burned - t.decayed - t.transferLoss)(seedK.ledger.totals);
   const { k } = journey(42);
@@ -72,8 +83,9 @@ test('probe LOD: checkpoint mid-journey resumes bit-identically', () => {
   // run A: straight through
   const a = journey(42);
   // run B: same journey, but checkpoint+reload right after the travel promotion
-  const k = new Kernel({ seed: 42, bounds: BOUNDS });
-  spawnWorld(k, BOUNDS, START);
+  const k = new Kernel({ seed: 42 });
+  spawnStart(k, START);
+  ensureAllBaselines(k, BOUNDS, 0);
   const tm = new TierManager(k, { fullR: 0, ringR: 1, demoteR: 2 });   // must mirror journey()
   tm.update([{ x: 8, y: 8 }], 0);
   k.runTo(180 * DAY);
@@ -89,8 +101,8 @@ test('probe LOD: checkpoint mid-journey resumes bit-identically', () => {
 
 test('probe LOD: a 1600×1600-tile statistical world runs a year cheaply', () => {
   const big = { x0: 0, y0: 0, w: 1600, h: 1600 };       // 10k regions ≈ 1.4M expected entities
-  const k = new Kernel({ seed: 42, bounds: big });
-  spawnWorld(k, big, { x0: 0, y0: 0, w: 0, h: 0 });
+  const k = new Kernel({ seed: 42 });
+  ensureAllBaselines(k, big, 0);
   const aggs = [...k.graph.nodes.values()].filter(n => n.type === 'aggregate').length;
   assert.equal(aggs, 10000);
   const t0 = process.hrtime.bigint();

@@ -32,7 +32,7 @@ export function roadAt(kernel, x, y) {
 export function buildRoad(kernel, groupId, from, to, tick, opts = {}) {
   const group = kernel.graph.nodes.get(groupId);
   if (!group || group.type !== 'group') return false;
-  const route = planRoute(from, to, kernel.bounds, opts);
+  const route = planRoute(from, to, null, opts);
   if (!route) return false;
   const newTiles = route.filter(t => !roadAt(kernel, t.x, t.y));
   if (newTiles.length === 0) return false;          // nothing to build

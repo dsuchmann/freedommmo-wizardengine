@@ -9,7 +9,6 @@ import { Kernel } from '../kernel/kernel.js';
 import { createPlayer, pick } from '../world/actions.js';
 import { createGroup, contribute } from '../society/groups.js';
 import { foundSettlement } from '../society/settlements.js';
-import { findSettlementSite } from '../society/suitability.js';
 import { materializeRect } from '../world/wire.js';
 import { clearPlot, enableGrowth, expandTerritory, GROWTH_INTERVAL_DAYS, RESERVE_FLOOR, TIER_THRESHOLDS } from '../society/growth.js';
 import { DAY } from '../time/metabolism.js';
@@ -31,8 +30,10 @@ export function growthScenario(fund = 2600) {
   while (pl.R < fund) { if (pick(k, p.id, bush.id, 0) <= 0) break; }
   assert.ok(pl.R >= fund, `player holds ≥${fund}`);
   assert.equal(contribute(k, p.id, g.id, fund, 0), true);
-  const site = findSettlementSite(k, RECT);
-  const s = foundSettlement(k, g.id, site, 0);
+  // P1 unbounded world: territories are no longer clipped to bounds, so the rect's
+  // water-hugging argmax site deeds zero land plots. Growth tests are about the growth
+  // loop, not site selection — found at a known plot-viable land site (settlements.test site).
+  const s = foundSettlement(k, g.id, { x: 940, y: 8 }, 0);
   assert.ok(s, 'settlement founded');
   return { k, p, g, s, bush };
 }
@@ -88,10 +89,12 @@ test('growth loop: scheduled decisions clear then build huts while surplus lasts
   assert.equal(enableGrowth(k, s.id, 0), true);
   k.runTo(GROWTH_INTERVAL_DAYS * DAY * 6);
   const d = decisions(k);
-  // Priority order is observable: first interval clears plot 1, second builds on it,
-  // then the next plot, until surplus (cost 610 + floor 200) runs out.
+  // Priority order is observable: clearing (free labor) exhausts every dirty plot,
+  // then building begins, until surplus (cost 610 + floor 200) runs out.
+  // P1 unbounded world: the unclipped territory at this site deeds 2 plots, both dirty.
   assert.equal(d[0], 'clear', 'first decision clears the first dirty plot');
-  assert.equal(d[1], 'build_hut', 'second decision builds on the cleared plot');
+  assert.equal(d[1], 'clear', 'second decision clears the second dirty plot');
+  assert.equal(d[2], 'build_hut', 'third decision builds on a cleared plot');
   const built = [...k.graph.nodes.values()].filter(n => n.type === 'building');
   const builtHuts = built.filter(b => b.attrs.template === 'hut');
   assert.ok(built.length >= 1, 'at least one hut stands');
@@ -107,13 +110,13 @@ test('growth loop: scheduled decisions clear then build huts while surplus lasts
 test('growth loop: maintenance outranks construction', () => {
   const { k, g, s } = growthScenario(2600);
   assert.equal(enableGrowth(k, s.id, 0), true);
-  k.runTo(GROWTH_INTERVAL_DAYS * DAY * 2);     // clear + build first hut
+  k.runTo(GROWTH_INTERVAL_DAYS * DAY * 3);     // clear ×2 (both plots dirty) + build first hut
   const hut = [...k.graph.nodes.values()].find(n => n.type === 'building');
   assert.ok(hut);
   hut.attrs.condition = 30;                    // below MAINTAIN_AT
-  k.runTo(GROWTH_INTERVAL_DAYS * DAY * 3);
+  k.runTo(GROWTH_INTERVAL_DAYS * DAY * 4);
   const d = decisions(k);
-  assert.equal(d[2], 'maintain', 'third decision repairs instead of building');
+  assert.equal(d[3], 'maintain', 'fourth decision repairs instead of building');
   // Adaptation (logged): maintainBuilding sets condition=100, but building_decay
   // runs daily and may fire once more within the same runTo window (condition→99).
   // The maintain rule fired and restored the hut — 99 is within one decay tick of 100.

@@ -7,6 +7,7 @@ import { createPlayer, pick, chop, harvest, take, eat, strike, combine, move } f
 import { equip, unequip } from '../items/equipment.js';
 import { checkpoint } from '../store/checkpoint.js';
 import { TierManager } from '../lod/tiers.js';
+import { narrate } from '../story/narrator.js';
 
 const PUMP_MS = 100;   // ~10 Hz (spec §3.2)
 
@@ -65,6 +66,9 @@ export class SimServer {
       } else if (m.type === 'query') {
         const node = this.kernel.graph.nodes.get(m.id);
         ws.send(JSON.stringify({ type: 'query-result', id: m.id, entity: node ? serializeEntity(node, this.kernel.tick, this.kernel.seed) : null }));
+      } else if (m.type === 'inspect') {
+        const result = narrate(this.kernel, m.nodeId);
+        ws.send(JSON.stringify({ type: 'inspect_result', nodeId: m.nodeId, ...(result ?? { summary: null, events: [] }) }));
       } else if (m.type === 'admin') {
         if (m.op === 'pause') this.paused = true;
         if (m.op === 'resume') { this.paused = false; this._lastReal = Date.now(); }

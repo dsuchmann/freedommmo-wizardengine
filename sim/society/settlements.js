@@ -15,13 +15,12 @@ export const TERRITORY_H = 10;
 export const PLOT_W = 5;          // hut footprint (M4 blueprint)
 export const PLOT_H = 4;
 
-/** Clip a TERRITORY_W×TERRITORY_H rect centered on (x,y) to kernel bounds. */
-function territoryAround(x, y, bounds) {
-  const x0 = Math.max(bounds.x0, x - Math.floor(TERRITORY_W / 2));
-  const y0 = Math.max(bounds.y0, y - Math.floor(TERRITORY_H / 2));
-  const w = Math.min(TERRITORY_W, bounds.x0 + bounds.w - x0);
-  const h = Math.min(TERRITORY_H, bounds.y0 + bounds.h - y0);
-  return { x0, y0, w, h };
+/** TERRITORY_W×TERRITORY_H rect centered on (x,y). */
+export function territoryAround(x, y) {
+  return {
+    x0: x - Math.floor(TERRITORY_W / 2), y0: y - Math.floor(TERRITORY_H / 2),
+    w: TERRITORY_W, h: TERRITORY_H,
+  };
 }
 
 function overlaps(a, b) {
@@ -30,15 +29,13 @@ function overlaps(a, b) {
 
 /** Found a settlement at `site` by group `groupId`. Returns the settlement node, or
  *  null (side-effect-free, zero events) on: missing/non-group founder, water site,
- *  site outside bounds, or territory overlapping an existing settlement. */
+ *  or territory overlapping an existing settlement. */
 export function foundSettlement(kernel, groupId, site, tick) {
   const group = kernel.graph.nodes.get(groupId);
   if (!group || group.type !== 'group') return null;
-  const b = kernel.bounds;
-  if (!b || site.x < b.x0 || site.x >= b.x0 + b.w || site.y < b.y0 || site.y >= b.y0 + b.h) return null;
-  const scored = scoreSite(kernel, site.x, site.y, b);
+  const scored = scoreSite(kernel, site.x, site.y);
   if (!scored) return null;                      // water site
-  const territory = territoryAround(site.x, site.y, b);
+  const territory = territoryAround(site.x, site.y);
   for (const n of kernel.graph.nodes.values()) {
     if (n.type === 'settlement' && overlaps(territory, n.attrs.territory)) return null;
   }

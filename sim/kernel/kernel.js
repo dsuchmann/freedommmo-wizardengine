@@ -14,10 +14,11 @@ import { registerGrowth } from '../society/growth.js';
 import { registerInstinct } from '../life/instinct.js';
 
 export class Kernel {
-  constructor({ seed, phi = 4, bounds = null }) {
+  constructor({ seed, phi = 4 }) {
     this.seed = seed;
     this.tick = 0;
-    this.bounds = bounds;   // {x0,y0,w,h} or null = unbounded; seeds outside bounds fail to establish
+    this.touched = new Set();   // region keys whose deterministic baseline has materialized (exactly-once frontier)
+    this.genesisSettlements = new Set();   // macro-cell keys whose genesis settlements have been evaluated (exactly-once frontier)
     this.graph = new Graph();
     this.ledger = new Ledger();
     this.deltas = new Deltas();
