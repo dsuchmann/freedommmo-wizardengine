@@ -10,7 +10,7 @@ import { setChunkStore, getDebugWangData, setDebugWangData } from './wang-terrai
 import { biomeVariantFrameId } from '../assets/variant-selector.js';
 import { drawElevationOverlay } from './elevation-overlay.js';
 import { drawSimDebugOverlay } from './sim-debug-overlay.js';
-import { drawBuildingFloors } from './building-renderer.js';
+import { updateBuildingClaims } from './building-renderer.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations, buildWaveField } from './water-wave-overlay.js';
 import { drawLargeObjects, preloadLargeObjectSprites, setPlayerDrawFn } from './large-object-renderer.js';
 import { drawField2Animations, preloadField2Animations, drawWindWispOverlay, setField2PlayerDraw, setField2PlayerGL } from './field2-animator.js';
@@ -318,11 +318,9 @@ export class CanvasRenderer {
     // canvas with a fullscreen fill in drawLighting (after this call) instead.
     drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, h, performance.now() / 1000, weather ? weather.wind() : null, glOn, glScene ? sun : null);
 
-    // === BUILDING FLOORS ===
-    // Draw AFTER terrain + water, BEFORE F2 sprites + player.
-    // Buildings sit on the terrain plane. F2 sprites (including player)
-    // render on top via y-sorted depth order.
-    drawBuildingFloors(ctx, camX, camY, tilePx, w, h);
+    // Update building claims (suppresses F2+ at building positions).
+    // No floor drawing yet — that will be integrated into chunk compilation.
+    updateBuildingClaims(camX, camY, tilePx, w, h);
 
     // Wang debug overlay (toggle with D key)
     if (this.debugWang) {
