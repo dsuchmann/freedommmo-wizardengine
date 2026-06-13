@@ -17,7 +17,6 @@
 // don't exist yet. Culture fingerprints are stubs.
 
 import { rand, mix } from '../kernel/rng.js';
-import { tileCost } from './routing.js';
 import { REGION } from '../lod/aggregate.js';
 import { worldEpochs } from '../chronicle/epochs.js';
 import { macroCellPeoples } from '../chronicle/races.js';
@@ -44,45 +43,19 @@ export function macroKeyOf(regionKey) {
   return `${Math.floor(rx / MACRO)},${Math.floor(ry / MACRO)}`;
 }
 
-// ── Pure settlement placement (no kernel, no graph) ─────────────────
+// ── Pure settlement placement — INSTANT, no terrain queries ─────────
 
-/** Check that most of a territory rect is on land. Pure. */
-function territoryLandFraction(x, y, tier) {
-  const sz = TIER_SIZE[tier] ?? TIER_SIZE.village;
-  const x0 = x - Math.floor(sz.w / 2), y0 = y - Math.floor(sz.h / 2);
-  let land = 0, total = 0;
-  const step = Math.max(4, Math.floor(sz.w / 16));
-  for (let dy = 0; dy < sz.h; dy += step) {
-    for (let dx = 0; dx < sz.w; dx += step) {
-      total++;
-      if (tileCost(x0 + dx, y0 + dy) !== Infinity) land++;
-    }
-  }
-  return land / total;
-}
-
-/** Find the best settlement site in a macro-cell. Pure f(seed, mx, my, terrain).
- *  Fast: samples at STRIDE, picks the land tile with best water proximity. */
+/** Settlement position within a macro-cell. Pure f(seed, mx, my).
+ *  Seeded offset from macro-cell center — NO tileCost, NO classifyBiome.
+ *  The chronicle + biome affinity already guarantee this is habitable land.
+ *  Position refinement onto actual terrain is Phase B (world compiler). */
 function findSiteInMacro(seed, mx, my) {
-  const x0 = mx * MACRO_TILES, y0 = my * MACRO_TILES;
-  let bestScore = -1, bestX = x0, bestY = y0;
-  for (let dy = 0; dy < MACRO_TILES; dy += STRIDE) {
-    for (let dx = 0; dx < MACRO_TILES; dx += STRIDE) {
-      const tx = x0 + dx, ty = y0 + dy;
-      if (tileCost(tx, ty) === Infinity) continue;
-      // Quick water proximity: check 4 cardinal directions
-      let waterDist = 7;
-      for (let r = 1; r <= 6; r++) {
-        if (tileCost(tx + r, ty) === Infinity || tileCost(tx - r, ty) === Infinity ||
-            tileCost(tx, ty + r) === Infinity || tileCost(tx, ty - r) === Infinity) {
-          waterDist = r; break;
-        }
-      }
-      const quality = (7 - waterDist) / 6 * 0.6 + (1 / (1 + tileCost(tx, ty))) * 0.4;
-      if (quality > bestScore) { bestScore = quality; bestX = tx; bestY = ty; }
-    }
-  }
-  return bestScore > 0 ? { x: bestX, y: bestY } : null;
+  const cx = mx * MACRO_TILES + Math.floor(MACRO_TILES / 2);
+  const cy = my * MACRO_TILES + Math.floor(MACRO_TILES / 2);
+  // Seeded offset within ±quarter of macro-cell (keeps it away from edges)
+  const ox = Math.floor((rand(seed, mx * 7 + 1, my * 13 + 2) - 0.5) * MACRO_TILES * 0.5);
+  const oy = Math.floor((rand(seed, mx * 11 + 3, my * 17 + 4) - 0.5) * MACRO_TILES * 0.5);
+  return { x: cx + ox, y: cy + oy };
 }
 
 /** Territory rect centered on site, sized by settlement tier. */
@@ -138,13 +111,21 @@ function neighborSite(seed, nmx, nmy) {
   return findSiteInMacro(seed, nmx, nmy);
 }
 
-// ── Epoch cache ─────────────────────────────────────────────────────
+// ── Caches (pure functions, safe to memoize) ────────────────────────
 
 const _epochCache = new Map();
 function _cachedEpochs(seed) {
   let e = _epochCache.get(seed);
   if (!e) { e = worldEpochs(seed); _epochCache.set(seed, e); }
   return e;
+}
+
+const _biomeCache = new Map();
+function _cachedBiome(x, y) {
+  const k = `${x},${y}`;
+  let b = _biomeCache.get(k);
+  if (!b) { b = classifyBiome(x, y); _biomeCache.set(k, b); if (_biomeCache.size > 500) _biomeCache.clear(); }
+  return b;
 }
 
 // ── Main entry point ────────────────────────────────────────────────
@@ -159,12 +140,12 @@ export function ensureGenesisSettlements(kernel, regionKey, tick) {
 
   const [mx, my] = mk.split(',').map(Number);
 
-  // Chronicle pipeline — all pure functions
+  // Chronicle pipeline — all pure functions, biome cached
   const cx = mx * MACRO_TILES + Math.floor(MACRO_TILES / 2);
   const cy = my * MACRO_TILES + Math.floor(MACRO_TILES / 2);
-  const biome = classifyBiome(cx, cy);
+  const biome = _cachedBiome(cx, cy);
   const epochs = _cachedEpochs(kernel.seed);
-  const peoples = macroCellPeoples(kernel.seed, mk, epochs);
+  const peoples = macroCellPeoples(kernel.seed, mk, epochs, biome);
   const chronicle = regionChronicle(kernel.seed, mk, peoples, biome.climate);
   const state = settlementState(chronicle);
 
@@ -189,10 +170,8 @@ export function ensureGenesisSettlements(kernel, regionKey, tick) {
     : (chronicleAge >= 3 && hasFlourishing) ? 'town' : 'village';
   const effectiveTier = state === 'ruined' ? 'ruins' : tier;
 
-  // Find site — pure, instant
+  // Find site — pure, instant (no terrain queries)
   const site = findSiteInMacro(kernel.seed, mx, my);
-  if (!site) return;
-  if (territoryLandFraction(site.x, site.y, effectiveTier) < 0.7) return;
 
   const territory = territoryAround(site.x, site.y, effectiveTier);
 

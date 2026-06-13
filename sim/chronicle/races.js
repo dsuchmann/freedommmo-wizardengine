@@ -109,13 +109,15 @@ export function biomeAffinities(biomeId) {
   return _biomeIndex.get(biomeId) ?? [];
 }
 
-/** Pure f(seed, macroKey, epochs). Samples the dominant biome at macro-cell center,
- *  rolls each race's affinity against a seeded threshold. Returns [{raceId, name, presence}]. */
-export function macroCellPeoples(seed, macroKey, epochs) {
+/** Pure f(seed, macroKey, epochs, biome?). If biome is provided, skips the classifyBiome call.
+ *  Rolls each race's affinity against a seeded threshold. Returns [{raceId, name, presence}]. */
+export function macroCellPeoples(seed, macroKey, epochs, biome = null) {
   const [mx, my] = macroKey.split(',').map(Number);
-  const cx = mx * MACRO_TILES + Math.floor(MACRO_TILES / 2);
-  const cy = my * MACRO_TILES + Math.floor(MACRO_TILES / 2);
-  const biome = classifyBiome(cx, cy);
+  if (!biome) {
+    const cx = mx * MACRO_TILES + Math.floor(MACRO_TILES / 2);
+    const cy = my * MACRO_TILES + Math.floor(MACRO_TILES / 2);
+    biome = classifyBiome(cx, cy);
+  }
   const biomeId = biome.id;
   const affs = biomeAffinities(biomeId);
 
