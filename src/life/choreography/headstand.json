@@ -1,0 +1,17 @@
+{
+  "id": "headstand", "kind": "gesture",
+  "tags": ["headstand","invert","upside down","head balance","gymnastics","yoga"],
+  "desc": "Lower into a headstand with forearms on the ground, legs vertical, then return to standing.",
+  "variant": { "time": [0.95, 1.05], "amplitude": [1, 1] },
+  "root": { "op": "sequence", "children": [
+    { "op": "pose", "joints": { "thigh_l": -30, "thigh_r": -30, "shin_l": 60, "shin_r": 60, "spine": -20, "arm_u_l": -50, "arm_u_r": 50, "arm_f_l": -90, "arm_f_r": 90 }, "ticks": 5 },
+    { "op": "balance", "on": false },
+    { "op": "pose", "joints": { "thigh_l": -90, "thigh_r": -90, "shin_l": 90, "shin_r": 90, "spine": -30, "arm_u_l": -80, "arm_u_r": 80, "arm_f_l": -90, "arm_f_r": 90 }, "ticks": 6 },
+    { "op": "pose", "joints": { "thigh_l": -110, "thigh_r": -110, "shin_l": 20, "shin_r": 20, "spine": -30, "arm_u_l": -80, "arm_u_r": 80, "arm_f_l": -90, "arm_f_r": 90 }, "ticks": 5 },
+    { "op": "wait", "ticks": 8 },
+    { "op": "pose", "joints": { "thigh_l": -90, "thigh_r": -90, "shin_l": 90, "shin_r": 90, "spine": -30, "arm_u_l": -80, "arm_u_r": 80, "arm_f_l": -90, "arm_f_r": 90 }, "ticks": 5 },
+    { "op": "pose", "joints": { "thigh_l": -30, "thigh_r": -30, "shin_l": 60, "shin_r": 60, "spine": -20, "arm_u_l": -50, "arm_u_r": 50, "arm_f_l": -90, "arm_f_r": 90 }, "ticks": 6 },
+    { "op": "pose", "joints": { "thigh_l": 0, "thigh_r": 0, "shin_l": 0, "shin_r": 0, "spine": 0, "arm_u_l": 0, "arm_u_r": 0, "arm_f_l": 0, "arm_f_r": 0 }, "ticks": 6 },
+    { "op": "balance", "on": true }
+  ] }
+}

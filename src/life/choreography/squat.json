@@ -1,0 +1,32 @@
+{
+  "id": "squat", "kind": "gesture",
+  "tags": ["squat","squatting","exercise","legs","lower body","strength","bend"],
+  "desc": "Three squat repetitions — bend the knees into a low squat then stand back up.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "thigh_l": -60, "thigh_r": -60, "shin_l": 80, "shin_r": 80 }, "ticks": 4 },
+      { "op": "pose", "joints": { "spine": -10 }, "ticks": 4 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "thigh_l": 0, "thigh_r": 0, "shin_l": 0, "shin_r": 0 }, "ticks": 4 },
+      { "op": "pose", "joints": { "spine": 0 }, "ticks": 4 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "thigh_l": -60, "thigh_r": -60, "shin_l": 80, "shin_r": 80 }, "ticks": 4 },
+      { "op": "pose", "joints": { "spine": -10 }, "ticks": 4 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "thigh_l": 0, "thigh_r": 0, "shin_l": 0, "shin_r": 0 }, "ticks": 4 },
+      { "op": "pose", "joints": { "spine": 0 }, "ticks": 4 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "thigh_l": -60, "thigh_r": -60, "shin_l": 80, "shin_r": 80 }, "ticks": 4 },
+      { "op": "pose", "joints": { "spine": -10 }, "ticks": 4 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "thigh_l": 0, "thigh_r": 0, "shin_l": 0, "shin_r": 0 }, "ticks": 4 },
+      { "op": "pose", "joints": { "spine": 0 }, "ticks": 4 }
+    ] }
+  ] }
+}

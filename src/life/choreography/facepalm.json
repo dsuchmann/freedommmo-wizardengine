@@ -1,0 +1,17 @@
+{
+  "id": "facepalm", "kind": "gesture",
+  "tags": ["facepalm","face palm","embarrassed","disbelief","oh no","reaction","palm face"],
+  "desc": "Raise a hand to cover the face in an exasperated facepalm, then lower.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_r": 80, "arm_f_r": 90, "hand_r": 20 }, "ticks": 4 },
+      { "op": "pose", "joints": { "head": -10 }, "ticks": 4 }
+    ] },
+    { "op": "wait", "ticks": 6 },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_r": 0, "arm_f_r": 0, "hand_r": 0 }, "ticks": 4 },
+      { "op": "pose", "joints": { "head": 0 }, "ticks": 4 }
+    ] }
+  ] }
+}

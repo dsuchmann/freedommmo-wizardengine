@@ -1,0 +1,13 @@
+{
+  "id": "nod", "kind": "gesture",
+  "tags": ["nod","nodding","yes","agree","acknowledge","head nod","affirmative"],
+  "desc": "Nod the head forward and back twice to indicate agreement.",
+  "variant": { "time": [0.85, 1.2], "amplitude": [0.85, 1.1] },
+  "root": { "op": "sequence", "children": [
+    { "op": "pose", "joints": { "head": -20 }, "ticks": 2 },
+    { "op": "pose", "joints": { "head": 10 }, "ticks": 2 },
+    { "op": "pose", "joints": { "head": -20 }, "ticks": 2 },
+    { "op": "pose", "joints": { "head": 10 }, "ticks": 2 },
+    { "op": "pose", "joints": { "head": 0 }, "ticks": 2 }
+  ] }
+}

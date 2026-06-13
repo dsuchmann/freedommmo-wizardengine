@@ -1,0 +1,19 @@
+{
+  "id": "bow", "kind": "gesture",
+  "tags": ["bow","bowing","respect","greeting","nod","curtsy","formal"],
+  "desc": "Bow forward at the waist as a gesture of respect, then straighten up.",
+  "variant": { "time": [0.9, 1.15], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "balance", "on": false },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "spine": 25, "arm_u_l": 30, "arm_u_r": -30 }, "ticks": 5 },
+      { "op": "pose", "joints": { "head": -15 }, "ticks": 5 }
+    ] },
+    { "op": "wait", "ticks": 6 },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "spine": 0, "arm_u_l": 0, "arm_u_r": 0 }, "ticks": 5 },
+      { "op": "pose", "joints": { "head": 0 }, "ticks": 5 }
+    ] },
+    { "op": "balance", "on": true }
+  ] }
+}

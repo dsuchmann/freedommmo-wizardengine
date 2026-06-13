@@ -1,0 +1,14 @@
+{
+  "id": "wave_both", "kind": "gesture",
+  "tags": ["wave both","both hands","wave","greeting","farewell","hello","goodbye"],
+  "desc": "Wave both arms overhead in a big greeting or farewell gesture.",
+  "variant": { "time": [0.9, 1.15], "amplitude": [0.85, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "pose", "joints": { "arm_u_l": -150, "arm_u_r": 150 }, "ticks": 5 },
+    { "op": "pose", "joints": { "arm_u_l": -150, "arm_f_l": -30, "arm_u_r": 150, "arm_f_r": 30 }, "ticks": 2 },
+    { "op": "pose", "joints": { "arm_u_l": -150, "arm_f_l": 0, "arm_u_r": 150, "arm_f_r": 0 }, "ticks": 2 },
+    { "op": "pose", "joints": { "arm_u_l": -150, "arm_f_l": -30, "arm_u_r": 150, "arm_f_r": 30 }, "ticks": 2 },
+    { "op": "pose", "joints": { "arm_u_l": -150, "arm_f_l": 0, "arm_u_r": 150, "arm_f_r": 0 }, "ticks": 2 },
+    { "op": "pose", "joints": { "arm_u_l": 0, "arm_f_l": 0, "arm_u_r": 0, "arm_f_r": 0 }, "ticks": 5 }
+  ] }
+}

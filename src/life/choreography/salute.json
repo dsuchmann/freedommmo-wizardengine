@@ -1,0 +1,11 @@
+{
+  "id": "salute", "kind": "gesture",
+  "tags": ["salute","military","greeting","respect","hand to forehead","formal"],
+  "desc": "Raise the right hand to the forehead in a crisp military salute, then lower.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "pose", "joints": { "arm_u_r": 80, "arm_f_r": 90, "hand_r": -20 }, "ticks": 4 },
+    { "op": "wait", "ticks": 6 },
+    { "op": "pose", "joints": { "arm_u_r": 0, "arm_f_r": 0, "hand_r": 0 }, "ticks": 4 }
+  ] }
+}

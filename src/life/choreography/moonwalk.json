@@ -1,0 +1,28 @@
+{
+  "id": "moonwalk", "kind": "dance",
+  "tags": ["moonwalk","moon walk","dance","slide","michael jackson","cool","backward"],
+  "desc": "Perform a moonwalk-style glide — alternating leg lifts while arms swing — then stop.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "thigh_l": 20, "shin_l": 30, "thigh_r": -10, "shin_r": 10 }, "ticks": 3 },
+      { "op": "pose", "joints": { "arm_u_l": -20, "arm_u_r": 10, "spine": -5 }, "ticks": 3 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "thigh_l": -10, "shin_l": 10, "thigh_r": 20, "shin_r": 30 }, "ticks": 3 },
+      { "op": "pose", "joints": { "arm_u_l": 10, "arm_u_r": -20, "spine": 5 }, "ticks": 3 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "thigh_l": 20, "shin_l": 30, "thigh_r": -10, "shin_r": 10 }, "ticks": 3 },
+      { "op": "pose", "joints": { "arm_u_l": -20, "arm_u_r": 10, "spine": -5 }, "ticks": 3 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "thigh_l": -10, "shin_l": 10, "thigh_r": 20, "shin_r": 30 }, "ticks": 3 },
+      { "op": "pose", "joints": { "arm_u_l": 10, "arm_u_r": -20, "spine": 5 }, "ticks": 3 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "thigh_l": 0, "shin_l": 0, "thigh_r": 0, "shin_r": 0 }, "ticks": 3 },
+      { "op": "pose", "joints": { "arm_u_l": 0, "arm_u_r": 0, "spine": 0 }, "ticks": 3 }
+    ] }
+  ] }
+}

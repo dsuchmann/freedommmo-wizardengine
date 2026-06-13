@@ -1,0 +1,11 @@
+{
+  "id": "hop_right", "kind": "jump",
+  "tags": ["hop right","hop","right","jump","step right","lateral","move"],
+  "desc": "Hop to the right — lift the left foot and push off right, then land.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "pose", "joints": { "thigh_r": -20, "shin_r": 30, "thigh_l": 10, "shin_l": 20, "spine": 5 }, "ticks": 3 },
+    { "op": "pose", "joints": { "thigh_r": 10, "shin_r": 0, "thigh_l": -30, "shin_l": 40, "spine": 0 }, "ticks": 4 },
+    { "op": "pose", "joints": { "thigh_r": 0, "shin_r": 0, "thigh_l": 0, "shin_l": 0, "spine": 0 }, "ticks": 3 }
+  ] }
+}

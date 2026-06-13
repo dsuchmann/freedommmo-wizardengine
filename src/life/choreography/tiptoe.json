@@ -1,0 +1,17 @@
+{
+  "id": "tiptoe", "kind": "gesture",
+  "tags": ["tiptoe","tiptoeing","sneak","quiet","careful","stealth","soft steps"],
+  "desc": "Rise onto tiptoes with arms slightly raised for balance, then lower quietly.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "foot_l": 20, "foot_r": 20 }, "ticks": 3 },
+      { "op": "pose", "joints": { "arm_u_l": -15, "arm_u_r": 15 }, "ticks": 3 }
+    ] },
+    { "op": "wait", "ticks": 6 },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "foot_l": 0, "foot_r": 0 }, "ticks": 3 },
+      { "op": "pose", "joints": { "arm_u_l": 0, "arm_u_r": 0 }, "ticks": 3 }
+    ] }
+  ] }
+}

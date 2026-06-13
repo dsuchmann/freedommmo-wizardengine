@@ -1,0 +1,13 @@
+{
+  "id": "kneel", "kind": "gesture",
+  "tags": ["kneel","kneeling","bow","reverence","humble","ground","down"],
+  "desc": "Lower to one knee in a kneeling position, then rise back to standing.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [1, 1] },
+  "root": { "op": "sequence", "children": [
+    { "op": "balance", "on": false },
+    { "op": "pose", "joints": { "thigh_l": -90, "shin_l": 90, "thigh_r": 20, "shin_r": 20, "spine": -10 }, "ticks": 5 },
+    { "op": "wait", "ticks": 6 },
+    { "op": "pose", "joints": { "thigh_l": 0, "shin_l": 0, "thigh_r": 0, "shin_r": 0, "spine": 0 }, "ticks": 5 },
+    { "op": "balance", "on": true }
+  ] }
+}

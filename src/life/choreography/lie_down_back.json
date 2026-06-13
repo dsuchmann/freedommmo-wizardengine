@@ -1,0 +1,12 @@
+{
+  "id": "lie_down_back", "kind": "sleep",
+  "tags": ["lie down","lying","back","rest","sleep","horizontal","supine"],
+  "desc": "Lie down on the back — legs extending flat, arms at sides — a terminal resting pose.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [1, 1] },
+  "root": { "op": "sequence", "children": [
+    { "op": "balance", "on": false },
+    { "op": "pose", "joints": { "thigh_l": -60, "thigh_r": -60, "shin_l": 0, "shin_r": 0, "spine": -20, "arm_u_l": 30, "arm_u_r": -30 }, "ticks": 5 },
+    { "op": "pose", "joints": { "thigh_l": -90, "thigh_r": -90, "shin_l": 0, "shin_r": 0, "spine": -25, "arm_u_l": 40, "arm_u_r": -40 }, "ticks": 5 },
+    { "op": "emit", "event": "lying_down" }
+  ] }
+}

@@ -1,0 +1,20 @@
+{
+  "id": "spin_around", "kind": "dance",
+  "tags": ["spin","spin around","turn","rotate","twirl","pirouette","dance"],
+  "desc": "Spin in a full circle with arms extended, then come to a stop.",
+  "variant": { "time": [0.85, 1.15], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -90, "arm_u_r": 90 }, "ticks": 3 },
+      { "op": "pose", "joints": { "head": 0 }, "ticks": 3 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -90, "arm_u_r": 90 }, "ticks": 8 },
+      { "op": "pose", "joints": { "head": 15 }, "ticks": 8 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": 0, "arm_u_r": 0 }, "ticks": 3 },
+      { "op": "pose", "joints": { "head": 0 }, "ticks": 3 }
+    ] }
+  ] }
+}

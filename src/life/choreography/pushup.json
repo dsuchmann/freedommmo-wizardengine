@@ -1,0 +1,18 @@
+{
+  "id": "pushup", "kind": "gesture",
+  "tags": ["pushup","push up","exercise","strength","arms","chest","floor"],
+  "desc": "Three push-up repetitions — lower the body by bending elbows then press back up.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [1, 1] },
+  "root": { "op": "sequence", "children": [
+    { "op": "balance", "on": false },
+    { "op": "pose", "joints": { "spine": -20, "arm_u_l": -50, "arm_u_r": 50, "arm_f_l": 0, "arm_f_r": 0, "thigh_l": -30, "thigh_r": -30, "shin_l": 30, "shin_r": 30 }, "ticks": 5 },
+    { "op": "pose", "joints": { "spine": -20, "arm_u_l": -50, "arm_u_r": 50, "arm_f_l": -80, "arm_f_r": 80, "thigh_l": -30, "thigh_r": -30, "shin_l": 30, "shin_r": 30 }, "ticks": 3 },
+    { "op": "pose", "joints": { "spine": -20, "arm_u_l": -50, "arm_u_r": 50, "arm_f_l": 0, "arm_f_r": 0, "thigh_l": -30, "thigh_r": -30, "shin_l": 30, "shin_r": 30 }, "ticks": 3 },
+    { "op": "pose", "joints": { "spine": -20, "arm_u_l": -50, "arm_u_r": 50, "arm_f_l": -80, "arm_f_r": 80, "thigh_l": -30, "thigh_r": -30, "shin_l": 30, "shin_r": 30 }, "ticks": 3 },
+    { "op": "pose", "joints": { "spine": -20, "arm_u_l": -50, "arm_u_r": 50, "arm_f_l": 0, "arm_f_r": 0, "thigh_l": -30, "thigh_r": -30, "shin_l": 30, "shin_r": 30 }, "ticks": 3 },
+    { "op": "pose", "joints": { "spine": -20, "arm_u_l": -50, "arm_u_r": 50, "arm_f_l": -80, "arm_f_r": 80, "thigh_l": -30, "thigh_r": -30, "shin_l": 30, "shin_r": 30 }, "ticks": 3 },
+    { "op": "pose", "joints": { "spine": -20, "arm_u_l": -50, "arm_u_r": 50, "arm_f_l": 0, "arm_f_r": 0, "thigh_l": -30, "thigh_r": -30, "shin_l": 30, "shin_r": 30 }, "ticks": 3 },
+    { "op": "pose", "joints": { "spine": 0, "arm_u_l": 0, "arm_u_r": 0, "thigh_l": 0, "thigh_r": 0, "shin_l": 0, "shin_r": 0 }, "ticks": 5 },
+    { "op": "balance", "on": true }
+  ] }
+}

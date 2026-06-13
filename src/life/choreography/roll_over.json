@@ -1,0 +1,14 @@
+{
+  "id": "roll_over", "kind": "gesture",
+  "tags": ["roll over","roll","tumble","barrel roll","floor","ground","acrobat"],
+  "desc": "Tuck and roll to one side along the ground, then return to standing.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [1, 1] },
+  "root": { "op": "sequence", "children": [
+    { "op": "balance", "on": false },
+    { "op": "pose", "joints": { "thigh_l": -80, "thigh_r": -80, "shin_l": 100, "shin_r": 100, "spine": -20, "arm_u_l": -80, "arm_u_r": 80 }, "ticks": 5 },
+    { "op": "pose", "joints": { "thigh_l": -110, "thigh_r": -110, "shin_l": 120, "shin_r": 120, "spine": -25, "arm_u_l": -100, "arm_u_r": 100 }, "ticks": 5 },
+    { "op": "pose", "joints": { "thigh_l": -80, "thigh_r": -80, "shin_l": 80, "shin_r": 80, "spine": -10, "arm_u_l": -60, "arm_u_r": 60 }, "ticks": 5 },
+    { "op": "pose", "joints": { "thigh_l": 0, "thigh_r": 0, "shin_l": 0, "shin_r": 0, "spine": 0, "arm_u_l": 0, "arm_u_r": 0 }, "ticks": 6 },
+    { "op": "balance", "on": true }
+  ] }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "point_forward", "kind": "gesture",
+  "tags": ["point","pointing","forward","direct","indicate","finger","gesture"],
+  "desc": "Extend the right arm forward to point at something, then lower the arm.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_r": -30, "arm_f_r": 0, "hand_r": 0 }, "ticks": 3 },
+      { "op": "pose", "joints": { "head": -10 }, "ticks": 3 }
+    ] },
+    { "op": "wait", "ticks": 6 },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_r": 0, "arm_f_r": 0, "hand_r": 0 }, "ticks": 3 },
+      { "op": "pose", "joints": { "head": 0 }, "ticks": 3 }
+    ] }
+  ] }
+}

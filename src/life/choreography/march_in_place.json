@@ -1,0 +1,30 @@
+{
+  "id": "march_in_place", "kind": "gesture",
+  "tags": ["march","marching","in place","walk","step","military","parade"],
+  "desc": "March in place with exaggerated knee lifts and swinging arms.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "balance", "on": false },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "thigh_l": -60, "shin_l": 0, "thigh_r": 10, "shin_r": 15 }, "ticks": 3 },
+      { "op": "pose", "joints": { "arm_u_l": -30, "arm_u_r": 20 }, "ticks": 3 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "thigh_l": 10, "shin_l": 15, "thigh_r": -60, "shin_r": 0 }, "ticks": 3 },
+      { "op": "pose", "joints": { "arm_u_l": 20, "arm_u_r": -30 }, "ticks": 3 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "thigh_l": -60, "shin_l": 0, "thigh_r": 10, "shin_r": 15 }, "ticks": 3 },
+      { "op": "pose", "joints": { "arm_u_l": -30, "arm_u_r": 20 }, "ticks": 3 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "thigh_l": 10, "shin_l": 15, "thigh_r": -60, "shin_r": 0 }, "ticks": 3 },
+      { "op": "pose", "joints": { "arm_u_l": 20, "arm_u_r": -30 }, "ticks": 3 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "thigh_l": 0, "shin_l": 0, "thigh_r": 0, "shin_r": 0 }, "ticks": 3 },
+      { "op": "pose", "joints": { "arm_u_l": 0, "arm_u_r": 0 }, "ticks": 3 }
+    ] },
+    { "op": "balance", "on": true }
+  ] }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "dig", "kind": "gesture",
+  "tags": ["dig","digging","shovel","earth","soil","work","labor"],
+  "desc": "Swing arms in a digging motion — driving a tool into the ground and levering up earth.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "balance", "on": false },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -80, "arm_f_l": -60, "arm_u_r": -20, "arm_f_r": 0, "spine": 20 }, "ticks": 4 },
+      { "op": "pose", "joints": { "head": -10 }, "ticks": 4 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -20, "arm_f_l": 0, "arm_u_r": -40, "arm_f_r": 40, "spine": -10 }, "ticks": 4 },
+      { "op": "pose", "joints": { "head": 10 }, "ticks": 4 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -80, "arm_f_l": -60, "arm_u_r": -20, "arm_f_r": 0, "spine": 20 }, "ticks": 4 },
+      { "op": "pose", "joints": { "head": -10 }, "ticks": 4 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -20, "arm_f_l": 0, "arm_u_r": -40, "arm_f_r": 40, "spine": -10 }, "ticks": 4 },
+      { "op": "pose", "joints": { "head": 10 }, "ticks": 4 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": 0, "arm_f_l": 0, "arm_u_r": 0, "arm_f_r": 0, "spine": 0 }, "ticks": 4 },
+      { "op": "pose", "joints": { "head": 0 }, "ticks": 4 }
+    ] },
+    { "op": "balance", "on": true }
+  ] }
+}

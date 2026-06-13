@@ -1,0 +1,13 @@
+{
+  "id": "shake_head", "kind": "gesture",
+  "tags": ["shake head","no","disagree","refuse","negative","head shake","denial"],
+  "desc": "Shake the head side to side twice to indicate disagreement or refusal.",
+  "variant": { "time": [0.85, 1.2], "amplitude": [0.85, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "pose", "joints": { "head": -30 }, "ticks": 2 },
+    { "op": "pose", "joints": { "head": 30 }, "ticks": 3 },
+    { "op": "pose", "joints": { "head": -30 }, "ticks": 3 },
+    { "op": "pose", "joints": { "head": 30 }, "ticks": 3 },
+    { "op": "pose", "joints": { "head": 0 }, "ticks": 2 }
+  ] }
+}

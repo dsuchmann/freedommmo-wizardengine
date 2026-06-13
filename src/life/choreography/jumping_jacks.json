@@ -1,0 +1,32 @@
+{
+  "id": "jumping_jacks", "kind": "jump",
+  "tags": ["jumping","jacks","exercise","star","jumps","jumping jacks","cardio"],
+  "desc": "Three repetitions of jumping jacks — arms swept out and up while legs spread, then return.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -90, "arm_u_r": 90, "thigh_l": -20, "thigh_r": -20 }, "ticks": 3 },
+      { "op": "pose", "joints": { "head": 0 }, "ticks": 3 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": 0, "arm_u_r": 0, "thigh_l": 0, "thigh_r": 0 }, "ticks": 3 },
+      { "op": "pose", "joints": { "head": 0 }, "ticks": 3 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -90, "arm_u_r": 90, "thigh_l": -20, "thigh_r": -20 }, "ticks": 3 },
+      { "op": "pose", "joints": { "head": 0 }, "ticks": 3 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": 0, "arm_u_r": 0, "thigh_l": 0, "thigh_r": 0 }, "ticks": 3 },
+      { "op": "pose", "joints": { "head": 0 }, "ticks": 3 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -90, "arm_u_r": 90, "thigh_l": -20, "thigh_r": -20 }, "ticks": 3 },
+      { "op": "pose", "joints": { "head": 0 }, "ticks": 3 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": 0, "arm_u_r": 0, "thigh_l": 0, "thigh_r": 0 }, "ticks": 3 },
+      { "op": "pose", "joints": { "head": 0 }, "ticks": 3 }
+    ] }
+  ] }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "cartwheel_prep", "kind": "gesture",
+  "tags": ["cartwheel","prep","side bend","warmup","gymnastics","acrobat","stretch"],
+  "desc": "Reach arms overhead and side-bend in preparation for a cartwheel, then return to standing.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [0.95, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -90, "arm_u_r": 90 }, "ticks": 3 },
+      { "op": "pose", "joints": { "head": 10 }, "ticks": 3 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -140, "arm_u_r": 140, "spine": 20 }, "ticks": 5 },
+      { "op": "pose", "joints": { "head": 15 }, "ticks": 5 }
+    ] },
+    { "op": "wait", "ticks": 4 },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -90, "arm_u_r": 90, "spine": 0 }, "ticks": 5 },
+      { "op": "pose", "joints": { "head": 0 }, "ticks": 5 }
+    ] },
+    { "op": "pose", "joints": { "arm_u_l": 0, "arm_u_r": 0 }, "ticks": 3 }
+  ] }
+}

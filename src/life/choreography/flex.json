@@ -1,0 +1,17 @@
+{
+  "id": "flex", "kind": "gesture",
+  "tags": ["flex","flexing","muscles","show off","bicep","strong","pose"],
+  "desc": "Flex both biceps by raising and bending the arms in a muscle-man pose, then lower.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -100, "arm_f_l": -100, "arm_u_r": 100, "arm_f_r": 100 }, "ticks": 5 },
+      { "op": "pose", "joints": { "head": 10 }, "ticks": 5 }
+    ] },
+    { "op": "wait", "ticks": 6 },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": 0, "arm_f_l": 0, "arm_u_r": 0, "arm_f_r": 0 }, "ticks": 5 },
+      { "op": "pose", "joints": { "head": 0 }, "ticks": 5 }
+    ] }
+  ] }
+}

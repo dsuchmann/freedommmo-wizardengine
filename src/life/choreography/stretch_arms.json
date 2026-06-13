@@ -1,0 +1,25 @@
+{
+  "id": "stretch_arms", "kind": "gesture",
+  "tags": ["stretch","arms","reach","overhead","extension","warm up","flexibility"],
+  "desc": "Raise both arms overhead and stretch upward, then lower back to rest.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -90, "arm_u_r": 90 }, "ticks": 3 },
+      { "op": "pose", "joints": { "head": 15 }, "ticks": 3 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -150, "arm_u_r": 150 }, "ticks": 4 },
+      { "op": "pose", "joints": { "head": 25 }, "ticks": 4 }
+    ] },
+    { "op": "wait", "ticks": 4 },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -90, "arm_u_r": 90 }, "ticks": 4 },
+      { "op": "pose", "joints": { "head": 10 }, "ticks": 4 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": 0, "arm_u_r": 0 }, "ticks": 3 },
+      { "op": "pose", "joints": { "head": 0 }, "ticks": 3 }
+    ] }
+  ] }
+}

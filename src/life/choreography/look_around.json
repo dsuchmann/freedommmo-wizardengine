@@ -1,0 +1,22 @@
+{
+  "id": "look_around", "kind": "gesture",
+  "tags": ["look around","scan","survey","observe","check","awareness","watch"],
+  "desc": "Turn the head left then right to look around, combined with a slight spine twist.",
+  "variant": { "time": [0.85, 1.2], "amplitude": [0.85, 1.1] },
+  "root": { "op": "sequence", "children": [
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "head": -45 }, "ticks": 3 },
+      { "op": "pose", "joints": { "spine": -10 }, "ticks": 3 }
+    ] },
+    { "op": "wait", "ticks": 3 },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "head": 45 }, "ticks": 6 },
+      { "op": "pose", "joints": { "spine": 10 }, "ticks": 6 }
+    ] },
+    { "op": "wait", "ticks": 3 },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "head": 0 }, "ticks": 3 },
+      { "op": "pose", "joints": { "spine": 0 }, "ticks": 3 }
+    ] }
+  ] }
+}

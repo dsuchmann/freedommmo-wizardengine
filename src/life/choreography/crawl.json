@@ -1,0 +1,15 @@
+{
+  "id": "crawl", "kind": "gesture",
+  "tags": ["crawl","crawling","hands knees","floor","baby","low","creep"],
+  "desc": "Get down on hands and knees for a crawling pose, then return to standing.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [1, 1] },
+  "root": { "op": "sequence", "children": [
+    { "op": "balance", "on": false },
+    { "op": "pose", "joints": { "thigh_l": -60, "thigh_r": -60, "shin_l": 90, "shin_r": 90, "spine": 20, "arm_u_l": -50, "arm_u_r": 50, "arm_f_l": -90, "arm_f_r": 90 }, "ticks": 5 },
+    { "op": "pose", "joints": { "thigh_l": -80, "thigh_r": -80, "shin_l": 90, "shin_r": 90, "spine": 25, "arm_u_l": -50, "arm_u_r": 50, "arm_f_l": -90, "arm_f_r": 90 }, "ticks": 4 },
+    { "op": "wait", "ticks": 6 },
+    { "op": "pose", "joints": { "thigh_l": -60, "thigh_r": -60, "shin_l": 90, "shin_r": 90, "spine": 20, "arm_u_l": -50, "arm_u_r": 50, "arm_f_l": -90, "arm_f_r": 90 }, "ticks": 4 },
+    { "op": "pose", "joints": { "thigh_l": 0, "thigh_r": 0, "shin_l": 0, "shin_r": 0, "spine": 0, "arm_u_l": 0, "arm_u_r": 0, "arm_f_l": 0, "arm_f_r": 0 }, "ticks": 6 },
+    { "op": "balance", "on": true }
+  ] }
+}

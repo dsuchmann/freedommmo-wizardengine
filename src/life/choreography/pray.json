@@ -1,0 +1,17 @@
+{
+  "id": "pray", "kind": "gesture",
+  "tags": ["pray","prayer","praying","hands together","worship","meditate","reverence"],
+  "desc": "Press hands together in a prayer pose with a slight bow of the head.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -30, "arm_u_r": 30, "arm_f_l": -80, "arm_f_r": 80 }, "ticks": 4 },
+      { "op": "pose", "joints": { "head": -15 }, "ticks": 4 }
+    ] },
+    { "op": "wait", "ticks": 12 },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": 0, "arm_u_r": 0, "arm_f_l": 0, "arm_f_r": 0 }, "ticks": 4 },
+      { "op": "pose", "joints": { "head": 0 }, "ticks": 4 }
+    ] }
+  ] }
+}

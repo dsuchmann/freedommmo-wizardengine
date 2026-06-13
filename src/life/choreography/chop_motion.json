@@ -1,0 +1,26 @@
+{
+  "id": "chop_motion", "kind": "gesture",
+  "tags": ["chop","chopping","axe","wood","cut","swing","lumber","strike"],
+  "desc": "Swing both arms in a chopping motion as if splitting wood — raise and bring down twice.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "balance", "on": false },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -120, "arm_u_r": 120, "arm_f_l": -30, "arm_f_r": 30, "spine": -15 }, "ticks": 5 },
+      { "op": "pose", "joints": { "head": -5 }, "ticks": 5 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": 30, "arm_u_r": -30, "arm_f_l": 0, "arm_f_r": 0, "spine": 25 }, "ticks": 5 },
+      { "op": "pose", "joints": { "head": 10 }, "ticks": 5 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -120, "arm_u_r": 120, "arm_f_l": -30, "arm_f_r": 30, "spine": -15 }, "ticks": 5 },
+      { "op": "pose", "joints": { "head": -5 }, "ticks": 5 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": 0, "arm_u_r": 0, "arm_f_l": 0, "arm_f_r": 0, "spine": 0 }, "ticks": 5 },
+      { "op": "pose", "joints": { "head": 0 }, "ticks": 5 }
+    ] },
+    { "op": "balance", "on": true }
+  ] }
+}

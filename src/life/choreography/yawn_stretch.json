@@ -1,0 +1,25 @@
+{
+  "id": "yawn_stretch", "kind": "gesture",
+  "tags": ["yawn","stretch","tired","sleepy","morning","wake up","arms overhead"],
+  "desc": "Yawn with mouth open and stretch both arms overhead, then relax.",
+  "variant": { "time": [0.9, 1.15], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -90, "arm_u_r": 90, "head": 20 }, "ticks": 3 },
+      { "op": "pose", "joints": { "spine": -5 }, "ticks": 3 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -140, "arm_u_r": 140, "head": 30 }, "ticks": 5 },
+      { "op": "pose", "joints": { "spine": -10 }, "ticks": 5 }
+    ] },
+    { "op": "wait", "ticks": 4 },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -90, "arm_u_r": 90, "head": 15 }, "ticks": 5 },
+      { "op": "pose", "joints": { "spine": -5 }, "ticks": 5 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": 0, "arm_u_r": 0, "head": 0 }, "ticks": 3 },
+      { "op": "pose", "joints": { "spine": 0 }, "ticks": 3 }
+    ] }
+  ] }
+}

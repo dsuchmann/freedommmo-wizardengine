@@ -1,0 +1,13 @@
+{
+  "id": "plank", "kind": "gesture",
+  "tags": ["plank","planking","core","exercise","hold","push up position","strength"],
+  "desc": "Hold a plank position with straight arms and body, then return to standing.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [1, 1] },
+  "root": { "op": "sequence", "children": [
+    { "op": "balance", "on": false },
+    { "op": "pose", "joints": { "spine": -20, "arm_u_l": -50, "arm_u_r": 50, "thigh_l": -30, "thigh_r": -30, "shin_l": 10, "shin_r": 10 }, "ticks": 5 },
+    { "op": "wait", "ticks": 20 },
+    { "op": "pose", "joints": { "spine": 0, "arm_u_l": 0, "arm_u_r": 0, "thigh_l": 0, "thigh_r": 0, "shin_l": 0, "shin_r": 0 }, "ticks": 5 },
+    { "op": "balance", "on": true }
+  ] }
+}

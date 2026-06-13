@@ -1,0 +1,13 @@
+{
+  "id": "beckon", "kind": "gesture",
+  "tags": ["beckon","come here","wave in","signal","invite","hand gesture","summon"],
+  "desc": "Extend an arm and curl the hand inward to beckon someone closer, repeated twice.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "pose", "joints": { "arm_u_r": 80, "arm_f_r": 60, "hand_r": -30 }, "ticks": 4 },
+    { "op": "pose", "joints": { "arm_u_r": 80, "arm_f_r": 60, "hand_r": 30 }, "ticks": 3 },
+    { "op": "pose", "joints": { "arm_u_r": 80, "arm_f_r": 60, "hand_r": -30 }, "ticks": 3 },
+    { "op": "pose", "joints": { "arm_u_r": 80, "arm_f_r": 60, "hand_r": 30 }, "ticks": 3 },
+    { "op": "pose", "joints": { "arm_u_r": 0, "arm_f_r": 0, "hand_r": 0 }, "ticks": 4 }
+  ] }
+}

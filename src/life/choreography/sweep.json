@@ -1,0 +1,30 @@
+{
+  "id": "sweep", "kind": "gesture",
+  "tags": ["sweep","sweeping","broom","clean","floor","push","work","chore"],
+  "desc": "Sweep the floor with side-to-side arm movements, bending slightly at the waist.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "balance", "on": false },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": 30, "arm_f_l": -60, "arm_u_r": -30, "arm_f_r": 40, "spine": 20 }, "ticks": 4 },
+      { "op": "pose", "joints": { "head": 5 }, "ticks": 4 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": 40, "arm_f_l": -80, "arm_u_r": -40, "arm_f_r": 60, "spine": 20 }, "ticks": 3 },
+      { "op": "pose", "joints": { "head": 5 }, "ticks": 3 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": 30, "arm_f_l": -60, "arm_u_r": -30, "arm_f_r": 40, "spine": 20 }, "ticks": 3 },
+      { "op": "pose", "joints": { "head": 5 }, "ticks": 3 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": 40, "arm_f_l": -80, "arm_u_r": -40, "arm_f_r": 60, "spine": 20 }, "ticks": 3 },
+      { "op": "pose", "joints": { "head": 5 }, "ticks": 3 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": 0, "arm_f_l": 0, "arm_u_r": 0, "arm_f_r": 0, "spine": 0 }, "ticks": 4 },
+      { "op": "pose", "joints": { "head": 0 }, "ticks": 4 }
+    ] },
+    { "op": "balance", "on": true }
+  ] }
+}

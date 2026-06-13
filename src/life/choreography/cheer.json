@@ -1,0 +1,24 @@
+{
+  "id": "cheer", "kind": "gesture",
+  "tags": ["cheer","cheering","celebrate","victory","arms up","hooray","excitement"],
+  "desc": "Throw both arms up in celebration with a cheer, then lower them back down.",
+  "variant": { "time": [0.85, 1.15], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -150, "arm_u_r": 150 }, "ticks": 5 },
+      { "op": "pose", "joints": { "head": 25 }, "ticks": 5 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -120, "arm_u_r": 120 }, "ticks": 3 },
+      { "op": "pose", "joints": { "head": 10 }, "ticks": 3 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": -150, "arm_u_r": 150 }, "ticks": 3 },
+      { "op": "pose", "joints": { "head": 25 }, "ticks": 3 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_l": 0, "arm_u_r": 0 }, "ticks": 5 },
+      { "op": "pose", "joints": { "head": 0 }, "ticks": 5 }
+    ] }
+  ] }
+}

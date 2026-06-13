@@ -1,0 +1,34 @@
+{
+  "id": "hammer", "kind": "gesture",
+  "tags": ["hammer","hammering","pound","nail","strike","craft","work","build"],
+  "desc": "Raise a hammer overhead and bring it down in three striking motions.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "balance", "on": false },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_r": 140, "arm_f_r": 80, "arm_u_l": -20 }, "ticks": 5 },
+      { "op": "pose", "joints": { "head": -10, "spine": -10 }, "ticks": 5 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_r": 30, "arm_f_r": 30, "arm_u_l": -20 }, "ticks": 4 },
+      { "op": "pose", "joints": { "head": 10, "spine": 15 }, "ticks": 4 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_r": 140, "arm_f_r": 80, "arm_u_l": -20 }, "ticks": 4 },
+      { "op": "pose", "joints": { "head": -10, "spine": -10 }, "ticks": 4 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_r": 30, "arm_f_r": 30, "arm_u_l": -20 }, "ticks": 4 },
+      { "op": "pose", "joints": { "head": 10, "spine": 15 }, "ticks": 4 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_r": 140, "arm_f_r": 80, "arm_u_l": -20 }, "ticks": 4 },
+      { "op": "pose", "joints": { "head": -10, "spine": -10 }, "ticks": 4 }
+    ] },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "arm_u_r": 0, "arm_f_r": 0, "arm_u_l": 0 }, "ticks": 5 },
+      { "op": "pose", "joints": { "head": 0, "spine": 0 }, "ticks": 5 }
+    ] },
+    { "op": "balance", "on": true }
+  ] }
+}

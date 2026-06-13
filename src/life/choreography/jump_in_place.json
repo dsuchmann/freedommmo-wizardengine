@@ -1,0 +1,14 @@
+{
+  "id": "jump_in_place", "kind": "jump",
+  "tags": ["jump","jumping","in place","leap","hop","bounce","exercise"],
+  "desc": "Jump straight up in place three times — crouch down and spring up.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "pose", "joints": { "thigh_l": -30, "thigh_r": -30, "shin_l": 40, "shin_r": 40, "spine": -10 }, "ticks": 3 },
+    { "op": "pose", "joints": { "thigh_l": 20, "thigh_r": 20, "shin_l": 0, "shin_r": 0, "spine": 5 }, "ticks": 4 },
+    { "op": "pose", "joints": { "thigh_l": -30, "thigh_r": -30, "shin_l": 40, "shin_r": 40, "spine": -10 }, "ticks": 3 },
+    { "op": "pose", "joints": { "thigh_l": 20, "thigh_r": 20, "shin_l": 0, "shin_r": 0, "spine": 5 }, "ticks": 4 },
+    { "op": "pose", "joints": { "thigh_l": -30, "thigh_r": -30, "shin_l": 40, "shin_r": 40, "spine": -10 }, "ticks": 3 },
+    { "op": "pose", "joints": { "thigh_l": 0, "thigh_r": 0, "shin_l": 0, "shin_r": 0, "spine": 0 }, "ticks": 4 }
+  ] }
+}

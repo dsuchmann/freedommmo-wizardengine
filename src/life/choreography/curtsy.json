@@ -1,0 +1,19 @@
+{
+  "id": "curtsy", "kind": "gesture",
+  "tags": ["curtsy","curtsey","bow","respect","greeting","formal","reverence"],
+  "desc": "Perform a curtsy — one knee dips while arms extend gracefully — then return upright.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "balance", "on": false },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "thigh_l": -60, "shin_l": 80, "thigh_r": 10, "shin_r": 20 }, "ticks": 4 },
+      { "op": "pose", "joints": { "arm_u_l": -60, "arm_u_r": 40, "spine": -5 }, "ticks": 4 }
+    ] },
+    { "op": "wait", "ticks": 4 },
+    { "op": "parallel", "children": [
+      { "op": "pose", "joints": { "thigh_l": 0, "shin_l": 0, "thigh_r": 0, "shin_r": 0 }, "ticks": 4 },
+      { "op": "pose", "joints": { "arm_u_l": 0, "arm_u_r": 0, "spine": 0 }, "ticks": 4 }
+    ] },
+    { "op": "balance", "on": true }
+  ] }
+}

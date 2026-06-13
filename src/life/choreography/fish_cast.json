@@ -1,0 +1,13 @@
+{
+  "id": "fish_cast", "kind": "gesture",
+  "tags": ["fish","cast","fishing","rod","throw","line","water","catch"],
+  "desc": "Cast a fishing line — reach back then sweep forward with the rod arm.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [0.9, 1.0] },
+  "root": { "op": "sequence", "children": [
+    { "op": "balance", "on": false },
+    { "op": "pose", "joints": { "arm_u_r": 100, "arm_f_r": 50, "arm_u_l": -20, "spine": -10, "head": -5 }, "ticks": 4 },
+    { "op": "pose", "joints": { "arm_u_r": -20, "arm_f_r": 20, "arm_u_l": -20, "spine": 15, "head": 5 }, "ticks": 4 },
+    { "op": "pose", "joints": { "arm_u_r": 0, "arm_f_r": 0, "arm_u_l": 0, "spine": 0, "head": 0 }, "ticks": 4 },
+    { "op": "balance", "on": true }
+  ] }
+}

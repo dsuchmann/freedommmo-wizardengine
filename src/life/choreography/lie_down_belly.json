@@ -1,0 +1,12 @@
+{
+  "id": "lie_down_belly", "kind": "sleep",
+  "tags": ["lie down","belly","prone","face down","floor","rest","sleep"],
+  "desc": "Lie down on the belly — legs flat, arms bent beside the chest — a terminal prone rest pose.",
+  "variant": { "time": [0.9, 1.1], "amplitude": [1, 1] },
+  "root": { "op": "sequence", "children": [
+    { "op": "balance", "on": false },
+    { "op": "pose", "joints": { "thigh_l": -60, "thigh_r": -60, "shin_l": 20, "shin_r": 20, "spine": 20, "arm_u_l": -50, "arm_u_r": 50, "arm_f_l": -80, "arm_f_r": 80 }, "ticks": 5 },
+    { "op": "pose", "joints": { "thigh_l": -90, "thigh_r": -90, "shin_l": 0, "shin_r": 0, "spine": 25, "arm_u_l": -50, "arm_u_r": 50, "arm_f_l": -100, "arm_f_r": 100 }, "ticks": 5 },
+    { "op": "emit", "event": "lying_prone" }
+  ] }
+}
