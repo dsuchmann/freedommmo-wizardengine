@@ -13,7 +13,7 @@ const BP_BASE = '/assets/pixelab/body_parts/';
 const RIG_URL = '/src/life/rigs/humanoid.json';
 const META_URL = '/src/life/rigs/humanoid-parts-south.json';
 const DEG = Math.PI / 180;
-const RIG_UNIT_PX = 0.55;   // ~58-unit body ≈ 32px (one tile) at zoom 1
+const RIG_UNIT_PX = 1.4;    // ~58-unit body ≈ 81px (~2.5 tiles) at zoom 1 (user: 1-tile avatar far too small)
 const FEET_OFFSET = 15;     // legacy doodle feet line: py + 15*zoom (keep continuity)
 
 // Avatar body plan is CLIENT CONFIG (player node has no species; presentation choice).
@@ -78,8 +78,11 @@ export function drawHumanoidPlayer(ctx, x, y, zoom, frame, animation) {
     const b = pose[PART_BONE[l.part]];
     const k = (S / m.ppu) * l.scale;
     ctx.save();
-    ctx.translate(x + b.origin.x * S, groundY - b.origin.y * S);
-    ctx.rotate(-b.worldDeg * DEG);   // rig CCW(+y up) -> canvas (y down)
+    // South view faces the camera: anatomical left appears on the viewer's RIGHT.
+    // Rig x is anatomical (left limbs at -x), so mirror x for this direction; the
+    // mirror flips angular direction, cancelling the y-down rotation negation.
+    ctx.translate(x - b.origin.x * S, groundY - b.origin.y * S);
+    ctx.rotate(b.worldDeg * DEG);
     ctx.drawImage(img, -m.pivot[0] * k, -m.pivot[1] * k, img.width * k, img.height * k);
     ctx.restore();
   }
