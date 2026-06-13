@@ -442,11 +442,12 @@
       const cfg = getLLMConfig();
       if (!cfg?.key) { document.getElementById('critique-status').textContent = 'No LLM key configured'; return; }
 
-      // Use the LATEST joints — from pending fix if we're iterating, else from the pose
+      // Use the LATEST joints — from pending fix if we're iterating, else from current view
+      const currentFrame = choreoFrames?.[choreoIdx];
       const currentJoints = pendingFix ? pendingFix.newJoints
-        : (selectedPose ? selectedPose.joints : (choreoFrames ? choreoFrames[choreoIdx].joints : {}));
-      const poseId = selectedPose?.id || 'unknown';
-      const poseDesc = selectedPose?.desc || '';
+        : (selectedPose?.joints ?? currentFrame?.joints ?? {});
+      const poseId = selectedPose?.id || currentFrame?.label || 'unknown';
+      const poseDesc = selectedPose?.desc || (document.getElementById('detail-title').textContent) || '';
 
       document.getElementById('critique-status').textContent = 'Sending to LLM...';
       document.getElementById('btn-fix').disabled = true;
@@ -620,10 +621,11 @@ ${poseSummary}
 
 RULES:
 1. Output JSON: {"id":"<id>","kind":"gesture","steps":[{"pose":"<pose_id>","ticks":<N>},...]}
-2. Reference poses by exact id from the list
-3. Start and end with "rest"
-4. Use 2-6 ticks per step (10 ticks = 1 second)
-5. Think about the full motion arc${rulesText}
+2. ONLY use pose ids from the AVAILABLE POSES list above. Do NOT invent new pose names.
+3. If no pose in the list matches what you need, use the CLOSEST available pose.
+4. Start and end with "rest"
+5. Use 2-6 ticks per step (10 ticks = 1 second)
+6. Think about the full motion arc — preparation, action, recovery${rulesText}
 
 Respond with ONLY the JSON.`;
 
@@ -648,12 +650,18 @@ Respond with ONLY the JSON.`;
         console.log('[QA] Generate raw:', text);
         const plan = JSON.parse(text.replace(/^```json?\s*/m, '').replace(/\s*```$/m, '').trim());
 
-        // Compile plan to frames
+        // Compile plan to frames — flag unknown poses
         const poseMap = new Map(poses.map(p => [p.id, p]));
+        const unknown = [];
         const frames = plan.steps.map(s => {
           const p = poseMap.get(s.pose);
-          return { joints: p ? { ...p.joints } : {}, label: s.pose, ticks: s.ticks };
+          if (!p) unknown.push(s.pose);
+          return { joints: p ? { ...p.joints } : {}, label: p ? s.pose : `?${s.pose}`, ticks: s.ticks };
         });
+        if (unknown.length) {
+          console.warn('[QA] Unknown poses (not in dictionary):', unknown);
+          document.getElementById('critique-status').textContent = `Warning: ${unknown.length} unknown pose(s): ${unknown.join(', ')}`;
+        }
 
         choreoFrames = frames;
         choreoIdx = 0;
