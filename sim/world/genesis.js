@@ -24,10 +24,17 @@ import { macroCellPeoples } from '../chronicle/races.js';
 import { regionChronicle, settlementState } from '../chronicle/chronicle.js';
 import { classifyBiome } from '../../src/world/biomes.js';
 
-export const MACRO = 8;                      // macro-cell = 8×8 regions = 128×128 tiles
-const MACRO_TILES = MACRO * REGION;          // 128 tiles per side
-const STRIDE = 8;                            // sample every 8th tile (fast)
-const TERRITORY_W = 48, TERRITORY_H = 40;   // settlement footprint (~proportional to F6 trees)
+export const MACRO = 16;                     // macro-cell = 16×16 regions = 256×256 tiles
+const MACRO_TILES = MACRO * REGION;          // 256 tiles per side
+const STRIDE = 16;                           // sample every 16th tile (fast over large macro-cells)
+
+// Settlement sizes by tier (in tiles). Villages ~2×2 chunks, towns ~6×6, cities ~16×16.
+const TIER_SIZE = {
+  village: { w: 64,  h: 64 },    // ~4 chunks
+  town:    { w: 192, h: 192 },   // ~36 chunks
+  city:    { w: 512, h: 512 },   // ~256 chunks
+  ruins:   { w: 64,  h: 64 },    // same as village (was a village once)
+};
 const GENESIS_GROUP_R = 50000;
 
 /** Map a region key to the macro-cell key that contains it. */
@@ -38,12 +45,14 @@ export function macroKeyOf(regionKey) {
 
 // ── Pure settlement placement (no kernel, no graph) ─────────────────
 
-/** Check that most of a territory rect is on land. Pure. */
-function territoryLandFraction(x, y) {
-  const x0 = x - Math.floor(TERRITORY_W / 2), y0 = y - Math.floor(TERRITORY_H / 2);
+/** Check that most of a territory rect is on land. Pure. Samples at stride 8. */
+function territoryLandFraction(x, y, tier) {
+  const sz = TIER_SIZE[tier] ?? TIER_SIZE.village;
+  const x0 = x - Math.floor(sz.w / 2), y0 = y - Math.floor(sz.h / 2);
   let land = 0, total = 0;
-  for (let dy = 0; dy < TERRITORY_H; dy += 4) {
-    for (let dx = 0; dx < TERRITORY_W; dx += 4) {
+  const step = Math.max(4, Math.floor(sz.w / 16)); // adaptive stride
+  for (let dy = 0; dy < sz.h; dy += step) {
+    for (let dx = 0; dx < sz.w; dx += step) {
       total++;
       if (tileCost(x0 + dx, y0 + dy) !== Infinity) land++;
     }
@@ -79,12 +88,12 @@ function findSiteInMacro(seed, mx, my) {
   return { x: bestX, y: bestY };
 }
 
-/** Territory rect centered on site. Spacing is guaranteed by macro-cell grid
- *  (64 tiles apart > 12+12 territory width — no overlap checks needed). */
-function territoryAround(x, y) {
+/** Territory rect centered on site, sized by settlement tier. */
+function territoryAround(x, y, tier) {
+  const sz = TIER_SIZE[tier] ?? TIER_SIZE.village;
   return {
-    x0: x - Math.floor(TERRITORY_W / 2), y0: y - Math.floor(TERRITORY_H / 2),
-    w: TERRITORY_W, h: TERRITORY_H,
+    x0: x - Math.floor(sz.w / 2), y0: y - Math.floor(sz.h / 2),
+    w: sz.w, h: sz.h,
   };
 }
 
@@ -176,16 +185,25 @@ export function ensureGenesisSettlements(kernel, regionKey, tick) {
 
   if (state === 'wilderness') return;
 
+  // Determine tier from chronicle: ancient flourishing → town/city, young → village
+  const foundingEv = chronicle.find(e => e.type === 'ancient_founding' || e.type === 'founding');
+  const race = foundingEv?.raceId ?? peoples[0]?.raceId ?? 'human';
+  const chronicleAge = chronicle.length > 0 ? Math.max(...chronicle.map(e => e.age ?? 0)) : 0;
+  const hasFlourishing = chronicle.some(e => e.type === 'flourishing');
+  const hasTrade = chronicle.some(e => e.type === 'trade_route');
+  const tier = (chronicleAge >= 4 && hasFlourishing && hasTrade) ? 'city'
+    : (chronicleAge >= 3 && hasFlourishing) ? 'town'
+    : 'village';
+
   // Find site — pure, instant
   const site = findSiteInMacro(kernel.seed, mx, my);
   if (!site) return;
 
-  const territory = territoryAround(site.x, site.y);
-  // Race: dominant people from the chronicle's founding event, or macro-cell dominant
-  const foundingEv = chronicle.find(e => e.type === 'ancient_founding' || e.type === 'founding');
-  const race = foundingEv?.raceId ?? peoples[0]?.raceId ?? 'human';
-  // Age: oldest chronicle event
-  const chronicleAge = chronicle.length > 0 ? Math.max(...chronicle.map(e => e.age ?? 0)) : 0;
+  // Verify territory footprint is mostly land
+  const effectiveTier = state === 'ruined' ? 'ruins' : tier;
+  if (territoryLandFraction(site.x, site.y, effectiveTier) < 0.7) return;
+
+  const territory = territoryAround(site.x, site.y, effectiveTier);
 
   if (state === 'ruined') {
     const lastEv = chronicle[chronicle.length - 1];
@@ -219,7 +237,7 @@ export function ensureGenesisSettlements(kernel, regionKey, tick) {
   });
   const settlement = kernel.graph.createNode({
     type: 'settlement', tick, x: site.x, y: site.y, causeEventId: settleEvId,
-    attrs: { tier: 'village', state: 'active', territory, noFlux: true,
+    attrs: { tier, state: 'active', territory, noFlux: true,
              founderGroup: group.id, race, chronicleAge,
              chronicle: chronicle.map(e => e.id),
              districts: [
