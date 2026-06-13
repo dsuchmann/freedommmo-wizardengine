@@ -30,7 +30,8 @@
 **Files:** Create `src/render/motion-player.js`; Modify `src/render/humanoid-player-renderer.js`.
 
 - [ ] motion-player: `playMotion(program, {count=1})` → builds the joint track via `solveProgramTrack(rig, program, {seed, entityId:0, startTick:0})`, repeated `count` times; `currentJoints(nowMs)` maps wall time → tick → joints (10 ticks/sec, lerp between ticks); `stopMotion()`; auto-stop at track end.
-- [ ] humanoid renderer: if a motion is active, use its joints instead of `jointsFor` (walking input calls `stopMotion()` — moving cancels the performance).
+- [ ] Phase support (taxonomy spec "Narrative phase structure"): if `program.phases` exists, track = enter ++ loop×count ++ (climax?) ++ exit; `stopMotion()` is GRACEFUL — finish current loop cycle, then exit phase, then stop (hard-stop only on movement input).
+- [ ] humanoid renderer: if a motion is active, use its joints instead of `jointsFor` (walking input calls `stopMotion(hard=true)` — moving cancels the performance).
 - [ ] Manual browser check: trigger `playMotion(wave)` from console, see the arm wave.
 - [ ] Commit.
 
@@ -58,6 +59,7 @@
 **Files:** Create `src/life/choreography/motifs.js` (~32 named fragments → program sub-trees, params {scale, ticks}); Create `src/life/choreography/postures.js` (14 validated postures + transition-edge table + `pathBetween(from, to)`); Modify `sim/life/motion/program.js` (allow `{op:'motif', id, params}` expanded at load); Test: `sim/test/motion-motifs.test.js` (every motif + posture + transition validates; pathBetween finds lie_back→handstand chain).
 
 - [ ] Choreography JSONs gain `from`/`to` posture fields (default stand/stand); player chains transitions before playing.
+- [ ] Phase schema in `sim/life/motion/program.js`: `phases: {enter?, loop, exit?, climax?}` (each a sub-tree); validator adds loop cycle-continuity check (last→first tick ≤30°/tick); phaseless programs = pure loop (bootstrap library stays valid). Duet schema keys both roles' programs by shared phase id; transitions are external events (social layer when L6 lands; commands/timers until then — honest absence, never faked inner state).
 
 ### Task 6: Taxonomy authoring waves (~190 ids per spec catalog)
 

@@ -104,8 +104,20 @@ const PART_Z = (() => {
     'torso', 'head', 'thigh_r', 'shin_r', 'foot_r', 'arm_upper_r', 'arm_fore_r', 'hand_r'];
   const westOrder = ['arm_upper_r', 'arm_fore_r', 'hand_r', 'thigh_r', 'shin_r', 'foot_r',
     'torso', 'head', 'thigh_l', 'shin_l', 'foot_l', 'arm_upper_l', 'arm_fore_l', 'hand_l'];
+  // Diagonals: s-biased (se/sw) = south stacking with the near-side leg pulled
+  // above the torso; n-biased (ne/nw) = north stacking, near arm above torso.
+  // Near side = right for se/ne, left for sw/nw (mirror art convention).
+  const seOrder = ['arm_upper_l', 'arm_fore_l', 'hand_l', 'thigh_l', 'shin_l', 'foot_l',
+    'torso', 'thigh_r', 'shin_r', 'foot_r', 'arm_upper_r', 'arm_fore_r', 'hand_r', 'head'];
+  const swOrder = ['arm_upper_r', 'arm_fore_r', 'hand_r', 'thigh_r', 'shin_r', 'foot_r',
+    'torso', 'thigh_l', 'shin_l', 'foot_l', 'arm_upper_l', 'arm_fore_l', 'hand_l', 'head'];
+  const neOrder = ['arm_upper_l', 'arm_fore_l', 'hand_l', 'head', 'torso',
+    'arm_upper_r', 'arm_fore_r', 'hand_r', 'thigh_l', 'shin_l', 'foot_l', 'thigh_r', 'shin_r', 'foot_r'];
+  const nwOrder = ['arm_upper_r', 'arm_fore_r', 'hand_r', 'head', 'torso',
+    'arm_upper_l', 'arm_fore_l', 'hand_l', 'thigh_r', 'shin_r', 'foot_r', 'thigh_l', 'shin_l', 'foot_l'];
   const table = {};
-  for (const [dir, order] of [['s', south], ['n', northOrder], ['e', eastOrder], ['w', westOrder]]) {
+  for (const [dir, order] of [['s', south], ['n', northOrder], ['e', eastOrder], ['w', westOrder],
+    ['se', seOrder], ['sw', swOrder], ['ne', neOrder], ['nw', nwOrder]]) {
     table[dir] = Object.fromEntries(order.map((p, i) => [p, (i + 1) * 100]));
   }
   return table;

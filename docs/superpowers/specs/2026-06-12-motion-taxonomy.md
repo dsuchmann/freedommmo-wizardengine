@@ -20,6 +20,33 @@ L4 Performance      count × speed × amplitude variants, idle layering, posture
 The LLM contract (runtime generation): given the motif catalog + posture graph + a command,
 emit `{from, to, steps:[{motif|pose, params}]}` — small, fast, validator-gated.
 
+## Narrative phase structure (user directive 2026-06-12)
+
+Every expressive animation has a mini narrative arc: **initiation → performance → (climax) → finish**.
+A wave raises the arm, waves some open-ended number of beats, then lowers it.
+
+Program schema: `phases: { enter?, loop, exit?, climax? }` — each phase a program sub-tree.
+- `enter`/`exit` are the wind-up/wind-down (bounded, played once).
+- `loop` is the repeatable core. Validation adds a **cycle-continuity check**: last tick → first
+  tick of `loop` must satisfy the same ≤30°/tick rule, so it can repeat indefinitely.
+- `climax` is an optional one-shot phase between loop and exit (tackle impact, orgasm, dance dip).
+- A program without `phases` is treated as `loop` with identity enter/exit (backward compatible —
+  the bootstrap library stays valid).
+
+**Duration is decided ABOVE the motion layer.** The executor never knows how long `loop` runs:
+- Solo + command: count ("five jumping jacks") or default beats.
+- Solo + NPC: its mind decides (L6) — boredom, goal change, interruption.
+- Duets: a **shared phase machine** — both roles' phase programs are keyed by the same phase id;
+  transitions are events negotiated at the social layer (internal state: arousal, fatigue, fun;
+  communication; consent). Dance has no fixed end; sex transitions to climax from entity internal
+  state; tackle's impact is an event that crosses entities (attacker climax = victim reaction).
+- Stop requests are graceful: finish the current loop cycle, then play `exit` — never snap to rest.
+- Interrupts (hit mid-wave): preempt to `exit` or replace with a reaction program whose `enter`
+  starts at the interrupted pose (validator-checked at runtime chain time).
+
+Honest absence: until L6 minds exist, NPC/duet phase transitions come only from explicit commands,
+timers, or player input — never from faked inner state.
+
 ## L2 Postures (14)
 
 stand, stand_relaxed, sit_ground, sit_chair, kneel, crouch, squat_hold, lie_back, lie_belly,

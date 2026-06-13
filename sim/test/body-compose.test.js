@@ -16,7 +16,7 @@ test('L2a: every equipment slot anchors to a body part', () => {
 });
 
 test('L2a: bare-body composition emits all 14 parts, strictly z-ordered, per direction', () => {
-  for (const d of ['n', 's', 'e', 'w']) {
+  for (const d of ['n', 's', 'e', 'w', 'se', 'sw', 'ne', 'nw']) {
     const layers = composeLayers(plan, {}, d);
     assert.equal(layers.length, 14, d);
     assert.deepEqual([...layers.map(l => l.part)].sort(),
@@ -39,6 +39,20 @@ test('L2a: facing direction flips near/far limb stacking', () => {
   // facing west: mirrored
   assert.ok(zOf(west, 'arm_upper_l') > zOf(west, 'torso'));
   assert.ok(zOf(west, 'arm_upper_r') < zOf(west, 'torso'));
+  // diagonals: near side (right for se/ne, left for sw/nw) above torso, far below
+  const se = composeLayers(plan, {}, 'se'), sw = composeLayers(plan, {}, 'sw');
+  const ne = composeLayers(plan, {}, 'ne'), nw = composeLayers(plan, {}, 'nw');
+  assert.ok(zOf(se, 'arm_upper_r') > zOf(se, 'torso'));
+  assert.ok(zOf(se, 'arm_upper_l') < zOf(se, 'torso'));
+  assert.ok(zOf(sw, 'arm_upper_l') > zOf(sw, 'torso'));
+  assert.ok(zOf(sw, 'arm_upper_r') < zOf(sw, 'torso'));
+  assert.ok(zOf(ne, 'arm_upper_r') > zOf(ne, 'torso'));
+  assert.ok(zOf(ne, 'arm_upper_l') < zOf(ne, 'torso'));
+  assert.ok(zOf(nw, 'arm_upper_l') > zOf(nw, 'torso'));
+  assert.ok(zOf(nw, 'arm_upper_r') < zOf(nw, 'torso'));
+  // s-biased diagonals draw head last (front view); n-biased draw legs in front
+  assert.ok(zOf(se, 'head') > zOf(se, 'hand_r'));
+  assert.ok(zOf(ne, 'foot_r') > zOf(ne, 'head'));
 });
 
 test('L2a: worn items interleave by SLOTS.layer above their anchor part', () => {
