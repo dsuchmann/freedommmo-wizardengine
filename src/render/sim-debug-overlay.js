@@ -102,6 +102,18 @@ function discoverSettlements(camX, camY, w, h, tilePx) {
 
 let _discoveredCache = { key: '', settlements: [] };
 
+// ── Floor tile images ──────────────────────────────────────────────
+const FLOOR_TILES = {};  // material -> HTMLImageElement
+function loadFloorTile(material, path) {
+  if (FLOOR_TILES[material]) return;
+  const img = new Image();
+  img.src = path;
+  img.onload = () => { FLOOR_TILES[material] = img; };
+  FLOOR_TILES[material] = null; // loading
+}
+// Load wood plank floor tile on module init
+loadFloorTile('wood_plank', '/assets/pixelab/buildings/floors/wood_plank/wood_plank__wang_17ed5efd90dd4c18a9546f4452866ab9.png');
+
 // ── Race colors (distinct per race for visual identification) ───────
 const RACE_COLORS = {
   human:    { fill: 'rgba(220,200,150,', stroke: 'rgba(220,200,150,' },
@@ -298,9 +310,24 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
         const bw = Math.ceil(bb.w * tilePx), bh = Math.ceil(bb.h * tilePx);
         if (bsx > w || bsy > h || bsx + bw < 0 || bsy + bh < 0) continue;
 
-        // Fill
-        ctx.fillStyle = BUILDING_COLORS.floor;
-        ctx.fillRect(bsx, bsy, bw, bh);
+        // Fill: use floor tile image if available, otherwise solid color
+        const floorMat = fp.interior?.floor?.material;
+        const floorImg = floorMat ? FLOOR_TILES[floorMat] : null;
+        if (floorImg) {
+          // Tile the floor image across the building footprint
+          const t = Math.ceil(tilePx);
+          ctx.save();
+          ctx.imageSmoothingEnabled = false;
+          for (let fy = 0; fy < bb.h; fy++) {
+            for (let fx = 0; fx < bb.w; fx++) {
+              ctx.drawImage(floorImg, bsx + fx * t, bsy + fy * t, t, t);
+            }
+          }
+          ctx.restore();
+        } else {
+          ctx.fillStyle = BUILDING_COLORS.floor;
+          ctx.fillRect(bsx, bsy, bw, bh);
+        }
         // Outline (walls)
         ctx.strokeStyle = BUILDING_COLORS.wall;
         ctx.lineWidth = Math.max(1, tilePx * 0.1);
