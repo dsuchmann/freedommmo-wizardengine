@@ -598,6 +598,7 @@ function trimFoot(cx, cy, size, drawPx, trim, wFrac, hFrac, legacyW, legacyH) {
 //              hasAnim, bx, by, fw, fh } — bx/by/fw/fh = base footprint
 // ellipse in world art px, same contract as f3 placements.
 export function f4Placements(wx, wy, tileInfo) {
+  if (buildingClaimTiles.has(wx + ',' + wy)) return EMPTY;
   var t = tileInfo(wx, wy);
   if (!t || t.transition) return EMPTY;
   var key = wx + ',' + wy + ',' + t.biome;
@@ -751,6 +752,7 @@ function f5Candidate(wx, wy, tileInfo) {
 // never both survive. Candidates are pure per-tile rolls, so this terminates
 // (no recursion through neighbors).
 export function f5Placements(wx, wy, tileInfo) {
+  if (buildingClaimTiles.has(wx + ',' + wy)) return EMPTY;
   var cand = f5Candidate(wx, wy, tileInfo);
   if (!cand.length) return cand;
   var key = wx + ',' + wy + ',res';
@@ -800,6 +802,7 @@ export function f5AnimUrlBase(p) {
 // future traversal system (Plan B). Claim = trunk base, not canopy: F2/F4
 // may grow under the canopy, just not through the trunk.
 export function f6Placements(wx, wy, tileInfo) {
+  if (buildingClaimTiles.has(wx + ',' + wy)) return EMPTY;
   var t = tileInfo(wx, wy);
   if (!t || t.transition) return EMPTY;
   var key = wx + ',' + wy + ',' + t.biome;
