@@ -72,12 +72,12 @@ export class SimClient {
     } else if (msg.type === 'time') {
       this.tick = msg.tick;
       this.day = msg.day;
-    }
     } else if (msg.type === 'inspect_result') {
       if (this._pendingInspect?.nodeId === msg.nodeId) {
         this._pendingInspect.resolve(msg);
         this._pendingInspect = null;
       }
+    }
     // unknown message types are silently ignored (future-proofing)
     this.onState(this);
   }
