@@ -24,17 +24,18 @@ import { macroCellPeoples } from '../chronicle/races.js';
 import { regionChronicle, settlementState } from '../chronicle/chronicle.js';
 import { classifyBiome } from '../../src/world/biomes.js';
 
-export const MACRO = 16;                     // macro-cell = 16×16 regions = 256×256 tiles
-const MACRO_TILES = MACRO * REGION;          // 256 tiles per side
-const STRIDE = 16;                           // sample every 16th tile (fast over large macro-cells)
+export const MACRO = 8;                      // macro-cell = 8×8 regions = 128×128 tiles
+const MACRO_TILES = MACRO * REGION;          // 128 tiles per side
+const STRIDE = 8;                            // sample every 8th tile
 const GENESIS_GROUP_R = 50000;
 
-// Settlement sizes by tier (in tiles). Villages ~2×2 chunks, towns ~6×6, cities ~16×16.
+// Settlement sizes by tier (in tiles).
+// Village: ~2×2 chunks, town: ~3×3 chunks, city: ~5×5 chunks.
 const TIER_SIZE = {
-  village: { w: 64,  h: 64 },    // ~4 chunks
-  town:    { w: 192, h: 192 },   // ~36 chunks
-  city:    { w: 512, h: 512 },   // ~256 chunks
-  ruins:   { w: 64,  h: 64 },
+  village: { w: 64,  h: 56 },    // ~4 chunks
+  town:    { w: 96,  h: 80 },    // ~9 chunks
+  city:    { w: 160, h: 128 },   // ~20 chunks
+  ruins:   { w: 64,  h: 56 },    // was a village
 };
 
 /** Map a region key to the macro-cell key that contains it. */
