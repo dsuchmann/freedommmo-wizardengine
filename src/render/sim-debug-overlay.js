@@ -54,11 +54,50 @@ function discoverSettlements(camX, camY, w, h, tilePx) {
       const tier = state === 'ruined' ? 'ruins'
         : chronicleTier(chronicle, WORLD_SEED, mk);
 
+      // Skip settlements centered on water
+      const siteBiome = classifyBiome(x, y);
+      if (['ocean', 'deep_ocean', 'lake', 'river', 'shallow_water'].includes(siteBiome.id)) continue;
+
       const name = generateSettlementName(WORLD_SEED, x, y);
-      settlements.push({ x, y, tier, race, state, chronicleAge, biome: biome.id, name });
+      settlements.push({ x, y, tier, race, state, chronicleAge, biome: siteBiome.id, name });
     }
   }
-  return settlements;
+
+  // ── Spacing enforcement: larger settlements suppress nearby smaller ones ──
+  // Sort by tier rank (largest first). Each settlement has a suppression radius
+  // proportional to its size. Smaller settlements within that radius are removed.
+  const TIER_RANK = {};
+  TIER_NAMES.forEach((t, i) => TIER_RANK[t] = i);
+  TIER_RANK.ruins = -1;
+
+  // Minimum tile distance between settlement centers by tier
+  const MIN_SPACING = {
+    homestead: 30, hamlet: 40, village: 50, township: 60,
+    town: 80, borough: 100, city: 140, great_city: 180,
+    capital: 220, metropolis: 280, megacity: 350, world_capital: 440,
+    ruins: 30,
+  };
+
+  settlements.sort((a, b) => (TIER_RANK[b.tier] ?? 0) - (TIER_RANK[a.tier] ?? 0));
+  const kept = [];
+  for (const s of settlements) {
+    const spacing = MIN_SPACING[s.tier] ?? 50;
+    let tooClose = false;
+    for (const k of kept) {
+      const dist = Math.abs(s.x - k.x) + Math.abs(s.y - k.y);
+      // A smaller settlement is suppressed if it's within the LARGER settlement's spacing
+      const largerSpacing = MIN_SPACING[k.tier] ?? 50;
+      if (dist < largerSpacing && (TIER_RANK[k.tier] ?? 0) >= (TIER_RANK[s.tier] ?? 0)) {
+        tooClose = true; break;
+      }
+      // Two settlements of same tier: use the smaller spacing
+      if (dist < Math.min(spacing, largerSpacing) * 0.7) {
+        tooClose = true; break;
+      }
+    }
+    if (!tooClose) kept.push(s);
+  }
+  return kept;
 }
 
 let _discoveredCache = { key: '', settlements: [] };
@@ -226,6 +265,10 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
       for (const b of layout.buildings) {
         const fp = b.footprint;
         const bb = fp.boundingBox;
+
+        // Skip buildings on water
+        const bBiome = classifyBiome(b.x + Math.floor(bb.w / 2), b.y + Math.floor(bb.h / 2));
+        if (['ocean', 'deep_ocean', 'lake', 'river', 'shallow_water', 'stream'].includes(bBiome.id)) continue;
 
         // Cross-settlement overlap check: skip if any tile already occupied
         let overlaps = false;
