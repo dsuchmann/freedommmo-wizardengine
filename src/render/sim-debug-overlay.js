@@ -207,7 +207,8 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
     }
 
     // ── Settlement label (rich info) ────────────────────────────────
-    const labelX = r[0] + r[2] / 2, labelY = r[1] - 4;
+    const csx = Math.floor(s.x * tilePx - camX), csy = Math.floor(s.y * tilePx - camY);
+    const labelX = csx, labelY = csy - 20;
     ctx.textAlign = 'center';
 
     // Background pill
@@ -227,7 +228,6 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
     ctx.fillText(label, labelX, labelY);
 
     // Settlement center marker
-    const csx = Math.floor(s.x * tilePx - camX), csy = Math.floor(s.y * tilePx - camY);
     ctx.fillStyle = isRuin ? 'rgba(180,100,80,0.7)' : rc.fill + '0.9)';
     ctx.beginPath();
     ctx.arc(csx, csy, Math.max(4, tilePx * 0.3), 0, Math.PI * 2);
