@@ -3,12 +3,15 @@ import { DAY } from '../time/metabolism.js';
 import { REGION, createAggregate } from '../lod/aggregate.js';
 
 // Deterministic baseline meadow (spec §5.1). Densities are per-tile probabilities.
-export const DENSITY = { grass: 0.5, berry_bush: 0.05, grazer: 0.004, tree: 0.02 };
+export const DENSITY = { grass: 0.5, berry_bush: 0.05, grazer: 0.004, tree: 0.02, rabbit: 0.003, deer: 0.002, wolf: 0.0008 };
 export const START = {
-  grass:      { R: [200, 1500],   body: [10, 60],    maxAgeDays: 50 },
-  berry_bush: { R: [3000, 15000], body: [500, 3000], maxAgeDays: 600 },
+  grass:      { R: [200, 1500],    body: [10, 60],     maxAgeDays: 50 },
+  berry_bush: { R: [3000, 15000],  body: [500, 3000],  maxAgeDays: 600 },
   grazer:     { R: [20000, 60000], body: [2000, 8000], maxAgeDays: 1500 },
   tree:       { R: [10000, 40000], body: [5000, 30000], maxAgeDays: 3000 },
+  rabbit:     { R: [4000, 12000],  body: [300, 1200],  maxAgeDays: 500 },
+  deer:       { R: [15000, 45000], body: [1500, 7000], maxAgeDays: 1200 },
+  wolf:       { R: [15000, 40000], body: [1500, 6000], maxAgeDays: 1200 },
 };
 
 export function spawnMeadow(kernel, { x0, y0, w, h }) {
