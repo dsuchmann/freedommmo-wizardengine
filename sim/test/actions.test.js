@@ -651,8 +651,7 @@ test('P1 move: one-tile steps update position and emit move events; invalid move
   assert.equal(move(k, p.id, 2, 0, 1), false, 'step >1');
   const limbo = createPlayer(k, 1);
   assert.equal(move(k, limbo.id, 1, 0, 1), false, 'unpositioned actor cannot move');
-  // bounds: player is at (6,6), step right to x=7 is valid (w=8 → x0=0..7),
-  // step to x=8 would exit bounds — need two steps right first
+  // extent never refuses: the world is unbounded — steps past the old 8×8 edge succeed
   assert.equal(move(k, p.id, 1, 0, 1), true, 'step to (7,6) valid');  // now at (7,6)
-  assert.equal(move(k, p.id, 1, 0, 1), false, 'step to x=8 exits bounds');
+  assert.equal(move(k, p.id, 1, 0, 1), true, 'step to x=8 succeeds — extent never refuses');
 });

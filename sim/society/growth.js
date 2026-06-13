@@ -74,14 +74,13 @@ function deedPlots(kernel, settlement, groupId, strip, evId, tick) {
  *  first viable direction (W, E, N, S — deterministic), zone the new strip
  *  residential, deed plots. Zero-cost declaration (P3 founding precedent — the
  *  labor is paid later by clearing and construction). Returns true, or false
- *  (side-effect-free) when: bad actor/target, non-founder, or every direction is
- *  out of bounds / overlaps another settlement / yields zero land plots. */
+ *  (side-effect-free) when: bad actor/target, non-founder, or every direction
+ *  overlaps another settlement / yields zero land plots. */
 export function expandTerritory(kernel, groupId, settlementId, tick) {
   const group = kernel.graph.nodes.get(groupId);
   const s = kernel.graph.nodes.get(settlementId);
   if (!group || group.type !== 'group' || !s || s.type !== 'settlement') return false;
   if (s.attrs.founderGroup !== groupId) return false;
-  const b = kernel.bounds;
   const t = s.attrs.territory;
   const candidates = [
     { dir: 'west',  rect: { x0: t.x0 - PLOT_W, y0: t.y0, w: PLOT_W, h: t.h } },
@@ -90,8 +89,6 @@ export function expandTerritory(kernel, groupId, settlementId, tick) {
     { dir: 'south', rect: { x0: t.x0, y0: t.y0 + t.h,    w: t.w, h: PLOT_H } },
   ];
   for (const { dir, rect } of candidates) {
-    if (b && (rect.x0 < b.x0 || rect.y0 < b.y0 ||
-        rect.x0 + rect.w > b.x0 + b.w || rect.y0 + rect.h > b.y0 + b.h)) continue;
     let clash = false;
     for (const n of kernel.graph.nodes.values()) {
       if (n.type === 'settlement' && n.id !== s.id &&

@@ -15,7 +15,8 @@ export function tileCost(x, y) {
   return b.definition?.movementCost ?? 1;
 }
 
-/** Least-cost 4-connected route from `from` to `to` inside `bounds` ({x0,y0,w,h}).
+/** Least-cost 4-connected route from `from` to `to`. `bounds` is {x0,y0,w,h} or
+ *  null = unbounded (the MAX_EXPLORE cost horizon is the only limit).
  *  opts.crossings: Set of 'x,y' strings — water tiles that may be traversed at cost 2.
  *  opts.blocked:   Set of 'x,y' strings — land tiles that may NEVER be traversed
  *                  (building walls — P4 impassable claims).
@@ -24,7 +25,8 @@ export function tileCost(x, y) {
 export function planRoute(from, to, bounds, opts = {}) {
   if (tileCost(from.x, from.y) === Infinity || tileCost(to.x, to.y) === Infinity) return null;
   if (opts.blocked?.has(`${from.x},${from.y}`) || opts.blocked?.has(`${to.x},${to.y}`)) return null;
-  const inB = (x, y) => x >= bounds.x0 && x < bounds.x0 + bounds.w && y >= bounds.y0 && y < bounds.y0 + bounds.h;
+  const inB = (x, y) => bounds == null
+    || (x >= bounds.x0 && x < bounds.x0 + bounds.w && y >= bounds.y0 && y < bounds.y0 + bounds.h);
   if (!inB(from.x, from.y) || !inB(to.x, to.y)) return null;
   const key = (x, y) => `${x},${y}`;
   const h = (x, y) => Math.abs(x - to.x) + Math.abs(y - to.y);

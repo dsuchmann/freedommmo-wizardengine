@@ -13,8 +13,8 @@ function makeKernel(bounds = MIXED) { return new Kernel({ seed: 7, bounds }); }
 
 test('P3 scoreSite: water tile is unscoreable (null); land tile yields full reason codes', () => {
   const k = makeKernel();
-  assert.equal(scoreSite(k, 930, 0, MIXED), null, 'river tile refused');
-  const s = scoreSite(k, 940, 8, MIXED);
+  assert.equal(scoreSite(k, 930, 0), null, 'river tile refused');
+  const s = scoreSite(k, 940, 8);
   assert.ok(s, 'land tile scored');
   assert.ok(s.score >= 0 && s.score <= 1, 'score normalized');
   for (const c of ['water', 'fertility', 'defensibility', 'trade']) {
@@ -30,8 +30,8 @@ test('P3 scoreSite: water tile is unscoreable (null); land tile yields full reas
 test('P3 scoreSite: water access carries evidence — tile near river beats waterless tile on the water component', () => {
   const k = makeKernel();
   // (938,6) sits within WATER_SCAN_R of the river wedge edge; deep grass (945,12) does not (verify empirically; adjust coords).
-  const near = scoreSite(k, 938, 6, MIXED);
-  const far = scoreSite(k, 945, 12, MIXED);
+  const near = scoreSite(k, 938, 6);
+  const far = scoreSite(k, 945, 12);
   assert.ok(near.reasons.water.score > far.reasons.water.score, 'closer to water scores higher');
   assert.ok(near.reasons.water.nearest, 'evidence: nearest water tile recorded');
   assert.equal(tileCost(near.reasons.water.nearest.x, near.reasons.water.nearest.y), Infinity,
@@ -42,14 +42,14 @@ test('P3 scoreSite: water access carries evidence — tile near river beats wate
 
 test('P3 trade component: no settlements → 0 with declared absence; reachable settlement → > 0 with via evidence', () => {
   const k = makeKernel();
-  const s0 = scoreSite(k, 940, 8, MIXED);
+  const s0 = scoreSite(k, 940, 8);
   assert.equal(s0.reasons.trade.score, 0, 'first settlement has no neighbors — honest 0');
   assert.equal(s0.reasons.trade.via, null);
   // arrange a settlement node (shape-only — real founding tested in settlements.test.js)
   k.graph.boot(() => {
     k.graph.createNode({ type: 'settlement', tick: 0, x: 945, y: 10, attrs: { territory: { x0: 941, y0: 6, w: 9, h: 8 }, noFlux: true } });
   });
-  const s1 = scoreSite(k, 940, 8, MIXED);
+  const s1 = scoreSite(k, 940, 8);
   assert.ok(s1.reasons.trade.score > 0, 'reachable settlement raises trade');
   assert.ok(s1.reasons.trade.via != null, 'evidence: which settlement');
 });
@@ -63,7 +63,7 @@ test('P3 findSettlementSite: argmax in rect, deterministic, never water, twice-i
   assert.ok(tileCost(a.x, a.y) !== Infinity, 'site is land');
   // it really is the maximum: no scanned tile beats it (spot-check full rescan)
   for (let y = MIXED.y0; y < MIXED.y0 + MIXED.h; y++) for (let x = MIXED.x0; x < MIXED.x0 + MIXED.w; x++) {
-    const s = scoreSite(k, x, y, MIXED);
+    const s = scoreSite(k, x, y);
     if (s) assert.ok(s.score <= a.score + 1e-12, `no tile beats the chosen site (${x},${y})`);
   }
 });

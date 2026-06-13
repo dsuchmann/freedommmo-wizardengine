@@ -25,7 +25,7 @@ test('P3 foundSettlement: settlement node + districts + plots, all provenanced t
   assert.equal(s.attrs.tier, 'village');
   assert.equal(s.attrs.founderGroup, g.id);
   // reason codes recomputed at founding — must match an independent rescore
-  const independent = scoreSite(k, 940, 8, MIXED);
+  const independent = scoreSite(k, 940, 8);
   // (trade may differ: founding created the settlement itself — exclude it; assert the static components)
   for (const c of ['water', 'fertility', 'defensibility'])
     assert.deepEqual(s.attrs.reasons[c], independent.reasons[c], `reason ${c} matches independent rescore`);
