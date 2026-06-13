@@ -5,6 +5,7 @@
 import { parseCommand, matchMotion } from '../life/motion-match.js';
 import { MOTION_MANIFEST } from '../life/choreography/manifest.js';
 import { playMotion } from '../render/humanoid-player-renderer.js';
+import { isLLMConfigured, generateMotion } from '../life/motion-llm.js';
 
 let _container = null;
 let _input = null;
@@ -89,15 +90,29 @@ async function submitCommand() {
     } catch (err) {
       showFeedback(`failed to load ${match.id}: ${err.message}`, '#ffaaaa');
     }
+  } else if (isLLMConfigured()) {
+    // No dictionary match — generate via LLM
+    showFeedback(`generating "${text}"...`, '#aaccff');
+    closeChat();
+    const { program, error } = await generateMotion(text);
+    if (program) {
+      playMotion(program, { count });
+      showFeedback(`generated: ${program.id} ×${count}`);
+      // Append to runtime manifest so repeats are instant
+      MOTION_MANIFEST.push({ id: program.id, kind: program.kind || 'gesture',
+        tags: tokens, desc: text });
+    } else {
+      showFeedback(error, '#ffaaaa');
+    }
+    return;
   } else {
-    // No match — find closest guess
-    const { tokens: t } = parseCommand(text);
+    // No match, no LLM — find closest guess
     let bestId = null, bestScore = 0;
     for (const entry of MOTION_MANIFEST) {
       const idTokens = entry.id.split('_');
       const tagTokens = entry.tags.flatMap(tg => tg.split(/\s+/));
       let s = 0;
-      for (const w of t) {
+      for (const w of tokens) {
         if (idTokens.some(it => it.startsWith(w))) s += 2;
         else if (tagTokens.some(tt => tt.startsWith(w))) s += 1;
       }
