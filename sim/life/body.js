@@ -96,8 +96,10 @@ export const SLOT_ANCHOR = {
 /** Base z per part per facing direction. Gaps of 100 leave room for worn layers. */
 const PART_Z = (() => {
   // painter orders, far → near, per facing; each array = exactly the 14 PARTS once
-  const south = ['arm_upper_l', 'arm_fore_l', 'hand_l', 'thigh_l', 'shin_l', 'foot_l',
-    'thigh_r', 'shin_r', 'foot_r', 'torso', 'arm_upper_r', 'arm_fore_r', 'hand_r', 'head'];
+  // South: both arms BEHIND torso at rest. Z-hints bring them forward during gestures.
+  // Previously right arm was above torso which made it pop out at idle.
+  const south = ['arm_upper_l', 'arm_fore_l', 'hand_l', 'arm_upper_r', 'arm_fore_r', 'hand_r',
+    'thigh_l', 'shin_l', 'foot_l', 'thigh_r', 'shin_r', 'foot_r', 'torso', 'head'];
   const northOrder = ['arm_upper_r', 'arm_fore_r', 'hand_r', 'arm_upper_l', 'arm_fore_l', 'hand_l',
     'head', 'torso', 'thigh_l', 'shin_l', 'foot_l', 'thigh_r', 'shin_r', 'foot_r'];
   const eastOrder = ['arm_upper_l', 'arm_fore_l', 'hand_l', 'thigh_l', 'shin_l', 'foot_l',
