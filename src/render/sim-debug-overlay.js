@@ -153,6 +153,9 @@ const seenEvents = [];
 let lastEventsRef = null;
 let inspectResult = null;
 let inspectPending = false;
+let selectedBuilding = null;   // clicked building with full metadata
+let selectedSettlement = null; // clicked settlement (aggregate view)
+let _renderedBuildings = [];   // [{x, y, w, h, building, settlement}] for click detection
 let _teleportButtons = [];
 let _teleportHover = -1;
 
@@ -229,6 +232,7 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
   };
   // Global occupied tile tracker — prevents cross-settlement building overlap
   const globalOccupied = new Set();
+  _renderedBuildings = [];
   for (const s of allSettlements) {
     const rc = RACE_COLORS[s.race] ?? DEFAULT_RACE;
     const isRuin = s.state === 'ruined' || s.tier === 'ruins';
@@ -324,6 +328,8 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
           const label = b.brand?.name || fp.typeName || fp.typeId;
           ctx.fillText(label, bsx + 2, bsy - 2);
         }
+        // Track for click detection
+        _renderedBuildings.push({ screenX: bsx, screenY: bsy, screenW: bw, screenH: bh, building: b, settlement: s });
       }
 
       // District labels at district centers
@@ -480,45 +486,121 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
     _teleportButtons.push({ x: 12, y: by, w: TELEPORT_W - 8, h: TELEPORT_BTN_H, tier: name });
   }
 
-  // ── Inspect panel (bottom-left) ───────────────────────────────────
-  if (inspectResult) {
-    const panelW = 440, lineH = 15;
+  // ── Detail panel (right side) — building or settlement view ────────
+  const PANEL_W = 320, LINE_H = 15, PANEL_X = w - PANEL_W - 8;
+  if (selectedBuilding) {
+    const b = selectedBuilding;
+    const s = selectedSettlement;
+    const fp = b.footprint;
     const lines = [];
-    const n = inspectResult.node;
-    const isRuin = n?.attrs?.state === 'ruined';
-    const race = n?.attrs?.race;
-    const header = `${isRuin ? 'RUINS' : (n?.attrs?.tier ?? n?.type ?? '?').toUpperCase()}`
-      + (race ? ` · ${race}` : '') + ` at ${n?.x},${n?.y}`;
-    lines.push(header);
-    if (inspectResult.summary) {
-      const words = inspectResult.summary.split(' ');
-      let line = '';
-      for (const wd of words) {
-        if ((line + ' ' + wd).length > 58) { lines.push(line); line = wd; }
-        else line = line ? line + ' ' + wd : wd;
+    lines.push({ text: `${b.brand?.name ?? fp.typeName}`, color: '#ffd24a' });
+    lines.push({ text: ``, color: '#666' });
+    lines.push({ text: `TYPE: ${fp.typeName} (${fp.category})`, color: '#ccc' });
+    if (b.specialization) lines.push({ text: `SPECIALIZATION: ${b.specialization.name}`, color: '#9cf' });
+    if (b.specialization?.desc) lines.push({ text: `  "${b.specialization.desc}"`, color: '#888' });
+    lines.push({ text: `DISTRICT: ${b.district}`, color: '#ada' });
+    lines.push({ text: ``, color: '#666' });
+    if (s) {
+      lines.push({ text: `SETTLEMENT: ${s.name}`, color: '#ddd' });
+      lines.push({ text: `  Tier: ${s.tier} · Race: ${s.race}`, color: '#aaa' });
+      lines.push({ text: `  Age: ${s.chronicleAge} ages · Biome: ${s.biome}`, color: '#aaa' });
+    }
+    lines.push({ text: ``, color: '#666' });
+    if (b.owner) lines.push({ text: `OWNER: ${b.owner}`, color: '#cba' });
+    if (b.brand?.name) lines.push({ text: `BRAND: ${b.brand.name}`, color: '#ec9' });
+    lines.push({ text: `SIZE: ${fp.boundingBox.w}×${fp.boundingBox.h} tiles`, color: '#aaa' });
+    lines.push({ text: `PATTERN: ${fp.sections?.length ?? 1} sections`, color: '#aaa' });
+    lines.push({ text: ``, color: '#666' });
+    if (b.inventory) {
+      lines.push({ text: `INVENTORY:`, color: '#9cf' });
+      for (const item of (b.inventory.base ?? []).slice(0, 5)) {
+        lines.push({ text: `  [base] ${item}`, color: '#888' });
       }
-      if (line) lines.push(line);
+      for (const item of (b.inventory.specialty ?? []).slice(0, 5)) {
+        lines.push({ text: `  [spec] ${item}`, color: '#adf' });
+      }
     }
-    lines.push('');
-    lines.push('CAUSAL CHAIN:');
-    for (const ev of (inspectResult.events ?? []).slice(0, 10)) {
-      const age = ev.age != null ? ` (${ev.age} ages ago)` : '';
-      lines.push(`  [${ev.eventId}] ${ev.type}${age}`);
+    if (fp.features?.length) {
+      lines.push({ text: ``, color: '#666' });
+      lines.push({ text: `INTERIOR: ${fp.features.map(f => f.type).join(', ')}`, color: '#aaa' });
     }
-    const panelH = (lines.length + 1) * lineH + 10;
-    ctx.fillStyle = 'rgba(0,0,0,0.8)';
-    ctx.fillRect(8, h - panelH - 8, panelW, panelH);
-    ctx.font = '12px monospace';
+    lines.push({ text: ``, color: '#666' });
+    lines.push({ text: `[click elsewhere to close · click settlement label for overview]`, color: '#666' });
+
+    const panelH = (lines.length + 1) * LINE_H + 10;
+    const panelY = Math.max(8, h / 2 - panelH / 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.88)';
+    ctx.fillRect(PANEL_X, panelY, PANEL_W, panelH);
+    ctx.strokeStyle = 'rgba(255,215,74,0.4)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(PANEL_X, panelY, PANEL_W, panelH);
+    ctx.font = '11px monospace';
     ctx.textAlign = 'left';
     for (let i = 0; i < lines.length; i++) {
-      ctx.fillStyle = i === 0 ? '#ffd24a' : lines[i].startsWith('  [') ? '#9cf' : '#ccc';
-      ctx.fillText(lines[i], 16, h - panelH + 6 + lineH * i);
+      ctx.fillStyle = lines[i].color;
+      ctx.fillText(lines[i].text, PANEL_X + 8, panelY + 14 + LINE_H * i);
     }
-  } else if (inspectPending) {
-    ctx.font = '12px monospace';
-    ctx.fillStyle = '#888';
+  } else if (selectedSettlement) {
+    // Settlement aggregate view
+    const s = selectedSettlement;
+    const layout = (() => { try { return layoutSettlement(42, { x: s.x, y: s.y }, s.tier || 'village', s.race || 'human', s.biome || 'grassland'); } catch { return null; } })();
+    const lines = [];
+    lines.push({ text: `${s.name} — ${(s.tier || 'village').toUpperCase()}`, color: '#ffd24a' });
+    lines.push({ text: `Race: ${s.race} · Age: ${s.chronicleAge} ages · Biome: ${s.biome}`, color: '#aaa' });
+    lines.push({ text: ``, color: '#666' });
+    if (layout) {
+      lines.push({ text: `BUILDINGS: ${layout.buildings.length} total`, color: '#ccc' });
+      lines.push({ text: `DISTRICTS: ${layout.districts.length}`, color: '#ccc' });
+      lines.push({ text: `ROADS: ${layout.spines.length} spines`, color: '#ccc' });
+      lines.push({ text: ``, color: '#666' });
+      // Aggregate by category
+      const cats = {};
+      for (const b of layout.buildings) {
+        const cat = b.footprint.category ?? 'unknown';
+        cats[cat] = (cats[cat] ?? 0) + 1;
+      }
+      lines.push({ text: `BY CATEGORY:`, color: '#9cf' });
+      for (const [cat, count] of Object.entries(cats).sort((a, b) => b[1] - a[1])) {
+        lines.push({ text: `  ${cat}: ${count}`, color: '#aaa' });
+      }
+      lines.push({ text: ``, color: '#666' });
+      // Aggregate by district
+      const dists = {};
+      for (const b of layout.buildings) {
+        dists[b.district] = (dists[b.district] ?? 0) + 1;
+      }
+      lines.push({ text: `BY DISTRICT:`, color: '#ada' });
+      for (const [dist, count] of Object.entries(dists).sort((a, b) => b[1] - a[1])) {
+        lines.push({ text: `  ${dist}: ${count} buildings`, color: '#aaa' });
+      }
+      lines.push({ text: ``, color: '#666' });
+      // List specializations
+      const specs = layout.buildings.filter(b => b.specialization).map(b => `${b.brand?.name ?? b.footprint.typeName} (${b.specialization?.name ?? ''})`);
+      if (specs.length > 0) {
+        lines.push({ text: `BUSINESSES:`, color: '#ec9' });
+        for (const sp of specs.slice(0, 15)) {
+          lines.push({ text: `  ${sp}`, color: '#aaa' });
+        }
+        if (specs.length > 15) lines.push({ text: `  ... and ${specs.length - 15} more`, color: '#666' });
+      }
+    }
+    lines.push({ text: ``, color: '#666' });
+    lines.push({ text: `[click a building for details · click elsewhere to close]`, color: '#666' });
+
+    const panelH = Math.min(h - 20, (lines.length + 1) * LINE_H + 10);
+    const panelY = 8;
+    ctx.fillStyle = 'rgba(0,0,0,0.88)';
+    ctx.fillRect(PANEL_X, panelY, PANEL_W, panelH);
+    ctx.strokeStyle = 'rgba(100,200,255,0.4)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(PANEL_X, panelY, PANEL_W, panelH);
+    ctx.font = '11px monospace';
     ctx.textAlign = 'left';
-    ctx.fillText('inspecting...', 16, h - 20);
+    for (let i = 0; i < Math.floor((panelH - 10) / LINE_H); i++) {
+      if (i >= lines.length) break;
+      ctx.fillStyle = lines[i].color;
+      ctx.fillText(lines[i].text, PANEL_X + 8, panelY + 14 + LINE_H * i);
+    }
   }
 
   ctx.restore();
@@ -599,26 +681,32 @@ export function initSimDebugOverlay() {
       }
     }
 
-    // Settlement inspect click
-    const sim = window._simClient;
-    if (!sim?.inspect) return;
+    // Building click: check rendered buildings first
+    for (const rb of _renderedBuildings) {
+      if (e.clientX >= rb.screenX && e.clientX <= rb.screenX + rb.screenW &&
+          e.clientY >= rb.screenY && e.clientY <= rb.screenY + rb.screenH) {
+        selectedBuilding = rb.building;
+        selectedSettlement = rb.settlement;
+        return;
+      }
+    }
+
+    // Settlement label click: check nearby settlement centers
     const { camX, camY, tilePx, settlements } = _lastDrawState;
     const clickTileX = (e.clientX + camX) / tilePx;
     const clickTileY = (e.clientY + camY) / tilePx;
-    let best = null, bestDist = Infinity;
     for (const s of settlements) {
       const dx = clickTileX - s.x, dy = clickTileY - s.y;
-      const d2 = Math.abs(dx) + Math.abs(dy);
-      if (d2 < bestDist && d2 < 20) { bestDist = d2; best = s; }
+      if (Math.abs(dx) + Math.abs(dy) < 10) {
+        selectedBuilding = null;
+        selectedSettlement = s;
+        return;
+      }
     }
-    if (best) {
-      inspectPending = true;
-      inspectResult = null;
-      sim.inspect(best.id).then(result => {
-        inspectPending = false;
-        inspectResult = result;
-      });
-    }
+
+    // Click on empty space: clear selection
+    selectedBuilding = null;
+    selectedSettlement = null;
   });
   window._simDebugOverlay = { toggle: () => { enabled = !enabled; }, isEnabled: () => enabled };
 }
