@@ -11,24 +11,35 @@
     main { display: flex; flex: 1; overflow: hidden; }
     .panel { border-right: 1px solid #333; overflow-y: auto; }
     #library { width: 220px; padding: 8px; }
-    #library input { width: 100%; padding: 4px 8px; background: #222; color: #ddd; border: 1px solid #444; border-radius: 4px; margin-bottom: 8px; }
+    #library input { width: 100%; padding: 4px 8px; background: #222; color: #ddd; border: 1px solid #444; border-radius: 4px; margin-bottom: 8px; font: 12px monospace; }
     .pose-item { padding: 4px 8px; cursor: pointer; border-radius: 4px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .pose-item:hover { background: #2a2a3a; }
     .pose-item.selected { background: #335; }
-    .pose-item .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+    .pose-item .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
     .dot.pass { background: #5b5; } .dot.fail { background: #b55; } .dot.untested { background: #555; }
     #canvas-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #1a1a1a; }
     #canvas-wrap canvas { border: 1px solid #333; }
     .controls { padding: 8px; display: flex; gap: 8px; align-items: center; }
-    .controls button { background: #333; color: #ddd; border: 1px solid #555; border-radius: 4px; padding: 4px 12px; cursor: pointer; }
+    .controls button { background: #333; color: #ddd; border: 1px solid #555; border-radius: 4px; padding: 4px 12px; cursor: pointer; font-size: 16px; }
     .controls button:hover { background: #444; }
-    #details { width: 300px; padding: 12px; overflow-y: auto; }
-    #details h3 { color: #9af; margin-bottom: 8px; }
-    #details pre { background: #1a1a1a; padding: 8px; border-radius: 4px; font-size: 11px; overflow-x: auto; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+    .controls button.active { background: #446; border-color: #66a; }
+    #details { width: 340px; padding: 12px; overflow-y: auto; }
+    #details h3 { color: #9af; margin: 12px 0 6px; }
+    #details h3:first-child { margin-top: 0; }
+    #details pre { background: #1a1a1a; padding: 8px; border-radius: 4px; font-size: 11px; overflow-x: auto; white-space: pre-wrap; max-height: 200px; overflow-y: auto; }
+    #critique-box { width: 100%; min-height: 60px; padding: 6px 8px; background: #1a1a2a; color: #ddd; border: 1px solid #444; border-radius: 4px; font: 12px monospace; resize: vertical; }
+    #btn-fix { background: #644; color: #fcc; border: 1px solid #855; border-radius: 4px; padding: 6px 16px; cursor: pointer; margin-top: 6px; width: 100%; }
+    #btn-fix:hover { background: #755; }
+    #btn-approve { background: #464; color: #cfc; border: 1px solid #585; border-radius: 4px; padding: 6px 16px; cursor: pointer; margin-top: 4px; width: 100%; display: none; }
+    #btn-approve:hover { background: #575; }
+    #critique-status { font-size: 11px; color: #888; margin-top: 4px; min-height: 16px; }
+    #rules-list { font-size: 11px; color: #a9a; max-height: 150px; overflow-y: auto; }
+    #rules-list .rule { padding: 4px 0; border-bottom: 1px solid #222; }
     #command-bar { background: #1a1a2a; padding: 8px 16px; border-top: 1px solid #333; display: flex; gap: 8px; }
-    #command-bar input { flex: 1; padding: 6px 10px; background: #222; color: #ddd; border: 1px solid #444; border-radius: 4px; }
+    #command-bar input { flex: 1; padding: 6px 10px; background: #222; color: #ddd; border: 1px solid #444; border-radius: 4px; font: 13px monospace; }
     #command-bar button { background: #446; color: #ddd; border: 1px solid #556; border-radius: 4px; padding: 6px 16px; cursor: pointer; }
     .status { padding: 4px 8px; font-size: 12px; color: #888; }
+    .section-label { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin: 8px 0 4px; }
   </style>
 </head>
 <body>
@@ -39,25 +50,37 @@
   <main>
     <div class="panel" id="library">
       <input type="text" id="filter" placeholder="Filter poses..." />
+      <div class="section-label">POSES</div>
       <div id="pose-list"></div>
+      <div class="section-label" style="margin-top:12px">CHOREOGRAPHIES</div>
+      <div id="choreo-list"></div>
     </div>
     <div id="canvas-wrap">
       <canvas id="preview" width="400" height="600"></canvas>
       <div class="controls">
-        <button id="btn-prev">&#9198;</button>
-        <button id="btn-play">&#9654;</button>
-        <button id="btn-next">&#9197;</button>
-        <button id="btn-loop">&#128257;</button>
+        <button id="btn-prev" title="Previous frame">&#9664;&#9664;</button>
+        <button id="btn-play" title="Play/Pause">&#9654;</button>
+        <button id="btn-next" title="Next frame">&#9654;&#9654;</button>
+        <button id="btn-loop" title="Toggle loop">&#8635;</button>
         <span class="status" id="frame-info">-</span>
       </div>
     </div>
     <div class="panel" id="details">
       <h3 id="detail-title">Select a pose</h3>
       <div id="detail-desc"></div>
-      <h3 style="margin-top:12px">Joints</h3>
+      <h3>Joints</h3>
       <pre id="detail-json">{}</pre>
-      <h3 style="margin-top:12px">Tags</h3>
-      <div id="detail-tags"></div>
+      <h3>Tags</h3>
+      <div id="detail-tags" style="font-size:12px;color:#aaa"></div>
+
+      <h3>Critique</h3>
+      <textarea id="critique-box" placeholder="Describe what's wrong with this pose...&#10;e.g. 'the arms are clipping through the torso'&#10;or 'this doesn't look like a salute at all'"></textarea>
+      <button id="btn-fix">Fix with LLM</button>
+      <button id="btn-approve">Approve &amp; Save Rule</button>
+      <div id="critique-status"></div>
+
+      <h3>Learned Rules</h3>
+      <div id="rules-list"></div>
     </div>
   </main>
   <div id="command-bar">
@@ -65,21 +88,54 @@
     <button id="btn-generate">Generate</button>
   </div>
   <script type="module">
-    import { solvePose } from '/src/life/pose.js';
     import { drawPose } from '/src/life/eval/stick-renderer.js';
 
     let rig = null;
     let poses = [];
+    let rules = [];
     let selectedPose = null;
+    let pendingFix = null; // { originalJoints, newJoints, critique, rule }
 
+    // Choreography playback state
+    let choreoFrames = null; // [{joints, label}]
+    let choreoIdx = 0;
+    let playing = false;
+    let looping = false;
+    let playTimer = null;
+
+    // ── LLM config ──────────────────────────────────────────────────────────
+    function getLLMConfig() {
+      try { return JSON.parse(localStorage.getItem('motion_llm')); } catch { return null; }
+    }
+
+    // ── Init ────────────────────────────────────────────────────────────────
     async function init() {
       rig = await (await fetch('/src/life/rigs/humanoid.json')).json();
       poses = await (await fetch('/src/life/choreography/poses.json')).json();
-      document.getElementById('status').textContent = `${poses.length} poses loaded`;
+      loadRules();
+      document.getElementById('status').textContent = `${poses.length} poses, ${rules.length} rules`;
       renderList();
+      renderRules();
       if (poses.length) selectPose(poses[0]);
+      loadChoreoList();
     }
 
+    // ── Rules persistence ───────────────────────────────────────────────────
+    function loadRules() {
+      try { rules = JSON.parse(localStorage.getItem('motion_eval_rules') || '[]'); } catch { rules = []; }
+    }
+    function saveRules() {
+      localStorage.setItem('motion_eval_rules', JSON.stringify(rules));
+      renderRules();
+      document.getElementById('status').textContent = `${poses.length} poses, ${rules.length} rules`;
+    }
+    function renderRules() {
+      const el = document.getElementById('rules-list');
+      if (!rules.length) { el.innerHTML = '<div style="color:#555">No rules yet. Critique a pose to teach the system.</div>'; return; }
+      el.innerHTML = rules.map((r, i) => `<div class="rule">${i + 1}. ${r.rule}</div>`).join('');
+    }
+
+    // ── Pose list ───────────────────────────────────────────────────────────
     function renderList(filter = '') {
       const list = document.getElementById('pose-list');
       const f = filter.toLowerCase();
@@ -90,20 +146,130 @@
           return `<div class="pose-item" data-id="${p.id}"><span class="dot ${cls}"></span>${p.id}</div>`;
         }).join('');
       list.querySelectorAll('.pose-item').forEach(el => {
-        el.onclick = () => selectPose(poses.find(p => p.id === el.dataset.id));
+        el.onclick = () => { stopPlayback(); selectPose(poses.find(p => p.id === el.dataset.id)); };
       });
     }
 
     function selectPose(p) {
       selectedPose = p;
+      pendingFix = null;
+      choreoFrames = null;
       document.querySelectorAll('.pose-item').forEach(el => el.classList.toggle('selected', el.dataset.id === p.id));
       document.getElementById('detail-title').textContent = p.id;
       document.getElementById('detail-desc').textContent = p.desc;
       document.getElementById('detail-json').textContent = JSON.stringify(p.joints, null, 2);
       document.getElementById('detail-tags').textContent = p.tags.join(', ');
+      document.getElementById('critique-box').value = '';
+      document.getElementById('critique-status').textContent = '';
+      document.getElementById('btn-approve').style.display = 'none';
+      document.getElementById('frame-info').textContent = 'pose';
       drawPreview(p.joints);
     }
 
+    // ── Choreography list ───────────────────────────────────────────────────
+    async function loadChoreoList() {
+      const list = document.getElementById('choreo-list');
+      // Try to load manifest
+      try {
+        const mod = await import('/src/life/choreography/manifest.js');
+        const manifest = mod.MOTION_MANIFEST;
+        list.innerHTML = manifest.map(m =>
+          `<div class="pose-item" data-choreo="${m.id}"><span class="dot untested"></span>${m.id}</div>`
+        ).join('');
+        list.querySelectorAll('[data-choreo]').forEach(el => {
+          el.onclick = () => loadChoreo(el.dataset.choreo);
+        });
+      } catch { list.innerHTML = '<div style="color:#555;font-size:11px">No manifest</div>'; }
+    }
+
+    async function loadChoreo(id) {
+      try {
+        const res = await fetch(`/src/life/choreography/${id}.json`);
+        if (!res.ok) throw new Error(res.status);
+        const program = await res.json();
+        // Extract keyframes from the program tree
+        const frames = extractFrames(program.root);
+        if (!frames.length) { document.getElementById('critique-status').textContent = 'No pose frames found'; return; }
+        choreoFrames = frames;
+        choreoIdx = 0;
+        selectedPose = null;
+        document.querySelectorAll('.pose-item').forEach(el => el.classList.remove('selected'));
+        document.querySelectorAll(`[data-choreo="${id}"]`).forEach(el => el.classList.add('selected'));
+        document.getElementById('detail-title').textContent = id;
+        document.getElementById('detail-desc').textContent = `Choreography: ${frames.length} keyframes`;
+        document.getElementById('detail-tags').textContent = '';
+        showFrame(0);
+      } catch (e) {
+        document.getElementById('critique-status').textContent = `Load error: ${e.message}`;
+      }
+    }
+
+    function extractFrames(node) {
+      if (!node) return [];
+      if (node.op === 'pose') return [{ joints: node.joints || {}, label: `${node.ticks}t`, ticks: node.ticks }];
+      if (node.op === 'wait') return [{ joints: {}, label: `wait ${node.ticks}t`, ticks: node.ticks }];
+      if (node.op === 'sequence') return node.children.flatMap(c => extractFrames(c));
+      if (node.op === 'parallel') {
+        // Merge parallel children into combined frame
+        const merged = {};
+        let maxTicks = 1;
+        for (const c of node.children) {
+          const sub = extractFrames(c);
+          for (const f of sub) { Object.assign(merged, f.joints); maxTicks = Math.max(maxTicks, f.ticks || 1); }
+        }
+        return [{ joints: merged, label: `par ${maxTicks}t`, ticks: maxTicks }];
+      }
+      return [];
+    }
+
+    function showFrame(idx) {
+      if (!choreoFrames) return;
+      choreoIdx = Math.max(0, Math.min(idx, choreoFrames.length - 1));
+      const f = choreoFrames[choreoIdx];
+      drawPreview(f.joints);
+      document.getElementById('detail-json').textContent = JSON.stringify(f.joints, null, 2);
+      document.getElementById('frame-info').textContent = `${choreoIdx + 1}/${choreoFrames.length} (${f.label})`;
+    }
+
+    // ── Playback controls ───────────────────────────────────────────────────
+    function startPlayback() {
+      if (!choreoFrames || choreoFrames.length < 2) return;
+      playing = true;
+      document.getElementById('btn-play').textContent = '\u23F8'; // pause
+      document.getElementById('btn-play').classList.add('active');
+      tick();
+    }
+
+    function stopPlayback() {
+      playing = false;
+      if (playTimer) { clearTimeout(playTimer); playTimer = null; }
+      document.getElementById('btn-play').textContent = '\u25B6'; // play
+      document.getElementById('btn-play').classList.remove('active');
+    }
+
+    function tick() {
+      if (!playing || !choreoFrames) return;
+      const f = choreoFrames[choreoIdx];
+      const ms = (f.ticks || 3) * 100; // 10 ticks/sec
+      showFrame(choreoIdx);
+      choreoIdx++;
+      if (choreoIdx >= choreoFrames.length) {
+        if (looping) { choreoIdx = 0; } else { stopPlayback(); return; }
+      }
+      playTimer = setTimeout(tick, ms);
+    }
+
+    document.getElementById('btn-play').onclick = () => {
+      if (playing) stopPlayback(); else startPlayback();
+    };
+    document.getElementById('btn-prev').onclick = () => { stopPlayback(); showFrame(choreoIdx - 1); };
+    document.getElementById('btn-next').onclick = () => { stopPlayback(); showFrame(choreoIdx + 1); };
+    document.getElementById('btn-loop').onclick = () => {
+      looping = !looping;
+      document.getElementById('btn-loop').classList.toggle('active', looping);
+    };
+
+    // ── Drawing ─────────────────────────────────────────────────────────────
     function drawPreview(joints) {
       const canvas = document.getElementById('preview');
       const ctx = canvas.getContext('2d');
@@ -112,12 +278,194 @@
       drawPose(ctx, rig, joints, 0, 0, canvas.width, canvas.height, {});
     }
 
-    document.getElementById('filter').oninput = (e) => renderList(e.target.value);
-    document.getElementById('btn-generate').onclick = () => {
+    // ── Critique → Fix → Learn ──────────────────────────────────────────────
+    document.getElementById('btn-fix').onclick = async () => {
+      const critique = document.getElementById('critique-box').value.trim();
+      if (!critique) { document.getElementById('critique-status').textContent = 'Type a critique first'; return; }
+
+      const cfg = getLLMConfig();
+      if (!cfg?.key) { document.getElementById('critique-status').textContent = 'No LLM key. Run in console: localStorage.setItem("motion_llm", JSON.stringify({key:"sk-..."}))'; return; }
+
+      const currentJoints = selectedPose ? selectedPose.joints : (choreoFrames ? choreoFrames[choreoIdx].joints : {});
+      const poseId = selectedPose?.id || 'unknown';
+      const poseDesc = selectedPose?.desc || '';
+
+      document.getElementById('critique-status').textContent = 'Sending to LLM...';
+      document.getElementById('btn-fix').disabled = true;
+
+      // Get the stick figure as base64 for the vision model
+      const canvas = document.getElementById('preview');
+      const base64 = canvas.toDataURL('image/png').split(',')[1];
+
+      // Build rules context
+      const rulesText = rules.length ? '\n\nLEARNED RULES (follow these):\n' + rules.map((r, i) => `${i + 1}. ${r.rule}`).join('\n') : '';
+
+      const systemPrompt = `You are a pose correction expert for a 2D humanoid stick figure rig.
+
+JOINTS and their limits:
+spine: [-30, 30] (negative = lean forward), head: [-60, 60] (negative = look down),
+arm_u_l: [-170, 50] (negative = raise up), arm_f_l: [-140, 0] (negative = bend),
+hand_l: [-45, 45], arm_u_r: [-50, 170] (positive = raise up),
+arm_f_r: [0, 140] (positive = bend), hand_r: [-45, 45],
+thigh_l: [-110, 30] (negative = lift forward), shin_l: [0, 140] (positive = bend knee),
+foot_l: [-30, 30], thigh_r: [-110, 30], shin_r: [0, 140], foot_r: [-30, 30]
+
+You will see a stick figure image of the current pose and a critique from the user.
+Fix the joint angles to address the critique.
+
+Also extract a GENERAL RULE from this critique that would help avoid similar issues in future poses.
+The rule should be universal, not specific to this one pose.${rulesText}
+
+Respond in EXACTLY this JSON format:
+{"joints": {<corrected joint angles>}, "rule": "<general rule for future poses>"}
+
+No markdown, no explanation. Just the JSON.`;
+
+      const userMsg = [
+        { type: 'text', text: `Pose: "${poseId}" — "${poseDesc}"\nCurrent joints: ${JSON.stringify(currentJoints)}\n\nCritique: ${critique}\n\nFix the joints and extract a rule.` },
+        { type: 'image_url', image_url: { url: `data:image/png;base64,${base64}` } },
+      ];
+
+      try {
+        const isOpenAI = !cfg.key.startsWith('sk-ant-');
+        const url = cfg.url || (isOpenAI ? 'https://api.openai.com/v1/chat/completions' : 'https://api.anthropic.com/v1/messages');
+        const model = cfg.model || (isOpenAI ? 'gpt-4o-mini' : 'claude-haiku-4-5-20251001');
+
+        const headers = isOpenAI
+          ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.key}` }
+          : { 'Content-Type': 'application/json', 'x-api-key': cfg.key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' };
+
+        const body = isOpenAI
+          ? { model, max_tokens: 500, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userMsg }] }
+          : { model, max_tokens: 500, system: systemPrompt, messages: [{ role: 'user', content: userMsg.map(p => p.type === 'image_url' ? { type: 'image', source: { type: 'base64', media_type: 'image/png', data: base64 } } : p) }] };
+
+        const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+        if (!res.ok) throw new Error(`API ${res.status}: ${(await res.text()).slice(0, 200)}`);
+        const data = await res.json();
+        const text = isOpenAI ? (data.choices?.[0]?.message?.content || '') : (data.content?.[0]?.text || '');
+        const jsonStr = text.replace(/^```json?\s*/m, '').replace(/\s*```$/m, '').trim();
+        const result = JSON.parse(jsonStr);
+
+        // Show the fix
+        pendingFix = { originalJoints: { ...currentJoints }, newJoints: result.joints, critique, rule: result.rule };
+        drawPreview(result.newJoints);
+        document.getElementById('detail-json').textContent = JSON.stringify(result.newJoints, null, 2);
+        document.getElementById('critique-status').textContent = `Rule: "${result.rule}"`;
+        document.getElementById('btn-approve').style.display = 'block';
+      } catch (e) {
+        document.getElementById('critique-status').textContent = `Error: ${e.message}`;
+      }
+      document.getElementById('btn-fix').disabled = false;
+    };
+
+    // ── Approve: save fix + learn rule ──────────────────────────────────────
+    document.getElementById('btn-approve').onclick = () => {
+      if (!pendingFix) return;
+
+      // Update the pose in memory
+      if (selectedPose) {
+        selectedPose.joints = pendingFix.newJoints;
+        selectedPose.verified = true;
+      }
+
+      // Save the rule
+      rules.push({
+        rule: pendingFix.rule,
+        source: `critique of ${selectedPose?.id || 'unknown'}: "${pendingFix.critique}"`,
+        date: new Date().toISOString().slice(0, 10),
+      });
+      saveRules();
+
+      // Update UI
+      document.getElementById('btn-approve').style.display = 'none';
+      document.getElementById('critique-status').textContent = `Saved! Rule #${rules.length} learned.`;
+      document.getElementById('critique-box').value = '';
+      renderList(document.getElementById('filter').value);
+      pendingFix = null;
+
+      // Note: poses.json on disk isn't updated (browser can't write files).
+      // The user can export via console: copy(JSON.stringify(poses, null, 2))
+      // Or the verify-poses.js Node script handles disk writes.
+      console.log('[QA] Updated poses in memory. To persist, run in console: copy(JSON.stringify(poses, null, 2))');
+      console.log('[QA] Then paste into src/life/choreography/poses.json');
+    };
+
+    // ── Generate command ────────────────────────────────────────────────────
+    document.getElementById('btn-generate').onclick = async () => {
       const cmd = document.getElementById('command').value.trim();
       if (!cmd) return;
-      document.getElementById('status').textContent = 'Run: MOTION_LLM_KEY=... node src/life/eval/generate-motion.js "' + cmd + '"';
+      const cfg = getLLMConfig();
+      if (!cfg?.key) { document.getElementById('status').textContent = 'No LLM key configured'; return; }
+
+      document.getElementById('status').textContent = `Generating "${cmd}"...`;
+
+      // Build pose summary for composition
+      const poseSummary = poses.map(p => `  ${p.id} -- ${p.desc}`).join('\n');
+      const rulesText = rules.length ? '\n\nRULES TO FOLLOW:\n' + rules.map((r, i) => `${i + 1}. ${r.rule}`).join('\n') : '';
+
+      const systemPrompt = `You compose motion choreographies by picking from verified poses and specifying timing.
+
+AVAILABLE POSES:
+${poseSummary}
+
+RULES:
+1. Output JSON: {"id":"<id>","kind":"gesture","steps":[{"pose":"<pose_id>","ticks":<N>},...]}
+2. Reference poses by exact id from the list
+3. Start and end with "rest"
+4. Use 2-6 ticks per step (10 ticks = 1 second)
+5. Think about the full motion arc${rulesText}
+
+Respond with ONLY the JSON.`;
+
+      const id = cmd.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 40);
+
+      try {
+        const isOpenAI = !cfg.key.startsWith('sk-ant-');
+        const url = cfg.url || (isOpenAI ? 'https://api.openai.com/v1/chat/completions' : 'https://api.anthropic.com/v1/messages');
+        const model = cfg.model || (isOpenAI ? 'gpt-4o-mini' : 'claude-haiku-4-5-20251001');
+        const headers = isOpenAI
+          ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.key}` }
+          : { 'Content-Type': 'application/json', 'x-api-key': cfg.key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' };
+        const body = isOpenAI
+          ? { model, max_tokens: 1024, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: `Choreograph: "${cmd}", id="${id}"` }] }
+          : { model, max_tokens: 1024, system: systemPrompt, messages: [{ role: 'user', content: `Choreograph: "${cmd}", id="${id}"` }] };
+
+        const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+        if (!res.ok) throw new Error(`API ${res.status}`);
+        const data = await res.json();
+        const text = isOpenAI ? (data.choices?.[0]?.message?.content || '') : (data.content?.[0]?.text || '');
+        const plan = JSON.parse(text.replace(/^```json?\s*/m, '').replace(/\s*```$/m, '').trim());
+
+        // Compile plan to frames
+        const poseMap = new Map(poses.map(p => [p.id, p]));
+        const frames = plan.steps.map(s => {
+          const p = poseMap.get(s.pose);
+          return { joints: p ? { ...p.joints } : {}, label: s.pose, ticks: s.ticks };
+        });
+
+        choreoFrames = frames;
+        choreoIdx = 0;
+        selectedPose = null;
+        document.getElementById('detail-title').textContent = plan.id;
+        document.getElementById('detail-desc').textContent = `Generated: ${frames.length} keyframes`;
+        document.getElementById('detail-tags').textContent = plan.steps.map(s => s.pose).join(' -> ');
+        showFrame(0);
+        document.getElementById('status').textContent = `Generated "${cmd}" (${frames.length} frames)`;
+      } catch (e) {
+        document.getElementById('status').textContent = `Error: ${e.message}`;
+      }
     };
+
+    // ── Filter ──────────────────────────────────────────────────────────────
+    document.getElementById('filter').oninput = (e) => renderList(e.target.value);
+
+    // ── Keyboard shortcuts ──────────────────────────────────────────────────
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.key === 'ArrowLeft') { stopPlayback(); showFrame(choreoIdx - 1); }
+      if (e.key === 'ArrowRight') { stopPlayback(); showFrame(choreoIdx + 1); }
+      if (e.key === ' ') { e.preventDefault(); if (playing) stopPlayback(); else startPlayback(); }
+    });
 
     init();
   </script>
