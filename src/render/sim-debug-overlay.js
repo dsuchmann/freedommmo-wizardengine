@@ -257,14 +257,11 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
         ctx.fillText(dist.kind, dx2, dy2);
       }
     } else {
-      // Fallback: just draw the rect territory (ruins, or layout failed)
-      const r = rectPx(s.territory);
-      if (!rectOnScreen(r)) continue;
-      ctx.setLineDash(isRuin ? [3, 6] : [6, 4]);
-      ctx.strokeStyle = isRuin ? 'rgba(140,90,70,0.6)' : rc.stroke + '0.85)';
-      ctx.lineWidth = isRuin ? 1 : 2;
-      ctx.strokeRect(r[0] + 0.5, r[1] + 0.5, r[2] - 1, r[3] - 1);
-      ctx.setLineDash([]);
+      // Fallback: marker dot for ruins or layout-failed settlements
+      ctx.fillStyle = isRuin ? 'rgba(140,90,70,0.5)' : rc.fill + '0.5)';
+      ctx.beginPath();
+      ctx.arc(csx, csy, Math.max(6, tilePx * 0.5), 0, Math.PI * 2);
+      ctx.fill();
     }
 
     // ── Settlement label (rich info) ────────────────────────────────
