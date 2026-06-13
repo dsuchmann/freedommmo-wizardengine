@@ -565,7 +565,7 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
       }
     }
     lines.push({ text: ``, color: '#666' });
-    lines.push({ text: `[click elsewhere to close · click settlement label for overview]`, color: '#666' });
+    lines.push({ text: `[click elsewhere to close · press C to copy]`, color: '#666' });
 
     const panelH = (lines.length + 1) * LINE_H + 10;
     const panelY = Math.max(8, h / 2 - panelH / 2);
@@ -688,10 +688,46 @@ function findSettlementOfTier(targetTier, camX, camY, tilePx) {
 
 export function initSimDebugOverlay() {
   window.addEventListener('keydown', (e) => {
-    if (e.key !== '9' || e.ctrlKey || e.altKey || e.metaKey) return;
     if (e.target instanceof Element && e.target.closest('input,textarea,select,[contenteditable]')) return;
-    enabled = !enabled;
-    if (!enabled) inspectResult = null;
+    if (e.key === '9' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      enabled = !enabled;
+      if (!enabled) { inspectResult = null; selectedBuilding = null; selectedSettlement = null; }
+    }
+    // C key: copy selected building metadata to clipboard
+    if (e.key === 'c' && !e.ctrlKey && enabled && selectedBuilding) {
+      const b = selectedBuilding;
+      const s = selectedSettlement;
+      const fp = b.footprint;
+      const int = fp.interior;
+      const lines = [
+        `=== ${b.brand?.name ?? fp.typeName} ===`,
+        `type: ${fp.typeId} (${fp.typeName})`,
+        `category: ${fp.category}`,
+        `position: ${b.x}, ${b.y}`,
+        `size: ${fp.boundingBox.w}x${fp.boundingBox.h} tiles`,
+        `pattern: ${fp.pattern} (${fp.sections.length} sections)`,
+        `district: ${b.district}`,
+        `specialization: ${b.specialization?.name ?? 'none'}${b.specialization?.desc ? ' — ' + b.specialization.desc : ''}`,
+        `owner: ${b.owner ?? 'none'}`,
+        `brand: ${b.brand?.name ?? 'none'}`,
+        s ? `settlement: ${s.name} (${s.tier} · ${s.race} · ${s.biome})` : '',
+        s ? `chronicle age: ${s.chronicleAge} ages` : '',
+        ``,
+        `=== INTERIOR ===`,
+        `floor: ${int?.floor?.name ?? '?'}`,
+        `condition: ${int?.condition?.name ?? '?'} (${int?.condition?.desc ?? ''})`,
+        `walls: ${int?.walls?.map(w => w.name).join(', ') ?? 'none'}`,
+        `structure: ${int?.structure?.map(s2 => s2.name + (s2.direction ? ' (' + s2.direction + ')' : '')).join(', ') ?? 'none'}`,
+        `furniture: ${int?.furniture?.map(f => f.name).join(', ') ?? 'none'}`,
+        `objects: ${int?.objects?.map(o => o.name).join(', ') ?? 'none'}`,
+        `decorative: ${int?.decorative?.map(d => d.name + ' (' + d.placement + ')').join(', ') ?? 'none'}`,
+        ``,
+        `=== INVENTORY ===`,
+        `base: ${b.inventory?.base?.join(', ') ?? 'none'}`,
+        `specialty: ${b.inventory?.specialty?.join(', ') ?? 'none'}`,
+      ].filter(l => l !== '').join('\n');
+      navigator.clipboard.writeText(lines).catch(() => {});
+    }
   });
   window.addEventListener('mousemove', (e) => {
     if (!enabled) return;
