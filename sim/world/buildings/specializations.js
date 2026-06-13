@@ -334,27 +334,72 @@ export const BRAND_PARTS = {
 // ── Settlement composition by tier ──────────────────────────────────────
 
 const COMPOSITION = {
-  village: {
+  homestead: {
+    residential: 2, craft: 1, commercial: 0, agricultural: 1,
+    religious: 0, civic: 0, military: 0, entertainment: 0,
+    infrastructure: 0,
+  },
+  hamlet: {
     residential: 4, craft: 2, commercial: 1, agricultural: 1,
+    religious: 1, civic: 0, military: 0, entertainment: 0,
+    infrastructure: 0,
+  },
+  village: {
+    residential: 6, craft: 3, commercial: 2, agricultural: 2,
     religious: 1, civic: 0, military: 0, entertainment: 0,
     infrastructure: 1,
   },
-  town: {
+  township: {
     residential: 10, craft: 5, commercial: 4, agricultural: 3,
-    religious: 2, civic: 2, military: 2, entertainment: 1,
+    religious: 2, civic: 1, military: 0, entertainment: 0,
+    infrastructure: 2,
+  },
+  town: {
+    residential: 14, craft: 7, commercial: 6, agricultural: 4,
+    religious: 3, civic: 3, military: 2, entertainment: 1,
     infrastructure: 3,
+  },
+  borough: {
+    residential: 22, craft: 10, commercial: 8, agricultural: 5,
+    religious: 4, civic: 4, military: 3, entertainment: 3,
+    infrastructure: 5,
   },
   city: {
     residential: 30, craft: 15, commercial: 12, agricultural: 8,
     religious: 6, civic: 5, military: 6, entertainment: 5,
     infrastructure: 8,
   },
+  great_city: {
+    residential: 50, craft: 22, commercial: 18, agricultural: 12,
+    religious: 10, civic: 8, military: 10, entertainment: 8,
+    infrastructure: 12,
+  },
+  capital: {
+    residential: 75, craft: 30, commercial: 25, agricultural: 15,
+    religious: 14, civic: 12, military: 14, entertainment: 12,
+    infrastructure: 16,
+  },
+  metropolis: {
+    residential: 110, craft: 40, commercial: 35, agricultural: 18,
+    religious: 18, civic: 16, military: 18, entertainment: 18,
+    infrastructure: 22,
+  },
+  megacity: {
+    residential: 160, craft: 55, commercial: 50, agricultural: 22,
+    religious: 24, civic: 22, military: 24, entertainment: 25,
+    infrastructure: 28,
+  },
+  world_capital: {
+    residential: 220, craft: 75, commercial: 70, agricultural: 28,
+    religious: 30, civic: 30, military: 30, entertainment: 35,
+    infrastructure: 35,
+  },
 };
 
 /**
  * How many buildings of each category a settlement at this tier should have.
- * Village ~10, Town ~32, City ~95.
- * @param {'village'|'town'|'city'} tier
+ * Homestead ~4, Village ~15, Town ~43, City ~95, World Capital ~553.
+ * @param {string} tier  One of TIER_NAMES
  * @returns {{ [category: string]: number }}
  */
 export function compositionForTier(tier) {
@@ -436,17 +481,23 @@ export function specializeBuilding(seed, typeId, tier, communitySpecializations)
 
   const h = mix(seed, hashStr(typeId), 0xF001);
 
-  // Filter out already-used specializations (villages: strict; towns: allow 1 overlap; cities: allow freely)
+  // Filter out already-used specializations:
+  // small settlements (homestead-village): strict unique
+  // mid (township-borough): allow overlap when niches exhausted
+  // large (city+): allow multiple vendors of the same niche
+  const tierNum = { homestead: 1, hamlet: 2, village: 3, township: 4, town: 5,
+    borough: 6, city: 7, great_city: 8, capital: 9, metropolis: 10,
+    megacity: 11, world_capital: 12 }[tier] ?? 3;
   let available = specs;
-  if (tier === 'village') {
+  if (tierNum <= 3) {
     const filtered = specs.filter(s => !communitySpecializations.has(s.id));
     if (filtered.length > 0) available = filtered;
-  } else if (tier === 'town') {
+  } else if (tierNum <= 6) {
     const filtered = specs.filter(s => !communitySpecializations.has(s.id));
     if (filtered.length > 0) available = filtered;
-    // Towns allow overlap only when all niches are exhausted
+    // Mid-tier: allow overlap only when all niches are exhausted
   }
-  // Cities: no filtering, allow multiple vendors of the same niche
+  // Large settlements (city+): no filtering, allow multiple vendors
 
   // Pick deterministically
   const idx = Math.floor(rand(h, 0xF002) * available.length);

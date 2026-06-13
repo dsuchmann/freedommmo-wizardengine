@@ -20,8 +20,9 @@ import { rand, mix } from '../kernel/rng.js';
 import { REGION } from '../lod/aggregate.js';
 import { worldEpochs } from '../chronicle/epochs.js';
 import { macroCellPeoples } from '../chronicle/races.js';
-import { regionChronicle, settlementState } from '../chronicle/chronicle.js';
+import { regionChronicle, settlementState, chronicleTier } from '../chronicle/chronicle.js';
 import { classifyBiome } from '../../src/world/biomes.js';
+import { TIER_NAMES } from './buildings/layout.js';
 
 export const MACRO = 4;                      // macro-cell = 4×4 regions = 64×64 tiles
 const MACRO_TILES = MACRO * REGION;          // 64 tiles per side
@@ -29,12 +30,20 @@ const STRIDE = 8;                            // sample every 8th tile
 const GENESIS_GROUP_R = 50000;
 
 // Settlement sizes by tier (in tiles).
-// Village: ~2×2 chunks, town: ~3×3 chunks, city: ~5×5 chunks.
 const TIER_SIZE = {
-  village: { w: 64,  h: 56 },    // ~4 chunks
-  town:    { w: 96,  h: 80 },    // ~9 chunks
-  city:    { w: 160, h: 128 },   // ~20 chunks
-  ruins:   { w: 64,  h: 56 },    // was a village
+  homestead:     { w: 40,  h: 36 },    // ~1.5 chunks
+  hamlet:        { w: 52,  h: 44 },    // ~2.5 chunks
+  village:       { w: 64,  h: 56 },    // ~4 chunks
+  township:      { w: 80,  h: 68 },    // ~6 chunks
+  town:          { w: 100, h: 84 },    // ~9 chunks
+  borough:       { w: 128, h: 108 },   // ~14 chunks
+  city:          { w: 160, h: 128 },   // ~20 chunks
+  great_city:    { w: 200, h: 168 },   // ~30 chunks
+  capital:       { w: 240, h: 200 },   // ~42 chunks
+  metropolis:    { w: 300, h: 250 },   // ~60 chunks
+  megacity:      { w: 360, h: 300 },   // ~80 chunks
+  world_capital: { w: 440, h: 360 },   // ~100+ chunks
+  ruins:         { w: 64,  h: 56 },    // was a village
 };
 
 /** Map a region key to the macro-cell key that contains it. */
@@ -164,10 +173,7 @@ export function ensureGenesisSettlements(kernel, regionKey, tick) {
   const foundingEv = chronicle.find(e => e.type === 'ancient_founding' || e.type === 'founding');
   const race = foundingEv?.raceId ?? peoples[0]?.raceId ?? 'human';
   const chronicleAge = chronicle.length > 0 ? Math.max(...chronicle.map(e => e.age ?? 0)) : 0;
-  const hasFlourishing = chronicle.some(e => e.type === 'flourishing');
-  const hasTrade = chronicle.some(e => e.type === 'trade_route');
-  const tier = (chronicleAge >= 4 && hasFlourishing && hasTrade) ? 'city'
-    : (chronicleAge >= 3 && hasFlourishing) ? 'town' : 'village';
+  const tier = chronicleTier(chronicle, kernel.seed, mk);
   const effectiveTier = state === 'ruined' ? 'ruins' : tier;
 
   // Find site — pure, instant (no terrain queries)

@@ -7,12 +7,36 @@ import { typesForTier, typesInCategory } from './taxonomy.js';
 import { generateFootprint } from './footprints.js';
 import { specializeBuilding } from './specializations.js';
 
+// ── Canonical 12-tier names (shared constant) ───────────────────────
+
+export const TIER_NAMES = [
+  'homestead', 'hamlet', 'village', 'township', 'town', 'borough',
+  'city', 'great_city', 'capital', 'metropolis', 'megacity', 'world_capital',
+];
+
+/** Map tier name to 1-based tier number. */
+export const TIER_INDEX = Object.fromEntries(TIER_NAMES.map((n, i) => [n, i + 1]));
+
 // ── District configurations by tier ──────────────────────────────────
 
 export const DISTRICT_CONFIGS = {
+  homestead: [
+    { kind: 'residential', weight: 1.0, anchor: 'cottage' },
+  ],
+  hamlet: [
+    { kind: 'residential', weight: 0.7, anchor: 'cottage' },
+    { kind: 'craft',       weight: 0.3, anchor: 'blacksmith' },
+  ],
   village: [
     { kind: 'residential', weight: 0.6, anchor: 'cottage' },
     { kind: 'craft',       weight: 0.4, anchor: 'blacksmith' },
+  ],
+  township: [
+    { kind: 'residential', weight: 0.35, anchor: 'house' },
+    { kind: 'craft',       weight: 0.25, anchor: 'blacksmith' },
+    { kind: 'market',      weight: 0.20, anchor: 'shop' },
+    { kind: 'religious',   weight: 0.10, anchor: 'chapel' },
+    { kind: 'agricultural', weight: 0.10, anchor: 'barn' },
   ],
   town: [
     { kind: 'residential', weight: 0.30, anchor: 'house' },
@@ -20,6 +44,15 @@ export const DISTRICT_CONFIGS = {
     { kind: 'craft',       weight: 0.20, anchor: 'blacksmith' },
     { kind: 'civic',       weight: 0.15, anchor: 'town_hall' },
     { kind: 'religious',   weight: 0.15, anchor: 'chapel' },
+  ],
+  borough: [
+    { kind: 'residential',   weight: 0.25, anchor: 'house' },
+    { kind: 'market',        weight: 0.18, anchor: 'bazaar' },
+    { kind: 'craft',         weight: 0.17, anchor: 'blacksmith' },
+    { kind: 'civic',         weight: 0.12, anchor: 'town_hall' },
+    { kind: 'religious',     weight: 0.10, anchor: 'chapel' },
+    { kind: 'military',      weight: 0.10, anchor: 'barracks' },
+    { kind: 'entertainment', weight: 0.08, anchor: 'garden' },
   ],
   city: [
     { kind: 'residential',   weight: 0.20, anchor: 'house' },
@@ -31,10 +64,64 @@ export const DISTRICT_CONFIGS = {
     { kind: 'agricultural',  weight: 0.10, anchor: 'barn' },
     { kind: 'entertainment', weight: 0.10, anchor: 'garden' },
   ],
+  great_city: [
+    { kind: 'residential',   weight: 0.20, anchor: 'manor' },
+    { kind: 'market',        weight: 0.15, anchor: 'bazaar' },
+    { kind: 'craft',         weight: 0.13, anchor: 'blacksmith' },
+    { kind: 'civic',         weight: 0.12, anchor: 'town_hall' },
+    { kind: 'religious',     weight: 0.10, anchor: 'temple' },
+    { kind: 'military',      weight: 0.10, anchor: 'barracks' },
+    { kind: 'agricultural',  weight: 0.08, anchor: 'barn' },
+    { kind: 'entertainment', weight: 0.12, anchor: 'theater' },
+  ],
+  capital: [
+    { kind: 'residential',   weight: 0.18, anchor: 'manor' },
+    { kind: 'market',        weight: 0.15, anchor: 'bazaar' },
+    { kind: 'craft',         weight: 0.12, anchor: 'blacksmith' },
+    { kind: 'civic',         weight: 0.13, anchor: 'town_hall' },
+    { kind: 'religious',     weight: 0.12, anchor: 'temple' },
+    { kind: 'military',      weight: 0.10, anchor: 'barracks' },
+    { kind: 'agricultural',  weight: 0.08, anchor: 'barn' },
+    { kind: 'entertainment', weight: 0.12, anchor: 'theater' },
+  ],
+  metropolis: [
+    { kind: 'residential',   weight: 0.20, anchor: 'apartment' },
+    { kind: 'market',        weight: 0.15, anchor: 'bazaar' },
+    { kind: 'craft',         weight: 0.12, anchor: 'blacksmith' },
+    { kind: 'civic',         weight: 0.12, anchor: 'town_hall' },
+    { kind: 'religious',     weight: 0.10, anchor: 'temple' },
+    { kind: 'military',      weight: 0.10, anchor: 'barracks' },
+    { kind: 'agricultural',  weight: 0.08, anchor: 'barn' },
+    { kind: 'entertainment', weight: 0.13, anchor: 'arena' },
+  ],
+  megacity: [
+    { kind: 'residential',   weight: 0.22, anchor: 'apartment' },
+    { kind: 'market',        weight: 0.14, anchor: 'bazaar' },
+    { kind: 'craft',         weight: 0.11, anchor: 'blacksmith' },
+    { kind: 'civic',         weight: 0.12, anchor: 'town_hall' },
+    { kind: 'religious',     weight: 0.10, anchor: 'monastery' },
+    { kind: 'military',      weight: 0.10, anchor: 'barracks' },
+    { kind: 'agricultural',  weight: 0.08, anchor: 'barn' },
+    { kind: 'entertainment', weight: 0.13, anchor: 'arena' },
+  ],
+  world_capital: [
+    { kind: 'residential',   weight: 0.22, anchor: 'villa' },
+    { kind: 'market',        weight: 0.14, anchor: 'bazaar' },
+    { kind: 'craft',         weight: 0.10, anchor: 'blacksmith' },
+    { kind: 'civic',         weight: 0.13, anchor: 'courthouse' },
+    { kind: 'religious',     weight: 0.10, anchor: 'monastery' },
+    { kind: 'military',      weight: 0.10, anchor: 'barracks' },
+    { kind: 'agricultural',  weight: 0.07, anchor: 'barn' },
+    { kind: 'entertainment', weight: 0.14, anchor: 'arena' },
+  ],
 };
 
 // Settlement radius by tier (in tiles from center).
-const TIER_RADIUS = { village: 24, town: 40, city: 64 };
+const TIER_RADIUS = {
+  homestead: 15, hamlet: 20, village: 30, township: 40,
+  town: 50, borough: 65, city: 80, great_city: 100,
+  capital: 120, metropolis: 150, megacity: 180, world_capital: 220,
+};
 
 // ── District assignment ──────────────────────────────────────────────
 
@@ -45,7 +132,7 @@ const TIER_RADIUS = { village: 24, town: 40, city: 64 };
  *
  * @param {number} seed
  * @param {{x:number, y:number}} site  Settlement center
- * @param {string} tier  'village' | 'town' | 'city'
+ * @param {string} tier  One of TIER_NAMES
  * @param {string} race
  * @param {string} biome
  * @returns {Array<{kind, angleStart, angleEnd, radius, innerRadius, anchor}>}
@@ -164,10 +251,25 @@ export function generateRoadSpines(seed, site, districts) {
 
 // How many buildings a district gets, by tier.
 const BUDGET = {
-  village: { residential: 6,  craft: 3 },
-  town:    { residential: 12, market: 6, craft: 6, civic: 3, religious: 3 },
-  city:    { residential: 20, market: 10, craft: 10, civic: 5, religious: 5,
-             military: 4, agricultural: 4, entertainment: 3 },
+  homestead:     { residential: 3 },
+  hamlet:        { residential: 5,  craft: 2 },
+  village:       { residential: 6,  craft: 3 },
+  township:      { residential: 10, craft: 5,  market: 4,  religious: 2, agricultural: 2 },
+  town:          { residential: 12, market: 6,  craft: 6,  civic: 3,  religious: 3 },
+  borough:       { residential: 18, market: 8,  craft: 8,  civic: 4,  religious: 4,
+                   military: 3, entertainment: 3 },
+  city:          { residential: 25, market: 12, craft: 12, civic: 6,  religious: 6,
+                   military: 5, agricultural: 5, entertainment: 4 },
+  great_city:    { residential: 40, market: 18, craft: 18, civic: 10, religious: 8,
+                   military: 8, agricultural: 8, entertainment: 8 },
+  capital:       { residential: 60, market: 25, craft: 25, civic: 15, religious: 12,
+                   military: 12, agricultural: 10, entertainment: 12 },
+  metropolis:    { residential: 90, market: 35, craft: 35, civic: 20, religious: 16,
+                   military: 16, agricultural: 14, entertainment: 18 },
+  megacity:      { residential: 140, market: 50, craft: 50, civic: 30, religious: 22,
+                   military: 22, agricultural: 18, entertainment: 25 },
+  world_capital: { residential: 200, market: 70, craft: 70, civic: 40, religious: 30,
+                   military: 30, agricultural: 25, entertainment: 35 },
 };
 
 // Category mapping: which taxonomy categories fill each district kind.
@@ -354,7 +456,7 @@ const _layoutCache = new Map();  // "seed,mx,my" -> layout
  *
  * @param {number} seed
  * @param {{x,y}} site
- * @param {string} tier  'village' | 'town' | 'city'
+ * @param {string} tier  One of TIER_NAMES
  * @param {string} race
  * @param {string} biome
  * @returns {{districts, buildings, spines, site, tier, race, queryTile(x,y)}}

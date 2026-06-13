@@ -207,11 +207,20 @@ export function typeById(id) {
   return BUILDING_TYPES[id] ?? null;
 }
 
-/** All types available at a given tier (village ⊂ town ⊂ city). */
+/** All types available at a given tier (village ⊂ town ⊂ city).
+ *  The 12 settlement tiers map to one of the 3 taxonomy gates:
+ *    homestead/hamlet/village/township -> 'village' gate
+ *    town/borough                     -> 'town' gate
+ *    city and above                   -> 'city' gate */
 export function typesForTier(tier) {
-  const allowed = tier === 'city' ? ['village', 'town', 'city']
-                : tier === 'town' ? ['village', 'town']
-                : ['village'];
+  const GATE = {
+    homestead: ['village'], hamlet: ['village'], village: ['village'], township: ['village', 'town'],
+    town: ['village', 'town'], borough: ['village', 'town'],
+    city: ['village', 'town', 'city'], great_city: ['village', 'town', 'city'],
+    capital: ['village', 'town', 'city'], metropolis: ['village', 'town', 'city'],
+    megacity: ['village', 'town', 'city'], world_capital: ['village', 'town', 'city'],
+  };
+  const allowed = GATE[tier] ?? ['village'];
   const out = [];
   for (const [id, type] of Object.entries(BUILDING_TYPES)) {
     if (allowed.includes(type.tier)) out.push({ id, ...type });
