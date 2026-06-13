@@ -5,7 +5,9 @@
 // of the main panel showing that object's state-weight rows and variant rows.
 // Size + density combine multiplicatively (see src/world/field-tuning.js).
 // Edits persist in localStorage ('fieldTuning'); "copy JSON" exports the tree
-// for baking into source defaults, after which localStorage should be cleared.
+// for baking into src/world/field-tuning-defaults.js (see re-bake instructions there).
+// After baking, clear stale localStorage (DevTools → Application → Clear Site Data).
+// "Reset all" returns to BAKED defaults (field-tuning-defaults.js), not empty tree.
 import { setFieldTuning } from '../world/field-tuning.js';
 import { clearClaimCaches } from '../world/decoration-claims.js';
 import { clearF2TileDescriptors } from '../render/field2-animator.js';

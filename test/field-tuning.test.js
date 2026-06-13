@@ -45,8 +45,14 @@ test('density: biome part and object part are separate', () => {
 test('setFieldTuning replaces tree and live-binding updates', () => {
   setFieldTuning({ f4: { size: 5 } });
   assert.equal(FIELD_TUNING.f4.size, 5);
+  // null resets to baked defaults (not empty objects): f3 is empty, f5 has baked entries
   setFieldTuning(null);
-  assert.deepEqual(FIELD_TUNING, { f2: {}, f3: {}, f4: {}, f5: {} });
+  assert.deepEqual(FIELD_TUNING.f3, {});  // f3 calibration was entirely empty objects — pruned
+  // f5 has baked grassland densities; spot-check hay_bale size = 0.35
+  assert.equal(FIELD_TUNING.f5.biomes.grassland.objects.hay_bale.size, 0.35);
+  // live override with size:5 merged over defaults; spot-check sibling biome not affected
+  setFieldTuning({ f4: { size: 5 } });
+  assert.equal(FIELD_TUNING.f4.size, 5);
 });
 
 test('anim categories default enabled, disable per object x category', () => {
@@ -112,13 +118,23 @@ test('per-field state defaults match the historical hardcoded splits', () => {
 test('setFieldTuning normalizes f5', () => {
   setFieldTuning({ f5: { size: 2 } });
   assert.equal(FIELD_TUNING.f5.size, 2);
+  // null resets to baked defaults — f5 now has calibrated biome entries
   setFieldTuning(null);
-  assert.deepEqual(FIELD_TUNING, { f2: {}, f3: {}, f4: {}, f5: {} });
+  // baked f5 grassland hay_bale size = 0.35 (from 2026-06-12 calibration)
+  assert.equal(FIELD_TUNING.f5.biomes.grassland.objects.hay_bale.size, 0.35);
+  // f3 has no calibrated values, remains empty
+  assert.deepEqual(FIELD_TUNING.f3, {});
 });
 
-test('maxSizeMul: empty tree -> 1', () => {
+test('maxSizeMul: baked defaults give worst-case from calibration', () => {
   setFieldTuning(null);
-  assert.equal(maxSizeMul('f5'), 1);
+  // Baked f5 defaults include arctic/frozen_ruin size=1.75 (largest in calibration).
+  // No master size node, so maxSizeMul = 1.75.
+  assert.equal(maxSizeMul('f5'), 1.75);
+  // f2/f3/f4 have no size multipliers > 1 in calibration defaults
+  assert.equal(maxSizeMul('f2'), 1);
+  assert.equal(maxSizeMul('f3'), 1);
+  assert.equal(maxSizeMul('f4'), 1);
 });
 
 test('maxSizeMul: multiplies worst-case master/biome/object/variant', () => {
@@ -128,7 +144,28 @@ test('maxSizeMul: multiplies worst-case master/biome/object/variant', () => {
     } },
     desert: { size: 1.25 }
   } } });
-  // 2 (master) * 2 (worst biome) * 2 (sizeMax) * 1.5 (variant) = 12
+  // live: 2 (master) * 2 (worst biome) * 2 (sizeMax) * 1.5 (variant) = 12
+  // baked arctic/frozen_ruin size=1.75 merges under these — grassland live wins
   assert.equal(maxSizeMul('f5'), 12);
+  setFieldTuning(null);
+});
+
+test('fresh state (setFieldTuning null): f5 grassland hay_bale size and anim from baked defaults', () => {
+  setFieldTuning(null);
+  // Calibration: f5.biomes.grassland.objects.hay_bale = { size: 0.35, density: 0.55, anims: { wind_sway: false } }
+  // hay_bale has no biome-level size node, only object-level size 0.35
+  // tuneSize: master(1) * biome(1, no biome size) * object(0.35) = 0.35
+  assert.equal(tuneSize('f5', 'grassland', 'hay_bale', 0, 0, 0, 9999), 0.35);
+  // wind_sway is baked false for f5 grassland hay_bale (F5 no-wind-anims policy)
+  assert.equal(tuneAnimEnabled('f5', 'grassland', 'hay_bale', 'wind_sway'), false);
+});
+
+test('live override wins over baked defaults, sibling keys from defaults are preserved', () => {
+  // Live sets hay_bale size to 1; defaults have density 0.55
+  setFieldTuning({ f5: { biomes: { grassland: { objects: { hay_bale: { size: 1 } } } } } });
+  // live size wins
+  assert.equal(tuneSize('f5', 'grassland', 'hay_bale', 0, 0, 0, 9999), 1);
+  // default density still applies (sibling key preserved via merge)
+  assert.equal(tuneObjDensity('f5', 'grassland', 'hay_bale'), 0.55);
   setFieldTuning(null);
 });

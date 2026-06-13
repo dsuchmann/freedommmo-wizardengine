@@ -12,13 +12,38 @@
 //       variants: { 3: { size|sizeMin+sizeMax } } } } } } }, f3: {...}, f4: {...} }
 // Density stops at object level (variants keep their catalog weights).
 import { rand2 } from '../core/random.js';
+import { DEFAULT_FIELD_TUNING } from './field-tuning-defaults.js';
 
-export var FIELD_TUNING = { f2: {}, f3: {}, f4: {}, f5: {} };
+// Deep-merge two plain-object nodes: default values are overridden key-by-key
+// by the live tree. Non-object (scalar) values from live always win outright.
+function mergeNode(def, live) {
+  if (!def) return live; if (!live) return def;
+  var out = {}, k;
+  for (k in def) out[k] = def[k];
+  for (k in live) {
+    out[k] = (live[k] && typeof live[k] === 'object' && def[k] && typeof def[k] === 'object')
+      ? mergeNode(def[k], live[k]) : live[k];
+  }
+  return out;
+}
+
+// Module-init: start with baked defaults so workers that import this module
+// before any setFieldTuning call already see the calibrated values.
+export var FIELD_TUNING = {
+  f2: mergeNode(DEFAULT_FIELD_TUNING.f2, {}),
+  f3: mergeNode(DEFAULT_FIELD_TUNING.f3, {}),
+  f4: mergeNode(DEFAULT_FIELD_TUNING.f4, {}),
+  f5: mergeNode(DEFAULT_FIELD_TUNING.f5, {})
+};
 
 export function setFieldTuning(tree) {
-  FIELD_TUNING = tree && typeof tree === 'object'
-    ? { f2: tree.f2 || {}, f3: tree.f3 || {}, f4: tree.f4 || {}, f5: tree.f5 || {} }
-    : { f2: {}, f3: {}, f4: {}, f5: {} };
+  var t = (tree && typeof tree === 'object') ? tree : {};
+  FIELD_TUNING = {
+    f2: mergeNode(DEFAULT_FIELD_TUNING.f2, t.f2 || {}),
+    f3: mergeNode(DEFAULT_FIELD_TUNING.f3, t.f3 || {}),
+    f4: mergeNode(DEFAULT_FIELD_TUNING.f4, t.f4 || {}),
+    f5: mergeNode(DEFAULT_FIELD_TUNING.f5, t.f5 || {})
+  };
 }
 
 // One node's size contribution. Range nodes roll deterministically from the
