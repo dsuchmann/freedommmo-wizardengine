@@ -310,35 +310,17 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
         const bw = Math.ceil(bb.w * tilePx), bh = Math.ceil(bb.h * tilePx);
         if (bsx > w || bsy > h || bsx + bw < 0 || bsy + bh < 0) continue;
 
-        // Fill: use floor tile image if available, otherwise solid color
-        const floorMat = fp.interior?.floor?.material;
-        const floorImg = floorMat ? FLOOR_TILES[floorMat] : null;
-        if (floorImg) {
-          // Tile the floor image across the building footprint
-          const t = Math.ceil(tilePx);
-          ctx.save();
-          ctx.imageSmoothingEnabled = false;
-          for (let fy = 0; fy < bb.h; fy++) {
-            for (let fx = 0; fx < bb.w; fx++) {
-              ctx.drawImage(floorImg, bsx + fx * t, bsy + fy * t, t, t);
-            }
-          }
-          ctx.restore();
-        } else {
+        // Fill + outline per section (matches actual footprint shape, not bounding box)
+        const t = Math.ceil(tilePx);
+        for (const sec of fp.sections) {
+          const ssx = Math.floor((b.x + sec.x0) * tilePx - camX);
+          const ssy = Math.floor((b.y + sec.y0) * tilePx - camY);
+          const sw = Math.ceil(sec.w * tilePx), sh = Math.ceil(sec.h * tilePx);
           ctx.fillStyle = BUILDING_COLORS.floor;
-          ctx.fillRect(bsx, bsy, bw, bh);
-        }
-        // Outline (walls)
-        ctx.strokeStyle = BUILDING_COLORS.wall;
-        ctx.lineWidth = Math.max(1, tilePx * 0.1);
-        ctx.strokeRect(bsx + 0.5, bsy + 0.5, bw - 1, bh - 1);
-        // Non-rect sections: draw additional section outlines for L/T/compound shapes
-        if (fp.sections.length > 1) {
-          for (const sec of fp.sections) {
-            const ssx = Math.floor((b.x + sec.x0) * tilePx - camX);
-            const ssy = Math.floor((b.y + sec.y0) * tilePx - camY);
-            ctx.strokeRect(ssx + 0.5, ssy + 0.5, Math.ceil(sec.w * tilePx) - 1, Math.ceil(sec.h * tilePx) - 1);
-          }
+          ctx.fillRect(ssx, ssy, sw, sh);
+          ctx.strokeStyle = BUILDING_COLORS.wall;
+          ctx.lineWidth = Math.max(1, tilePx * 0.1);
+          ctx.strokeRect(ssx + 0.5, ssy + 0.5, sw - 1, sh - 1);
         }
         // Doors: small colored marks
         for (const d2 of fp.doors) {
