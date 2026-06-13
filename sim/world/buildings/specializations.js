@@ -331,6 +331,24 @@ export const BRAND_PARTS = {
   ],
 };
 
+// ── Settlement name generation ──────────────────────────────────────────
+
+const PLACE_SUFFIXES = [
+  'haven', 'hold', 'stead', 'ford', 'gate', 'bridge', 'field', 'dale',
+  'vale', 'glen', 'crest', 'ridge', 'brook', 'spring', 'well', 'tower',
+  'keep', 'watch', 'harbor', 'port', 'bury', 'worth', 'ton', 'wick',
+  'ham', 'minster', 'mouth', 'fell', 'moor', 'march', 'crossing',
+];
+
+/** Generate a deterministic settlement name. Pure f(seed, x, y). */
+export function generateSettlementName(seed, x, y) {
+  const h = mix(seed, x * 9001, y * 7013, 0xCC01);
+  const prefixes = BRAND_PARTS.prefixes;
+  const pi = Math.floor(rand(h, 0xCC02) * prefixes.length);
+  const si = Math.floor(rand(h, 0xCC03) * PLACE_SUFFIXES.length);
+  return prefixes[pi] + PLACE_SUFFIXES[si];
+}
+
 // ── Settlement composition by tier ──────────────────────────────────────
 
 const COMPOSITION = {

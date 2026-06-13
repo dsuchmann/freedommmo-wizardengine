@@ -4,6 +4,7 @@
 
 import { layoutSettlement, TIER_NAMES } from '../../sim/world/buildings/layout.js';
 import { computeTerritory } from '../../sim/world/territory.js';
+import { generateSettlementName } from '../../sim/world/buildings/specializations.js';
 import { MACRO } from '../../sim/world/genesis.js';
 import { REGION } from '../../sim/lod/aggregate.js';
 import { worldEpochs } from '../../sim/chronicle/epochs.js';
@@ -11,6 +12,8 @@ import { macroCellPeoples } from '../../sim/chronicle/races.js';
 import { regionChronicle, settlementState, chronicleTier } from '../../sim/chronicle/chronicle.js';
 import { classifyBiome } from '../world/biomes.js';
 import { rand } from '../../sim/kernel/rng.js';
+
+const MAX_OVERLAY_BUILDINGS = 80; // cap layout generation for performance
 
 const EVENT_CAP = 50;
 const MACRO_TILES = MACRO * REGION;
@@ -51,7 +54,8 @@ function discoverSettlements(camX, camY, w, h, tilePx) {
       const tier = state === 'ruined' ? 'ruins'
         : chronicleTier(chronicle, WORLD_SEED, mk);
 
-      settlements.push({ x, y, tier, race, state, chronicleAge, biome: biome.id });
+      const name = generateSettlementName(WORLD_SEED, x, y);
+      settlements.push({ x, y, tier, race, state, chronicleAge, biome: biome.id, name });
     }
   }
   return settlements;
@@ -191,9 +195,15 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
     if (!onScreen(csx, csy)) continue;
 
     // Compute layout client-side (pure, same as sim)
+    // Cap at MAX_OVERLAY_BUILDINGS to prevent freeze on metropolis+
     let layout = null;
     try {
-      if (!isRuin) layout = layoutSettlement(42, { x: s.x, y: s.y }, s.tier || 'village', s.race || 'human', 'grassland');
+      const overlayTier = s.tier || 'village';
+      if (!isRuin) layout = layoutSettlement(42, { x: s.x, y: s.y }, overlayTier, s.race || 'human', s.biome || 'grassland');
+      // Cap buildings for rendering performance
+      if (layout && layout.buildings.length > MAX_OVERLAY_BUILDINGS) {
+        layout = { ...layout, buildings: layout.buildings.slice(0, MAX_OVERLAY_BUILDINGS) };
+      }
     } catch { /* layout stays null — honest absence */ }
 
     if (layout) {
@@ -275,13 +285,13 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
     const labelX = csx, labelY = csy - 20;
     ctx.textAlign = 'center';
 
-    // Background pill
-    const tierName = isRuin ? 'RUINS' : (s.tier ?? 'village').toUpperCase();
+    // Background pill — settlement name + tier + race
+    const settlementName = s.name ?? 'Unknown';
+    const tierName = isRuin ? 'ruins' : (s.tier ?? 'village');
     const raceName = s.race ? s.race.charAt(0).toUpperCase() + s.race.slice(1) : '';
-    const ageStr = s.chronicleAge ? `${s.chronicleAge} ages` : '';
     const label = isRuin
-      ? `${tierName}${raceName ? ' (' + raceName + ')' : ''}${ageStr ? ' · ' + ageStr : ''}`
-      : `${tierName}${raceName ? ' · ' + raceName : ''}${ageStr ? ' · ' + ageStr : ''}`;
+      ? `${settlementName} (${tierName}${raceName ? ' · ' + raceName : ''})`
+      : `${settlementName} — ${tierName}${raceName ? ' · ' + raceName : ''}`;
 
     ctx.font = 'bold 12px monospace';
     const labelW = ctx.measureText(label).width + 12;
