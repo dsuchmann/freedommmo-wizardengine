@@ -187,6 +187,8 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
   for (const s of allSettlements) {
     const rc = RACE_COLORS[s.race] ?? DEFAULT_RACE;
     const isRuin = s.state === 'ruined' || s.tier === 'ruins';
+    const csx = Math.floor(s.x * tilePx - camX), csy = Math.floor(s.y * tilePx - camY);
+    if (!onScreen(csx, csy)) continue;
 
     // Compute layout client-side (pure, same as sim)
     let layout = null;
@@ -265,7 +267,6 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
     }
 
     // ── Settlement label (rich info) ────────────────────────────────
-    const csx = Math.floor(s.x * tilePx - camX), csy = Math.floor(s.y * tilePx - camY);
     const labelX = csx, labelY = csy - 20;
     ctx.textAlign = 'center';
 
