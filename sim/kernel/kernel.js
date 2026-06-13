@@ -18,6 +18,7 @@ export class Kernel {
     this.seed = seed;
     this.tick = 0;
     this.touched = new Set();   // region keys whose deterministic baseline has materialized (exactly-once frontier)
+    this.genesisSettlements = new Set();   // macro-cell keys whose genesis settlements have been evaluated (exactly-once frontier)
     this.graph = new Graph();
     this.ledger = new Ledger();
     this.deltas = new Deltas();
