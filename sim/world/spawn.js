@@ -41,8 +41,7 @@ export function spawnMeadow(kernel, { x0, y0, w, h }) {
 }
 
 /** Statistical baseline for one region: expected counts from the same DENSITY table,
- *  means from the same START ranges the individual spawner uses (spec §5.1 — baseline from seed).
- *  w/h: actual in-bounds tile extent (edge regions clipped by world bounds). */
+ *  means from the same START ranges the individual spawner uses (spec §5.1 — baseline from seed). */
 export function spawnRegionAggregate(kernel, rx, ry, w = REGION, h = REGION, tick = kernel.tick, causeEventId = null) {
   const pops = {};
   let salt = 0;
