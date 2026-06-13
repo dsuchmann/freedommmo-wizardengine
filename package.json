@@ -10,6 +10,7 @@
     "sim": "node sim/server/main.js"
   },
   "dependencies": {
+    "@napi-rs/canvas": "^1.0.0",
     "better-sqlite3": "^11.0.0",
     "playwright-core": "^1.60.0",
     "ws": "^8.21.0"
