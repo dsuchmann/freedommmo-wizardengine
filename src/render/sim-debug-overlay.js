@@ -1,6 +1,9 @@
-// Civilization overlay: draws settlements, roads, plots, districts, and chronicle
-// info as translucent shapes over the game world. READ-ONLY over window._simClient.
+// Civilization overlay: draws settlements with organic layouts from the world compiler.
+// Pure functions imported client-side — same deterministic result as the sim.
 // Toggle: key 9. Click a settlement to inspect its history.
+
+import { layoutSettlement } from '../../sim/world/buildings/layout.js';
+import { computeTerritory } from '../../sim/world/territory.js';
 
 const EVENT_CAP = 50;
 
@@ -111,40 +114,96 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
     ctx.fillRect(sx, sy, Math.ceil(tilePx), Math.ceil(tilePx));
   }
 
-  // ── Settlements: territory, districts, labels ─────────────────────
-  const DISTRICT_COLORS = { residential: 'rgba(80,220,120,', craft: 'rgba(255,150,60,' };
+  // ── Settlements: world-compiler layout ─────────────────────────────
+  const DISTRICT_COLORS = {
+    residential: 'rgba(80,220,120,', craft: 'rgba(255,150,60,', market: 'rgba(255,220,80,',
+    civic: 'rgba(150,180,255,', religious: 'rgba(200,160,255,', military: 'rgba(200,80,80,',
+    agricultural: 'rgba(120,180,80,', entertainment: 'rgba(255,180,200,', harbor: 'rgba(80,200,220,',
+  };
+  const BUILDING_COLORS = {
+    wall: 'rgba(70,80,95,0.7)', door: 'rgba(160,110,60,0.8)', floor: 'rgba(200,190,170,0.25)',
+  };
   for (const s of d.settlements) {
-    const r = rectPx(s.territory);
-    if (!rectOnScreen(r)) continue;
     const rc = RACE_COLORS[s.race] ?? DEFAULT_RACE;
     const isRuin = s.state === 'ruined' || s.tier === 'ruins';
 
-    // Territory fill
-    ctx.fillStyle = isRuin ? 'rgba(80,60,50,0.12)' : rc.fill + '0.08)';
-    ctx.fillRect(...r);
+    // Compute layout client-side (pure, same as sim)
+    let layout = null;
+    try {
+      if (!isRuin) layout = layoutSettlement(42, { x: s.x, y: s.y }, s.tier || 'village', s.race || 'human', 'grassland');
+    } catch { /* layout stays null — honest absence */ }
 
-    // Territory outline
-    ctx.setLineDash(isRuin ? [3, 6] : [6, 4]);
-    ctx.strokeStyle = isRuin ? 'rgba(140,90,70,0.6)' : rc.stroke + '0.85)';
-    ctx.lineWidth = isRuin ? 1 : 2;
-    ctx.strokeRect(r[0] + 0.5, r[1] + 0.5, r[2] - 1, r[3] - 1);
-    ctx.setLineDash([]);
-
-    // Districts (active only)
-    if (!isRuin) {
-      for (const dist of s.districts) {
-        const dr = rectPx(dist.rect);
-        const c = DISTRICT_COLORS[dist.kind] ?? 'rgba(180,180,180,';
-        ctx.fillStyle = c + '0.10)';
-        ctx.fillRect(...dr);
-        ctx.strokeStyle = c + '0.5)';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(dr[0] + 0.5, dr[1] + 0.5, dr[2] - 1, dr[3] - 1);
-        ctx.font = '9px monospace';
-        ctx.textAlign = 'left';
-        ctx.fillStyle = c + '0.7)';
-        ctx.fillText(dist.kind, dr[0] + 3, dr[1] + 10);
+    if (layout) {
+      // Road spines: tan lines
+      ctx.lineWidth = Math.max(1, tilePx * 0.08);
+      ctx.strokeStyle = 'rgba(160,140,100,0.5)';
+      for (const spine of layout.spines) {
+        ctx.beginPath();
+        for (let i = 0; i < spine.points.length; i++) {
+          const px2 = Math.floor(spine.points[i].x * tilePx - camX);
+          const py2 = Math.floor(spine.points[i].y * tilePx - camY);
+          if (i === 0) ctx.moveTo(px2, py2); else ctx.lineTo(px2, py2);
+        }
+        ctx.stroke();
       }
+
+      // Buildings: colored footprints with type labels
+      for (const b of layout.buildings) {
+        const fp = b.footprint;
+        // Walls
+        for (const w of fp.walls) {
+          const sx = Math.floor((b.x + w.x) * tilePx - camX), sy = Math.floor((b.y + w.y) * tilePx - camY);
+          if (!onScreen(sx, sy)) continue;
+          ctx.fillStyle = BUILDING_COLORS.wall;
+          ctx.fillRect(sx, sy, Math.ceil(tilePx), Math.ceil(tilePx));
+        }
+        // Floors
+        for (const f of fp.floors) {
+          const sx = Math.floor((b.x + f.x) * tilePx - camX), sy = Math.floor((b.y + f.y) * tilePx - camY);
+          if (!onScreen(sx, sy)) continue;
+          ctx.fillStyle = BUILDING_COLORS.floor;
+          ctx.fillRect(sx, sy, Math.ceil(tilePx), Math.ceil(tilePx));
+        }
+        // Doors
+        for (const d2 of fp.doors) {
+          const sx = Math.floor((b.x + d2.x) * tilePx - camX), sy = Math.floor((b.y + d2.y) * tilePx - camY);
+          if (!onScreen(sx, sy)) continue;
+          ctx.fillStyle = BUILDING_COLORS.door;
+          ctx.fillRect(sx, sy, Math.ceil(tilePx), Math.ceil(tilePx));
+        }
+        // Type label
+        if (tilePx >= 8) {
+          const lx = Math.floor(b.x * tilePx - camX);
+          const ly = Math.floor(b.y * tilePx - camY) - 2;
+          ctx.font = '9px monospace';
+          ctx.textAlign = 'left';
+          ctx.fillStyle = 'rgba(255,255,255,0.8)';
+          ctx.fillText(fp.typeName || fp.typeId, lx, ly);
+        }
+      }
+
+      // District labels at district centers
+      for (const dist of layout.districts) {
+        const c = DISTRICT_COLORS[dist.kind] ?? 'rgba(180,180,180,';
+        // District center approximate: settlement center + angle offset
+        const angle = (dist.angleStart + dist.angleEnd) / 2;
+        const r2 = dist.radius * 0.5;
+        const dx2 = Math.floor((s.x + Math.cos(angle) * r2) * tilePx - camX);
+        const dy2 = Math.floor((s.y + Math.sin(angle) * r2) * tilePx - camY);
+        ctx.font = 'bold 11px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = c + '0.9)';
+        ctx.fillText(dist.kind, dx2, dy2);
+      }
+    } else {
+      // Fallback: just draw the rect territory (ruins, or layout failed)
+      const r = rectPx(s.territory);
+      if (!rectOnScreen(r)) continue;
+      ctx.setLineDash(isRuin ? [3, 6] : [6, 4]);
+      ctx.strokeStyle = isRuin ? 'rgba(140,90,70,0.6)' : rc.stroke + '0.85)';
+      ctx.lineWidth = isRuin ? 1 : 2;
+      ctx.strokeRect(r[0] + 0.5, r[1] + 0.5, r[2] - 1, r[3] - 1);
+      ctx.setLineDash([]);
     }
 
     // ── Settlement label (rich info) ────────────────────────────────
