@@ -457,13 +457,24 @@ IMPORTANT: Return ALL 14 joint values in your response, not just the ones you ch
 
 Also extract a GENERAL RULE from this critique that would help avoid similar issues in ALL future poses.${rulesText}
 
-Respond in EXACTLY this JSON format (include ALL joints):
-{"joints": {"spine":0,"head":0,"arm_u_l":0,"arm_f_l":0,"hand_l":0,"arm_u_r":0,"arm_f_r":0,"hand_r":0,"thigh_l":0,"thigh_r":0,"shin_l":0,"shin_r":0,"foot_l":0,"foot_r":0}, "rule": "<general rule>"}
+Respond in EXACTLY this JSON format. Fill in the CORRECTED values (do NOT just copy zeros):
+{"joints": {"spine":___,"head":___,"arm_u_l":___,"arm_f_l":___,"hand_l":___,"arm_u_r":___,"arm_f_r":___,"hand_r":___,"thigh_l":___,"thigh_r":___,"shin_l":___,"shin_r":___,"foot_l":___,"foot_r":___}, "rule": "___"}
 
 No markdown, no explanation. Just the JSON.`;
 
+      // Build ALL current joints with defaults for any missing
+      const allJoints = { spine:0, head:0, arm_u_l:0, arm_f_l:0, hand_l:0, arm_u_r:0, arm_f_r:0, hand_r:0, thigh_l:0, thigh_r:0, shin_l:0, shin_r:0, foot_l:0, foot_r:0, ...currentJoints };
+
       const userMsg = [
-        { type: 'text', text: `Pose: "${poseId}" — "${poseDesc}"\nCurrent joints: ${JSON.stringify(currentJoints)}\n\nCritique: ${critique}\n\nFix the joints and extract a rule.` },
+        { type: 'text', text: `Pose: "${poseId}" — "${poseDesc}"
+
+CURRENT joint angles (this is what the stick figure shows — these are WRONG and need fixing):
+${JSON.stringify(allJoints, null, 2)}
+
+USER CRITIQUE (what's wrong with this pose):
+"${critique}"
+
+Now return the CORRECTED joint angles that fix the critique. Start from the current values above and adjust the joints that need changing. Keep joints that are fine at their current values.` },
         { type: 'image_url', image_url: { url: `data:image/png;base64,${base64}` } },
       ];
 
@@ -480,18 +491,26 @@ No markdown, no explanation. Just the JSON.`;
           ? { model, max_tokens: 500, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userMsg }] }
           : { model, max_tokens: 500, system: systemPrompt, messages: [{ role: 'user', content: userMsg.map(p => p.type === 'image_url' ? { type: 'image', source: { type: 'base64', media_type: 'image/png', data: base64 } } : p) }] };
 
+        console.log('[QA] Sending critique to LLM...', { poseId, critique, allJoints });
         const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
         if (!res.ok) throw new Error(`API ${res.status}: ${(await res.text()).slice(0, 200)}`);
         const data = await res.json();
         const text = isOpenAI ? (data.choices?.[0]?.message?.content || '') : (data.content?.[0]?.text || '');
+        console.log('[QA] Raw LLM response:', text);
         const jsonStr = text.replace(/^```json?\s*/m, '').replace(/\s*```$/m, '').trim();
         const result = JSON.parse(jsonStr);
+        console.log('[QA] Parsed result:', result);
+        console.log('[QA] New joints:', result.joints);
+
+        // Verify the LLM actually changed something
+        const changed = Object.entries(result.joints).filter(([k, v]) => (allJoints[k] ?? 0) !== v);
+        console.log('[QA] Changed joints:', changed);
 
         // Show the fix
-        pendingFix = { originalJoints: { ...currentJoints }, newJoints: result.joints, critique, rule: result.rule };
-        drawPreview(result.newJoints);
-        document.getElementById('detail-json').textContent = JSON.stringify(result.newJoints, null, 2);
-        document.getElementById('critique-status').textContent = `Rule: "${result.rule}"`;
+        pendingFix = { originalJoints: { ...allJoints }, newJoints: result.joints, critique, rule: result.rule };
+        drawPreview(result.joints);
+        document.getElementById('detail-json').textContent = JSON.stringify(result.joints, null, 2);
+        document.getElementById('critique-status').textContent = `Rule: "${result.rule}" (${changed.length} joints changed)`;
         document.getElementById('btn-approve').style.display = 'block';
       } catch (e) {
         document.getElementById('critique-status').textContent = `Error: ${e.message}`;
