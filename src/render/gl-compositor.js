@@ -221,10 +221,10 @@ vec4 atmoSample(sampler2D t, vec2 uv, vec2 bs) {
 void main() {
   vec2 texel = vTL * uView + uOff;            // art px, top-left origin
   // Sharp bilinear: sample pinned to the texel CENTER across the texel's
-  // interior (crisp plateau), ramping to the boundary only within a
-  // one-device-pixel band at each edge. (The previous formula was inverted —
-  // it saturated at the texel BOUNDARY, a 50/50 blend, over the outer half
-  // of every texel, blurring the whole image.)
+  // interior (crisp plateau), with a sub-pixel blend band at each edge.
+  // uSharp includes an 8× boost so the blend band is ~0.125 device px —
+  // visually identical to nearest-neighbour while preserving smooth sub-pixel
+  // camera scrolling via the fractional offset.
   vec2 ip = floor(texel);
   vec2 cd = texel - ip - 0.5;                 // distance from texel center
   vec2 rr = vec2(max(0.0, 0.5 - 0.5 / uSharp)); // crisp half-width
@@ -692,10 +692,10 @@ export class GLCompositor {
     gl.uniform4f(this.pUArt, this._artW, this._artH, this._sceneAllocW, this._sceneAllocH);
     gl.uniform2f(this.pUView, cssW / zoom, cssH / zoom);
     gl.uniform2f(this.pUOff, fracX, fracY);
-    // Sharpness band is one DEVICE pixel — on scaled displays (dpr > 1) the
-    // canvas backing store is larger than CSS px, and using zoom alone makes
-    // every pixel edge dpr-times blurrier than intended.
-    gl.uniform1f(this.pUSharp, zoom * (this.canvas.width / Math.max(1, cssW)));
+    // Sharp-bilinear crispness: base = device px per art px.  The 8×
+    // multiplier shrinks the blend band from 1 device px to ~0.125, matching
+    // nearest-neighbour pixel clarity while keeping smooth sub-pixel scrolling.
+    gl.uniform1f(this.pUSharp, zoom * (this.canvas.width / Math.max(1, cssW)) * 8);
     gl.uniform1f(this.pUCrt, this.crt ? 1 : 0);
     gl.uniform1f(this.pUCrtK, zoom / 1.84);
     if (this._waveOn) {
