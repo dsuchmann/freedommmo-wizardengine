@@ -50,7 +50,9 @@
           },
           {
             "op": "pose",
-            "joints": {},
+            "joints": {
+              "head": 30
+            },
             "ticks": 3,
             "zHints": {}
           }
@@ -69,7 +71,9 @@
           },
           {
             "op": "pose",
-            "joints": {},
+            "joints": {
+              "head": 0
+            },
             "ticks": 3,
             "zHints": {}
           }

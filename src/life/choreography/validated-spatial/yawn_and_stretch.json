@@ -19,6 +19,7 @@
           {
             "op": "pose",
             "joints": {
+              "spine": 15,
               "head": -18
             },
             "ticks": 4,
@@ -27,6 +28,8 @@
           {
             "op": "pose",
             "joints": {
+              "spine": 15,
+              "head": -18,
               "arm_u_l": -119,
               "arm_u_r": 119
             },
@@ -41,9 +44,11 @@
           {
             "op": "pose",
             "joints": {
+              "spine": 15,
+              "head": -18,
               "arm_u_l": -60,
-              "arm_f_l": -15,
               "arm_u_r": 60,
+              "arm_f_l": -15,
               "arm_f_r": 15
             },
             "ticks": 4,
@@ -52,7 +57,12 @@
           {
             "op": "pose",
             "joints": {
-              "head": 0
+              "spine": 15,
+              "head": 0,
+              "arm_u_l": -60,
+              "arm_u_r": 60,
+              "arm_f_l": -15,
+              "arm_f_r": 15
             },
             "ticks": 4,
             "zHints": {}
@@ -62,8 +72,12 @@
       {
         "op": "pose",
         "joints": {
+          "spine": 15,
+          "head": 0,
           "arm_u_l": 0,
-          "arm_u_r": 0
+          "arm_u_r": 0,
+          "arm_f_l": -15,
+          "arm_f_r": 15
         },
         "ticks": 4,
         "zHints": {}
@@ -74,7 +88,12 @@
           {
             "op": "pose",
             "joints": {
-              "spine": 0
+              "spine": 0,
+              "head": 0,
+              "arm_u_l": 0,
+              "arm_u_r": 0,
+              "arm_f_l": -15,
+              "arm_f_r": 15
             },
             "ticks": 4,
             "zHints": {}
@@ -82,7 +101,12 @@
           {
             "op": "pose",
             "joints": {
-              "head": 0
+              "spine": 0,
+              "head": 0,
+              "arm_u_l": 0,
+              "arm_u_r": 0,
+              "arm_f_l": -15,
+              "arm_f_r": 15
             },
             "ticks": 4,
             "zHints": {}

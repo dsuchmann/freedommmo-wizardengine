@@ -20,6 +20,8 @@
           {
             "op": "pose",
             "joints": {
+              "shin_l": 0,
+              "shin_r": 0,
               "arm_u_l": 0,
               "arm_u_r": 0
             },
@@ -34,6 +36,10 @@
           {
             "op": "pose",
             "joints": {
+              "shin_l": 0,
+              "shin_r": 0,
+              "arm_u_l": 0,
+              "arm_u_r": 0,
               "thigh_l": -22,
               "thigh_r": -22
             },
@@ -43,8 +49,12 @@
           {
             "op": "pose",
             "joints": {
+              "shin_l": 0,
+              "shin_r": 0,
               "arm_u_l": -17,
-              "arm_u_r": 17
+              "arm_u_r": 17,
+              "thigh_l": -22,
+              "thigh_r": -22
             },
             "ticks": 3,
             "zHints": {}
@@ -57,6 +67,12 @@
           {
             "op": "pose",
             "joints": {
+              "shin_l": 0,
+              "shin_r": 0,
+              "arm_u_l": -17,
+              "arm_u_r": 17,
+              "thigh_l": -22,
+              "thigh_r": -22,
               "foot_l": -6
             },
             "ticks": 2,
@@ -65,6 +81,13 @@
           {
             "op": "pose",
             "joints": {
+              "shin_l": 0,
+              "shin_r": 0,
+              "arm_u_l": -17,
+              "arm_u_r": 17,
+              "thigh_l": -22,
+              "thigh_r": -22,
+              "foot_l": -6,
               "foot_r": -6
             },
             "ticks": 2,
@@ -78,8 +101,14 @@
           {
             "op": "pose",
             "joints": {
-              "thigh_l": 0,
-              "thigh_r": 0
+              "shin_l": 0,
+              "shin_r": 0,
+              "arm_u_l": -17,
+              "arm_u_r": 17,
+              "thigh_l": -22,
+              "thigh_r": -22,
+              "foot_l": -6,
+              "foot_r": -6
             },
             "ticks": 4,
             "zHints": {}
@@ -87,8 +116,14 @@
           {
             "op": "pose",
             "joints": {
-              "arm_u_l": 0,
-              "arm_u_r": 0
+              "shin_l": 0,
+              "shin_r": 0,
+              "arm_u_l": -17,
+              "arm_u_r": 17,
+              "thigh_l": -22,
+              "thigh_r": -22,
+              "foot_l": -6,
+              "foot_r": -6
             },
             "ticks": 4,
             "zHints": {}

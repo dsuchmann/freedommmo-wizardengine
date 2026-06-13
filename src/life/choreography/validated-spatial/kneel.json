@@ -20,6 +20,8 @@
           {
             "op": "pose",
             "joints": {
+              "shin_l": 130,
+              "shin_r": 130,
               "spine": -9
             },
             "ticks": 5,
@@ -34,7 +36,8 @@
             "op": "pose",
             "joints": {
               "shin_l": 130,
-              "shin_r": 130
+              "shin_r": 130,
+              "spine": -9
             },
             "ticks": 8,
             "zHints": {}
@@ -42,6 +45,9 @@
           {
             "op": "pose",
             "joints": {
+              "shin_l": 130,
+              "shin_r": 130,
+              "spine": -9,
               "head": -18
             },
             "ticks": 3,
@@ -56,7 +62,9 @@
             "op": "pose",
             "joints": {
               "shin_l": 0,
-              "shin_r": 0
+              "shin_r": 0,
+              "spine": -9,
+              "head": -18
             },
             "ticks": 5,
             "zHints": {}
@@ -64,7 +72,10 @@
           {
             "op": "pose",
             "joints": {
-              "spine": 0
+              "shin_l": 0,
+              "shin_r": 0,
+              "spine": 0,
+              "head": -18
             },
             "ticks": 5,
             "zHints": {}
@@ -72,6 +83,9 @@
           {
             "op": "pose",
             "joints": {
+              "shin_l": 0,
+              "shin_r": 0,
+              "spine": 0,
               "head": 0
             },
             "ticks": 5,

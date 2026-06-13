@@ -19,6 +19,7 @@
           {
             "op": "pose",
             "joints": {
+              "spine": -18,
               "shin_l": 112,
               "shin_r": 112
             },
@@ -33,7 +34,9 @@
           {
             "op": "pose",
             "joints": {
-              "spine": 0
+              "spine": 0,
+              "shin_l": 112,
+              "shin_r": 112
             },
             "ticks": 4,
             "zHints": {}
@@ -41,6 +44,7 @@
           {
             "op": "pose",
             "joints": {
+              "spine": 0,
               "shin_l": 0,
               "shin_r": 0
             },

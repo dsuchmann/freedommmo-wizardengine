@@ -266,18 +266,19 @@ export function compileInstruction(instruction, rig, currentAngles = {}, directi
 }
 
 /**
- * Walk a step (or array of steps) and produce DSL nodes.
- * @param {object|object[]} step
- * @param {object} rig
- * @returns {object}  DSL node
+ * Walk a step and produce a DSL node, accumulating joint state.
+ * `state` is a mutable object tracking ALL current joint angles.
+ * Each emitted pose carries the FULL accumulated state, not just the delta.
  */
-function compileStep(step, rig, direction) {
+function compileStep(step, rig, direction, state) {
   // Single instruction
   if (step.part && step.action) {
-    const { joints, zHints } = compileInstruction(step, rig, {}, direction);
+    const { joints, zHints } = compileInstruction(step, rig, state, direction);
+    // Merge this instruction's joints INTO the accumulated state
+    Object.assign(state, joints);
     return {
       op: 'pose',
-      joints,
+      joints: { ...state },  // emit FULL state, not just this step's delta
       ticks: step.ticks ?? 1,
       zHints,
     };
@@ -287,7 +288,7 @@ function compileStep(step, rig, direction) {
   if (step.type === 'sequence' || step.type === 'parallel') {
     return {
       op: step.type,
-      children: (step.steps ?? []).map(s => compileStep(s, rig, direction)),
+      children: (step.steps ?? []).map(s => compileStep(s, rig, direction, state)),
     };
   }
 
@@ -300,6 +301,10 @@ function compileStep(step, rig, direction) {
  * choreography = { id, kind?, steps: [instruction | {type:"sequence"|"parallel", steps:[...]}] }
  * Returns { id, kind, variant, root: {op:"sequence", children:[{op:"pose", joints, ticks, zHints}]} }
  *
+ * Joint state accumulates: each pose includes ALL active joints from prior
+ * steps, not just the current instruction's delta. This prevents limbs from
+ * snapping to rest when a later instruction doesn't mention them.
+ *
  * @param {{ id: string, kind?: string, steps: object[] }} choreography
  * @param {object} rig  Parsed humanoid.json
  * @param {string} [direction='e']  Facing direction — affects extend/retract depth mapping
@@ -307,8 +312,9 @@ function compileStep(step, rig, direction) {
  */
 export function compileSpatialProgram(choreography, rig, direction = 'e') {
   const { id, kind = 'action', steps = [] } = choreography;
+  const state = {};  // accumulated joint angles across all steps
 
-  const children = steps.map(step => compileStep(step, rig, direction));
+  const children = steps.map(step => compileStep(step, rig, direction, state));
 
   return {
     id,

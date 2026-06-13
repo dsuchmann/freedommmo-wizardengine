@@ -19,6 +19,7 @@
           {
             "op": "pose",
             "joints": {
+              "thigh_l": -55,
               "arm_u_r": 85
             },
             "ticks": 4,
@@ -32,7 +33,8 @@
           {
             "op": "pose",
             "joints": {
-              "thigh_l": 0
+              "thigh_l": -55,
+              "arm_u_r": 85
             },
             "ticks": 4,
             "zHints": {}
@@ -40,7 +42,8 @@
           {
             "op": "pose",
             "joints": {
-              "arm_u_r": 0
+              "thigh_l": -55,
+              "arm_u_r": 85
             },
             "ticks": 4,
             "zHints": {}
@@ -53,6 +56,8 @@
           {
             "op": "pose",
             "joints": {
+              "thigh_l": -55,
+              "arm_u_r": 85,
               "thigh_r": -55
             },
             "ticks": 4,
@@ -61,6 +66,9 @@
           {
             "op": "pose",
             "joints": {
+              "thigh_l": -55,
+              "arm_u_r": 85,
+              "thigh_r": -55,
               "arm_u_l": -85
             },
             "ticks": 4,
@@ -74,7 +82,10 @@
           {
             "op": "pose",
             "joints": {
-              "thigh_r": 0
+              "thigh_l": -55,
+              "arm_u_r": 85,
+              "thigh_r": -55,
+              "arm_u_l": -85
             },
             "ticks": 4,
             "zHints": {}
@@ -82,7 +93,10 @@
           {
             "op": "pose",
             "joints": {
-              "arm_u_l": 0
+              "thigh_l": -55,
+              "arm_u_r": 85,
+              "thigh_r": -55,
+              "arm_u_l": -85
             },
             "ticks": 4,
             "zHints": {}

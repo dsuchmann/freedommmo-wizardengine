@@ -19,6 +19,7 @@
           {
             "op": "pose",
             "joints": {
+              "spine": -12,
               "shin_l": 98,
               "shin_r": 98
             },
@@ -33,7 +34,9 @@
           {
             "op": "pose",
             "joints": {
-              "spine": -24
+              "spine": -24,
+              "shin_l": 98,
+              "shin_r": 98
             },
             "ticks": 3,
             "zHints": {}
@@ -41,6 +44,7 @@
           {
             "op": "pose",
             "joints": {
+              "spine": -24,
               "shin_l": 140,
               "shin_r": 140
             },
@@ -50,6 +54,9 @@
           {
             "op": "pose",
             "joints": {
+              "spine": -24,
+              "shin_l": 140,
+              "shin_r": 140,
               "thigh_l": 0
             },
             "ticks": 3,
@@ -58,6 +65,10 @@
           {
             "op": "pose",
             "joints": {
+              "spine": -24,
+              "shin_l": 140,
+              "shin_r": 140,
+              "thigh_l": 0,
               "thigh_r": 0
             },
             "ticks": 3,
