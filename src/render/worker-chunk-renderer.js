@@ -12,6 +12,7 @@ import { cliffLevel } from '../world/terrain-shaper.js';
 import { soilMaterialForBiome, sfVariantsFor, wangAssetName } from './wang-image-list.js';
 import { rand2 } from '../core/random.js';
 import { SS_BIOME_OBJECTS, f3Placements, f3SpriteUrl } from '../world/decoration-claims.js';
+import { queryBuildingTile, isBuildingClaimed, floorTileUrl } from './building-tile-query.js';
 
 // PixelLab wang tile index = NW*8 + NE*4 + SW*2 + SE*1 where 1=upper biome.
 // Game cornerMask uses same bit positions but 1=lower biome.
@@ -233,6 +234,9 @@ function applySoilFieldToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imag
       var tile = chunk.tiles[ty * chunkSize + tx];
       var wx = chunk.cx * chunkSize + tx;
       var wy = chunk.cy * chunkSize + ty;
+
+      // Skip soil on building floor tiles — floor tiles are drawn in the terrain pass
+      if (tile._buildingFloor) continue;
 
       var isTransition = !!tile.transitionPair;
       var biomeA, biomeB;
@@ -548,6 +552,8 @@ function applyGroundCoverToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, im
   for (var ty = 0; ty < chunkSize; ty++) {
     for (var tx = 0; tx < chunkSize; tx++) {
       var tile = chunk.tiles[ty * chunkSize + tx];
+      // Skip ground cover on building floor tiles
+      if (tile._buildingFloor) continue;
       var biomeObjs = GC_BIOME_OBJECTS[tile.biome];
       if (!biomeObjs) continue;
       // Skip transition tiles EXCEPT for water-adjacent biomes where ground cover is essential
@@ -638,6 +644,8 @@ function applyGroundCoverToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, im
   for (var ty = 0; ty < chunkSize; ty++) {
     for (var tx = 0; tx < chunkSize; tx++) {
       var tile = chunk.tiles[ty * chunkSize + tx];
+      // Skip ground cover sprites on building floor tiles
+      if (tile._buildingFloor) continue;
       var biomeObjs = GC_BIOME_OBJECTS[tile.biome];
       if (!biomeObjs) continue;
       var skipTransition2 = tile.transitionPair && tile.biome !== 'beach' && tile.biome !== 'swamp';
@@ -909,6 +917,10 @@ function applySmallScatterToChunk(ctx, chunk, tileSize, chunkSize, imageCache, m
   for (var ty2 = 0; ty2 < chunkSize; ty2++) {
     for (var tx2 = 0; tx2 < chunkSize; tx2++) {
       var wx2 = chunk.cx * chunkSize + tx2, wy2 = chunk.cy * chunkSize + ty2;
+      // Suppress F3 scatter on building footprints (including margin)
+      var f3Tile = chunk.tiles[ty2 * chunkSize + tx2];
+      if (f3Tile && f3Tile._buildingFloor) continue;
+      if (isBuildingClaimed(wx2, wy2)) continue;
       var pls = f3Placements(wx2, wy2, tileInfo);
       for (var pi = 0; pi < pls.length; pi++) {
         // Skip placements that the sim has marked as taken (honest removal, no pop)
@@ -973,6 +985,7 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
   var debugCliffLevels = new Array(tileCount);
   var debugInteriorUsed = new Array(tileCount);
   var debugCliffOverlay = new Array(tileCount);
+  var floorMissing = 0;  // building floor images not yet in cache
 
   var tileAt = function(wx, wy) {
     var cx = Math.floor(wx / chunkSize);
@@ -1139,6 +1152,21 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
       paintTerrainTile(ctx, tile, sx, sy, tileSize, sun, tile.climate.elevation, imageCache, variant);
       paintCliffOverlay(ctx, tile, sx, sy, tileSize, sun, imageCache);
 
+      // Building floor override: if this tile is inside a building section,
+      // draw the floor tile image ON TOP of the terrain (same lighting/z-order).
+      var buildingHit = queryBuildingTile(wx, wy);
+      if (buildingHit) {
+        var floorUrl = floorTileUrl(buildingHit.material);
+        var floorBmp = imageCache.get(floorUrl);
+        if (floorBmp) {
+          ctx.drawImage(floorBmp, 0, 0, 32, 32, sx, sy, tileSize, tileSize);
+        } else {
+          floorMissing++;
+        }
+        // Mark this tile as building-claimed for F0/F1/F3 suppression below
+        tile._buildingFloor = true;
+      }
+
       // Collect debug data
       var idx = y * chunkSize + x;
       var wangSrc = getWangSrc(tile, variant);
@@ -1210,7 +1238,7 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
   return {
     bitmap: bitmap,
     hasSoil: hasSoil,
-    needsRepaint: soilResult.missedSoil || wangMissing > 0 || scatterMissed > 0,
+    needsRepaint: soilResult.missedSoil || wangMissing > 0 || scatterMissed > 0 || floorMissing > 0,
     scatterMissingUrls: scatterMissing.size > 0 ? [...scatterMissing] : null,
     debug: {
       masks: debugMasks, successes: debugSuccesses, srcs: debugSrcs, biomes: debugBiomes,

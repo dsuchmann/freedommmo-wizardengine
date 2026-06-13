@@ -6,6 +6,7 @@ import { ChunkCompiler } from './chunk-compiler.js';
 import { getAllWangImageURLs, getWangImageURLsForBiomes, getSoilImageURLs, getGroundCoverImageURLs, getSmallFloraImageURLs, getSmallScatterImageURLs } from '../render/wang-image-list.js';
 import { renderChunkToBitmap, setF3RemovedKeys } from '../render/worker-chunk-renderer.js';
 import { denoiseBitmap } from '../render/sprite-denoise.js';
+import { getAllFloorTileURLs } from '../render/building-tile-query.js';
 
 var compiler = new ChunkCompiler();
 var SLICE_ROWS = 8;
@@ -111,7 +112,7 @@ async function runRepaintPass() {
 
   // Re-fetch anything still missing (failed loads from earlier batches).
   // Include scatter URLs so chunks that baked before F3 images loaded get debris.
-  var critical = getSoilImageURLs().concat(getAllWangImageURLs()).concat(getSmallScatterImageURLs());
+  var critical = getSoilImageURLs().concat(getAllWangImageURLs()).concat(getSmallScatterImageURLs()).concat(getAllFloorTileURLs());
   var missing = critical.filter(function(url) { return !imageCache.has(url); });
   if (missing.length > 0) {
     await loadImageBatch(missing, 40);
@@ -226,7 +227,8 @@ self.onmessage = function(event) {
     var biomeUrls = getWangImageURLsForBiomes(data.biomes);
     var soilUrls = getSoilImageURLs();
     var gcUrls = getGroundCoverImageURLs();
-    var allUrls = biomeUrls.concat(soilUrls).concat(gcUrls);
+    var floorUrls = getAllFloorTileURLs();
+    var allUrls = biomeUrls.concat(soilUrls).concat(gcUrls).concat(floorUrls);
     // Batch of 50 per worker — with up to 6 workers plus main-thread preloads,
     // larger batches exhaust the browser's network stack (ERR_INSUFFICIENT_RESOURCES)
     loadImageBatch(allUrls, 50).then(function(result) {
