@@ -1,7 +1,7 @@
 // sim/test/buildings-layout.test.js
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { assignDistricts, DISTRICT_CONFIGS, generateRoadSpines } from '../world/buildings/layout.js';
+import { assignDistricts, DISTRICT_CONFIGS, generateRoadSpines, placeBuildings } from '../world/buildings/layout.js';
 
 test('village gets 2 districts (residential + craft)', () => {
   const districts = assignDistricts(42, { x: 500, y: 500 }, 'village', 'human', 'grassland');
@@ -103,4 +103,89 @@ test('road spines are deterministic', () => {
   const a = generateRoadSpines(42, { x: 500, y: 500 }, districts);
   const b = generateRoadSpines(42, { x: 500, y: 500 }, districts);
   assert.deepEqual(a, b);
+});
+
+// ── Task 3: Building placement ───────────────────────────────────────
+
+test('placeBuildings: village produces at least 5 buildings', () => {
+  const districts = assignDistricts(42, { x: 500, y: 500 }, 'village', 'human', 'grassland');
+  const spines = generateRoadSpines(42, { x: 500, y: 500 }, districts);
+  const buildings = placeBuildings(42, { x: 500, y: 500 }, 'village', 'human', districts, spines);
+  assert.ok(buildings.length >= 5, `only ${buildings.length} buildings in village`);
+});
+
+test('placeBuildings: town produces more buildings than village', () => {
+  const vd = assignDistricts(42, { x: 500, y: 500 }, 'village', 'human', 'grassland');
+  const vs = generateRoadSpines(42, { x: 500, y: 500 }, vd);
+  const vb = placeBuildings(42, { x: 500, y: 500 }, 'village', 'human', vd, vs);
+
+  const td = assignDistricts(42, { x: 500, y: 500 }, 'town', 'human', 'grassland');
+  const ts = generateRoadSpines(42, { x: 500, y: 500 }, td);
+  const tb = placeBuildings(42, { x: 500, y: 500 }, 'town', 'human', td, ts);
+
+  assert.ok(tb.length > vb.length, `town (${tb.length}) should have more buildings than village (${vb.length})`);
+});
+
+test('placeBuildings: each building has position, footprint, and district', () => {
+  const districts = assignDistricts(42, { x: 500, y: 500 }, 'town', 'human', 'grassland');
+  const spines = generateRoadSpines(42, { x: 500, y: 500 }, districts);
+  const buildings = placeBuildings(42, { x: 500, y: 500 }, 'town', 'human', districts, spines);
+  for (const b of buildings) {
+    assert.ok(typeof b.x === 'number', `building missing x`);
+    assert.ok(typeof b.y === 'number', `building missing y`);
+    assert.ok(b.footprint, 'building missing footprint');
+    assert.ok(b.footprint.typeId, 'footprint missing typeId');
+    assert.ok(b.district, 'building missing district assignment');
+  }
+});
+
+test('placeBuildings: no two buildings overlap', () => {
+  const districts = assignDistricts(42, { x: 500, y: 500 }, 'city', 'human', 'grassland');
+  const spines = generateRoadSpines(42, { x: 500, y: 500 }, districts);
+  const buildings = placeBuildings(42, { x: 500, y: 500 }, 'city', 'human', districts, spines);
+  // Collect all occupied tiles
+  const occupied = new Set();
+  for (const b of buildings) {
+    const bb = b.footprint.boundingBox;
+    for (let dy = 0; dy < bb.h; dy++) {
+      for (let dx = 0; dx < bb.w; dx++) {
+        const key = `${b.x + dx},${b.y + dy}`;
+        assert.ok(!occupied.has(key), `overlap at ${key} (building ${b.footprint.typeId})`);
+        occupied.add(key);
+      }
+    }
+  }
+});
+
+test('placeBuildings: anchor building is first in its district', () => {
+  const districts = assignDistricts(42, { x: 500, y: 500 }, 'town', 'human', 'grassland');
+  const spines = generateRoadSpines(42, { x: 500, y: 500 }, districts);
+  const buildings = placeBuildings(42, { x: 500, y: 500 }, 'town', 'human', districts, spines);
+  // The civic district's first building should be the town_hall
+  const civicBuildings = buildings.filter(b => b.district === 'civic');
+  if (civicBuildings.length > 0) {
+    assert.equal(civicBuildings[0].footprint.typeId, 'town_hall',
+      'civic anchor is town_hall');
+  }
+});
+
+test('placeBuildings: deterministic', () => {
+  const d = assignDistricts(42, { x: 500, y: 500 }, 'town', 'human', 'grassland');
+  const s = generateRoadSpines(42, { x: 500, y: 500 }, d);
+  const a = placeBuildings(42, { x: 500, y: 500 }, 'town', 'human', d, s);
+  const b = placeBuildings(42, { x: 500, y: 500 }, 'town', 'human', d, s);
+  assert.deepEqual(a, b);
+});
+
+test('placeBuildings: buildings within settlement radius', () => {
+  const site = { x: 500, y: 500 };
+  const districts = assignDistricts(42, site, 'village', 'human', 'grassland');
+  const spines = generateRoadSpines(42, site, districts);
+  const buildings = placeBuildings(42, site, 'village', 'human', districts, spines);
+  const maxR = Math.max(...districts.map(d => d.radius));
+  for (const b of buildings) {
+    const dx = b.x - site.x, dy = b.y - site.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    assert.ok(dist <= maxR + 20, `building at distance ${dist} exceeds radius ${maxR}`);
+  }
 });

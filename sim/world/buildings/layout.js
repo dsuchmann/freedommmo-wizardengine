@@ -158,3 +158,168 @@ export function generateRoadSpines(seed, site, districts) {
 
   return spines;
 }
+
+// ── Building budgets per district ────────────────────────────────────
+
+// How many buildings a district gets, by tier.
+const BUDGET = {
+  village: { residential: 6,  craft: 3 },
+  town:    { residential: 12, market: 6, craft: 6, civic: 3, religious: 3 },
+  city:    { residential: 20, market: 10, craft: 10, civic: 5, religious: 5,
+             military: 4, agricultural: 4, entertainment: 3 },
+};
+
+// Category mapping: which taxonomy categories fill each district kind.
+const DISTRICT_CATEGORIES = {
+  residential:   ['residential'],
+  market:        ['commercial'],
+  craft:         ['craft'],
+  civic:         ['civic'],
+  religious:     ['religious'],
+  military:      ['military'],
+  agricultural:  ['agricultural'],
+  entertainment: ['entertainment'],
+  harbor:        ['infrastructure', 'commercial'],
+};
+
+// ── Building placement ───────────────────────────────────────────────
+
+/**
+ * Place buildings along road spines within districts.
+ * Anchor buildings placed first at district center, then fill along spines.
+ * Returns flat array of placed buildings with world-space positions.
+ *
+ * @param {number} seed
+ * @param {{x,y}} site  Settlement center
+ * @param {string} tier
+ * @param {string} race
+ * @param {Array} districts
+ * @param {Array} spines
+ * @returns {Array<{x, y, footprint, district, isAnchor}>}
+ */
+export function placeBuildings(seed, site, tier, race, districts, spines) {
+  const ps = mix(seed, site.x, site.y, 0xB001);
+  const budget = BUDGET[tier] ?? BUDGET.village;
+  const placed = [];
+  const occupiedTiles = new Set();  // "wx,wy" keys for collision detection
+
+  /** Check if a footprint at (wx, wy) collides with already-placed buildings.
+   *  Includes a 1-tile gap for breathing room. */
+  function wouldCollide(wx, wy, fp) {
+    const bb = fp.boundingBox;
+    for (let dy = -1; dy <= bb.h; dy++) {
+      for (let dx = -1; dx <= bb.w; dx++) {
+        if (occupiedTiles.has(`${wx + dx},${wy + dy}`)) return true;
+      }
+    }
+    return false;
+  }
+
+  /** Mark a footprint's tiles as occupied. */
+  function markOccupied(wx, wy, fp) {
+    const bb = fp.boundingBox;
+    for (let dy = 0; dy < bb.h; dy++) {
+      for (let dx = 0; dx < bb.w; dx++) {
+        occupiedTiles.add(`${wx + dx},${wy + dy}`);
+      }
+    }
+  }
+
+  /** Pick a building type from the allowed categories for this district kind. */
+  function pickType(districtKind, idx) {
+    const cats = DISTRICT_CATEGORIES[districtKind] ?? ['residential'];
+    const available = typesForTier(tier).filter(t => cats.includes(t.category));
+    if (available.length === 0) return null;
+    const ti = Math.floor(rand(ps, 0xBB01, idx, districtKind.length) * available.length);
+    return available[ti];
+  }
+
+  // Phase 1: Place anchor buildings at district centers.
+  for (const d of districts) {
+    if (!d.anchor) continue;
+    const midAngle = (d.angleStart + d.angleEnd) / 2;
+    const midR = (d.innerRadius + d.radius) * 0.4;  // closer to center
+    const ax = Math.round(site.x + Math.cos(midAngle) * midR);
+    const ay = Math.round(site.y + Math.sin(midAngle) * midR);
+    const fp = generateFootprint(mix(ps, 0xBA00, ax, ay), d.anchor, race);
+    if (!wouldCollide(ax, ay, fp)) {
+      markOccupied(ax, ay, fp);
+      placed.push({ x: ax, y: ay, footprint: fp, district: d.kind, isAnchor: true });
+    }
+  }
+
+  const maxR = Math.max(...districts.map(d => d.radius));
+
+  // Phase 2: Fill along road spines.
+  let globalIdx = 0;
+  for (const d of districts) {
+    const count = budget[d.kind] ?? 3;
+    const districtSpines = spines.filter(s => s.district === d.kind || s.district === null);
+    let placedInDistrict = placed.filter(b => b.district === d.kind).length;
+
+    for (const spine of districtSpines) {
+      if (placedInDistrict >= count) break;
+      // Walk along spine waypoints, placing buildings at intervals
+      for (let pi = 0; pi < spine.points.length - 1 && placedInDistrict < count; pi++) {
+        const p0 = spine.points[pi], p1 = spine.points[pi + 1];
+        const segLen = Math.sqrt((p1.x - p0.x) ** 2 + (p1.y - p0.y) ** 2);
+        if (segLen < 2) continue;
+
+        // Place buildings along this segment with seeded spacing (scale down for small settlements)
+        const spacing = Math.max(3, Math.floor(maxR * 0.15) + Math.floor(rand(ps, 0xBC01, globalIdx) * 3));
+        const numSlots = Math.max(1, Math.floor(segLen / spacing));
+
+        for (let si = 0; si < numSlots && placedInDistrict < count; si++) {
+          const t = (si + 0.5) / Math.max(1, numSlots);
+          const bx = Math.round(p0.x + (p1.x - p0.x) * t);
+          const by = Math.round(p0.y + (p1.y - p0.y) * t);
+
+          // Setback from road: perpendicular offset (1-4 tiles)
+          const perpAngle = Math.atan2(p1.y - p0.y, p1.x - p0.x) + Math.PI / 2;
+          const setback = 2 + Math.floor(rand(ps, 0xBC02, globalIdx, si) * 3);
+          const side = rand(ps, 0xBC03, globalIdx, si) > 0.5 ? 1 : -1;
+          const wx = Math.round(bx + Math.cos(perpAngle) * setback * side);
+          const wy = Math.round(by + Math.sin(perpAngle) * setback * side);
+
+          const type = pickType(d.kind, globalIdx + si);
+          if (!type) { globalIdx++; continue; }
+
+          const fp = generateFootprint(mix(ps, 0xBF00, wx, wy, globalIdx), type.id, race);
+          if (!wouldCollide(wx, wy, fp)) {
+            markOccupied(wx, wy, fp);
+            placed.push({ x: wx, y: wy, footprint: fp, district: d.kind, isAnchor: false });
+            placedInDistrict++;
+          }
+          globalIdx++;
+        }
+      }
+    }
+
+    // Phase 3: Scatter fill -- if spine placement didn't reach budget, place buildings
+    // radially within the district wedge at noise-displaced positions.
+    placedInDistrict = placed.filter(b => b.district === d.kind).length;
+    let scatterIdx = 0;
+    while (placedInDistrict < count && scatterIdx < count * 4) {
+      const midAngle = (d.angleStart + d.angleEnd) / 2;
+      const span = d.angleEnd - d.angleStart;
+      const scatterAngle = midAngle + (rand(ps, 0xBD01, scatterIdx, d.kind.length) - 0.5) * span * 0.8;
+      const rFrac = 0.3 + rand(ps, 0xBD02, scatterIdx, d.kind.length) * 0.6;
+      const r = d.innerRadius + (d.radius - d.innerRadius) * rFrac;
+      const wx = Math.round(site.x + Math.cos(scatterAngle) * r);
+      const wy = Math.round(site.y + Math.sin(scatterAngle) * r);
+
+      const type = pickType(d.kind, globalIdx + scatterIdx);
+      scatterIdx++;
+      if (!type) continue;
+
+      const fp = generateFootprint(mix(ps, 0xBD10, wx, wy, scatterIdx), type.id, race);
+      if (!wouldCollide(wx, wy, fp)) {
+        markOccupied(wx, wy, fp);
+        placed.push({ x: wx, y: wy, footprint: fp, district: d.kind, isAnchor: false });
+        placedInDistrict++;
+      }
+    }
+  }
+
+  return placed;
+}
