@@ -614,8 +614,7 @@ export function clearF2TileDescriptors() {
   _tileDescCache.clear();
   clearF2Pool();
 }
-var _instArray = null; // Float32Array scratch for GL instances
-var _shadowArray = null; // Float32Array scratch for GL silhouette shadows
+// Legacy _instArray/_shadowArray removed — the persistent pool uses its own mirrors.
 
 var _ctiStore = null, _ctiFn = null;
 function _claimTileInfo(chunkStore) {
@@ -1664,136 +1663,11 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
 
   var twoD = drawBuffer;
   var playerInGL = false;
-  if (glc && glc.spritesOk) {
-    // ALL sprites go to the GL instanced batch, and the player joins it as
-    // one more instance (composited offscreen, uploaded to a reserved atlas
-    // region each frame). One ordering domain — no 2D/GL split boundary
-    // where relative sprite depth would pop as the player moves.
-    var pRect = _playerGL ? glc.uploadPlayerSprite(_playerGL.canvas) : null;
-    var maxInst = drawBuffer.length + 1;
-    if (!_instArray || _instArray.length < maxInst * SPRITE_FLOATS) {
-      _instArray = new Float32Array(Math.max(4096, maxInst * SPRITE_FLOATS * 2));
-    }
-    // Silhouette shadows: one shadow instance per sufficiently large sprite.
-    // Tiny sprites (grass blades < 60% of a tile) skip — silhouettes don't
-    // read at that size and the ground sells the lighting anyway.
-    var sunH = sun ? sun.sunHeight : 1;
-    var sunUp = sunH < 0.08 ? (sunH / 0.08) * (sunH / 0.08) * (3 - 2 * (sunH / 0.08)) : 1; // smoothstep 0..0.08
-    var shadowOn = glc.shadowOk && sun && sunH > 0.001;
-    var shCount = 0;
-    if (shadowOn) {
-      if (!_shadowArray || _shadowArray.length < (drawBuffer.length + 1) * SPRITE_FLOATS) {
-        _shadowArray = new Float32Array(Math.max(4096, (drawBuffer.length + 1) * SPRITE_FLOATS * 2));
-      }
-      var minShadowSize = tilePxSnapped * 0.6;
-      for (var shi = 0; shi < drawBuffer.length; shi++) {
-        var sg = drawBuffer[shi];
-        if (sg.drawSize < minShadowSize) continue;
-        var srect = glc.atlasRect(sg.img, sg._url);
-        if (!srect) continue;
-        var so = shCount * SPRITE_FLOATS;
-        _shadowArray[so] = sg.sx;
-        _shadowArray[so + 1] = sg.sy + sg.halfDraw;       // same ground pivot as sprite
-        _shadowArray[so + 2] = sg.drawSize;
-        // diffusion tier: small flora → faint individual silhouettes that
-        // only read in aggregate; large objects → full defined silhouette
-        var tier = (sg.drawSize - minShadowSize) / (tilePxSnapped * 1.2);
-        tier = tier < 0 ? 0 : tier > 1 ? 1 : tier;
-        // rotation slot carries per-instance diffusion for the shadow program
-        _shadowArray[so + 3] = 1.0 - tier;
-        var diffuseK = 0.30 + 0.70 * tier;
-        _shadowArray[so + 4] = sg.alpha * (sg.shadowK !== undefined ? sg.shadowK : 0.5) * diffuseK;
-        _shadowArray[so + 5] = srect.u0;
-        _shadowArray[so + 6] = srect.v0;
-        _shadowArray[so + 7] = srect.du;
-        _shadowArray[so + 8] = srect.dv;
-        shCount++;
-      }
-      // Player silhouette shadow: anchor at the FEET line, not the canvas
-      // bottom (the 256px player canvas has a 64px empty band below the
-      // baseline; using the raw quad pivot would detach the shadow).
-      if (pRect && _playerGL) {
-        var pbf = _playerGL.baseFrac || 1;
-        var pso = shCount * SPRITE_FLOATS;
-        _shadowArray[pso] = _playerGL.pivotX;
-        _shadowArray[pso + 1] = _playerGL.pivotY - _playerGL.size * (1 - pbf);
-        _shadowArray[pso + 2] = _playerGL.size * pbf;
-        _shadowArray[pso + 3] = 0.3; // mild diffusion — defined silhouette
-        _shadowArray[pso + 4] = 0.5;
-        _shadowArray[pso + 5] = pRect.u0;
-        _shadowArray[pso + 6] = pRect.v0;
-        _shadowArray[pso + 7] = pRect.du;
-        _shadowArray[pso + 8] = pRect.dv * pbf;
-        shCount++;
-      }
-    }
-    var instCount = 0;
-    var playerSortY = player.y + 0.4;
-    twoD = [];
-    for (var gi = 0; gi < drawBuffer.length; gi++) {
-      var g = drawBuffer[gi];
-      if (pRect && !playerInGL && g.sortY > playerSortY) {
-        var po = instCount * SPRITE_FLOATS;
-        _instArray[po] = _playerGL.pivotX;
-        _instArray[po + 1] = _playerGL.pivotY;
-        _instArray[po + 2] = _playerGL.size;
-        _instArray[po + 3] = 0;
-        _instArray[po + 4] = 1;
-        _instArray[po + 5] = pRect.u0;
-        _instArray[po + 6] = pRect.v0;
-        _instArray[po + 7] = pRect.du;
-        _instArray[po + 8] = pRect.dv;
-        instCount++;
-        playerInGL = true;
-      }
-      var rect = glc.atlasRect(g.img, g._url);
-      if (!rect) {
-        // Not atlased (yet). In art-scene mode coords are art px — they can't
-        // draw on the CSS-px 2D canvas, so skip a frame (sprite is mid-fade
-        // anyway); otherwise fall back to the 2D canvas.
-        if (!glc.sceneActive) twoD.push(g);
-        continue;
-      }
-      var o = instCount * SPRITE_FLOATS;
-      _instArray[o] = g.sx;
-      _instArray[o + 1] = g.sy + g.halfDraw; // pivot at bottom-center
-      _instArray[o + 2] = g.drawSize;
-      _instArray[o + 3] = g.baseAngle + g.sway;
-      _instArray[o + 4] = g.alpha;
-      _instArray[o + 5] = rect.u0;
-      _instArray[o + 6] = rect.v0;
-      _instArray[o + 7] = rect.du;
-      _instArray[o + 8] = rect.dv;
-      instCount++;
-    }
-    if (pRect && !playerInGL) {
-      var po2 = instCount * SPRITE_FLOATS;
-      _instArray[po2] = _playerGL.pivotX;
-      _instArray[po2 + 1] = _playerGL.pivotY;
-      _instArray[po2 + 2] = _playerGL.size;
-      _instArray[po2 + 3] = 0;
-      _instArray[po2 + 4] = 1;
-      _instArray[po2 + 5] = pRect.u0;
-      _instArray[po2 + 6] = pRect.v0;
-      _instArray[po2 + 7] = pRect.du;
-      _instArray[po2 + 8] = pRect.dv;
-      instCount++;
-      playerInGL = true;
-    }
-    if (shadowOn && shCount > 0) {
-      // shadowVec: top of sprite lands shadowLength sprite-heights away,
-      // skewed horizontally by sun azimuth; flattened to 35% vertical run.
-      var shVec = {
-        x: sun.shadowX * sun.shadowLength * 0.9,
-        y: sun.shadowLength * 0.35,
-      };
-      var shStrength = 0.50 * (0.62 + (1 - sunH) * 0.38) * sunUp;
-      glc.drawShadowInstances(_shadowArray, shCount, w, h, shVec, shStrength);
-    }
-    glc.drawSpriteInstances(_instArray, instCount, w, h);
-  }
+  // Legacy GL block removed: the persistent pool path (_poolFrame) now
+  // handles all GL rendering when glc.spritesOk is true, returning before
+  // this point. The 2D fallback below still serves useGL=false mode.
 
-  // 2D pass (everything in 2D mode; rare atlas misses in GL mode)
+  // 2D pass (everything in 2D mode)
   var playerInserted = playerInGL;
   for (var di = 0; di < twoD.length; di++) {
     // Draw player when we reach sprites at or below player's Y
