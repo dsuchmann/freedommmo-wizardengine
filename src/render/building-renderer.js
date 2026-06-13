@@ -13,6 +13,7 @@ import { classifyBiome } from '../world/biomes.js';
 import { rand } from '../../sim/kernel/rng.js';
 import { generateSettlementName } from '../../sim/world/buildings/specializations.js';
 import { buildingClaimTiles } from '../world/decoration-claims.js';
+import { WORLD } from '../core/constants.js';
 
 const MACRO_TILES = MACRO * REGION;
 const WORLD_SEED = 42;
@@ -21,19 +22,38 @@ const MAX_BUILDINGS = 80;
 const CLAIM_MARGIN = 2;  // suppress decorations N tiles around buildings
 
 // ── Floor tile images ──────────────────────────────────────────────
-const _floorImages = {};
-let _floorLoaded = false;
+// Wang tiles for building floors. Index 15 = solid interior (all corners same).
+// Indices 1-14 = edge variants. Corner mask: NW*8 + NE*4 + SW*2 + SE*1 where
+// 1 = floor tile, 0 = not floor. Wang index = 15 - cornerMask (complement).
+const FLOOR_BASE = '/assets/pixelab/buildings/floors/wood_plank/';
+const FLOOR_SOLID_URL = FLOOR_BASE + 'wood_plank__wang_b0d15a082a4142c7a767d58d1a875b3c.png';
+const _floorImgs = new Array(16);  // [0..15] indexed by wang mask
+let _floorLoadState = 0;  // 0=not started, 1=loading, 2=ready
 
 function ensureFloorImages() {
-  if (_floorLoaded) return;
-  _floorLoaded = true;
-  const img = new Image();
-  img.src = '/assets/pixelab/buildings/floors/wood_plank/wood_plank__wang_b0d15a082a4142c7a767d58d1a875b3c.png';
-  img.onload = () => { _floorImages.wood_plank = img; };
+  if (_floorLoadState > 0) return;
+  _floorLoadState = 1;
+  let pending = 0;
+  function loaded() { if (--pending === 0) _floorLoadState = 2; }
+  // Wang indices 1-14 map to named files
+  for (let i = 1; i <= 14; i++) {
+    pending++;
+    const img = new Image();
+    img.src = FLOOR_BASE + 'wood_plank__wang_' + i + '.png';
+    img.onload = () => { _floorImgs[i] = img; loaded(); };
+    img.onerror = () => loaded();
+  }
+  // Index 0 = all corners are non-floor (shouldn't draw, but load solid as fallback)
+  // Index 15 = all corners are floor = solid interior
+  pending++;
+  const solid = new Image();
+  solid.src = FLOOR_SOLID_URL;
+  solid.onload = () => { _floorImgs[15] = solid; _floorImgs[0] = solid; loaded(); };
+  solid.onerror = () => loaded();
 }
 
 // ── Settlement/building cache ──────────────────────────────────────
-let _cache = { key: '', buildings: [] };
+let _cache = { key: '', buildings: [], floorTiles: null };
 
 // Building claims are tracked in decoration-claims.js (buildingClaimTiles)
 
@@ -96,21 +116,93 @@ function discoverBuildings(camX, camY, w, h, tilePx) {
       }
     }
   }
-  return buildings;
+
+  // Build floor tile set: all world-tile positions that are inside any building section.
+  // Used for Wang mask computation (a tile is "floor" if it belongs to any section).
+  const floorTiles = new Set();
+  for (const b of buildings) {
+    for (const sec of b.footprint.sections) {
+      for (let dy = 0; dy < sec.h; dy++) {
+        for (let dx = 0; dx < sec.w; dx++) {
+          floorTiles.add((b.x + sec.x0 + dx) + ',' + (b.y + sec.y0 + dy));
+        }
+      }
+    }
+  }
+
+  return { buildings, floorTiles };
 }
 
 /** Compute building positions and populate claims for F2+ suppression.
- *  Call each frame — the actual floor drawing is handled by chunk compilation (TODO)
- *  or the overlay. This function ensures decoration claims are up to date. */
+ *  Call each frame — claims always stay current. */
 export function updateBuildingClaims(camX, camY, tilePx, w, h) {
   ensureFloorImages();
 
   const cacheKey = `${Math.floor(camX / 500)},${Math.floor(camY / 500)},${Math.floor(tilePx * 10)}`;
   if (_cache.key !== cacheKey) {
-    _cache = { key: cacheKey, buildings: discoverBuildings(camX, camY, w, h, tilePx) };
+    const result = discoverBuildings(camX, camY, w, h, tilePx);
+    _cache = { key: cacheKey, buildings: result.buildings, floorTiles: result.floorTiles };
+  }
+}
+
+/** Draw building floors onto the canvas.
+ *  Called AFTER terrain chunks, BEFORE F2 sprites — same pixel grid, no jitter.
+ *  @param {CanvasRenderingContext2D} ctx
+ *  @param {number} camX  Camera left edge in CSS pixels
+ *  @param {number} camY  Camera top edge in CSS pixels
+ *  @param {number} tilePx  Tile size in CSS pixels (WORLD.tileSize * zoom)
+ *  @param {number} w  Viewport width
+ *  @param {number} h  Viewport height */
+export function drawBuildingFloors(ctx, camX, camY, tilePx, w, h) {
+  if (_floorLoadState !== 2) return;  // images not ready yet
+  const buildings = _cache.buildings;
+  const floorTiles = _cache.floorTiles;
+  if (!buildings || buildings.length === 0 || !floorTiles) return;
+
+  // Viewport tile bounds (with 1-tile margin for edge tiles partially visible)
+  const vtx0 = Math.floor(camX / tilePx) - 1;
+  const vty0 = Math.floor(camY / tilePx) - 1;
+  const vtx1 = Math.ceil((camX + w) / tilePx) + 1;
+  const vty1 = Math.ceil((camY + h) / tilePx) + 1;
+
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+
+  for (const b of buildings) {
+    for (const sec of b.footprint.sections) {
+      for (let dy = 0; dy < sec.h; dy++) {
+        for (let dx = 0; dx < sec.w; dx++) {
+          const wx = b.x + sec.x0 + dx;
+          const wy = b.y + sec.y0 + dy;
+
+          // Skip tiles outside the viewport
+          if (wx < vtx0 || wx > vtx1 || wy < vty0 || wy > vty1) continue;
+
+          // Wang corner mask: which of the 4 corners (2x2 cell) are floor tiles?
+          // NW = this tile, NE = east, SW = south, SE = southeast
+          // 1 = floor present, 0 = not floor
+          const hasNW = floorTiles.has(wx + ',' + wy) ? 1 : 0;
+          const hasNE = floorTiles.has((wx + 1) + ',' + wy) ? 1 : 0;
+          const hasSW = floorTiles.has(wx + ',' + (wy + 1)) ? 1 : 0;
+          const hasSE = floorTiles.has((wx + 1) + ',' + (wy + 1)) ? 1 : 0;
+
+          // Corner mask: NW*8 + NE*4 + SW*2 + SE*1
+          // Wang index = 15 - cornerMask (floor is "upper biome", complement to match terrain convention)
+          const cornerMask = hasNW * 8 + hasNE * 4 + hasSW * 2 + hasSE * 1;
+          const wangIdx = 15 - cornerMask;
+
+          const img = _floorImgs[wangIdx] || _floorImgs[15];
+          if (!img) continue;
+
+          // Screen position: integer-snapped to match chunk grid
+          const sx = Math.round(wx * tilePx - camX);
+          const sy = Math.round(wy * tilePx - camY);
+
+          ctx.drawImage(img, sx, sy, Math.round(tilePx), Math.round(tilePx));
+        }
+      }
+    }
   }
 
-  // Claims are populated by discoverBuildings — no floor drawing in this pass.
-  // Floor rendering will be integrated into chunk compilation (same pipeline as terrain).
-  // For now, the overlay (key 9) shows building visuals; claims suppress F2+ sprites.
+  ctx.restore();
 }
