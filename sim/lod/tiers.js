@@ -2,6 +2,7 @@
 import { REGION, regionKeyOf, regionOrigin, aggregateOf, createAggregate, stepAggregateTo } from './aggregate.js';
 import { SPECIES, DAY } from '../time/metabolism.js';
 import { rand } from '../kernel/rng.js';
+import { ensureRegionBaseline } from '../world/spawn.js';
 
 const NEVER_DEMOTE = new Set(['player', 'group', 'corpse', 'aggregate']);
 const HALF = REGION / 2;
@@ -147,6 +148,7 @@ export class TierManager {
       for (let ry = cy - this.ringR; ry <= cy + this.ringR; ry++) {
         for (let rx = cx - this.ringR; rx <= cx + this.ringR; rx++) {
           const key = `${rx},${ry}`;
+          ensureRegionBaseline(this.kernel, key, tick);
           if (aggregateOf(this.kernel, key)) promoteRegion(this.kernel, key, tick);
           this.tiers.set(key, 'procedural');              // label refined below
         }

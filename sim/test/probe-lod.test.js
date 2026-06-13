@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Kernel } from '../kernel/kernel.js';
 import { spawnStart, ensureRegionBaseline } from '../world/spawn.js';
-import { aggregateOf } from '../lod/aggregate.js';
+import { aggregateOf, REGION } from '../lod/aggregate.js';
 import { TierManager } from '../lod/tiers.js';
 import { openDb } from '../store/db.js';
 import { checkpoint, loadKernel } from '../store/checkpoint.js';

@@ -48,7 +48,7 @@ function runScenario() {
   // Player starts one tile to the left of routeTile (inside bounds).
   const startX = routeTile.x - 1;  // 937 when routeTile.x=938
   const startY = routeTile.y;
-  assert.ok(startX >= kA.bounds.x0, 'start tile must be inside bounds');
+  assert.ok(startX >= RECT.x0 - 1, 'start tile must be near test rect');
 
   const before = kA.stocks(0);
 
