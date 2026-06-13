@@ -696,14 +696,16 @@ export class GLCompositor {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.sceneTex);
     gl.uniform1i(this.pUScene, 0);
+    // Full-resolution FBO: texel space = CSS pixels. uView maps vTL to CSS px.
+    // uArt: x,y = FBO content size (CSS px), z,w = alloc size (texels = CSS px).
     gl.uniform4f(this.pUArt, this._artW, this._artH, this._sceneAllocW, this._sceneAllocH);
-    gl.uniform2f(this.pUView, cssW / zoom, cssH / zoom);
-    gl.uniform2f(this.pUOff, fracX, fracY);
-    // 1:1 art-resolution output — no upscaling. uSharp > 1 ensures the
-    // sharp-bilinear math pins every sample to the texel center.
-    gl.uniform1f(this.pUSharp, 100);
+    gl.uniform2f(this.pUView, cssW, cssH);
+    gl.uniform2f(this.pUOff, 0, 0); // no sub-pixel offset at full resolution
+    gl.uniform1f(this.pUSharp, 100); // 1:1, no upscale — pin to texel center
     gl.uniform1f(this.pUCrt, this.crt ? 1 : 0);
-    gl.uniform1f(this.pUCrtK, zoom / 1.84);
+    // CRT scanlines: texel is in CSS px; one art row = zoom CSS px.
+    // Period = 1.84 art rows = 1.84*zoom CSS px → uCrtK = 1/(1.84*zoom).
+    gl.uniform1f(this.pUCrtK, 1 / (1.84 * zoom));
     if (this._waveOn) {
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, this.waveTex);

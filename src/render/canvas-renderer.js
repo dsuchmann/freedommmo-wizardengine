@@ -188,10 +188,9 @@ export class CanvasRenderer {
     this.glc = new GLCompositor();
     this.useGL = this.glc.ok; // A/B toggle with G key (main.js)
     if (this.glc.ok) {
-      // GL canvas is hidden — we blit its output onto the 2D canvas each
-      // frame. Chrome's GPU compositor blurs WebGL canvases on Windows;
-      // the 2D canvas composites crisply.
-      this.glc.canvas.style.cssText = 'display:none;';
+      this.glc.canvas.style.cssText = 'position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:0;pointer-events:none;';
+      canvas.style.position = 'relative';
+      canvas.style.zIndex = '1';
       canvas.parentNode.insertBefore(this.glc.canvas, canvas);
     }
     this.ctx.imageSmoothingEnabled = false;
@@ -241,15 +240,16 @@ export class CanvasRenderer {
     let glScene = false;
     let camXi = 0, camYi = 0, fracX = 0, fracY = 0;
     if (glOn) {
-      // 2-px margin covers the fractional offset + bilinear taps at edges
-      const artW = Math.ceil(w / camera.zoom) + 2;
-      const artH = Math.ceil(h / camera.zoom) + 2;
-      const camXa = player.x * ts - w / camera.zoom / 2;
-      const camYa = player.y * ts - h / camera.zoom / 2 + (camera.elevationOffsetY ?? 0) / camera.zoom;
-      camXi = Math.floor(camXa);
-      camYi = Math.floor(camYa);
-      fracX = camXa - camXi;
-      fracY = camYa - camYi;
+      // Full-resolution FBO: render terrain + sprites at CSS-pixel scale (same
+      // as the 2D path), then the present pass applies atmosphere/CRT as a 1:1
+      // post-process — no upscaling, no blur.
+      const artW = w;
+      const artH = h;
+      camXi = 0; // not used for full-res; camera handled at CSS-pixel level
+      camYi = 0;
+      fracX = 0;
+      fracY = 0;
+      ctx.clearRect(0, 0, w, h);
       glScene = this.glc.beginScene(sun.skyColor || '#18262b', artW, artH);
       if (!glScene) this.glc.beginFrame(sun.skyColor || '#18262b', w, h); // stage-2 fallback
     } else {
@@ -292,11 +292,8 @@ export class CanvasRenderer {
       const sx = baseSX + (cx - minCX) * chunkPx;
       const sy = baseSY + (cy - minCY) * chunkPx;
       if (!cached) continue;
-      if (glScene) {
-        // Art-space: chunk quads land on exact integer art pixels (zero seams)
-        const chunkArt = WORLD.chunkSize * ts;
-        this.glc.drawChunk(key, cached, cx * chunkArt - camXi, cy * chunkArt - camYi, chunkArt, chunkArt);
-      } else if (glOn) {
+      if (glScene || glOn) {
+        // CSS-pixel scale — full-resolution FBO, same coords as Stage 2
         this.glc.drawChunk(key, cached, sx, sy, chunkPx, chunkPx);
       } else {
         ctx.drawImage(cached, sx, sy, chunkPx, chunkPx);
@@ -377,27 +374,15 @@ export class CanvasRenderer {
       var pctx = this._playerCanvas.getContext('2d');
       pctx.clearRect(0, 0, PC, PC);
       pctx.imageSmoothingEnabled = false;
-      if (glScene) {
-        // Art-res scene: player composited at zoom 1 so its pixels share the
-        // world's pixel grid; CSS->art mapping is css/zoom + frac.
-        this.drawPlayerAt(PC / 2, PBASE, 1, player, pctx, true);
-        setField2PlayerGL({
-          canvas: this._playerCanvas,
-          pivotX: w / 2 / camera.zoom + fracX,
-          pivotY: _playerScreenY / camera.zoom + fracY + (PC - PBASE),
-          size: PC,
-          baseFrac: PBASE / PC, // fraction of canvas height above the feet line
-        });
-      } else {
-        this.drawPlayerAt(PC / 2, PBASE, camera.zoom, player, pctx, true);
-        setField2PlayerGL({
-          canvas: this._playerCanvas,
-          pivotX: w / 2,
-          pivotY: _playerScreenY + (PC - PBASE), // quad pivot is bottom-center
-          size: PC,
-          baseFrac: PBASE / PC, // fraction of canvas height above the feet line
-        });
-      }
+      // Always CSS-pixel coords — full-resolution FBO matches the 2D path.
+      this.drawPlayerAt(PC / 2, PBASE, camera.zoom, player, pctx, true);
+      setField2PlayerGL({
+        canvas: this._playerCanvas,
+        pivotX: w / 2,
+        pivotY: _playerScreenY + (PC - PBASE),
+        size: PC,
+        baseFrac: PBASE / PC,
+      });
     } else {
       setField2PlayerGL(null);
     }
@@ -406,10 +391,9 @@ export class CanvasRenderer {
     // In art-scene mode the grid is in art pixels (so all sprite instances
     // land on the same integer-snapped pixel grid as the terrain).
     const chunkArtPx = WORLD.chunkSize * ts;
-    const f2Grid = glScene
-      ? { baseSX: minCX * chunkArtPx - camXi, baseSY: minCY * chunkArtPx - camYi, minCX, minCY, chunkPx: chunkArtPx }
-      : { baseSX, baseSY, minCX, minCY, chunkPx };
-    drawField2Animations(ctx, chunkStore, player, camera, glScene ? w / camera.zoom : w, glScene ? h / camera.zoom : h, f2Grid, performance.now(), weather, sun, glOn ? this.glc : null);
+    // Always CSS-pixel grid — full-resolution FBO matches the 2D path's scale.
+    const f2Grid = { baseSX, baseSY, minCX, minCY, chunkPx };
+    drawField2Animations(ctx, chunkStore, player, camera, w, h, f2Grid, performance.now(), weather, sun, glOn ? this.glc : null);
 
     // Weather AFTER all sprites — in GL mode most F2 sprites live on the GL
     // canvas (below this one), so fog/precip drawn earlier would cover them
@@ -440,15 +424,17 @@ export class CanvasRenderer {
       // Stage 4: per-tile water wave field, soft-light blended in the present
       // shader (restores the 2D path's water shimmer, minus its chunk-edge
       // seams — the field spans the whole viewport).
-      const tile0X = Math.floor(camXi / ts);
-      const tile0Y = Math.floor(camYi / ts);
-      const tilesW = Math.ceil(this.glc._artW / ts) + 2;
-      const tilesH = Math.ceil(this.glc._artH / ts) + 2;
+      // Wave/atmosphere fields: tile origins in CSS-pixel texel space.
+      // camX/camY are CSS-pixel camera coords; tilePx = tileSize * zoom.
+      const tile0X = Math.floor(camX / tilePx);
+      const tile0Y = Math.floor(camY / tilePx);
+      const tilesW = Math.ceil(w / tilePx) + 4;
+      const tilesH = Math.ceil(h / tilePx) + 4;
       const field = buildWaveField(chunkStore, tile0X, tile0Y, tilesW, tilesH, performance.now() / 1000);
-      if (field) this.glc.setWaveField(field, tilesW, tilesH, camXi - tile0X * ts, camYi - tile0Y * ts, ts);
+      if (field) this.glc.setWaveField(field, tilesW, tilesH, camX - tile0X * tilePx, camY - tile0Y * tilePx, tilePx);
       else this.glc.clearWaveField();
       const afield = buildAtmoField(chunkStore, tile0X, tile0Y, tilesW, tilesH);
-      this.glc.setAtmoField(afield, tilesW, tilesH, camXi - tile0X * ts, camYi - tile0Y * ts, ts);
+      this.glc.setAtmoField(afield, tilesW, tilesH, camX - tile0X * tilePx, camY - tile0Y * tilePx, tilePx);
       const cloudsNow = weather ? weather.clouds() : { cover: 0, speed: 0, direction: 0 };
       if (!this._cloudOff) this._cloudOff = { x: 0, y: 0, t: performance.now() };
       const cdt = Math.min(0.1, (performance.now() - this._cloudOff.t) / 1000);
@@ -465,24 +451,14 @@ export class CanvasRenderer {
         cloudCover: cloudsNow.cover,
         cloudOffX: this._cloudOff.x,
         cloudOffY: this._cloudOff.y,
-        worldOrgX: camXi,
-        worldOrgY: camYi,
-        // player feet in world art px (camera is centered on the player, so
-        // this matches the texel+uWorldOrg space used by the present shader)
-        playerX: player.x * ts,
-        playerY: player.y * ts,
+        worldOrgX: camX,
+        worldOrgY: camY,
+        // player feet in world CSS px (texel space is CSS pixels now)
+        playerX: player.x * tilePx,
+        playerY: player.y * tilePx,
         playerLight: 1,
       });
       this.glc.presentScene(w, h, camera.zoom, fracX, fracY);
-      // Blit GL output onto the 2D canvas — bypasses Chrome's blurry WebGL
-      // canvas compositing. Both canvases are the same backing-store size
-      // (innerWidth × innerHeight at dpr 1), so this is a 1:1 pixel copy.
-      ctx.save();
-      ctx.resetTransform();
-      ctx.globalCompositeOperation = 'copy';
-      ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(this.glc.canvas, 0, 0);
-      ctx.restore();
     }
     if (glOn) this.glc.endFrame();
   }
