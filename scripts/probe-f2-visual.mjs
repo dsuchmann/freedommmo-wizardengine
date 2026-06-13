@@ -25,7 +25,18 @@ const res = await page.evaluate(async (objNames) => {
   window._dbgRenderer.useGL = false;
   window._lighting.paused = true;
   window._lighting.time = 0.5; // midday
-  await wait(800);
+  // Remove F4/F6 for the whole session: their random ambient sway gusts
+  // (192px trees especially) land differently between the baseline and
+  // reset captures and swamp the dReset gate. Constant across all captures,
+  // so the F2-only measurements stay valid.
+  {
+    const t = window._fieldTuning.tree();
+    t.f4 = { density: 0 };
+    t.f6 = { density: 0 };
+    window._fieldTuning.apply('f4');
+    window._fieldTuning.apply('f6');
+  }
+  await wait(1200);
 
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
@@ -60,8 +71,14 @@ const res = await page.evaluate(async (objNames) => {
   const q1 = capture(); await wait(1500);
   const motionOff = mad(q1, capture());
 
-  // Density / size legs against the quiet floor (anims stay off).
+  // Drift control: F2 ambient-life sway (~7% of sprites self-trigger every
+  // 6-15s and freeze on a different frame) moves pixels over multi-second
+  // spans even with wind_sway off. Measure that drift over the same span the
+  // edit legs take so the reset gate compares against real ambient noise,
+  // not the (much smaller) quiet-window motion floor.
   const base = capture();
+  await wait(6000);
+  const driftCtl = mad(base, capture());
 
   setF2(animsOffTree({ density: 0 }));
   await wait(1200);
@@ -76,7 +93,7 @@ const res = await page.evaluate(async (objNames) => {
   const rst = capture();
 
   return {
-    motionOn, motionOff,
+    motionOn, motionOff, driftCtl,
     dDensity0: mad(base, d0),
     dSize2: mad(base, s2),
     dD0vsS2: mad(d0, s2),
@@ -89,12 +106,14 @@ await browser.close();
 // 1. Anim gate: disabling wind_sway must visibly still the scene.
 // 2. density-0 (no F2) and size-2 (double F2) must each differ from the
 //    quiet baseline, and from each other, by well more than the floor.
-// 3. reset must return near the baseline.
-const floor = Math.max(res.motionOff * 3, 0.4);
+// 3. reset must return to within ambient-drift noise of the baseline
+//    (driftCtl x2 headroom), and stay well below the edit signals.
+const floor = Math.max(res.motionOff * 3, res.driftCtl * 1.5, 0.4);
 const gateOk = res.motionOff < res.motionOn * 0.5;
+const resetLimit = Math.max(res.driftCtl * 2, res.motionOff * 3, 0.8);
 const ok = gateOk
   && res.dDensity0 > floor && res.dSize2 > floor && res.dD0vsS2 > floor
-  && res.dReset < Math.max(res.motionOff * 3, 0.8);
-console.log(`anim gate: motion ${res.motionOn.toFixed(3)} -> ${res.motionOff.toFixed(3)} (${gateOk ? 'ok' : 'FAIL'}); floor=${floor.toFixed(3)}`);
+  && res.dReset < resetLimit && res.dReset < res.dDensity0 * 0.5;
+console.log(`anim gate: motion ${res.motionOn.toFixed(3)} -> ${res.motionOff.toFixed(3)} (${gateOk ? 'ok' : 'FAIL'}); floor=${floor.toFixed(3)} driftCtl=${res.driftCtl.toFixed(3)} resetLimit=${resetLimit.toFixed(3)}`);
 console.log(ok ? 'F2 VISUAL PROBE PASSED' : 'F2 VISUAL PROBE FAILED');
 process.exit(ok ? 0 : 1);
