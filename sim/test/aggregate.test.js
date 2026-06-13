@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Kernel } from '../kernel/kernel.js';
 import { REGION, regionKeyOf, regionOrigin, aggregateOf, createAggregate, AGG_STEP } from '../lod/aggregate.js';
-import { spawnWorld, spawnRegionAggregate } from '../world/spawn.js';
+import { spawnStart, spawnRegionAggregate, ensureRegionBaseline } from '../world/spawn.js';
 
 test('region helpers: 16-tile regions, stable keys', () => {
   assert.equal(REGION, 16);
@@ -38,11 +38,13 @@ test('spawnRegionAggregate is deterministic and mass matches expected densities'
   assert.ok(pa.grass.sumR > 0 && pa.grass.sumBody > 0 && pa.grass.ageSum > 0);
 });
 
-test('spawnWorld: individuals inside fullRect, aggregates outside, all baseline provenance', () => {
-  const k = new Kernel({ seed: 42, bounds: { x0: 0, y0: 0, w: 64, h: 32 } });
-  spawnWorld(k, { x0: 0, y0: 0, w: 64, h: 32 }, { x0: 0, y0: 0, w: 16, h: 16 });
+test('spawnStart: individuals inside start rect, ensureRegionBaseline aggregates outside', () => {
+  const k = new Kernel({ seed: 42 });
+  spawnStart(k, { x0: 0, y0: 0, w: 16, h: 16 });
+  ensureRegionBaseline(k, '1,0', 0);
+  ensureRegionBaseline(k, '3,1', 0);
   assert.equal(aggregateOf(k, '0,0'), undefined);    // start region is individual
-  assert.ok(aggregateOf(k, '1,0'));                  // everything else statistical
+  assert.ok(aggregateOf(k, '1,0'));                  // lazily materialized statistical
   assert.ok(aggregateOf(k, '3,1'));
   const individuals = [...k.graph.nodes.values()].filter(n => n.R != null);
   assert.ok(individuals.length > 0);
@@ -65,8 +67,8 @@ function flows(k) {
 }
 
 test('agg_step: conservation identity holds exactly over a statistical year', () => {
-  const k = new Kernel({ seed: 42, bounds: { x0: 0, y0: 0, w: 64, h: 64 } });
-  spawnWorld(k, { x0: 0, y0: 0, w: 64, h: 64 }, { x0: 0, y0: 0, w: 0, h: 0 });  // all statistical
+  const k = new Kernel({ seed: 42 });
+  for (let ry = 0; ry < 4; ry++) for (let rx = 0; rx < 4; rx++) ensureRegionBaseline(k, `${rx},${ry}`, 0);
   const start = k.stocks(0), f0 = flows(k);
   k.runTo(360 * 86400);
   const end = k.stocks(k.tick), f1 = flows(k);
@@ -76,8 +78,8 @@ test('agg_step: conservation identity holds exactly over a statistical year', ()
 });
 
 test('agg_step: populations persist without explosion or instant extinction', () => {
-  const k = new Kernel({ seed: 42, bounds: { x0: 0, y0: 0, w: 64, h: 64 } });
-  spawnWorld(k, { x0: 0, y0: 0, w: 64, h: 64 }, { x0: 0, y0: 0, w: 0, h: 0 });
+  const k = new Kernel({ seed: 42 });
+  for (let ry = 0; ry < 4; ry++) for (let rx = 0; rx < 4; rx++) ensureRegionBaseline(k, `${rx},${ry}`, 0);
   const count = kk => [...kk.graph.nodes.values()].filter(n => n.type === 'aggregate')
     .reduce((s, n) => s + (n.attrs.pops.grass?.count ?? 0), 0);
   const c0 = count(k);
@@ -91,8 +93,8 @@ test('agg_step: populations persist without explosion or instant extinction', ()
 
 test('agg_step is deterministic (two runs, identical pops)', () => {
   const run = () => {
-    const k = new Kernel({ seed: 99, bounds: { x0: 0, y0: 0, w: 32, h: 32 } });
-    spawnWorld(k, { x0: 0, y0: 0, w: 32, h: 32 }, { x0: 0, y0: 0, w: 0, h: 0 });
+    const k = new Kernel({ seed: 99 });
+    for (let ry = 0; ry < 2; ry++) for (let rx = 0; rx < 2; rx++) ensureRegionBaseline(k, `${rx},${ry}`, 0);
     k.runTo(200 * 86400);
     return JSON.stringify([...k.graph.nodes.values()].filter(n => n.type === 'aggregate')
       .sort((a, b) => a.id - b.id).map(n => n.attrs));

@@ -42,7 +42,7 @@ export function spawnMeadow(kernel, { x0, y0, w, h }) {
 /** Statistical baseline for one region: expected counts from the same DENSITY table,
  *  means from the same START ranges the individual spawner uses (spec §5.1 — baseline from seed).
  *  w/h: actual in-bounds tile extent (edge regions clipped by world bounds). */
-export function spawnRegionAggregate(kernel, rx, ry, w = REGION, h = REGION) {
+export function spawnRegionAggregate(kernel, rx, ry, w = REGION, h = REGION, tick = kernel.tick, causeEventId = null) {
   const pops = {};
   let salt = 0;
   for (const species of Object.keys(DENSITY)) {
@@ -60,22 +60,27 @@ export function spawnRegionAggregate(kernel, rx, ry, w = REGION, h = REGION) {
       detritusE: 0,
     };
   }
-  if (Object.keys(pops).length) createAggregate(kernel, `${rx},${ry}`, pops, kernel.tick, null);
+  if (Object.keys(pops).length) createAggregate(kernel, `${rx},${ry}`, pops, tick, causeEventId);
 }
 
-/** Whole-world baseline: individuals where the attention bubble starts, aggregates everywhere else. */
-export function spawnWorld(kernel, bounds, fullRect) {
+/** Deterministic baseline for one region, exactly once per world (frontier-tracked).
+ *  Pure f(seed, region): never reads sim state, so visit order cannot matter. */
+export function ensureRegionBaseline(kernel, regionKey, tick) {
+  if (kernel.touched.has(regionKey)) return;
+  kernel.touched.add(regionKey);
+  const [rx, ry] = regionKey.split(',').map(Number);
+  const evId = kernel.ledger.emit({ tick, type: 'genesis', attrs: { region: regionKey } });
+  spawnRegionAggregate(kernel, rx, ry, REGION, REGION, tick, evId);
+}
+
+/** Boot-time start area: full individuals in every region overlapping `rect`. */
+export function spawnStart(kernel, rect) {
   kernel.graph.boot(() => {
-    const r0x = Math.floor(bounds.x0 / REGION), r1x = Math.ceil((bounds.x0 + bounds.w) / REGION);
-    const r0y = Math.floor(bounds.y0 / REGION), r1y = Math.ceil((bounds.y0 + bounds.h) / REGION);
+    const r0x = Math.floor(rect.x0 / REGION), r1x = Math.ceil((rect.x0 + rect.w) / REGION);
+    const r0y = Math.floor(rect.y0 / REGION), r1y = Math.ceil((rect.y0 + rect.h) / REGION);
     for (let ry = r0y; ry < r1y; ry++) for (let rx = r0x; rx < r1x; rx++) {
-      const gx = rx * REGION, gy = ry * REGION;
-      // clip edge regions to the world bounds so baseline never spawns outside the world
-      const cw = Math.min(REGION, bounds.x0 + bounds.w - gx), ch = Math.min(REGION, bounds.y0 + bounds.h - gy);
-      const overlaps = gx < fullRect.x0 + fullRect.w && gx + REGION > fullRect.x0
-        && gy < fullRect.y0 + fullRect.h && gy + REGION > fullRect.y0;
-      if (overlaps) spawnMeadow(kernel, { x0: gx, y0: gy, w: cw, h: ch });
-      else spawnRegionAggregate(kernel, rx, ry, cw, ch);
+      kernel.touched.add(`${rx},${ry}`);
+      spawnMeadow(kernel, { x0: rx * REGION, y0: ry * REGION, w: REGION, h: REGION });
     }
   });
 }
