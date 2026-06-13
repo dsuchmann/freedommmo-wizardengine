@@ -1,0 +1,58 @@
+{
+  "id": "point_up",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "raise",
+          "amount": 0.95,
+          "ticks": 5
+        },
+        {
+          "part": "right_arm",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 5
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0.25,
+          "ticks": 5
+        }
+      ]
+    },
+    {
+      "part": "right_hand",
+      "action": "turn_out",
+      "amount": 0.35,
+      "ticks": 2
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 5
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_in",
+          "amount": 0,
+          "ticks": 5
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0,
+          "ticks": 5
+        }
+      ]
+    }
+  ]
+}

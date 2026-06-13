@@ -1,0 +1,104 @@
+{
+  "id": "give_thumbs_down",
+  "kind": "gesture",
+  "steps": [
+    {
+      "part": "right_arm",
+      "action": "raise",
+      "amount": 0.45,
+      "ticks": 4
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "extend",
+          "amount": 0.6,
+          "ticks": 4,
+          "zHint": "front"
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_in",
+          "amount": 0.85,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_hand",
+          "action": "lower",
+          "amount": 0.9,
+          "ticks": 3
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.25,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "lower",
+          "amount": 0.25,
+          "ticks": 2
+        },
+        {
+          "part": "right_hand",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "retract",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "right_hand",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 4
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_in",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+{
+  "id": "breathe_slowly",
+  "kind": "idle",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0.14,
+          "ticks": 6
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0.06,
+          "ticks": 6
+        },
+        {
+          "part": "both_shoulders",
+          "action": "raise",
+          "amount": 0.16,
+          "ticks": 6
+        },
+        {
+          "part": "both_arms",
+          "action": "open",
+          "amount": 0.08,
+          "ticks": 6
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.14,
+          "ticks": 6
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.06,
+          "ticks": 6
+        },
+        {
+          "part": "both_shoulders",
+          "action": "lower",
+          "amount": 0.16,
+          "ticks": 6
+        },
+        {
+          "part": "both_arms",
+          "action": "close",
+          "amount": 0.08,
+          "ticks": 6
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0.12,
+          "ticks": 6
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0.04,
+          "ticks": 6
+        },
+        {
+          "part": "both_shoulders",
+          "action": "raise",
+          "amount": 0.14,
+          "ticks": 6
+        },
+        {
+          "part": "both_arms",
+          "action": "open",
+          "amount": 0.06,
+          "ticks": 6
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.12,
+          "ticks": 6
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.04,
+          "ticks": 6
+        },
+        {
+          "part": "both_shoulders",
+          "action": "lower",
+          "amount": 0.14,
+          "ticks": 6
+        },
+        {
+          "part": "both_arms",
+          "action": "close",
+          "amount": 0.06,
+          "ticks": 6
+        }
+      ]
+    }
+  ]
+}

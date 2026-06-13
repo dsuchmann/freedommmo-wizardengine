@@ -1,0 +1,104 @@
+{
+  "id": "shrug_shoulders",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_shoulders",
+          "action": "raise",
+          "amount": 0.8,
+          "ticks": 4
+        },
+        {
+          "part": "both_arms",
+          "action": "open",
+          "amount": 0.25,
+          "ticks": 4
+        },
+        {
+          "part": "both_arms",
+          "action": "bend",
+          "amount": 0.35,
+          "ticks": 4
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.15,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "left_hand",
+          "action": "turn_out",
+          "amount": 0.45,
+          "ticks": 3
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_out",
+          "amount": 0.45,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_shoulders",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 4
+        },
+        {
+          "part": "both_arms",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "close",
+          "amount": 0,
+          "ticks": 3
+        },
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "left_hand",
+          "action": "turn_in",
+          "amount": 0,
+          "ticks": 3
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_in",
+          "amount": 0,
+          "ticks": 3
+        }
+      ]
+    }
+  ]
+}

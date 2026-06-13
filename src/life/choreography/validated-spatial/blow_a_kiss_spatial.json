@@ -1,0 +1,99 @@
+{
+  "id": "blow_a_kiss",
+  "kind": "gesture",
+  "steps": [
+    {
+      "part": "right_arm",
+      "action": "raise",
+      "amount": 0.55,
+      "ticks": 4
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "bend",
+          "amount": 0.75,
+          "ticks": 3
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_in",
+          "amount": 0.45,
+          "ticks": 3
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.15,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "part": "right_arm",
+      "action": "retract",
+      "amount": 0.45,
+      "ticks": 3
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "extend",
+          "amount": 0.85,
+          "ticks": 4,
+          "zHint": "front"
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_out",
+          "amount": 0.8,
+          "ticks": 4
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "retract",
+          "amount": 0.3,
+          "ticks": 3
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_in",
+          "amount": 0,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "right_arm",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 4
+        }
+      ]
+    }
+  ]
+}

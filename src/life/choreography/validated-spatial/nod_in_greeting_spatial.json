@@ -1,0 +1,30 @@
+{
+  "id": "nod_greeting",
+  "kind": "gesture",
+  "steps": [
+    {
+      "part": "head",
+      "action": "lower",
+      "amount": 0.35,
+      "ticks": 3
+    },
+    {
+      "part": "head",
+      "action": "raise",
+      "amount": 0,
+      "ticks": 3
+    },
+    {
+      "part": "head",
+      "action": "lower",
+      "amount": 0.25,
+      "ticks": 2
+    },
+    {
+      "part": "head",
+      "action": "raise",
+      "amount": 0,
+      "ticks": 3
+    }
+  ]
+}

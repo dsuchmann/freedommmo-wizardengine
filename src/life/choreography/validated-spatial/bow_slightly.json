@@ -1,0 +1,55 @@
+{
+  "id": "bow_slightly",
+  "kind": "gesture",
+  "variant": "spatial",
+  "root": {
+    "op": "sequence",
+    "children": [
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "spine": -10
+            },
+            "ticks": 4,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "spine": -10,
+              "head": -15
+            },
+            "ticks": 4,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "spine": 0,
+              "head": -15
+            },
+            "ticks": 4,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "spine": 0,
+              "head": 0
+            },
+            "ticks": 4,
+            "zHints": {}
+          }
+        ]
+      }
+    ]
+  }
+}

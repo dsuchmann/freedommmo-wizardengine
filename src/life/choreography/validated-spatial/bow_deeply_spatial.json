@@ -1,0 +1,98 @@
+{
+  "id": "deep_bow",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "close",
+          "amount": 0.25,
+          "ticks": 3
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.2,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.95,
+          "ticks": 6
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.75,
+          "ticks": 6
+        },
+        {
+          "part": "both_legs",
+          "action": "bend",
+          "amount": 0.25,
+          "ticks": 6
+        },
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 0.4,
+          "ticks": 6
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 6
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 6
+        },
+        {
+          "part": "both_legs",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 6
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "open",
+          "amount": 0,
+          "ticks": 3
+        },
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 3
+        }
+      ]
+    }
+  ]
+}

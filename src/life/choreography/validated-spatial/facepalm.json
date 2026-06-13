@@ -67,7 +67,7 @@
       {
         "op": "pose",
         "joints": {
-          "arm_u_r": -4,
+          "arm_u_r": 0,
           "hand_r": -45,
           "arm_f_r": 70,
           "head": -12

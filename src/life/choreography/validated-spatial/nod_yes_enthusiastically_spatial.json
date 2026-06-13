@@ -1,0 +1,64 @@
+{
+  "id": "enthusiastic_yes_nod",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.85,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.18,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "part": "head",
+      "action": "lower",
+      "amount": 0.75,
+      "ticks": 2
+    },
+    {
+      "part": "head",
+      "action": "raise",
+      "amount": 0,
+      "ticks": 2
+    },
+    {
+      "part": "head",
+      "action": "lower",
+      "amount": 0.6,
+      "ticks": 2
+    },
+    {
+      "part": "head",
+      "action": "raise",
+      "amount": 0,
+      "ticks": 3
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "id": "bow_slightly",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.35,
+          "ticks": 4
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.25,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 4
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    }
+  ]
+}

@@ -46,7 +46,7 @@
               "arm_u_l": -136,
               "arm_u_r": 102,
               "shin_l": 70,
-              "thigh_r": -7,
+              "thigh_r": 0,
               "shin_r": 0
             },
             "ticks": 4,
@@ -65,7 +65,7 @@
               "arm_u_l": -136,
               "arm_u_r": 102,
               "shin_l": 70,
-              "thigh_r": -7,
+              "thigh_r": 0,
               "shin_r": 0
             },
             "ticks": 4,
@@ -77,7 +77,7 @@
               "arm_u_l": -136,
               "arm_u_r": 102,
               "shin_l": 70,
-              "thigh_r": -7,
+              "thigh_r": 0,
               "shin_r": 0
             },
             "ticks": 4,
@@ -94,7 +94,7 @@
               "arm_u_l": -136,
               "arm_u_r": 102,
               "shin_l": 70,
-              "thigh_r": -7,
+              "thigh_r": 0,
               "shin_r": 0
             },
             "ticks": 4,
@@ -106,7 +106,7 @@
               "arm_u_l": -136,
               "arm_u_r": 102,
               "shin_l": 70,
-              "thigh_r": -7,
+              "thigh_r": 0,
               "shin_r": 0
             },
             "ticks": 4,
@@ -123,7 +123,7 @@
               "arm_u_l": -136,
               "arm_u_r": 102,
               "shin_l": 70,
-              "thigh_r": -7,
+              "thigh_r": 0,
               "shin_r": 0,
               "spine": 21
             },
@@ -136,7 +136,7 @@
               "arm_u_l": -136,
               "arm_u_r": 102,
               "shin_l": 70,
-              "thigh_r": -7,
+              "thigh_r": 0,
               "shin_r": 0,
               "spine": 21,
               "head": 30
@@ -155,7 +155,7 @@
               "arm_u_l": -136,
               "arm_u_r": 102,
               "shin_l": 0,
-              "thigh_r": -7,
+              "thigh_r": 0,
               "shin_r": 0,
               "spine": 21,
               "head": 30

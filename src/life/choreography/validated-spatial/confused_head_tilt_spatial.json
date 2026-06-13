@@ -1,0 +1,64 @@
+{
+  "id": "confused_head_tilt",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.28,
+          "ticks": 4
+        },
+        {
+          "part": "left_shoulder",
+          "action": "raise",
+          "amount": 0.35,
+          "ticks": 4
+        },
+        {
+          "part": "right_shoulder",
+          "action": "lower",
+          "amount": 0.15,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "part": "head",
+      "action": "raise",
+      "amount": 0.12,
+      "ticks": 3
+    },
+    {
+      "part": "head",
+      "action": "lower",
+      "amount": 0.22,
+      "ticks": 3
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 4
+        },
+        {
+          "part": "left_shoulder",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "right_shoulder",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    }
+  ]
+}

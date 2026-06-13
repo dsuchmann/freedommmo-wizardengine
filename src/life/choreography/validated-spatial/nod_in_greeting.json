@@ -1,0 +1,42 @@
+{
+  "id": "nod_greeting",
+  "kind": "gesture",
+  "variant": "spatial",
+  "root": {
+    "op": "sequence",
+    "children": [
+      {
+        "op": "pose",
+        "joints": {
+          "head": -21
+        },
+        "ticks": 3,
+        "zHints": {}
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "head": 0
+        },
+        "ticks": 3,
+        "zHints": {}
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "head": -15
+        },
+        "ticks": 2,
+        "zHints": {}
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "head": 0
+        },
+        "ticks": 3,
+        "zHints": {}
+      }
+    ]
+  }
+}
