@@ -2,13 +2,13 @@
 // Pure functions imported client-side — same deterministic result as the sim.
 // Toggle: key 9. Click a settlement to inspect its history.
 
-import { layoutSettlement } from '../../sim/world/buildings/layout.js';
+import { layoutSettlement, TIER_NAMES } from '../../sim/world/buildings/layout.js';
 import { computeTerritory } from '../../sim/world/territory.js';
 import { MACRO } from '../../sim/world/genesis.js';
 import { REGION } from '../../sim/lod/aggregate.js';
 import { worldEpochs } from '../../sim/chronicle/epochs.js';
 import { macroCellPeoples } from '../../sim/chronicle/races.js';
-import { regionChronicle, settlementState } from '../../sim/chronicle/chronicle.js';
+import { regionChronicle, settlementState, chronicleTier } from '../../sim/chronicle/chronicle.js';
 import { classifyBiome } from '../world/biomes.js';
 import { rand } from '../../sim/kernel/rng.js';
 
@@ -48,11 +48,8 @@ function discoverSettlements(camX, camY, w, h, tilePx) {
       const foundingEv = chronicle.find(e => e.type === 'ancient_founding' || e.type === 'founding');
       const race = foundingEv?.raceId ?? peoples[0]?.raceId ?? 'human';
       const chronicleAge = chronicle.length > 0 ? Math.max(...chronicle.map(e => e.age ?? 0)) : 0;
-      const hasFlourishing = chronicle.some(e => e.type === 'flourishing');
-      const hasTrade = chronicle.some(e => e.type === 'trade_route');
       const tier = state === 'ruined' ? 'ruins'
-        : (chronicleAge >= 4 && hasFlourishing && hasTrade) ? 'city'
-        : (chronicleAge >= 3 && hasFlourishing) ? 'town' : 'village';
+        : chronicleTier(chronicle, WORLD_SEED, mk);
 
       settlements.push({ x, y, tier, race, state, chronicleAge, biome: biome.id });
     }
@@ -113,6 +110,8 @@ const seenEvents = [];
 let lastEventsRef = null;
 let inspectResult = null;
 let inspectPending = false;
+let _teleportButtons = [];
+let _teleportHover = -1;
 
 export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
   if (!enabled) return;
@@ -359,6 +358,52 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
     ctx.fillText(`[${e.tick}] ${e.type}`, w - 14, 38 + 16 * i);
   });
 
+  // ── Teleport panel (left side) ───────────────────────────────────
+  const TELEPORT_W = 180, TELEPORT_BTN_H = 22, TELEPORT_PAD = 4;
+  const teleportPanelH = TIER_NAMES.length * (TELEPORT_BTN_H + TELEPORT_PAD) + 30;
+  const teleportY0 = 8;
+  ctx.fillStyle = 'rgba(0,0,0,0.75)';
+  ctx.fillRect(8, teleportY0, TELEPORT_W, teleportPanelH);
+  ctx.font = 'bold 11px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#9ad';
+  ctx.fillText('TELEPORT TO TIER', 14, teleportY0 + 16);
+
+  // Count visible settlements per tier
+  const tierCounts = {};
+  for (const s of allSettlements) {
+    if (s.state !== 'ruined') tierCounts[s.tier] = (tierCounts[s.tier] ?? 0) + 1;
+  }
+
+  // Store button rects for click detection
+  _teleportButtons = [];
+  for (let i = 0; i < TIER_NAMES.length; i++) {
+    const name = TIER_NAMES[i];
+    const by = teleportY0 + 24 + i * (TELEPORT_BTN_H + TELEPORT_PAD);
+    const count = tierCounts[name] ?? 0;
+    const isHover = _teleportHover === i;
+
+    // Button background
+    ctx.fillStyle = isHover ? 'rgba(100,140,200,0.5)' : 'rgba(40,50,60,0.7)';
+    ctx.fillRect(12, by, TELEPORT_W - 8, TELEPORT_BTN_H);
+
+    // Tier number + name
+    ctx.font = '11px monospace';
+    ctx.fillStyle = count > 0 ? '#eee' : '#666';
+    const label = `${(i + 1).toString().padStart(2)} ${name.replace('_', ' ')}`;
+    ctx.fillText(label, 16, by + 15);
+
+    // Count badge
+    if (count > 0) {
+      ctx.fillStyle = '#7bf';
+      ctx.textAlign = 'right';
+      ctx.fillText(`${count}`, TELEPORT_W - 2, by + 15);
+      ctx.textAlign = 'left';
+    }
+
+    _teleportButtons.push({ x: 12, y: by, w: TELEPORT_W - 8, h: TELEPORT_BTN_H, tier: name });
+  }
+
   // ── Inspect panel (bottom-left) ───────────────────────────────────
   if (inspectResult) {
     const panelW = 440, lineH = 15;
@@ -406,6 +451,43 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
 /** Store last draw state for click detection. */
 let _lastDrawState = { camX: 0, camY: 0, tilePx: 32, settlements: [] };
 
+/** Scan outward from current camera position to find a settlement of the given tier.
+ *  Evaluates macro-cells in expanding rings (up to 1000 cells out). */
+function findSettlementOfTier(targetTier, camX, camY, tilePx) {
+  const epochs = worldEpochs(WORLD_SEED);
+  const centerTileX = Math.floor(camX / tilePx + 500 / tilePx);
+  const centerTileY = Math.floor(camY / tilePx + 400 / tilePx);
+  const centerMx = Math.floor(centerTileX / MACRO_TILES);
+  const centerMy = Math.floor(centerTileY / MACRO_TILES);
+
+  for (let ring = 0; ring <= 1000; ring++) {
+    // Scan all cells at Manhattan distance `ring` from center
+    for (let dy = -ring; dy <= ring; dy++) {
+      for (let dx = -ring; dx <= ring; dx++) {
+        if (Math.abs(dx) + Math.abs(dy) !== ring) continue; // only the ring perimeter
+        const mx = centerMx + dx, my = centerMy + dy;
+        const mk = `${mx},${my}`;
+        const cx = mx * MACRO_TILES + Math.floor(MACRO_TILES / 2);
+        const cy = my * MACRO_TILES + Math.floor(MACRO_TILES / 2);
+        const biome = classifyBiome(cx, cy);
+        const peoples = macroCellPeoples(WORLD_SEED, mk, epochs, biome);
+        const chronicle = regionChronicle(WORLD_SEED, mk, peoples, biome.climate);
+        const state = settlementState(chronicle);
+        if (state === 'wilderness' || state === 'ruined') continue;
+
+        const tier = chronicleTier(chronicle, WORLD_SEED, mk);
+        if (tier !== targetTier) continue;
+
+        // Found it - compute site position
+        const ox = Math.floor((rand(WORLD_SEED, mx * 7 + 1, my * 13 + 2) - 0.5) * MACRO_TILES * 0.5);
+        const oy = Math.floor((rand(WORLD_SEED, mx * 11 + 3, my * 17 + 4) - 0.5) * MACRO_TILES * 0.5);
+        return { x: cx + ox, y: cy + oy };
+      }
+    }
+  }
+  return null;
+}
+
 export function initSimDebugOverlay() {
   window.addEventListener('keydown', (e) => {
     if (e.key !== '9' || e.ctrlKey || e.altKey || e.metaKey) return;
@@ -413,8 +495,35 @@ export function initSimDebugOverlay() {
     enabled = !enabled;
     if (!enabled) inspectResult = null;
   });
+  window.addEventListener('mousemove', (e) => {
+    if (!enabled) return;
+    _teleportHover = -1;
+    for (let i = 0; i < _teleportButtons.length; i++) {
+      const b = _teleportButtons[i];
+      if (e.clientX >= b.x && e.clientX <= b.x + b.w &&
+          e.clientY >= b.y && e.clientY <= b.y + b.h) {
+        _teleportHover = i;
+        break;
+      }
+    }
+  });
   window.addEventListener('click', (e) => {
     if (!enabled) return;
+
+    // Check teleport panel clicks first
+    for (const b of _teleportButtons) {
+      if (e.clientX >= b.x && e.clientX <= b.x + b.w &&
+          e.clientY >= b.y && e.clientY <= b.y + b.h) {
+        const { camX, camY, tilePx } = _lastDrawState;
+        const target = findSettlementOfTier(b.tier, camX, camY, tilePx);
+        if (target) {
+          window.location.href = `/?x=${target.x}&y=${target.y}`;
+        }
+        return; // consumed by teleport panel
+      }
+    }
+
+    // Settlement inspect click
     const sim = window._simClient;
     if (!sim?.inspect) return;
     const { camX, camY, tilePx, settlements } = _lastDrawState;
@@ -423,8 +532,8 @@ export function initSimDebugOverlay() {
     let best = null, bestDist = Infinity;
     for (const s of settlements) {
       const dx = clickTileX - s.x, dy = clickTileY - s.y;
-      const d = Math.abs(dx) + Math.abs(dy);
-      if (d < bestDist && d < 20) { bestDist = d; best = s; }
+      const d2 = Math.abs(dx) + Math.abs(dy);
+      if (d2 < bestDist && d2 < 20) { bestDist = d2; best = s; }
     }
     if (best) {
       inspectPending = true;
