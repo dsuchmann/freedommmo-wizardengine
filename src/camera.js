@@ -5,17 +5,22 @@ export class Camera {
     this.elevationOffsetY = 0;
     window.addEventListener('wheel', event => {
       event.preventDefault();
-      // Multiplicative zoom — feels natural at any scale, fine-grained
-      const factor = event.deltaY > 0 ? 0.95 : 1.0 / 0.95;
+      // Use actual deltaY magnitude — smooth on trackpads, proportional on mice
+      // deltaMode 0 = pixels, 1 = lines, 2 = pages
+      let pixels = event.deltaY;
+      if (event.deltaMode === 1) pixels *= 16;  // lines → pixels
+      if (event.deltaMode === 2) pixels *= 100;  // pages → pixels
+      // Multiplicative: each pixel of scroll = tiny zoom factor
+      const factor = Math.pow(0.998, pixels);
       this.targetZoom = clamp(this.targetZoom * factor, 0.32, 2.4);
     }, { passive: false });
   }
 
   update(dt) {
-    // Smooth exponential interpolation — fast response, no overshoot
-    const t = 1 - Math.pow(0.0001, dt); // ~93% per frame at 60fps
+    // Smooth exponential chase — converges quickly, never overshoots
+    const t = 1 - Math.pow(0.00001, dt);
     this.zoom += (this.targetZoom - this.zoom) * t;
-    if (Math.abs(this.targetZoom - this.zoom) < 0.001) this.zoom = this.targetZoom;
+    if (Math.abs(this.targetZoom - this.zoom) < 0.0005) this.zoom = this.targetZoom;
     this.elevationOffsetY = 0;
   }
 }
