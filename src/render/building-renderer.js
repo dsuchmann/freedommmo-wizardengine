@@ -13,7 +13,6 @@ import { classifyBiome } from '../world/biomes.js';
 import { rand } from '../../sim/kernel/rng.js';
 import { generateSettlementName } from '../../sim/world/buildings/specializations.js';
 import { buildingClaimTiles } from '../world/decoration-claims.js';
-import { WORLD } from '../core/constants.js';
 
 const MACRO_TILES = MACRO * REGION;
 const WORLD_SEED = 42;
@@ -22,12 +21,16 @@ const MAX_BUILDINGS = 80;
 const CLAIM_MARGIN = 2;  // suppress decorations N tiles around buildings
 
 // ── Floor tile images ──────────────────────────────────────────────
-// Wang tiles for building floors. Index 15 = solid interior (all corners same).
-// Indices 1-14 = edge variants. Corner mask: NW*8 + NE*4 + SW*2 + SE*1 where
-// 1 = floor tile, 0 = not floor. Wang index = 15 - cornerMask (complement).
+// Wang tiles for building floors.  PixelLab convention:
+//   wang index = NW*8 + NE*4 + SW*2 + SE*1  where 1 = "upper" (floor).
+//   Index 15 = all floor = solid interior.
+//   Index 0  = no floor  = terrain only (not drawn).
+// Files: _wang_1 through _wang_14 = numbered; _wang_0 and _wang_15 are UUID files.
 const FLOOR_BASE = '/assets/pixelab/buildings/floors/wood_plank/';
-const FLOOR_SOLID_URL = FLOOR_BASE + 'wood_plank__wang_b0d15a082a4142c7a767d58d1a875b3c.png';
-const _floorImgs = new Array(16);  // [0..15] indexed by wang mask
+// From metadata: wang_0 = b0d15a08... (all lower); wang_15 = 17ed5efd... (all upper/floor)
+const FLOOR_WANG0_URL  = FLOOR_BASE + 'wood_plank__wang_b0d15a082a4142c7a767d58d1a875b3c.png';
+const FLOOR_WANG15_URL = FLOOR_BASE + 'wood_plank__wang_17ed5efd90dd4c18a9546f4452866ab9.png';
+const _floorImgs = new Array(16);  // [0..15] indexed by wang index
 let _floorLoadState = 0;  // 0=not started, 1=loading, 2=ready
 
 function ensureFloorImages() {
@@ -43,13 +46,19 @@ function ensureFloorImages() {
     img.onload = () => { _floorImgs[i] = img; loaded(); };
     img.onerror = () => loaded();
   }
-  // Index 0 = all corners are non-floor (shouldn't draw, but load solid as fallback)
-  // Index 15 = all corners are floor = solid interior
+  // Index 0 = all terrain (both textures are identical wood, so this is just the
+  // decorative-edge variant for "no floor corners"). Not drawn, but loaded as fallback.
   pending++;
-  const solid = new Image();
-  solid.src = FLOOR_SOLID_URL;
-  solid.onload = () => { _floorImgs[15] = solid; _floorImgs[0] = solid; loaded(); };
-  solid.onerror = () => loaded();
+  const wang0 = new Image();
+  wang0.src = FLOOR_WANG0_URL;
+  wang0.onload = () => { _floorImgs[0] = wang0; loaded(); };
+  wang0.onerror = () => loaded();
+  // Index 15 = all floor = solid interior
+  pending++;
+  const wang15 = new Image();
+  wang15.src = FLOOR_WANG15_URL;
+  wang15.onload = () => { _floorImgs[15] = wang15; loaded(); };
+  wang15.onerror = () => loaded();
 }
 
 // ── Settlement/building cache ──────────────────────────────────────
@@ -178,18 +187,19 @@ export function drawBuildingFloors(ctx, camX, camY, tilePx, w, h) {
           // Skip tiles outside the viewport
           if (wx < vtx0 || wx > vtx1 || wy < vty0 || wy > vty1) continue;
 
-          // Wang corner mask: which of the 4 corners (2x2 cell) are floor tiles?
+          // Wang corner mask for the 2x2 cell centered on this tile's SE corner.
+          // Each corner: is the adjacent tile also floor?
           // NW = this tile, NE = east, SW = south, SE = southeast
-          // 1 = floor present, 0 = not floor
           const hasNW = floorTiles.has(wx + ',' + wy) ? 1 : 0;
           const hasNE = floorTiles.has((wx + 1) + ',' + wy) ? 1 : 0;
           const hasSW = floorTiles.has(wx + ',' + (wy + 1)) ? 1 : 0;
           const hasSE = floorTiles.has((wx + 1) + ',' + (wy + 1)) ? 1 : 0;
 
-          // Corner mask: NW*8 + NE*4 + SW*2 + SE*1
-          // Wang index = 15 - cornerMask (floor is "upper biome", complement to match terrain convention)
-          const cornerMask = hasNW * 8 + hasNE * 4 + hasSW * 2 + hasSE * 1;
-          const wangIdx = 15 - cornerMask;
+          // PixelLab wang index = NW*8 + NE*4 + SW*2 + SE*1, where 1 = "upper" = floor.
+          // Index 15 = all corners floor = solid interior (wang_15 / UUID file).
+          // Index 0  = no corners floor = terrain only (wang_0 / UUID file, not drawn).
+          const wangIdx = hasNW * 8 + hasNE * 4 + hasSW * 2 + hasSE * 1;
+          if (wangIdx === 0) continue;  // no floor corners visible, skip
 
           const img = _floorImgs[wangIdx] || _floorImgs[15];
           if (!img) continue;
