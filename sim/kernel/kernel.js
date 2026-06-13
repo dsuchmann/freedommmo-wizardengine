@@ -11,6 +11,7 @@ import { registerRoads } from '../world/roads.js';
 import { registerCrossings } from '../world/crossings.js';
 import { registerBuildings } from '../world/buildings.js';
 import { registerGrowth } from '../society/growth.js';
+import { registerInstinct } from '../life/instinct.js';
 
 export class Kernel {
   constructor({ seed, phi = 4, bounds = null }) {
@@ -30,6 +31,7 @@ export class Kernel {
     registerCrossings(this);
     registerBuildings(this);
     registerGrowth(this);
+    registerInstinct(this);
   }
 
   on(kind, fn) { this.handlers.set(kind, fn); }

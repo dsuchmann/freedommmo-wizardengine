@@ -3,6 +3,40 @@ import { rand, randRange } from '../kernel/rng.js';
 
 const GONE_THRESHOLD = 0.5;   // tu — corpse below this is gone
 
+/** Bite the nearest living flora within `radius` (graze mechanics, spec §1.5 harvest channel).
+ *  Deterministic: nearest by squared distance, ties by lowest id. Emits a 'graze' event.
+ *  Returns true if a bite happened. Used by the legacy graze handler (humanoids) AND
+ *  the L4 instinct forage rule — one mechanics, two schedulers.
+ *  NOTE: the prey filter excludes instinct-bearing species (fauna don't graze fauna;
+ *  predation is the hunt rule). Humanoid foragers therefore can't bite fauna either. */
+export function forageBite(k, node, { bite, radius }, tick) {
+  const prey = k.graph.nodesNear(node.x, node.y, radius)
+    .filter(n => n.R != null && SPECIES[n.attrs.species]
+      && !SPECIES[n.attrs.species].graze && !SPECIES[n.attrs.species].instinct && n.id !== node.id)
+    .sort((a, b) => {
+      const da = (a.x - node.x) ** 2 + (a.y - node.y) ** 2;
+      const db = (b.x - node.x) ** 2 + (b.y - node.y) ** 2;
+      return da - db || a.id - b.id;
+    })[0];
+  if (!prey) return false;
+  k.closeSegment(prey, tick);
+  if (prey.R < 0) {                       // scheduler-ceil overdraft correction
+    k.ledger.count('burned', prey.R);
+    prey.R = 0;
+  }
+  const amount = Math.min(bite, prey.attrs.body + prey.R);
+  const fromBody = Math.min(amount, prey.attrs.body);
+  prey.attrs.body -= fromBody;
+  prey.R -= (amount - fromBody);
+  const gained = transfer(amount, 'harvest', k.ledger);
+  node.R += gained;
+  const evId = k.ledger.emit({ tick, type: 'graze', actor: node.id, targets: [prey.id], magnitude: amount });
+  if (prey.attrs.body + prey.R <= 1e-9) die(k, prey, tick, evId);
+  else k.reRateTileOf(prey.id, tick);
+  k.reRateTileOf(node.id, tick);
+  return true;
+}
+
 export function registerLifecycle(kernel) {
   kernel._scheduleLifecycle = (node, tick) => {
     const sp = SPECIES[node.attrs.species];
@@ -22,6 +56,9 @@ export function registerLifecycle(kernel) {
     }
     if (sp.graze) {
       kernel.scheduler.schedule(tick + sp.graze.every, node.id, 'graze', -1);
+    }
+    if (sp.instinct) {
+      kernel.scheduler.schedule(tick + sp.instinct.every, node.id, 'instinct', -1);
     }
   };
 
@@ -87,37 +124,7 @@ export function registerLifecycle(kernel) {
   kernel.on('graze', (k, node, ev) => {
     const sp = SPECIES[node.attrs.species];
     k.closeSegment(node, ev.tick);
-    // deterministic target: nearest living flora within radius, ties by lowest id
-    const prey = k.graph.nodesNear(node.x, node.y, sp.graze.radius)
-      .filter(n => n.R != null && SPECIES[n.attrs.species] && !SPECIES[n.attrs.species].graze && n.id !== node.id)
-      .sort((a, b) => {
-        const da = (a.x - node.x) ** 2 + (a.y - node.y) ** 2;
-        const db = (b.x - node.x) ** 2 + (b.y - node.y) ** 2;
-        return da - db || a.id - b.id;
-      })[0];
-    if (prey) {
-      k.closeSegment(prey, ev.tick);
-      // Correct any scheduler-ceil overdraft before computing bite (prevents phantom time minting).
-      if (prey.R < 0) {
-        k.ledger.count('burned', prey.R);   // prey.R is negative — decrements burned
-        prey.R = 0;
-      }
-      const bite = Math.min(sp.graze.bite, prey.attrs.body + prey.R);
-      const fromBody = Math.min(bite, prey.attrs.body);
-      prey.attrs.body -= fromBody;
-      prey.R -= (bite - fromBody);
-      const gained = transfer(bite, 'harvest', k.ledger);
-      node.R += gained;
-      const evId = k.ledger.emit({
-        tick: ev.tick, type: 'graze', actor: node.id, targets: [prey.id], magnitude: bite,
-      });
-      if (prey.attrs.body + prey.R <= 1e-9) {
-        die(k, prey, ev.tick, evId);
-      } else {
-        k.reRateTileOf(prey.id, ev.tick);
-      }
-      k.reRateTileOf(node.id, ev.tick);
-    }
+    forageBite(k, node, sp.graze, ev.tick);
     k.scheduler.schedule(ev.tick + sp.graze.every, node.id, 'graze', -1);
   });
 
