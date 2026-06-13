@@ -27,10 +27,15 @@ test('coalesceDirty: unsorted input is handled', () => {
 
 test('lowerBound: finds first index with value >= needle', () => {
   const a = new Float32Array([1, 3, 3, 7, 9]);
-  assert.equal(lowerBound(a, 5, 0), 3);
+  assert.equal(lowerBound(a, 5, null), 3);
   assert.equal(lowerBound(a, 3, 5), 1);
   assert.equal(lowerBound(a, 0, 5), 0);
   assert.equal(lowerBound(a, 99, 5), 5);
+});
+
+test('lowerBound: len=0 means empty pool (returns 0)', () => {
+  const a = new Float32Array([1, 3, 3, 7, 9]);
+  assert.equal(lowerBound(a, 5, 0), 0);
 });
 
 test('lowerBound: respects explicit length (ignores tail garbage)', () => {

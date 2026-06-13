@@ -1,9 +1,9 @@
 // src/render/sprite-pool-util.js — pure helpers for the GL persistent
 // sprite pool. No DOM/GL dependencies so node --test covers them.
 
-// Merge a list of dirty instance indices into upload ranges. Indices closer
-// than `gap` apart merge into one range — a few large bufferSubData calls
-// beat many tiny ones on every driver we target.
+// Merge a list of dirty instance indices into upload ranges. Indices `gap`
+// or closer apart merge into one range (inclusive) — a few large bufferSubData
+// calls beat many tiny ones on every driver we target.
 export function coalesceDirty(indices, gap) {
   if (indices.length === 0) return [];
   var sorted = Array.from(indices).sort(function (a, b) { return a - b; });
@@ -21,11 +21,11 @@ export function coalesceDirty(indices, gap) {
 }
 
 // First index in sortedArr[0..len) with value >= needle (binary search).
-// len of null/undefined/0 means "use the full array length" (callers pass
-// the live instance count, which is only 0 when the pool is empty).
+// len of null/undefined means "use the full array length"; a real 0 means
+// empty range (callers pass the live instance count, which is 0 for empty pool).
 // Used to find the player's insertion point in the y-sorted pool.
 export function lowerBound(sortedArr, needle, len) {
-  var lo = 0, hi = (len == null || len === 0) ? sortedArr.length : len;
+  var lo = 0, hi = (len == null) ? sortedArr.length : len;
   while (lo < hi) {
     var mid = (lo + hi) >> 1;
     if (sortedArr[mid] < needle) lo = mid + 1; else hi = mid;
