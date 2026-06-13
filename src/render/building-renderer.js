@@ -30,7 +30,7 @@ function ensureFloorImages() {
   _floorReady = true;  // only try once
   // Solid interior tile per material (wang_15 = all corners upper = full floor)
   const mats = {
-    wood_plank:   'wood_plank__wang_17ed5efd90dd4c18a9546f4452866ab9.png',
+    wood_plank:   'wood_plank__wang_7.png',
     stone_slab:   'stone_slab__wang_d1337f95477b4d7a918d5a5556af7504.png',
     marble:       'marble_white__wang_603af85846c7441796099ea053ce4355.png',
     packed_dirt:  'packed_dirt__wang_f5dd54875c3346fcaf92c1495aacd7ad.png',
