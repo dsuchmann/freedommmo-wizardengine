@@ -7,7 +7,8 @@
 import { rand, mix } from '../kernel/rng.js';
 
 // Base influence budget by tier (higher = larger territory).
-const TIER_INFLUENCE = { village: 30, town: 50, city: 80 };
+// Must exceed tier radius * avg noise cost (~1.25) to cover settlement footprint.
+const TIER_INFLUENCE = { village: 40, town: 70, city: 110 };
 
 // ── Noise-based terrain cost ─────────────────────────────────────────
 

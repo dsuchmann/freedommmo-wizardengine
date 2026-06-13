@@ -245,3 +245,34 @@ test('layoutSettlement queryTile identifies road tiles', () => {
   }
   assert.ok(foundRoad, 'at least one spine waypoint is a road tile');
 });
+
+// ── Task 6: Integration -- layout + territory ────────────────────────
+import { computeTerritory } from '../world/territory.js';
+
+test('integration: layout fits within territory', () => {
+  const site = { x: 500, y: 500 };
+  const layout = layoutSettlement(42, site, 'town', 'human', 'grassland');
+  const territory = computeTerritory(42, site, 'town');
+  // Every building should be inside the territory
+  let insideCount = 0;
+  for (const b of layout.buildings) {
+    if (territory.tiles.has(`${b.x},${b.y}`)) insideCount++;
+  }
+  const pct = insideCount / layout.buildings.length;
+  assert.ok(pct >= 0.7, `only ${(pct * 100).toFixed(0)}% of buildings inside territory`);
+});
+
+test('integration: territory boundary is not a rectangle', () => {
+  const territory = computeTerritory(42, { x: 500, y: 500 }, 'town');
+  assert.ok(territory.boundary.size > 0, 'has boundary tiles');
+  // Boundary should not be a perfect rectangle border
+  const bPoints = [...territory.boundary].map(k => k.split(',').map(Number));
+  const xs = bPoints.map(p => p[0]);
+  const ys = bPoints.map(p => p[1]);
+  const uniqueXs = new Set(xs).size;
+  const uniqueYs = new Set(ys).size;
+  // A rectangle boundary has only 2 unique x values (left, right edges) for horizontal runs
+  // and 2 unique y values for vertical runs. Organic shape has many more.
+  assert.ok(uniqueXs > 4, `boundary has only ${uniqueXs} unique x coords -- too rectangular`);
+  assert.ok(uniqueYs > 4, `boundary has only ${uniqueYs} unique y coords -- too rectangular`);
+});
