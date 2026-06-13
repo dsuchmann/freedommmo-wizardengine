@@ -5,8 +5,8 @@ import { rand, mix } from '../kernel/rng.js';
 import { classifyBiome } from '../../src/world/biomes.js';
 import { REGION } from '../lod/aggregate.js';
 
-// Inline: MACRO=4 (same as genesis.js) to avoid circular import.
-const MACRO = 4;
+// Must match genesis.js MACRO value.
+const MACRO = 8;
 const MACRO_TILES = MACRO * REGION;
 
 export const RACES = {
@@ -60,6 +60,15 @@ export const RACES = {
       { biome: 'arctic', weight: 0.7 },
     ],
   },
+  thalori: {
+    name: 'Thalori',
+    desc: 'Coastal seafarers with salt-weathered skin and deep knowledge of tides.',
+    affinities: [
+      { biome: 'beach', weight: 1.0 },
+      { biome: 'shallow_water', weight: 0.7 },
+      { biome: 'ocean', weight: 0.3 },
+    ],
+  },
   human: {
     name: 'Human',
     desc: 'Adaptable and ambitious, at home in any land that can grow food.',
@@ -74,6 +83,7 @@ export const RACES = {
       { biome: 'tundra', weight: 0.15 },
       { biome: 'swamp', weight: 0.2 },
       { biome: 'beach', weight: 0.5 },
+      { biome: 'shallow_water', weight: 0.2 },
       { biome: 'dense_forest', weight: 0.2 },
       { biome: 'tropical_forest', weight: 0.2 },
       { biome: 'mountains', weight: 0.1 },
