@@ -12,6 +12,7 @@ import { getAtmosphere } from '../world/biome-atmosphere.js';
 import { isClaimedAt, f4Placements, f4SpriteUrl, f4AnimUrlBase, f5Placements, f5SpriteUrl, f5AnimUrlBase, f6Placements, f6SpriteUrl, f6AnimUrlBase } from '../world/decoration-claims.js';
 import { tuneSize, tuneBiomeDensity, tuneObjDensity, tuneAnimEnabled, tuneStateWeights, rollWeighted,
   F2_STATE_ORDER, F2_STATE_DEFAULTS } from '../world/field-tuning.js';
+import { coalesceDirty, lowerBound } from './sprite-pool-util.js';
 
 var ANIM_RADIUS = 40; // tiles around player — large enough to cover full screen at any zoom
 var FADE_INNER = 34; // fully opaque inside this radius
@@ -609,7 +610,10 @@ var MAX_TILE_DESC_CACHE = 30000;
 
 // Dev tuner hook (F4 size sliders): descriptors bake F4 lifeScale/sortYOff,
 // so a scale change must rebuild them.
-export function clearF2TileDescriptors() { _tileDescCache.clear(); }
+export function clearF2TileDescriptors() {
+  _tileDescCache.clear();
+  clearF2Pool();
+}
 var _instArray = null; // Float32Array scratch for GL instances
 var _shadowArray = null; // Float32Array scratch for GL silhouette shadows
 
@@ -920,6 +924,213 @@ function imgFade(img, timeMs) {
   var f = (timeMs - img._f2At) / 400;
   if (f >= 1) { img._f2At = 0; return 1; }
   return f < 0 ? 0 : f;
+}
+
+// ==== GL persistent sprite pool ====
+// World-space instances live in CPU mirrors + persistent GPU VBOs.
+// Full rebuild only on events (tile window / zoom / tuning / chunk-ready);
+// the 10Hz tick triggers animations; the per-frame path touches only the
+// active list. Spec: docs/superpowers/specs/2026-06-12-f2-persistent-
+// instance-buffers-design.md
+var _pool = {
+  n: 0,                 // live instance count
+  mirror: null,         // Float32Array, n * SPRITE_FLOATS (sprite instances)
+  shadowMirror: null,   // Float32Array, shadowN * SPRITE_FLOATS
+  shadowN: 0,
+  sortY: null,          // Float32Array(n) — for player lowerBound
+  meta: [],             // per-instance registry (see _poolRebuild)
+  shadowOf: null,       // Int32Array(n): sprite idx -> shadow idx or -1
+  tiles: [],            // per-tile groups: { wx, wy, first, count, biomeShadowK }
+  active: new Map(),    // instance idx -> true (currently animating/fading)
+  dirty: new Set(),     // instance idxs needing upload this frame
+  shadowDirty: new Set(),
+  pending: [],          // instance idxs whose image/atlas wasn't ready at rebuild
+  key: '',              // rebuild key — change forces rebuild
+  lastTickMs: 0,
+  uploaded: false,
+};
+var _f2Stats = { rebuilds: 0, dirtyInstances: 0, activeCount: 0, lastRebuildMs: 0, ticks: 0 };
+if (typeof window !== 'undefined') window._f2Stats = _f2Stats;
+
+export function clearF2Pool() { _pool.key = ''; }
+
+function _poolWriteStatic(idx, m, worldX, worldPivotY, sizeTiles, rot, alpha, rect) {
+  var o = idx * SPRITE_FLOATS;
+  m[o] = worldX;
+  m[o + 1] = worldPivotY;
+  m[o + 2] = sizeTiles;
+  m[o + 3] = rot;
+  m[o + 4] = alpha;
+  if (rect) {
+    m[o + 5] = rect.u0; m[o + 6] = rect.v0; m[o + 7] = rect.du; m[o + 8] = rect.dv;
+  } else {
+    m[o + 5] = 0; m[o + 6] = 0; m[o + 7] = 0; m[o + 8] = 0;
+  }
+}
+
+function _poolRebuild(chunkStore, player, glc, tilePxSnapped, radiusX, radiusY) {
+  var t0 = performance.now();
+  var px = Math.floor(player.x);
+  var py = Math.floor(player.y);
+  var maxR = Math.max(radiusX, radiusY);
+  var fadeStart = maxR - 6;
+
+  var entries = [];
+  var tiles = [];
+  for (var wy = py - radiusY; wy <= py + radiusY; wy++) {
+    for (var wx = px - radiusX; wx <= px + radiusX; wx++) {
+      var cx = floorDiv(wx, WORLD.chunkSize);
+      var cy = floorDiv(wy, WORLD.chunkSize);
+      var chunk = chunkStore.getIfReady(cx, cy);
+      if (!chunk) continue;
+      var tx = ((wx % WORLD.chunkSize) + WORLD.chunkSize) % WORLD.chunkSize;
+      var ty = ((wy % WORLD.chunkSize) + WORLD.chunkSize) % WORLD.chunkSize;
+      var tile = chunk.tiles[ty * WORLD.chunkSize + tx];
+      if (!tile) continue;
+      var objects = SF_BIOME_OBJECTS_LIST[tile.biome];
+      if (!objects || objects.length === 0) continue;
+      if (tile.transitionPair) continue;
+
+      var tkey = wx + ',' + wy;
+      var desc;
+      if (_tileDescCache.has(tkey)) {
+        desc = _tileDescCache.get(tkey);
+      } else {
+        var built = buildTileDescriptor(chunkStore, tile, objects, wx, wy);
+        desc = built.desc;
+        if (built.cacheable) {
+          if (_tileDescCache.size >= MAX_TILE_DESC_CACHE) _tileDescCache.clear();
+          _tileDescCache.set(tkey, desc);
+        }
+      }
+      if (!desc) continue;
+
+      var dist = Math.max(Math.abs(wx - px), Math.abs(wy - py));
+      var edgeFade = dist <= fadeStart ? 1.0 : Math.max(0, 1.0 - (dist - fadeStart) / (maxR - fadeStart));
+      var biomeShadowK = getAtmosphere(tile.biome).shadow / 100;
+      var tileEntry = { wx: wx, wy: wy, first: -1, count: 0, biomeShadowK: biomeShadowK };
+
+      for (var b = 0; b < desc.blades.length; b++) {
+        var bl = desc.blades[b];
+        entries.push({
+          sortY: wy + bl.sortYOff,
+          worldX: wx + 0.5 + bl.offUX,
+          worldPivotY: wy + 0.5 + bl.offUY + bl.lifeScale * 0.5,
+          sizeTiles: bl.lifeScale,
+          bl: bl, wx: wx, wy: wy,
+          edgeFade: edgeFade, biomeShadowK: biomeShadowK,
+          tileRef: tileEntry,
+        });
+      }
+      if (desc.extra) {
+        entries.push({
+          sortY: wy + 0.5,
+          worldX: wx + 0.5 + desc.extra.offUX,
+          worldPivotY: wy + 0.5 + desc.extra.offUY + 0.5,
+          sizeTiles: 1.0,
+          bl: null, extraUrl: desc.extra.url, wx: wx, wy: wy,
+          edgeFade: edgeFade, biomeShadowK: biomeShadowK,
+          tileRef: tileEntry,
+        });
+      }
+      if (entries.length && entries[entries.length - 1].tileRef === tileEntry) tiles.push(tileEntry);
+    }
+  }
+
+  entries.sort(function (a, b) { return a.sortY - b.sortY; });
+
+  var n = entries.length;
+  if (!_pool.mirror || _pool.mirror.length < n * SPRITE_FLOATS) {
+    _pool.mirror = new Float32Array(Math.max(4096, n * SPRITE_FLOATS * 2));
+    _pool.sortY = new Float32Array(Math.max(512, n * 2));
+    _pool.shadowOf = new Int32Array(Math.max(512, n * 2));
+    _pool.shadowMirror = new Float32Array(Math.max(4096, n * SPRITE_FLOATS * 2));
+  }
+  _pool.meta.length = 0;
+  _pool.tiles = [];
+  _pool.active.clear();
+  _pool.dirty.clear();
+  _pool.shadowDirty.clear();
+  _pool.pending.length = 0;
+  var minShadowTiles = 0.6;
+  var shCount = 0;
+  var lastTile = null;
+  var timeMs = performance.now();
+  for (var i = 0; i < n; i++) {
+    var e = entries[i];
+    _pool.sortY[i] = e.sortY;
+    if (e.tileRef !== lastTile) { e.tileRef.first = i; lastTile = e.tileRef; _pool.tiles.push(e.tileRef); }
+    e.tileRef.count++;
+
+    var url, img, frameCount = null, restFrame = 0, baseAngle = 0;
+    if (e.bl) {
+      var bl = e.bl;
+      baseAngle = bl.baseAngle;
+      restFrame = bl.restFrame;
+      frameCount = bl.frameCount || null;
+      img = (bl.stateUrl) ? loadFrame(bl.stateUrl) : null;
+      if (!img && bl.animUrlBase) {
+        img = loadFrame(bl.animUrlBase + 'frame_' + String(bl.restFrame).padStart(3, '0') + '.png', bl.frameCount);
+      }
+      if (!img) img = loadFrame(bl.staticUrl);
+    } else {
+      img = loadFrame(e.extraUrl);
+    }
+    var drawSizePx = tilePxSnapped * e.sizeTiles;
+    var rect = null, alpha = 0;
+    if (img) {
+      img = scaledFrame(img, drawSizePx);
+      rect = glc.atlasRect(img, img.src || img._dnKey || '');
+      alpha = e.edgeFade * imgFade(img, timeMs);
+    }
+    _poolWriteStatic(i, _pool.mirror, e.worldX, e.worldPivotY, e.sizeTiles, baseAngle, rect ? alpha : 0, rect);
+    if (!rect || (img && img._f2At)) _pool.pending.push(i);
+    if (img && img._f2At) _pool.active.set(i, true);
+
+    var sIdx = -1;
+    if (e.sizeTiles >= minShadowTiles) {
+      sIdx = shCount++;
+      var tier = (drawSizePx - tilePxSnapped * minShadowTiles) / (tilePxSnapped * 1.2);
+      tier = tier < 0 ? 0 : tier > 1 ? 1 : tier;
+      var diffuseK = 0.30 + 0.70 * tier;
+      _poolWriteStatic(sIdx, _pool.shadowMirror, e.worldX, e.worldPivotY, e.sizeTiles,
+        1.0 - tier,
+        (rect ? alpha : 0) * e.biomeShadowK * diffuseK, rect);
+    }
+    _pool.shadowOf[i] = sIdx;
+
+    _pool.meta.push({
+      bl: e.bl, wx: e.wx, wy: e.wy, edgeFade: e.edgeFade,
+      biomeShadowK: e.biomeShadowK, sizeTiles: e.sizeTiles,
+      drawSizePx: drawSizePx, img: img || null,
+      lastFrameIdx: restFrame, frozen: false,
+    });
+  }
+  _pool.n = n;
+  _pool.shadowN = shCount;
+
+  var ok = glc.ensurePoolCapacity('sprite', n + 1) && glc.ensurePoolCapacity('shadow', shCount + 1);
+  if (ok) {
+    glc.uploadPoolRange('sprite', _pool.mirror, 0, n);
+    glc.uploadPoolRange('shadow', _pool.shadowMirror, 0, shCount);
+    _pool.uploaded = true;
+  } else {
+    _pool.uploaded = false;
+  }
+  _f2Stats.rebuilds++;
+  _f2Stats.lastRebuildMs = performance.now() - t0;
+}
+
+function _poolKey(chunkStore, px, py, tilePxSnapped, radiusX, radiusY) {
+  var minCX = floorDiv(px - radiusX, WORLD.chunkSize);
+  var maxCX = floorDiv(px + radiusX, WORLD.chunkSize);
+  var minCY = floorDiv(py - radiusY, WORLD.chunkSize);
+  var maxCY = floorDiv(py + radiusY, WORLD.chunkSize);
+  var ready = 0;
+  for (var cy = minCY; cy <= maxCY; cy++)
+    for (var cx = minCX; cx <= maxCX; cx++)
+      if (chunkStore.getIfReady(cx, cy)) ready++;
+  return px + '|' + py + '|' + tilePxSnapped.toFixed(4) + '|' + radiusX + '|' + radiusY + '|' + ready;
 }
 
 // Draw animated Field 2 sprites near the player.
