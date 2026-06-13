@@ -1,20 +1,53 @@
 // src/life/motion-llm.js — Runtime LLM generation of choreography programs.
-// Config: localStorage 'motion_llm' → {url, model, key} (never committed).
-// Default: Anthropic messages API, claude-haiku-4-5.
+// Config: localStorage 'motion_llm' → {url, model, key, provider} (never committed).
+// Auto-detects provider from key prefix: sk-proj-* or sk-* → openai, sk-ant-* → anthropic.
 // On miss: sends DSL cheat-sheet + user command → parse → validate → repair
 // loop (one retry) → cache in-memory + localStorage 'motion_cache'.
 
-const DEFAULT_URL = 'https://api.anthropic.com/v1/messages';
-const DEFAULT_MODEL = 'claude-haiku-4-5-20251001';
+const PROVIDERS = {
+  openai: {
+    url: 'https://api.openai.com/v1/chat/completions',
+    model: 'gpt-4o-mini',
+    makeHeaders: (key) => ({ 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` }),
+    makeBody: (model, system, messages) => ({
+      model, max_tokens: 2048,
+      messages: [{ role: 'system', content: system }, ...messages],
+    }),
+    extractText: (data) => data.choices?.[0]?.message?.content || '',
+  },
+  anthropic: {
+    url: 'https://api.anthropic.com/v1/messages',
+    model: 'claude-haiku-4-5-20251001',
+    makeHeaders: (key) => ({
+      'Content-Type': 'application/json', 'x-api-key': key,
+      'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true',
+    }),
+    makeBody: (model, system, messages) => ({ model, max_tokens: 2048, system, messages }),
+    extractText: (data) => data.content?.[0]?.text || '',
+  },
+};
 
-const DSL_CHEATSHEET = `You are a motion choreography author for a 2D humanoid rig.
+function detectProvider(key) {
+  if (key?.startsWith('sk-ant-')) return 'anthropic';
+  return 'openai'; // sk-proj-*, sk-*, or anything else
+}
+
+const DSL_CHEATSHEET = `You are a motion choreography author for a 2D side-view humanoid pixel-art rig.
+The character is viewed from the SIDE. Positive joint angles rotate CLOCKWISE (screen-space).
+
+IMPORTANT ANATOMY NOTES:
+- Arms hang DOWN at rest (0°). arm_u_l NEGATIVE = raise left arm UP. arm_u_r POSITIVE = raise right arm UP.
+- Legs point DOWN at rest. thigh NEGATIVE = lift leg FORWARD/UP. shin POSITIVE = bend knee.
+- spine NEGATIVE = lean forward. spine POSITIVE = lean back.
+- head NEGATIVE = look down. head POSITIVE = look up.
+- The rig is 2D side-view: "raising an arm" means rotating it AWAY from the body vertically.
 
 PRIMITIVES (each is a JSON node with "op"):
-- pose: { op:"pose", joints:{boneName: degrees}, ticks: N } — glide to target angles over N ticks
+- pose: { op:"pose", joints:{boneName: degrees}, ticks: N } — glide ALL listed joints to target angles over N ticks (10 ticks = 1 second). Joints NOT listed keep their current value.
 - wait: { op:"wait", ticks: N } — hold current pose for N ticks
 - sequence: { op:"sequence", children:[...] } — play children in order
 - parallel: { op:"parallel", children:[...] } — play children simultaneously
-- balance: { op:"balance", on: true|false } — disable/enable balance checks (for lying/inverted)
+- balance: { op:"balance", on: true|false } — required before/after leaving standing
 
 JOINTS (bone names → [min, max] degrees):
 spine: [-30, 30], head: [-60, 60],
@@ -25,12 +58,13 @@ thigh_r: [-110, 30], shin_r: [0, 140], foot_r: [-30, 30]
 
 RULES:
 1. Joint angles MUST stay within [min, max]
-2. Max change per tick between consecutive poses: 30° per joint
+2. Max change between consecutive poses: 30° per joint per tick. If a joint needs to move 90°, use at least 3 ticks.
 3. Programs that leave standing (lying, inverted) MUST start with {op:"balance",on:false} and end with {op:"balance",on:true}
-4. Last pose should return to rest (all joints 0) unless it's a terminal pose (sit, lie down)
-5. Use reasonable tick counts: 2-6 ticks per motion step, 10 ticks = 1 second
+4. The LAST pose should return to rest (all joints 0°) unless it's a terminal pose (sit, lie down)
+5. Use 2-6 ticks per pose step. 10 ticks = 1 second. Make movements feel natural, not robotic.
+6. Think about what EACH BODY PART does during the motion. A wave isn't just the arm — the head might tilt, the spine might shift.
 
-EXAMPLE - wave:
+EXAMPLE - wave (right arm raises, forearm waves back and forth, then lowers):
 {"id":"wave","kind":"gesture","variant":{"time":[0.9,1.15],"amplitude":[0.85,1.1]},
 "root":{"op":"sequence","children":[
 {"op":"pose","joints":{"arm_u_r":150},"ticks":6},
@@ -40,17 +74,24 @@ EXAMPLE - wave:
 {"op":"pose","joints":{"arm_u_r":150,"arm_f_r":10},"ticks":2},
 {"op":"pose","joints":{"arm_u_r":0,"arm_f_r":0},"ticks":6}]}}
 
-EXAMPLE - squat:
-{"id":"squat","kind":"gesture","variant":{"time":[0.9,1.1],"amplitude":[0.85,1.1]},
+EXAMPLE - bow (spine leans forward, head dips, pause, then straighten):
+{"id":"bow","kind":"gesture","variant":{"time":[0.9,1.1],"amplitude":[0.9,1.1]},
 "root":{"op":"sequence","children":[
-{"op":"pose","joints":{"thigh_l":-80,"thigh_r":-80,"shin_l":110,"shin_r":110,"spine":-15},"ticks":6},
-{"op":"pose","joints":{"thigh_l":0,"thigh_r":0,"shin_l":0,"shin_r":0,"spine":0},"ticks":6},
-{"op":"pose","joints":{"thigh_l":-80,"thigh_r":-80,"shin_l":110,"shin_r":110,"spine":-15},"ticks":5},
-{"op":"pose","joints":{"thigh_l":0,"thigh_r":0,"shin_l":0,"shin_r":0,"spine":0},"ticks":5},
-{"op":"pose","joints":{"thigh_l":-80,"thigh_r":-80,"shin_l":110,"shin_r":110,"spine":-15},"ticks":5},
-{"op":"pose","joints":{"thigh_l":0,"thigh_r":0,"shin_l":0,"shin_r":0,"spine":0},"ticks":5}]}}
+{"op":"pose","joints":{"spine":-25,"head":-20,"arm_u_l":-15,"arm_u_r":15},"ticks":5},
+{"op":"wait","ticks":8},
+{"op":"pose","joints":{"spine":0,"head":0,"arm_u_l":0,"arm_u_r":0},"ticks":5}]}}
 
-Respond with ONLY the program JSON. No markdown, no explanation, no code fences. Just the raw JSON object.`;
+EXAMPLE - jumping jacks (crouch, extend arms+legs, return, repeat):
+{"id":"jumping_jacks","kind":"jump","variant":{"time":[0.9,1.1],"amplitude":[0.9,1.1]},
+"root":{"op":"sequence","children":[
+{"op":"pose","joints":{"thigh_l":-50,"thigh_r":-50,"shin_l":60,"shin_r":60},"ticks":3},
+{"op":"pose","joints":{"thigh_l":0,"thigh_r":0,"shin_l":0,"shin_r":0,"arm_u_l":-150,"arm_u_r":150},"ticks":3},
+{"op":"pose","joints":{"arm_u_l":0,"arm_u_r":0},"ticks":3},
+{"op":"pose","joints":{"thigh_l":-50,"thigh_r":-50,"shin_l":60,"shin_r":60},"ticks":3},
+{"op":"pose","joints":{"thigh_l":0,"thigh_r":0,"shin_l":0,"shin_r":0,"arm_u_l":-150,"arm_u_r":150},"ticks":3},
+{"op":"pose","joints":{"arm_u_l":0,"arm_u_r":0},"ticks":3}]}}
+
+Respond with ONLY the program JSON. No markdown, no explanation, no code fences.`;
 
 function getConfig() {
   try {
@@ -84,13 +125,23 @@ loadCache();
 
 export function getCachedProgram(id) { return _cache.get(id) ?? null; }
 
+/** Clear the motion cache (useful during QA iteration). */
+export function clearMotionCache() {
+  _cache.clear();
+  try { localStorage.removeItem('motion_cache'); } catch {}
+}
+
 /** Generate a choreography program via LLM. Returns { program, error }. */
 export async function generateMotion(command) {
   const cfg = getConfig();
   if (!cfg?.key) return { program: null, error: 'No LLM configured. Set localStorage "motion_llm" to {"key":"sk-..."}' };
 
-  const url = cfg.url || DEFAULT_URL;
-  const model = cfg.model || DEFAULT_MODEL;
+  const providerName = cfg.provider || detectProvider(cfg.key);
+  const provider = PROVIDERS[providerName];
+  if (!provider) return { program: null, error: `Unknown provider: ${providerName}` };
+
+  const url = cfg.url || provider.url;
+  const model = cfg.model || provider.model;
   const id = command.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 40);
 
   // Check cache first
@@ -107,13 +158,8 @@ export async function generateMotion(command) {
 
       const res = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': cfg.key,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({ model, max_tokens: 2048, system: DSL_CHEATSHEET, messages }),
+        headers: provider.makeHeaders(cfg.key),
+        body: JSON.stringify(provider.makeBody(model, DSL_CHEATSHEET, messages)),
       });
 
       if (!res.ok) {
@@ -122,7 +168,7 @@ export async function generateMotion(command) {
       }
 
       const data = await res.json();
-      const text = data.content?.[0]?.text || '';
+      const text = provider.extractText(data);
       // Strip any markdown fences the LLM might add despite instructions
       const jsonStr = text.replace(/^```json?\s*/m, '').replace(/\s*```$/m, '').trim();
 
