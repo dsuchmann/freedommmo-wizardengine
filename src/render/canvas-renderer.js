@@ -398,10 +398,10 @@ export class CanvasRenderer {
     }
 
     // === FIELD 2: ANIMATED WIND SWAY ===
-    // Skip F2 when civilization overlay is active — thousands of animated sprites
-    // kill FPS at zoom-out, and the overlay needs to show settlements clearly.
+    // Skip F2 when civilization overlay is active or zoomed far out —
+    // thousands of animated sprites kill FPS at low zoom.
     const civOverlay = window._simDebugOverlay?.isEnabled?.();
-    if (!civOverlay) {
+    if (!civOverlay && camera.zoom > 0.7) {
       const chunkArtPx = WORLD.chunkSize * ts;
       const f2Grid = { baseSX, baseSY, minCX, minCY, chunkPx };
       drawField2Animations(ctx, chunkStore, player, camera, w, h, f2Grid, performance.now(), weather, sun, glOn ? this.glc : null);
