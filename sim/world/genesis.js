@@ -5,7 +5,6 @@
 // and up to 3 nearest neighbors get roads. Exactly-once frontier: kernel.genesisSettlements.
 import { rand } from '../kernel/rng.js';
 import { tileCost } from './routing.js';
-import { scoreSite } from '../society/suitability.js';
 import { foundSettlement } from '../society/settlements.js';
 import { buildRoad } from './roads.js';
 import { REGION } from '../lod/aggregate.js';
@@ -15,7 +14,7 @@ const MACRO_TILES = MACRO * REGION;          // 64 tiles per side
 const STRIDE = 4;                            // sample every 4th tile in evaluateMacroCell
 const SETTLE_PROB_SCALE = 0.85;              // probability scale against best score
 const REFINE_R = 8;                          // ±8 tile scan around candidate
-const MAX_NEIGHBOR_DIST = 128;               // Manhattan distance for road connections
+const MAX_NEIGHBOR_DIST = 96;                // Manhattan distance for road connections
 const MAX_NEIGHBORS = 3;                     // connect to at most 3 nearest settlements
 const GENESIS_GROUP_R = 50000;               // initial resource endowment
 const ROAD_COST_PER_TILE = 30;               // (documentation; actual cost is in roads.js)
@@ -83,18 +82,23 @@ export function evaluateMacroCell(seed, macroKey) {
   return { x: bestX, y: bestY };
 }
 
-/** Refine candidate with full scoreSite in ±REFINE_R area. Reads kernel (trade centrality). */
-function refineSite(kernel, candidate) {
+/** Refine candidate position: pure ±REFINE_R scan using tileCost + waterProximity.
+ *  No kernel reads, no A* routing — genesis refinement must be cheap. The full
+ *  scoreSite (with trade centrality A*) runs inside foundSettlement anyway. */
+function refineSite(candidate) {
   let best = null;
   let bestScore = -1;
   for (let dy = -REFINE_R; dy <= REFINE_R; dy++) {
     for (let dx = -REFINE_R; dx <= REFINE_R; dx++) {
       const x = candidate.x + dx;
       const y = candidate.y + dy;
-      const s = scoreSite(kernel, x, y);
-      if (s && s.score > bestScore) {
-        bestScore = s.score;
-        best = { x, y, ...s };
+      if (tileCost(x, y) === Infinity) continue;
+      const wp = waterProximity(x, y);
+      const tc = tileCost(x, y);
+      const quality = wp * 0.6 + (1 / (1 + tc)) * 0.4;
+      if (quality > bestScore) {
+        bestScore = quality;
+        best = { x, y };
       }
     }
   }
@@ -130,8 +134,8 @@ export function ensureGenesisSettlements(kernel, regionKey, tick) {
   const candidate = evaluateMacroCell(kernel.seed, mk);
   if (!candidate) return;
 
-  // Step 2: refine with full scoreSite
-  const site = refineSite(kernel, candidate);
+  // Step 2: pure refinement (no kernel reads, no A* — must be cheap)
+  const site = refineSite(candidate);
   if (!site) return;
 
   // Step 3: create genesis group (provenance: ledger event, not boot scope)
