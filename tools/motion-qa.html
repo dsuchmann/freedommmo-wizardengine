@@ -231,25 +231,69 @@
       drawPreview(p.joints);
     }
 
-    // ── Choreography list — loads ONLY validated-spatial files ─────────────
-    const VALIDATED_CHOREOS = [
-      'wave', 'clap', 'bow', 'salute', 'point_forward', 'shrug', 'nod_yes',
-      'shake_head_no', 'flex_muscles', 'pray', 'cheer_with_both_arms',
-      'beckon_someone_to_come_here', 'yawn_and_stretch', 'look_around_nervously',
-      'crouch_down', 'jump_in_place', 'do_jumping_jacks', 'squat',
-      'dance', 'facepalm', 'kneel', 'sit_down', 'tiptoe',
-      'march_in_place', 'dig_with_a_shovel', 'sweep_the_floor',
-    ];
+    // ── Choreography list — dynamically discovers validated-spatial files ──
+    let _knownChoreos = new Set();
 
     async function loadChoreoList() {
+      // Load taxonomy for the full list of possible IDs
+      let allIds = [];
+      try {
+        const mod = await import('/src/life/eval/motion-taxonomy.js');
+        allIds = mod.ALL_COMMANDS.map(c => c.command.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 50));
+      } catch {}
+
+      // Probe which ones actually exist on disk (batch HEAD requests)
       const list = document.getElementById('choreo-list');
-      list.innerHTML = VALIDATED_CHOREOS.map(id =>
+      list.innerHTML = '<div style="color:#555;font-size:11px;padding:4px">Scanning...</div>';
+
+      const found = [];
+      // Check in batches of 20 to avoid overwhelming
+      for (let i = 0; i < allIds.length; i += 20) {
+        const batch = allIds.slice(i, i + 20);
+        const results = await Promise.all(batch.map(async id => {
+          try {
+            const res = await fetch(`/src/life/choreography/validated-spatial/${id}.json`, { method: 'HEAD' });
+            return res.ok ? id : null;
+          } catch { return null; }
+        }));
+        for (const id of results) if (id) found.push(id);
+      }
+
+      _knownChoreos = new Set(found);
+      renderChoreoList(found);
+
+      document.getElementById('status').textContent = `${poses.length} poses, ${found.length} choreos, ${rules.length} rules`;
+    }
+
+    function renderChoreoList(ids) {
+      const list = document.getElementById('choreo-list');
+      list.innerHTML = ids.map(id =>
         `<div class="pose-item" data-choreo="${id}"><span class="dot pass"></span>${id}</div>`
       ).join('');
       list.querySelectorAll('[data-choreo]').forEach(el => {
         el.onclick = () => loadValidatedChoreo(el.dataset.choreo);
       });
     }
+
+    // Auto-refresh: poll for new choreos every 30s while generating
+    setInterval(async () => {
+      try {
+        const mod = await import('/src/life/eval/motion-taxonomy.js');
+        const allIds = mod.ALL_COMMANDS.map(c => c.command.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 50));
+        let newCount = 0;
+        for (const id of allIds) {
+          if (_knownChoreos.has(id)) continue;
+          try {
+            const res = await fetch(`/src/life/choreography/validated-spatial/${id}.json`, { method: 'HEAD' });
+            if (res.ok) { _knownChoreos.add(id); newCount++; }
+          } catch {}
+        }
+        if (newCount > 0) {
+          renderChoreoList([..._knownChoreos].sort());
+          document.getElementById('status').textContent = `${poses.length} poses, ${_knownChoreos.size} choreos (+${newCount} new)`;
+        }
+      } catch {}
+    }, 30000);
 
     async function loadValidatedChoreo(id) {
       try {
