@@ -39,17 +39,20 @@ void main() {
 var SPRITE_VERT_SRC = `#version 300 es
 precision highp float;
 in vec2 aUnit;     // unit quad corner (0..1)
-in vec4 aPSR;      // pivot.xy (CSS px), size (CSS px), rotation (rad)
+in vec4 aPSR;      // pivot.xy (world TILE units), size (tiles), rotation (rad)
 in float aAlpha;
 in vec4 aUV;       // u0, v0, du, dv
 uniform vec2 uViewport;
+uniform vec3 uCam; // x,y = screen-px offset, z = px per tile (tilePxSnapped)
 out vec2 vUV;
 out float vAlpha;
 void main() {
-  vec2 local = vec2(aUnit.x * aPSR.z - aPSR.z * 0.5, aUnit.y * aPSR.z - aPSR.z);
+  float sizePx = aPSR.z * uCam.z;
+  vec2 pivotPx = aPSR.xy * uCam.z + uCam.xy;
+  vec2 local = vec2(aUnit.x * sizePx - sizePx * 0.5, aUnit.y * sizePx - sizePx);
   float c = cos(aPSR.w);
   float s = sin(aPSR.w);
-  vec2 px = aPSR.xy + vec2(local.x * c - local.y * s, local.x * s + local.y * c);
+  vec2 px = pivotPx + vec2(local.x * c - local.y * s, local.x * s + local.y * c);
   vec2 clip = vec2(px.x / uViewport.x * 2.0 - 1.0, 1.0 - px.y / uViewport.y * 2.0);
   gl_Position = vec4(clip, 0.0, 1.0);
   vUV = aUV.xy + aUnit * aUV.zw;
@@ -72,29 +75,27 @@ void main() {
 var SHADOW_VERT_SRC = `#version 300 es
 precision highp float;
 in vec2 aUnit;
-in vec4 aPSR;      // pivot.xy, size, w = diffusion (1 - tier; sprite rotation slot)
+in vec4 aPSR;      // pivot.xy (world tiles), size (tiles), w = diffusion
 in float aAlpha;   // sprite alpha * per-biome shadow strength
 in vec4 aUV;
 uniform vec2 uViewport;
-uniform vec2 uShadowVec;  // ground displacement per unit sprite-height (art px ratio): x=skew, y=flatten
+uniform vec3 uCam;        // x,y = screen-px offset, z = px per tile
+uniform vec2 uShadowVec;
 out vec2 vUV;
 out float vAlpha;
-out float vH;             // 0 at base, 1 at sprite top
-out float vDiff;          // 0 = crisp large silhouette, 1 = soft diffuse pool
+out float vH;
+out float vDiff;
 void main() {
-  float hgt = 1.0 - aUnit.y;                       // quad top = sprite top
+  float sizePx = aPSR.z * uCam.z;
+  vec2 pivotPx = aPSR.xy * uCam.z + uCam.xy;
+  float hgt = 1.0 - aUnit.y;
   float diff = aPSR.w;
-  // Ground-plane projection: the quad gets real vertical extent below the
-  // base line (pivot row) — short midday shadows are squat pools spreading
-  // from the full base width; long golden-hour shadows stretch tall.
   float shadowLen = length(uShadowVec);
   float flatK = clamp(1.0 - shadowLen / 2.5, 0.0, 1.0);
   float vert = mix(0.85, 0.40, flatK);
-  // diffuse (small/oval flora) shadows ground across their whole base width
   float wide = 1.0 + diff * 0.45;
-  vec2 base = vec2((aUnit.x - 0.5) * aPSR.z * wide, hgt * aPSR.z * vert);
-  // then the existing shear: top of sprite lands shadowVec away
-  vec2 px = aPSR.xy + base + hgt * aPSR.z * uShadowVec;
+  vec2 base = vec2((aUnit.x - 0.5) * sizePx * wide, hgt * sizePx * vert);
+  vec2 px = pivotPx + base + hgt * sizePx * uShadowVec;
   vec2 clip = vec2(px.x / uViewport.x * 2.0 - 1.0, 1.0 - px.y / uViewport.y * 2.0);
   gl_Position = vec4(clip, 0.0, 1.0);
   vUV = aUV.xy + aUnit * aUV.zw;
@@ -779,6 +780,7 @@ export class GLCompositor {
     if (!prog) return;
     this.spriteProgram = prog;
     this.sUViewport = gl.getUniformLocation(prog, 'uViewport');
+    this.sUCam = gl.getUniformLocation(prog, 'uCam');
     this.sUAtlas = gl.getUniformLocation(prog, 'uAtlas');
 
     // Runtime shelf-packed sprite atlas. F2 sprites are ~32px so a 4096²
@@ -824,6 +826,7 @@ export class GLCompositor {
     gl.vertexAttribDivisor(locUV, 1);
     gl.bindVertexArray(null);
     this._instCapacityBytes = 0;
+    this._spriteAttribLocs = { psr: locPSR, alpha: locAlpha, uv: locUV };
 
     // Shadow pass: same instance layout, separate program/VAO/VBO so the
     // shadow batch (subset of sprites) doesn't disturb the sprite batch.
@@ -832,6 +835,7 @@ export class GLCompositor {
     if (sprog) {
       this.shadowProgram = sprog;
       this.shUViewport = gl.getUniformLocation(sprog, 'uViewport');
+      this.shUCam = gl.getUniformLocation(sprog, 'uCam');
       this.shUAtlas = gl.getUniformLocation(sprog, 'uAtlas');
       this.shUShadowVec = gl.getUniformLocation(sprog, 'uShadowVec');
       this.shUShadowAlpha = gl.getUniformLocation(sprog, 'uShadowAlpha');
@@ -858,6 +862,7 @@ export class GLCompositor {
       gl.vertexAttribDivisor(sLocUV, 1);
       gl.bindVertexArray(null);
       this._shadowCapacityBytes = 0;
+      this._shadowAttribLocs = { psr: sLocPSR, alpha: sLocAlpha, uv: sLocUV };
       this.shadowOk = true;
     }
     this.spritesOk = true;
@@ -958,6 +963,7 @@ export class GLCompositor {
     // or sprites drift off the terrain's pixel grid by the ceil+margin delta.
     if (this.sceneActive) gl.uniform2f(this.sUViewport, this._artW, this._artH);
     else gl.uniform2f(this.sUViewport, cssW, cssH);
+    gl.uniform3f(this.sUCam, 0, 0, 1);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.atlasTex);
     gl.uniform1i(this.sUAtlas, 0);
@@ -985,6 +991,7 @@ export class GLCompositor {
     gl.bindVertexArray(this.shadowVao);
     if (this.sceneActive) gl.uniform2f(this.shUViewport, this._artW, this._artH);
     else gl.uniform2f(this.shUViewport, cssW, cssH);
+    gl.uniform3f(this.shUCam, 0, 0, 1);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.atlasTex);
     gl.uniform1i(this.shUAtlas, 0);
@@ -1003,6 +1010,111 @@ export class GLCompositor {
     gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
     gl.disable(gl.BLEND);
     gl.bindVertexArray(null);
+  }
+
+  // --- Persistent sprite pool (world-space instances, partial uploads) ---
+  // The pool owns two VBOs (sprites, shadows) that survive across frames.
+  // ensurePoolCapacity grows them; uploadPoolRange patches dirty instances;
+  // drawPoolRange draws a contiguous instance range by re-pointing the
+  // instance attributes (WebGL2 has no baseInstance).
+
+  ensurePoolCapacity(kind, instCount) {
+    if (!this.ok || !this.spritesOk) return false;
+    var gl = this.gl;
+    if (!this._pool) this._pool = {};
+    var p = this._pool[kind];
+    if (!p) {
+      p = this._pool[kind] = { vbo: gl.createBuffer(), capBytes: 0 };
+    }
+    var bytes = Math.max(4096 * SPRITE_STRIDE, instCount * SPRITE_STRIDE);
+    if (bytes > p.capBytes) {
+      gl.bindBuffer(gl.ARRAY_BUFFER, p.vbo);
+      p.capBytes = bytes * 2;
+      gl.bufferData(gl.ARRAY_BUFFER, p.capBytes, gl.DYNAMIC_DRAW);
+      gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    }
+    return true;
+  }
+
+  // Upload `count` instances from mirror (Float32Array of packed instances)
+  // starting at instance index `start` (same index in VBO and mirror).
+  uploadPoolRange(kind, mirror, start, count) {
+    if (!this.ok || !this.spritesOk || count === 0) return;
+    var gl = this.gl;
+    var p = this._pool && this._pool[kind];
+    if (!p) return;
+    if ((start + count) * SPRITE_STRIDE > p.capBytes) return;
+    gl.bindBuffer(gl.ARRAY_BUFFER, p.vbo);
+    gl.bufferSubData(gl.ARRAY_BUFFER, start * SPRITE_STRIDE,
+      mirror, start * SPRITE_FLOATS, count * SPRITE_FLOATS);
+  }
+
+  // Point the 3 instance attributes of the currently-bound VAO at byte offset
+  // start*stride of the given VBO. attribLocs = { psr, alpha, uv }.
+  _pointPoolAttribs(vbo, locs, startInst) {
+    var gl = this.gl;
+    var base = startInst * SPRITE_STRIDE;
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    gl.vertexAttribPointer(locs.psr, 4, gl.FLOAT, false, SPRITE_STRIDE, base);
+    gl.vertexAttribPointer(locs.alpha, 1, gl.FLOAT, false, SPRITE_STRIDE, base + 16);
+    gl.vertexAttribPointer(locs.uv, 4, gl.FLOAT, false, SPRITE_STRIDE, base + 20);
+  }
+
+  // Draw instances [start, start+count) of the persistent sprite pool.
+  // cam = { x, y, scale } (screen-px offset + px-per-tile).
+  drawPoolSprites(start, count, cssW, cssH, cam) {
+    if (!this.ok || !this.spritesOk || count === 0) return;
+    var p = this._pool && this._pool.sprite;
+    if (!p) return;
+    var gl = this.gl;
+    gl.useProgram(this.spriteProgram);
+    gl.bindVertexArray(this.spriteVao);
+    if (this.sceneActive) gl.uniform2f(this.sUViewport, this._artW, this._artH);
+    else gl.uniform2f(this.sUViewport, cssW, cssH);
+    gl.uniform3f(this.sUCam, cam.x, cam.y, cam.scale);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.atlasTex);
+    gl.uniform1i(this.sUAtlas, 0);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    try {
+      this._pointPoolAttribs(p.vbo, this._spriteAttribLocs, start);
+      gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
+    } finally {
+      // Restore VAO's default pointers (offset 0 into the legacy instVbo) so
+      // legacy drawSpriteInstances callers are unaffected.
+      this._pointPoolAttribs(this.instVbo, this._spriteAttribLocs, 0);
+      gl.bindVertexArray(null);
+    }
+    gl.disable(gl.BLEND);
+  }
+
+  drawPoolShadows(start, count, cssW, cssH, cam, shadowVec, strength) {
+    if (!this.ok || !this.shadowOk || count === 0) return;
+    var p = this._pool && this._pool.shadow;
+    if (!p) return;
+    var gl = this.gl;
+    gl.useProgram(this.shadowProgram);
+    gl.bindVertexArray(this.shadowVao);
+    if (this.sceneActive) gl.uniform2f(this.shUViewport, this._artW, this._artH);
+    else gl.uniform2f(this.shUViewport, cssW, cssH);
+    gl.uniform3f(this.shUCam, cam.x, cam.y, cam.scale);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.atlasTex);
+    gl.uniform1i(this.shUAtlas, 0);
+    gl.uniform2f(this.shUShadowVec, shadowVec.x, shadowVec.y);
+    gl.uniform1f(this.shUShadowAlpha, strength);
+    gl.uniform1f(this.shUAtlasTexel, 1 / (this.atlasSize || 1));
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    try {
+      this._pointPoolAttribs(p.vbo, this._shadowAttribLocs, start);
+      gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
+    } finally {
+      this._pointPoolAttribs(this.shadowVbo, this._shadowAttribLocs, 0);
+      gl.bindVertexArray(null);
+    }
+    gl.disable(gl.BLEND);
   }
 
   endFrame() {

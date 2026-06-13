@@ -12,6 +12,7 @@ import { getAtmosphere } from '../world/biome-atmosphere.js';
 import { isClaimedAt, f4Placements, f4SpriteUrl, f4AnimUrlBase, f5Placements, f5SpriteUrl, f5AnimUrlBase, f6Placements, f6SpriteUrl, f6AnimUrlBase } from '../world/decoration-claims.js';
 import { tuneSize, tuneBiomeDensity, tuneObjDensity, tuneAnimEnabled, tuneStateWeights, rollWeighted,
   F2_STATE_ORDER, F2_STATE_DEFAULTS } from '../world/field-tuning.js';
+import { coalesceDirty, lowerBound } from './sprite-pool-util.js';
 
 var ANIM_RADIUS = 40; // tiles around player — large enough to cover full screen at any zoom
 var FADE_INNER = 34; // fully opaque inside this radius
@@ -609,9 +610,11 @@ var MAX_TILE_DESC_CACHE = 30000;
 
 // Dev tuner hook (F4 size sliders): descriptors bake F4 lifeScale/sortYOff,
 // so a scale change must rebuild them.
-export function clearF2TileDescriptors() { _tileDescCache.clear(); }
-var _instArray = null; // Float32Array scratch for GL instances
-var _shadowArray = null; // Float32Array scratch for GL silhouette shadows
+export function clearF2TileDescriptors() {
+  _tileDescCache.clear();
+  clearF2Pool();
+}
+// Legacy _instArray/_shadowArray removed — the persistent pool uses its own mirrors.
 
 var _ctiStore = null, _ctiFn = null;
 function _claimTileInfo(chunkStore) {
@@ -922,6 +925,484 @@ function imgFade(img, timeMs) {
   return f < 0 ? 0 : f;
 }
 
+// ==== GL persistent sprite pool ====
+// World-space instances live in CPU mirrors + persistent GPU VBOs.
+// Full rebuild only on events (tile window / zoom / tuning / chunk-ready);
+// the 10Hz tick triggers animations; the per-frame path touches only the
+// active list. Spec: docs/superpowers/specs/2026-06-12-f2-persistent-
+// instance-buffers-design.md
+var _pool = {
+  n: 0,                 // live instance count
+  mirror: null,         // Float32Array, n * SPRITE_FLOATS (sprite instances)
+  shadowMirror: null,   // Float32Array, shadowN * SPRITE_FLOATS
+  shadowN: 0,
+  sortY: null,          // Float32Array(n) — for player lowerBound
+  meta: [],             // per-instance registry (see _poolRebuild)
+  shadowOf: null,       // Int32Array(n): sprite idx -> shadow idx or -1
+  tiles: [],            // per-tile groups: { wx, wy, first, count, biomeShadowK }
+  active: new Map(),    // instance idx -> true (currently animating/fading)
+  dirty: new Set(),     // instance idxs needing upload this frame
+  shadowDirty: new Set(),
+  pending: [],          // instance idxs whose image/atlas wasn't ready at rebuild
+  key: '',              // rebuild key — change forces rebuild
+  lastTickMs: 0,
+  uploaded: false,
+};
+var _f2Stats = { rebuilds: 0, dirtyInstances: 0, activeCount: 0, lastRebuildMs: 0, ticks: 0 };
+if (typeof window !== 'undefined') window._f2Stats = _f2Stats;
+
+export function clearF2Pool() { _pool.key = ''; }
+
+function _poolWriteStatic(idx, m, worldX, worldPivotY, sizeTiles, rot, alpha, rect) {
+  var o = idx * SPRITE_FLOATS;
+  m[o] = worldX;
+  m[o + 1] = worldPivotY;
+  m[o + 2] = sizeTiles;
+  m[o + 3] = rot;
+  m[o + 4] = alpha;
+  if (rect) {
+    m[o + 5] = rect.u0; m[o + 6] = rect.v0; m[o + 7] = rect.du; m[o + 8] = rect.dv;
+  } else {
+    m[o + 5] = 0; m[o + 6] = 0; m[o + 7] = 0; m[o + 8] = 0;
+  }
+}
+
+function _poolRebuild(chunkStore, player, glc, tilePxSnapped, radiusX, radiusY) {
+  var t0 = performance.now();
+  var px = Math.floor(player.x);
+  var py = Math.floor(player.y);
+  var maxR = Math.max(radiusX, radiusY);
+  var fadeStart = maxR - 6;
+
+  var entries = [];
+  var tiles = [];
+  for (var wy = py - radiusY; wy <= py + radiusY; wy++) {
+    for (var wx = px - radiusX; wx <= px + radiusX; wx++) {
+      var cx = floorDiv(wx, WORLD.chunkSize);
+      var cy = floorDiv(wy, WORLD.chunkSize);
+      var chunk = chunkStore.getIfReady(cx, cy);
+      if (!chunk) continue;
+      var tx = ((wx % WORLD.chunkSize) + WORLD.chunkSize) % WORLD.chunkSize;
+      var ty = ((wy % WORLD.chunkSize) + WORLD.chunkSize) % WORLD.chunkSize;
+      var tile = chunk.tiles[ty * WORLD.chunkSize + tx];
+      if (!tile) continue;
+      var objects = SF_BIOME_OBJECTS_LIST[tile.biome];
+      if (!objects || objects.length === 0) continue;
+      if (tile.transitionPair) continue;
+
+      var tkey = wx + ',' + wy;
+      var desc;
+      if (_tileDescCache.has(tkey)) {
+        desc = _tileDescCache.get(tkey);
+      } else {
+        var built = buildTileDescriptor(chunkStore, tile, objects, wx, wy);
+        desc = built.desc;
+        if (built.cacheable) {
+          if (_tileDescCache.size >= MAX_TILE_DESC_CACHE) _tileDescCache.clear();
+          _tileDescCache.set(tkey, desc);
+        }
+      }
+      if (!desc) continue;
+
+      var dist = Math.max(Math.abs(wx - px), Math.abs(wy - py));
+      var edgeFade = dist <= fadeStart ? 1.0 : Math.max(0, 1.0 - (dist - fadeStart) / (maxR - fadeStart));
+      var biomeShadowK = getAtmosphere(tile.biome).shadow / 100;
+      var tileEntry = { wx: wx, wy: wy, first: -1, count: 0, biomeShadowK: biomeShadowK };
+
+      for (var b = 0; b < desc.blades.length; b++) {
+        var bl = desc.blades[b];
+        entries.push({
+          sortY: wy + bl.sortYOff,
+          worldX: wx + 0.5 + bl.offUX,
+          worldPivotY: wy + 0.5 + bl.offUY + bl.lifeScale * 0.5,
+          sizeTiles: bl.lifeScale,
+          bl: bl, wx: wx, wy: wy,
+          edgeFade: edgeFade, biomeShadowK: biomeShadowK,
+          tileRef: tileEntry,
+        });
+      }
+      if (desc.extra) {
+        entries.push({
+          sortY: wy + 0.5,
+          worldX: wx + 0.5 + desc.extra.offUX,
+          worldPivotY: wy + 0.5 + desc.extra.offUY + 0.5,
+          sizeTiles: 1.0,
+          bl: null, extraUrl: desc.extra.url, wx: wx, wy: wy,
+          edgeFade: edgeFade, biomeShadowK: biomeShadowK,
+          tileRef: tileEntry,
+        });
+      }
+      if (entries.length && entries[entries.length - 1].tileRef === tileEntry) tiles.push(tileEntry);
+    }
+  }
+
+  entries.sort(function (a, b) { return a.sortY - b.sortY; });
+
+  var n = entries.length;
+  if (!_pool.mirror || _pool.mirror.length < (n + 1) * SPRITE_FLOATS) {
+    _pool.mirror = new Float32Array(Math.max(4096, (n + 1) * SPRITE_FLOATS * 2));
+    _pool.sortY = new Float32Array(Math.max(512, n * 2));
+    _pool.shadowOf = new Int32Array(Math.max(512, n * 2));
+    _pool.shadowMirror = new Float32Array(Math.max(4096, n * SPRITE_FLOATS * 2));
+  }
+  _pool.meta.length = 0;
+  _pool.tiles = [];
+  _pool.active.clear();
+  _pool.dirty.clear();
+  _pool.shadowDirty.clear();
+  _pool.pending.length = 0;
+  var minShadowTiles = 0.6;
+  var shCount = 0;
+  var lastTile = null;
+  var timeMs = performance.now();
+  for (var i = 0; i < n; i++) {
+    var e = entries[i];
+    _pool.sortY[i] = e.sortY;
+    if (e.tileRef !== lastTile) { e.tileRef.first = i; lastTile = e.tileRef; _pool.tiles.push(e.tileRef); }
+    e.tileRef.count++;
+
+    var url, img, frameCount = null, restFrame = 0, baseAngle = 0;
+    if (e.bl) {
+      var bl = e.bl;
+      baseAngle = bl.baseAngle;
+      restFrame = bl.restFrame;
+      frameCount = bl.frameCount || null;
+      img = (bl.stateUrl) ? loadFrame(bl.stateUrl) : null;
+      if (!img && bl.animUrlBase) {
+        img = loadFrame(bl.animUrlBase + 'frame_' + String(bl.restFrame).padStart(3, '0') + '.png', bl.frameCount);
+      }
+      if (!img) img = loadFrame(bl.staticUrl);
+    } else {
+      img = loadFrame(e.extraUrl);
+    }
+    var drawSizePx = tilePxSnapped * e.sizeTiles;
+    var rect = null, alpha = 0;
+    if (img) {
+      img = scaledFrame(img, drawSizePx);
+      rect = glc.atlasRect(img, img.src || img._dnKey || '');
+      alpha = e.edgeFade * imgFade(img, timeMs);
+    }
+    _poolWriteStatic(i, _pool.mirror, e.worldX, e.worldPivotY, e.sizeTiles, baseAngle, rect ? alpha : 0, rect);
+    if (!rect || (img && img._f2At)) _pool.pending.push(i);
+    if (img && img._f2At) _pool.active.set(i, true);
+
+    var sIdx = -1;
+    if (e.sizeTiles >= minShadowTiles) {
+      sIdx = shCount++;
+      var tier = (drawSizePx - tilePxSnapped * minShadowTiles) / (tilePxSnapped * 1.2);
+      tier = tier < 0 ? 0 : tier > 1 ? 1 : tier;
+      var diffuseK = 0.30 + 0.70 * tier;
+      _poolWriteStatic(sIdx, _pool.shadowMirror, e.worldX, e.worldPivotY, e.sizeTiles,
+        1.0 - tier,
+        (rect ? alpha : 0) * e.biomeShadowK * diffuseK, rect);
+    }
+    _pool.shadowOf[i] = sIdx;
+
+    _pool.meta.push({
+      bl: e.bl, wx: e.wx, wy: e.wy, edgeFade: e.edgeFade,
+      biomeShadowK: e.biomeShadowK, sizeTiles: e.sizeTiles,
+      drawSizePx: drawSizePx, img: img || null,
+      lastFrameIdx: restFrame, frozen: false,
+      extraUrl: e.extraUrl || null,
+      simState: null,
+      tileRotCached: 0,
+    });
+  }
+  _pool.n = n;
+  _pool.shadowN = shCount;
+
+  var ok = glc.ensurePoolCapacity('sprite', n + 1) && glc.ensurePoolCapacity('shadow', shCount + 1);
+  if (ok) {
+    glc.uploadPoolRange('sprite', _pool.mirror, 0, n);
+    glc.uploadPoolRange('shadow', _pool.shadowMirror, 0, shCount);
+    _pool.uploaded = true;
+  } else {
+    _pool.uploaded = false;
+  }
+  _f2Stats.rebuilds++;
+  _f2Stats.lastRebuildMs = performance.now() - t0;
+  if (typeof window !== 'undefined') window._f2PoolN = _pool.n;
+}
+
+function _poolKey(chunkStore, px, py, tilePxSnapped, radiusX, radiusY) {
+  var minCX = floorDiv(px - radiusX, WORLD.chunkSize);
+  var maxCX = floorDiv(px + radiusX, WORLD.chunkSize);
+  var minCY = floorDiv(py - radiusY, WORLD.chunkSize);
+  var maxCY = floorDiv(py + radiusY, WORLD.chunkSize);
+  var ready = 0;
+  for (var cy = minCY; cy <= maxCY; cy++)
+    for (var cx = minCX; cx <= maxCX; cx++)
+      if (chunkStore.getIfReady(cx, cy)) ready++;
+  return px + '|' + py + '|' + tilePxSnapped.toFixed(4) + '|' + radiusX + '|' + radiusY + '|' + ready;
+}
+
+function _poolTick(timeMs, timeSec, glc, tilePxSnapped) {
+  _f2Stats.ticks++;
+  // Phase 1: sample wind per tile (one sampleCurrents per tile, not per blade).
+  // Tile groups can be non-contiguous in the y-sorted meta array (entries from
+  // different tiles interleave by sortY), so we cache rot per tile here and
+  // look it up per blade in Phase 2.
+  var tileRotMap = new Map();
+  var tileImpulseMap = new Map();
+  for (var t = 0; t < _pool.tiles.length; t++) {
+    var tg = _pool.tiles[t];
+    var currentEffect = sampleCurrents(tg.wx, tg.wy, timeSec);
+    tg.rot = currentEffect.rot;
+    var tk = tg.wx * 10000 + tg.wy;
+    tileRotMap.set(tk, currentEffect.rot);
+    tileImpulseMap.set(tk, Math.abs(currentEffect.rot) * 12);
+  }
+
+  // Phase 2: iterate all blades linearly through the meta array.
+  for (var i = 0; i < _pool.n; i++) {
+    var meta = _pool.meta[i];
+    var tileKey = meta.wx * 10000 + meta.wy;
+    meta.tileRotCached = tileRotMap.get(tileKey) || 0;
+    var bl = meta.bl;
+    if (!bl) continue;
+    var canAnimate = !!bl.animUrlBase || !!bl.ambientPeriod || (!bl.isRigid && bl.lifeSway !== 0);
+    if (!canAnimate) continue;
+    var blCycle = (bl.frameCount || FRAME_COUNT) * FRAME_DURATION;
+    var impulse = tileImpulseMap.get(tileKey) || 0;
+    if (bl.ambientPeriod && (timeMs + bl.ambientPhase) % bl.ambientPeriod < blCycle * 4) {
+      impulse = 0.2;
+    }
+    var triggerKey = meta.wx * 10000 + meta.wy * 100 + bl.bi;
+    if (impulse > 0.08) {
+      var existing = triggerTimes.get(triggerKey);
+      if (!existing || timeMs - existing.time > blCycle * 2) {
+        triggerTimes.set(triggerKey, { time: timeMs + bl.startDelay, ext: 0 });
+        _pool.active.set(i, true);
+      } else if (existing) {
+        _pool.active.set(i, true);
+      }
+    }
+    var triggerData = triggerTimes.get(triggerKey);
+    if (triggerData) {
+      var triggerDuration = blCycle * bl.loopCount;
+      var elapsed = timeMs - triggerData.time;
+      if (elapsed > triggerDuration * 0.8 && triggerData.ext < MAX_EXTENSIONS) {
+        var shouldExtend = false;
+        for (var nd = -1; nd <= 1 && !shouldExtend; nd++) {
+          for (var ne = -1; ne <= 1 && !shouldExtend; ne++) {
+            if (nd === 0 && ne === 0) continue;
+            var nData = triggerTimes.get((meta.wx + ne) * 10000 + (meta.wy + nd) * 100);
+            if (!nData) continue;
+            var nElapsed = timeMs - nData.time;
+            if (nElapsed < triggerDuration * 0.6 && nData.ext < MAX_EXTENSIONS) shouldExtend = true;
+          }
+        }
+        if (shouldExtend) {
+          triggerTimes.set(triggerKey, { time: triggerData.time + blCycle, ext: triggerData.ext + 1 });
+          _pool.active.set(i, true);
+        }
+      }
+      if (elapsed >= 0 && elapsed <= triggerDuration) _pool.active.set(i, true);
+    }
+  }
+
+  // 2) Sim overrides (F4 entries, bi >= 90). At most 100ms latency.
+  if (_simWorldState) {
+    for (var j = 0; j < _pool.n; j++) {
+      var m2 = _pool.meta[j];
+      if (!m2.bl || m2.bl.bi < 90) continue;
+      var key = 'f4:' + m2.wx + ',' + m2.wy + ':' + (m2.bl.bi - 90);
+      var ov = _simWorldState.overrideFor(key);
+      var want = null;
+      if (ov && ov.removed) want = 'REMOVED';
+      else if (ov && ov.visual && ov.visual !== 'normal') want = ov.visual;
+      if (want !== m2.simState) {
+        m2.simState = want;
+        _pool.active.set(j, true);
+      }
+    }
+  }
+
+  // 3) Pending images: retry load/atlas.
+  for (var pIdx = _pool.pending.length - 1; pIdx >= 0; pIdx--) {
+    var k = _pool.pending[pIdx];
+    var pm = _pool.meta[k];
+    var img = pm.bl
+      ? ((pm.bl.stateUrl ? loadFrame(pm.bl.stateUrl) : null)
+        || (pm.bl.animUrlBase ? loadFrame(pm.bl.animUrlBase + 'frame_' + String(pm.bl.restFrame).padStart(3, '0') + '.png', pm.bl.frameCount) : null)
+        || loadFrame(pm.bl.staticUrl))
+      : loadFrame(pm.extraUrl || '');
+    if (!img) continue;
+    img = scaledFrame(img, pm.drawSizePx);
+    var rect = glc.atlasRect(img, img.src || img._dnKey || '');
+    if (!rect) continue;
+    pm.img = img;
+    _pool.active.set(k, true);
+    _pool.pending.splice(pIdx, 1);
+  }
+}
+
+function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, weather, sun, glc) {
+  var tilePxSnapped = chunkGrid.chunkPx / WORLD.chunkSize;
+  var visibleTilesX = Math.ceil(w / tilePxSnapped / 2) + 2;
+  var visibleTilesY = Math.ceil(h / tilePxSnapped / 2) + 2;
+  var radiusX = Math.min(ANIM_RADIUS, visibleTilesX);
+  var radiusY = Math.min(ANIM_RADIUS, visibleTilesY);
+  var px = Math.floor(player.x);
+  var py = Math.floor(player.y);
+  var timeSec = timeMs * 0.001;
+
+  // Wind currents advance per frame (cheap; ≤4 currents).
+  var wind = weather ? weather.wind() : { direction: 0.3, intensity: 0.3 };
+  updateCurrents(timeSec, wind.direction, wind.intensity, player.x, player.y);
+
+  // Rebuild on key change (tile window, zoom, chunk readiness, tuner clear).
+  var key = _poolKey(chunkStore, px, py, tilePxSnapped, radiusX, radiusY);
+  if (key !== _pool.key || !_pool.uploaded) {
+    _pool.key = key;
+    _poolRebuild(chunkStore, player, glc, tilePxSnapped, radiusX, radiusY);
+    if (!_pool.uploaded) return false; // GL not ready — caller falls back to legacy path
+  }
+
+  // 10Hz trigger tick.
+  if (timeMs - _pool.lastTickMs >= 100) {
+    _pool.lastTickMs = timeMs;
+    _poolTick(timeMs, timeSec, glc, tilePxSnapped);
+  }
+
+  // Per-frame: animate only the active list.
+  var m = _pool.mirror;
+  var sm = _pool.shadowMirror;
+  var doneKeys = null;
+  _pool.active.forEach(function (_v, i) {
+    var meta = _pool.meta[i];
+    var bl = meta.bl;
+    var o = i * SPRITE_FLOATS;
+    var stillActive = false;
+
+    var frameIdx = bl ? bl.restFrame : 0;
+    var animBlend = 0;
+    if (bl) {
+      var blCycle = (bl.frameCount || FRAME_COUNT) * FRAME_DURATION;
+      var triggerKey = meta.wx * 10000 + meta.wy * 100 + bl.bi;
+      var triggerData = triggerTimes.get(triggerKey);
+      var triggerTime = triggerData ? triggerData.time : -99999;
+      var triggerDuration = blCycle * bl.loopCount;
+      var elapsed = timeMs - triggerTime;
+      var isAnimating = elapsed >= 0 && elapsed <= triggerDuration;
+      if (isAnimating) {
+        frameIdx = Math.floor((elapsed / FRAME_DURATION + bl.restFrame) % (bl.frameCount || FRAME_COUNT));
+        var cycleProgress = elapsed / blCycle;
+        if (cycleProgress < 1) animBlend = Math.min(1, cycleProgress * 2);
+        else if (cycleProgress > bl.loopCount - 1) animBlend = Math.max(0, (bl.loopCount - cycleProgress) * 2);
+        else animBlend = 1;
+        stillActive = true;
+      } else if (triggerData && triggerTime > -99999) {
+        // Freeze on the frame the animation ended on (ambient-life design).
+        frameIdx = Math.floor((triggerDuration / FRAME_DURATION + bl.restFrame) % (bl.frameCount || FRAME_COUNT));
+      }
+    }
+
+    // Resolve image: sim state > lifecycle state > anim frame > static.
+    var img = null;
+    if (bl && meta.simState === 'REMOVED') { img = null; }
+    else if (bl) {
+      var simUrl = (meta.simState && meta.simState !== 'REMOVED')
+        ? f4SpriteUrl({ name: bl._f4Name, biome: bl._f4Biome, variant: bl._f4Variant, state: meta.simState })
+        : null;
+      img = (simUrl || bl.stateUrl) ? loadFrame(simUrl || bl.stateUrl) : null;
+      if (!img && bl.animUrlBase) {
+        img = loadFrame(bl.animUrlBase + 'frame_' + String(frameIdx).padStart(3, '0') + '.png', bl.frameCount);
+      }
+      if (!img) img = loadFrame(bl.staticUrl);
+    } else {
+      img = meta.img; // extra decor: static, only fades
+    }
+
+    var rect = null, alpha = 0, sway = 0;
+    if (img) {
+      img = scaledFrame(img, meta.drawSizePx);
+      rect = glc.atlasRect(img, img.src || img._dnKey || '');
+      var fade = imgFade(img, timeMs);
+      if (fade < 1) stillActive = true; // keep fading
+      alpha = meta.edgeFade * fade;
+      if (bl && !bl.isRigid) {
+        sway = (meta.tileRotCached || 0) * 1.2 * animBlend * bl.lifeSway;
+      }
+    }
+    // Write floats + mark dirty.
+    m[o + 3] = (bl ? bl.baseAngle : 0) + sway;
+    m[o + 4] = rect ? alpha : 0;
+    if (rect) { m[o + 5] = rect.u0; m[o + 6] = rect.v0; m[o + 7] = rect.du; m[o + 8] = rect.dv; }
+    _pool.dirty.add(i);
+    var sIdx = _pool.shadowOf[i];
+    if (sIdx >= 0) {
+      var so = sIdx * SPRITE_FLOATS;
+      var tier = 1.0 - sm[so + 3]; // diffusion slot was set at rebuild
+      sm[so + 4] = (rect ? alpha : 0) * meta.biomeShadowK * (0.30 + 0.70 * tier);
+      if (rect) { sm[so + 5] = rect.u0; sm[so + 6] = rect.v0; sm[so + 7] = rect.du; sm[so + 8] = rect.dv; }
+      _pool.shadowDirty.add(sIdx);
+    }
+    if (!stillActive) { if (!doneKeys) doneKeys = []; doneKeys.push(i); }
+  });
+  if (doneKeys) for (var d = 0; d < doneKeys.length; d++) _pool.active.delete(doneKeys[d]);
+
+  // Upload dirty ranges (full upload if heavily fragmented).
+  var FULL_FRACTION = 0.30, GAP = 8;
+  if (_pool.dirty.size > 0) {
+    if (_pool.dirty.size > _pool.n * FULL_FRACTION) {
+      glc.uploadPoolRange('sprite', m, 0, _pool.n);
+    } else {
+      var ranges = coalesceDirty(Array.from(_pool.dirty), GAP);
+      for (var r = 0; r < ranges.length; r++) glc.uploadPoolRange('sprite', m, ranges[r].start, ranges[r].count);
+    }
+  }
+  if (_pool.shadowDirty.size > 0) {
+    if (_pool.shadowDirty.size > _pool.shadowN * FULL_FRACTION) {
+      glc.uploadPoolRange('shadow', sm, 0, _pool.shadowN);
+    } else {
+      var sRanges = coalesceDirty(Array.from(_pool.shadowDirty), GAP);
+      for (var sr = 0; sr < sRanges.length; sr++) glc.uploadPoolRange('shadow', sm, sRanges[sr].start, sRanges[sr].count);
+    }
+  }
+  _f2Stats.dirtyInstances = _pool.dirty.size;
+  _f2Stats.activeCount = _pool.active.size;
+  _pool.dirty.clear();
+  _pool.shadowDirty.clear();
+
+  // Camera uniform.
+  var cam = {
+    x: chunkGrid.baseSX - chunkGrid.minCX * chunkGrid.chunkPx,
+    y: chunkGrid.baseSY - chunkGrid.minCY * chunkGrid.chunkPx,
+    scale: tilePxSnapped,
+  };
+
+  // Shadows first (under sprites), as today.
+  var sunH = sun ? sun.sunHeight : 1;
+  var sunUp = sunH < 0.08 ? (sunH / 0.08) * (sunH / 0.08) * (3 - 2 * (sunH / 0.08)) : 1;
+  if (glc.shadowOk && sun && sunH > 0.001 && _pool.shadowN > 0) {
+    var shVec = { x: sun.shadowX * sun.shadowLength * 0.9, y: sun.shadowLength * 0.35 };
+    var shStrength = 0.50 * (0.62 + (1 - sunH) * 0.38) * sunUp;
+    glc.drawPoolShadows(0, _pool.shadowN, w, h, cam, shVec, shStrength);
+  }
+
+  // Player: uploaded per frame, drawn as a 1-instance range between the two
+  // halves of the pool split at the player's sortY.
+  var pRect = _playerGL ? glc.uploadPlayerSprite(_playerGL.canvas) : null;
+  var split = _pool.n;
+  if (pRect && _playerGL) {
+    split = lowerBound(_pool.sortY, player.y + 0.4, _pool.n);
+    var tail = _pool.n; // player instance lives at slot n (capacity is n+1)
+    var to = tail * SPRITE_FLOATS;
+    m[to] = (_playerGL.pivotX - cam.x) / cam.scale;
+    m[to + 1] = (_playerGL.pivotY - cam.y) / cam.scale;
+    m[to + 2] = _playerGL.size / cam.scale;
+    m[to + 3] = 0;
+    m[to + 4] = 1;
+    m[to + 5] = pRect.u0; m[to + 6] = pRect.v0; m[to + 7] = pRect.du; m[to + 8] = pRect.dv;
+    glc.uploadPoolRange('sprite', m, tail, 1);
+  }
+  glc.drawPoolSprites(0, split, w, h, cam);
+  if (pRect && _playerGL) glc.drawPoolSprites(_pool.n, 1, w, h, cam);
+  if (split < _pool.n) glc.drawPoolSprites(split, _pool.n - split, w, h, cam);
+  return true;
+}
+
 // Draw animated Field 2 sprites near the player.
 // Called per-frame from canvas-renderer after chunk drawing.
 // When `glc` is provided (GL mode), most sprites render as GPU instances;
@@ -929,6 +1410,14 @@ function imgFade(img, timeMs) {
 export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, weather, sun, glc) {
   // Don't render until all sprites are loaded — prevents cascading pops
   if (!_f2Ready) return;
+
+  if (glc && glc.spritesOk) {
+    var usedPool = _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, weather, sun, glc);
+    if (usedPool) {
+      _prevPlayerX = player.x; _prevPlayerY = player.y;
+      return;
+    }
+  }
 
   var tilePx = WORLD.tileSize * camera.zoom;
   var chunkPx = chunkGrid.chunkPx;
@@ -1174,136 +1663,11 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
 
   var twoD = drawBuffer;
   var playerInGL = false;
-  if (glc && glc.spritesOk) {
-    // ALL sprites go to the GL instanced batch, and the player joins it as
-    // one more instance (composited offscreen, uploaded to a reserved atlas
-    // region each frame). One ordering domain — no 2D/GL split boundary
-    // where relative sprite depth would pop as the player moves.
-    var pRect = _playerGL ? glc.uploadPlayerSprite(_playerGL.canvas) : null;
-    var maxInst = drawBuffer.length + 1;
-    if (!_instArray || _instArray.length < maxInst * SPRITE_FLOATS) {
-      _instArray = new Float32Array(Math.max(4096, maxInst * SPRITE_FLOATS * 2));
-    }
-    // Silhouette shadows: one shadow instance per sufficiently large sprite.
-    // Tiny sprites (grass blades < 60% of a tile) skip — silhouettes don't
-    // read at that size and the ground sells the lighting anyway.
-    var sunH = sun ? sun.sunHeight : 1;
-    var sunUp = sunH < 0.08 ? (sunH / 0.08) * (sunH / 0.08) * (3 - 2 * (sunH / 0.08)) : 1; // smoothstep 0..0.08
-    var shadowOn = glc.shadowOk && sun && sunH > 0.001;
-    var shCount = 0;
-    if (shadowOn) {
-      if (!_shadowArray || _shadowArray.length < (drawBuffer.length + 1) * SPRITE_FLOATS) {
-        _shadowArray = new Float32Array(Math.max(4096, (drawBuffer.length + 1) * SPRITE_FLOATS * 2));
-      }
-      var minShadowSize = tilePxSnapped * 0.6;
-      for (var shi = 0; shi < drawBuffer.length; shi++) {
-        var sg = drawBuffer[shi];
-        if (sg.drawSize < minShadowSize) continue;
-        var srect = glc.atlasRect(sg.img, sg._url);
-        if (!srect) continue;
-        var so = shCount * SPRITE_FLOATS;
-        _shadowArray[so] = sg.sx;
-        _shadowArray[so + 1] = sg.sy + sg.halfDraw;       // same ground pivot as sprite
-        _shadowArray[so + 2] = sg.drawSize;
-        // diffusion tier: small flora → faint individual silhouettes that
-        // only read in aggregate; large objects → full defined silhouette
-        var tier = (sg.drawSize - minShadowSize) / (tilePxSnapped * 1.2);
-        tier = tier < 0 ? 0 : tier > 1 ? 1 : tier;
-        // rotation slot carries per-instance diffusion for the shadow program
-        _shadowArray[so + 3] = 1.0 - tier;
-        var diffuseK = 0.30 + 0.70 * tier;
-        _shadowArray[so + 4] = sg.alpha * (sg.shadowK !== undefined ? sg.shadowK : 0.5) * diffuseK;
-        _shadowArray[so + 5] = srect.u0;
-        _shadowArray[so + 6] = srect.v0;
-        _shadowArray[so + 7] = srect.du;
-        _shadowArray[so + 8] = srect.dv;
-        shCount++;
-      }
-      // Player silhouette shadow: anchor at the FEET line, not the canvas
-      // bottom (the 256px player canvas has a 64px empty band below the
-      // baseline; using the raw quad pivot would detach the shadow).
-      if (pRect && _playerGL) {
-        var pbf = _playerGL.baseFrac || 1;
-        var pso = shCount * SPRITE_FLOATS;
-        _shadowArray[pso] = _playerGL.pivotX;
-        _shadowArray[pso + 1] = _playerGL.pivotY - _playerGL.size * (1 - pbf);
-        _shadowArray[pso + 2] = _playerGL.size * pbf;
-        _shadowArray[pso + 3] = 0.3; // mild diffusion — defined silhouette
-        _shadowArray[pso + 4] = 0.5;
-        _shadowArray[pso + 5] = pRect.u0;
-        _shadowArray[pso + 6] = pRect.v0;
-        _shadowArray[pso + 7] = pRect.du;
-        _shadowArray[pso + 8] = pRect.dv * pbf;
-        shCount++;
-      }
-    }
-    var instCount = 0;
-    var playerSortY = player.y + 0.4;
-    twoD = [];
-    for (var gi = 0; gi < drawBuffer.length; gi++) {
-      var g = drawBuffer[gi];
-      if (pRect && !playerInGL && g.sortY > playerSortY) {
-        var po = instCount * SPRITE_FLOATS;
-        _instArray[po] = _playerGL.pivotX;
-        _instArray[po + 1] = _playerGL.pivotY;
-        _instArray[po + 2] = _playerGL.size;
-        _instArray[po + 3] = 0;
-        _instArray[po + 4] = 1;
-        _instArray[po + 5] = pRect.u0;
-        _instArray[po + 6] = pRect.v0;
-        _instArray[po + 7] = pRect.du;
-        _instArray[po + 8] = pRect.dv;
-        instCount++;
-        playerInGL = true;
-      }
-      var rect = glc.atlasRect(g.img, g._url);
-      if (!rect) {
-        // Not atlased (yet). In art-scene mode coords are art px — they can't
-        // draw on the CSS-px 2D canvas, so skip a frame (sprite is mid-fade
-        // anyway); otherwise fall back to the 2D canvas.
-        if (!glc.sceneActive) twoD.push(g);
-        continue;
-      }
-      var o = instCount * SPRITE_FLOATS;
-      _instArray[o] = g.sx;
-      _instArray[o + 1] = g.sy + g.halfDraw; // pivot at bottom-center
-      _instArray[o + 2] = g.drawSize;
-      _instArray[o + 3] = g.baseAngle + g.sway;
-      _instArray[o + 4] = g.alpha;
-      _instArray[o + 5] = rect.u0;
-      _instArray[o + 6] = rect.v0;
-      _instArray[o + 7] = rect.du;
-      _instArray[o + 8] = rect.dv;
-      instCount++;
-    }
-    if (pRect && !playerInGL) {
-      var po2 = instCount * SPRITE_FLOATS;
-      _instArray[po2] = _playerGL.pivotX;
-      _instArray[po2 + 1] = _playerGL.pivotY;
-      _instArray[po2 + 2] = _playerGL.size;
-      _instArray[po2 + 3] = 0;
-      _instArray[po2 + 4] = 1;
-      _instArray[po2 + 5] = pRect.u0;
-      _instArray[po2 + 6] = pRect.v0;
-      _instArray[po2 + 7] = pRect.du;
-      _instArray[po2 + 8] = pRect.dv;
-      instCount++;
-      playerInGL = true;
-    }
-    if (shadowOn && shCount > 0) {
-      // shadowVec: top of sprite lands shadowLength sprite-heights away,
-      // skewed horizontally by sun azimuth; flattened to 35% vertical run.
-      var shVec = {
-        x: sun.shadowX * sun.shadowLength * 0.9,
-        y: sun.shadowLength * 0.35,
-      };
-      var shStrength = 0.50 * (0.62 + (1 - sunH) * 0.38) * sunUp;
-      glc.drawShadowInstances(_shadowArray, shCount, w, h, shVec, shStrength);
-    }
-    glc.drawSpriteInstances(_instArray, instCount, w, h);
-  }
+  // Legacy GL block removed: the persistent pool path (_poolFrame) now
+  // handles all GL rendering when glc.spritesOk is true, returning before
+  // this point. The 2D fallback below still serves useGL=false mode.
 
-  // 2D pass (everything in 2D mode; rare atlas misses in GL mode)
+  // 2D pass (everything in 2D mode)
   var playerInserted = playerInGL;
   for (var di = 0; di < twoD.length; di++) {
     // Draw player when we reach sprites at or below player's Y
