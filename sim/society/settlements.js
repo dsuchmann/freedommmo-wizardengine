@@ -16,7 +16,7 @@ export const PLOT_W = 5;          // hut footprint (M4 blueprint)
 export const PLOT_H = 4;
 
 /** TERRITORY_W×TERRITORY_H rect centered on (x,y). */
-function territoryAround(x, y) {
+export function territoryAround(x, y) {
   return {
     x0: x - Math.floor(TERRITORY_W / 2), y0: y - Math.floor(TERRITORY_H / 2),
     w: TERRITORY_W, h: TERRITORY_H,

@@ -4,8 +4,9 @@
 import { rand, mix } from '../kernel/rng.js';
 import { classifyBiome } from '../../src/world/biomes.js';
 import { REGION } from '../lod/aggregate.js';
-import { MACRO } from '../world/genesis.js';
 
+// Inline: MACRO=4 (same as genesis.js) to avoid circular import.
+const MACRO = 4;
 const MACRO_TILES = MACRO * REGION;
 
 export const RACES = {
@@ -121,9 +122,9 @@ export function macroCellPeoples(seed, macroKey, epochs) {
     }
   }
 
-  // Epoch severity modulates threshold (harsher epochs → fewer peoples survive)
+  // Epoch severity modulates threshold slightly (harsher epochs → fewer peoples survive)
   const epochSeverity = epochs.reduce((s, e) => s + (e.severity ?? 0), 0) / Math.max(1, epochs.length);
-  const threshold = 0.3 + epochSeverity * 0.15; // 0.3–0.45 range
+  const threshold = 0.15 + epochSeverity * 0.1; // 0.15–0.25 range — generous, terrain gates the rest
 
   const result = [];
   const cellHash = mix(mx, my);
