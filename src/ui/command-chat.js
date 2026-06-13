@@ -77,6 +77,20 @@ async function submitCommand() {
   if (!text) { closeChat(); return; }
 
   const { count, tokens } = parseCommand(text);
+
+  // Try validated dictionary first (these have passed visual eval)
+  const tryId = tokens.join('_');
+  const validatedRes = await fetch(`/src/life/choreography/validated/${tryId}.json`).catch(() => null);
+  if (validatedRes?.ok) {
+    try {
+      const program = await validatedRes.json();
+      playMotion(program, { count });
+      showFeedback(`${program.id} ×${count} (validated)`);
+      closeChat();
+      return;
+    } catch {}
+  }
+
   const match = matchMotion(tokens, MOTION_MANIFEST);
 
   if (match) {
