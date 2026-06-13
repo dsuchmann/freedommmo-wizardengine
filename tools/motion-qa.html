@@ -173,7 +173,7 @@
       renderRules();
       if (poses.length) selectPose(poses[0]);
       loadChoreoList();
-      loadSavedGenerations();
+      // Don't load localStorage-cached generations — only show validated files
     }
 
     function savePoses() {
@@ -231,20 +231,61 @@
       drawPreview(p.joints);
     }
 
-    // ── Choreography list ───────────────────────────────────────────────────
+    // ── Choreography list — loads ONLY validated-spatial files ─────────────
+    const VALIDATED_CHOREOS = [
+      'wave', 'clap', 'bow', 'salute', 'point_forward', 'shrug', 'nod_yes',
+      'shake_head_no', 'flex_muscles', 'pray', 'cheer_with_both_arms',
+      'beckon_someone_to_come_here', 'yawn_and_stretch', 'look_around_nervously',
+      'crouch_down', 'jump_in_place', 'do_jumping_jacks', 'squat',
+      'dance', 'facepalm', 'kneel', 'sit_down', 'tiptoe',
+      'march_in_place', 'dig_with_a_shovel', 'sweep_the_floor',
+    ];
+
     async function loadChoreoList() {
       const list = document.getElementById('choreo-list');
-      // Try to load manifest
+      list.innerHTML = VALIDATED_CHOREOS.map(id =>
+        `<div class="pose-item" data-choreo="${id}"><span class="dot pass"></span>${id}</div>`
+      ).join('');
+      list.querySelectorAll('[data-choreo]').forEach(el => {
+        el.onclick = () => loadValidatedChoreo(el.dataset.choreo);
+      });
+    }
+
+    async function loadValidatedChoreo(id) {
       try {
-        const mod = await import('/src/life/choreography/manifest.js');
-        const manifest = mod.MOTION_MANIFEST;
-        list.innerHTML = manifest.map(m =>
-          `<div class="pose-item" data-choreo="${m.id}"><span class="dot untested"></span>${m.id}</div>`
-        ).join('');
-        list.querySelectorAll('[data-choreo]').forEach(el => {
-          el.onclick = () => loadChoreo(el.dataset.choreo);
-        });
-      } catch { list.innerHTML = '<div style="color:#555;font-size:11px">No manifest</div>'; }
+        const res = await fetch(`/src/life/choreography/validated-spatial/${id}.json`);
+        if (!res.ok) throw new Error(res.status);
+        const program = await res.json();
+        const frames = extractFrames(program.root);
+        if (!frames.length) { document.getElementById('critique-status').textContent = 'No frames'; return; }
+
+        // Also load spatial source for the detail panel
+        let spatialSteps = null;
+        try {
+          const sr = await fetch(`/src/life/choreography/validated-spatial/${id}_spatial.json`);
+          if (sr.ok) spatialSteps = await sr.json();
+        } catch {}
+
+        choreoFrames = frames;
+        choreoIdx = 0;
+        selectedPose = null;
+        pendingFix = null;
+        stopPlayback();
+        document.querySelectorAll('.pose-item').forEach(el => el.classList.remove('selected'));
+        document.querySelectorAll(`[data-choreo="${id}"]`).forEach(el => el.classList.add('selected'));
+        document.getElementById('detail-title').textContent = id;
+        document.getElementById('detail-desc').textContent = `Validated: ${frames.length} keyframes`;
+        document.getElementById('detail-tags').textContent = '';
+        document.getElementById('detail-json').textContent = spatialSteps
+          ? JSON.stringify(spatialSteps.steps || spatialSteps, null, 2)
+          : JSON.stringify(program, null, 2);
+        document.getElementById('critique-box').value = '';
+        document.getElementById('critique-status').textContent = '';
+        document.getElementById('btn-approve').style.display = 'none';
+        showFrame(0);
+      } catch (e) {
+        document.getElementById('critique-status').textContent = `Load error: ${e.message}`;
+      }
     }
 
     async function loadChoreo(id) {
