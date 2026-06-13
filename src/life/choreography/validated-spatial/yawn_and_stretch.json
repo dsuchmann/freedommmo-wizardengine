@@ -48,8 +48,8 @@
               "head": -18,
               "arm_u_l": -60,
               "arm_u_r": 60,
-              "arm_f_l": -15,
-              "arm_f_r": 15
+              "arm_f_l": -60,
+              "arm_f_r": 60
             },
             "ticks": 4,
             "zHints": {}
@@ -61,8 +61,8 @@
               "head": 0,
               "arm_u_l": -60,
               "arm_u_r": 60,
-              "arm_f_l": -15,
-              "arm_f_r": 15
+              "arm_f_l": -60,
+              "arm_f_r": 60
             },
             "ticks": 4,
             "zHints": {}
@@ -76,8 +76,8 @@
           "head": 0,
           "arm_u_l": 0,
           "arm_u_r": 0,
-          "arm_f_l": -15,
-          "arm_f_r": 15
+          "arm_f_l": -60,
+          "arm_f_r": 60
         },
         "ticks": 4,
         "zHints": {}
@@ -92,8 +92,8 @@
               "head": 0,
               "arm_u_l": 0,
               "arm_u_r": 0,
-              "arm_f_l": -15,
-              "arm_f_r": 15
+              "arm_f_l": -60,
+              "arm_f_r": 60
             },
             "ticks": 4,
             "zHints": {}
@@ -105,8 +105,8 @@
               "head": 0,
               "arm_u_l": 0,
               "arm_u_r": 0,
-              "arm_f_l": -15,
-              "arm_f_r": 15
+              "arm_f_l": -60,
+              "arm_f_r": 60
             },
             "ticks": 4,
             "zHints": {}

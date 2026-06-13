@@ -87,10 +87,10 @@ function computeBoneAngle(boneName, action, amount, currentAngles, depthFactor =
         case 'retract':
           return lerp(0, (isLeft ? 50 : -50) * depthFactor, amount);
         case 'close':
-          // Move arm toward body centerline — small inward angle (left arm goes less negative, right less positive)
-          return lerp(0, isLeft ? -40 : 40, amount);
+          // Move arm toward body centerline — left arm POSITIVE (inward), right arm NEGATIVE (inward)
+          return lerp(0, isLeft ? 40 : -40, amount);
         case 'open':
-          // Move arm away from body — wider angle
+          // Move arm away from body — left arm NEGATIVE (outward), right arm POSITIVE (outward)
           return lerp(0, isLeft ? -120 : 120, amount);
         default:
           return null;
@@ -109,11 +109,12 @@ function computeBoneAngle(boneName, action, amount, currentAngles, depthFactor =
         case 'straighten':
           return 0;
         case 'close':
-          // Bend forearm inward to bring hand toward center
-          return lerp(0, isLeft ? -90 : 90, amount);
+          // Bend forearm inward — left: toward 0 (less bent), right: toward 0 (less bent)
+          // At close amount 1.0 with upper at 40/-40, forearm at -35/35 makes hands touch
+          return lerp(0, isLeft ? -35 : 35, amount);
         case 'open':
-          // Straighten forearm outward
-          return lerp(0, isLeft ? -30 : 30, amount);
+          // Bend forearm outward — spread hands apart
+          return lerp(0, isLeft ? -120 : 120, amount);
         default:
           return null;
       }

@@ -38,8 +38,8 @@
               "arm_u_l": -120,
               "arm_u_r": 120,
               "spine": 15,
-              "arm_f_l": -30,
-              "arm_f_r": 30
+              "arm_f_l": -120,
+              "arm_f_r": 120
             },
             "ticks": 3,
             "zHints": {}
@@ -50,8 +50,8 @@
               "arm_u_l": -120,
               "arm_u_r": 120,
               "spine": 15,
-              "arm_f_l": -30,
-              "arm_f_r": 30,
+              "arm_f_l": -120,
+              "arm_f_r": 120,
               "head": 30
             },
             "ticks": 3,
@@ -65,11 +65,11 @@
           {
             "op": "pose",
             "joints": {
-              "arm_u_l": -20,
-              "arm_u_r": 20,
+              "arm_u_l": 20,
+              "arm_u_r": -20,
               "spine": 15,
-              "arm_f_l": -45,
-              "arm_f_r": 45,
+              "arm_f_l": -17,
+              "arm_f_r": 18,
               "head": 30
             },
             "ticks": 3,
@@ -78,11 +78,11 @@
           {
             "op": "pose",
             "joints": {
-              "arm_u_l": -20,
-              "arm_u_r": 20,
+              "arm_u_l": 20,
+              "arm_u_r": -20,
               "spine": 15,
-              "arm_f_l": -45,
-              "arm_f_r": 45,
+              "arm_f_l": -17,
+              "arm_f_r": 18,
               "head": -30
             },
             "ticks": 3,
@@ -99,8 +99,8 @@
               "arm_u_l": -120,
               "arm_u_r": 120,
               "spine": 15,
-              "arm_f_l": -30,
-              "arm_f_r": 30,
+              "arm_f_l": -120,
+              "arm_f_r": 120,
               "head": -30
             },
             "ticks": 3,
@@ -112,8 +112,8 @@
               "arm_u_l": -120,
               "arm_u_r": 120,
               "spine": 0,
-              "arm_f_l": -30,
-              "arm_f_r": 30,
+              "arm_f_l": -120,
+              "arm_f_r": 120,
               "head": -30
             },
             "ticks": 3,
@@ -127,8 +127,8 @@
           "arm_u_l": 0,
           "arm_u_r": 0,
           "spine": 0,
-          "arm_f_l": -30,
-          "arm_f_r": 30,
+          "arm_f_l": -120,
+          "arm_f_r": 120,
           "head": -30
         },
         "ticks": 4,
