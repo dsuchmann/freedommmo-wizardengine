@@ -188,6 +188,8 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
   const BUILDING_COLORS = {
     wall: 'rgba(70,80,95,0.7)', door: 'rgba(160,110,60,0.8)', floor: 'rgba(200,190,170,0.25)',
   };
+  // Global occupied tile tracker — prevents cross-settlement building overlap
+  const globalOccupied = new Set();
   for (const s of allSettlements) {
     const rc = RACE_COLORS[s.race] ?? DEFAULT_RACE;
     const isRuin = s.state === 'ruined' || s.tier === 'ruins';
@@ -224,6 +226,22 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
       for (const b of layout.buildings) {
         const fp = b.footprint;
         const bb = fp.boundingBox;
+
+        // Cross-settlement overlap check: skip if any tile already occupied
+        let overlaps = false;
+        for (let dy = 0; dy < bb.h && !overlaps; dy++) {
+          for (let dx = 0; dx < bb.w && !overlaps; dx++) {
+            if (globalOccupied.has(`${b.x + dx},${b.y + dy}`)) overlaps = true;
+          }
+        }
+        if (overlaps) continue;
+        // Mark tiles as occupied (with 2-tile margin)
+        for (let dy = -2; dy < bb.h + 2; dy++) {
+          for (let dx = -2; dx < bb.w + 2; dx++) {
+            globalOccupied.add(`${b.x + dx},${b.y + dy}`);
+          }
+        }
+
         const bsx = Math.floor(b.x * tilePx - camX), bsy = Math.floor(b.y * tilePx - camY);
         const bw = Math.ceil(bb.w * tilePx), bh = Math.ceil(bb.h * tilePx);
         if (bsx > w || bsy > h || bsx + bw < 0 || bsy + bh < 0) continue;
