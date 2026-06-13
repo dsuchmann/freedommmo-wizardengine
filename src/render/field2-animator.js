@@ -1040,8 +1040,8 @@ function _poolRebuild(chunkStore, player, glc, tilePxSnapped, radiusX, radiusY) 
   entries.sort(function (a, b) { return a.sortY - b.sortY; });
 
   var n = entries.length;
-  if (!_pool.mirror || _pool.mirror.length < n * SPRITE_FLOATS) {
-    _pool.mirror = new Float32Array(Math.max(4096, n * SPRITE_FLOATS * 2));
+  if (!_pool.mirror || _pool.mirror.length < (n + 1) * SPRITE_FLOATS) {
+    _pool.mirror = new Float32Array(Math.max(4096, (n + 1) * SPRITE_FLOATS * 2));
     _pool.sortY = new Float32Array(Math.max(512, n * 2));
     _pool.shadowOf = new Int32Array(Math.max(512, n * 2));
     _pool.shadowMirror = new Float32Array(Math.max(4096, n * SPRITE_FLOATS * 2));
