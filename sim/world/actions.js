@@ -335,6 +335,32 @@ export function move(kernel, actorId, dx, dy, tick) {
   return true;
 }
 
+/** Domesticate an adjacent tameable animal by investing R through the nurture channel.
+ *  L4 (atlas S4 fauna row): the edge is the system — herding/loyalty/upkeep are honest
+ *  absences. Refuses (false): missing nodes, not fauna/tameable, offer < species minOffer,
+ *  not adjacent (Chebyshev 1), player can't pay, or already domesticated. */
+export function tame(kernel, playerId, targetId, offer, tick) {
+  const player = kernel.graph.nodes.get(playerId);
+  const animal = kernel.graph.nodes.get(targetId);
+  if (!player || !animal || animal.R == null) return false;
+  const sp = SPECIES[animal.attrs.species];
+  const tameSpec = sp?.instinct?.tame;
+  if (!tameSpec || offer < tameSpec.minOffer || player.R < offer) return false;
+  if (Math.max(Math.abs(player.x - animal.x), Math.abs(player.y - animal.y)) > 1) return false;
+  for (const eid of kernel.graph.byNode.get(targetId) ?? []) {
+    if (kernel.graph.edges.get(eid)?.type === 'domestic') return false;   // one owner
+  }
+  kernel.closeSegment(animal, tick);
+  animal.attrs.pinned = true;            // named in a player ledger event (spec §4.3)
+  player.R -= offer;
+  const delivered = transfer(offer, 'nurture', kernel.ledger);
+  animal.R += delivered;
+  kernel.graph.createEdge({ type: 'domestic', tick, members: [[playerId, 'owner'], [targetId, 'animal']] });
+  kernel.ledger.emit({ tick, type: 'tame', actor: playerId, targets: [targetId], magnitude: offer });
+  kernel.reRateTileOf(targetId, tick);
+  return true;
+}
+
 /** Eat an inventory item: converts its E to player R through the harvest transfer channel (lossy). */
 export function eat(kernel, playerId, itemId, tick) {
   const player = kernel.graph.nodes.get(playerId);
