@@ -674,8 +674,8 @@ Now return the CORRECTED joint angles that fix the critique. Start from the curr
         if (error) throw new Error(error);
         console.log('[QA] Spatial choreography:', choreography);
 
-        // Step 2: Compile to joints + zHints
-        const program = compileSpatialProgram(choreography, rig);
+        // Step 2: Compile to joints + zHints (direction-aware)
+        const program = compileSpatialProgram(choreography, rig, currentDir);
         console.log('[QA] Compiled program:', program);
 
         // Step 3: Extract frames for display

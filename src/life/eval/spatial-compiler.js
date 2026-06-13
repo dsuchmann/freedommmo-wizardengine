@@ -2,9 +2,22 @@
  * Spatial Compiler — deterministic conversion of spatial instructions
  * (body part + primitive + amount) into joint angles + Z hints.
  * No LLM involved — pure math.
+ *
+ * DIRECTION-AWARE: extend/retract scale joint rotation by viewing angle.
+ * Front views (south): forward = into screen → minimal rotation + Z hint.
+ * Profile views (east/west): forward = across screen → full rotation.
  */
 
 import { resolveBones, expandCompound, isCompound, BODY_GROUPS } from './spatial-groups.js';
+
+// How much of the "forward/backward" axis maps to the rig's 2D X plane
+// per facing direction. Profile = 1 (forward IS sideways), front = 0 (forward is depth).
+export const DIR_DEPTH_FACTOR = {
+  s: 0.15, n: 0.15,              // front/back: forward is almost entirely depth
+  e: 1.0,  w: 1.0,               // profile: forward is fully in-plane
+  se: 0.55, sw: 0.55,            // diagonal: partial
+  ne: 0.55, nw: 0.55,
+};
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -49,9 +62,11 @@ function boneFamily(boneName) {
 
 /**
  * Compute the angle delta for a single bone given an action + amount.
+ * depthFactor: 0–1, how much extend/retract maps to the rig's 2D plane.
+ *   1.0 = profile view (forward IS the rig plane), 0.15 = front view (forward is depth).
  * Returns the angle value, or null if this bone is unaffected by the action.
  */
-function computeBoneAngle(boneName, action, amount, currentAngles) {
+function computeBoneAngle(boneName, action, amount, currentAngles, depthFactor = 1.0) {
   const role   = boneRole(boneName);
   const side   = boneSide(boneName);
   const family = boneFamily(boneName);
@@ -67,9 +82,10 @@ function computeBoneAngle(boneName, action, amount, currentAngles) {
         case 'lower':
           return lerp(currentAngles[boneName] ?? 0, 0, amount);
         case 'extend':
-          return lerp(0, isLeft ? -90 : 90, amount);
+          // Scale by depthFactor: profile=full rotation, front=minimal (forward is into screen)
+          return lerp(0, (isLeft ? -90 : 90) * depthFactor, amount);
         case 'retract':
-          return lerp(0, isLeft ? 50 : -50, amount);
+          return lerp(0, (isLeft ? 50 : -50) * depthFactor, amount);
         default:
           return null; // bend/straighten/turn_in/turn_out don't touch upper
       }
@@ -112,9 +128,9 @@ function computeBoneAngle(boneName, action, amount, currentAngles) {
         case 'lower':
           return lerp(currentAngles[boneName] ?? 0, 0, amount);
         case 'extend':
-          return lerp(0, -90, amount);
+          return lerp(0, -90 * depthFactor, amount);
         case 'retract':
-          return lerp(0, 30, amount);
+          return lerp(0, 30 * depthFactor, amount);
         default:
           return null;
       }
@@ -194,10 +210,12 @@ function computeBoneAngle(boneName, action, amount, currentAngles) {
  * @param {{ part: string, action: string, amount: number, ticks?: number, zHint?: string }} instruction
  * @param {object} rig  Parsed humanoid.json
  * @param {object} [currentAngles={}]  Current joint angles for 'lower' actions
+ * @param {string} [direction='e']  Facing direction (s/n/e/w/se/sw/ne/nw). Affects extend/retract depth.
  * @returns {{ joints: Record<string, number>, zHints: Record<string, string> }}
  */
-export function compileInstruction(instruction, rig, currentAngles = {}) {
+export function compileInstruction(instruction, rig, currentAngles = {}, direction = 'e') {
   const { part, action, amount, zHint } = instruction;
+  const depthFactor = DIR_DEPTH_FACTOR[direction] ?? 1.0;
 
   const joints  = {};
   const zHints  = {};
@@ -205,24 +223,31 @@ export function compileInstruction(instruction, rig, currentAngles = {}) {
   // Expand compound groups so each individual group gets processed
   const individualGroups = expandCompound(part);
 
+  // For extend/retract on front-facing views, auto-add zHint if not specified
+  const autoZ = (action === 'extend' && !zHint && depthFactor < 0.5) ? 'front'
+    : (action === 'retract' && !zHint && depthFactor < 0.5) ? 'behind'
+    : null;
+
   for (const groupName of individualGroups) {
     const bones = BODY_GROUPS[groupName];
     for (const boneName of bones) {
-      const angle = computeBoneAngle(boneName, action, amount, currentAngles);
+      const angle = computeBoneAngle(boneName, action, amount, currentAngles, depthFactor);
       if (angle !== null) {
         joints[boneName] = angle;
       }
     }
 
-    // Carry zHint on each expanded group
-    if (zHint !== undefined) {
-      zHints[groupName] = zHint;
+    // Carry zHint on each expanded group (explicit > auto)
+    const effectiveZ = zHint ?? autoZ;
+    if (effectiveZ) {
+      zHints[groupName] = effectiveZ;
     }
   }
 
   // Also attach zHint to the original part name (covers non-compound pass-through)
-  if (zHint !== undefined) {
-    zHints[part] = zHint;
+  const effectiveZTop = zHint ?? autoZ;
+  if (effectiveZTop) {
+    zHints[part] = effectiveZTop;
   }
 
   return { joints, zHints };
@@ -234,10 +259,10 @@ export function compileInstruction(instruction, rig, currentAngles = {}) {
  * @param {object} rig
  * @returns {object}  DSL node
  */
-function compileStep(step, rig) {
+function compileStep(step, rig, direction) {
   // Single instruction
   if (step.part && step.action) {
-    const { joints, zHints } = compileInstruction(step, rig);
+    const { joints, zHints } = compileInstruction(step, rig, {}, direction);
     return {
       op: 'pose',
       joints,
@@ -250,7 +275,7 @@ function compileStep(step, rig) {
   if (step.type === 'sequence' || step.type === 'parallel') {
     return {
       op: step.type,
-      children: (step.steps ?? []).map(s => compileStep(s, rig)),
+      children: (step.steps ?? []).map(s => compileStep(s, rig, direction)),
     };
   }
 
@@ -265,12 +290,13 @@ function compileStep(step, rig) {
  *
  * @param {{ id: string, kind?: string, steps: object[] }} choreography
  * @param {object} rig  Parsed humanoid.json
+ * @param {string} [direction='e']  Facing direction — affects extend/retract depth mapping
  * @returns {{ id: string, kind: string, variant: string, root: object }}
  */
-export function compileSpatialProgram(choreography, rig) {
+export function compileSpatialProgram(choreography, rig, direction = 'e') {
   const { id, kind = 'action', steps = [] } = choreography;
 
-  const children = steps.map(step => compileStep(step, rig));
+  const children = steps.map(step => compileStep(step, rig, direction));
 
   return {
     id,

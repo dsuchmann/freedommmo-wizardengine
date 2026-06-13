@@ -120,7 +120,9 @@ async function submitCommand() {
     const { choreography, error } = await composeSpatial(text, cfg, { rules });
     if (error) { showFeedback(error, '#ffaaaa'); return; }
 
-    const program = compileSpatialProgram(choreography, rig);
+    // Get player's current facing direction for direction-aware compilation
+    const playerDir = (window._player?.character?.direction || 'S').toLowerCase();
+    const program = compileSpatialProgram(choreography, rig, playerDir);
     playMotion(program, { count });
     showFeedback(`${choreography.id} ×${count} (spatial)`, '#aaffaa');
 

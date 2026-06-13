@@ -63,6 +63,23 @@ test('compileSpatialProgram produces valid DSL', () => {
   assert.ok(program.root.children[0].joints.arm_u_r > 100);
 });
 
+test('extend south-facing produces minimal rotation + auto zHint front', () => {
+  const { joints, zHints } = compileInstruction(
+    { part: 'right_arm', action: 'extend', amount: 1.0 }, rig, {}, 's'
+  );
+  // South: depthFactor=0.15, so 90*0.15=13.5 → rounds to 14
+  assert.ok(joints.arm_u_r <= 20, `south extend should be small, got ${joints.arm_u_r}`);
+  assert.strictEqual(zHints.right_arm, 'front', 'auto Z hint should be front');
+});
+
+test('extend east-facing produces full rotation, no auto zHint', () => {
+  const { joints, zHints } = compileInstruction(
+    { part: 'right_arm', action: 'extend', amount: 1.0 }, rig, {}, 'e'
+  );
+  assert.strictEqual(joints.arm_u_r, 90);
+  assert.strictEqual(zHints.right_arm, undefined, 'no auto Z hint for profile');
+});
+
 test('compileSpatialProgram handles parallel', () => {
   const choreo = {
     id: 'test_par', steps: [
