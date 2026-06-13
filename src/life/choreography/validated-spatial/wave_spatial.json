@@ -1,0 +1,42 @@
+{
+  "id": "wave",
+  "kind": "gesture",
+  "steps": [
+    {
+      "part": "right_arm",
+      "action": "raise",
+      "amount": 0.88,
+      "ticks": 5
+    },
+    {
+      "part": "right_arm",
+      "action": "bend",
+      "amount": 0.3,
+      "ticks": 2
+    },
+    {
+      "part": "right_arm",
+      "action": "straighten",
+      "amount": 1,
+      "ticks": 2
+    },
+    {
+      "part": "right_arm",
+      "action": "bend",
+      "amount": 0.3,
+      "ticks": 2
+    },
+    {
+      "part": "right_arm",
+      "action": "straighten",
+      "amount": 1,
+      "ticks": 2
+    },
+    {
+      "part": "right_arm",
+      "action": "lower",
+      "amount": 1,
+      "ticks": 5
+    }
+  ]
+}

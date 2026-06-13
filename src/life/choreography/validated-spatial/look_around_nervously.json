@@ -1,0 +1,80 @@
+{
+  "id": "look_around_nervously",
+  "kind": "idle",
+  "variant": "spatial",
+  "root": {
+    "op": "sequence",
+    "children": [
+      {
+        "op": "pose",
+        "joints": {
+          "head": 18
+        },
+        "ticks": 3,
+        "zHints": {}
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "head": 0
+        },
+        "ticks": 3,
+        "zHints": {}
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "head": 18
+        },
+        "ticks": 3,
+        "zHints": {}
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "head": 0
+        },
+        "ticks": 3,
+        "zHints": {}
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "head": 30
+            },
+            "ticks": 3,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {},
+            "ticks": 3,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "head": 0
+            },
+            "ticks": 3,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {},
+            "ticks": 3,
+            "zHints": {}
+          }
+        ]
+      }
+    ]
+  }
+}

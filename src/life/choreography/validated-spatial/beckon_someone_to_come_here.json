@@ -1,0 +1,69 @@
+{
+  "id": "beckon_come_here",
+  "kind": "gesture",
+  "variant": "spatial",
+  "root": {
+    "op": "sequence",
+    "children": [
+      {
+        "op": "pose",
+        "joints": {
+          "arm_u_r": 119
+        },
+        "ticks": 4,
+        "zHints": {}
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "arm_u_r": 7,
+          "arm_f_r": 0
+        },
+        "ticks": 3,
+        "zHints": {
+          "right_arm": "front"
+        }
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "arm_f_r": 98
+        },
+        "ticks": 2,
+        "zHints": {}
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "arm_f_r": 0
+        },
+        "ticks": 3,
+        "zHints": {}
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "arm_f_r": 98
+        },
+        "ticks": 3,
+        "zHints": {}
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "arm_f_r": 0
+        },
+        "ticks": 3,
+        "zHints": {}
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "arm_u_r": 0
+        },
+        "ticks": 4,
+        "zHints": {}
+      }
+    ]
+  }
+}

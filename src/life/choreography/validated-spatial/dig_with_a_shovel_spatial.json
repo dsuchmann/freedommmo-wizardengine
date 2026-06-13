@@ -1,0 +1,99 @@
+{
+  "id": "dig_with_shovel",
+  "kind": "action",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "torso",
+          "action": "bend",
+          "amount": 0.3,
+          "ticks": 4
+        },
+        {
+          "part": "right_arm",
+          "action": "extend",
+          "amount": 0.7,
+          "ticks": 4,
+          "zHint": "front"
+        },
+        {
+          "part": "left_arm",
+          "action": "bend",
+          "amount": 0.5,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_legs",
+          "action": "bend",
+          "amount": 0.3,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "retract",
+          "amount": 0.5,
+          "ticks": 3
+        },
+        {
+          "part": "left_arm",
+          "action": "extend",
+          "amount": 0.5,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 1,
+          "ticks": 5
+        },
+        {
+          "part": "right_arm",
+          "action": "extend",
+          "amount": 0.7,
+          "ticks": 5,
+          "zHint": "front"
+        },
+        {
+          "part": "left_arm",
+          "action": "retract",
+          "amount": 1,
+          "ticks": 5
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "both_legs",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 4
+        }
+      ]
+    }
+  ]
+}

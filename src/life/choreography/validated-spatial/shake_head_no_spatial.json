@@ -1,0 +1,42 @@
+{
+  "id": "shake_head_no",
+  "kind": "gesture",
+  "steps": [
+    {
+      "part": "head",
+      "action": "lower",
+      "amount": 0.1,
+      "ticks": 2
+    },
+    {
+      "part": "head",
+      "action": "turn_out",
+      "amount": 0.4,
+      "ticks": 3
+    },
+    {
+      "part": "head",
+      "action": "turn_in",
+      "amount": 0.8,
+      "ticks": 3
+    },
+    {
+      "part": "head",
+      "action": "turn_out",
+      "amount": 0.4,
+      "ticks": 3
+    },
+    {
+      "part": "head",
+      "action": "turn_in",
+      "amount": 0,
+      "ticks": 3
+    },
+    {
+      "part": "head",
+      "action": "raise",
+      "amount": 0,
+      "ticks": 2
+    }
+  ]
+}

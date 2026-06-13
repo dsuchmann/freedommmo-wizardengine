@@ -1,0 +1,63 @@
+{
+  "id": "jump_in_place",
+  "kind": "action",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "raise",
+          "amount": 0.8,
+          "ticks": 4
+        },
+        {
+          "part": "both_legs",
+          "action": "bend",
+          "amount": 0.6,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_legs",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 2
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0.5,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_legs",
+          "action": "bend",
+          "amount": 0,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "part": "both_arms",
+      "action": "lower",
+      "amount": 0,
+      "ticks": 4
+    }
+  ]
+}

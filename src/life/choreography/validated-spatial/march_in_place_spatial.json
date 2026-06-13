@@ -1,0 +1,74 @@
+{
+  "id": "march_in_place",
+  "kind": "idle",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "left_leg",
+          "action": "raise",
+          "amount": 0.5,
+          "ticks": 4
+        },
+        {
+          "part": "right_arm",
+          "action": "raise",
+          "amount": 0.5,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "left_leg",
+          "action": "lower",
+          "amount": 0,
+          "ticks": 4
+        },
+        {
+          "part": "right_arm",
+          "action": "lower",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_leg",
+          "action": "raise",
+          "amount": 0.5,
+          "ticks": 4
+        },
+        {
+          "part": "left_arm",
+          "action": "raise",
+          "amount": 0.5,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_leg",
+          "action": "lower",
+          "amount": 0,
+          "ticks": 4
+        },
+        {
+          "part": "left_arm",
+          "action": "lower",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    }
+  ]
+}

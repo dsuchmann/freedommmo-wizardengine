@@ -1,0 +1,63 @@
+{
+  "id": "shrug",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_shoulders",
+          "action": "raise",
+          "amount": 0.2,
+          "ticks": 3
+        },
+        {
+          "part": "both_arms",
+          "action": "bend",
+          "amount": 0.35,
+          "ticks": 3
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0.15,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_shoulders",
+          "action": "raise",
+          "amount": 0.2,
+          "ticks": 6
+        },
+        {
+          "part": "both_arms",
+          "action": "bend",
+          "amount": 0.35,
+          "ticks": 6
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 3
+        }
+      ]
+    }
+  ]
+}

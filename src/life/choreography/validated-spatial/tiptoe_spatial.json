@@ -1,0 +1,74 @@
+{
+  "id": "tiptoe",
+  "kind": "action",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_legs",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 0.2,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_legs",
+          "action": "raise",
+          "amount": 0.2,
+          "ticks": 3
+        },
+        {
+          "part": "both_arms",
+          "action": "raise",
+          "amount": 0.1,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "left_foot",
+          "action": "turn_out",
+          "amount": 0.2,
+          "ticks": 2
+        },
+        {
+          "part": "right_foot",
+          "action": "turn_out",
+          "amount": 0.2,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_legs",
+          "action": "lower",
+          "amount": 0,
+          "ticks": 4
+        },
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    }
+  ]
+}

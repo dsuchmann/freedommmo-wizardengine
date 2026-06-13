@@ -1,0 +1,64 @@
+{
+  "id": "look_around_nervously",
+  "kind": "idle",
+  "steps": [
+    {
+      "part": "head",
+      "action": "turn_out",
+      "amount": 0.3,
+      "ticks": 3
+    },
+    {
+      "part": "head",
+      "action": "turn_in",
+      "amount": 0,
+      "ticks": 3
+    },
+    {
+      "part": "head",
+      "action": "turn_out",
+      "amount": 0.3,
+      "ticks": 3
+    },
+    {
+      "part": "head",
+      "action": "turn_in",
+      "amount": 0,
+      "ticks": 3
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "turn_out",
+          "amount": 0.5,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "turn_out",
+          "amount": 0.2,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "turn_in",
+          "amount": 0,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "turn_in",
+          "amount": 0,
+          "ticks": 3
+        }
+      ]
+    }
+  ]
+}

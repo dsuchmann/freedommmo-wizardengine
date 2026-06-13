@@ -1,0 +1,30 @@
+{
+  "id": "nod_yes",
+  "kind": "gesture",
+  "steps": [
+    {
+      "part": "head",
+      "action": "lower",
+      "amount": 0.3,
+      "ticks": 3
+    },
+    {
+      "part": "head",
+      "action": "raise",
+      "amount": 0.3,
+      "ticks": 3
+    },
+    {
+      "part": "head",
+      "action": "lower",
+      "amount": 0.3,
+      "ticks": 3
+    },
+    {
+      "part": "head",
+      "action": "raise",
+      "amount": 0,
+      "ticks": 3
+    }
+  ]
+}

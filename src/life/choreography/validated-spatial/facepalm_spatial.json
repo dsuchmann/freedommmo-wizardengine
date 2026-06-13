@@ -1,0 +1,75 @@
+{
+  "id": "facepalm",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "raise",
+          "amount": 0.5,
+          "ticks": 4
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_out",
+          "amount": 0.5,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "part": "right_arm",
+      "action": "bend",
+      "amount": 0.7,
+      "ticks": 3
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.2,
+          "ticks": 2
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_in",
+          "amount": 1,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "part": "right_arm",
+      "action": "retract",
+      "amount": 0.5,
+      "ticks": 3
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_out",
+          "amount": 0,
+          "ticks": 4
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "id": "salute",
+  "kind": "gesture",
+  "steps": [
+    {
+      "part": "right_arm",
+      "action": "raise",
+      "amount": 0.8,
+      "ticks": 4
+    },
+    {
+      "part": "right_arm",
+      "action": "bend",
+      "amount": 0.5,
+      "ticks": 3
+    },
+    {
+      "part": "right_hand",
+      "action": "turn_in",
+      "amount": 0.5,
+      "ticks": 2
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_hand",
+          "action": "turn_out",
+          "amount": 0,
+          "ticks": 2
+        },
+        {
+          "part": "right_arm",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "part": "right_arm",
+      "action": "lower",
+      "amount": 1,
+      "ticks": 4
+    }
+  ]
+}

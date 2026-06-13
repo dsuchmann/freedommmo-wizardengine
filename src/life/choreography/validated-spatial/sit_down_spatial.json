@@ -1,0 +1,52 @@
+{
+  "id": "sit_down",
+  "kind": "action",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.4,
+          "ticks": 4
+        },
+        {
+          "part": "both_legs",
+          "action": "bend",
+          "amount": 0.7,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.8,
+          "ticks": 3
+        },
+        {
+          "part": "both_legs",
+          "action": "bend",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "left_hip",
+          "action": "lower",
+          "amount": 0.5,
+          "ticks": 3
+        },
+        {
+          "part": "right_hip",
+          "action": "lower",
+          "amount": 0.5,
+          "ticks": 3
+        }
+      ]
+    }
+  ]
+}

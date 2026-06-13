@@ -1,0 +1,86 @@
+{
+  "id": "flex_muscles",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "raise",
+          "amount": 0.7,
+          "ticks": 4
+        },
+        {
+          "part": "both_arms",
+          "action": "bend",
+          "amount": 0.9,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "left_hand",
+          "action": "turn_out",
+          "amount": 0.6,
+          "ticks": 3
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_out",
+          "amount": 0.6,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "upper_body",
+          "action": "raise",
+          "amount": 0.2,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 0,
+          "ticks": 4
+        },
+        {
+          "part": "both_arms",
+          "action": "straighten",
+          "amount": 0,
+          "ticks": 4
+        },
+        {
+          "part": "upper_body",
+          "action": "lower",
+          "amount": 0,
+          "ticks": 4
+        },
+        {
+          "part": "left_hand",
+          "action": "turn_in",
+          "amount": 0,
+          "ticks": 4
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_in",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    }
+  ]
+}
