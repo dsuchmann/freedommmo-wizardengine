@@ -105,8 +105,11 @@ function jointsFor(frame, animation, d) {
 // (rasterized at zoom 1, k≈0.07–0.24) look shredded. Residual scale stays ~1.
 const _scaledParts = new Map(); // part|dir@steps -> canvas
 function partFrame(part, d, img, k) {
+  // Quantize k to prevent cache thrashing during smooth zoom animation.
+  // Round to nearest 0.05 — at most 20 discrete scale levels.
+  const qk = Math.round(k * 20) / 20;
   let steps = 0;
-  while (k * (1 << (steps + 1)) <= 1.1) steps++;
+  while (qk * (1 << (steps + 1)) <= 1.1) steps++;
   if (steps === 0) return img;
   const key = part + '|' + d + '@' + steps;
   let c = _scaledParts.get(key);
