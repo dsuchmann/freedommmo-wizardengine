@@ -36,7 +36,7 @@ export function foundSettlement(kernel, groupId, site, tick) {
   if (!group || group.type !== 'group') return null;
   const b = kernel.bounds;
   if (!b || site.x < b.x0 || site.x >= b.x0 + b.w || site.y < b.y0 || site.y >= b.y0 + b.h) return null;
-  const scored = scoreSite(kernel, site.x, site.y, b);
+  const scored = scoreSite(kernel, site.x, site.y);
   if (!scored) return null;                      // water site
   const territory = territoryAround(site.x, site.y, b);
   for (const n of kernel.graph.nodes.values()) {

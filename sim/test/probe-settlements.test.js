@@ -55,7 +55,7 @@ function bestSiteExcluding(k, rect, excludeTerritory) {
   for (let y = rect.y0; y < rect.y0 + rect.h; y++) {
     for (let x = rect.x0; x < rect.x0 + rect.w; x++) {
       if (overlapsFn(territoryFor(x, y), excludeTerritory)) continue;
-      const s = scoreSite(k, x, y, rect);
+      const s = scoreSite(k, x, y);
       if (!s) continue;
       if (!best || s.score > best.score + 1e-12) best = { x, y, ...s };
     }
@@ -136,7 +136,7 @@ function runScenario() {
   assert.ok(tileCost(site1.x, site1.y) !== Infinity, 'site1 is land');
 
   // Independent rescore: score and reasons must be bit-identical to site1.
-  const rescore1 = scoreSite(k, site1.x, site1.y, RECT);
+  const rescore1 = scoreSite(k, site1.x, site1.y);
   assert.deepEqual({ score: site1.score, reasons: site1.reasons },
     { score: rescore1.score, reasons: rescore1.reasons },
     'site1 score+reasons match independent rescore');
@@ -144,7 +144,7 @@ function runScenario() {
   // Argmax identity: no scanned tile beats site1 (reuse suitability.test.js pattern).
   for (let y = RECT.y0; y < RECT.y0 + RECT.h; y++) {
     for (let x = RECT.x0; x < RECT.x0 + RECT.w; x++) {
-      const s = scoreSite(k, x, y, RECT);
+      const s = scoreSite(k, x, y);
       if (s) assert.ok(s.score <= site1.score + 1e-12,
         `argmax violated: (${x},${y}) scores ${s.score} > site1 ${site1.score}`);
     }

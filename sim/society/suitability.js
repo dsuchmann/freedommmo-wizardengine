@@ -26,7 +26,7 @@ function nearestWater(x, y) {
 /** Score a candidate site. Returns {score, reasons} or null when the tile itself is water.
  *  reasons = { water:{score,nearest}, fertility:{score,moisture,heat},
  *              defensibility:{score,elevation}, trade:{score,via} }. */
-export function scoreSite(kernel, x, y, bounds) {
+export function scoreSite(kernel, x, y) {
   if (tileCost(x, y) === Infinity) return null;
   const { climate } = classifyBiome(x, y);
   const nw = nearestWater(x, y);
@@ -37,12 +37,12 @@ export function scoreSite(kernel, x, y, bounds) {
     moisture: climate.moisture, heat: climate.heat,
   };
   const defensibility = { score: clamp01(climate.elevation), elevation: climate.elevation };
-  // Trade centrality: reachable existing settlement (coarse: any land route inside bounds).
+  // Trade centrality: reachable existing settlement (coarse: any land route, unbounded).
   // Graph insertion order is deterministic for a deterministic scenario — first reachable wins.
   let trade = { score: 0, via: null };
   for (const n of kernel.graph.nodes.values()) {
     if (n.type !== 'settlement') continue;
-    const route = planRoute({ x, y }, { x: n.x, y: n.y }, bounds);
+    const route = planRoute({ x, y }, { x: n.x, y: n.y }, null);
     if (route) { trade = { score: 1, via: n.id }; break; }
   }
   const score = WEIGHTS.water * water.score + WEIGHTS.fertility * fertility.score
@@ -54,7 +54,7 @@ export function scoreSite(kernel, x, y, bounds) {
 export function findSettlementSite(kernel, rect) {
   let best = null;
   for (let y = rect.y0; y < rect.y0 + rect.h; y++) for (let x = rect.x0; x < rect.x0 + rect.w; x++) {
-    const s = scoreSite(kernel, x, y, rect);
+    const s = scoreSite(kernel, x, y);
     if (!s) continue;
     if (!best || s.score > best.score + 1e-12) best = { x, y, ...s };
   }
