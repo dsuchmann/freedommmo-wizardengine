@@ -43,16 +43,23 @@ Wilderness is the chronicle's **recorded reason** nobody came, not an unpopulate
 
 ## Peoples: biome-anchored races as L1 anchors
 
-Every biome carries at least one race **uniquely of that biome**, otherworldly, loosely
-tied to its substance (user direction, 2026-06-12): volcanic → a golem-kind; mystic →
-surreal crystal humanoids; swamp → an orc-like people that is **never called "orc"** —
-names are invented, unique to this world; mountains → living stone people. Humans exist
-alongside, not instead.
+Every biome has a **requisite race that rhymes with it** — a canonical affinity, often
+otherworldly, loosely tied to the biome's substance (user direction, 2026-06-12):
+volcanic → a golem-kind; mystic → surreal crystal humanoids; swamp → an orc-like people
+that is **never called "orc"** — names are invented, unique to this world; mountains →
+living stone people. Humans exist alongside, not instead.
+
+Affinity is a factor, not a quota: any given biome region may *manifest* anywhere from
+zero to all races. The race table declares each people's biome affinities; how races
+actually appear in the world — as cultures, settlements, dynamic civilizations,
+communities, populations — is decided by the generative system itself (L1/L2 + the live
+sim), with biome affinity as **one input among many** (suitability, chronicle events,
+migrations, conflicts).
 
 Races are the **groupings history generation anchors to**: L1 derives each macro-cell's
-peoples from its dominant biomes + seed; L2 chronicles are interactions of those peoples
-(migrations, trade, war, syncretism at biome borders). A culture's "fingerprint" —
-naming language, building idiom, road style, ruin signature, beliefs — derives from
+peoples from its biomes' affinities + seed; L2 chronicles are interactions of those
+peoples (migrations, trade, war, syncretism at biome borders). A culture's "fingerprint"
+— naming language, building idiom, road style, ruin signature, beliefs — derives from
 race × biome × chronicle, so two crystal-folk regions feel related but not identical.
 This is expected to need heavy iteration; the structure (race table per biome, fingerprint
 derivation functions) lands in Phase 3, with content tuned over many passes. Race
