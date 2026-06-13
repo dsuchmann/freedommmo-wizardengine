@@ -1,6 +1,7 @@
 import { rand, randRange } from '../kernel/rng.js';
 import { DAY } from '../time/metabolism.js';
 import { REGION, createAggregate } from '../lod/aggregate.js';
+import { tileCost } from './routing.js';
 
 // Deterministic baseline meadow (spec §5.1). Densities are per-tile probabilities.
 export const DENSITY = { grass: 0.5, berry_bush: 0.05, grazer: 0.004, tree: 0.02, rabbit: 0.003, deer: 0.002, wolf: 0.0008 };
@@ -83,4 +84,22 @@ export function spawnStart(kernel, rect) {
       spawnMeadow(kernel, { x0: rx * REGION, y0: ry * REGION, w: REGION, h: REGION });
     }
   });
+}
+
+/** Deterministic outward region-ring search for a mostly-land start rect near `spawn`.
+ *  Pure f(terrain, spawn) — no kernel, no RNG. Returns {x0,y0,w,h} or null. */
+export function findLandStart(spawn, { w = 48, h = 32, minLand = 0.8, maxRings = 256 } = {}) {
+  const cx = Math.floor(spawn.x / REGION), cy = Math.floor(spawn.y / REGION);
+  const samples = Math.ceil(w / 4) * Math.ceil(h / 4);
+  for (let r = 0; r <= maxRings; r++) {
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+      const x0 = (cx + dx) * REGION, y0 = (cy + dy) * REGION;
+      let land = 0;
+      for (let y = 0; y < h; y += 4) for (let x = 0; x < w; x += 4)
+        if (tileCost(x0 + x, y0 + y) !== Infinity) land++;
+      if (land / samples >= minLand) return { x0, y0, w, h };
+    }
+  }
+  return null;
 }

@@ -19,7 +19,7 @@ export function checkpoint(kernel, db) {
     const meta = db.prepare('INSERT OR REPLACE INTO meta(key,value) VALUES (?,?)');
     meta.run('seed', String(kernel.seed));
     meta.run('phi', String(kernel.flux.phi));
-    meta.run('bounds', JSON.stringify(kernel.bounds));
+    meta.run('touched', JSON.stringify([...kernel.touched]));
     // tick is written LAST: it is the checkpoint's commit marker. A crash
     // mid-checkpoint leaves the previous tick, so the partial write is ignored
     // (boot treats the world as at the older checkpoint; WAL keeps it readable).
@@ -32,8 +32,8 @@ export function loadKernel(db) {
   const kernel = new Kernel({
     seed: Number(get('seed')),
     phi: Number(get('phi')),
-    bounds: JSON.parse(get('bounds') ?? 'null'),
   });
+  kernel.touched = new Set(JSON.parse(get('touched') ?? '[]'));
   kernel.tick = Number(get('tick'));
 
   // graph — restore nodes
