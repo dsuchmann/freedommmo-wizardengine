@@ -1,15 +1,25 @@
-// Dev debug overlay: draws live sim state (worn paths, road segments, deltas,
-// event ticker) as translucent shapes. READ-ONLY over window._simClient.
-// Toggle: key 9. Pure collector below is node-testable (no DOM at module top).
-// Wire reality 2026-06-12: settlement/plot geometry (territory/districts/plots)
-// crosses the wire via explicit wire forms (sim/server/protocol.js).
-// Never fake absent layers — honest absence is declared, not simulated.
+// Civilization overlay: draws settlements, roads, plots, districts, and chronicle
+// info as translucent shapes over the game world. READ-ONLY over window._simClient.
+// Toggle: key 9. Click a settlement to inspect its history.
 
 const EVENT_CAP = 50;
 
+// ── Race colors (distinct per race for visual identification) ───────
+const RACE_COLORS = {
+  human:    { fill: 'rgba(220,200,150,', stroke: 'rgba(220,200,150,' },
+  ignaar:   { fill: 'rgba(255,120,40,',  stroke: 'rgba(255,120,40,' },
+  veylith:  { fill: 'rgba(160,200,255,', stroke: 'rgba(160,200,255,' },
+  grotharn: { fill: 'rgba(100,180,80,',  stroke: 'rgba(100,180,80,' },
+  kaldreth: { fill: 'rgba(180,180,200,', stroke: 'rgba(180,180,200,' },
+  sylvari:  { fill: 'rgba(80,200,120,',  stroke: 'rgba(80,200,120,' },
+  ashren:   { fill: 'rgba(220,180,100,', stroke: 'rgba(220,180,100,' },
+  frostwyn: { fill: 'rgba(180,220,255,', stroke: 'rgba(180,220,255,' },
+};
+const DEFAULT_RACE = { fill: 'rgba(200,200,200,', stroke: 'rgba(200,200,200,' };
+
 export function collectDebugDrawables(sim) {
   const out = { paths: [], roads: [], deltas: [], settlements: [], plots: [],
-                buildings: [], crossings: [], tick: sim?.tick ?? -1 };
+                buildings: [], crossings: [], groups: [], tick: sim?.tick ?? -1 };
   if (!sim?.entities) return out;
   for (const e of sim.entities.values()) {
     if (e.type === 'path') out.paths.push({ x: e.x, y: e.y, wear: e.wear ?? 0 });
@@ -18,11 +28,14 @@ export function collectDebugDrawables(sim) {
       out.crossings.push({ x: e.x, y: e.y, kind: e.archetype });
     else if (e.type === 'settlement' && e.territory)
       out.settlements.push({ id: e.id, x: e.x, y: e.y, tier: e.tier, state: e.state,
+                             race: e.race, chronicleAge: e.chronicleAge,
                              territory: e.territory, districts: e.districts ?? [] });
     else if (e.type === 'plot' && e.rect)
       out.plots.push({ rect: e.rect, owner: e.owner, district: e.district });
     else if (e.type === 'building' && e.footprint)
       out.buildings.push({ template: e.template, footprint: e.footprint, stamps: e.stamps ?? [] });
+    else if (e.type === 'group' && e.x != null)
+      out.groups.push({ id: e.id, x: e.x, y: e.y });
   }
   for (const d of sim.deltas ?? []) {
     if (d.x != null && d.y != null) out.deltas.push({ x: d.x, y: d.y, kind: d.kind });
@@ -40,87 +53,153 @@ export function accumulateEvents(seen, batch) {
 let enabled = false;
 const seenEvents = [];
 let lastEventsRef = null;
-let inspectResult = null;   // last inspect response {summary, events, node}
+let inspectResult = null;
 let inspectPending = false;
-
-const DELTA_COLORS = { worn: 'rgba(255,180,0,0.9)', paved: 'rgba(130,130,255,0.9)' };
 
 export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
   if (!enabled) return;
   const sim = (typeof window !== 'undefined') ? window._simClient : null;
-  if (sim && sim.events !== lastEventsRef) {       // events batches are replaced; accumulate
+  if (sim && sim.events !== lastEventsRef) {
     accumulateEvents(seenEvents, sim.events);
     lastEventsRef = sim.events;
   }
   const d = collectDebugDrawables(sim);
   _lastDrawState = { camX, camY, tilePx, settlements: d.settlements };
   const onScreen = (sx, sy) => sx > -tilePx && sy > -tilePx && sx < w + tilePx && sy < h + tilePx;
+  const px = v => Math.ceil(v * tilePx);
+  const rectPx = r => [Math.floor(r.x0 * tilePx - camX), Math.floor(r.y0 * tilePx - camY), px(r.w), px(r.h)];
+  const rectOnScreen = ([sx, sy, sw, sh]) => sx < w && sy < h && sx + sw > 0 && sy + sh > 0;
 
   ctx.save();
-  for (const p of d.paths) {                       // worn-path intensity: amber, alpha by wear
+
+  // ── Road segments: filled tiles with road color ───────────────────
+  for (const r of d.roads) {
+    const sx = Math.floor(r.x * tilePx - camX), sy = Math.floor(r.y * tilePx - camY);
+    if (!onScreen(sx, sy)) continue;
+    ctx.fillStyle = 'rgba(160,140,100,0.4)';
+    ctx.fillRect(sx, sy, Math.ceil(tilePx), Math.ceil(tilePx));
+  }
+
+  // ── Road network lines: draw connections between settlements ──────
+  if (d.settlements.length > 1) {
+    ctx.lineWidth = Math.max(2, tilePx * 0.15);
+    ctx.setLineDash([]);
+    for (let i = 0; i < d.settlements.length; i++) {
+      const a = d.settlements[i];
+      if (a.state === 'ruined') continue;
+      for (let j = i + 1; j < d.settlements.length; j++) {
+        const b = d.settlements[j];
+        if (b.state === 'ruined') continue;
+        const dist = Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+        if (dist > 100) continue; // only draw nearby connections
+        const ax = Math.floor(a.x * tilePx - camX), ay = Math.floor(a.y * tilePx - camY);
+        const bx = Math.floor(b.x * tilePx - camX), by = Math.floor(b.y * tilePx - camY);
+        ctx.strokeStyle = 'rgba(160,140,100,0.35)';
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(bx, by);
+        ctx.stroke();
+      }
+    }
+  }
+
+  // ── Worn paths: amber intensity by wear ───────────────────────────
+  for (const p of d.paths) {
     const sx = Math.floor(p.x * tilePx - camX), sy = Math.floor(p.y * tilePx - camY);
     if (!onScreen(sx, sy)) continue;
     ctx.fillStyle = `rgba(255,180,0,${(0.15 + 0.55 * Math.min(1, p.wear / 8)).toFixed(3)})`;
     ctx.fillRect(sx, sy, Math.ceil(tilePx), Math.ceil(tilePx));
   }
-  for (const r of d.roads) {                       // road segments: blue outline boxes
-    const sx = Math.floor(r.x * tilePx - camX), sy = Math.floor(r.y * tilePx - camY);
-    if (!onScreen(sx, sy)) continue;
-    ctx.fillStyle = 'rgba(130,130,255,0.25)';
-    ctx.fillRect(sx, sy, Math.ceil(tilePx), Math.ceil(tilePx));
-    ctx.strokeStyle = 'rgba(130,130,255,0.9)';
-    ctx.strokeRect(sx + 0.5, sy + 0.5, Math.ceil(tilePx) - 1, Math.ceil(tilePx) - 1);
-  }
-  const px = v => Math.ceil(v * tilePx);
-  const rectPx = r => [Math.floor(r.x0 * tilePx - camX), Math.floor(r.y0 * tilePx - camY), px(r.w), px(r.h)];
-  const rectOnScreen = ([sx, sy, sw, sh]) => sx < w && sy < h && sx + sw > 0 && sy + sh > 0;
+
+  // ── Settlements: territory, districts, labels ─────────────────────
   const DISTRICT_COLORS = { residential: 'rgba(80,220,120,', craft: 'rgba(255,150,60,' };
-  for (const s of d.settlements) {                 // territory: white dashed outline + tier label
+  for (const s of d.settlements) {
     const r = rectPx(s.territory);
     if (!rectOnScreen(r)) continue;
-    ctx.setLineDash([6, 4]);
-    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-    ctx.lineWidth = 2;
+    const rc = RACE_COLORS[s.race] ?? DEFAULT_RACE;
+    const isRuin = s.state === 'ruined' || s.tier === 'ruins';
+
+    // Territory fill
+    ctx.fillStyle = isRuin ? 'rgba(80,60,50,0.12)' : rc.fill + '0.08)';
+    ctx.fillRect(...r);
+
+    // Territory outline
+    ctx.setLineDash(isRuin ? [3, 6] : [6, 4]);
+    ctx.strokeStyle = isRuin ? 'rgba(140,90,70,0.6)' : rc.stroke + '0.85)';
+    ctx.lineWidth = isRuin ? 1 : 2;
     ctx.strokeRect(r[0] + 0.5, r[1] + 0.5, r[2] - 1, r[3] - 1);
     ctx.setLineDash([]);
-    for (const dist of s.districts) {              // districts: tinted fill + outline by kind
-      const dr = rectPx(dist.rect);
-      const c = DISTRICT_COLORS[dist.kind] ?? 'rgba(180,180,180,';
-      ctx.fillStyle = c + '0.10)';
-      ctx.fillRect(...dr);
-      ctx.strokeStyle = c + '0.8)';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(dr[0] + 0.5, dr[1] + 0.5, dr[2] - 1, dr[3] - 1);
-      ctx.font = '10px monospace';
-      ctx.textAlign = 'left';
-      ctx.fillStyle = c + '0.9)';
-      ctx.fillText(dist.kind, dr[0] + 3, dr[1] + 11);
+
+    // Districts (active only)
+    if (!isRuin) {
+      for (const dist of s.districts) {
+        const dr = rectPx(dist.rect);
+        const c = DISTRICT_COLORS[dist.kind] ?? 'rgba(180,180,180,';
+        ctx.fillStyle = c + '0.10)';
+        ctx.fillRect(...dr);
+        ctx.strokeStyle = c + '0.5)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(dr[0] + 0.5, dr[1] + 0.5, dr[2] - 1, dr[3] - 1);
+        ctx.font = '9px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillStyle = c + '0.7)';
+        ctx.fillText(dist.kind, dr[0] + 3, dr[1] + 10);
+      }
     }
-    ctx.font = 'bold 13px monospace';
-    ctx.textAlign = 'left';
-    const isRuin = s.state === 'ruined' || s.tier === 'ruins';
-    ctx.fillStyle = isRuin ? 'rgba(180,100,80,0.95)' : s.tier === 'ghost' ? 'rgba(160,160,160,0.95)' : '#ffd24a';
-    ctx.fillText(isRuin ? 'RUINS' : s.tier.toUpperCase(), r[0] + 3, r[1] - 5);
+
+    // ── Settlement label (rich info) ────────────────────────────────
+    const labelX = r[0] + r[2] / 2, labelY = r[1] - 4;
+    ctx.textAlign = 'center';
+
+    // Background pill
+    const tierName = isRuin ? 'RUINS' : (s.tier ?? 'village').toUpperCase();
+    const raceName = s.race ? s.race.charAt(0).toUpperCase() + s.race.slice(1) : '';
+    const ageStr = s.chronicleAge ? `${s.chronicleAge} ages` : '';
+    const label = isRuin
+      ? `${tierName}${raceName ? ' (' + raceName + ')' : ''}${ageStr ? ' · ' + ageStr : ''}`
+      : `${tierName}${raceName ? ' · ' + raceName : ''}${ageStr ? ' · ' + ageStr : ''}`;
+
+    ctx.font = 'bold 12px monospace';
+    const labelW = ctx.measureText(label).width + 12;
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(labelX - labelW / 2, labelY - 12, labelW, 16);
+
+    ctx.fillStyle = isRuin ? 'rgba(180,100,80,0.95)' : rc.stroke + '1)';
+    ctx.fillText(label, labelX, labelY);
+
+    // Settlement center marker
+    const csx = Math.floor(s.x * tilePx - camX), csy = Math.floor(s.y * tilePx - camY);
+    ctx.fillStyle = isRuin ? 'rgba(180,100,80,0.7)' : rc.fill + '0.9)';
+    ctx.beginPath();
+    ctx.arc(csx, csy, Math.max(4, tilePx * 0.3), 0, Math.PI * 2);
+    ctx.fill();
+    if (!isRuin) {
+      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
   }
-  for (const p of d.plots) {                       // plots: thin white box + owner tag
+
+  // ── Plots: building footprint boxes ───────────────────────────────
+  for (const p of d.plots) {
     const r = rectPx(p.rect);
     if (!rectOnScreen(r)) continue;
-    ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+    ctx.fillStyle = 'rgba(200,190,170,0.08)';
+    ctx.fillRect(...r);
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
     ctx.lineWidth = 1;
     ctx.strokeRect(r[0] + 0.5, r[1] + 0.5, r[2] - 1, r[3] - 1);
-    ctx.font = '9px monospace';
-    ctx.textAlign = 'left';
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.fillText(`g${p.owner}`, r[0] + 2, r[1] + r[3] - 3);
   }
-  for (const b of d.buildings) {                   // buildings: stamps are the render truth
+
+  // ── Buildings: stamps ─────────────────────────────────────────────
+  for (const b of d.buildings) {
     const fr = rectPx(b.footprint);
     if (!rectOnScreen(fr)) continue;
     for (const st of b.stamps) {
       const sx = Math.floor(st.x * tilePx - camX), sy = Math.floor(st.y * tilePx - camY);
       if (st.piece === 'wall') ctx.fillStyle = 'rgba(70,80,95,0.85)';
       else if (st.piece === 'door') ctx.fillStyle = 'rgba(160,110,60,0.85)';
-      else ctx.fillStyle = 'rgba(200,190,170,0.35)';            // floor
+      else ctx.fillStyle = 'rgba(200,190,170,0.35)';
       ctx.fillRect(sx, sy, Math.ceil(tilePx), Math.ceil(tilePx));
     }
     ctx.font = '10px monospace';
@@ -128,7 +207,9 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
     ctx.fillStyle = '#fff';
     ctx.fillText(b.template, fr[0] + 2, fr[1] - 3);
   }
-  for (const c of d.crossings) {                   // crossings: teal diamonds
+
+  // ── Crossings: teal diamonds ──────────────────────────────────────
+  for (const c of d.crossings) {
     const sx = Math.floor(c.x * tilePx - camX), sy = Math.floor(c.y * tilePx - camY);
     if (!onScreen(sx, sy)) continue;
     ctx.fillStyle = c.kind === 'bridge' ? 'rgba(0,220,220,0.8)' : 'rgba(0,160,160,0.6)';
@@ -138,36 +219,38 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
     ctx.closePath();
     ctx.fill();
   }
-  for (const dd of d.deltas) {                     // deltas: small corner ticks, color by kind
-    const sx = Math.floor(dd.x * tilePx - camX), sy = Math.floor(dd.y * tilePx - camY);
-    if (!onScreen(sx, sy)) continue;
-    ctx.fillStyle = DELTA_COLORS[dd.kind] ?? 'rgba(255,0,255,0.9)';
-    ctx.fillRect(sx + 2, sy + 2, Math.max(3, tilePx / 6), Math.max(3, tilePx / 6));
-  }
-  // event ticker, top-right: last 8 events; settlement_founded highlighted.
+
+  // ── HUD: stats bar (top-right) ───────────────────────────────────
   ctx.font = '12px monospace';
   ctx.textAlign = 'right';
-  ctx.fillStyle = 'rgba(0,0,0,0.55)';
-  ctx.fillRect(w - 320, 8, 312, 16 * 9 + 10);
+  ctx.fillStyle = 'rgba(0,0,0,0.65)';
+  ctx.fillRect(w - 340, 8, 332, 16 * 9 + 10);
   ctx.fillStyle = '#9ad';
-  ctx.fillText(`SIM DEBUG  tick=${d.tick}  paths=${d.paths.length} roads=${d.roads.length} stl=${d.settlements.length} plots=${d.plots.length} bld=${d.buildings.length}`, w - 14, 22);
+  const active = d.settlements.filter(s => s.state !== 'ruined').length;
+  const ruined = d.settlements.filter(s => s.state === 'ruined').length;
+  ctx.fillText(`CIV OVERLAY  tick=${d.tick}  stl=${active}+${ruined}r  roads=${d.roads.length}  plots=${d.plots.length}`, w - 14, 22);
   seenEvents.slice(-8).forEach((e, i) => {
-    ctx.fillStyle = e.type === 'settlement_founded' ? '#ffd24a' : '#ccc';
+    const isChronicle = e.type?.startsWith('chronicle_') || e.type === 'settlement_founded';
+    ctx.fillStyle = isChronicle ? '#ffd24a' : '#999';
     ctx.fillText(`[${e.tick}] ${e.type}`, w - 14, 38 + 16 * i);
   });
-  // inspect panel: bottom-left, shows "why is this here?" for the last clicked settlement
+
+  // ── Inspect panel (bottom-left) ───────────────────────────────────
   if (inspectResult) {
-    const panelW = 420, lineH = 15;
+    const panelW = 440, lineH = 15;
     const lines = [];
-    lines.push(`— ${inspectResult.node?.type ?? '?'} #${inspectResult.nodeId} at ${inspectResult.node?.x},${inspectResult.node?.y} —`);
-    if (inspectResult.node?.attrs?.state === 'ruined') lines.push('STATE: RUINED');
+    const n = inspectResult.node;
+    const isRuin = n?.attrs?.state === 'ruined';
+    const race = n?.attrs?.race;
+    const header = `${isRuin ? 'RUINS' : (n?.attrs?.tier ?? n?.type ?? '?').toUpperCase()}`
+      + (race ? ` · ${race}` : '') + ` at ${n?.x},${n?.y}`;
+    lines.push(header);
     if (inspectResult.summary) {
-      // word-wrap summary to ~50 chars
       const words = inspectResult.summary.split(' ');
       let line = '';
-      for (const w2 of words) {
-        if ((line + ' ' + w2).length > 55) { lines.push(line); line = w2; }
-        else line = line ? line + ' ' + w2 : w2;
+      for (const wd of words) {
+        if ((line + ' ' + wd).length > 58) { lines.push(line); line = wd; }
+        else line = line ? line + ' ' + wd : wd;
       }
       if (line) lines.push(line);
     }
@@ -178,7 +261,7 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
       lines.push(`  [${ev.eventId}] ${ev.type}${age}`);
     }
     const panelH = (lines.length + 1) * lineH + 10;
-    ctx.fillStyle = 'rgba(0,0,0,0.75)';
+    ctx.fillStyle = 'rgba(0,0,0,0.8)';
     ctx.fillRect(8, h - panelH - 8, panelW, panelH);
     ctx.font = '12px monospace';
     ctx.textAlign = 'left';
@@ -192,6 +275,7 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
     ctx.textAlign = 'left';
     ctx.fillText('inspecting...', 16, h - 20);
   }
+
   ctx.restore();
 }
 
@@ -203,9 +287,8 @@ export function initSimDebugOverlay() {
     if (e.key !== '9' || e.ctrlKey || e.altKey || e.metaKey) return;
     if (e.target instanceof Element && e.target.closest('input,textarea,select,[contenteditable]')) return;
     enabled = !enabled;
-    if (!enabled) inspectResult = null;   // clear panel when overlay closes
+    if (!enabled) inspectResult = null;
   });
-  // Click-to-inspect: when debug overlay is on, clicking a settlement queries its history
   window.addEventListener('click', (e) => {
     if (!enabled) return;
     const sim = window._simClient;
@@ -213,7 +296,6 @@ export function initSimDebugOverlay() {
     const { camX, camY, tilePx, settlements } = _lastDrawState;
     const clickTileX = (e.clientX + camX) / tilePx;
     const clickTileY = (e.clientY + camY) / tilePx;
-    // Find the nearest settlement to the click
     let best = null, bestDist = Infinity;
     for (const s of settlements) {
       const dx = clickTileX - s.x, dy = clickTileY - s.y;
@@ -229,5 +311,5 @@ export function initSimDebugOverlay() {
       });
     }
   });
-  window._simDebugOverlay = { toggle: () => { enabled = !enabled; }, isEnabled: () => enabled }; // probe hook
+  window._simDebugOverlay = { toggle: () => { enabled = !enabled; }, isEnabled: () => enabled };
 }

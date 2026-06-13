@@ -85,8 +85,9 @@ export function serializeEntity(node, tick, seed) {
   if (node.type === 'settlement') {
     // Structure geometry is render truth (debug overlay); founderGroup, scoring
     // reasons and growth-loop state stay sim-side (privacy rule precedent).
-    const { tier, territory, districts, state } = node.attrs;
+    const { tier, territory, districts, state, race, chronicleAge } = node.attrs;
     return { id: node.id, type: 'settlement', x: node.x, y: node.y, tier, state, territory,
+             race: race ?? null, chronicleAge: chronicleAge ?? null,
              districts: (districts ?? []).map(d => ({ kind: d.kind, rect: d.rect })) };
   }
   if (node.type === 'plot') {

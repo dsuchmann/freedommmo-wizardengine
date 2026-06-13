@@ -164,6 +164,11 @@ export function ensureGenesisSettlements(kernel, regionKey, tick) {
   if (!site) return;
 
   const territory = territoryAround(site.x, site.y);
+  // Race: dominant people from the chronicle's founding event, or macro-cell dominant
+  const foundingEv = chronicle.find(e => e.type === 'ancient_founding' || e.type === 'founding');
+  const race = foundingEv?.raceId ?? peoples[0]?.raceId ?? 'human';
+  // Age: oldest chronicle event
+  const chronicleAge = chronicle.length > 0 ? Math.max(...chronicle.map(e => e.age ?? 0)) : 0;
 
   if (state === 'ruined') {
     const lastEv = chronicle[chronicle.length - 1];
@@ -174,7 +179,7 @@ export function ensureGenesisSettlements(kernel, regionKey, tick) {
     kernel.graph.createNode({
       type: 'settlement', tick, x: site.x, y: site.y, causeEventId: evId,
       attrs: { tier: 'ruins', state: 'ruined', territory, noFlux: true,
-               chronicle: chronicle.map(e => e.id) },
+               race, chronicleAge, chronicle: chronicle.map(e => e.id) },
     });
     return;
   }
@@ -198,7 +203,8 @@ export function ensureGenesisSettlements(kernel, regionKey, tick) {
   const settlement = kernel.graph.createNode({
     type: 'settlement', tick, x: site.x, y: site.y, causeEventId: settleEvId,
     attrs: { tier: 'village', state: 'active', territory, noFlux: true,
-             founderGroup: group.id, chronicle: chronicle.map(e => e.id),
+             founderGroup: group.id, race, chronicleAge,
+             chronicle: chronicle.map(e => e.id),
              districts: [
                { kind: 'residential', rect: { x0: territory.x0, y0: territory.y0,
                  w: Math.ceil(territory.w / 2), h: territory.h } },
