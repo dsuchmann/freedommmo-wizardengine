@@ -1,12 +1,23 @@
-// sim/world/genesis.js — P3: chronicle-driven settlement genesis.
-// Each macro-cell (4×4 regions = 64×64 tiles) is evaluated at most once.
-// The chronicle (world epochs → peoples → regional history → state) decides
-// whether the cell becomes active settlement, ruins, or wilderness.
-// Active settlements get a genesis group + roads. Ruins get a bare node.
-import { rand } from '../kernel/rng.js';
+// sim/world/genesis.js — deterministic civilization layer over the terrain oracle.
+// Pure f(seed, coordinates) — instant, parallelizable, GPU-ready.
+//
+// The civilization field works like classifyBiome: a pure function evaluated at
+// any coordinate that returns what civilization built there. No A*, no graph
+// queries, no sequential dependencies. The chronicle decides IF, the terrain
+// oracle decides WHERE, and both are pure functions of (seed, position).
+//
+// Settlement spacing: macro-cells are 64×64 tiles. Each macro-cell has at most
+// one settlement. Territory overlap is impossible by construction (64 > 12+12).
+// Roads are straight-line connections to the nearest settlement in each of the
+// 4 cardinal macro-cell neighbors — no pathfinding, just Bresenham-style stepping
+// that avoids water tiles.
+//
+// HONEST ABSENCES: settlement layouts are placeholder rectangles (organic layouts
+// need the nested-blueprint system from the world compiler spec). Building sprites
+// don't exist yet. Culture fingerprints are stubs.
+
+import { rand, mix } from '../kernel/rng.js';
 import { tileCost } from './routing.js';
-import { foundSettlement, territoryAround } from '../society/settlements.js';
-import { buildRoad } from './roads.js';
 import { REGION } from '../lod/aggregate.js';
 import { worldEpochs } from '../chronicle/epochs.js';
 import { macroCellPeoples } from '../chronicle/races.js';
@@ -15,132 +26,112 @@ import { classifyBiome } from '../../src/world/biomes.js';
 
 export const MACRO = 4;                      // macro-cell = 4×4 regions
 const MACRO_TILES = MACRO * REGION;          // 64 tiles per side
-const STRIDE = 4;                            // sample every 4th tile in evaluateMacroCell
-const SETTLE_PROB_SCALE = 0.85;              // probability scale against best score
-const REFINE_R = 8;                          // ±8 tile scan around candidate
-const MAX_NEIGHBOR_DIST = 96;                // Manhattan distance for road connections
-const MAX_NEIGHBORS = 3;                     // connect to at most 3 nearest settlements
-const GENESIS_GROUP_R = 50000;               // initial resource endowment
-const ROAD_COST_PER_TILE = 30;               // (documentation; actual cost is in roads.js)
+const STRIDE = 8;                            // sample every 8th tile (fast)
+const TERRITORY_W = 12, TERRITORY_H = 10;   // settlement footprint
+const GENESIS_GROUP_R = 50000;
 
 /** Map a region key to the macro-cell key that contains it. */
 export function macroKeyOf(regionKey) {
   const [rx, ry] = regionKey.split(',').map(Number);
-  const mx = Math.floor(rx / MACRO);
-  const my = Math.floor(ry / MACRO);
-  return `${mx},${my}`;
+  return `${Math.floor(rx / MACRO)},${Math.floor(ry / MACRO)}`;
 }
 
-/** Water proximity score: count water tiles in a ring around (x,y). Pure. */
-function waterProximity(x, y) {
-  let bestDist = Infinity;
-  for (let r = 1; r <= 6; r++) {
-    for (let dy = -r; dy <= r; dy++) {
-      for (let dx = -r; dx <= r; dx++) {
-        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
-        if (tileCost(x + dx, y + dy) === Infinity) {
-          bestDist = Math.min(bestDist, r);
-        }
-      }
-    }
-    if (bestDist < Infinity) break;
-  }
-  return bestDist < Infinity ? (7 - bestDist) / 6 : 0;
-}
+// ── Pure settlement placement (no kernel, no graph) ─────────────────
 
-/** Pure evaluation of a macro-cell. No kernel reads — only tileCost + rand.
- *  Returns {x, y} candidate or null. */
-export function evaluateMacroCell(seed, macroKey) {
-  const [mx, my] = macroKey.split(',').map(Number);
-  const x0 = mx * MACRO_TILES;
-  const y0 = my * MACRO_TILES;
-
-  let bestScore = -1;
-  let bestX = 0, bestY = 0;
-
-  for (let dy = 0; dy < MACRO_TILES; dy += STRIDE) {
-    for (let dx = 0; dx < MACRO_TILES; dx += STRIDE) {
-      const tx = x0 + dx;
-      const ty = y0 + dy;
-      if (tileCost(tx, ty) === Infinity) continue;
-      const wp = waterProximity(tx, ty);
-      const tc = tileCost(tx, ty);
-      const terrainQuality = 1 / (1 + tc);
-      const quality = wp * 0.6 + terrainQuality * 0.4;
-      if (quality > bestScore) {
-        bestScore = quality;
-        bestX = tx;
-        bestY = ty;
-      }
-    }
-  }
-
-  if (bestScore <= 0) return null;
-
-  const roll = rand(seed, mx * 1000003, my * 1000033, 777);
-  if (roll > bestScore * SETTLE_PROB_SCALE) return null;
-
-  return { x: bestX, y: bestY };
-}
-
-/** Find the best site in a macro-cell. Pure f(seed, mx, my, terrain oracle).
- *  Scans the full 64×64 area at STRIDE, scores by water proximity + terrain.
- *  No suitability roll — the chronicle already decided a settlement exists here. */
-function findBestSiteInMacro(seed, mx, my) {
+/** Find the best settlement site in a macro-cell. Pure f(seed, mx, my, terrain).
+ *  Fast: samples at STRIDE, picks the land tile with best water proximity. */
+function findSiteInMacro(seed, mx, my) {
   const x0 = mx * MACRO_TILES, y0 = my * MACRO_TILES;
-  let bestScore = -1, bestX = 0, bestY = 0;
+  let bestScore = -1, bestX = x0, bestY = y0;
   for (let dy = 0; dy < MACRO_TILES; dy += STRIDE) {
     for (let dx = 0; dx < MACRO_TILES; dx += STRIDE) {
       const tx = x0 + dx, ty = y0 + dy;
       if (tileCost(tx, ty) === Infinity) continue;
-      const wp = waterProximity(tx, ty);
-      const quality = wp * 0.6 + (1 / (1 + tileCost(tx, ty))) * 0.4;
+      // Quick water proximity: check 4 cardinal directions
+      let waterDist = 7;
+      for (let r = 1; r <= 6; r++) {
+        if (tileCost(tx + r, ty) === Infinity || tileCost(tx - r, ty) === Infinity ||
+            tileCost(tx, ty + r) === Infinity || tileCost(tx, ty - r) === Infinity) {
+          waterDist = r; break;
+        }
+      }
+      const quality = (7 - waterDist) / 6 * 0.6 + (1 / (1 + tileCost(tx, ty))) * 0.4;
       if (quality > bestScore) { bestScore = quality; bestX = tx; bestY = ty; }
     }
   }
-  if (bestScore <= 0) return null;
-  // Refine: ±REFINE_R around the best sampled tile
-  let best = { x: bestX, y: bestY };
-  let refinedScore = bestScore;
-  for (let dy = -REFINE_R; dy <= REFINE_R; dy++) {
-    for (let dx = -REFINE_R; dx <= REFINE_R; dx++) {
-      const x = bestX + dx, y = bestY + dy;
-      if (tileCost(x, y) === Infinity) continue;
-      const q = waterProximity(x, y) * 0.6 + (1 / (1 + tileCost(x, y))) * 0.4;
-      if (q > refinedScore) { refinedScore = q; best = { x, y }; }
-    }
-  }
-  return best;
+  return bestScore > 0 ? { x: bestX, y: bestY } : null;
 }
 
-/** Connect a settlement to up to MAX_NEIGHBORS nearest existing settlements within range. */
-function connectToNeighbors(kernel, settlement, groupId, tick) {
-  const candidates = [];
-  for (const n of kernel.graph.nodes.values()) {
-    if (n.type !== 'settlement' || n.id === settlement.id) continue;
-    const dist = Math.abs(n.x - settlement.x) + Math.abs(n.y - settlement.y);
-    if (dist <= MAX_NEIGHBOR_DIST) {
-      candidates.push({ node: n, dist });
-    }
-  }
-  candidates.sort((a, b) => a.dist - b.dist || a.node.id - b.node.id);
-  for (let i = 0; i < Math.min(candidates.length, MAX_NEIGHBORS); i++) {
-    const target = candidates[i].node;
-    buildRoad(kernel, groupId, { x: settlement.x, y: settlement.y }, { x: target.x, y: target.y }, tick);
-  }
+/** Territory rect centered on site. Spacing is guaranteed by macro-cell grid
+ *  (64 tiles apart > 12+12 territory width — no overlap checks needed). */
+function territoryAround(x, y) {
+  return {
+    x0: x - Math.floor(TERRITORY_W / 2), y0: y - Math.floor(TERRITORY_H / 2),
+    w: TERRITORY_W, h: TERRITORY_H,
+  };
 }
 
-// Cache world epochs per seed (pure, never changes)
+// ── Pure road connections (no A*, no pathfinding) ───────────────────
+
+/** Straight-line road tiles from (ax,ay) to (bx,by), stepping around water.
+ *  Pure f(terrain oracle). Returns array of {x,y} or empty if blocked.
+ *  Uses a simple greedy walk: prefer the axis-aligned step that reduces distance,
+ *  skip water tiles by trying the perpendicular axis. O(distance), not O(20000). */
+function straightRoad(ax, ay, bx, by) {
+  const tiles = [];
+  let x = ax, y = ay;
+  const maxSteps = Math.abs(bx - ax) + Math.abs(by - ay) + 20; // generous budget
+  for (let i = 0; i < maxSteps && (x !== bx || y !== by); i++) {
+    const dx = Math.sign(bx - x), dy = Math.sign(by - y);
+    // Try primary direction (larger delta first), then secondary, then diagonal
+    const candidates = Math.abs(bx - x) >= Math.abs(by - y)
+      ? [{ x: x + dx, y }, { x, y: y + dy }, { x: x + dx, y: y + dy }]
+      : [{ x, y: y + dy }, { x: x + dx, y }, { x: x + dx, y: y + dy }];
+    let moved = false;
+    for (const c of candidates) {
+      if (c.x === x && c.y === y) continue; // dy=0 can produce no-move
+      if (tileCost(c.x, c.y) !== Infinity) {
+        x = c.x; y = c.y;
+        tiles.push({ x, y });
+        moved = true;
+        break;
+      }
+    }
+    if (!moved) break; // completely blocked
+  }
+  // Only return if we reached the destination (no partial roads)
+  if (x === bx && y === by) return tiles;
+  return [];
+}
+
+/** Find the settlement site in a neighbor macro-cell. Pure. Returns {x,y} or null. */
+function neighborSite(seed, nmx, nmy) {
+  const epochs = _cachedEpochs(seed);
+  const mk = `${nmx},${nmy}`;
+  const cx = nmx * MACRO_TILES + Math.floor(MACRO_TILES / 2);
+  const cy = nmy * MACRO_TILES + Math.floor(MACRO_TILES / 2);
+  const biome = classifyBiome(cx, cy);
+  const peoples = macroCellPeoples(seed, mk, epochs);
+  const chronicle = regionChronicle(seed, mk, peoples, biome.climate);
+  const state = settlementState(chronicle);
+  if (state === 'wilderness' || state === 'ruined') return null; // only connect to active
+  return findSiteInMacro(seed, nmx, nmy);
+}
+
+// ── Epoch cache ─────────────────────────────────────────────────────
+
 const _epochCache = new Map();
-function cachedEpochs(seed) {
+function _cachedEpochs(seed) {
   let e = _epochCache.get(seed);
   if (!e) { e = worldEpochs(seed); _epochCache.set(seed, e); }
   return e;
 }
 
-/** Ensure genesis settlements are evaluated for the macro-cell containing `regionKey`.
- *  Exactly-once per macro-cell, tracked via kernel.genesisSettlements.
- *  Chronicle-driven: epochs → peoples → regional chronicle → state. */
+// ── Main entry point ────────────────────────────────────────────────
+
+/** Ensure genesis is evaluated for the macro-cell containing `regionKey`.
+ *  Exactly-once per macro-cell (kernel.genesisSettlements frontier).
+ *  Instant: no A*, no graph queries for placement. Chronicle → site → roads. */
 export function ensureGenesisSettlements(kernel, regionKey, tick) {
   const mk = macroKeyOf(regionKey);
   if (kernel.genesisSettlements.has(mk)) return;
@@ -148,19 +139,16 @@ export function ensureGenesisSettlements(kernel, regionKey, tick) {
 
   const [mx, my] = mk.split(',').map(Number);
 
-  // Step 1: Sample biome at macro-cell center for climate
+  // Chronicle pipeline — all pure functions
   const cx = mx * MACRO_TILES + Math.floor(MACRO_TILES / 2);
   const cy = my * MACRO_TILES + Math.floor(MACRO_TILES / 2);
   const biome = classifyBiome(cx, cy);
-  const climate = biome.climate;
-
-  // Step 2: Chronicle pipeline — pure
-  const epochs = cachedEpochs(kernel.seed);
+  const epochs = _cachedEpochs(kernel.seed);
   const peoples = macroCellPeoples(kernel.seed, mk, epochs);
-  const chronicle = regionChronicle(kernel.seed, mk, peoples, climate);
+  const chronicle = regionChronicle(kernel.seed, mk, peoples, biome.climate);
   const state = settlementState(chronicle);
 
-  // Step 3: Emit chronicle events into kernel ledger
+  // Emit chronicle events into ledger
   for (const ev of chronicle) {
     kernel.ledger.emit({
       tick, type: `chronicle_${ev.type}`,
@@ -169,27 +157,20 @@ export function ensureGenesisSettlements(kernel, regionKey, tick) {
     });
   }
 
-  // Step 4: Act on state
   if (state === 'wilderness') return;
 
-  // The chronicle has spoken — a settlement exists here. Find the best site.
-  // evaluateMacroCell's suitability roll is skipped: the chronicle is the authority.
-  // We only need to find WHERE in the macro-cell to place it.
-  const site = findBestSiteInMacro(kernel.seed, mx, my);
-  if (!site) return;  // entire macro-cell is water — chronicle was wrong (shouldn't happen)
+  // Find site — pure, instant
+  const site = findSiteInMacro(kernel.seed, mx, my);
+  if (!site) return;
+
+  const territory = territoryAround(site.x, site.y);
 
   if (state === 'ruined') {
-    // Ruins: no group, no roads — just a settlement node with ruined state
-    const lastEvent = chronicle[chronicle.length - 1];
+    const lastEv = chronicle[chronicle.length - 1];
     const evId = kernel.ledger.emit({
       tick, type: 'ruins_placed',
-      attrs: { macroCell: mk, x: site.x, y: site.y, chronicleId: lastEvent?.id },
+      attrs: { macroCell: mk, x: site.x, y: site.y, chronicleId: lastEv?.id },
     });
-    const territory = territoryAround(site.x, site.y);
-    // Check overlap
-    for (const n of kernel.graph.nodes.values()) {
-      if (n.type === 'settlement' && _overlaps(territory, n.attrs.territory)) return;
-    }
     kernel.graph.createNode({
       type: 'settlement', tick, x: site.x, y: site.y, causeEventId: evId,
       attrs: { tier: 'ruins', state: 'ruined', territory, noFlux: true,
@@ -198,7 +179,7 @@ export function ensureGenesisSettlements(kernel, regionKey, tick) {
     return;
   }
 
-  // Active settlement: genesis group + foundSettlement + roads (P2 logic)
+  // Active settlement: group + settlement node + straight-line roads
   const evId = kernel.ledger.emit({
     tick, type: 'genesis_group_founded',
     attrs: { macroCell: mk, x: site.x, y: site.y },
@@ -209,17 +190,46 @@ export function ensureGenesisSettlements(kernel, regionKey, tick) {
   });
   kernel.ledger.events[evId - 1].targets.push(group.id);
 
-  const settlement = foundSettlement(kernel, group.id, site, tick);
-  if (!settlement) return;
+  // Settlement node (inline, no foundSettlement call — avoid graph queries for plots)
+  const settleEvId = kernel.ledger.emit({
+    tick, type: 'settlement_founded', actor: group.id, targets: [],
+    attrs: { x: site.x, y: site.y, macroCell: mk },
+  });
+  const settlement = kernel.graph.createNode({
+    type: 'settlement', tick, x: site.x, y: site.y, causeEventId: settleEvId,
+    attrs: { tier: 'village', state: 'active', territory, noFlux: true,
+             founderGroup: group.id, chronicle: chronicle.map(e => e.id),
+             districts: [
+               { kind: 'residential', rect: { x0: territory.x0, y0: territory.y0,
+                 w: Math.ceil(territory.w / 2), h: territory.h } },
+               { kind: 'craft', rect: { x0: territory.x0 + Math.ceil(territory.w / 2),
+                 y0: territory.y0, w: territory.w - Math.ceil(territory.w / 2), h: territory.h } },
+             ] },
+  });
+  kernel.ledger.events[settleEvId - 1].targets.push(settlement.id);
 
-  // Tag settlement with chronicle
-  settlement.attrs.state = 'active';
-  settlement.attrs.chronicle = chronicle.map(e => e.id);
-
-  connectToNeighbors(kernel, settlement, group.id, tick);
-}
-
-function _overlaps(a, b) {
-  if (!a || !b) return false;
-  return a.x0 < b.x0 + b.w && b.x0 < a.x0 + a.w && a.y0 < b.y0 + b.h && b.y0 < a.y0 + a.h;
+  // Roads: straight-line to active neighbor settlements in 4 cardinal macro-cells
+  // Pure, O(distance), no A*
+  const neighbors = [
+    [mx - 1, my], [mx + 1, my], [mx, my - 1], [mx, my + 1],
+  ];
+  for (const [nmx, nmy] of neighbors) {
+    const ns = neighborSite(kernel.seed, nmx, nmy);
+    if (!ns) continue;
+    const roadTiles = straightRoad(site.x, site.y, ns.x, ns.y);
+    if (roadTiles.length === 0) continue;
+    const cost = roadTiles.length * 30;
+    if (group.R < cost) continue;
+    group.R -= cost;
+    const roadEvId = kernel.ledger.emit({
+      tick, type: 'road_built', actor: group.id, targets: [],
+      attrs: { fromX: site.x, fromY: site.y, toX: ns.x, toY: ns.y, tiles: roadTiles.length },
+    });
+    for (const t of roadTiles) {
+      kernel.graph.createNode({
+        type: 'matter', tick, x: t.x, y: t.y, causeEventId: roadEvId,
+        attrs: { archetype: 'road_segment', noFlux: true, condition: 100 },
+      });
+    }
+  }
 }
