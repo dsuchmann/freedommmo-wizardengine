@@ -522,7 +522,14 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
     }
     if (fp.features?.length) {
       lines.push({ text: ``, color: '#666' });
-      lines.push({ text: `INTERIOR: ${fp.features.map(f => f.type).join(', ')}`, color: '#aaa' });
+      lines.push({ text: `INTERIOR:`, color: '#aaa' });
+      const MAX_CHARS = 38;
+      let iLine = '  ';
+      for (const f of fp.features) {
+        if ((iLine + f.type + ', ').length > MAX_CHARS) { lines.push({ text: iLine, color: '#888' }); iLine = '  '; }
+        iLine += (iLine.length > 2 ? ', ' : '') + f.type;
+      }
+      if (iLine.length > 2) lines.push({ text: iLine, color: '#888' });
     }
     lines.push({ text: ``, color: '#666' });
     lines.push({ text: `[click elsewhere to close · click settlement label for overview]`, color: '#666' });
