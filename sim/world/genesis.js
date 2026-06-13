@@ -83,22 +83,31 @@ export function evaluateMacroCell(seed, macroKey) {
   return { x: bestX, y: bestY };
 }
 
-/** Refine candidate position: pure ±REFINE_R scan using tileCost + waterProximity. */
-function refineSite(candidate) {
-  let best = null;
-  let bestScore = -1;
+/** Find the best site in a macro-cell. Pure f(seed, mx, my, terrain oracle).
+ *  Scans the full 64×64 area at STRIDE, scores by water proximity + terrain.
+ *  No suitability roll — the chronicle already decided a settlement exists here. */
+function findBestSiteInMacro(seed, mx, my) {
+  const x0 = mx * MACRO_TILES, y0 = my * MACRO_TILES;
+  let bestScore = -1, bestX = 0, bestY = 0;
+  for (let dy = 0; dy < MACRO_TILES; dy += STRIDE) {
+    for (let dx = 0; dx < MACRO_TILES; dx += STRIDE) {
+      const tx = x0 + dx, ty = y0 + dy;
+      if (tileCost(tx, ty) === Infinity) continue;
+      const wp = waterProximity(tx, ty);
+      const quality = wp * 0.6 + (1 / (1 + tileCost(tx, ty))) * 0.4;
+      if (quality > bestScore) { bestScore = quality; bestX = tx; bestY = ty; }
+    }
+  }
+  if (bestScore <= 0) return null;
+  // Refine: ±REFINE_R around the best sampled tile
+  let best = { x: bestX, y: bestY };
+  let refinedScore = bestScore;
   for (let dy = -REFINE_R; dy <= REFINE_R; dy++) {
     for (let dx = -REFINE_R; dx <= REFINE_R; dx++) {
-      const x = candidate.x + dx;
-      const y = candidate.y + dy;
+      const x = bestX + dx, y = bestY + dy;
       if (tileCost(x, y) === Infinity) continue;
-      const wp = waterProximity(x, y);
-      const tc = tileCost(x, y);
-      const quality = wp * 0.6 + (1 / (1 + tc)) * 0.4;
-      if (quality > bestScore) {
-        bestScore = quality;
-        best = { x, y };
-      }
+      const q = waterProximity(x, y) * 0.6 + (1 / (1 + tileCost(x, y))) * 0.4;
+      if (q > refinedScore) { refinedScore = q; best = { x, y }; }
     }
   }
   return best;
@@ -163,11 +172,11 @@ export function ensureGenesisSettlements(kernel, regionKey, tick) {
   // Step 4: Act on state
   if (state === 'wilderness') return;
 
-  // Find a site via evaluateMacroCell + refineSite (same terrain logic as before)
-  const candidate = evaluateMacroCell(kernel.seed, mk);
-  if (!candidate) return;
-  const site = refineSite(candidate);
-  if (!site) return;
+  // The chronicle has spoken — a settlement exists here. Find the best site.
+  // evaluateMacroCell's suitability roll is skipped: the chronicle is the authority.
+  // We only need to find WHERE in the macro-cell to place it.
+  const site = findBestSiteInMacro(kernel.seed, mx, my);
+  if (!site) return;  // entire macro-cell is water — chronicle was wrong (shouldn't happen)
 
   if (state === 'ruined') {
     // Ruins: no group, no roads — just a settlement node with ruined state
