@@ -167,8 +167,8 @@ export function drawBuildingFloors(ctx, camX, camY, tilePx, w, h) {
 }
 
 /** Draw building walls (south-facing face sprites) AFTER F2 sprites.
- *  Walls render as tall sprites at the south edge of each building section,
- *  drawn in front of everything (like cliff faces). */
+ *  Each building section's south edge gets a wall face strip drawn below it,
+ *  like a cliff face. The wall sprite maintains its aspect ratio. */
 export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
   const buildings = _cache.buildings;
   if (!buildings || buildings.length === 0) return;
@@ -177,11 +177,9 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
   ctx.save();
   ctx.imageSmoothingEnabled = false;
 
-  // Wall face height in pixels (proportional to tile size)
-  // 256px sprite covers 8 tiles worth of wall face
-  const WALL_TILES = 8;  // how many tiles tall the wall face appears
-  const wallH = Math.ceil(tilePx * WALL_TILES);
-  const segW = Math.ceil(tilePx);  // each wall segment = 1 tile wide
+  // Wall face = 3 tiles tall (proportional to building scale)
+  const WALL_H_TILES = 3;
+  const wallH = Math.ceil(tilePx * WALL_H_TILES);
 
   for (const b of buildings) {
     const fp = b.footprint;
@@ -189,28 +187,35 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
     const hasWindow = fp.interior?.walls?.some(w2 => w2.kind === 'window');
 
     for (const sec of fp.sections) {
-      // South edge of this section: y = sec.y0 + sec.h (bottom row)
+      const secW = Math.ceil(sec.w * tilePx);
       const southY = b.y + sec.y0 + sec.h;
       const westX = b.x + sec.x0;
+      const sx = Math.floor(westX * tilePx - camX);
+      const sy = Math.floor(southY * tilePx - camY);
 
-      for (let dx = 0; dx < sec.w; dx++) {
-        const wx = westX + dx;
-        const sx = Math.floor(wx * tilePx - camX);
-        // Wall face hangs DOWN from the south edge
-        const sy = Math.floor(southY * tilePx - camY);
+      if (sx + secW < 0 || sx > w || sy + wallH < 0 || sy > h) continue;
 
-        if (sx + segW < 0 || sx > w || sy + wallH < 0 || sy > h) continue;
+      // Draw wall segments across the section width
+      // Each segment is ~4 tiles wide to maintain aspect ratio of the 256×256 sprite
+      const SEG_TILES = 4;
+      const segW = Math.ceil(tilePx * SEG_TILES);
+      const numSegs = Math.ceil(sec.w / SEG_TILES);
 
-        // Pick wall variant: door at the door position, window every few tiles
+      for (let si = 0; si < numSegs; si++) {
+        const segX = sx + si * segW;
+        const drawW = Math.min(segW, sx + secW - segX); // clip last segment
+        if (drawW <= 0) continue;
+
+        // Pick variant: door near center, windows at intervals
         let img = _wallImgs.plain;
-        if (hasDoor && dx === Math.floor(sec.w / 2)) {
+        const midSeg = Math.floor(numSegs / 2);
+        if (hasDoor && si === midSeg) {
           img = _wallImgs.door || _wallImgs.plain;
-        } else if (hasWindow && dx % 4 === 2 && dx > 0 && dx < sec.w - 1) {
+        } else if (hasWindow && si % 2 === 1 && si !== midSeg) {
           img = _wallImgs.window || _wallImgs.plain;
         }
 
-        // Draw wall face sprite: 1 tile wide, WALL_TILES tiles tall
-        ctx.drawImage(img, sx, sy, segW, wallH);
+        ctx.drawImage(img, segX, sy, drawW, wallH);
       }
     }
   }
