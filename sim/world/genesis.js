@@ -24,8 +24,8 @@ import { macroCellPeoples } from '../chronicle/races.js';
 import { regionChronicle, settlementState } from '../chronicle/chronicle.js';
 import { classifyBiome } from '../../src/world/biomes.js';
 
-export const MACRO = 8;                      // macro-cell = 8×8 regions = 128×128 tiles
-const MACRO_TILES = MACRO * REGION;          // 128 tiles per side
+export const MACRO = 4;                      // macro-cell = 4×4 regions = 64×64 tiles
+const MACRO_TILES = MACRO * REGION;          // 64 tiles per side
 const STRIDE = 8;                            // sample every 8th tile
 const GENESIS_GROUP_R = 50000;
 
@@ -240,28 +240,7 @@ export function ensureGenesisSettlements(kernel, regionKey, tick) {
   });
   kernel.ledger.events[settleEvId - 1].targets.push(settlement.id);
 
-  // Roads: straight-line to active neighbor settlements in 4 cardinal macro-cells
-  // Pure, O(distance), no A*
-  const neighbors = [
-    [mx - 1, my], [mx + 1, my], [mx, my - 1], [mx, my + 1],
-  ];
-  for (const [nmx, nmy] of neighbors) {
-    const ns = neighborSite(kernel.seed, nmx, nmy);
-    if (!ns) continue;
-    const roadTiles = straightRoad(site.x, site.y, ns.x, ns.y);
-    if (roadTiles.length === 0) continue;
-    const cost = roadTiles.length * 30;
-    if (group.R < cost) continue;
-    group.R -= cost;
-    const roadEvId = kernel.ledger.emit({
-      tick, type: 'road_built', actor: group.id, targets: [],
-      attrs: { fromX: site.x, fromY: site.y, toX: ns.x, toY: ns.y, tiles: roadTiles.length },
-    });
-    for (const t of roadTiles) {
-      kernel.graph.createNode({
-        type: 'matter', tick, x: t.x, y: t.y, causeEventId: roadEvId,
-        attrs: { archetype: 'road_segment', noFlux: true, condition: 100 },
-      });
-    }
-  }
+  // HONEST ABSENCE: roads are Phase D of the world compiler.
+  // Road network is a per-tile pure field function (spec: roadAt), not tile entities.
+  // Disabled here: straightRoad + neighborSite were the performance bottleneck.
 }

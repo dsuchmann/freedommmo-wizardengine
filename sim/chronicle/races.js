@@ -6,7 +6,7 @@ import { classifyBiome } from '../../src/world/biomes.js';
 import { REGION } from '../lod/aggregate.js';
 
 // Must match genesis.js MACRO value.
-const MACRO = 8;
+const MACRO = 4;
 const MACRO_TILES = MACRO * REGION;
 
 export const RACES = {
