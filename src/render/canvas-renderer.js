@@ -10,7 +10,7 @@ import { setChunkStore, getDebugWangData, setDebugWangData } from './wang-terrai
 import { biomeVariantFrameId } from '../assets/variant-selector.js';
 import { drawElevationOverlay } from './elevation-overlay.js';
 import { drawSimDebugOverlay } from './sim-debug-overlay.js';
-import { drawBuildingFloors, buildingOccupiedTiles } from './building-renderer.js';
+import { drawBuildingFloors } from './building-renderer.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations, buildWaveField } from './water-wave-overlay.js';
 import { drawLargeObjects, preloadLargeObjectSprites, setPlayerDrawFn } from './large-object-renderer.js';
 import { drawField2Animations, preloadField2Animations, drawWindWispOverlay, setField2PlayerDraw, setField2PlayerGL } from './field2-animator.js';
@@ -318,6 +318,12 @@ export class CanvasRenderer {
     // canvas with a fullscreen fill in drawLighting (after this call) instead.
     drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, h, performance.now() / 1000, weather ? weather.wind() : null, glOn, glScene ? sun : null);
 
+    // === BUILDING FLOORS ===
+    // Draw AFTER terrain + water, BEFORE F2 sprites + player.
+    // Buildings sit on the terrain plane. F2 sprites (including player)
+    // render on top via y-sorted depth order.
+    drawBuildingFloors(ctx, camX, camY, tilePx, w, h);
+
     // Wang debug overlay (toggle with D key)
     if (this.debugWang) {
       ctx.save();
@@ -397,11 +403,6 @@ export class CanvasRenderer {
       const f2Grid = { baseSX, baseSY, minCX, minCY, chunkPx };
       drawField2Animations(ctx, chunkStore, player, camera, w, h, f2Grid, performance.now(), weather, sun, glOn ? this.glc : null);
     }
-
-    // === BUILDING FLOORS ===
-    // Draw building floor tiles OVER terrain + F2 sprites.
-    // Buildings visually override all nature at their footprint.
-    drawBuildingFloors(ctx, camX, camY, tilePx, w, h);
 
     // Weather AFTER all sprites — in GL mode most F2 sprites live on the GL
     // canvas (below this one), so fog/precip drawn earlier would cover them

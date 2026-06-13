@@ -12,11 +12,13 @@ import { regionChronicle, settlementState, chronicleTier } from '../../sim/chron
 import { classifyBiome } from '../world/biomes.js';
 import { rand } from '../../sim/kernel/rng.js';
 import { generateSettlementName } from '../../sim/world/buildings/specializations.js';
+import { buildingClaimTiles } from '../world/decoration-claims.js';
 
 const MACRO_TILES = MACRO * REGION;
 const WORLD_SEED = 42;
 const WATER = new Set(['ocean', 'deep_ocean', 'lake', 'river', 'shallow_water', 'stream']);
 const MAX_BUILDINGS = 80;
+const CLAIM_MARGIN = 2;  // suppress decorations N tiles around buildings
 
 // ── Floor tile images ──────────────────────────────────────────────
 const _floorImages = {};
@@ -33,8 +35,7 @@ function ensureFloorImages() {
 // ── Settlement/building cache ──────────────────────────────────────
 let _cache = { key: '', buildings: [] };
 
-/** Occupied tile set for suppressing F2+ sprites at building positions. */
-export const buildingOccupiedTiles = new Set();
+// Building claims are tracked in decoration-claims.js (buildingClaimTiles)
 
 function discoverBuildings(camX, camY, w, h, tilePx) {
   const margin = MACRO_TILES * tilePx * 2;
@@ -47,7 +48,7 @@ function discoverBuildings(camX, camY, w, h, tilePx) {
 
   const epochs = worldEpochs(WORLD_SEED);
   const buildings = [];
-  buildingOccupiedTiles.clear();
+  buildingClaimTiles.clear();
 
   for (let my = my0; my <= my1; my++) {
     for (let mx = mx0; mx <= mx1; mx++) {
@@ -83,10 +84,11 @@ function discoverBuildings(camX, camY, w, h, tilePx) {
         if (WATER.has(classifyBiome(b.x + bb.w - 1, b.y + bb.h - 1).id)) continue;
 
         buildings.push(b);
-        // Mark occupied tiles for F2 suppression
-        for (let dy = 0; dy < bb.h; dy++) {
-          for (let dx = 0; dx < bb.w; dx++) {
-            buildingOccupiedTiles.add(`${b.x + dx},${b.y + dy}`);
+        // Mark tiles as claimed — suppresses F2+ decoration spawning
+        // Include CLAIM_MARGIN tiles around the building for clean edges
+        for (let dy = -CLAIM_MARGIN; dy < bb.h + CLAIM_MARGIN; dy++) {
+          for (let dx = -CLAIM_MARGIN; dx < bb.w + CLAIM_MARGIN; dx++) {
+            buildingClaimTiles.add(`${b.x + dx},${b.y + dy}`);
           }
         }
       }

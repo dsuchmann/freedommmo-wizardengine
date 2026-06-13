@@ -548,8 +548,14 @@ export function getClaimMask(wx, wy, tileInfo) {
 }
 
 // Point test in world art px — used by F2 to cull blades.
+/** Set of "wx,wy" world-tile keys occupied by buildings.
+ *  Populated by the building renderer; checked here to suppress F2+ sprites. */
+export const buildingClaimTiles = new Set();
+
 export function isClaimedAt(px, py, tileInfo) {
   var wx = Math.floor(px / TILE_ART_PX), wy = Math.floor(py / TILE_ART_PX);
+  // Building claim: entire tile suppressed (plus 1-tile margin for clean edges)
+  if (buildingClaimTiles.has(wx + ',' + wy)) return true;
   var mask = getClaimMask(wx, wy, tileInfo);
   var c = Math.floor((px - wx * TILE_ART_PX) / CELL_PX);
   var r = Math.floor((py - wy * TILE_ART_PX) / CELL_PX);
