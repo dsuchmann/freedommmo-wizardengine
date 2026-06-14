@@ -155,9 +155,12 @@ function cachedLayout(seed, mx, my) {
         var wKey = wlx + ',' + wly;
 
         if (westOut) {
-          wallIndex.set(wwx + ',' + wwy, { sprite: 'south_corner_west', edge: 'south', spriteW: 1, half: null });
+          // Corner: base at this tile, corner piece 1 tile outside building
+          wallIndex.set(wwx + ',' + wwy, { sprite: 'south_base', edge: 'south', spriteW: 1, half: null });
+          wallIndex.set((wwx - 1) + ',' + wwy, { sprite: 'south_corner_west', edge: 'south', spriteW: 1, half: null });
         } else if (eastOut) {
-          wallIndex.set(wwx + ',' + wwy, { sprite: 'south_corner_east', edge: 'south', spriteW: 1, half: null });
+          wallIndex.set(wwx + ',' + wwy, { sprite: 'south_base', edge: 'south', spriteW: 1, half: null });
+          wallIndex.set((wwx + 1) + ',' + wwy, { sprite: 'south_corner_east', edge: 'south', spriteW: 1, half: null });
         } else if (doorSet2.has(wKey) && dx4 >= 2 && dx4 < sec3.w - 2) {
           // 2-wide door: LEFT half at this tile, RIGHT half at next tile
           wallIndex.set(wwx + ',' + wwy, { sprite: 'south_door', edge: 'south', spriteW: 2, half: 'left' });
@@ -180,15 +183,19 @@ function cachedLayout(seed, mx, my) {
         var nWestOut = !floorSet2.has((nlx - 1) + ',' + nly);
         var nEastOut = !floorSet2.has((nlx + 1) + ',' + nly);
 
-        var nSprite;
-        if (nWestOut) nSprite = 'south_corner_west';
-        else if (nEastOut) nSprite = 'south_corner_east';
-        else nSprite = 'south_base';
-
-        // North walls keyed separately so they don't overwrite south walls
+        // North walls with corner extension
         var nKey = nwx + ',' + nwy;
         if (!wallIndex.has(nKey)) {
-          wallIndex.set(nKey, { sprite: nSprite, edge: 'north', spriteW: 1 });
+          if (nWestOut) {
+            wallIndex.set(nKey, { sprite: 'south_base', edge: 'north', spriteW: 1 });
+            var nwKey = (nwx - 1) + ',' + nwy;
+            if (!wallIndex.has(nwKey)) wallIndex.set(nwKey, { sprite: 'south_corner_west', edge: 'north', spriteW: 1 });
+          } else if (nEastOut) {
+            wallIndex.set(nKey, { sprite: 'south_base', edge: 'north', spriteW: 1 });
+            var neKey = (nwx + 1) + ',' + nwy;
+            if (!wallIndex.has(neKey)) wallIndex.set(neKey, { sprite: 'south_corner_east', edge: 'north', spriteW: 1 });
+          } else {
+            wallIndex.set(nKey, { sprite: 'south_base', edge: 'north', spriteW: 1 });
         }
       }
 
@@ -285,11 +292,19 @@ export function isBuildingClaimed(wx, wy) {
     for (var dmx = -1; dmx <= 1; dmx++) {
       var entry = cachedLayout(seed, mx + dmx, my + dmy);
       if (!entry) continue;
-      // Check with margin
+      // Check floor tiles with margin
       for (var cdy = -CLAIM_MARGIN; cdy <= CLAIM_MARGIN; cdy++) {
         for (var cdx = -CLAIM_MARGIN; cdx <= CLAIM_MARGIN; cdx++) {
           if (entry.floorIndex.has((wx + cdx) + ',' + (wy + cdy))) return true;
         }
+      }
+      // Check wall tiles (including corners that extend outside building)
+      if (entry.wallIndex.has(wx + ',' + wy)) return true;
+      // North wall extends upward — suppress F2/F3 for 4 tiles above any north wall tile
+      for (var nUp = 1; nUp <= 4; nUp++) {
+        var belowKey = wx + ',' + (wy + nUp);
+        var belowHit = entry.wallIndex.get(belowKey);
+        if (belowHit && belowHit.edge === 'north') return true;
       }
     }
   }
