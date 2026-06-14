@@ -1182,68 +1182,65 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
       }
 
       // ── Building wall tile: drawn INTO the chunk bitmap ──────────
-      // Walls hang below the floor tile (south walls) or sit beside it (east/west).
-      // Calibrated params from user tuning session.
+      // Calibrated values from user tuning session (baked).
       var wallHit = queryBuildingWall(wx, wy);
       if (wallHit) {
         var wUrl = wallTileUrl(wallHit.sprite);
         var wBmp = imageCache.get(wUrl);
         if (wBmp) {
           var wSrc = wallSpriteSrc(wallHit.sprite);
+          var WALL_Y_OFF = 0.25;    // wallYOffset
+          var WALL_H_TILES = 4;     // wallHeight
+          var NORTH_Y_OFF = 0.25;   // northYOffset
+          var EW_TILE_H = 0.40;     // ewTileHeight
+          var EW_X_OFF = -0.30;     // ewXOffset
+          var wallHPx = Math.round(tileSize * WALL_H_TILES);
+          var pad = 1; // 1px overlap to kill seams
+
           if (wallHit.edge === 'south') {
-            // South wall: hangs below the floor tile's south edge
-            var wallYOff = Math.round(tileSize * 0.25);   // wallYOffset = 0.25
-            var wallHPx = tileSize * 4;                     // wallHeight = 4 tiles
-            var drawW = tileSize;                           // always 1 tile wide per chunk tile
-            var wallSY = sy + tileSize + wallYOff - wallHPx;
-            // For 2-wide sprites (door/window), draw the correct half
+            // South wall bottom edge aligned to floor south pixel + offset
+            var wallSY = sy + tileSize - wallHPx + Math.round(tileSize * WALL_Y_OFF);
+            // Source crop for 2-wide sprites
             var srcX0 = 0, srcCropW = wSrc.w;
-            if (wallHit.half === 'left') { srcX0 = 0; srcCropW = Math.round(wSrc.w / 2); }
+            if (wallHit.half === 'left') { srcCropW = Math.round(wSrc.w / 2); }
             else if (wallHit.half === 'right') { srcX0 = Math.round(wSrc.w / 2); srcCropW = Math.round(wSrc.w / 2); }
             // Clamp to chunk canvas
-            var wallDrawTop = Math.max(0, wallSY);
-            var wallDrawBot = Math.min(canvasSize, wallSY + wallHPx);
-            if (wallDrawBot > wallDrawTop) {
-              var srcClipTop = wallDrawTop - wallSY;
-              var srcClipH = wallDrawBot - wallDrawTop;
-              var srcYFrac = srcClipTop / wallHPx;
-              var srcHFrac = srcClipH / wallHPx;
+            var sDrawTop = Math.max(0, wallSY);
+            var sDrawBot = Math.min(canvasSize, wallSY + wallHPx);
+            if (sDrawBot > sDrawTop) {
+              var sFrac0 = (sDrawTop - wallSY) / wallHPx;
+              var sFracH = (sDrawBot - sDrawTop) / wallHPx;
               ctx.drawImage(wBmp,
-                srcX0, Math.round(srcYFrac * wSrc.h), srcCropW, Math.round(srcHFrac * wSrc.h),
-                sx, wallDrawTop, drawW, srcClipH);
+                srcX0, Math.round(sFrac0 * wSrc.h), srcCropW, Math.round(sFracH * wSrc.h),
+                sx, sDrawTop, tileSize + pad, sDrawBot - sDrawTop + pad);
             }
+
           } else if (wallHit.edge === 'north') {
-            // North wall: same as south but anchored at north edge of tile
-            var nWallYOff = Math.round(tileSize * 0.25);  // northYOffset = 0.25
-            var nWallHPx = tileSize * 4;
-            var nWallSY = sy + nWallYOff - nWallHPx;
-            var nDrawTop = Math.max(0, nWallSY);
-            var nDrawBot = Math.min(canvasSize, nWallSY + nWallHPx);
+            // North wall: anchored at top of tile, extends upward
+            var nSY = sy - wallHPx + Math.round(tileSize * NORTH_Y_OFF);
+            var nDrawTop = Math.max(0, nSY);
+            var nDrawBot = Math.min(canvasSize, nSY + wallHPx);
             if (nDrawBot > nDrawTop) {
-              var nSrcClipTop = nDrawTop - nWallSY;
-              var nSrcClipH = nDrawBot - nDrawTop;
-              var nSrcYFrac = nSrcClipTop / nWallHPx;
-              var nSrcHFrac = nSrcClipH / nWallHPx;
+              var nFrac0 = (nDrawTop - nSY) / wallHPx;
+              var nFracH = (nDrawBot - nDrawTop) / wallHPx;
+              // Fill opaque background first (sprite has alpha at top)
+              ctx.fillStyle = 'rgb(140,130,120)';
+              ctx.fillRect(sx, nDrawTop, tileSize + pad, nDrawBot - nDrawTop + pad);
               ctx.drawImage(wBmp,
-                0, Math.round(nSrcYFrac * wSrc.h), wSrc.w, Math.round(nSrcHFrac * wSrc.h),
-                sx, nDrawTop, tileSize, nSrcClipH);
+                0, Math.round(nFrac0 * wSrc.h), wSrc.w, Math.round(nFracH * wSrc.h),
+                sx, nDrawTop, tileSize + pad, nDrawBot - nDrawTop + pad);
             }
+
           } else if (wallHit.edge === 'east' || wallHit.edge === 'west') {
-            // East/west edge piece: rotated 90 degrees, calibrated offsets
-            var ewH = Math.round(tileSize * 0.40);        // ewTileHeight = 0.40
-            var ewXOff = Math.round(tileSize * -0.30);    // ewXOffset = -0.30
+            var ewH = Math.round(tileSize * EW_TILE_H);
+            var ewXOff = Math.round(tileSize * EW_X_OFF);
             var ewSX = wallHit.edge === 'west' ? sx - ewXOff : sx + ewXOff;
-            var ewSY = sy;
-            // Clamp to canvas
-            if (ewSX + tileSize > 0 && ewSX < canvasSize && ewSY + ewH > 0 && ewSY < canvasSize) {
-              // ewRotate90 = true: rotate 90 degrees, auto-mirror for west side
+            if (ewSX + tileSize > 0 && ewSX < canvasSize && sy + ewH > 0 && sy < canvasSize) {
               ctx.save();
-              var ewCX = ewSX + tileSize / 2, ewCY = ewSY + ewH / 2;
-              ctx.translate(ewCX, ewCY);
-              ctx.rotate(Math.PI / 2);
-              var ewScaleX = wallHit.edge === 'west' ? -1 : 1;
-              ctx.scale(ewScaleX, 1);
-              ctx.drawImage(wBmp, 0, 0, wSrc.w, wSrc.h, -tileSize / 2, -ewH / 2, tileSize, ewH);
+              ctx.translate(ewSX + tileSize / 2, sy + ewH / 2);
+              ctx.rotate(Math.PI / 2);  // ewRotate90 = true
+              if (wallHit.edge === 'west') ctx.scale(-1, 1);  // auto-mirror
+              ctx.drawImage(wBmp, 0, 0, wSrc.w, wSrc.h, -tileSize / 2, -ewH / 2, tileSize + pad, ewH + pad);
               ctx.restore();
             }
           }
