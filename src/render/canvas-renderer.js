@@ -10,7 +10,7 @@ import { setChunkStore, getDebugWangData, setDebugWangData } from './wang-terrai
 import { biomeVariantFrameId } from '../assets/variant-selector.js';
 import { drawElevationOverlay } from './elevation-overlay.js';
 import { drawSimDebugOverlay } from './sim-debug-overlay.js';
-import { updateBuildingClaims, drawBuildingFloors } from './building-renderer.js';
+import { updateBuildingClaims, drawBuildingFloors, drawBuildingWalls } from './building-renderer.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations, buildWaveField } from './water-wave-overlay.js';
 import { drawLargeObjects, preloadLargeObjectSprites, setPlayerDrawFn } from './large-object-renderer.js';
 import { drawField2Animations, preloadField2Animations, drawWindWispOverlay, setField2PlayerDraw, setField2PlayerGL } from './field2-animator.js';
@@ -407,8 +407,8 @@ export class CanvasRenderer {
       drawField2Animations(ctx, chunkStore, player, camera, w, h, f2Grid, performance.now(), weather, sun, glOn ? this.glc : null);
     }
 
-    // Building walls now rendered by the cliff system (elevation boost in chunk compiler).
-    // No separate-pass wall drawing needed.
+    // Building walls: 8-direction wall objects at building perimeters
+    drawBuildingWalls(ctx, camX, camY, tilePx, w, h);
 
     // Weather AFTER all sprites — in GL mode most F2 sprites live on the GL
     // canvas (below this one), so fog/precip drawn earlier would cover them

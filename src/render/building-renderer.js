@@ -21,18 +21,23 @@ const CLAIM_MARGIN = 2;
 
 // ── Floor + wall tile images ────────────────────────────────────────
 const _floorImgs = {};  // material id -> HTMLImageElement
-const _wallImgs = { plain: null, window: null, door: null };
+const _wallImgs = {};   // "variant_direction" -> HTMLImageElement (e.g. "plain_south")
 let _floorReady = false;
 
 function ensureFloorImages() {
   if (_floorReady) return;
   _floorReady = true;
-  // Wall sprites (256×256 each)
-  const wallBase = '/assets/pixelab/buildings/walls/stone_brick/';
-  for (const [key, file] of [['plain', 'wall_plain.png'], ['window', 'wall_window.png'], ['door', 'wall_door.png']]) {
-    const img = new Image();
-    img.src = wallBase + file;
-    img.onload = () => { _wallImgs[key] = img; };
+  // 8-direction wall sprites (170×170 each)
+  const wallBase = '/assets/pixelab/buildings/walls/stone_brick_8dir/';
+  const variants = ['plain', 'window', 'door'];
+  const dirs = ['south', 'north', 'east', 'west', 'southeast', 'southwest', 'northeast', 'northwest'];
+  for (const v of variants) {
+    for (const d of dirs) {
+      const key = v + '_' + d;
+      const img = new Image();
+      img.src = wallBase + 'wall_' + key + '.png';
+      img.onload = () => { _wallImgs[key] = img; };
+    }
   }
   // Solid interior tile per material (wang_15 = all corners upper = full floor)
   const mats = {
@@ -166,25 +171,19 @@ export function drawBuildingFloors(ctx, camX, camY, tilePx, w, h) {
   ctx.restore();
 }
 
-/** Draw building walls AFTER F2 sprites.
- *  South walls: full face visible (windows, doors).
- *  East/West walls: thin side edges.
- *  North walls: just a cap line (barely visible in 3/4 view). */
+/** Draw 8-direction wall objects around building perimeters. Call AFTER F2/player.
+ *  Each edge gets the appropriate directional wall sprite (south, east, west, north). */
 export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
   const buildings = _cache.buildings;
   if (!buildings || buildings.length === 0) return;
-  if (!_wallImgs.plain) return;
+  if (!_wallImgs.plain_south) return;
 
   ctx.save();
   ctx.imageSmoothingEnabled = false;
 
-  // Wall face height = 2 tiles (like a 1-story wall seen in 3/4 view)
-  const WALL_H = 2;
-  const wallH = Math.ceil(tilePx * WALL_H);
-  // Segment width = same as height to preserve 1:1 aspect ratio of 256×256 sprite
-  const segPx = wallH;
-  // Side wall width (east/west) = 0.5 tiles (thin edge)
-  const sideW = Math.ceil(tilePx * 0.5);
+  // Wall sprite: 170×170 source, render at 5×5 tiles maintaining aspect ratio
+  const WALL_TILES = 5;
+  const wallSize = Math.ceil(tilePx * WALL_TILES);
 
   for (const b of buildings) {
     const fp = b.footprint;
@@ -192,68 +191,60 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
     const hasWindow = fp.interior?.walls?.some(w2 => w2.kind === 'window');
 
     for (const sec of fp.sections) {
+      const x0 = b.x + sec.x0;
+      const y0 = b.y + sec.y0;
       const secWpx = Math.ceil(sec.w * tilePx);
       const secHpx = Math.ceil(sec.h * tilePx);
-      const westX = b.x + sec.x0;
-      const northY = b.y + sec.y0;
-      const southY = northY + sec.h;
-      const eastX = westX + sec.w;
 
-      // ── South wall (full face) ──────────────────────────────
-      const ssx = Math.floor(westX * tilePx - camX);
-      const ssy = Math.floor(southY * tilePx - camY);
-      if (!(ssx + secWpx < 0 || ssx > w || ssy + wallH < 0 || ssy > h)) {
-        const numSegs = Math.max(1, Math.ceil(secWpx / segPx));
-        for (let si = 0; si < numSegs; si++) {
-          const segX = ssx + si * segPx;
-          const drawW = Math.min(segPx, ssx + secWpx - segX);
-          if (drawW <= 0) continue;
-          let img = _wallImgs.plain;
-          const midSeg = Math.floor(numSegs / 2);
-          if (hasDoor && si === midSeg) img = _wallImgs.door || img;
-          else if (hasWindow && si % 2 === 1) img = _wallImgs.window || img;
-          // Source rect: crop from sprite to maintain aspect ratio for partial segments
-          const srcW = Math.floor(256 * drawW / segPx);
-          ctx.drawImage(img, 0, 0, srcW, 256, segX, ssy, drawW, wallH);
-        }
+      // ── South wall (full face, most visible) ─────────────────
+      const numSegsS = Math.max(1, Math.ceil(sec.w / WALL_TILES));
+      for (let si = 0; si < numSegsS; si++) {
+        const wx = x0 + si * WALL_TILES;
+        const sx = Math.floor(wx * tilePx - camX);
+        const sy = Math.floor((y0 + sec.h) * tilePx - camY) - Math.floor(wallSize * 0.35);
+        const segW = Math.min(wallSize, Math.ceil((x0 + sec.w - wx) * tilePx));
+        if (sx + segW < 0 || sx > w || sy + wallSize < 0 || sy > h) continue;
+        const mid = Math.floor(numSegsS / 2);
+        let variant = 'plain';
+        if (hasDoor && si === mid) variant = 'door';
+        else if (hasWindow && si % 2 === 1) variant = 'window';
+        const img = _wallImgs[variant + '_south'];
+        if (img) ctx.drawImage(img, 0, 0, 170, 170, sx, sy, segW, wallSize);
       }
 
-      // ── East wall (thin side edge) ──────────────────────────
-      const esx = Math.floor(eastX * tilePx - camX);
-      const esy = Math.floor(northY * tilePx - camY);
-      if (!(esx + sideW < 0 || esx > w || esy + secHpx < 0 || esy > h)) {
-        // Draw a thin vertical strip of the plain wall, tiled vertically
-        const numVSegs = Math.max(1, Math.ceil(secHpx / segPx));
-        for (let vi = 0; vi < numVSegs; vi++) {
-          const segY = esy + vi * segPx;
-          const drawH = Math.min(segPx, esy + secHpx - segY);
-          if (drawH <= 0) continue;
-          // Use rightmost column of sprite for the edge
-          ctx.drawImage(_wallImgs.plain, 200, 0, 56, 256, esx, segY, sideW, drawH);
-        }
+      // ── East wall ─────────────────────────────────────────────
+      const numSegsE = Math.max(1, Math.ceil(sec.h / WALL_TILES));
+      for (let si = 0; si < numSegsE; si++) {
+        const wy = y0 + si * WALL_TILES;
+        const sx = Math.floor((x0 + sec.w) * tilePx - camX) - Math.floor(wallSize * 0.35);
+        const sy = Math.floor(wy * tilePx - camY);
+        const segH = Math.min(wallSize, Math.ceil((y0 + sec.h - wy) * tilePx));
+        if (sx + wallSize < 0 || sx > w || sy + segH < 0 || sy > h) continue;
+        const img = _wallImgs['plain_east'];
+        if (img) ctx.drawImage(img, 0, 0, 170, 170, sx, sy, wallSize, segH);
       }
 
-      // ── West wall (thin side edge, mirrored) ────────────────
-      const wsx = Math.floor(westX * tilePx - camX) - sideW;
-      const wsy = esy;
-      if (!(wsx + sideW < 0 || wsx > w || wsy + secHpx < 0 || wsy > h)) {
-        const numVSegs = Math.max(1, Math.ceil(secHpx / segPx));
-        for (let vi = 0; vi < numVSegs; vi++) {
-          const segY = wsy + vi * segPx;
-          const drawH = Math.min(segPx, wsy + secHpx - segY);
-          if (drawH <= 0) continue;
-          ctx.drawImage(_wallImgs.plain, 0, 0, 56, 256, wsx, segY, sideW, drawH);
-        }
+      // ── West wall ─────────────────────────────────────────────
+      for (let si = 0; si < numSegsE; si++) {
+        const wy = y0 + si * WALL_TILES;
+        const sx = Math.floor(x0 * tilePx - camX) - Math.floor(wallSize * 0.65);
+        const sy = Math.floor(wy * tilePx - camY);
+        const segH = Math.min(wallSize, Math.ceil((y0 + sec.h - wy) * tilePx));
+        if (sx + wallSize < 0 || sx > w || sy + segH < 0 || sy > h) continue;
+        const img = _wallImgs['plain_west'];
+        if (img) ctx.drawImage(img, 0, 0, 170, 170, sx, sy, wallSize, segH);
       }
 
-      // ── North wall (thin cap line, barely visible) ──────────
-      const nsx = ssx;
-      const nsy = Math.floor(northY * tilePx - camY) - Math.ceil(tilePx * 0.3);
-      const capH = Math.ceil(tilePx * 0.3);
-      if (!(nsx + secWpx < 0 || nsx > w || nsy < 0 || nsy > h)) {
-        // Use top edge of sprite as the cap
-        const srcH = Math.floor(256 * 0.15);
-        ctx.drawImage(_wallImgs.plain, 0, 0, 256, srcH, nsx, nsy, secWpx, capH);
+      // ── North wall (behind building, less visible) ────────────
+      const numSegsN = numSegsS;
+      for (let si = 0; si < numSegsN; si++) {
+        const wx = x0 + si * WALL_TILES;
+        const sx = Math.floor(wx * tilePx - camX);
+        const sy = Math.floor(y0 * tilePx - camY) - Math.floor(wallSize * 0.65);
+        const segW = Math.min(wallSize, Math.ceil((x0 + sec.w - wx) * tilePx));
+        if (sx + segW < 0 || sx > w || sy + wallSize < 0 || sy > h) continue;
+        const img = _wallImgs['plain_north'];
+        if (img) ctx.drawImage(img, 0, 0, 170, 170, sx, sy, segW, wallSize);
       }
     }
   }
