@@ -605,7 +605,7 @@ export class CanvasRenderer {
       ctx.ellipse(px + skewX, sy + 8 * zoom, (8 * zoom + (player?.z ?? 0) * zoom) * stretch, 3 * zoom, 0, 0, Math.PI * 2);
       ctx.fill();
     }
-    // Try sprite character first (PixelLab full-character), fall back to assembled rig, then doodle
+    // Try sprite character first (PixelLab full-character), fall back to assembled rig
     const spriteDrawn = drawSpriteCharacter(ctx, px, py, zoom, frame, player?.character?.animation ?? 'idle', player?.character?.direction ?? 'S');
     const bodyDrawn = spriteDrawn || drawHumanoidPlayer(ctx, px, py, zoom, frame, player?.character?.animation ?? 'idle', player?.character?.direction ?? 'S');
     if (!bodyDrawn) {
