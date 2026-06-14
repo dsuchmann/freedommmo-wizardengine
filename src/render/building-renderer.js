@@ -196,7 +196,6 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
   const t = Math.round(tilePx);       // 1 tile in screen px
   const WALL_H = 4;                   // wall is 4 tiles tall (128px source)
   const wallH = Math.round(tilePx * WALL_H);
-  const NORTH_H = 2;                  // north back = 2 tiles tall
 
   for (const b of buildings) {
     const fp = b.footprint;
@@ -241,38 +240,18 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
         const wx = b.x + lx;
         const wy = b.y + northRow;
         const sx = Math.round(wx * tilePx - camX);
-        const sy = Math.round(wy * tilePx - camY) - Math.round(tilePx * NORTH_H);
-        if (sx + t < 0 || sx > w || sy + Math.round(tilePx * NORTH_H) < 0 || sy > h) continue;
-        if (_wallImgs.north_back) {
-          ctx.drawImage(_wallImgs.north_back, 0, 0, 32, 64, sx, sy, t, Math.round(tilePx * NORTH_H));
+        const sy = Math.round(wy * tilePx - camY) - wallH;
+        if (sx + t < 0 || sx > w || sy + wallH < 0 || sy > h) continue;
+        // Use south_base for north wall too (same height, placeholder)
+        if (_wallImgs.south_base) {
+          ctx.drawImage(_wallImgs.south_base, 0, 0, 32, 128, sx, sy, t + 1, wallH + 1);
         }
       }
     }
 
     // ── Pass 2: East/West — foundation border only (honest absence)
 
-    // ── Pass 3: Interior south walls at section junctions ──────
-    // Uses south_base as placeholder until proper interior sprites exist.
-    // Same height as exterior (4 tiles) so it matches.
-    for (const sec of fp.sections) {
-      const lastRow = sec.y0 + sec.h - 1;
-      for (let dx = 0; dx < sec.w; dx++) {
-        const lx = sec.x0 + dx, ly = lastRow;
-        const southInside = floorSet.has(lx + ',' + (ly + 1));
-        if (!southInside) continue;
-        // Verify it's a different section (not same section's interior)
-        if (ly + 1 < sec.y0 + sec.h) continue;
-
-        const wx = b.x + lx;
-        const floorBottomPx = Math.round((b.y + sec.y0 + sec.h) * tilePx - camY);
-        const sx = Math.round(wx * tilePx - camX);
-        const sy = floorBottomPx - wallH + Math.round(t * 0.15);
-        if (sx + t < 0 || sx > w || sy + wallH < 0 || sy > h) continue;
-        if (_wallImgs.south_base) {
-          ctx.drawImage(_wallImgs.south_base, 0, 0, 32, 128, sx, sy, t + 1, wallH + 1);
-        }
-      }
-    }
+    // ── Pass 3: Interior walls — honest absence until proper interior sprites.
 
     // ── Pass 4: South exterior walls (most visible, drawn last) ──
     for (const sec of fp.sections) {
@@ -289,15 +268,16 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
         // Wall bottom edge sits AT the floor's south pixel edge
         const floorBottomPx = Math.round((b.y + sec.y0 + sec.h) * tilePx - camY);
         const sx = Math.round(wx * tilePx - camX);
-        const sy = floorBottomPx - wallH + Math.round(t * 0.15); // slight overlap into floor edge
+        const sy = floorBottomPx - wallH + Math.round(t * 0.4); // wall overlaps floor edge substantially
         const pad = 1; // 1px overlap between adjacent tiles to kill seams
         if (sx + t < 0 || sx > w || sy + wallH < 0 || sy > h) continue;
 
         const key = lx + ',' + ly;
 
-        // Is this the first or last tile of this exterior run?
-        const isWestEnd = dx === 0 || floorSet.has((lx - 1) + ',' + (ly + 1));
-        const isEastEnd = dx === sec.w - 1 || floorSet.has((lx + 1) + ',' + (ly + 1));
+        // Corner termination only at TRUE exterior edges — the tile to the
+        // west/east is NOT part of any building section (not an inner seam).
+        const isWestEnd = !floorSet.has((lx - 1) + ',' + ly);
+        const isEastEnd = !floorSet.has((lx + 1) + ',' + ly);
 
         if (isWestEnd && _wallImgs.south_corner_west) {
           ctx.drawImage(_wallImgs.south_corner_west, 0, 0, 32, 128, sx, sy, t + pad, wallH + pad);
