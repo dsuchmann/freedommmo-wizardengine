@@ -1035,7 +1035,7 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
 
       // Building elevation boost: if this tile or neighbors are building floors,
       // raise their effective elevation so the cliff system draws wall faces.
-      var BUILDING_EL_BOOST = 0.12; // +1 cliff level
+      var BUILDING_EL_BOOST = 0.45; // +4 cliff levels for visible wall height
       var isBldg = queryBuildingTile(wx, wy);
       var isBldgE = queryBuildingTile(wx + 1, wy);
       var isBldgS = queryBuildingTile(wx, wy + 1);

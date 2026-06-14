@@ -231,6 +231,7 @@ export const INTERIOR_TEMPLATES = {
   // ── Residential ───────────────────────────────────────────────────
   hut: {
     floor: ['packed_dirt', 'reed_mat'],
+    wallMaterial: 'wood',
     walls: { windows: 1, doors: 1 },
     structure: [],
     furniture: ['bed_single', 'stool', 'chest_wood'],
@@ -367,6 +368,7 @@ export const INTERIOR_TEMPLATES = {
   // ── Civic ─────────────────────────────────────────────────────────
   town_hall: {
     floor: ['marble', 'wood_plank', 'carpet_wool'],
+    wallMaterial: 'stone_brick',
     walls: { windows: 6, doors: 3, archways: 2 },
     structure: ['stairs_up', 'pillar', 'pillar'],
     furniture: ['throne', 'war_table', 'bookcase', 'bookcase', 'display_case', 'chest_iron', 'chair', 'chair', 'chair'],
@@ -415,6 +417,10 @@ export function generateInterior(seed, typeId, race, tier, footprint) {
   }
   const floor = { material: floorId, name: FLOOR_MATERIALS[floorId]?.name ?? floorId };
 
+  // Wall material: from template or default by tier
+  const WALL_DEFAULTS = { village: 'wood', town: 'stone_brick', city: 'stone_brick' };
+  const wallMaterial = template.wallMaterial ?? WALL_DEFAULTS[tier] ?? 'wood';
+
   // I1: Wall features — place on perimeter tiles
   const wallFeatures = [];
   const wallSpec = template.walls;
@@ -459,7 +465,7 @@ export function generateInterior(seed, typeId, race, tier, footprint) {
   const condId = template.condition[Math.floor(rand(h, 0xE060) * template.condition.length)];
   const condition = { id: condId, ...(CONDITION[condId] ?? CONDITION.lived_in) };
 
-  return { floor, walls: wallFeatures, structure, furniture, objects, decorative, condition };
+  return { floor, wallMaterial, walls: wallFeatures, structure, furniture, objects, decorative, condition };
 }
 
 /** All interior field layer names. */

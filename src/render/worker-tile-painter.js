@@ -134,5 +134,12 @@ export function paintCliffOverlay(ctx, tile, sx, sy, size, sun, imageCache) {
   }
   var bmp = imageCache.get(src);
   if (!bmp) return;
-  ctx.drawImage(bmp, 0, 0, 32, 32, sx, sy, size, size);
+  if (tile._isBuildingWall) {
+    // Draw building wall cliff face TALLER — extend downward to show wall height.
+    // The cliff tile's lower half is the wall face; stretch it vertically.
+    var wallFaceH = Math.ceil(size * 2.5); // 2.5 tiles tall wall face
+    ctx.drawImage(bmp, 0, 0, 32, 32, sx, sy, size, wallFaceH);
+  } else {
+    ctx.drawImage(bmp, 0, 0, 32, 32, sx, sy, size, size);
+  }
 }
