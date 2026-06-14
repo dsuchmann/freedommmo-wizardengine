@@ -1035,7 +1035,7 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
 
       // Building elevation boost: if this tile or neighbors are building floors,
       // raise their effective elevation so the cliff system draws wall faces.
-      var BUILDING_EL_BOOST = 0.45; // +4 cliff levels for visible wall height
+      var BUILDING_EL_BOOST = 0.05; // minimal — just enough for cliff edge detection, walls are separate objects
       var isBldg = queryBuildingTile(wx, wy);
       var isBldgE = queryBuildingTile(wx + 1, wy);
       var isBldgS = queryBuildingTile(wx, wy + 1);
@@ -1182,18 +1182,14 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
         // Mark this tile as building-claimed for F0/F1/F3 suppression below
         tile._buildingFloor = true;
 
-        // Wall face: if the tile SOUTH of us is NOT a building tile, this is the
-        // south edge — draw the wall face sprite extending downward into the chunk.
-        var southIsBuilding = queryBuildingTile(wx, wy + 1);
-        if (!southIsBuilding) {
-          var wallUrl = '/assets/pixelab/buildings/walls/stone_brick/wall_plain.png';
-          var wallBmp = imageCache.get(wallUrl);
-          if (wallBmp) {
-            // Wall face: 2 tiles tall, drawn below the floor tile
-            var wallH = tileSize * 2;
-            ctx.drawImage(wallBmp, 0, 0, 256, 256, sx, sy + tileSize, tileSize, wallH);
-          }
-        }
+        // Foundation border: draw a thick dark line at building perimeter edges.
+        // Check each cardinal direction — if neighbor is NOT a building tile, draw edge.
+        var borderW = Math.max(2, Math.round(tileSize * 0.12));
+        ctx.fillStyle = 'rgba(40,35,30,0.85)';
+        if (!queryBuildingTile(wx, wy - 1)) ctx.fillRect(sx, sy, tileSize, borderW);            // north edge
+        if (!queryBuildingTile(wx, wy + 1)) ctx.fillRect(sx, sy + tileSize - borderW, tileSize, borderW); // south edge
+        if (!queryBuildingTile(wx - 1, wy)) ctx.fillRect(sx, sy, borderW, tileSize);            // west edge
+        if (!queryBuildingTile(wx + 1, wy)) ctx.fillRect(sx + tileSize - borderW, sy, borderW, tileSize); // east edge
       }
 
       // Collect debug data
