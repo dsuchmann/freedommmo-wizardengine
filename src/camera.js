@@ -11,8 +11,10 @@ export class Camera {
       if (event.deltaMode === 1) pixels *= 16;  // lines → pixels
       if (event.deltaMode === 2) pixels *= 100;  // pages → pixels
       // Multiplicative: each pixel of scroll = tiny zoom factor
-      const factor = Math.pow(0.998, pixels);
-      this.targetZoom = clamp(this.targetZoom * factor, 0.32, 2.4);
+      // Clamp pixels to prevent extreme jumps from high-DPI mice
+      pixels = Math.max(-150, Math.min(150, pixels));
+      const factor = Math.pow(0.999, pixels);
+      this.targetZoom = clamp(this.targetZoom * factor, 0.5, 2.4);
     }, { passive: false });
   }
 
