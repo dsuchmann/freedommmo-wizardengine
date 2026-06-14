@@ -1,0 +1,92 @@
+{
+  "id": "tap_foot_impatiently",
+  "kind": "idle",
+  "variant": "spatial",
+  "root": {
+    "op": "sequence",
+    "children": [
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "shin_r": 21
+            },
+            "ticks": 3,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "shin_r": 21
+            },
+            "ticks": 3,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "shin_r": 21
+        },
+        "ticks": 2,
+        "zHints": {}
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "shin_r": 21
+        },
+        "ticks": 2,
+        "zHints": {}
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "shin_r": 21
+        },
+        "ticks": 2,
+        "zHints": {}
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "shin_r": 21
+        },
+        "ticks": 2,
+        "zHints": {}
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "shin_r": 21
+        },
+        "ticks": 2,
+        "zHints": {}
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "shin_r": 0
+            },
+            "ticks": 3,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "shin_r": 0
+            },
+            "ticks": 3,
+            "zHints": {}
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "command": "draw rune in air",
+  "id": "draw_rune_in_air",
+  "category": "magic",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "more than 20 frames — too complex"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

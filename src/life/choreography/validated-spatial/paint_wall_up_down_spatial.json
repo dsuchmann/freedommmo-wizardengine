@@ -1,0 +1,81 @@
+{
+  "id": "paint_wall_up_down",
+  "kind": "action",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "extend",
+          "amount": 0.75,
+          "ticks": 4,
+          "zHint": "front"
+        },
+        {
+          "part": "right_arm",
+          "action": "raise",
+          "amount": 0.45,
+          "ticks": 4
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_out",
+          "amount": 0.25,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "part": "right_arm",
+      "action": "raise",
+      "amount": 0.85,
+      "ticks": 5,
+      "zHint": "front"
+    },
+    {
+      "part": "right_arm",
+      "action": "lower",
+      "amount": 0.75,
+      "ticks": 5,
+      "zHint": "front"
+    },
+    {
+      "part": "right_arm",
+      "action": "raise",
+      "amount": 0.85,
+      "ticks": 5,
+      "zHint": "front"
+    },
+    {
+      "part": "right_arm",
+      "action": "lower",
+      "amount": 0.75,
+      "ticks": 5,
+      "zHint": "front"
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "retract",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "right_arm",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_in",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    }
+  ]
+}

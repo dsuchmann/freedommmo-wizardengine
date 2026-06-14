@@ -1,0 +1,29 @@
+{
+  "command": "twiddle thumbs",
+  "id": "twiddle_thumbs",
+  "category": "idle",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_l jumps 106° in 3 ticks (35°/tick)"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

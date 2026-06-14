@@ -1,0 +1,128 @@
+{
+  "id": "catch_object",
+  "kind": "action",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "raise",
+          "amount": 0.45,
+          "ticks": 4
+        },
+        {
+          "part": "both_arms",
+          "action": "open",
+          "amount": 0.35,
+          "ticks": 4
+        },
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.25,
+          "ticks": 4
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0.25,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "extend",
+          "amount": 0.8,
+          "ticks": 4,
+          "zHint": "front"
+        },
+        {
+          "part": "both_arms",
+          "action": "bend",
+          "amount": 0.25,
+          "ticks": 4
+        },
+        {
+          "part": "both_hands",
+          "action": "turn_in",
+          "amount": 0.5,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "close",
+          "amount": 0.85,
+          "ticks": 3
+        },
+        {
+          "part": "both_arms",
+          "action": "bend",
+          "amount": 0.45,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "retract",
+          "amount": 0.75,
+          "ticks": 4
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 4
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 5
+        },
+        {
+          "part": "both_arms",
+          "action": "open",
+          "amount": 0,
+          "ticks": 5
+        },
+        {
+          "part": "left_hand",
+          "action": "turn_out",
+          "amount": 0,
+          "ticks": 5
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_out",
+          "amount": 0,
+          "ticks": 5
+        }
+      ]
+    }
+  ]
+}

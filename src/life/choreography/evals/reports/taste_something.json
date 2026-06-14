@@ -1,0 +1,93 @@
+{
+  "command": "taste something",
+  "id": "taste_something",
+  "category": "consume",
+  "reviews": [
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 2,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 3,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 4,
+      "type": "fluidity",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 5,
+      "type": "fluidity",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 6,
+      "type": "fluidity",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 7,
+      "type": "adversarial",
+      "result": "fail",
+      "issues": [
+        "frames 15 and 16 are identical"
+      ]
+    },
+    {
+      "pass": 8,
+      "type": "adversarial",
+      "result": "fail",
+      "issues": [
+        "frames 15 and 16 are identical"
+      ]
+    },
+    {
+      "pass": 9,
+      "type": "adversarial",
+      "result": "fail",
+      "issues": [
+        "frames 15 and 16 are identical"
+      ]
+    },
+    {
+      "pass": 10,
+      "type": "library",
+      "result": "pass",
+      "frames": 17,
+      "score": 7
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_r jumps 108° in 3 ticks (36°/tick)",
+        "arm_f_r jumps 128° in 3 ticks (43°/tick)",
+        "arm_f_r jumps 140° in 3 ticks (47°/tick)"
+      ]
+    }
+  ],
+  "verdict": "pass",
+  "score": 7,
+  "frames": 17
+}

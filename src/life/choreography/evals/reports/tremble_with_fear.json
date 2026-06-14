@@ -1,0 +1,27 @@
+{
+  "command": "tremble with fear",
+  "id": "tremble_with_fear",
+  "category": "emotions",
+  "reviews": [
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

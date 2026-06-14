@@ -1,0 +1,27 @@
+{
+  "command": "tightrope balance walk",
+  "id": "tightrope_balance_walk",
+  "category": "performance",
+  "reviews": [
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

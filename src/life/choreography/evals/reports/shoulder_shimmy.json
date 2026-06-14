@@ -1,0 +1,37 @@
+{
+  "command": "shoulder shimmy",
+  "id": "shoulder_shimmy",
+  "category": "dance",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_r jumps 83° in 2 ticks (42°/tick)"
+      ]
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_l jumps 76° in 2 ticks (38°/tick)",
+        "arm_u_r jumps 77° in 2 ticks (39°/tick)",
+        "arm_u_l jumps 85° in 2 ticks (43°/tick)",
+        "arm_u_r jumps 77° in 2 ticks (39°/tick)",
+        "arm_u_l jumps 85° in 2 ticks (43°/tick)",
+        "arm_u_r jumps 85° in 2 ticks (43°/tick)",
+        "arm_u_r jumps 85° in 2 ticks (43°/tick)"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

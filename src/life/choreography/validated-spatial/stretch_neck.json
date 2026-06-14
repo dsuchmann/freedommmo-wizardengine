@@ -1,0 +1,98 @@
+{
+  "id": "stretch_neck",
+  "kind": "gesture",
+  "variant": "spatial",
+  "root": {
+    "op": "sequence",
+    "children": [
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": 0,
+              "arm_u_r": 0
+            },
+            "ticks": 4,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": 0,
+              "arm_u_r": 0
+            },
+            "ticks": 4,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "arm_u_l": 0,
+          "arm_u_r": 0,
+          "head": -36
+        },
+        "ticks": 5,
+        "zHints": {}
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "arm_u_l": 0,
+          "arm_u_r": 0,
+          "head": 45
+        },
+        "ticks": 5,
+        "zHints": {}
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "arm_u_l": 0,
+          "arm_u_r": 0,
+          "head": -21
+        },
+        "ticks": 4,
+        "zHints": {}
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": 0,
+              "arm_u_r": 0,
+              "head": 0
+            },
+            "ticks": 4,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": 0,
+              "arm_u_r": 0,
+              "head": 0
+            },
+            "ticks": 4,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": 0,
+              "arm_u_r": 0,
+              "head": 0
+            },
+            "ticks": 4,
+            "zHints": {}
+          }
+        ]
+      }
+    ]
+  }
+}

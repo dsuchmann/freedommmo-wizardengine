@@ -1,0 +1,31 @@
+{
+  "command": "halt gesture",
+  "id": "halt_gesture",
+  "category": "gestures",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_r jumps 117° in 3 ticks (39°/tick)"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_r jumps 121° in 3 ticks (40°/tick)"
+      ]
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

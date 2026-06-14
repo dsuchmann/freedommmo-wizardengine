@@ -1,0 +1,111 @@
+{
+  "id": "thrust_forward",
+  "kind": "action",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "retract",
+          "amount": 0.65,
+          "ticks": 3
+        },
+        {
+          "part": "right_arm",
+          "action": "bend",
+          "amount": 0.45,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.25,
+          "ticks": 3
+        },
+        {
+          "part": "both_legs",
+          "action": "bend",
+          "amount": 0.25,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "extend",
+          "amount": 1,
+          "ticks": 3,
+          "zHint": "front"
+        },
+        {
+          "part": "right_arm",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_out",
+          "amount": 0.35,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0.15,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "retract",
+          "amount": 0.55,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0,
+          "ticks": 3
+        },
+        {
+          "part": "both_legs",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_in",
+          "amount": 0,
+          "ticks": 4
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    }
+  ]
+}

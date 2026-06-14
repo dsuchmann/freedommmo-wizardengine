@@ -1,0 +1,31 @@
+{
+  "command": "pull lever",
+  "id": "pull_lever",
+  "category": "work",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_f_r jumps 84° in 2 ticks (42°/tick)"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_f_r jumps 77° in 2 ticks (39°/tick)"
+      ]
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

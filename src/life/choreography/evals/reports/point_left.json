@@ -1,0 +1,34 @@
+{
+  "command": "point left",
+  "id": "point_left",
+  "category": "greetings",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_f_l jumps 114° in 3 ticks (38°/tick)",
+        "arm_f_l jumps 114° in 3 ticks (38°/tick)",
+        "arm_f_l jumps 140° in 3 ticks (47°/tick)"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_l jumps 97° in 2 ticks (49°/tick)",
+        "arm_f_l jumps 140° in 3 ticks (47°/tick)"
+      ]
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

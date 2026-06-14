@@ -1,0 +1,89 @@
+{
+  "command": "tricep stretch",
+  "id": "tricep_stretch",
+  "category": "exercise",
+  "reviews": [
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 2,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 3,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 4,
+      "type": "fluidity",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 5,
+      "type": "fluidity",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 6,
+      "type": "fluidity",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 7,
+      "type": "adversarial",
+      "result": "fail",
+      "issues": [
+        "frames 7 and 8 are identical"
+      ]
+    },
+    {
+      "pass": 8,
+      "type": "adversarial",
+      "result": "fail",
+      "issues": [
+        "frames 7 and 8 are identical"
+      ]
+    },
+    {
+      "pass": 9,
+      "type": "adversarial",
+      "result": "fail",
+      "issues": [
+        "frames 7 and 8 are identical"
+      ]
+    },
+    {
+      "pass": 10,
+      "type": "library",
+      "result": "pass",
+      "frames": 13,
+      "score": 7
+    }
+  ],
+  "verdict": "pass",
+  "score": 7,
+  "frames": 13
+}

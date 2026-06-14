@@ -1,0 +1,106 @@
+{
+  "id": "hip_thrust",
+  "kind": "action",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_legs",
+          "action": "bend",
+          "amount": 0.35,
+          "ticks": 4
+        },
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.2,
+          "ticks": 4
+        },
+        {
+          "part": "both_hips",
+          "action": "retract",
+          "amount": 0.35,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_hips",
+          "action": "extend",
+          "amount": 0.85,
+          "ticks": 3,
+          "zHint": "front"
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0.25,
+          "ticks": 3
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0.15,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "part": "both_hips",
+      "action": "retract",
+      "amount": 0.45,
+      "ticks": 3
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_hips",
+          "action": "extend",
+          "amount": 1,
+          "ticks": 3,
+          "zHint": "front"
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0.35,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_hips",
+          "action": "retract",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "both_legs",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 4
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    }
+  ]
+}

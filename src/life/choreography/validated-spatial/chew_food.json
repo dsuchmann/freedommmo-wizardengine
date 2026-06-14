@@ -1,0 +1,164 @@
+{
+  "id": "chew_food",
+  "kind": "gesture",
+  "variant": "spatial",
+  "root": {
+    "op": "sequence",
+    "children": [
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_r": 82
+            },
+            "ticks": 4,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_r": 82,
+              "head": -7
+            },
+            "ticks": 4,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_r": 82,
+              "head": -7,
+              "arm_f_r": 101
+            },
+            "ticks": 4,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_r": 82,
+              "head": -7,
+              "arm_f_r": 101,
+              "hand_r": -20
+            },
+            "ticks": 4,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "arm_u_r": -4,
+          "head": -7,
+          "arm_f_r": 70,
+          "hand_r": -20
+        },
+        "ticks": 3,
+        "zHints": {
+          "right_arm": "behind"
+        }
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "arm_u_r": -4,
+          "head": 5,
+          "arm_f_r": 70,
+          "hand_r": -20
+        },
+        "ticks": 2,
+        "zHints": {}
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "arm_u_r": -4,
+          "head": -8,
+          "arm_f_r": 70,
+          "hand_r": -20
+        },
+        "ticks": 2,
+        "zHints": {}
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "arm_u_r": -4,
+          "head": 5,
+          "arm_f_r": 70,
+          "hand_r": -20
+        },
+        "ticks": 2,
+        "zHints": {}
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "arm_u_r": -4,
+          "head": -7,
+          "arm_f_r": 70,
+          "hand_r": -20
+        },
+        "ticks": 2,
+        "zHints": {}
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_r": -4,
+              "head": -7,
+              "arm_f_r": 0,
+              "hand_r": -20
+            },
+            "ticks": 4,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_r": -4,
+              "head": -7,
+              "arm_f_r": 0,
+              "hand_r": 0
+            },
+            "ticks": 4,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_r": -4,
+              "head": 0,
+              "arm_f_r": 0,
+              "hand_r": 0
+            },
+            "ticks": 4,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "arm_u_r": 0,
+          "head": 0,
+          "arm_f_r": 0,
+          "hand_r": 0
+        },
+        "ticks": 4,
+        "zHints": {}
+      }
+    ]
+  }
+}

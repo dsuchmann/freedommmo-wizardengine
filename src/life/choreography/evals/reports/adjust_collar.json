@@ -1,0 +1,31 @@
+{
+  "command": "adjust collar",
+  "id": "adjust_collar",
+  "category": "idle",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_l jumps 140° in 3 ticks (47°/tick)"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_l jumps 124° in 3 ticks (41°/tick)"
+      ]
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

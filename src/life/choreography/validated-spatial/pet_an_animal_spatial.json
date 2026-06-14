@@ -1,0 +1,100 @@
+{
+  "id": "pet_animal",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.35,
+          "ticks": 5
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.3,
+          "ticks": 5
+        },
+        {
+          "part": "right_arm",
+          "action": "extend",
+          "amount": 0.55,
+          "ticks": 5,
+          "zHint": "front"
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "lower",
+          "amount": 0.35,
+          "ticks": 3
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_in",
+          "amount": 0.25,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "part": "right_arm",
+      "action": "raise",
+      "amount": 0.18,
+      "ticks": 2
+    },
+    {
+      "part": "right_arm",
+      "action": "lower",
+      "amount": 0.32,
+      "ticks": 3
+    },
+    {
+      "part": "right_arm",
+      "action": "raise",
+      "amount": 0.18,
+      "ticks": 2
+    },
+    {
+      "part": "right_arm",
+      "action": "lower",
+      "amount": 0.32,
+      "ticks": 3
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "retract",
+          "amount": 1,
+          "ticks": 5
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_out",
+          "amount": 0,
+          "ticks": 5
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 5
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 5
+        }
+      ]
+    }
+  ]
+}

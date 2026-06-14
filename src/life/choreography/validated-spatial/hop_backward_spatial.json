@@ -1,0 +1,100 @@
+{
+  "id": "hop_backward",
+  "kind": "action",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_legs",
+          "action": "bend",
+          "amount": 0.55,
+          "ticks": 4
+        },
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.25,
+          "ticks": 4
+        },
+        {
+          "part": "both_arms",
+          "action": "extend",
+          "amount": 0.35,
+          "ticks": 4,
+          "zHint": "front"
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_legs",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "both_hips",
+          "action": "retract",
+          "amount": 0.45,
+          "ticks": 3,
+          "zHint": "behind"
+        },
+        {
+          "part": "both_arms",
+          "action": "raise",
+          "amount": 0.35,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_legs",
+          "action": "bend",
+          "amount": 0.35,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0.2,
+          "ticks": 3
+        },
+        {
+          "part": "both_arms",
+          "action": "retract",
+          "amount": 0.3,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_legs",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    }
+  ]
+}

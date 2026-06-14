@@ -1,0 +1,87 @@
+{
+  "id": "shift_weight_left",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "left_leg",
+          "action": "straighten",
+          "amount": 0.8,
+          "ticks": 3
+        },
+        {
+          "part": "left_foot",
+          "action": "lower",
+          "amount": 0.3,
+          "ticks": 3
+        },
+        {
+          "part": "right_leg",
+          "action": "bend",
+          "amount": 0.35,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.15,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_leg",
+          "action": "retract",
+          "amount": 0.25,
+          "ticks": 3
+        },
+        {
+          "part": "right_foot",
+          "action": "raise",
+          "amount": 0.25,
+          "ticks": 3
+        },
+        {
+          "part": "left_hip",
+          "action": "lower",
+          "amount": 0.2,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_foot",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "right_leg",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 3
+        },
+        {
+          "part": "left_hip",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 3
+        }
+      ]
+    }
+  ]
+}

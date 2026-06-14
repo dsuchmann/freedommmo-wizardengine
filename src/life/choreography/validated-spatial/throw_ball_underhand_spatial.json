@@ -1,0 +1,140 @@
+{
+  "id": "throw_ball_underhand",
+  "kind": "action",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_legs",
+          "action": "bend",
+          "amount": 0.35,
+          "ticks": 4
+        },
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.25,
+          "ticks": 4
+        },
+        {
+          "part": "right_arm",
+          "action": "lower",
+          "amount": 0.55,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "extend",
+          "amount": 0.45,
+          "ticks": 4,
+          "zHint": "behind"
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_in",
+          "amount": 0.35,
+          "ticks": 4
+        },
+        {
+          "part": "left_arm",
+          "action": "open",
+          "amount": 0.25,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_legs",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 3
+        },
+        {
+          "part": "right_arm",
+          "action": "extend",
+          "amount": 0.85,
+          "ticks": 3,
+          "zHint": "front"
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "raise",
+          "amount": 0.55,
+          "ticks": 3
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_out",
+          "amount": 0.7,
+          "ticks": 2
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0.25,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "lower",
+          "amount": 0.45,
+          "ticks": 4
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_in",
+          "amount": 0,
+          "ticks": 4
+        },
+        {
+          "part": "left_arm",
+          "action": "close",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 5
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0,
+          "ticks": 5
+        }
+      ]
+    }
+  ]
+}

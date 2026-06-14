@@ -1,0 +1,32 @@
+{
+  "command": "stand up quickly",
+  "id": "stand_up_quickly",
+  "category": "sitting",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "shin_l jumps 105° in 2 ticks (53°/tick)",
+        "arm_f_l jumps 140° in 2 ticks (70°/tick)"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "shin_l jumps 109° in 3 ticks (36°/tick)"
+      ]
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

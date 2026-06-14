@@ -1,0 +1,31 @@
+{
+  "command": "wave dance arms",
+  "id": "wave_dance_arms",
+  "category": "dance",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "more than 20 frames — too complex",
+        "arm_u_r jumps 138° in 3 ticks (46°/tick)",
+        "arm_u_l jumps 137° in 3 ticks (46°/tick)"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

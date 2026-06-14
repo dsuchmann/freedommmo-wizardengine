@@ -1,0 +1,87 @@
+{
+  "id": "uncross_arms",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "raise",
+          "amount": 0.45,
+          "ticks": 4
+        },
+        {
+          "part": "both_arms",
+          "action": "bend",
+          "amount": 0.7,
+          "ticks": 4
+        },
+        {
+          "part": "both_arms",
+          "action": "close",
+          "amount": 0.95,
+          "ticks": 4
+        },
+        {
+          "part": "both_hands",
+          "action": "turn_in",
+          "amount": 0.4,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "open",
+          "amount": 0.85,
+          "ticks": 4
+        },
+        {
+          "part": "both_arms",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "left_hand",
+          "action": "turn_out",
+          "amount": 0.25,
+          "ticks": 4
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_out",
+          "amount": 0.25,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 5
+        },
+        {
+          "part": "left_hand",
+          "action": "turn_in",
+          "amount": 0,
+          "ticks": 5
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_in",
+          "amount": 0,
+          "ticks": 5
+        }
+      ]
+    }
+  ]
+}

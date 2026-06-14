@@ -1,0 +1,30 @@
+{
+  "command": "roundhouse kick",
+  "id": "roundhouse_kick",
+  "category": "combat",
+  "reviews": [
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "more than 20 frames — too complex",
+        "does not return to rest — arm_f_l:-54, arm_f_r:49, shin_r:77"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

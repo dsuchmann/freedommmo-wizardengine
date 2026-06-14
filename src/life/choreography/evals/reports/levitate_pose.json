@@ -1,0 +1,29 @@
+{
+  "command": "levitate pose",
+  "id": "levitate_pose",
+  "category": "magic",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "does not return to rest — arm_u_l:-71, arm_u_r:71, head:25, thigh_l:-46, thigh_r:-46, shin_l:39, shin_r:39"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

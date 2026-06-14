@@ -1,0 +1,75 @@
+{
+  "id": "sit_up_straight",
+  "kind": "action",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.45,
+          "ticks": 4
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.3,
+          "ticks": 4
+        },
+        {
+          "part": "both_shoulders",
+          "action": "close",
+          "amount": 0.35,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 5
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 5
+        },
+        {
+          "part": "both_shoulders",
+          "action": "open",
+          "amount": 0.45,
+          "ticks": 5
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_shoulders",
+          "action": "open",
+          "amount": 0,
+          "ticks": 3
+        },
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 3
+        }
+      ]
+    }
+  ]
+}

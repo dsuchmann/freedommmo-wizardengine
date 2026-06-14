@@ -1,0 +1,98 @@
+{
+  "id": "performance_bow",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "raise",
+          "amount": 0.35,
+          "ticks": 4
+        },
+        {
+          "part": "both_arms",
+          "action": "open",
+          "amount": 0.65,
+          "ticks": 4
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0.15,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.82,
+          "ticks": 6
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.55,
+          "ticks": 6
+        },
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 0.35,
+          "ticks": 6
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 6
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 6
+        },
+        {
+          "part": "both_arms",
+          "action": "raise",
+          "amount": 0.25,
+          "ticks": 6
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "close",
+          "amount": 0.25,
+          "ticks": 3
+        },
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    }
+  ]
+}

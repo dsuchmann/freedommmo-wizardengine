@@ -1,0 +1,33 @@
+{
+  "command": "hammer nail",
+  "id": "hammer_nail",
+  "category": "work",
+  "reviews": [
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_r jumps 85° in 2 ticks (43°/tick)",
+        "arm_u_r jumps 77° in 2 ticks (39°/tick)",
+        "arm_u_r jumps 77° in 2 ticks (39°/tick)",
+        "arm_u_r jumps 85° in 2 ticks (43°/tick)",
+        "arm_f_l jumps 128° in 3 ticks (43°/tick)"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

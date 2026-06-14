@@ -1,0 +1,92 @@
+{
+  "id": "roll_eyes",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.15,
+          "ticks": 2
+        },
+        {
+          "part": "both_shoulders",
+          "action": "raise",
+          "amount": 0.2,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "part": "head",
+      "action": "raise",
+      "amount": 0.75,
+      "ticks": 4
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "left_shoulder",
+          "action": "raise",
+          "amount": 0.25,
+          "ticks": 2
+        },
+        {
+          "part": "right_shoulder",
+          "action": "lower",
+          "amount": 0.25,
+          "ticks": 2
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.1,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "left_shoulder",
+          "action": "lower",
+          "amount": 0.25,
+          "ticks": 2
+        },
+        {
+          "part": "right_shoulder",
+          "action": "raise",
+          "amount": 0.25,
+          "ticks": 2
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0.45,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "both_shoulders",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 4
+        }
+      ]
+    }
+  ]
+}

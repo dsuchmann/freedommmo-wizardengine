@@ -1,0 +1,111 @@
+{
+  "id": "dodge_left",
+  "kind": "action",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.45,
+          "ticks": 2
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.25,
+          "ticks": 2
+        },
+        {
+          "part": "both_legs",
+          "action": "bend",
+          "amount": 0.45,
+          "ticks": 2
+        },
+        {
+          "part": "left_leg",
+          "action": "open",
+          "amount": 0.8,
+          "ticks": 2
+        },
+        {
+          "part": "both_arms",
+          "action": "open",
+          "amount": 0.35,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "left_leg",
+          "action": "bend",
+          "amount": 0.6,
+          "ticks": 2
+        },
+        {
+          "part": "right_leg",
+          "action": "extend",
+          "amount": 0.45,
+          "ticks": 2
+        },
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.6,
+          "ticks": 2
+        },
+        {
+          "part": "right_arm",
+          "action": "extend",
+          "amount": 0.45,
+          "ticks": 2
+        },
+        {
+          "part": "left_arm",
+          "action": "retract",
+          "amount": 0.35,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_legs",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "left_leg",
+          "action": "close",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 3
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 3
+        },
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 3
+        }
+      ]
+    }
+  ]
+}

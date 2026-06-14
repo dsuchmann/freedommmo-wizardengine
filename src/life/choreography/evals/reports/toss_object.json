@@ -1,0 +1,30 @@
+{
+  "command": "toss object",
+  "id": "toss_object",
+  "category": "daily",
+  "reviews": [
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "more than 20 frames — too complex",
+        "arm_u_r jumps 138° in 3 ticks (46°/tick)"
+      ]
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

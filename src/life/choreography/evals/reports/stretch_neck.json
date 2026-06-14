@@ -1,0 +1,117 @@
+{
+  "command": "stretch neck",
+  "id": "stretch_neck",
+  "category": "idle",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 2,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 3,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 4,
+      "type": "fluidity",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 5,
+      "type": "fluidity",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 6,
+      "type": "fluidity",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 7,
+      "type": "adversarial",
+      "result": "fail",
+      "issues": [
+        "frames 1 and 2 are identical",
+        "frames 6 and 7 are identical"
+      ]
+    },
+    {
+      "pass": 8,
+      "type": "adversarial",
+      "result": "fail",
+      "issues": [
+        "frames 1 and 2 are identical",
+        "frames 6 and 7 are identical"
+      ]
+    },
+    {
+      "pass": 9,
+      "type": "adversarial",
+      "result": "fail",
+      "issues": [
+        "frames 1 and 2 are identical",
+        "frames 6 and 7 are identical"
+      ]
+    },
+    {
+      "pass": 10,
+      "type": "library",
+      "result": "pass",
+      "frames": 8,
+      "score": 7
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 2,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 3,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 4,
+      "type": "fluidity",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 5,
+      "type": "fluidity",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 10,
+      "type": "library",
+      "result": "pass",
+      "frames": 7,
+      "score": 6
+    }
+  ],
+  "verdict": "pass",
+  "score": 7,
+  "frames": 8
+}

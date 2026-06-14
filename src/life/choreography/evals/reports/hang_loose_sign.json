@@ -1,0 +1,37 @@
+{
+  "command": "hang loose sign",
+  "id": "hang_loose_sign",
+  "category": "gestures",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_f_r jumps 140° in 3 ticks (47°/tick)",
+        "arm_f_r jumps 140° in 3 ticks (47°/tick)"
+      ]
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_f_r jumps 140° in 3 ticks (47°/tick)",
+        "arm_f_r jumps 140° in 3 ticks (47°/tick)"
+      ]
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_r jumps 106° in 3 ticks (35°/tick)",
+        "arm_f_r jumps 140° in 3 ticks (47°/tick)",
+        "arm_f_r jumps 140° in 3 ticks (47°/tick)"
+      ]
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

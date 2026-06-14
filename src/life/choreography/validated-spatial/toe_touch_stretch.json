@@ -1,0 +1,199 @@
+{
+  "id": "toe_touch_stretch",
+  "kind": "action",
+  "variant": "spatial",
+  "root": {
+    "op": "sequence",
+    "children": [
+      {
+        "op": "pose",
+        "joints": {
+          "arm_u_l": -136,
+          "arm_u_r": 136
+        },
+        "ticks": 5,
+        "zHints": {}
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -136,
+              "arm_u_r": 136,
+              "spine": -27
+            },
+            "ticks": 6,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -136,
+              "arm_u_r": 136,
+              "spine": -27,
+              "head": -33
+            },
+            "ticks": 6,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -136,
+              "arm_u_r": 136,
+              "spine": -27,
+              "head": -33,
+              "shin_l": 0,
+              "shin_r": 0
+            },
+            "ticks": 4,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": 0,
+              "arm_u_r": 0,
+              "spine": -27,
+              "head": -33,
+              "shin_l": 0,
+              "shin_r": 0
+            },
+            "ticks": 5,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -6,
+              "arm_u_r": 6,
+              "spine": -27,
+              "head": -33,
+              "shin_l": 0,
+              "shin_r": 0,
+              "arm_f_l": 0,
+              "arm_f_r": 0
+            },
+            "ticks": 5,
+            "zHints": {
+              "left_arm": "front",
+              "right_arm": "front",
+              "both_arms": "front"
+            }
+          }
+        ]
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -6,
+              "arm_u_r": 6,
+              "spine": -30,
+              "head": -33,
+              "shin_l": 0,
+              "shin_r": 0,
+              "arm_f_l": 0,
+              "arm_f_r": 0
+            },
+            "ticks": 3,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -8,
+              "arm_u_r": 8,
+              "spine": -30,
+              "head": -33,
+              "shin_l": 0,
+              "shin_r": 0,
+              "arm_f_l": 0,
+              "arm_f_r": 0
+            },
+            "ticks": 3,
+            "zHints": {
+              "left_arm": "front",
+              "right_arm": "front",
+              "both_arms": "front"
+            }
+          }
+        ]
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -8,
+              "arm_u_r": 8,
+              "spine": 0,
+              "head": -33,
+              "shin_l": 0,
+              "shin_r": 0,
+              "arm_f_l": 0,
+              "arm_f_r": 0
+            },
+            "ticks": 6,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -8,
+              "arm_u_r": 8,
+              "spine": 0,
+              "head": 0,
+              "shin_l": 0,
+              "shin_r": 0,
+              "arm_f_l": 0,
+              "arm_f_r": 0
+            },
+            "ticks": 6,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -76,
+              "arm_u_r": 77,
+              "spine": 0,
+              "head": 0,
+              "shin_l": 0,
+              "shin_r": 0,
+              "arm_f_l": 0,
+              "arm_f_r": 0
+            },
+            "ticks": 6,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "arm_u_l": 0,
+          "arm_u_r": 0,
+          "spine": 0,
+          "head": 0,
+          "shin_l": 0,
+          "shin_r": 0,
+          "arm_f_l": 0,
+          "arm_f_r": 0
+        },
+        "ticks": 5,
+        "zHints": {}
+      }
+    ]
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "id": "kick_at_the_ground",
+  "kind": "action",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.18,
+          "ticks": 3
+        },
+        {
+          "part": "left_leg",
+          "action": "bend",
+          "amount": 0.15,
+          "ticks": 3
+        },
+        {
+          "part": "right_leg",
+          "action": "retract",
+          "amount": 0.35,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_leg",
+          "action": "raise",
+          "amount": 0.35,
+          "ticks": 3
+        },
+        {
+          "part": "right_leg",
+          "action": "bend",
+          "amount": 0.45,
+          "ticks": 3
+        },
+        {
+          "part": "right_foot",
+          "action": "turn_out",
+          "amount": 0.25,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_leg",
+          "action": "extend",
+          "amount": 0.7,
+          "ticks": 3
+        },
+        {
+          "part": "right_leg",
+          "action": "straighten",
+          "amount": 0.85,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "retract",
+          "amount": 0.15,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_leg",
+          "action": "lower",
+          "amount": 0.85,
+          "ticks": 2
+        },
+        {
+          "part": "right_foot",
+          "action": "turn_in",
+          "amount": 0.35,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_leg",
+          "action": "retract",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "right_foot",
+          "action": "turn_in",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_leg",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "left_leg",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    }
+  ]
+}

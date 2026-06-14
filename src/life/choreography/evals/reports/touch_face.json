@@ -1,0 +1,34 @@
+{
+  "command": "touch face",
+  "id": "touch_face",
+  "category": "idle",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_r jumps 119° in 3 ticks (40°/tick)"
+      ]
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_r jumps 114° in 3 ticks (38°/tick)"
+      ]
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_f_r jumps 109° in 3 ticks (36°/tick)",
+        "arm_f_r jumps 109° in 3 ticks (36°/tick)"
+      ]
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

@@ -1,0 +1,98 @@
+{
+  "id": "eagle_soar_arms_out",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "raise",
+          "amount": 0.55,
+          "ticks": 5
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0.25,
+          "ticks": 5
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0.3,
+          "ticks": 5
+        }
+      ]
+    },
+    {
+      "part": "both_arms",
+      "action": "open",
+      "amount": 1,
+      "ticks": 5
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 0.18,
+          "ticks": 3
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0.4,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "part": "both_arms",
+      "action": "raise",
+      "amount": 0.7,
+      "ticks": 3
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "open",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0.35,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 5
+        },
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0,
+          "ticks": 5
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0,
+          "ticks": 5
+        }
+      ]
+    }
+  ]
+}

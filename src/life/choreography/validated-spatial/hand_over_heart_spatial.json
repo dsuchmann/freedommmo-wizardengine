@@ -1,0 +1,98 @@
+{
+  "id": "hand_over_heart",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "raise",
+          "amount": 0.55,
+          "ticks": 4
+        },
+        {
+          "part": "right_arm",
+          "action": "bend",
+          "amount": 0.6,
+          "ticks": 4
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_in",
+          "amount": 0.35,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "part": "right_arm",
+      "action": "close",
+      "amount": 0.75,
+      "ticks": 4
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.25,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.15,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "open",
+          "amount": 0.25,
+          "ticks": 3
+        },
+        {
+          "part": "right_arm",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_out",
+          "amount": 0,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "part": "right_arm",
+      "action": "lower",
+      "amount": 1,
+      "ticks": 4
+    }
+  ]
+}

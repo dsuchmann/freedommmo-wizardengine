@@ -1,0 +1,179 @@
+{
+  "id": "performance_bow",
+  "kind": "gesture",
+  "variant": "spatial",
+  "root": {
+    "op": "sequence",
+    "children": [
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -59,
+              "arm_u_r": 59
+            },
+            "ticks": 4,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -78,
+              "arm_u_r": 78,
+              "arm_f_l": -78,
+              "arm_f_r": 78
+            },
+            "ticks": 4,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -78,
+              "arm_u_r": 78,
+              "arm_f_l": -78,
+              "arm_f_r": 78,
+              "head": 9
+            },
+            "ticks": 4,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -78,
+              "arm_u_r": 78,
+              "arm_f_l": -78,
+              "arm_f_r": 78,
+              "head": 9,
+              "spine": -25
+            },
+            "ticks": 6,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -78,
+              "arm_u_r": 78,
+              "arm_f_l": -78,
+              "arm_f_r": 78,
+              "head": -33,
+              "spine": -25
+            },
+            "ticks": 6,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -51,
+              "arm_u_r": 51,
+              "arm_f_l": -78,
+              "arm_f_r": 78,
+              "head": -33,
+              "spine": -25
+            },
+            "ticks": 6,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -51,
+              "arm_u_r": 51,
+              "arm_f_l": -78,
+              "arm_f_r": 78,
+              "head": -33,
+              "spine": 0
+            },
+            "ticks": 6,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -51,
+              "arm_u_r": 51,
+              "arm_f_l": -78,
+              "arm_f_r": 78,
+              "head": 0,
+              "spine": 0
+            },
+            "ticks": 6,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -42,
+              "arm_u_r": 43,
+              "arm_f_l": -78,
+              "arm_f_r": 78,
+              "head": 0,
+              "spine": 0
+            },
+            "ticks": 6,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": 10,
+              "arm_u_r": -10,
+              "arm_f_l": -9,
+              "arm_f_r": 9,
+              "head": 0,
+              "spine": 0
+            },
+            "ticks": 3,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": 0,
+              "arm_u_r": 0,
+              "arm_f_l": -9,
+              "arm_f_r": 9,
+              "head": 0,
+              "spine": 0
+            },
+            "ticks": 4,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": 0,
+              "arm_u_r": 0,
+              "arm_f_l": -9,
+              "arm_f_r": 9,
+              "head": 0,
+              "spine": 0
+            },
+            "ticks": 4,
+            "zHints": {}
+          }
+        ]
+      }
+    ]
+  }
+}

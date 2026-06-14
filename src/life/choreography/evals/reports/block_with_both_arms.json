@@ -1,0 +1,33 @@
+{
+  "command": "block with both arms",
+  "id": "block_with_both_arms",
+  "category": "combat",
+  "reviews": [
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_l jumps 161° in 3 ticks (54°/tick)"
+      ]
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_l jumps 161° in 3 ticks (54°/tick)",
+        "arm_f_l jumps 140° in 3 ticks (47°/tick)",
+        "arm_f_l jumps 140° in 2 ticks (70°/tick)"
+      ]
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

@@ -1,0 +1,32 @@
+{
+  "command": "throw overhand",
+  "id": "throw_overhand",
+  "category": "daily",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_r jumps 151° in 3 ticks (50°/tick)"
+      ]
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "more than 20 frames — too complex",
+        "arm_u_r jumps 149° in 3 ticks (50°/tick)"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

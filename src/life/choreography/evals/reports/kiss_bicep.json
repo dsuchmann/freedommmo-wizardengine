@@ -1,0 +1,33 @@
+{
+  "command": "kiss bicep",
+  "id": "kiss_bicep",
+  "category": "gestures",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_f_r jumps 126° in 3 ticks (42°/tick)",
+        "arm_u_r jumps 119° in 3 ticks (40°/tick)"
+      ]
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_f_l jumps 126° in 3 ticks (42°/tick)",
+        "arm_u_l jumps 137° in 3 ticks (46°/tick)"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

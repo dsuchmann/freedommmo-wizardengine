@@ -1,0 +1,30 @@
+{
+  "command": "overhead swing",
+  "id": "overhead_swing",
+  "category": "combat",
+  "reviews": [
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "more than 20 frames — too complex",
+        "arm_u_l jumps 191° in 5 ticks (38°/tick)"
+      ]
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

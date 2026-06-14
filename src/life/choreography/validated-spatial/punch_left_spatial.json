@@ -1,0 +1,123 @@
+{
+  "id": "left_punch",
+  "kind": "action",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "left_arm",
+          "action": "raise",
+          "amount": 0.45,
+          "ticks": 3
+        },
+        {
+          "part": "left_arm",
+          "action": "bend",
+          "amount": 0.65,
+          "ticks": 3
+        },
+        {
+          "part": "right_arm",
+          "action": "retract",
+          "amount": 0.35,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "retract",
+          "amount": 0.15,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "left_arm",
+          "action": "extend",
+          "amount": 0.95,
+          "ticks": 3,
+          "zHint": "front"
+        },
+        {
+          "part": "left_arm",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "right_arm",
+          "action": "bend",
+          "amount": 0.45,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "extend",
+          "amount": 0.25,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "left_arm",
+          "action": "retract",
+          "amount": 0.7,
+          "ticks": 3
+        },
+        {
+          "part": "left_arm",
+          "action": "bend",
+          "amount": 0.45,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "retract",
+          "amount": 0,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "left_arm",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "left_arm",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "right_arm",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "right_arm",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    }
+  ]
+}

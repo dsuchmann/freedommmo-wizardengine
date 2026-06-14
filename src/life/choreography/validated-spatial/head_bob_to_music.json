@@ -1,0 +1,235 @@
+{
+  "id": "head_bob_to_music",
+  "kind": "idle",
+  "variant": "spatial",
+  "root": {
+    "op": "sequence",
+    "children": [
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "head": -21
+            },
+            "ticks": 3,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "head": -21,
+              "spine": -4
+            },
+            "ticks": 3,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "head": 0,
+              "spine": -4
+            },
+            "ticks": 3,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "head": 0,
+              "spine": 0
+            },
+            "ticks": 3,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "head": -30,
+              "spine": 0
+            },
+            "ticks": 2,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "head": -30,
+              "spine": -5
+            },
+            "ticks": 2,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "head": -30,
+              "spine": -5,
+              "arm_u_l": -25,
+              "arm_u_r": 26
+            },
+            "ticks": 2,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "head": 0,
+              "spine": -5,
+              "arm_u_l": -25,
+              "arm_u_r": 26
+            },
+            "ticks": 2,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "head": 0,
+              "spine": 0,
+              "arm_u_l": -25,
+              "arm_u_r": 26
+            },
+            "ticks": 2,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "head": 0,
+              "spine": 0,
+              "arm_u_l": 0,
+              "arm_u_r": 0
+            },
+            "ticks": 2,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "head": -21,
+              "spine": 0,
+              "arm_u_l": 0,
+              "arm_u_r": 0
+            },
+            "ticks": 3,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "head": -21,
+              "spine": -3,
+              "arm_u_l": 0,
+              "arm_u_r": 0
+            },
+            "ticks": 3,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "head": 0,
+              "spine": -3,
+              "arm_u_l": 0,
+              "arm_u_r": 0
+            },
+            "ticks": 3,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "head": 0,
+              "spine": 0,
+              "arm_u_l": 0,
+              "arm_u_r": 0
+            },
+            "ticks": 3,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "head": -27,
+              "spine": 0,
+              "arm_u_l": 0,
+              "arm_u_r": 0
+            },
+            "ticks": 2,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "head": -27,
+              "spine": -4,
+              "arm_u_l": 0,
+              "arm_u_r": 0
+            },
+            "ticks": 2,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "head": 0,
+              "spine": -4,
+              "arm_u_l": 0,
+              "arm_u_r": 0
+            },
+            "ticks": 4,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "head": 0,
+              "spine": 0,
+              "arm_u_l": 0,
+              "arm_u_r": 0
+            },
+            "ticks": 4,
+            "zHints": {}
+          }
+        ]
+      }
+    ]
+  }
+}

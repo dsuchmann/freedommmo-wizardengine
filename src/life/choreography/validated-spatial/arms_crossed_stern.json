@@ -1,0 +1,193 @@
+{
+  "id": "arms_crossed_stern",
+  "kind": "gesture",
+  "variant": "spatial",
+  "root": {
+    "op": "sequence",
+    "children": [
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -76,
+              "arm_u_r": 77
+            },
+            "ticks": 4,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -76,
+              "arm_u_r": 77
+            },
+            "ticks": 4,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "arm_u_l": -76,
+          "arm_u_r": 77,
+          "arm_f_l": -105,
+          "arm_f_r": 105
+        },
+        "ticks": 3,
+        "zHints": {}
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": 40,
+              "arm_u_r": -40,
+              "arm_f_l": -35,
+              "arm_f_r": 35
+            },
+            "ticks": 4,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": 40,
+              "arm_u_r": -40,
+              "arm_f_l": -35,
+              "arm_f_r": 35,
+              "hand_l": 27
+            },
+            "ticks": 4,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": 40,
+              "arm_u_r": -40,
+              "arm_f_l": -35,
+              "arm_f_r": 35,
+              "hand_l": 27,
+              "hand_r": -27
+            },
+            "ticks": 4,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": 40,
+              "arm_u_r": -40,
+              "arm_f_l": -35,
+              "arm_f_r": 35,
+              "hand_l": 27,
+              "hand_r": -27,
+              "head": -15
+            },
+            "ticks": 4,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -42,
+              "arm_u_r": 42,
+              "arm_f_l": -42,
+              "arm_f_r": 42,
+              "hand_l": 27,
+              "hand_r": -27,
+              "head": -15
+            },
+            "ticks": 4,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -42,
+              "arm_u_r": 42,
+              "arm_f_l": -42,
+              "arm_f_r": 42,
+              "hand_l": 27,
+              "hand_r": -27,
+              "head": 0
+            },
+            "ticks": 4,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "arm_u_l": -42,
+          "arm_u_r": 42,
+          "arm_f_l": 0,
+          "arm_f_r": 0,
+          "hand_l": 27,
+          "hand_r": -27,
+          "head": 0
+        },
+        "ticks": 3,
+        "zHints": {}
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": 0,
+              "arm_u_r": 0,
+              "arm_f_l": 0,
+              "arm_f_r": 0,
+              "hand_l": 27,
+              "hand_r": -27,
+              "head": 0
+            },
+            "ticks": 5,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": 0,
+              "arm_u_r": 0,
+              "arm_f_l": 0,
+              "arm_f_r": 0,
+              "hand_l": 0,
+              "hand_r": -27,
+              "head": 0
+            },
+            "ticks": 5,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": 0,
+              "arm_u_r": 0,
+              "arm_f_l": 0,
+              "arm_f_r": 0,
+              "hand_l": 0,
+              "hand_r": 0,
+              "head": 0
+            },
+            "ticks": 5,
+            "zHints": {}
+          }
+        ]
+      }
+    ]
+  }
+}

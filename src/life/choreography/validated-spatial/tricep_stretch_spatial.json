@@ -1,0 +1,106 @@
+{
+  "id": "tricep_stretch",
+  "kind": "gesture",
+  "steps": [
+    {
+      "part": "right_arm",
+      "action": "raise",
+      "amount": 0.95,
+      "ticks": 5
+    },
+    {
+      "part": "right_arm",
+      "action": "bend",
+      "amount": 0.8,
+      "ticks": 4,
+      "zHint": "behind"
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "left_arm",
+          "action": "raise",
+          "amount": 0.55,
+          "ticks": 4
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.15,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "part": "left_arm",
+      "action": "close",
+      "amount": 0.75,
+      "ticks": 4
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "left_arm",
+          "action": "close",
+          "amount": 0.9,
+          "ticks": 5
+        },
+        {
+          "part": "right_arm",
+          "action": "bend",
+          "amount": 0.9,
+          "ticks": 5,
+          "zHint": "behind"
+        },
+        {
+          "part": "torso",
+          "action": "straighten",
+          "amount": 0.4,
+          "ticks": 5
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "left_arm",
+          "action": "open",
+          "amount": 0.4,
+          "ticks": 3
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "left_arm",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "right_arm",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "part": "right_arm",
+      "action": "lower",
+      "amount": 1,
+      "ticks": 5
+    }
+  ]
+}

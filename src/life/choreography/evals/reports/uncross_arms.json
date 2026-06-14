@@ -1,0 +1,85 @@
+{
+  "command": "uncross arms",
+  "id": "uncross_arms",
+  "category": "idle",
+  "reviews": [
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_l jumps 112° in 3 ticks (37°/tick)"
+      ]
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 2,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 3,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 4,
+      "type": "fluidity",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 5,
+      "type": "fluidity",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 6,
+      "type": "fluidity",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 7,
+      "type": "adversarial",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 8,
+      "type": "adversarial",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 9,
+      "type": "adversarial",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 10,
+      "type": "library",
+      "result": "pass",
+      "frames": 11,
+      "score": 10
+    }
+  ],
+  "verdict": "pass",
+  "score": 10,
+  "frames": 11
+}

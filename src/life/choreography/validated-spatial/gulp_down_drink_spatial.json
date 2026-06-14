@@ -1,0 +1,98 @@
+{
+  "id": "gulp_down_drink",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "bend",
+          "amount": 0.7,
+          "ticks": 4
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_in",
+          "amount": 0.45,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "part": "right_arm",
+      "action": "raise",
+      "amount": 0.62,
+      "ticks": 4
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0.45,
+          "ticks": 3
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_in",
+          "amount": 0.85,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "part": "head",
+      "action": "lower",
+      "amount": 0.18,
+      "ticks": 2
+    },
+    {
+      "part": "head",
+      "action": "raise",
+      "amount": 0.42,
+      "ticks": 2
+    },
+    {
+      "part": "head",
+      "action": "lower",
+      "amount": 0.15,
+      "ticks": 2
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_out",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_arm",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "right_arm",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 5
+        }
+      ]
+    }
+  ]
+}

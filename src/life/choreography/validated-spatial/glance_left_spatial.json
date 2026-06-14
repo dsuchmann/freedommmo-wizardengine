@@ -1,0 +1,52 @@
+{
+  "id": "glance_left",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "turn_in",
+          "amount": 0.35,
+          "ticks": 3
+        },
+        {
+          "part": "left_shoulder",
+          "action": "raise",
+          "amount": 0.12,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "part": "head",
+      "action": "lower",
+      "amount": 0.12,
+      "ticks": 2
+    },
+    {
+      "part": "head",
+      "action": "raise",
+      "amount": 0,
+      "ticks": 2
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "turn_out",
+          "amount": 0,
+          "ticks": 3
+        },
+        {
+          "part": "left_shoulder",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 3
+        }
+      ]
+    }
+  ]
+}

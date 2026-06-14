@@ -1,0 +1,31 @@
+{
+  "command": "give thumbs up",
+  "id": "give_thumbs_up",
+  "category": "greetings",
+  "reviews": [
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_r jumps 145° in 4 ticks (36°/tick)"
+      ]
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_r jumps 80° in 2 ticks (40°/tick)"
+      ]
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

@@ -1,0 +1,36 @@
+{
+  "command": "block high",
+  "id": "block_high",
+  "category": "combat",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_l jumps 183° in 3 ticks (61°/tick)",
+        "arm_u_l jumps 200° in 2 ticks (100°/tick)",
+        "arm_u_l jumps 128° in 3 ticks (43°/tick)"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "more than 20 frames — too complex",
+        "arm_u_l jumps 156° in 4 ticks (39°/tick)",
+        "arm_u_l jumps 184° in 3 ticks (61°/tick)",
+        "arm_u_l jumps 87° in 2 ticks (44°/tick)"
+      ]
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

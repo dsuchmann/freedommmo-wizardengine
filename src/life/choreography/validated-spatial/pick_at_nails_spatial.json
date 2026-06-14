@@ -1,0 +1,154 @@
+{
+  "id": "pick_at_nails",
+  "kind": "idle",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "raise",
+          "amount": 0.42,
+          "ticks": 4
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.25,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "bend",
+          "amount": 0.55,
+          "ticks": 3
+        },
+        {
+          "part": "both_arms",
+          "action": "close",
+          "amount": 0.65,
+          "ticks": 3
+        },
+        {
+          "part": "left_hand",
+          "action": "turn_in",
+          "amount": 0.35,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_hand",
+          "action": "turn_in",
+          "amount": 0.55,
+          "ticks": 2
+        },
+        {
+          "part": "right_arm",
+          "action": "retract",
+          "amount": 0.18,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_hand",
+          "action": "turn_out",
+          "amount": 0.35,
+          "ticks": 2
+        },
+        {
+          "part": "right_arm",
+          "action": "extend",
+          "amount": 0.15,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_hand",
+          "action": "turn_in",
+          "amount": 0.6,
+          "ticks": 2
+        },
+        {
+          "part": "right_arm",
+          "action": "retract",
+          "amount": 0.2,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_hand",
+          "action": "turn_out",
+          "amount": 0.3,
+          "ticks": 2
+        },
+        {
+          "part": "right_arm",
+          "action": "extend",
+          "amount": 0.12,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "open",
+          "amount": 0.2,
+          "ticks": 3
+        },
+        {
+          "part": "left_hand",
+          "action": "turn_out",
+          "amount": 0,
+          "ticks": 3
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_in",
+          "amount": 0,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 5
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 5
+        }
+      ]
+    }
+  ]
+}

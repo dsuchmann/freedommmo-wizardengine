@@ -1,0 +1,29 @@
+{
+  "command": "karate chop",
+  "id": "karate_chop",
+  "category": "sports",
+  "reviews": [
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_r jumps 130° in 2 ticks (65°/tick)"
+      ]
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

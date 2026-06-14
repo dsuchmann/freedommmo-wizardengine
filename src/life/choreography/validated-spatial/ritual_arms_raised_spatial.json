@@ -1,0 +1,126 @@
+{
+  "id": "ritual_arms_raised",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "raise",
+          "amount": 0.75,
+          "ticks": 5
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0.25,
+          "ticks": 5
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0.35,
+          "ticks": 5
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "open",
+          "amount": 0.45,
+          "ticks": 4
+        },
+        {
+          "part": "both_hands",
+          "action": "turn_out",
+          "amount": 0.55,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "raise",
+          "amount": 1,
+          "ticks": 5
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0.55,
+          "ticks": 5
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "bend",
+          "amount": 0.18,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0.35,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "both_hands",
+          "action": "turn_out",
+          "amount": 0.8,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 6
+        },
+        {
+          "part": "both_hands",
+          "action": "turn_in",
+          "amount": 0,
+          "ticks": 6
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0,
+          "ticks": 6
+        },
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0,
+          "ticks": 6
+        }
+      ]
+    }
+  ]
+}

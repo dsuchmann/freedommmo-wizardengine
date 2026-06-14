@@ -1,0 +1,203 @@
+{
+  "id": "scuff_foot_on_ground",
+  "kind": "action",
+  "variant": "spatial",
+  "root": {
+    "op": "sequence",
+    "children": [
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "spine": -5
+            },
+            "ticks": 3,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "spine": -5,
+              "shin_l": 25
+            },
+            "ticks": 3,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "spine": -5,
+              "shin_l": 25,
+              "thigh_r": -3,
+              "shin_r": 0
+            },
+            "ticks": 3,
+            "zHints": {
+              "right_leg": "front"
+            }
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "spine": -5,
+              "shin_l": 25,
+              "thigh_r": -3,
+              "shin_r": 0
+            },
+            "ticks": 3,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "spine": -5,
+              "shin_l": 25,
+              "thigh_r": -5,
+              "shin_r": 0
+            },
+            "ticks": 3,
+            "zHints": {
+              "right_leg": "front"
+            }
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "spine": -5,
+              "shin_l": 25,
+              "thigh_r": -5,
+              "shin_r": 0,
+              "foot_r": -7
+            },
+            "ticks": 3,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "spine": -5,
+              "shin_l": 25,
+              "thigh_r": 1,
+              "shin_r": 39,
+              "foot_r": -7
+            },
+            "ticks": 3,
+            "zHints": {
+              "right_leg": "behind"
+            }
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "spine": -5,
+              "shin_l": 25,
+              "thigh_r": 1,
+              "shin_r": 39,
+              "foot_r": 8
+            },
+            "ticks": 3,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "spine": -5,
+              "shin_l": 25,
+              "thigh_r": -4,
+              "shin_r": 0,
+              "foot_r": 8
+            },
+            "ticks": 2,
+            "zHints": {
+              "right_leg": "front"
+            }
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "spine": -5,
+              "shin_l": 25,
+              "thigh_r": -4,
+              "shin_r": 0,
+              "foot_r": -5
+            },
+            "ticks": 2,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "spine": -5,
+              "shin_l": 25,
+              "thigh_r": 5,
+              "shin_r": 140,
+              "foot_r": -5
+            },
+            "ticks": 4,
+            "zHints": {
+              "right_leg": "behind"
+            }
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "spine": -5,
+              "shin_l": 25,
+              "thigh_r": 5,
+              "shin_r": 140,
+              "foot_r": -5
+            },
+            "ticks": 4,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "spine": -5,
+              "shin_l": 0,
+              "thigh_r": 5,
+              "shin_r": 140,
+              "foot_r": -5
+            },
+            "ticks": 4,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "spine": 0,
+              "shin_l": 0,
+              "thigh_r": 5,
+              "shin_r": 140,
+              "foot_r": -5
+            },
+            "ticks": 4,
+            "zHints": {}
+          }
+        ]
+      }
+    ]
+  }
+}

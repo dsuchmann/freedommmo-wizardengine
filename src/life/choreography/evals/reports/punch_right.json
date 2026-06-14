@@ -1,0 +1,32 @@
+{
+  "command": "punch right",
+  "id": "punch_right",
+  "category": "combat",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_l jumps 77° in 2 ticks (39°/tick)"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_f_r jumps 126° in 3 ticks (42°/tick)",
+        "arm_f_r jumps 126° in 2 ticks (63°/tick)"
+      ]
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

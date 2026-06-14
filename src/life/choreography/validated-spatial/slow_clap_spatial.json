@@ -1,0 +1,70 @@
+{
+  "id": "slow_clap",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "raise",
+          "amount": 0.45,
+          "ticks": 5
+        },
+        {
+          "part": "both_arms",
+          "action": "bend",
+          "amount": 0.45,
+          "ticks": 5
+        }
+      ]
+    },
+    {
+      "part": "both_arms",
+      "action": "close",
+      "amount": 1,
+      "ticks": 6
+    },
+    {
+      "part": "both_arms",
+      "action": "open",
+      "amount": 0.45,
+      "ticks": 5
+    },
+    {
+      "part": "both_arms",
+      "action": "close",
+      "amount": 1,
+      "ticks": 6
+    },
+    {
+      "part": "both_arms",
+      "action": "open",
+      "amount": 0.45,
+      "ticks": 5
+    },
+    {
+      "part": "both_arms",
+      "action": "close",
+      "amount": 1,
+      "ticks": 6
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "open",
+          "amount": 0.25,
+          "ticks": 4
+        },
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 6
+        }
+      ]
+    }
+  ]
+}

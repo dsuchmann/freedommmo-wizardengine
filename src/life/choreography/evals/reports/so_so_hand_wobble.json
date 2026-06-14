@@ -1,0 +1,31 @@
+{
+  "command": "so-so hand wobble",
+  "id": "so_so_hand_wobble",
+  "category": "gestures",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_f_r jumps 115° in 3 ticks (38°/tick)"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_f_r jumps 140° in 3 ticks (47°/tick)"
+      ]
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

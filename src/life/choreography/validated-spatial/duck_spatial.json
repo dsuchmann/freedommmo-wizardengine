@@ -1,0 +1,93 @@
+{
+  "id": "duck",
+  "kind": "action",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_legs",
+          "action": "bend",
+          "amount": 0.85,
+          "ticks": 4
+        },
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.75,
+          "ticks": 4
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.8,
+          "ticks": 4
+        },
+        {
+          "part": "both_arms",
+          "action": "retract",
+          "amount": 0.35,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.9,
+          "ticks": 2
+        },
+        {
+          "part": "both_shoulders",
+          "action": "raise",
+          "amount": 0.35,
+          "ticks": 2
+        },
+        {
+          "part": "both_arms",
+          "action": "close",
+          "amount": 0.25,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_legs",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 5
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 5
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 5
+        },
+        {
+          "part": "both_arms",
+          "action": "retract",
+          "amount": 0,
+          "ticks": 5
+        },
+        {
+          "part": "both_shoulders",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 5
+        }
+      ]
+    }
+  ]
+}

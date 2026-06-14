@@ -1,0 +1,29 @@
+{
+  "command": "pirouette",
+  "id": "pirouette",
+  "category": "dance",
+  "reviews": [
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "does not return to rest — arm_u_l:-78, arm_f_l:-78, arm_u_r:78, arm_f_r:78, shin_l:39, shin_r:39"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

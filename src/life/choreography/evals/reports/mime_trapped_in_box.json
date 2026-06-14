@@ -1,0 +1,47 @@
+{
+  "command": "mime trapped in box",
+  "id": "mime_trapped_in_box",
+  "category": "performance",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 2,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 3,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 4,
+      "type": "fluidity",
+      "result": "fail",
+      "issues": [
+        "complex command but fewer than 4 frames"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

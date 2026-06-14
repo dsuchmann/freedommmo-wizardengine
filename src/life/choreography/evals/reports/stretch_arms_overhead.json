@@ -1,0 +1,31 @@
+{
+  "command": "stretch arms overhead",
+  "id": "stretch_arms_overhead",
+  "category": "idle",
+  "reviews": [
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_l jumps 156° in 4 ticks (39°/tick)"
+      ]
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "does not return to rest — arm_u_l:-161, arm_u_r:162, hand_l:-16, hand_r:16"
+      ]
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

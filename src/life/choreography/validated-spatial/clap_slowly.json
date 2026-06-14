@@ -1,0 +1,106 @@
+{
+  "id": "slow_clap",
+  "kind": "gesture",
+  "variant": "spatial",
+  "root": {
+    "op": "sequence",
+    "children": [
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -76,
+              "arm_u_r": 77
+            },
+            "ticks": 5,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": -76,
+              "arm_u_r": 77,
+              "arm_f_l": -49,
+              "arm_f_r": 49
+            },
+            "ticks": 5,
+            "zHints": {}
+          }
+        ]
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "arm_u_l": 40,
+          "arm_u_r": -40,
+          "arm_f_l": -35,
+          "arm_f_r": 35
+        },
+        "ticks": 6,
+        "zHints": {}
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "arm_u_l": -54,
+          "arm_u_r": 54,
+          "arm_f_l": -54,
+          "arm_f_r": 54
+        },
+        "ticks": 6,
+        "zHints": {}
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "arm_u_l": 40,
+          "arm_u_r": -40,
+          "arm_f_l": -35,
+          "arm_f_r": 35
+        },
+        "ticks": 6,
+        "zHints": {}
+      },
+      {
+        "op": "pose",
+        "joints": {
+          "arm_u_l": -54,
+          "arm_u_r": 54,
+          "arm_f_l": -54,
+          "arm_f_r": 54
+        },
+        "ticks": 6,
+        "zHints": {}
+      },
+      {
+        "op": "parallel",
+        "children": [
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": 0,
+              "arm_u_r": 0,
+              "arm_f_l": -54,
+              "arm_f_r": 54
+            },
+            "ticks": 6,
+            "zHints": {}
+          },
+          {
+            "op": "pose",
+            "joints": {
+              "arm_u_l": 0,
+              "arm_u_r": 0,
+              "arm_f_l": 0,
+              "arm_f_r": 0
+            },
+            "ticks": 6,
+            "zHints": {}
+          }
+        ]
+      }
+    ]
+  }
+}

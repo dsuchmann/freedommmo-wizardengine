@@ -1,0 +1,79 @@
+{
+  "command": "kick front",
+  "id": "kick_front",
+  "category": "combat",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "does not return to rest — arm_f_l:-42, arm_f_r:42, shin_r:98"
+      ]
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 2,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 3,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 4,
+      "type": "fluidity",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 5,
+      "type": "fluidity",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 6,
+      "type": "fluidity",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 7,
+      "type": "adversarial",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 8,
+      "type": "adversarial",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 9,
+      "type": "adversarial",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 10,
+      "type": "library",
+      "result": "pass",
+      "frames": 9,
+      "score": 10
+    }
+  ],
+  "verdict": "pass",
+  "score": 10,
+  "frames": 9
+}

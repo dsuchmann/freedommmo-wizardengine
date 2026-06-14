@@ -1,0 +1,33 @@
+{
+  "command": "big enthusiastic wave",
+  "id": "big_enthusiastic_wave",
+  "category": "greetings",
+  "reviews": [
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "more than 20 frames — too complex",
+        "hand_r jumps 72° in 2 ticks (36°/tick)",
+        "hand_r jumps 72° in 2 ticks (36°/tick)",
+        "hand_r jumps 72° in 2 ticks (36°/tick)",
+        "hand_r jumps 77° in 2 ticks (39°/tick)"
+      ]
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

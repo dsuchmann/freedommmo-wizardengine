@@ -1,0 +1,98 @@
+{
+  "id": "look_around_casually",
+  "kind": "idle",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0.18,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0.08,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "part": "head",
+      "action": "turn_out",
+      "amount": 0.45,
+      "ticks": 4
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.12,
+          "ticks": 3
+        },
+        {
+          "part": "right_shoulder",
+          "action": "lower",
+          "amount": 0.12,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "part": "head",
+      "action": "turn_in",
+      "amount": 0.45,
+      "ticks": 5
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0.16,
+          "ticks": 3
+        },
+        {
+          "part": "left_shoulder",
+          "action": "lower",
+          "amount": 0.1,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "turn_in",
+          "amount": 0,
+          "ticks": 4
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0,
+          "ticks": 4
+        },
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0,
+          "ticks": 4
+        },
+        {
+          "part": "both_shoulders",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    }
+  ]
+}

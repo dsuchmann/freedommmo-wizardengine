@@ -1,0 +1,81 @@
+{
+  "id": "neck_roll",
+  "kind": "gesture",
+  "steps": [
+    {
+      "part": "head",
+      "action": "lower",
+      "amount": 0.45,
+      "ticks": 4
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "turn_out",
+          "amount": 0.45,
+          "ticks": 4
+        },
+        {
+          "part": "right_shoulder",
+          "action": "lower",
+          "amount": 0.25,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "part": "head",
+      "action": "raise",
+      "amount": 0.4,
+      "ticks": 4
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "turn_in",
+          "amount": 0.45,
+          "ticks": 4
+        },
+        {
+          "part": "left_shoulder",
+          "action": "lower",
+          "amount": 0.25,
+          "ticks": 4
+        },
+        {
+          "part": "right_shoulder",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "part": "head",
+      "action": "lower",
+      "amount": 0.3,
+      "ticks": 4
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 4
+        },
+        {
+          "part": "left_shoulder",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    }
+  ]
+}

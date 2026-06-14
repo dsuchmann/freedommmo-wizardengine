@@ -1,0 +1,141 @@
+{
+  "id": "lunge_forward",
+  "kind": "action",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_legs",
+          "action": "bend",
+          "amount": 0.25,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.2,
+          "ticks": 3
+        },
+        {
+          "part": "both_arms",
+          "action": "retract",
+          "amount": 0.25,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_leg",
+          "action": "extend",
+          "amount": 0.85,
+          "ticks": 5,
+          "zHint": "front"
+        },
+        {
+          "part": "left_leg",
+          "action": "straighten",
+          "amount": 0.75,
+          "ticks": 5
+        },
+        {
+          "part": "torso",
+          "action": "extend",
+          "amount": 0.35,
+          "ticks": 5,
+          "zHint": "front"
+        },
+        {
+          "part": "both_arms",
+          "action": "open",
+          "amount": 0.35,
+          "ticks": 5
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_leg",
+          "action": "bend",
+          "amount": 0.55,
+          "ticks": 3
+        },
+        {
+          "part": "left_leg",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0.25,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_leg",
+          "action": "straighten",
+          "amount": 0.85,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0.15,
+          "ticks": 3
+        },
+        {
+          "part": "both_arms",
+          "action": "retract",
+          "amount": 0.2,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_leg",
+          "action": "retract",
+          "amount": 1,
+          "ticks": 5
+        },
+        {
+          "part": "both_legs",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 5
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 5
+        },
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 5
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0,
+          "ticks": 5
+        }
+      ]
+    }
+  ]
+}

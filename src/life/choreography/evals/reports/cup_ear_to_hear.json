@@ -1,0 +1,31 @@
+{
+  "command": "cup ear to hear",
+  "id": "cup_ear_to_hear",
+  "category": "gestures",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_r jumps 125° in 3 ticks (42°/tick)"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_r jumps 137° in 3 ticks (46°/tick)"
+      ]
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

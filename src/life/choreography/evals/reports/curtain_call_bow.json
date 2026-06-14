@@ -1,0 +1,29 @@
+{
+  "command": "curtain call bow",
+  "id": "curtain_call_bow",
+  "category": "performance",
+  "reviews": [
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_l jumps 122° in 3 ticks (41°/tick)"
+      ]
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

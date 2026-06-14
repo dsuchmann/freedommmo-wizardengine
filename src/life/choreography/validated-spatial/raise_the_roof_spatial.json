@@ -1,0 +1,149 @@
+{
+  "id": "raise_the_roof",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "raise",
+          "amount": 0.9,
+          "ticks": 5
+        },
+        {
+          "part": "both_arms",
+          "action": "bend",
+          "amount": 0.35,
+          "ticks": 5
+        },
+        {
+          "part": "both_hands",
+          "action": "turn_out",
+          "amount": 0.7,
+          "ticks": 5
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "raise",
+          "amount": 1,
+          "ticks": 2
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0.2,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 0.25,
+          "ticks": 2
+        },
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.15,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "raise",
+          "amount": 1,
+          "ticks": 2
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0.2,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 0.25,
+          "ticks": 2
+        },
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.15,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "raise",
+          "amount": 1,
+          "ticks": 2
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0.2,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 5
+        },
+        {
+          "part": "both_arms",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 5
+        },
+        {
+          "part": "left_hand",
+          "action": "turn_in",
+          "amount": 0,
+          "ticks": 5
+        },
+        {
+          "part": "right_hand",
+          "action": "turn_in",
+          "amount": 0,
+          "ticks": 5
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 5
+        }
+      ]
+    }
+  ]
+}

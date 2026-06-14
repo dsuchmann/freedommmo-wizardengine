@@ -1,0 +1,94 @@
+{
+  "id": "stand_up_quickly",
+  "kind": "action",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.25,
+          "ticks": 2
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.2,
+          "ticks": 2
+        },
+        {
+          "part": "both_legs",
+          "action": "bend",
+          "amount": 0.45,
+          "ticks": 2
+        },
+        {
+          "part": "both_arms",
+          "action": "retract",
+          "amount": 0.35,
+          "ticks": 2
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_legs",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0.6,
+          "ticks": 3
+        },
+        {
+          "part": "both_arms",
+          "action": "extend",
+          "amount": 0.35,
+          "ticks": 3,
+          "zHint": "front"
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "both_legs",
+          "action": "straighten",
+          "amount": 0,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 3
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 3
+        }
+      ]
+    }
+  ]
+}

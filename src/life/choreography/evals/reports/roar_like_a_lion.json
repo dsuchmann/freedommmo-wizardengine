@@ -1,0 +1,35 @@
+{
+  "command": "roar like a lion",
+  "id": "roar_like_a_lion",
+  "category": "animal",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "more than 20 frames — too complex",
+        "does not return to rest — spine:30, head:-60, hand_l:27, hand_r:-27",
+        "arm_f_l jumps 105° in 2 ticks (53°/tick)",
+        "arm_f_l jumps 105° in 2 ticks (53°/tick)",
+        "hand_l jumps 72° in 2 ticks (36°/tick)",
+        "hand_r jumps 72° in 2 ticks (36°/tick)",
+        "arm_f_l jumps 84° in 2 ticks (42°/tick)"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

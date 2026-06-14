@@ -1,0 +1,33 @@
+{
+  "command": "tuck jump",
+  "id": "tuck_jump",
+  "category": "exercise",
+  "reviews": [
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "does not return to rest — arm_f_l:-48, arm_f_r:48, head:-60",
+        "arm_u_l jumps 130° in 3 ticks (43°/tick)",
+        "shin_l jumps 126° in 3 ticks (42°/tick)",
+        "arm_u_l jumps 132° in 3 ticks (44°/tick)",
+        "shin_l jumps 126° in 3 ticks (42°/tick)"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

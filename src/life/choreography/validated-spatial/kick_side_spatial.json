@@ -1,0 +1,132 @@
+{
+  "id": "side_kick",
+  "kind": "action",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "open",
+          "amount": 0.45,
+          "ticks": 3
+        },
+        {
+          "part": "left_leg",
+          "action": "bend",
+          "amount": 0.18,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.18,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_leg",
+          "action": "raise",
+          "amount": 0.55,
+          "ticks": 4
+        },
+        {
+          "part": "right_leg",
+          "action": "bend",
+          "amount": 0.5,
+          "ticks": 4
+        },
+        {
+          "part": "right_hip",
+          "action": "open",
+          "amount": 0.7,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_leg",
+          "action": "open",
+          "amount": 0.9,
+          "ticks": 3
+        },
+        {
+          "part": "right_leg",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "retract",
+          "amount": 0.25,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_leg",
+          "action": "bend",
+          "amount": 0.45,
+          "ticks": 3
+        },
+        {
+          "part": "right_leg",
+          "action": "retract",
+          "amount": 0.75,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_hip",
+          "action": "close",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "right_leg",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 4
+        },
+        {
+          "part": "left_leg",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "close",
+          "amount": 0,
+          "ticks": 3
+        },
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 3
+        }
+      ]
+    }
+  ]
+}

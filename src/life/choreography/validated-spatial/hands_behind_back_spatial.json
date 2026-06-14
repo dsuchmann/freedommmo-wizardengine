@@ -1,0 +1,90 @@
+{
+  "id": "hands_behind_back",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 0.45,
+          "ticks": 4
+        },
+        {
+          "part": "both_shoulders",
+          "action": "open",
+          "amount": 0.35,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "retract",
+          "amount": 0.75,
+          "ticks": 5,
+          "zHint": "behind"
+        },
+        {
+          "part": "both_hands",
+          "action": "turn_in",
+          "amount": 0.45,
+          "ticks": 5
+        }
+      ]
+    },
+    {
+      "part": "both_arms",
+      "action": "close",
+      "amount": 0.85,
+      "ticks": 4,
+      "zHint": "behind"
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "open",
+          "amount": 0.4,
+          "ticks": 3,
+          "zHint": "behind"
+        },
+        {
+          "part": "both_hands",
+          "action": "turn_in",
+          "amount": 0,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "retract",
+          "amount": 0,
+          "ticks": 5,
+          "zHint": "behind"
+        },
+        {
+          "part": "both_shoulders",
+          "action": "close",
+          "amount": 0,
+          "ticks": 5
+        }
+      ]
+    },
+    {
+      "part": "both_arms",
+      "action": "lower",
+      "amount": 1,
+      "ticks": 4
+    }
+  ]
+}

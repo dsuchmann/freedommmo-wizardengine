@@ -1,0 +1,33 @@
+{
+  "command": "rock on sign",
+  "id": "rock_on_sign",
+  "category": "gestures",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_r jumps 157° in 3 ticks (52°/tick)"
+      ]
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_r jumps 147° in 3 ticks (49°/tick)"
+      ]
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_r jumps 148° in 3 ticks (49°/tick)"
+      ]
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

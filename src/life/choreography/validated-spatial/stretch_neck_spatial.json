@@ -1,0 +1,64 @@
+{
+  "id": "stretch_neck",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_shoulders",
+          "action": "lower",
+          "amount": 0.5,
+          "ticks": 4
+        },
+        {
+          "part": "both_arms",
+          "action": "lower",
+          "amount": 0.3,
+          "ticks": 4
+        }
+      ]
+    },
+    {
+      "part": "head",
+      "action": "lower",
+      "amount": 0.6,
+      "ticks": 5
+    },
+    {
+      "part": "head",
+      "action": "raise",
+      "amount": 0.75,
+      "ticks": 5
+    },
+    {
+      "part": "head",
+      "action": "lower",
+      "amount": 0.35,
+      "ticks": 4
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 4
+        },
+        {
+          "part": "both_shoulders",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 4
+        },
+        {
+          "part": "both_arms",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 4
+        }
+      ]
+    }
+  ]
+}

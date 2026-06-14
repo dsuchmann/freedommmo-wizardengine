@@ -1,0 +1,23 @@
+{
+  "id": "sip_carefully",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "raise",
+          "amount": 0.42,
+          "ticks": 5
+        },
+        {
+          "part": "both_hands",
+          "action": "turn_in",
+          "amount": 0.25,
+          "ticks": 5
+        }
+      ]
+    }
+  ]
+}

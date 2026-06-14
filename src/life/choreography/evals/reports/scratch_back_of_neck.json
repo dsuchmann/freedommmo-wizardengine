@@ -1,0 +1,31 @@
+{
+  "command": "scratch back of neck",
+  "id": "scratch_back_of_neck",
+  "category": "idle",
+  "reviews": [
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_f_r jumps 112° in 2 ticks (56°/tick)",
+        "arm_f_r jumps 112° in 2 ticks (56°/tick)",
+        "arm_f_r jumps 112° in 3 ticks (37°/tick)"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

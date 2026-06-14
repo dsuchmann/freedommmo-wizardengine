@@ -1,0 +1,36 @@
+{
+  "command": "rapid applause",
+  "id": "rapid_applause",
+  "category": "gestures",
+  "reviews": [
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_l jumps 134° in 2 ticks (67°/tick)",
+        "arm_u_l jumps 82° in 2 ticks (41°/tick)",
+        "arm_u_l jumps 82° in 2 ticks (41°/tick)",
+        "arm_u_l jumps 82° in 2 ticks (41°/tick)",
+        "arm_u_l jumps 82° in 2 ticks (41°/tick)",
+        "arm_u_l jumps 82° in 2 ticks (41°/tick)",
+        "arm_u_l jumps 82° in 2 ticks (41°/tick)",
+        "arm_u_l jumps 88° in 2 ticks (44°/tick)"
+      ]
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

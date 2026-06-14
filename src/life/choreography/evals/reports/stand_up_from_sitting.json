@@ -1,0 +1,89 @@
+{
+  "command": "stand up from sitting",
+  "id": "stand_up_from_sitting",
+  "category": "sitting",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 2,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 3,
+      "type": "structural",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 4,
+      "type": "fluidity",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 5,
+      "type": "fluidity",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 6,
+      "type": "fluidity",
+      "result": "pass",
+      "issues": []
+    },
+    {
+      "pass": 7,
+      "type": "adversarial",
+      "result": "fail",
+      "issues": [
+        "frames 6 and 7 are identical"
+      ]
+    },
+    {
+      "pass": 8,
+      "type": "adversarial",
+      "result": "fail",
+      "issues": [
+        "frames 6 and 7 are identical"
+      ]
+    },
+    {
+      "pass": 9,
+      "type": "adversarial",
+      "result": "fail",
+      "issues": [
+        "frames 6 and 7 are identical"
+      ]
+    },
+    {
+      "pass": 10,
+      "type": "library",
+      "result": "pass",
+      "frames": 11,
+      "score": 7
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    }
+  ],
+  "verdict": "pass",
+  "score": 7,
+  "frames": 11
+}

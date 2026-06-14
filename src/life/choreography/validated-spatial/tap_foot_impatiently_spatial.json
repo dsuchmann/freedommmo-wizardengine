@@ -1,0 +1,70 @@
+{
+  "id": "tap_foot_impatiently",
+  "kind": "idle",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_leg",
+          "action": "bend",
+          "amount": 0.15,
+          "ticks": 3
+        },
+        {
+          "part": "right_foot",
+          "action": "raise",
+          "amount": 0.55,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "part": "right_foot",
+      "action": "lower",
+      "amount": 1,
+      "ticks": 2
+    },
+    {
+      "part": "right_foot",
+      "action": "raise",
+      "amount": 0.5,
+      "ticks": 2
+    },
+    {
+      "part": "right_foot",
+      "action": "lower",
+      "amount": 1,
+      "ticks": 2
+    },
+    {
+      "part": "right_foot",
+      "action": "raise",
+      "amount": 0.45,
+      "ticks": 2
+    },
+    {
+      "part": "right_foot",
+      "action": "lower",
+      "amount": 1,
+      "ticks": 2
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "right_leg",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "right_foot",
+          "action": "lower",
+          "amount": 1,
+          "ticks": 3
+        }
+      ]
+    }
+  ]
+}

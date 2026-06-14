@@ -1,0 +1,35 @@
+{
+  "command": "peace sign",
+  "id": "peace_sign",
+  "category": "gestures",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_r jumps 128° in 3 ticks (43°/tick)",
+        "arm_f_r jumps 140° in 3 ticks (47°/tick)",
+        "arm_f_r jumps 140° in 3 ticks (47°/tick)"
+      ]
+    },
+    {
+      "pass": 0,
+      "type": "generate",
+      "result": "error",
+      "detail": "No JSON object found in LLM response"
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "arm_u_r jumps 142° in 3 ticks (47°/tick)",
+        "arm_f_r jumps 140° in 3 ticks (47°/tick)",
+        "arm_f_r jumps 140° in 3 ticks (47°/tick)"
+      ]
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}

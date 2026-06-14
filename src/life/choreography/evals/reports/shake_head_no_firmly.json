@@ -1,0 +1,41 @@
+{
+  "command": "shake head no firmly",
+  "id": "shake_head_no_firmly",
+  "category": "emotions",
+  "reviews": [
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "head jumps 84° in 2 ticks (42°/tick)",
+        "head jumps 90° in 2 ticks (45°/tick)",
+        "head jumps 75° in 2 ticks (38°/tick)"
+      ]
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "head jumps 90° in 2 ticks (45°/tick)",
+        "head jumps 93° in 2 ticks (47°/tick)",
+        "head jumps 96° in 2 ticks (48°/tick)",
+        "head jumps 75° in 2 ticks (38°/tick)"
+      ]
+    },
+    {
+      "pass": 1,
+      "type": "structural",
+      "result": "fail",
+      "issues": [
+        "head jumps 90° in 2 ticks (45°/tick)",
+        "head jumps 99° in 2 ticks (50°/tick)",
+        "head jumps 108° in 2 ticks (54°/tick)",
+        "head jumps 87° in 2 ticks (44°/tick)"
+      ]
+    }
+  ],
+  "verdict": "fail",
+  "score": 0
+}
