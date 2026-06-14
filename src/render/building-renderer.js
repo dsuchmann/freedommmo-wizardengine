@@ -223,36 +223,48 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
     }
 
     for (const sec of fp.sections) {
-      const southRow = sec.y0 + sec.h - 1;
+      const southEdgeY = sec.y0 + sec.h; // one row BELOW the last floor tile
+      const x0 = sec.x0;
 
+      // Step 1: Draw plain brick wall as a seamless base across entire south edge
       for (let dx = 0; dx < sec.w; dx++) {
-        const lx = sec.x0 + dx;
-        const ly = southRow;
+        const lx = x0 + dx;
+        const ly = southEdgeY - 1; // last floor row
+        // Only exterior edges (south neighbor outside building)
+        if (floorSet.has(lx + ',' + (ly + 1))) continue;
+
         const wx = b.x + lx;
-        const wy = b.y + ly + 1; // wall draws at the row BELOW the last floor tile
-
-        // Is the tile south of this floor tile outside the building?
-        const southOutside = !floorSet.has(lx + ',' + (ly + 1));
-        if (!southOutside) continue; // interior junction — skip (Phase 2)
-
-        // Screen position — consistent Math.round to prevent jitter
+        const wy = b.y + southEdgeY;
         const sx = Math.round(wx * tilePx - camX);
         const sy = Math.round(wy * tilePx - camY) - wallH;
-
         if (sx + t < 0 || sx > w || sy + wallH < 0 || sy > h) continue;
 
-        // Which column of the 160px source to use (tile position within the 5-tile repeat)
+        // Plain wall: tile the 160px source, each tile = 1/5 of the sprite
         const srcCol = dx % 5;
-        const srcX = srcCol * SRC_COL_W;
+        ctx.drawImage(_wallImgs.plain, srcCol * SRC_COL_W, 0, SRC_COL_W, SRC, sx, sy, t, wallH);
+      }
 
-        // Pick sprite: door, window, or plain
-        let img = _wallImgs.plain;
+      // Step 2: Overlay doors and windows at their exact positions (full sprite, centered)
+      for (let dx = 0; dx < sec.w; dx++) {
+        const lx = x0 + dx;
+        const ly = southEdgeY - 1;
+        if (floorSet.has(lx + ',' + (ly + 1))) continue;
         const key = lx + ',' + ly;
-        if (doorSet.has(key)) img = _wallImgs.door || img;
-        else if (windowPositions.has(key)) img = _wallImgs.window || img;
 
-        // Draw one tile-width column of the wall sprite
-        ctx.drawImage(img, srcX, 0, SRC_COL_W, SRC, sx, sy, t, wallH);
+        let overlay = null;
+        if (doorSet.has(key)) overlay = _wallImgs.door;
+        else if (windowPositions.has(key)) overlay = _wallImgs.window;
+        if (!overlay) continue;
+
+        // Draw the full 5-tile-wide overlay centered on this tile
+        const wx = b.x + lx;
+        const wy = b.y + southEdgeY;
+        const centerSx = Math.round(wx * tilePx - camX);
+        const overlaySx = centerSx - Math.round(t * 2); // center of 5-tile sprite = tile 2
+        const overlaySy = Math.round(wy * tilePx - camY) - wallH;
+        const overlayW = Math.round(t * 5);
+
+        ctx.drawImage(overlay, 0, 0, SRC, SRC, overlaySx, overlaySy, overlayW, wallH);
       }
     }
   }
