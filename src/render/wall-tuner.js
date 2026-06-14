@@ -52,13 +52,13 @@ export function initWallTuner() {
     const key = PARAM_KEYS[selectedParam];
     const val = PARAMS[key];
 
-    // Left/right: adjust value
+    // , = value down, . = value up (also ←→ still work)
     const step = e.shiftKey ? 0.5 : 0.05;
-    if (e.key === 'ArrowLeft') {
+    if (e.key === ',' || e.key === 'ArrowLeft') {
       if (typeof val === 'boolean') PARAMS[key] = !val;
       else if (typeof val === 'number') PARAMS[key] = Math.round((val - step) * 100) / 100;
     }
-    if (e.key === 'ArrowRight') {
+    if (e.key === '.' || e.key === 'ArrowRight') {
       if (typeof val === 'boolean') PARAMS[key] = !val;
       else if (typeof val === 'number') PARAMS[key] = Math.round((val + step) * 100) / 100;
     }
@@ -98,7 +98,7 @@ export function drawWallTuner(ctx, w, h) {
   ctx.font = 'bold 13px monospace';
   ctx.textAlign = 'left';
   ctx.fillStyle = '#6cf';
-  ctx.fillText('WALL TUNER (\\ toggle, / select, ←→ adjust, C copy)', panelX + 8, panelY + 18);
+  ctx.fillText('WALL TUNER (\\ toggle, / select, ,. adjust, C copy)', panelX + 8, panelY + 18);
 
   for (let i = 0; i < PARAM_KEYS.length; i++) {
     const key = PARAM_KEYS[i];
@@ -126,7 +126,7 @@ export function drawWallTuner(ctx, w, h) {
   // Footer
   ctx.font = '11px monospace';
   ctx.fillStyle = '#666';
-  ctx.fillText('Shift+←→ = big steps | C = copy to clipboard', panelX + 8, panelY + panelH - 8);
+  ctx.fillText('Shift+,. = big steps | C = copy to clipboard', panelX + 8, panelY + panelH - 8);
 
   ctx.restore();
 }
