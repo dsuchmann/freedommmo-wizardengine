@@ -30,13 +30,15 @@ function ensureFloorImages() {
   // Wall tile sprites (all multiples of 32px)
   const WALL_BASE = '/assets/pixelab/buildings/walls/stone_brick_tiles/';
   const wallPieces = {
-    south_base:       'south_base.png',        // 32×128
-    south_window:     'south_window.png',       // 32×128
-    south_door:       'south_door.png',         // 64×128
-    interior_base:    'interior_base.png',      // 32×128
-    interior_archway: 'interior_archway.png',   // 64×128
-    edge_ew:          'edge_ew.png',            // 32×32
-    north_back:       'north_back.png',         // 32×64
+    south_base:         'south_base.png',          // 32×128
+    south_window:       'south_window.png',        // 64×128
+    south_door:         'south_door.png',          // 64×128
+    south_corner_west:  'south_corner_west.png',   // 32×128 (left edge with molding)
+    south_corner_east:  'south_corner_east.png',   // 32×128 (right edge with molding)
+    interior_base:      'interior_base.png',       // 32×128
+    interior_archway:   'interior_archway.png',    // 64×128
+    edge_ew:            'edge_ew.png',             // 32×32
+    north_back:         'north_back.png',          // 32×64
   };
   for (const [key, file] of Object.entries(wallPieces)) {
     const img = new Image();
@@ -267,15 +269,25 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
         if (floorSet.has(lx + ',' + (ly + 1))) continue;
 
         const wx = b.x + lx;
-        // Wall bottom edge aligns EXACTLY with the floor's south pixel edge
+        // Wall bottom edge overlaps the floor's south pixel edge by 1px (no gap)
         const floorBottomPx = Math.round((b.y + sec.y0 + sec.h) * tilePx - camY);
         const sx = Math.round(wx * tilePx - camX);
-        const sy = floorBottomPx - wallH;
+        const sy = floorBottomPx - wallH + 1; // +1 to overlap floor edge (kills the gap)
         if (sx + t < 0 || sx > w || sy + wallH < 0 || sy > h) continue;
 
         const key = lx + ',' + ly;
 
-        if (doorSet.has(key) && dx >= 2 && dx < sec.w - 2 && _wallImgs.south_door) {
+        // Is this the first or last tile of this exterior run?
+        const isWestEnd = dx === 0 || floorSet.has((lx - 1) + ',' + (ly + 1));
+        const isEastEnd = dx === sec.w - 1 || floorSet.has((lx + 1) + ',' + (ly + 1));
+
+        if (isWestEnd && _wallImgs.south_corner_west) {
+          // West termination: left edge with molding
+          ctx.drawImage(_wallImgs.south_corner_west, 0, 0, 32, 128, sx, sy, t, wallH);
+        } else if (isEastEnd && _wallImgs.south_corner_east) {
+          // East termination: right edge with molding
+          ctx.drawImage(_wallImgs.south_corner_east, 0, 0, 32, 128, sx, sy, t, wallH);
+        } else if (doorSet.has(key) && dx >= 2 && dx < sec.w - 2 && _wallImgs.south_door) {
           // Door: 2 tiles wide
           ctx.drawImage(_wallImgs.south_door, 0, 0, 64, 128, sx, sy, t * 2, wallH);
           skipSet.add(dx + 1);
@@ -284,7 +296,7 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
           ctx.drawImage(_wallImgs.south_window, 0, 0, 64, 128, sx, sy, t * 2, wallH);
           skipSet.add(dx + 1);
         } else if (_wallImgs.south_base) {
-          // Plain wall column
+          // Plain wall column (center brick, no molding)
           ctx.drawImage(_wallImgs.south_base, 0, 0, 32, 128, sx, sy, t, wallH);
         }
       }
