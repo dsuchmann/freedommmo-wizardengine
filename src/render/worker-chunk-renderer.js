@@ -1,5 +1,6 @@
 // Worker-compatible chunk renderer. Takes chunk data + neighbor tiles,
 // paints to OffscreenCanvas, returns ImageBitmap.
+console.log('[chunk-renderer] MODULE LOADED — wall code version 20260614c');
 
 // F3 suppression: placement keys that have been taken (sim truth). Set from chunk-worker via
 // setF3RemovedKeys(). When sim is absent this stays empty and behaviour is unchanged.
