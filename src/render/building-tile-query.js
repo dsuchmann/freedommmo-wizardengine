@@ -108,7 +108,114 @@ function cachedLayout(seed, mx, my) {
     }
   }
 
-  var result = { layout: layout, floorIndex: floorIndex };
+  // Build wall index: which world tiles have wall sprites hanging below/beside them.
+  // Walls are keyed by the floor tile that owns them (the tile at the edge of the building).
+  var wallIndex = new Map();
+  for (var bi2 = 0; bi2 < maxB; bi2++) {
+    var b2 = buildings[bi2];
+    var fp2 = b2.footprint;
+    var floorSet2 = new Set();
+    for (var si2 = 0; si2 < fp2.sections.length; si2++) {
+      var sec2 = fp2.sections[si2];
+      for (var dy2 = 0; dy2 < sec2.h; dy2++)
+        for (var dx2 = 0; dx2 < sec2.w; dx2++)
+          floorSet2.add((sec2.x0 + dx2) + ',' + (sec2.y0 + dy2));
+    }
+    var doorSet2 = new Set();
+    for (var di2 = 0; di2 < fp2.doors.length; di2++)
+      doorSet2.add(fp2.doors[di2].x + ',' + fp2.doors[di2].y);
+
+    for (var si3 = 0; si3 < fp2.sections.length; si3++) {
+      var sec3 = fp2.sections[si3];
+      var lastRow = sec3.y0 + sec3.h - 1;
+
+      // ── South wall tiles ──
+      // Build window positions for this section
+      var windowPos = new Set();
+      var interval = 0;
+      for (var dx3 = 0; dx3 < sec3.w; dx3++) {
+        var slx = sec3.x0 + dx3, sly = lastRow;
+        if (floorSet2.has(slx + ',' + (sly + 1))) { interval++; continue; }
+        if (doorSet2.has(slx + ',' + sly)) { interval = 0; continue; }
+        if (dx3 < 2 || dx3 >= sec3.w - 2) { interval++; continue; }
+        if (doorSet2.has((slx - 1) + ',' + sly) || doorSet2.has((slx + 1) + ',' + sly)) { interval++; continue; }
+        interval++;
+        if (interval % 3 === 0) windowPos.add(slx + ',' + sly);
+      }
+
+      var skipNext = false;
+      for (var dx4 = 0; dx4 < sec3.w; dx4++) {
+        if (skipNext) { skipNext = false; continue; }
+        var wlx = sec3.x0 + dx4, wly = lastRow;
+        // Only exterior south edge: south neighbor must be outside building
+        if (floorSet2.has(wlx + ',' + (wly + 1))) continue;
+        var wwx = b2.x + wlx, wwy = b2.y + wly;
+
+        var westOut = !floorSet2.has((wlx - 1) + ',' + wly);
+        var eastOut = !floorSet2.has((wlx + 1) + ',' + wly);
+        var wKey = wlx + ',' + wly;
+
+        var wallSprite, wallSpriteW;  // sprite name, width in tiles
+        if (westOut) {
+          wallSprite = 'south_corner_west'; wallSpriteW = 1;
+        } else if (eastOut) {
+          wallSprite = 'south_corner_east'; wallSpriteW = 1;
+        } else if (doorSet2.has(wKey) && dx4 >= 2 && dx4 < sec3.w - 2) {
+          wallSprite = 'south_door'; wallSpriteW = 2; skipNext = true;
+        } else if (windowPos.has(wKey) && dx4 >= 2 && dx4 < sec3.w - 2) {
+          wallSprite = 'south_window'; wallSpriteW = 2; skipNext = true;
+        } else {
+          wallSprite = 'south_base'; wallSpriteW = 1;
+        }
+        wallIndex.set(wwx + ',' + wwy, { sprite: wallSprite, edge: 'south', spriteW: wallSpriteW });
+      }
+
+      // ── North wall tiles ──
+      var northRow = sec3.y0;
+      for (var dx5 = 0; dx5 < sec3.w; dx5++) {
+        var nlx = sec3.x0 + dx5, nly = northRow;
+        if (floorSet2.has(nlx + ',' + (nly - 1))) continue;
+        var nwx = b2.x + nlx, nwy = b2.y + nly;
+        var nWestOut = !floorSet2.has((nlx - 1) + ',' + nly);
+        var nEastOut = !floorSet2.has((nlx + 1) + ',' + nly);
+
+        var nSprite;
+        if (nWestOut) nSprite = 'south_corner_west';
+        else if (nEastOut) nSprite = 'south_corner_east';
+        else nSprite = 'south_base';
+
+        // North walls keyed separately so they don't overwrite south walls
+        var nKey = nwx + ',' + nwy;
+        if (!wallIndex.has(nKey)) {
+          wallIndex.set(nKey, { sprite: nSprite, edge: 'north', spriteW: 1 });
+        }
+      }
+
+      // ── East/West edge tiles ──
+      for (var dy3 = 0; dy3 < sec3.h; dy3++) {
+        // East edge
+        var elx = sec3.x0 + sec3.w, ely = sec3.y0 + dy3;
+        if (!floorSet2.has(elx + ',' + ely)) {
+          var ewx = b2.x + elx, ewy = b2.y + ely;
+          var eKey = ewx + ',' + ewy;
+          if (!wallIndex.has(eKey)) {
+            wallIndex.set(eKey, { sprite: 'edge_ew', edge: 'east', spriteW: 1 });
+          }
+        }
+        // West edge
+        var wlx2 = sec3.x0 - 1, wly2 = sec3.y0 + dy3;
+        if (!floorSet2.has(wlx2 + ',' + wly2)) {
+          var wwx2 = b2.x + wlx2, wwy2 = b2.y + wly2;
+          var wKey2 = wwx2 + ',' + wwy2;
+          if (!wallIndex.has(wKey2)) {
+            wallIndex.set(wKey2, { sprite: 'edge_ew', edge: 'west', spriteW: 1 });
+          }
+        }
+      }
+    }
+  }
+
+  var result = { layout: layout, floorIndex: floorIndex, wallIndex: wallIndex };
   _layoutCache.set(mk, result);
   if (_layoutCache.size > 200) _layoutCache.clear();
   return result;
@@ -131,6 +238,31 @@ export function queryBuildingTile(wx, wy) {
       var entry = cachedLayout(seed, mx + dmx, my + dmy);
       if (!entry) continue;
       var hit = entry.floorIndex.get(wx + ',' + wy);
+      if (hit) return hit;
+    }
+  }
+  return null;
+}
+
+/**
+ * Query whether a world tile (wx, wy) should have a wall sprite drawn.
+ * Returns { sprite, edge, spriteW } or null.
+ *   sprite: 'south_base' | 'south_window' | 'south_door' | 'south_corner_west' |
+ *           'south_corner_east' | 'edge_ew'
+ *   edge:   'south' | 'north' | 'east' | 'west'
+ *   spriteW: width in tiles (1 or 2 for door/window)
+ * Pure f(seed, wx, wy) — safe for workers.
+ */
+export function queryBuildingWall(wx, wy) {
+  var seed = getWorldSeed();
+  var mx = Math.floor(wx / MACRO_TILES);
+  var my = Math.floor(wy / MACRO_TILES);
+
+  for (var dmy = -1; dmy <= 1; dmy++) {
+    for (var dmx = -1; dmx <= 1; dmx++) {
+      var entry = cachedLayout(seed, mx + dmx, my + dmy);
+      if (!entry) continue;
+      var hit = entry.wallIndex.get(wx + ',' + wy);
       if (hit) return hit;
     }
   }
@@ -207,6 +339,37 @@ export function floorTileUrl(material) {
   return FLOOR_TILE_MAP.wood_plank;  // fallback
 }
 
+// ── Wall tile URL map ───────────────────────────────────────────────
+var WALL_TILE_BASE = '/assets/pixelab/buildings/walls/stone_brick_tiles/';
+var WALL_SPRITE_MAP = {
+  south_base:         WALL_TILE_BASE + 'south_base.png',         // 32x128
+  south_window:       WALL_TILE_BASE + 'south_window.png',       // 64x128
+  south_door:         WALL_TILE_BASE + 'south_door.png',         // 64x128
+  south_corner_west:  WALL_TILE_BASE + 'south_corner_west.png',  // 32x128
+  south_corner_east:  WALL_TILE_BASE + 'south_corner_east.png',  // 32x128
+  edge_ew:            WALL_TILE_BASE + 'edge_ew.png',            // 32x32
+};
+
+// Source dimensions for each wall sprite (width x height in pixels)
+var WALL_SPRITE_SRC = {
+  south_base:        { w: 32,  h: 128 },
+  south_window:      { w: 64,  h: 128 },
+  south_door:        { w: 64,  h: 128 },
+  south_corner_west: { w: 32,  h: 128 },
+  south_corner_east: { w: 32,  h: 128 },
+  edge_ew:           { w: 32,  h: 32  },
+};
+
+/** Resolve wall sprite name to URL. */
+export function wallTileUrl(spriteName) {
+  return WALL_SPRITE_MAP[spriteName] || WALL_SPRITE_MAP.south_base;
+}
+
+/** Get source dimensions for a wall sprite. */
+export function wallSpriteSrc(spriteName) {
+  return WALL_SPRITE_SRC[spriteName] || WALL_SPRITE_SRC.south_base;
+}
+
 /** All floor tile URLs for preloading. */
 export function getAllFloorTileURLs() {
   var urls = [];
@@ -217,9 +380,17 @@ export function getAllFloorTileURLs() {
   for (var i = 0; i <= 15; i++) {
     urls.push('/assets/pixelab/buildings/wall_cliff_stone/wall_cliff_stone__wang_' + i + '.png');
   }
-  // Wall face sprites
+  // Wall face sprites (old path, kept for backward compat)
   urls.push('/assets/pixelab/buildings/walls/stone_brick/wall_plain.png');
   urls.push('/assets/pixelab/buildings/walls/stone_brick/wall_window.png');
   urls.push('/assets/pixelab/buildings/walls/stone_brick/wall_door.png');
+  // Wall tile sprites (stone_brick_tiles — used by chunk pipeline)
+  var WALL_BASE = '/assets/pixelab/buildings/walls/stone_brick_tiles/';
+  urls.push(WALL_BASE + 'south_base.png');
+  urls.push(WALL_BASE + 'south_window.png');
+  urls.push(WALL_BASE + 'south_door.png');
+  urls.push(WALL_BASE + 'south_corner_west.png');
+  urls.push(WALL_BASE + 'south_corner_east.png');
+  urls.push(WALL_BASE + 'edge_ew.png');
   return urls;
 }
