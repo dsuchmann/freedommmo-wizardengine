@@ -609,9 +609,8 @@ export class CanvasRenderer {
       ctx.ellipse(px + skewX, sy + 8 * zoom, (8 * zoom + (player?.z ?? 0) * zoom) * stretch, 3 * zoom, 0, 0, Math.PI * 2);
       ctx.fill();
     }
-    // Try sprite character first (PixelLab full-character), fall back to assembled rig
-    const spriteDrawn = drawSpriteCharacter(ctx, px, py, zoom, frame, player?.character?.animation ?? 'idle', player?.character?.direction ?? 'S');
-    const bodyDrawn = spriteDrawn || drawHumanoidPlayer(ctx, px, py, zoom, frame, player?.character?.animation ?? 'idle', player?.character?.direction ?? 'S');
+    // Assembled body-part FK rig (scalable — equipment overlays on bones)
+    const bodyDrawn = drawHumanoidPlayer(ctx, px, py, zoom, frame, player?.character?.animation ?? 'idle', player?.character?.direction ?? 'S');
     if (!bodyDrawn) {
       drawModularPlayer(ctx, px, py, zoom, frame, player?.character?.animation ?? 'idle');
       // Visible red dot only on the fallback path (player never invisible)
