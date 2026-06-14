@@ -12,7 +12,7 @@ import { cliffLevel } from '../world/terrain-shaper.js';
 import { soilMaterialForBiome, sfVariantsFor, wangAssetName } from './wang-image-list.js';
 import { rand2 } from '../core/random.js';
 import { SS_BIOME_OBJECTS, f3Placements, f3SpriteUrl } from '../world/decoration-claims.js';
-import { queryBuildingTile, queryBuildingWall, isBuildingClaimed, floorTileUrl, wallTileUrl, wallSpriteSrc } from './building-tile-query.js';
+import { queryBuildingTile, isBuildingClaimed, floorTileUrl } from './building-tile-query.js';
 
 // PixelLab wang tile index = NW*8 + NE*4 + SW*2 + SE*1 where 1=upper biome.
 // Game cornerMask uses same bit positions but 1=lower biome.
@@ -1179,71 +1179,6 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
         if (!queryBuildingTile(wx, wy + 1)) ctx.fillRect(sx, sy + tileSize - borderW, tileSize, borderW); // south edge
         if (!queryBuildingTile(wx - 1, wy)) ctx.fillRect(sx, sy, borderW, tileSize);            // west edge
         if (!queryBuildingTile(wx + 1, wy)) ctx.fillRect(sx + tileSize - borderW, sy, borderW, tileSize); // east edge
-      }
-
-      // ── Building wall tile: drawn INTO the chunk bitmap ──────────
-      // Walls hang below the floor tile (south walls) or sit beside it (east/west).
-      // Calibrated params from user tuning session.
-      var wallHit = queryBuildingWall(wx, wy);
-      if (wallHit) {
-        var wUrl = wallTileUrl(wallHit.sprite);
-        var wBmp = imageCache.get(wUrl);
-        if (wBmp) {
-          var wSrc = wallSpriteSrc(wallHit.sprite);
-          if (wallHit.edge === 'south') {
-            // South wall: hangs below the floor tile's south edge
-            var wallYOff = Math.round(tileSize * 0.25);   // wallYOffset = 0.25
-            var wallHPx = tileSize * 4;                     // wallHeight = 4 tiles
-            var drawW = tileSize * wallHit.spriteW;
-            var wallSY = sy + tileSize + wallYOff - wallHPx; // top of wall sprite
-            // Clamp to chunk canvas — partial walls at chunk boundaries are OK
-            var wallDrawTop = Math.max(0, wallSY);
-            var wallDrawBot = Math.min(canvasSize, wallSY + wallHPx);
-            if (wallDrawBot > wallDrawTop) {
-              var srcClipTop = wallDrawTop - wallSY;
-              var srcClipH = wallDrawBot - wallDrawTop;
-              var srcYFrac = srcClipTop / wallHPx;
-              var srcHFrac = srcClipH / wallHPx;
-              ctx.drawImage(wBmp,
-                0, Math.round(srcYFrac * wSrc.h), wSrc.w, Math.round(srcHFrac * wSrc.h),
-                sx, wallDrawTop, drawW, srcClipH);
-            }
-          } else if (wallHit.edge === 'north') {
-            // North wall: same as south but anchored at north edge of tile
-            var nWallYOff = Math.round(tileSize * 0.25);  // northYOffset = 0.25
-            var nWallHPx = tileSize * 4;
-            var nWallSY = sy + nWallYOff - nWallHPx;
-            var nDrawTop = Math.max(0, nWallSY);
-            var nDrawBot = Math.min(canvasSize, nWallSY + nWallHPx);
-            if (nDrawBot > nDrawTop) {
-              var nSrcClipTop = nDrawTop - nWallSY;
-              var nSrcClipH = nDrawBot - nDrawTop;
-              var nSrcYFrac = nSrcClipTop / nWallHPx;
-              var nSrcHFrac = nSrcClipH / nWallHPx;
-              ctx.drawImage(wBmp,
-                0, Math.round(nSrcYFrac * wSrc.h), wSrc.w, Math.round(nSrcHFrac * wSrc.h),
-                sx, nDrawTop, tileSize, nSrcClipH);
-            }
-          } else if (wallHit.edge === 'east' || wallHit.edge === 'west') {
-            // East/west edge piece: rotated 90 degrees, calibrated offsets
-            var ewH = Math.round(tileSize * 0.40);        // ewTileHeight = 0.40
-            var ewXOff = Math.round(tileSize * -0.30);    // ewXOffset = -0.30
-            var ewSX = wallHit.edge === 'west' ? sx - ewXOff : sx + ewXOff;
-            var ewSY = sy;
-            // Clamp to canvas
-            if (ewSX + tileSize > 0 && ewSX < canvasSize && ewSY + ewH > 0 && ewSY < canvasSize) {
-              // ewRotate90 = true: rotate 90 degrees, auto-mirror for west side
-              ctx.save();
-              var ewCX = ewSX + tileSize / 2, ewCY = ewSY + ewH / 2;
-              ctx.translate(ewCX, ewCY);
-              ctx.rotate(Math.PI / 2);
-              var ewScaleX = wallHit.edge === 'west' ? -1 : 1;
-              ctx.scale(ewScaleX, 1);
-              ctx.drawImage(wBmp, 0, 0, wSrc.w, wSrc.h, -tileSize / 2, -ewH / 2, tileSize, ewH);
-              ctx.restore();
-            }
-          }
-        }
       }
 
       // Collect debug data
