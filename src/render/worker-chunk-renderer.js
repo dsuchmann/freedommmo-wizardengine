@@ -1185,6 +1185,9 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
       // Calibrated values from user tuning session (baked).
       var wallHit = queryBuildingWall(wx, wy);
       if (wallHit) {
+        // DEBUG: red dot at every wall tile to confirm wallIndex is working
+        ctx.fillStyle = 'rgba(255,0,0,0.5)';
+        ctx.fillRect(sx, sy, 4, 4);
         var wUrl = wallTileUrl(wallHit.sprite);
         var wBmp = imageCache.get(wUrl);
         if (wBmp) {
