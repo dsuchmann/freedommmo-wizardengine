@@ -230,6 +230,29 @@ function cachedLayout(seed, mx, my) {
 }
 
 /**
+ * Get all buildings near a chunk (for the wall post-pass).
+ * Returns an array of building objects from layoutSettlement.
+ */
+export function getBuildingsNearChunk(chunkCX, chunkCY, chunkSize) {
+  var seed = getWorldSeed();
+  var x0 = chunkCX * chunkSize, y0 = chunkCY * chunkSize;
+  var mx0 = Math.floor(x0 / MACRO_TILES) - 1;
+  var my0 = Math.floor(y0 / MACRO_TILES) - 1;
+  var buildings = [];
+  for (var dmy = 0; dmy <= 2; dmy++) {
+    for (var dmx = 0; dmx <= 2; dmx++) {
+      var entry = cachedLayout(seed, mx0 + dmx, my0 + dmy);
+      if (entry && entry.layout && entry.layout.buildings) {
+        for (var i = 0; i < entry.layout.buildings.length; i++) {
+          buildings.push(entry.layout.buildings[i]);
+        }
+      }
+    }
+  }
+  return buildings;
+}
+
+/**
  * Query whether a world tile (wx, wy) is inside a building.
  * Returns { material, tileKind } or null.
  * Pure f(seed, wx, wy) — safe for workers.

@@ -1,6 +1,8 @@
 // Worker-compatible chunk renderer. Takes chunk data + neighbor tiles,
 // paints to OffscreenCanvas, returns ImageBitmap.
-console.log('[chunk-renderer] MODULE LOADED — wall code version 20260614c');
+console.log('[chunk-renderer] MODULE LOADED — wall code version 20260614h');
+import { drawWallsForBuildings } from './wall-draw.js';
+import { WALL_CONFIG } from './wall-config.js';
 
 // F3 suppression: placement keys that have been taken (sim truth). Set from chunk-worker via
 // setF3RemovedKeys(). When sim is absent this stays empty and behaviour is unchanged.
@@ -13,7 +15,7 @@ import { cliffLevel } from '../world/terrain-shaper.js';
 import { soilMaterialForBiome, sfVariantsFor, wangAssetName } from './wang-image-list.js';
 import { rand2 } from '../core/random.js';
 import { SS_BIOME_OBJECTS, f3Placements, f3SpriteUrl } from '../world/decoration-claims.js';
-import { queryBuildingTile, queryBuildingWall, isBuildingClaimed, floorTileUrl, wallTileUrl, wallSpriteSrc } from './building-tile-query.js';
+import { queryBuildingTile, queryBuildingWall, isBuildingClaimed, floorTileUrl, wallTileUrl, wallSpriteSrc, getBuildingsNearChunk } from './building-tile-query.js';
 
 // PixelLab wang tile index = NW*8 + NE*4 + SW*2 + SE*1 where 1=upper biome.
 // Game cornerMask uses same bit positions but 1=lower biome.
@@ -1314,78 +1316,26 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
     if (!debugSuccesses[wi]) wangMissing++;
   }
 
-  // ── Wall post-pass: draw building walls onto the chunk canvas ──────
-  // Uses the SAME positioning logic as the separate-pass renderer (building-renderer.js)
-  // but in chunk-local coordinates. Drawn AFTER terrain+soil+scatter, BEFORE bitmap transfer.
+  // ── Wall post-pass: shared drawing function (wall-draw.js) ──────────
+  // Uses the EXACT SAME code as the main-thread separate-pass renderer.
+  // Only difference: coordinate transform maps world tiles to chunk-local pixels.
   {
-    var WALL_Y_OFF = 0.25;
-    var WALL_H_TILES = 4;
-    var NORTH_Y_OFF = 0.25;
-    var EW_TILE_H = 0.40;
-    var EW_X_OFF = -0.30;
-    var wallHPx = Math.round(tileSize * WALL_H_TILES);
-    var wallPad = 1;
-
-    for (var wy2 = 0; wy2 < chunkSize; wy2++) {
-      for (var wx2 = 0; wx2 < chunkSize; wx2++) {
-        var gwx = chunk.cx * chunkSize + wx2;
-        var gwy = chunk.cy * chunkSize + wy2;
-        var wHit = queryBuildingWall(gwx, gwy);
-        if (!wHit) continue;
-
-        var wUrl2 = wallTileUrl(wHit.sprite);
-        var wBmp2 = imageCache.get(wUrl2);
-        if (!wBmp2) continue;
-        var wSrc2 = wallSpriteSrc(wHit.sprite);
-
-        var lsx = wx2 * tileSize;  // local chunk X
-        var lsy = wy2 * tileSize;  // local chunk Y
-
-        if (wHit.edge === 'south') {
-          // Wall bottom edge at floor south + offset, extends upward
-          var sWallTop = lsy + tileSize - wallHPx + Math.round(tileSize * WALL_Y_OFF);
-          var srcX2 = 0, srcW2 = wSrc2.w;
-          if (wHit.half === 'left') { srcW2 = Math.round(wSrc2.w / 2); }
-          else if (wHit.half === 'right') { srcX2 = Math.round(wSrc2.w / 2); srcW2 = Math.round(wSrc2.w / 2); }
-          // Clamp to canvas
-          var sTop = Math.max(0, sWallTop);
-          var sBot = Math.min(canvasSize, sWallTop + wallHPx);
-          if (sBot > sTop) {
-            var sF0 = (sTop - sWallTop) / wallHPx;
-            var sFH = (sBot - sTop) / wallHPx;
-            ctx.drawImage(wBmp2,
-              srcX2, Math.round(sF0 * wSrc2.h), srcW2, Math.round(sFH * wSrc2.h),
-              lsx, sTop, tileSize + wallPad, sBot - sTop + wallPad);
-          }
-
-        } else if (wHit.edge === 'north') {
-          // North wall: extends upward from tile top
-          var nWallTop = lsy - wallHPx + Math.round(tileSize * NORTH_Y_OFF);
-          var nTop = Math.max(0, nWallTop);
-          var nBot = Math.min(canvasSize, nWallTop + wallHPx);
-          if (nBot > nTop) {
-            var nF0 = (nTop - nWallTop) / wallHPx;
-            var nFH = (nBot - nTop) / wallHPx;
-            ctx.drawImage(wBmp2,
-              0, Math.round(nF0 * wSrc2.h), wSrc2.w, Math.round(nFH * wSrc2.h),
-              lsx, nTop, tileSize + wallPad, nBot - nTop + wallPad);
-          }
-
-        } else if (wHit.edge === 'east' || wHit.edge === 'west') {
-          var ewH2 = Math.round(tileSize * EW_TILE_H);
-          var ewXOff2 = Math.round(tileSize * EW_X_OFF);
-          var ewLsx = wHit.edge === 'west' ? lsx - ewXOff2 : lsx + ewXOff2;
-          if (ewLsx + tileSize > 0 && ewLsx < canvasSize && lsy + ewH2 > 0 && lsy < canvasSize) {
-            ctx.save();
-            ctx.translate(ewLsx + tileSize / 2, lsy + ewH2 / 2);
-            ctx.rotate(Math.PI / 2);
-            if (wHit.edge === 'west') ctx.scale(-1, 1);
-            ctx.drawImage(wBmp2, 0, 0, wSrc2.w, wSrc2.h,
-              -tileSize / 2, -ewH2 / 2, tileSize + wallPad, ewH2 + wallPad);
-            ctx.restore();
-          }
-        }
-      }
+    var chunkX0 = chunk.cx * chunkSize;
+    var chunkY0 = chunk.cy * chunkSize;
+    var chunkBuildings = getBuildingsNearChunk(chunk.cx, chunk.cy, chunkSize);
+    if (chunkBuildings.length > 0) {
+      var chunkWallImgs = {
+        south_base: imageCache.get(wallTileUrl('south_base')),
+        south_window: imageCache.get(wallTileUrl('south_window')),
+        south_door: imageCache.get(wallTileUrl('south_door')),
+        south_corner_west: imageCache.get(wallTileUrl('south_corner_west')),
+        south_corner_east: imageCache.get(wallTileUrl('south_corner_east')),
+        edge_ew: imageCache.get(wallTileUrl('edge_ew')),
+      };
+      var toChunkX = function(wx) { return Math.round((wx - chunkX0) * tileSize); };
+      var toChunkY = function(wy) { return Math.round((wy - chunkY0) * tileSize); };
+      drawWallsForBuildings(ctx, chunkBuildings, chunkWallImgs, tileSize, WALL_CONFIG,
+        toChunkX, toChunkY, canvasSize, canvasSize);
     }
   }
 
