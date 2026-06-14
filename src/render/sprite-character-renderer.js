@@ -114,6 +114,80 @@ export function drawSpriteCharacter(ctx, x, y, zoom, frame, animation, direction
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(img, drawX, drawY, w, h);
+
+  // ── Equipment overlay: draw equipment sprites at FK bone positions ──
+  if (_equipSprites.size > 0 && _rig) {
+    const joints = _getWalkJoints(frame, animation, d);
+    const pose = _solvePose(_rig, joints);
+    const RIG_UNIT_PX = 1.4;
+    const S = RIG_UNIT_PX * zoom;
+
+    for (const [slot, equip] of _equipSprites) {
+      const bone = pose[equip.bone];
+      if (!bone) continue;
+      const eImg = equip.img;
+      if (!eImg) continue;
+
+      // Position: character center + bone offset
+      // The FK rig's origin is at the root (feet). Bone positions are in rig units.
+      // xProj flattens x for front/back views (same as humanoid renderer).
+      const xProj = { s: 1, n: 1, e: 0.25, w: 0.25, se: 0.75, sw: 0.75, ne: 0.75, nw: 0.75 }[d] ?? 1;
+      const xSign = { s: -1, n: 1, e: -1, w: 1, se: -1, sw: 1, ne: -1, nw: 1 }[d] ?? -1;
+
+      const boneX = x + xSign * bone.origin.x * xProj * S;
+      const boneY = drawY + h - bone.origin.y * S; // flip Y: rig Y-up → canvas Y-down
+
+      const eScale = (equip.scale || 0.6) * zoom;
+      const ew = eImg.width * eScale;
+      const eh = eImg.height * eScale;
+      ctx.drawImage(eImg, boneX - ew / 2, boneY - eh / 2, ew, eh);
+    }
+  }
+
   ctx.restore();
   return true;
+}
+
+// ── Equipment system ──────────────────────────────────────────────────────
+import { solvePose as _solvePose } from '../life/pose.js';
+
+const _equipSprites = new Map(); // slot -> { bone, img, scale }
+let _rig = null;
+
+// Load rig for bone positions
+fetch('/src/life/rigs/humanoid.json').then(r => r.json()).then(r => { _rig = r; }).catch(() => {});
+
+function _getWalkJoints(frame, animation, d) {
+  if (!_rig) return {};
+  if (animation !== 'walk' && animation !== 'sprint') return {};
+  const gait = _rig.gaits[animation === 'sprint' ? 'run' : 'walk'];
+  const phase = frame * Math.PI / 4;
+  if (d === 'e' || d === 'w') {
+    const leg = Math.sin(phase) * 22 * gait.strideFactor;
+    const arm = -Math.sin(phase) * 14 * gait.strideFactor;
+    return { thigh_l: leg, thigh_r: -leg, arm_u_l: arm, arm_u_r: -arm };
+  }
+  const arm = -Math.sin(phase) * 5 * gait.strideFactor;
+  return { arm_u_l: arm, arm_u_r: -arm };
+}
+
+/** Equip a sprite to a bone slot. Call from console: equipItem('chest', '/path/to.png', 'spine') */
+export function equipItem(slot, imgUrl, boneName, scale = 0.6) {
+  const img = new Image();
+  img.src = imgUrl;
+  img.onload = () => {
+    _equipSprites.set(slot, { bone: boneName, img, scale });
+    console.log(`[equip] ${slot} → ${boneName}`);
+  };
+}
+
+/** Unequip a slot. */
+export function unequipItem(slot) {
+  _equipSprites.delete(slot);
+}
+
+// Expose on window for console testing
+if (typeof window !== 'undefined') {
+  window.equipItem = equipItem;
+  window.unequipItem = unequipItem;
 }
