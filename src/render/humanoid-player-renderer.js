@@ -194,12 +194,17 @@ export function drawHumanoidPlayer(ctx, x, y, zoom, frame, animation, direction 
     const src = partFrame(l.part, d, img, k);
     ctx.drawImage(src, -m.pivot[0] * k, -m.pivot[1] * k * squash, img.width * k, img.height * k * squash);
 
-    // ── Equipment overlay: draw armor piece at same transform ──
+    // ── Equipment overlay: draw armor piece centered on bone origin ──
     const equipSlot = _PART_TO_EQUIP_SLOT[l.part];
     const equipImg = equipSlot && _equipImages.get(equipSlot);
     if (equipImg) {
-      const ek = k * 1.05; // slightly larger to cover the body part
-      ctx.drawImage(equipImg, -m.pivot[0] * ek, -m.pivot[1] * ek * squash, img.width * ek, img.height * ek * squash);
+      // Equipment sprites are standalone 64×64 with item centered.
+      // Draw centered on the bone origin (0,0 in the rotated ctx).
+      // Scale to match the body part's rendered size.
+      const ek = k * 1.0;
+      const ew = equipImg.width * ek;
+      const eh = equipImg.height * ek;
+      ctx.drawImage(equipImg, -ew / 2, -eh / 2 * squash, ew, eh * squash);
     }
 
     ctx.restore();
