@@ -244,7 +244,10 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
         ctx.drawImage(_wallImgs.plain, srcCol * SRC_COL_W, 0, SRC_COL_W, SRC, sx, sy, t, wallH);
       }
 
-      // Step 2: Overlay doors and windows at their exact positions (full sprite, centered)
+      // Step 2: Overlay doors and windows, clipped to section bounds
+      const secLeftPx = Math.round((b.x + x0) * tilePx - camX);
+      const secRightPx = Math.round((b.x + x0 + sec.w) * tilePx - camX);
+
       for (let dx = 0; dx < sec.w; dx++) {
         const lx = x0 + dx;
         const ly = southEdgeY - 1;
@@ -256,15 +259,29 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
         else if (windowPositions.has(key)) overlay = _wallImgs.window;
         if (!overlay) continue;
 
-        // Draw the full 5-tile-wide overlay centered on this tile
         const wx = b.x + lx;
         const wy = b.y + southEdgeY;
-        const centerSx = Math.round(wx * tilePx - camX);
-        const overlaySx = centerSx - Math.round(t * 2); // center of 5-tile sprite = tile 2
+        const overlayFullW = Math.round(t * 5);
+        let overlaySx = Math.round(wx * tilePx - camX) - Math.round(t * 2);
         const overlaySy = Math.round(wy * tilePx - camY) - wallH;
-        const overlayW = Math.round(t * 5);
 
-        ctx.drawImage(overlay, 0, 0, SRC, SRC, overlaySx, overlaySy, overlayW, wallH);
+        // Clip to section bounds — don't bleed past building edges
+        let srcX = 0;
+        let drawX = overlaySx;
+        let drawW = overlayFullW;
+        if (drawX < secLeftPx) {
+          const clip = secLeftPx - drawX;
+          srcX = Math.round(clip * SRC / overlayFullW);
+          drawW -= clip;
+          drawX = secLeftPx;
+        }
+        if (drawX + drawW > secRightPx) {
+          drawW = secRightPx - drawX;
+        }
+        if (drawW <= 0) continue;
+        const srcW = Math.round(drawW * SRC / overlayFullW);
+
+        ctx.drawImage(overlay, srcX, 0, srcW, SRC, drawX, overlaySy, drawW, wallH);
       }
     }
   }
