@@ -22,13 +22,15 @@ export function initWallTuner() {
   window.addEventListener('keydown', (e) => {
     if (e.target instanceof Element && e.target.closest('input,textarea,select,[contenteditable]')) return;
 
-    if (e.key === 'w' && !e.ctrlKey && !e.altKey) {
+    if (e.key === '\\' && !e.ctrlKey && !e.altKey) {
       enabled = !enabled;
       return;
     }
     if (!enabled) return;
 
-    // Up/down: select parameter
+    // / to cycle through parameters
+    if (e.key === '/') { selectedParam = (selectedParam + 1) % PARAM_KEYS.length; e.preventDefault(); return; }
+    // Up/down also works
     if (e.key === 'ArrowUp') { selectedParam = (selectedParam - 1 + PARAM_KEYS.length) % PARAM_KEYS.length; }
     if (e.key === 'ArrowDown') { selectedParam = (selectedParam + 1) % PARAM_KEYS.length; }
 
@@ -73,7 +75,7 @@ export function drawWallTuner(ctx, w, h) {
   ctx.font = 'bold 13px monospace';
   ctx.textAlign = 'left';
   ctx.fillStyle = '#6cf';
-  ctx.fillText('WALL TUNER (W toggle, ↑↓ select, ←→ adjust)', panelX + 8, panelY + 18);
+  ctx.fillText('WALL TUNER (\\ toggle, / select, ←→ adjust)', panelX + 8, panelY + 18);
 
   for (let i = 0; i < PARAM_KEYS.length; i++) {
     const key = PARAM_KEYS[i];
