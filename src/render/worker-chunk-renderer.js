@@ -1194,9 +1194,13 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
             // South wall: hangs below the floor tile's south edge
             var wallYOff = Math.round(tileSize * 0.25);   // wallYOffset = 0.25
             var wallHPx = tileSize * 4;                     // wallHeight = 4 tiles
-            var drawW = tileSize * wallHit.spriteW;
-            var wallSY = sy + tileSize + wallYOff - wallHPx; // top of wall sprite
-            // Clamp to chunk canvas — partial walls at chunk boundaries are OK
+            var drawW = tileSize;                           // always 1 tile wide per chunk tile
+            var wallSY = sy + tileSize + wallYOff - wallHPx;
+            // For 2-wide sprites (door/window), draw the correct half
+            var srcX0 = 0, srcCropW = wSrc.w;
+            if (wallHit.half === 'left') { srcX0 = 0; srcCropW = Math.round(wSrc.w / 2); }
+            else if (wallHit.half === 'right') { srcX0 = Math.round(wSrc.w / 2); srcCropW = Math.round(wSrc.w / 2); }
+            // Clamp to chunk canvas
             var wallDrawTop = Math.max(0, wallSY);
             var wallDrawBot = Math.min(canvasSize, wallSY + wallHPx);
             if (wallDrawBot > wallDrawTop) {
@@ -1205,7 +1209,7 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
               var srcYFrac = srcClipTop / wallHPx;
               var srcHFrac = srcClipH / wallHPx;
               ctx.drawImage(wBmp,
-                0, Math.round(srcYFrac * wSrc.h), wSrc.w, Math.round(srcHFrac * wSrc.h),
+                srcX0, Math.round(srcYFrac * wSrc.h), srcCropW, Math.round(srcHFrac * wSrc.h),
                 sx, wallDrawTop, drawW, srcClipH);
             }
           } else if (wallHit.edge === 'north') {

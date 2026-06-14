@@ -143,31 +143,32 @@ function cachedLayout(seed, mx, my) {
         if (interval % 3 === 0) windowPos.add(slx + ',' + sly);
       }
 
-      var skipNext = false;
       for (var dx4 = 0; dx4 < sec3.w; dx4++) {
-        if (skipNext) { skipNext = false; continue; }
         var wlx = sec3.x0 + dx4, wly = lastRow;
-        // Only exterior south edge: south neighbor must be outside building
         if (floorSet2.has(wlx + ',' + (wly + 1))) continue;
         var wwx = b2.x + wlx, wwy = b2.y + wly;
+        // Skip if already assigned (right half of a 2-wide sprite)
+        if (wallIndex.has(wwx + ',' + wwy)) continue;
 
         var westOut = !floorSet2.has((wlx - 1) + ',' + wly);
         var eastOut = !floorSet2.has((wlx + 1) + ',' + wly);
         var wKey = wlx + ',' + wly;
 
-        var wallSprite, wallSpriteW;  // sprite name, width in tiles
         if (westOut) {
-          wallSprite = 'south_corner_west'; wallSpriteW = 1;
+          wallIndex.set(wwx + ',' + wwy, { sprite: 'south_corner_west', edge: 'south', spriteW: 1, half: null });
         } else if (eastOut) {
-          wallSprite = 'south_corner_east'; wallSpriteW = 1;
+          wallIndex.set(wwx + ',' + wwy, { sprite: 'south_corner_east', edge: 'south', spriteW: 1, half: null });
         } else if (doorSet2.has(wKey) && dx4 >= 2 && dx4 < sec3.w - 2) {
-          wallSprite = 'south_door'; wallSpriteW = 2; skipNext = true;
+          // 2-wide door: LEFT half at this tile, RIGHT half at next tile
+          wallIndex.set(wwx + ',' + wwy, { sprite: 'south_door', edge: 'south', spriteW: 2, half: 'left' });
+          wallIndex.set((wwx + 1) + ',' + wwy, { sprite: 'south_door', edge: 'south', spriteW: 2, half: 'right' });
         } else if (windowPos.has(wKey) && dx4 >= 2 && dx4 < sec3.w - 2) {
-          wallSprite = 'south_window'; wallSpriteW = 2; skipNext = true;
+          // 2-wide window: LEFT half at this tile, RIGHT half at next tile
+          wallIndex.set(wwx + ',' + wwy, { sprite: 'south_window', edge: 'south', spriteW: 2, half: 'left' });
+          wallIndex.set((wwx + 1) + ',' + wwy, { sprite: 'south_window', edge: 'south', spriteW: 2, half: 'right' });
         } else {
-          wallSprite = 'south_base'; wallSpriteW = 1;
+          wallIndex.set(wwx + ',' + wwy, { sprite: 'south_base', edge: 'south', spriteW: 1, half: null });
         }
-        wallIndex.set(wwx + ',' + wwy, { sprite: wallSprite, edge: 'south', spriteW: wallSpriteW });
       }
 
       // ── North wall tiles ──
