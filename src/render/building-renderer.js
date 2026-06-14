@@ -334,17 +334,32 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
 
     // ── Pass 2: East/West edge columns ───────────────────────────
     if (P.eastWestColumns) {
-      const eastImg = _wallImgs[P.eastTileName] || _wallImgs.south_corner_east;
-      const westImg = _wallImgs[P.westTileName] || _wallImgs.south_corner_west;
-      const ewH = Math.round(t * P.ewTileHeight);
-      const ewXOff = Math.round(t * P.ewXOffset);
-      // Source dimensions from image (use full height up to 128, width 32)
-      const eSrcH = eastImg ? Math.min(128, Math.round(P.ewTileHeight * 32)) : 32;
-      const wSrcH = westImg ? Math.min(128, Math.round(P.ewTileHeight * 32)) : 32;
+      const eastImg = _wallImgs[P.eastTileName] || _wallImgs.edge_ew;
+      const westImg = _wallImgs[P.westTileName] || _wallImgs.edge_ew;
+      const ewH = Math.round(t * (P.ewTileHeight || 1));
+      const ewXOff = Math.round(t * (P.ewXOffset || 0));
+      const freq = Math.max(1, Math.round(P.ewFrequency || 1));
+      const flipH = P.ewFlipH;
+      const flipV = P.ewFlipV;
+      const rot90 = P.ewRotate90;
+
+      function drawEWTile(img, sx, sy, drawW, drawH, isWest) {
+        ctx.save();
+        const cx = sx + drawW / 2, cy = sy + drawH / 2;
+        ctx.translate(cx, cy);
+        if (rot90) ctx.rotate(Math.PI / 2);
+        const scaleX = (flipH ? -1 : 1) * (isWest ? -1 : 1); // west auto-mirrors
+        const scaleY = flipV ? -1 : 1;
+        ctx.scale(scaleX, scaleY);
+        ctx.drawImage(img, 0, 0, img.naturalWidth || 32, img.naturalHeight || 128,
+          -drawW / 2, -drawH / 2, drawW, drawH);
+        ctx.restore();
+      }
 
       for (const sec of fp.sections) {
         // East edge
         for (let dy = 0; dy < sec.h; dy++) {
+          if (dy % freq !== 0) continue;
           const lx = sec.x0 + sec.w, ly = sec.y0 + dy;
           if (floorSet.has(lx + ',' + ly)) continue;
           const wx = b.x + lx;
@@ -352,10 +367,11 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
           const sx = Math.round(wx * tilePx - camX) + ewXOff;
           const sy = Math.round(wy * tilePx - camY);
           if (sx + t < 0 || sx > w || sy + ewH < 0 || sy > h) continue;
-          if (eastImg) ctx.drawImage(eastImg, 0, 0, 32, eSrcH, sx, sy, t + pad, ewH + pad);
+          if (eastImg) drawEWTile(eastImg, sx, sy, t + pad, ewH + pad, false);
         }
         // West edge
         for (let dy = 0; dy < sec.h; dy++) {
+          if (dy % freq !== 0) continue;
           const lx = sec.x0 - 1, ly = sec.y0 + dy;
           if (floorSet.has(lx + ',' + ly)) continue;
           const wx = b.x + lx;
@@ -363,7 +379,7 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
           const sx = Math.round(wx * tilePx - camX) - ewXOff;
           const sy = Math.round(wy * tilePx - camY);
           if (sx + t < 0 || sx > w || sy + ewH < 0 || sy > h) continue;
-          if (westImg) ctx.drawImage(westImg, 0, 0, 32, wSrcH, sx, sy, t + pad, ewH + pad);
+          if (westImg) drawEWTile(westImg, sx, sy, t + pad, ewH + pad, true);
         }
       }
     }

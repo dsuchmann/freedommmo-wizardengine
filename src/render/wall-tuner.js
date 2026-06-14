@@ -1,36 +1,44 @@
 // src/render/wall-tuner.js — live tuning panel for wall rendering parameters.
-// Press \ to toggle. / to cycle params. ←→ to adjust. C to copy values.
+// Press \ to toggle. / to cycle params. , and . to adjust. C to copy.
 
-// Available wall tile sprites (for cycling through with east/west tile selection)
 const TILE_OPTIONS = [
   'south_base', 'south_corner_west', 'south_corner_east',
   'south_window', 'south_door', 'interior_base', 'interior_archway',
   'edge_ew', 'north_back',
 ];
 
-const PARAMS = {
-  wallYOffset: 0.4,       // how far wall overlaps the floor edge (fraction of tile)
-  cornerExtend: 1,        // tiles of plain wall beyond floor edge before corner molding
-  wallHeight: 4,          // wall height in tiles
-  northWall: true,        // render north walls
-  northYOffset: 0.0,      // north wall Y offset (fraction of tile)
-  interiorWall: false,    // render interior junction walls
-  eastWestColumns: true,  // render east/west edge columns
-  eastTile: 1,            // index into TILE_OPTIONS for east column sprite
-  westTile: 1,            // index into TILE_OPTIONS for west column sprite
-  ewTileHeight: 1,        // east/west column height in tiles
-  ewXOffset: 0.0,         // east/west X offset (fraction of tile)
-};
+// 'int' type steps by 1, 'float' by 0.05, 'bool' toggles, 'tile' cycles tile list
+const PARAM_DEFS = [
+  { key: 'wallYOffset',     type: 'float', default: 0.4,  desc: 'south wall Y offset' },
+  { key: 'cornerExtend',    type: 'int',   default: 1,    desc: 'tiles past floor before corner' },
+  { key: 'wallHeight',      type: 'float', default: 4,    desc: 'wall height in tiles' },
+  { key: 'northWall',       type: 'bool',  default: true,  desc: 'render north walls' },
+  { key: 'northYOffset',    type: 'float', default: 0,    desc: 'north wall Y offset' },
+  { key: 'interiorWall',    type: 'bool',  default: false, desc: 'render interior walls' },
+  { key: 'eastWestColumns', type: 'bool',  default: true,  desc: 'render east/west columns' },
+  { key: 'eastTile',        type: 'tile',  default: 7,    desc: 'east column sprite' },    // 7 = edge_ew
+  { key: 'westTile',        type: 'tile',  default: 7,    desc: 'west column sprite' },    // 7 = edge_ew
+  { key: 'ewTileHeight',    type: 'float', default: 1,    desc: 'east/west tile height' },
+  { key: 'ewXOffset',       type: 'float', default: 0,    desc: 'east/west X offset' },
+  { key: 'ewFrequency',     type: 'int',   default: 1,    desc: 'paint every N tiles' },
+  { key: 'ewFlipH',         type: 'bool',  default: false, desc: 'flip east/west horizontal' },
+  { key: 'ewFlipV',         type: 'bool',  default: false, desc: 'flip east/west vertical' },
+  { key: 'ewRotate90',      type: 'bool',  default: false, desc: 'rotate east/west 90°' },
+];
+
+const PARAMS = {};
+for (const d of PARAM_DEFS) PARAMS[d.key] = d.default;
 
 let enabled = false;
 let selectedParam = 0;
-const PARAM_KEYS = Object.keys(PARAMS);
 
 export function wallTunerParams() {
+  const eastIdx = Math.max(0, Math.min(TILE_OPTIONS.length - 1, Math.round(PARAMS.eastTile)));
+  const westIdx = Math.max(0, Math.min(TILE_OPTIONS.length - 1, Math.round(PARAMS.westTile)));
   return {
     ...PARAMS,
-    eastTileName: TILE_OPTIONS[Math.max(0, Math.min(TILE_OPTIONS.length - 1, Math.round(PARAMS.eastTile)))],
-    westTileName: TILE_OPTIONS[Math.max(0, Math.min(TILE_OPTIONS.length - 1, Math.round(PARAMS.westTile)))],
+    eastTileName: TILE_OPTIONS[eastIdx],
+    westTileName: TILE_OPTIONS[westIdx],
   };
 }
 
@@ -44,38 +52,48 @@ export function initWallTuner() {
     }
     if (!enabled) return;
 
-    // / to cycle through parameters
-    if (e.key === '/') { selectedParam = (selectedParam + 1) % PARAM_KEYS.length; e.preventDefault(); return; }
-    if (e.key === 'ArrowUp') { selectedParam = (selectedParam - 1 + PARAM_KEYS.length) % PARAM_KEYS.length; }
-    if (e.key === 'ArrowDown') { selectedParam = (selectedParam + 1) % PARAM_KEYS.length; }
+    if (e.key === '/') {
+      selectedParam = (selectedParam + 1) % PARAM_DEFS.length;
+      e.preventDefault();
+      return;
+    }
+    if (e.key === 'ArrowUp') selectedParam = (selectedParam - 1 + PARAM_DEFS.length) % PARAM_DEFS.length;
+    if (e.key === 'ArrowDown') selectedParam = (selectedParam + 1) % PARAM_DEFS.length;
 
-    const key = PARAM_KEYS[selectedParam];
+    const def = PARAM_DEFS[selectedParam];
+    const key = def.key;
     const val = PARAMS[key];
 
-    // , = value down, . = value up (also ←→ still work)
-    const step = e.shiftKey ? 0.5 : 0.05;
-    if (e.key === ',' || e.key === 'ArrowLeft') {
-      if (typeof val === 'boolean') PARAMS[key] = !val;
-      else if (typeof val === 'number') PARAMS[key] = Math.round((val - step) * 100) / 100;
-    }
-    if (e.key === '.' || e.key === 'ArrowRight') {
-      if (typeof val === 'boolean') PARAMS[key] = !val;
-      else if (typeof val === 'number') PARAMS[key] = Math.round((val + step) * 100) / 100;
+    const isDown = e.key === ',' || e.key === 'ArrowLeft';
+    const isUp = e.key === '.' || e.key === 'ArrowRight';
+
+    if (isDown || isUp) {
+      const dir = isUp ? 1 : -1;
+      if (def.type === 'bool') {
+        PARAMS[key] = !val;
+      } else if (def.type === 'tile') {
+        PARAMS[key] = ((Math.round(val) + dir) % TILE_OPTIONS.length + TILE_OPTIONS.length) % TILE_OPTIONS.length;
+      } else if (def.type === 'int') {
+        PARAMS[key] = Math.round(val) + dir * (e.shiftKey ? 5 : 1);
+      } else {
+        const step = e.shiftKey ? 0.5 : 0.05;
+        PARAMS[key] = Math.round((val + dir * step) * 100) / 100;
+      }
     }
 
-    // C to copy all values to clipboard
+    // C to copy
     if (e.key === 'c' || e.key === 'C') {
-      const lines = PARAM_KEYS.map(k => {
-        const v = PARAMS[k];
-        let display = typeof v === 'boolean' ? (v ? 'true' : 'false') : v.toFixed(2);
-        if (k === 'eastTile' || k === 'westTile') {
+      const lines = PARAM_DEFS.map(d => {
+        const v = PARAMS[d.key];
+        let display;
+        if (d.type === 'bool') display = v ? 'true' : 'false';
+        else if (d.type === 'tile') {
           const idx = Math.max(0, Math.min(TILE_OPTIONS.length - 1, Math.round(v)));
-          display = `${v.toFixed(0)} (${TILE_OPTIONS[idx]})`;
-        }
-        return `${k}: ${display}`;
+          display = `${idx} (${TILE_OPTIONS[idx]})`;
+        } else display = typeof v === 'number' ? v.toFixed(2) : String(v);
+        return `${d.key}: ${display}`;
       });
-      const text = '=== WALL TUNER VALUES ===\n' + lines.join('\n');
-      navigator.clipboard.writeText(text).catch(() => {});
+      navigator.clipboard.writeText('=== WALL TUNER VALUES ===\n' + lines.join('\n')).catch(() => {});
     }
   });
 
@@ -85,48 +103,49 @@ export function initWallTuner() {
 export function drawWallTuner(ctx, w, h) {
   if (!enabled) return;
 
-  const panelW = 380, lineH = 22, panelX = 8, panelY = h / 2 - 150;
-  const panelH = (PARAM_KEYS.length + 3) * lineH + 10;
+  const panelW = 420, lineH = 20, panelX = 8;
+  const panelH = (PARAM_DEFS.length + 3) * lineH + 10;
+  const panelY = Math.max(8, Math.floor(h / 2 - panelH / 2));
 
   ctx.save();
-  ctx.fillStyle = 'rgba(0,0,0,0.88)';
+  ctx.fillStyle = 'rgba(0,0,0,0.9)';
   ctx.fillRect(panelX, panelY, panelW, panelH);
   ctx.strokeStyle = 'rgba(100,200,255,0.5)';
   ctx.lineWidth = 1;
   ctx.strokeRect(panelX, panelY, panelW, panelH);
 
-  ctx.font = 'bold 13px monospace';
+  ctx.font = 'bold 12px monospace';
   ctx.textAlign = 'left';
   ctx.fillStyle = '#6cf';
-  ctx.fillText('WALL TUNER (\\ toggle, / select, ,. adjust, C copy)', panelX + 8, panelY + 18);
+  ctx.fillText('\\ toggle  / select  ,. adjust  C copy', panelX + 8, panelY + 16);
 
-  for (let i = 0; i < PARAM_KEYS.length; i++) {
-    const key = PARAM_KEYS[i];
-    const val = PARAMS[key];
-    const y = panelY + 40 + i * lineH;
+  for (let i = 0; i < PARAM_DEFS.length; i++) {
+    const def = PARAM_DEFS[i];
+    const val = PARAMS[def.key];
+    const y = panelY + 36 + i * lineH;
     const isSelected = i === selectedParam;
 
     ctx.fillStyle = isSelected ? '#ffd24a' : '#aaa';
-    ctx.font = isSelected ? 'bold 12px monospace' : '12px monospace';
+    ctx.font = isSelected ? 'bold 11px monospace' : '11px monospace';
 
     let display;
-    if (typeof val === 'boolean') {
-      display = val ? 'ON' : 'OFF';
-    } else if (key === 'eastTile' || key === 'westTile') {
+    if (def.type === 'bool') display = val ? 'ON' : 'OFF';
+    else if (def.type === 'tile') {
       const idx = Math.max(0, Math.min(TILE_OPTIONS.length - 1, Math.round(val)));
-      display = `${idx}: ${TILE_OPTIONS[idx]}`;
-    } else {
-      display = val.toFixed(2);
-    }
+      display = `◄ ${TILE_OPTIONS[idx]} ►`;
+    } else if (def.type === 'int') display = String(Math.round(val));
+    else display = val.toFixed(2);
 
     const arrow = isSelected ? '► ' : '  ';
-    ctx.fillText(`${arrow}${key}: ${display}`, panelX + 8, y);
-  }
+    ctx.fillText(`${arrow}${def.key}: ${display}`, panelX + 8, y);
 
-  // Footer
-  ctx.font = '11px monospace';
-  ctx.fillStyle = '#666';
-  ctx.fillText('Shift+,. = big steps | C = copy to clipboard', panelX + 8, panelY + panelH - 8);
+    // Show description for selected param
+    if (isSelected) {
+      ctx.font = '10px monospace';
+      ctx.fillStyle = '#888';
+      ctx.fillText(def.desc, panelX + 280, y);
+    }
+  }
 
   ctx.restore();
 }
