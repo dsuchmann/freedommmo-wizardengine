@@ -27,7 +27,8 @@ let _floorReady = false;
 function ensureFloorImages() {
   if (_floorReady) return;
   _floorReady = true;
-  const wallBase = '/assets/pixelab/buildings/walls/stone_brick/';
+  // 160×160 south wall sprites (exactly 5 tiles, clean tiling)
+  const wallBase = '/assets/pixelab/buildings/walls/stone_160/';
   for (const v of ['plain', 'window', 'door']) {
     const img = new Image();
     img.src = wallBase + 'wall_' + v + '.png';
@@ -178,7 +179,7 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
   const SEG_TILES = 5;
   const segSize = Math.round(tilePx * SEG_TILES);
   // Source image is 256×256 (existing stone_brick sprites)
-  const SRC_SIZE = 256;
+  const SRC_SIZE = 160; // 160×160 sprites = exactly 5 tiles
 
   for (const b of buildings) {
     const fp = b.footprint;
