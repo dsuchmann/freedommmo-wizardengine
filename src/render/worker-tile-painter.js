@@ -124,14 +124,8 @@ export function paintCliffOverlay(ctx, tile, sx, sy, size, sun, imageCache) {
   if (seLevel === minLevel) cornerMask |= 1;
   if (cornerMask === 0 || cornerMask === 15) return;
   var wangIndex = CLIFF_CORNER_TO_WANG[cornerMask];
-  var src;
-  if (tile._isBuildingWall) {
-    // Building wall: use dedicated wall cliff tileset instead of terrain cliff
-    src = '/assets/pixelab/buildings/wall_cliff_stone/wall_cliff_stone__wang_' + wangIndex + '.png';
-  } else {
-    var cliffDir = BIOME_CLIFF[tile.biome] || 'cliff_overlay';
-    src = TRANSITIONS_BASE + cliffDir + '/wang/' + cliffDir + '__wang_' + wangIndex + WANG_SUFFIX;
-  }
+  var cliffDir = BIOME_CLIFF[tile.biome] || 'cliff_overlay';
+  var src = TRANSITIONS_BASE + cliffDir + '/wang/' + cliffDir + '__wang_' + wangIndex + WANG_SUFFIX;
   var bmp = imageCache.get(src);
   if (!bmp) return;
   ctx.drawImage(bmp, 0, 0, 32, 32, sx, sy, size, size);

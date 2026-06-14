@@ -1035,19 +1035,8 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
 
       // Building elevation boost: if this tile or neighbors are building floors,
       // raise their effective elevation so the cliff system draws wall faces.
-      var BUILDING_EL_BOOST = 0.05; // minimal — just enough for cliff edge detection, walls are separate objects
-      var isBldg = queryBuildingTile(wx, wy);
-      var isBldgE = queryBuildingTile(wx + 1, wy);
-      var isBldgS = queryBuildingTile(wx, wy + 1);
-      var isBldgSE = queryBuildingTile(wx + 1, wy + 1);
-      if (isBldg)   tile.climate.elevation = Math.min(0.99, tile.climate.elevation + BUILDING_EL_BOOST);
-      if (isBldgE)  tile._elE  = Math.min(0.99, tile._elE + BUILDING_EL_BOOST);
-      if (isBldgS)  tile._elS  = Math.min(0.99, tile._elS + BUILDING_EL_BOOST);
-      if (isBldgSE) tile._elSE = Math.min(0.99, tile._elSE + BUILDING_EL_BOOST);
-      // Flag as building wall if ANY corner in the 2×2 cell is a building tile.
-      // The cliff overlay may fire on ground tiles adjacent to buildings — those
-      // need the wall texture too (they show the wall's side/corner).
-      tile._isBuildingWall = !!(isBldg || isBldgE || isBldgS || isBldgSE);
+      // No elevation boost — buildings are flat on the terrain. Walls are separate objects.
+      // Just detect building tiles for floor/border rendering below.
 
       // Transition pair detection — based on the 2×2 wang cell (tile, E, S, SE).
       // The wang mask uses these 4 corners, so the transition pair must match.
