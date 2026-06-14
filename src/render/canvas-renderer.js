@@ -409,12 +409,9 @@ export class CanvasRenderer {
       drawField2Animations(ctx, chunkStore, player, camera, w, h, f2Grid, performance.now(), weather, sun, glOn ? this.glc : null);
     }
 
-    // Building walls: chunk pipeline handles them for correct lighting.
-    // When wall tuner is open (\), draw the separate-pass version ON TOP
-    // so tuner changes are visible immediately (tuner can't reach the worker).
-    if (window._wallTuner && window._simDebugOverlay?.isEnabled?.()) {
-      drawBuildingWalls(ctx, camX, camY, tilePx, w, h);
-    }
+    // Building walls: separate-pass renderer (calibrated by wall tuner).
+    // TODO: migrate to chunk pipeline once positioning matches exactly.
+    drawBuildingWalls(ctx, camX, camY, tilePx, w, h);
 
     // Weather AFTER all sprites — in GL mode most F2 sprites live on the GL
     // canvas (below this one), so fog/precip drawn earlier would cover them
