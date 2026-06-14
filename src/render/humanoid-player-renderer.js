@@ -194,14 +194,20 @@ export function drawHumanoidPlayer(ctx, x, y, zoom, frame, animation, direction 
     const src = partFrame(l.part, d, img, k);
     ctx.drawImage(src, -m.pivot[0] * k, -m.pivot[1] * k * squash, img.width * k, img.height * k * squash);
 
-    // ── Equipment overlay: draw armor at same position as body part ──
+    // ── Equipment overlay: draw armor aligned with body part ──
     const equipSlot = _PART_TO_EQUIP_SLOT[l.part];
     const equipImg = equipSlot && _equipImages.get(equipSlot);
     if (equipImg) {
-      // Use the SAME pivot and scale as the body part so equipment aligns exactly.
-      // The body part draws at: (-pivot.x * k, -pivot.y * k, width * k, height * k)
-      // Equipment draws identically but with its own image.
-      ctx.drawImage(equipImg, -m.pivot[0] * k, -m.pivot[1] * k * squash, img.width * k, img.height * k * squash);
+      // Body part draws at: (-pivot.x * k, -pivot.y * k) with size (width * k, height * k).
+      // Its visual center in the rotated ctx is at:
+      //   cx = -pivot.x * k + width * k / 2 = (width/2 - pivot.x) * k
+      //   cy = -pivot.y * k + height * k / 2 = (height/2 - pivot.y) * k
+      // Draw equipment sprite centered on that same visual center.
+      const bodyCx = (img.width / 2 - m.pivot[0]) * k;
+      const bodyCy = (img.height / 2 - m.pivot[1]) * k * squash;
+      const ew = equipImg.width * k;
+      const eh = equipImg.height * k;
+      ctx.drawImage(equipImg, bodyCx - ew / 2, bodyCy - eh / 2 * squash, ew, eh * squash);
     }
 
     ctx.restore();
