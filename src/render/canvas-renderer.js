@@ -19,7 +19,6 @@ import { findNearbyInteraction, objectReaction, performInteraction } from '../wo
 import { GLCompositor } from './gl-compositor.js';
 import { buildAtmoField } from './atmosphere-pass.js';
 import { drawHumanoidPlayer, playMotion, stopMotion } from './humanoid-player-renderer.js';
-import { drawSpriteCharacter } from './sprite-character-renderer.js';
 if (typeof window !== 'undefined') { window.playMotion = playMotion; window.stopMotion = stopMotion; }
 
 function drawPrecipitation(ctx, w, h, precip, wind, time, tint) {
@@ -606,9 +605,7 @@ export class CanvasRenderer {
       ctx.ellipse(px + skewX, sy + 8 * zoom, (8 * zoom + (player?.z ?? 0) * zoom) * stretch, 3 * zoom, 0, 0, Math.PI * 2);
       ctx.fill();
     }
-    // Try sprite character first (PixelLab full-character), fall back to assembled rig, then doodle
-    const spriteDrawn = drawSpriteCharacter(ctx, px, py, zoom, frame, player?.character?.animation ?? 'idle', player?.character?.direction ?? 'S');
-    const bodyDrawn = spriteDrawn || drawHumanoidPlayer(ctx, px, py, zoom, frame, player?.character?.animation ?? 'idle', player?.character?.direction ?? 'S');
+    const bodyDrawn = drawHumanoidPlayer(ctx, px, py, zoom, frame, player?.character?.animation ?? 'idle', player?.character?.direction ?? 'S');
     if (!bodyDrawn) {
       drawModularPlayer(ctx, px, py, zoom, frame, player?.character?.animation ?? 'idle');
       // Visible red dot only on the fallback path (player never invisible)
