@@ -17,6 +17,7 @@ import { SimClient } from './sim/sim-client.js';
 import { SimWorldState } from './sim/sim-world-state.js';
 import { setField2SimWorldState } from './render/field2-animator.js';
 import { initSimDebugOverlay } from './render/sim-debug-overlay.js';
+import { initWallTuner } from './render/wall-tuner.js';
 import { initCommandChat, isCommandChatOpen } from './ui/command-chat.js';
 
 const canvas = document.getElementById('game');
@@ -119,6 +120,7 @@ function _onSimClose() {
   simClient = new SimClient({ url: 'ws://127.0.0.1:8787', viewport, onState: _applySimState, onClose: _onSimClose });
   window._simClient = simClient; // dev hook
   initSimDebugOverlay();
+  initWallTuner();
   simClient.ready.then(() => {
     simConnected = true;
     console.log('[sim] connected — sim-driven world active');

@@ -177,111 +177,177 @@ export function drawBuildingFloors(ctx, camX, camY, tilePx, w, h) {
   ctx.restore();
 }
 
-/** Draw building walls at perimeters. Call AFTER F2/player.
- *
- *  Rendering approach:
- *  - Plain wall columns (32×128) tile seamlessly along edges
- *  - Doors (64×128) and windows (32×128) REPLACE specific columns
- *  - Interior walls use different texture at room junctions
- *  - Draw order: north → east/west → interior → south (front to back)
- */
+/** Draw building walls at perimeters. Uses wallTunerParams() for live calibration. */
 export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
   const buildings = _cache.buildings;
   if (!buildings || buildings.length === 0) return;
   if (!_wallImgs.south_base) return;
 
+  const P = (typeof window !== 'undefined' && window._wallTuner) ? window._wallTuner.params : {
+    wallYOffset: 0.4, cornerExtend: 1, wallHeight: 4,
+    northWall: true, interiorWall: false, eastWestColumns: true,
+  };
+
   ctx.save();
   ctx.imageSmoothingEnabled = false;
 
-  const t = Math.round(tilePx);       // 1 tile in screen px
-  const WALL_H = 4;                   // wall is 4 tiles tall (128px source)
-  const wallH = Math.round(tilePx * WALL_H);
+  const t = Math.round(tilePx);
+  const wallH = Math.round(tilePx * P.wallHeight);
+  const pad = 1;
+  const cornerExt = Math.max(0, Math.round(P.cornerExtend));
 
   for (const b of buildings) {
     const fp = b.footprint;
 
-    // Build floor set for interior/exterior detection
+    // Build floor set
     const floorSet = new Set();
     for (const sec of fp.sections) {
       for (let dy = 0; dy < sec.h; dy++)
         for (let dx = 0; dx < sec.w; dx++)
           floorSet.add((sec.x0 + dx) + ',' + (sec.y0 + dy));
     }
-
-    // Door positions (local coords relative to building origin)
     const doorSet = new Set((fp.doors || []).map(d => d.x + ',' + d.y));
 
-    // Window positions: exterior south edges, every 3rd tile, ≥2 from edges, not adjacent to doors
+    // Window positions
     const windowPositions = new Set();
     for (const sec of fp.sections) {
       const lastRow = sec.y0 + sec.h - 1;
       let interval = 0;
       for (let dx = 0; dx < sec.w; dx++) {
         const lx = sec.x0 + dx, ly = lastRow;
-        const southOutside = !floorSet.has(lx + ',' + (ly + 1));
-        if (!southOutside) continue;
+        if (floorSet.has(lx + ',' + (ly + 1))) continue;
         if (doorSet.has(lx + ',' + ly)) { interval = 0; continue; }
-        // ≥2 tiles from section edges
         if (dx < 2 || dx >= sec.w - 2) { interval++; continue; }
-        // Not adjacent to a door
         if (doorSet.has((lx - 1) + ',' + ly) || doorSet.has((lx + 1) + ',' + ly)) { interval++; continue; }
         interval++;
         if (interval % 3 === 0) windowPositions.add(lx + ',' + ly);
       }
     }
 
-    // ── Pass 1: North walls — honest absence (was rendering as interior wall)
-    // ── Pass 2: East/West — foundation border only (honest absence)
-    // ── Pass 3: Interior walls — honest absence
-
-    // ── Pass 4: South exterior walls (most visible, drawn last) ──
-    for (const sec of fp.sections) {
+    // Helper: draw a wall row (south-facing) along a section edge
+    function drawSouthWallRow(sec, isExterior) {
       const lastRow = sec.y0 + sec.h - 1;
-      const skipSet = new Set(); // tiles consumed by 2-wide doors
+      const skipSet = new Set();
+      const floorBottomPx = Math.round((b.y + sec.y0 + sec.h) * tilePx - camY);
 
       for (let dx = 0; dx < sec.w; dx++) {
         if (skipSet.has(dx)) continue;
         const lx = sec.x0 + dx, ly = lastRow;
-        // Only exterior (south neighbor outside building)
-        if (floorSet.has(lx + ',' + (ly + 1))) continue;
+        const southOutside = !floorSet.has(lx + ',' + (ly + 1));
+
+        // For exterior pass: only tiles whose south neighbor is outside
+        // For interior pass: only tiles whose south neighbor is inside (different section)
+        if (isExterior && !southOutside) continue;
+        if (!isExterior && southOutside) continue;
+        if (!isExterior && (ly + 1 < sec.y0 + sec.h)) continue; // same section
 
         const wx = b.x + lx;
-        // Wall bottom edge sits AT the floor's south pixel edge
-        const floorBottomPx = Math.round((b.y + sec.y0 + sec.h) * tilePx - camY);
         const sx = Math.round(wx * tilePx - camX);
-        const sy = floorBottomPx - wallH + Math.round(t * 0.4); // wall overlaps floor edge substantially
-        const pad = 1; // 1px overlap between adjacent tiles to kill seams
+        const sy = floorBottomPx - wallH + Math.round(t * P.wallYOffset);
         if (sx + t < 0 || sx > w || sy + wallH < 0 || sy > h) continue;
 
         const key = lx + ',' + ly;
 
-        // Corner termination: the tile to the west/east is NOT part of any
-        // building section. Corner piece draws 1 tile OUTSIDE the floor edge
-        // (wall extends past the building, then terminates with molding).
-        const isWestEnd = !floorSet.has((lx - 1) + ',' + ly);
-        const isEastEnd = !floorSet.has((lx + 1) + ',' + ly);
+        // Exterior corners: neighbor tile NOT in building at all
+        const westNeighborOutside = !floorSet.has((lx - 1) + ',' + ly);
+        const eastNeighborOutside = !floorSet.has((lx + 1) + ',' + ly);
 
-        if (isWestEnd && _wallImgs.south_corner_west) {
-          // Draw plain wall at this tile, then corner 1 tile to the LEFT (outside building)
+        if (isExterior && westNeighborOutside && _wallImgs.south_corner_west) {
+          // Plain wall at this tile + extension tiles + corner beyond
           ctx.drawImage(_wallImgs.south_base, 0, 0, 32, 128, sx, sy, t + pad, wallH + pad);
-          const cornerSx = sx - t;
-          ctx.drawImage(_wallImgs.south_corner_west, 0, 0, 32, 128, cornerSx, sy, t + pad, wallH + pad);
-        } else if (isEastEnd && _wallImgs.south_corner_east) {
-          // Draw plain wall at this tile, then corner 1 tile to the RIGHT (outside building)
+          for (let ext = 1; ext <= cornerExt; ext++) {
+            ctx.drawImage(_wallImgs.south_base, 0, 0, 32, 128, sx - t * ext, sy, t + pad, wallH + pad);
+          }
+          ctx.drawImage(_wallImgs.south_corner_west, 0, 0, 32, 128, sx - t * (cornerExt + 1), sy, t + pad, wallH + pad);
+        } else if (isExterior && eastNeighborOutside && _wallImgs.south_corner_east) {
           ctx.drawImage(_wallImgs.south_base, 0, 0, 32, 128, sx, sy, t + pad, wallH + pad);
-          const cornerSx = sx + t;
-          ctx.drawImage(_wallImgs.south_corner_east, 0, 0, 32, 128, cornerSx, sy, t + pad, wallH + pad);
-        } else if (doorSet.has(key) && dx >= 2 && dx < sec.w - 2 && _wallImgs.south_door) {
+          for (let ext = 1; ext <= cornerExt; ext++) {
+            ctx.drawImage(_wallImgs.south_base, 0, 0, 32, 128, sx + t * ext, sy, t + pad, wallH + pad);
+          }
+          ctx.drawImage(_wallImgs.south_corner_east, 0, 0, 32, 128, sx + t * (cornerExt + 1), sy, t + pad, wallH + pad);
+        } else if (isExterior && doorSet.has(key) && dx >= 2 && dx < sec.w - 2 && _wallImgs.south_door) {
           ctx.drawImage(_wallImgs.south_door, 0, 0, 64, 128, sx, sy, t * 2 + pad, wallH + pad);
           skipSet.add(dx + 1);
-        } else if (windowPositions.has(key) && dx >= 2 && dx < sec.w - 2 && _wallImgs.south_window) {
+        } else if (isExterior && windowPositions.has(key) && dx >= 2 && dx < sec.w - 2 && _wallImgs.south_window) {
           ctx.drawImage(_wallImgs.south_window, 0, 0, 64, 128, sx, sy, t * 2 + pad, wallH + pad);
           skipSet.add(dx + 1);
-        } else if (_wallImgs.south_base) {
+        } else {
+          // Plain wall (no corners for interior walls)
           ctx.drawImage(_wallImgs.south_base, 0, 0, 32, 128, sx, sy, t + pad, wallH + pad);
         }
       }
     }
+
+    // ── Pass 1: North exterior walls ──────────────────────────────
+    if (P.northWall) {
+      for (const sec of fp.sections) {
+        const northRow = sec.y0;
+        for (let dx = 0; dx < sec.w; dx++) {
+          const lx = sec.x0 + dx;
+          if (floorSet.has(lx + ',' + (northRow - 1))) continue;
+          const wx = b.x + lx;
+          const floorTopPx = Math.round((b.y + sec.y0) * tilePx - camY);
+          const sx = Math.round(wx * tilePx - camX);
+          const sy = floorTopPx - wallH;
+          if (sx + t < 0 || sx > w || sy + wallH < 0 || sy > h) continue;
+
+          // Corners on north wall too
+          const westOut = !floorSet.has((lx - 1) + ',' + (northRow));
+          const eastOut = !floorSet.has((lx + 1) + ',' + (northRow));
+
+          if (westOut && _wallImgs.south_corner_west) {
+            ctx.drawImage(_wallImgs.south_base, 0, 0, 32, 128, sx, sy, t + pad, wallH + pad);
+            for (let ext = 1; ext <= cornerExt; ext++)
+              ctx.drawImage(_wallImgs.south_base, 0, 0, 32, 128, sx - t * ext, sy, t + pad, wallH + pad);
+            ctx.drawImage(_wallImgs.south_corner_west, 0, 0, 32, 128, sx - t * (cornerExt + 1), sy, t + pad, wallH + pad);
+          } else if (eastOut && _wallImgs.south_corner_east) {
+            ctx.drawImage(_wallImgs.south_base, 0, 0, 32, 128, sx, sy, t + pad, wallH + pad);
+            for (let ext = 1; ext <= cornerExt; ext++)
+              ctx.drawImage(_wallImgs.south_base, 0, 0, 32, 128, sx + t * ext, sy, t + pad, wallH + pad);
+            ctx.drawImage(_wallImgs.south_corner_east, 0, 0, 32, 128, sx + t * (cornerExt + 1), sy, t + pad, wallH + pad);
+          } else {
+            ctx.drawImage(_wallImgs.south_base, 0, 0, 32, 128, sx, sy, t + pad, wallH + pad);
+          }
+        }
+      }
+    }
+
+    // ── Pass 2: East/West edge columns ───────────────────────────
+    if (P.eastWestColumns && _wallImgs.south_corner_east) {
+      for (const sec of fp.sections) {
+        // East edge
+        for (let dy = 0; dy < sec.h; dy++) {
+          const lx = sec.x0 + sec.w, ly = sec.y0 + dy;
+          if (floorSet.has(lx + ',' + ly)) continue;
+          const wx = b.x + lx;
+          const wy = b.y + ly;
+          const sx = Math.round(wx * tilePx - camX);
+          const sy = Math.round(wy * tilePx - camY);
+          if (sx + t < 0 || sx > w || sy + t < 0 || sy > h) continue;
+          // Draw the corner east piece as a column (just the top 32×32 of the corner)
+          ctx.drawImage(_wallImgs.south_corner_east, 0, 0, 32, 32, sx, sy, t + pad, t + pad);
+        }
+        // West edge
+        for (let dy = 0; dy < sec.h; dy++) {
+          const lx = sec.x0 - 1, ly = sec.y0 + dy;
+          if (floorSet.has(lx + ',' + ly)) continue;
+          const wx = b.x + lx;
+          const wy = b.y + ly;
+          const sx = Math.round(wx * tilePx - camX);
+          const sy = Math.round(wy * tilePx - camY);
+          if (sx + t < 0 || sx > w || sy + t < 0 || sy > h) continue;
+          ctx.drawImage(_wallImgs.south_corner_west, 0, 0, 32, 32, sx, sy, t + pad, t + pad);
+        }
+      }
+    }
+
+    // ── Pass 3: Interior walls (if enabled) ──────────────────────
+    if (P.interiorWall) {
+      for (const sec of fp.sections) drawSouthWallRow(sec, false);
+    }
+
+    // ── Pass 4: South exterior walls (most visible, drawn last) ──
+    for (const sec of fp.sections) drawSouthWallRow(sec, true);
   }
 
   ctx.restore();

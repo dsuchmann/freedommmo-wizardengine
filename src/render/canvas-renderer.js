@@ -11,6 +11,7 @@ import { biomeVariantFrameId } from '../assets/variant-selector.js';
 import { drawElevationOverlay } from './elevation-overlay.js';
 import { drawSimDebugOverlay } from './sim-debug-overlay.js';
 import { updateBuildingClaims, drawBuildingFloors, drawBuildingWalls } from './building-renderer.js';
+import { initWallTuner, drawWallTuner } from './wall-tuner.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations, buildWaveField } from './water-wave-overlay.js';
 import { drawLargeObjects, preloadLargeObjectSprites, setPlayerDrawFn } from './large-object-renderer.js';
 import { drawField2Animations, preloadField2Animations, drawWindWispOverlay, setField2PlayerDraw, setField2PlayerGL } from './field2-animator.js';
@@ -434,6 +435,7 @@ export class CanvasRenderer {
     this.drawAtmosphere(sun, w, h);
     // Sim debug overlay draws LAST (on top of atmosphere/lighting)
     drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h);
+    drawWallTuner(ctx, w, h);
 
     if (glScene) {
       // Stage 4: per-tile water wave field, soft-light blended in the present
