@@ -1,20 +1,28 @@
 // src/render/sprite-character-renderer.js — PixelLab character sprite renderer.
-// Renders a full-character sprite sheet (idle/walk/run per direction) instead
-// of the assembled body-part FK rig. Hot-swappable with humanoid-player-renderer.
+// Renders full-character sprite sheet animations (idle/walk/run per direction).
+// Hot-swappable with humanoid-player-renderer — returns false if not ready.
 
 const CHAR_BASE = '/assets/pixelab/characters/base_male_clothed';
-const FEET_OFFSET = 15;  // match humanoid-player-renderer
-const CHAR_SCALE = 1.25; // scale 128px canvas to match ~81px assembled character at zoom 1
+const FEET_OFFSET = 15;
+const CHAR_SCALE = 1.25;
 
 const DIR_MAP = {
   s: 'south', n: 'north', e: 'east', w: 'west',
   se: 'south-east', sw: 'south-west', ne: 'north-east', nw: 'north-west',
 };
 
-// State
-let _rotations = new Map();  // dir -> Image
-let _walkFrames = new Map(); // dir -> [Image, Image, ...]
-let _idleFrames = new Map(); // dir -> [Image, Image, ...]
+// Animation config: disk folder + max frame count per animation state
+const ANIM_CONFIG = {
+  idle:   { folder: 'idle',  maxFrames: 4,  fps: 3 },
+  walk:   { folder: 'walk',  maxFrames: 6,  fps: 8 },
+  sprint: { folder: 'run',   maxFrames: 8,  fps: 10 },
+};
+
+// Cache: animName -> dirCode -> [Image, ...]
+const _animCache = new Map();
+// Cache: dirCode -> Image (static rotation)
+const _rotations = new Map();
+
 let _loaded = false;
 let _loading = false;
 let _failed = false;
@@ -23,7 +31,7 @@ function loadImage(url) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error(`Failed to load ${url}`));
+    img.onerror = () => reject(new Error(`Failed: ${url}`));
     img.src = url;
   });
 }
@@ -32,75 +40,76 @@ async function loadAll() {
   if (_loading || _loaded || _failed) return;
   _loading = true;
   try {
-    // Load idle rotations
+    // Load static rotations
     for (const [code, name] of Object.entries(DIR_MAP)) {
-      const img = await loadImage(`${CHAR_BASE}/${name}.png`);
-      _rotations.set(code, img);
+      try {
+        _rotations.set(code, await loadImage(`${CHAR_BASE}/${name}.png`));
+      } catch {}
     }
 
-    // Try loading walk frames — they might not exist yet
-    for (const [code, name] of Object.entries(DIR_MAP)) {
-      const frames = [];
-      for (let i = 0; i < 6; i++) {
-        try {
-          const img = await loadImage(`${CHAR_BASE}/walk/${name}/${i}.png`);
-          frames.push(img);
-        } catch { break; }
+    // Load animation frames
+    for (const [animName, cfg] of Object.entries(ANIM_CONFIG)) {
+      const dirMap = new Map();
+      for (const [code, name] of Object.entries(DIR_MAP)) {
+        const frames = [];
+        for (let i = 0; i < cfg.maxFrames; i++) {
+          try {
+            frames.push(await loadImage(`${CHAR_BASE}/${cfg.folder}/${name}/${i}.png`));
+          } catch { break; }
+        }
+        if (frames.length > 0) dirMap.set(code, frames);
       }
-      if (frames.length > 0) _walkFrames.set(code, frames);
-    }
-
-    // Try loading idle anim frames
-    for (const [code, name] of Object.entries(DIR_MAP)) {
-      const frames = [];
-      for (let i = 0; i < 4; i++) {
-        try {
-          const img = await loadImage(`${CHAR_BASE}/idle/${name}/${i}.png`);
-          frames.push(img);
-        } catch { break; }
-      }
-      if (frames.length > 0) _idleFrames.set(code, frames);
+      if (dirMap.size > 0) _animCache.set(animName, dirMap);
     }
 
     _loaded = true;
-    console.log(`[sprite-char] Loaded: ${_rotations.size} rotations, ${_walkFrames.size} walk dirs, ${_idleFrames.size} idle dirs`);
+    const counts = [..._animCache.entries()].map(([k, v]) => `${k}:${v.size}dirs`).join(', ');
+    console.log(`[sprite-char] Loaded: ${_rotations.size} rotations, ${counts}`);
   } catch (e) {
-    console.warn('[sprite-char] Failed to load:', e.message);
+    console.warn('[sprite-char] Load failed:', e.message);
     _failed = true;
   }
   _loading = false;
 }
 
-/** Draw the sprite character. Same signature as drawHumanoidPlayer.
- *  Returns false if not ready (caller falls back to assembled rig). */
+/** Draw the sprite character. Returns false if not ready. */
 export function drawSpriteCharacter(ctx, x, y, zoom, frame, animation, direction = 'S') {
   if (_failed) return false;
   if (!_loaded) { loadAll(); return false; }
 
   const d = String(direction).toLowerCase();
-  const rotation = _rotations.get(d);
-  if (!rotation) return false;
 
-  // Pick the right frame source
-  let img = rotation; // default: static rotation
-  const moving = animation === 'walk' || animation === 'sprint';
+  // Map game animation state to our anim config
+  let animName = 'idle';
+  if (animation === 'walk') animName = 'walk';
+  else if (animation === 'sprint') animName = 'sprint';
 
-  if (moving && _walkFrames.has(d)) {
-    const frames = _walkFrames.get(d);
+  // Get the right frame
+  let img = null;
+  const animDir = _animCache.get(animName);
+  if (animDir?.has(d)) {
+    const frames = animDir.get(d);
     const idx = Math.floor(frame) % frames.length;
     img = frames[idx];
-  } else if (!moving && _idleFrames.has(d)) {
-    const frames = _idleFrames.get(d);
-    const idx = Math.floor(frame) % frames.length;
-    img = frames[idx];
+  } else {
+    // Fall back: sprint→walk→idle→static rotation
+    for (const fallback of ['walk', 'idle']) {
+      const fb = _animCache.get(fallback);
+      if (fb?.has(d)) {
+        img = fb.get(d)[Math.floor(frame) % fb.get(d).length];
+        break;
+      }
+    }
+    if (!img) img = _rotations.get(d);
   }
 
-  // Draw centered at (x, y + FEET_OFFSET*zoom) matching the assembled renderer
+  if (!img) return false;
+
   const scale = CHAR_SCALE * zoom;
   const w = img.width * scale;
   const h = img.height * scale;
   const drawX = x - w / 2;
-  const drawY = y + FEET_OFFSET * zoom - h * 0.85; // 0.85 = feet at ~85% down the sprite
+  const drawY = y + FEET_OFFSET * zoom - h * 0.85;
 
   ctx.save();
   ctx.imageSmoothingEnabled = false;
