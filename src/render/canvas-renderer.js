@@ -409,8 +409,8 @@ export class CanvasRenderer {
       drawField2Animations(ctx, chunkStore, player, camera, w, h, f2Grid, performance.now(), weather, sun, glOn ? this.glc : null);
     }
 
-    // Building walls: 8-direction wall objects at building perimeters
-    drawBuildingWalls(ctx, camX, camY, tilePx, w, h);
+    // Building walls now rendered INTO chunk bitmaps (lighting/day-night integrated).
+    // drawBuildingWalls(ctx, camX, camY, tilePx, w, h);
 
     // Weather AFTER all sprites — in GL mode most F2 sprites live on the GL
     // canvas (below this one), so fog/precip drawn earlier would cover them
