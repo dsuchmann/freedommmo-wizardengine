@@ -1040,7 +1040,7 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
       var isBldgE = queryBuildingTile(wx + 1, wy);
       var isBldgS = queryBuildingTile(wx, wy + 1);
       var isBldgSE = queryBuildingTile(wx + 1, wy + 1);
-      if (isBldg)   tile.climate.elevation = Math.min(0.99, tile.climate.elevation + BUILDING_EL_BOOST);
+      if (isBldg)   { tile.climate.elevation = Math.min(0.99, tile.climate.elevation + BUILDING_EL_BOOST); tile._isBuildingWall = true; }
       if (isBldgE)  tile._elE  = Math.min(0.99, tile._elE + BUILDING_EL_BOOST);
       if (isBldgS)  tile._elS  = Math.min(0.99, tile._elS + BUILDING_EL_BOOST);
       if (isBldgSE) tile._elSE = Math.min(0.99, tile._elSE + BUILDING_EL_BOOST);
