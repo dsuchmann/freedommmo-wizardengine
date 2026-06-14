@@ -19,12 +19,22 @@ import { setField2SimWorldState } from './render/field2-animator.js';
 import { initSimDebugOverlay } from './render/sim-debug-overlay.js';
 import { initWallTuner } from './render/wall-tuner.js';
 import { initCommandChat, isCommandChatOpen } from './ui/command-chat.js';
+import { initArmorSwap } from './ui/armor-swap.js';
 
 const canvas = document.getElementById('game');
 const stats = document.getElementById('stats');
 const overmapCanvas = document.getElementById('overmap');
 const input = new InputState();
 initCommandChat(input);
+initArmorSwap((setId, setData) => {
+  // Apply armor set to player's character equipment
+  const equip = {};
+  for (const [slot, url] of Object.entries(setData.pieces || {})) {
+    equip[slot] = url;
+  }
+  window._playerEquipment = equip;
+  console.log(`[armor] Equipped: ${setData.name} (${Object.keys(equip).length} pieces)`);
+});
 const params = new URLSearchParams(window.location.search);
 const spawnX = params.has('x') ? parseFloat(params.get('x')) : null;
 const spawnY = params.has('y') ? parseFloat(params.get('y')) : null;

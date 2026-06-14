@@ -193,8 +193,51 @@ export function drawHumanoidPlayer(ctx, x, y, zoom, frame, animation, direction 
     ctx.rotate(-cfg.xSign * b.worldDeg * DEG);
     const src = partFrame(l.part, d, img, k);
     ctx.drawImage(src, -m.pivot[0] * k, -m.pivot[1] * k * squash, img.width * k, img.height * k * squash);
+
+    // ── Equipment overlay: draw armor piece at same transform ──
+    const equipSlot = _PART_TO_EQUIP_SLOT[l.part];
+    const equipImg = equipSlot && _equipImages.get(equipSlot);
+    if (equipImg) {
+      const ek = k * 1.05; // slightly larger to cover the body part
+      ctx.drawImage(equipImg, -m.pivot[0] * ek, -m.pivot[1] * ek * squash, img.width * ek, img.height * ek * squash);
+    }
+
     ctx.restore();
   }
   ctx.restore();
   return true;
 }
+
+// ── Equipment overlay system ────────────────────────────────────────────
+// Maps body part names to equipment slot names
+const _PART_TO_EQUIP_SLOT = {
+  head: 'head', torso: 'torso',
+  arm_upper_l: 'arm_upper', arm_upper_r: 'arm_upper',
+  arm_fore_l: 'arm_fore', arm_fore_r: 'arm_fore',
+  hand_l: 'hand', hand_r: 'hand',
+  thigh_l: 'thigh', thigh_r: 'thigh',
+  shin_l: 'shin', shin_r: 'shin',
+  foot_l: 'foot', foot_r: 'foot',
+};
+
+const _equipImages = new Map(); // slot -> Image
+let _lastEquipUrls = null;
+
+// Poll for equipment changes from window._playerEquipment (set by armor-swap.js)
+function _checkEquipment() {
+  const equip = typeof window !== 'undefined' ? window._playerEquipment : null;
+  if (!equip && !_lastEquipUrls) return;
+  const key = JSON.stringify(equip || {});
+  if (key === _lastEquipUrls) return;
+  _lastEquipUrls = key;
+
+  _equipImages.clear();
+  if (!equip) return;
+
+  for (const [slot, url] of Object.entries(equip)) {
+    const img = new Image();
+    img.src = url;
+    img.onload = () => _equipImages.set(slot, img);
+  }
+}
+if (typeof window !== 'undefined') setInterval(_checkEquipment, 500);
