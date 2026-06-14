@@ -117,7 +117,10 @@ export class ChunkProvider {
 
   createWorker() {
     try {
-      const worker = new Worker(new URL('./chunk-worker.js', import.meta.url), { type: 'module' });
+      // Cache-bust: append timestamp so browser reloads worker modules on code changes
+      const workerUrl = new URL('./chunk-worker.js', import.meta.url);
+      workerUrl.searchParams.set('v', '20260614b');
+      const worker = new Worker(workerUrl, { type: 'module' });
       worker._imagesReady = false;
       worker.onmessage = event => {
         const msg = event.data;
