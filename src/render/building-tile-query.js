@@ -213,8 +213,8 @@ export function getAllFloorTileURLs() {
   for (var mat in FLOOR_TILE_MAP) {
     urls.push(FLOOR_TILE_MAP[mat]);
   }
-  // Building wall cliff tiles (wang 1-14 numbered)
-  for (var i = 1; i <= 14; i++) {
+  // Building wall cliff tiles (wang 0-15)
+  for (var i = 0; i <= 15; i++) {
     urls.push('/assets/pixelab/buildings/wall_cliff_stone/wall_cliff_stone__wang_' + i + '.png');
   }
   return urls;

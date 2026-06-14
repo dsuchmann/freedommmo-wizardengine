@@ -1040,10 +1040,14 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
       var isBldgE = queryBuildingTile(wx + 1, wy);
       var isBldgS = queryBuildingTile(wx, wy + 1);
       var isBldgSE = queryBuildingTile(wx + 1, wy + 1);
-      if (isBldg)   { tile.climate.elevation = Math.min(0.99, tile.climate.elevation + BUILDING_EL_BOOST); tile._isBuildingWall = true; }
+      if (isBldg)   tile.climate.elevation = Math.min(0.99, tile.climate.elevation + BUILDING_EL_BOOST);
       if (isBldgE)  tile._elE  = Math.min(0.99, tile._elE + BUILDING_EL_BOOST);
       if (isBldgS)  tile._elS  = Math.min(0.99, tile._elS + BUILDING_EL_BOOST);
       if (isBldgSE) tile._elSE = Math.min(0.99, tile._elSE + BUILDING_EL_BOOST);
+      // Flag as building wall if ANY corner in the 2×2 cell is a building tile.
+      // The cliff overlay may fire on ground tiles adjacent to buildings — those
+      // need the wall texture too (they show the wall's side/corner).
+      tile._isBuildingWall = !!(isBldg || isBldgE || isBldgS || isBldgSE);
 
       // Transition pair detection — based on the 2×2 wang cell (tile, E, S, SE).
       // The wang mask uses these 4 corners, so the transition pair must match.
