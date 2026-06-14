@@ -183,10 +183,30 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
   if (!buildings || buildings.length === 0) return;
   if (!_wallImgs.south_base) return;
 
-  const P = (typeof window !== 'undefined' && window._wallTuner) ? window._wallTuner.params : {
-    wallYOffset: 0.4, cornerExtend: 1, wallHeight: 4,
-    northWall: true, interiorWall: false, eastWestColumns: true,
-  };
+  // Import tuner params — use wallTunerParams() which includes derived tile names
+  let P;
+  try {
+    const mod = typeof window !== 'undefined' && window._wallTuner;
+    if (mod) {
+      // Read raw params + derive tile names inline
+      const raw = mod.params;
+      const TILE_OPTS = ['south_base', 'south_corner_west', 'south_corner_east',
+        'south_window', 'south_door', 'interior_base', 'interior_archway', 'edge_ew', 'north_back'];
+      P = {
+        ...raw,
+        eastTileName: TILE_OPTS[Math.max(0, Math.min(TILE_OPTS.length - 1, Math.round(raw.eastTile ?? 1)))] || 'south_corner_east',
+        westTileName: TILE_OPTS[Math.max(0, Math.min(TILE_OPTS.length - 1, Math.round(raw.westTile ?? 1)))] || 'south_corner_west',
+      };
+    } else {
+      P = { wallYOffset: 0.4, cornerExtend: 1, wallHeight: 4, northWall: true,
+            northYOffset: 0, interiorWall: false, eastWestColumns: true,
+            eastTileName: 'south_corner_east', westTileName: 'south_corner_west',
+            ewTileHeight: 1, ewXOffset: 0 };
+    }
+  } catch { P = { wallYOffset: 0.4, cornerExtend: 1, wallHeight: 4, northWall: true,
+    northYOffset: 0, interiorWall: false, eastWestColumns: true,
+    eastTileName: 'south_corner_east', westTileName: 'south_corner_west',
+    ewTileHeight: 1, ewXOffset: 0 }; }
 
   ctx.save();
   ctx.imageSmoothingEnabled = false;
@@ -288,7 +308,7 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
           const wx = b.x + lx;
           const floorTopPx = Math.round((b.y + sec.y0) * tilePx - camY);
           const sx = Math.round(wx * tilePx - camX);
-          const sy = floorTopPx - wallH;
+          const sy = floorTopPx - wallH + Math.round(t * (P.northYOffset ?? 0));
           if (sx + t < 0 || sx > w || sy + wallH < 0 || sy > h) continue;
 
           // Corners on north wall too
