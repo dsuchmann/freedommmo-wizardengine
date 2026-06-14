@@ -1,0 +1,103 @@
+<h2>Building Wall Rendering: Which Approach?</h2>
+<p class="subtitle">How should walls look in our 3/4 top-down view? Each approach handles south walls, side walls, corners, and interiors differently.</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Cliff-Face Model (recommended)</h3>
+      <p>Walls ARE cliff faces. The building floor sits at elevation +1. The south edge drops down showing a wall face (like terrain cliffs). East/west edges show thin cliff sides. North edge shows the wall cap from above. Corners get cliff corner tiles.</p>
+      <div style="background:#1a1a2e;padding:16px;border-radius:8px;margin-top:12px;font-family:monospace;font-size:13px;color:#aaa;">
+        <div style="color:#6a6;">How it works:</div>
+        <div>- Floor tiles at elevation 1 (chunk pipeline, already done)</div>
+        <div>- South edge: cliff face overlay = wall face sprite (windows/doors)</div>
+        <div>- East/west: thin cliff side overlay (1-2px dark edge)</div>
+        <div>- North: wall cap from above (existing Wang tileset)</div>
+        <div>- Corners: cliff corner tiles (already exist for terrain)</div>
+        <div style="color:#fa5;margin-top:8px;">Key insight: We already render cliff faces. Wall = mini cliff.</div>
+      </div>
+      <div class="pros-cons" style="margin-top:12px;">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Reuses existing cliff rendering pipeline</li>
+          <li>Correct lighting (same as terrain cliffs)</li>
+          <li>Correct z-order (cliff system handles this)</li>
+          <li>Corners already solved by cliff tile connectivity</li>
+          <li>Side walls are just cliff edges (thin, natural)</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Wall faces limited to cliff face height (~2 tiles)</li>
+          <li>Multi-story needs stacked elevation levels</li>
+          <li>Window/door overlays on cliff faces = new work</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Sprite Wall Segments</h3>
+      <p>Each wall direction is a separate sprite type. South = tall face sprite (256px). East/West = dedicated side-view sprites generated at correct angle. North = thin cap sprite. Corners = dedicated corner sprites. All drawn as overlay objects after terrain.</p>
+      <div style="background:#1a1a2e;padding:16px;border-radius:8px;margin-top:12px;font-family:monospace;font-size:13px;color:#aaa;">
+        <div style="color:#6a6;">How it works:</div>
+        <div>- South: wall face sprite (what we have now, just tiled correctly)</div>
+        <div>- East/West: new side-angle wall sprite (PixelLab, slight perspective)</div>
+        <div>- North: thin cap or invisible (facing away)</div>
+        <div>- Corners: dedicated corner piece sprites</div>
+        <div>- Each type generated separately via PixelLab</div>
+        <div style="color:#fa5;margin-top:8px;">Needs: 4+ sprite types per wall material, composited manually</div>
+      </div>
+      <div class="pros-cons" style="margin-top:12px;">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Full control over each wall direction's look</li>
+          <li>Can make walls any height (not limited by cliff system)</li>
+          <li>Each direction is a custom sprite — maximum visual quality</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>4+ sprite types per material = lots of PixelLab generation</li>
+          <li>Manual z-ordering (current broken approach)</li>
+          <li>Lighting mismatch (sprites bypass chunk pipeline)</li>
+          <li>Corner seams hard to get right without Wang system</li>
+          <li>Side wall perspective hard to get right in top-down</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Hybrid: Cliff + South Face Overlay</h3>
+      <p>Use the cliff system for elevation, z-order, lighting, side edges, and corners. THEN overlay the south-facing wall face sprite ON TOP of the cliff face for visual richness (brick texture, windows, doors). Best of both worlds.</p>
+      <div style="background:#1a1a2e;padding:16px;border-radius:8px;margin-top:12px;font-family:monospace;font-size:13px;color:#aaa;">
+        <div style="color:#6a6;">How it works:</div>
+        <div>- Floor at elevation +1 in chunk pipeline (cliff system kicks in)</div>
+        <div>- Cliff renders: south face, side edges, corners — correct lighting</div>
+        <div>- South face: wall sprite overlaid on cliff face (brick + windows)</div>
+        <div>- East/West: cliff edge handles it (thin dark line, correct)</div>
+        <div>- Corners: cliff corner tiles (already seamless)</div>
+        <div style="color:#fa5;margin-top:8px;">Cliff does structure. Sprite does beauty.</div>
+      </div>
+      <div class="pros-cons" style="margin-top:12px;">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Correct z-order from cliff system</li>
+          <li>Correct lighting from cliff system</li>
+          <li>Corners and side edges solved by cliffs</li>
+          <li>Rich south face from dedicated sprite (windows/doors)</li>
+          <li>Existing wall face sprites reused (256px brick + variants)</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Two systems (cliff + overlay) = more complexity</li>
+          <li>South face sprite must align with cliff face height</li>
+          <li>Need to figure out how to inject elevation into chunk compiler for buildings</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;padding:16px;background:#1a1a2e;border-radius:8px;">
+  <h3 style="color:#fff;margin-top:0;">Current State</h3>
+  <p style="color:#aaa;">We have floor Wang tiles rendering in the chunk pipeline (correct lighting/z-order). South wall sprites (256px stone brick with window/door variants) tile well but are drawn as a separate canvas pass — causing wrong z-order, no lighting, stretched proportions. Side walls and corners don't work.</p>
+  <p style="color:#fa5;">The cliff rendering system already solves elevation differences with south-facing faces, side edges, and corners. Buildings are essentially platforms at elevation +1.</p>
+</div>

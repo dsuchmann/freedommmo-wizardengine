@@ -1,0 +1,8 @@
+- generic [ref=e2]:
+  - generic [ref=e3]: day 0.00
+  - generic [ref=e4]: "wallet: 0 tu"
+  - generic [ref=e5]: attached
+  - button "FF 7 days" [ref=e6]
+  - generic [ref=e7]:
+    - checkbox "chop mode (else pick)" [ref=e8]
+    - text: chop mode (else pick)

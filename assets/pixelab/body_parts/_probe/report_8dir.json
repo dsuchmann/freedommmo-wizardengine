@@ -1,0 +1,97 @@
+{
+ "dirs": {
+  "e": {
+   "palette_union": 38,
+   "seams": {
+    "arm_u_l->arm_f_l": 0.735,
+    "arm_f_l->hand_l": 0.715,
+    "arm_u_r->arm_f_r": 0.735,
+    "arm_f_r->hand_r": 0.7,
+    "thigh_l->shin_l": 0.85,
+    "shin_l->foot_l": 0.542,
+    "thigh_r->shin_r": 0.85,
+    "shin_r->foot_r": 0.542
+   }
+  },
+  "n": {
+   "palette_union": 56,
+   "seams": {
+    "arm_u_l->arm_f_l": 0.787,
+    "arm_f_l->hand_l": 0.731,
+    "arm_u_r->arm_f_r": 0.791,
+    "arm_f_r->hand_r": 0.739,
+    "thigh_l->shin_l": 0.901,
+    "shin_l->foot_l": 0.644,
+    "thigh_r->shin_r": 0.901,
+    "shin_r->foot_r": 0.68
+   }
+  },
+  "se": {
+   "palette_union": 55,
+   "seams": {
+    "arm_u_l->arm_f_l": 0.787,
+    "arm_f_l->hand_l": 0.731,
+    "arm_u_r->arm_f_r": 0.794,
+    "arm_f_r->hand_r": 0.739,
+    "thigh_l->shin_l": 0.901,
+    "shin_l->foot_l": 0.644,
+    "thigh_r->shin_r": 0.901,
+    "shin_r->foot_r": 0.68
+   }
+  },
+  "ne": {
+   "palette_union": 57,
+   "seams": {
+    "arm_u_l->arm_f_l": 0.787,
+    "arm_f_l->hand_l": 0.731,
+    "arm_u_r->arm_f_r": 0.791,
+    "arm_f_r->hand_r": 0.739,
+    "thigh_l->shin_l": 0.901,
+    "shin_l->foot_l": 0.644,
+    "thigh_r->shin_r": 0.901,
+    "shin_r->foot_r": 0.68
+   }
+  },
+  "w": {
+   "palette_union": 38,
+   "seams": {
+    "arm_u_l->arm_f_l": 0.735,
+    "arm_f_l->hand_l": 0.7,
+    "arm_u_r->arm_f_r": 0.735,
+    "arm_f_r->hand_r": 0.715,
+    "thigh_l->shin_l": 0.85,
+    "shin_l->foot_l": 0.593,
+    "thigh_r->shin_r": 0.85,
+    "shin_r->foot_r": 0.593
+   }
+  },
+  "sw": {
+   "palette_union": 55,
+   "seams": {
+    "arm_u_l->arm_f_l": 0.791,
+    "arm_f_l->hand_l": 0.636,
+    "arm_u_r->arm_f_r": 0.787,
+    "arm_f_r->hand_r": 0.617,
+    "thigh_l->shin_l": 0.901,
+    "shin_l->foot_l": 0.68,
+    "thigh_r->shin_r": 0.901,
+    "shin_r->foot_r": 0.644
+   }
+  },
+  "nw": {
+   "palette_union": 57,
+   "seams": {
+    "arm_u_l->arm_f_l": 0.791,
+    "arm_f_l->hand_l": 0.636,
+    "arm_u_r->arm_f_r": 0.787,
+    "arm_f_r->hand_r": 0.617,
+    "thigh_l->shin_l": 0.901,
+    "shin_l->foot_l": 0.68,
+    "thigh_r->shin_r": 0.901,
+    "shin_r->foot_r": 0.644
+   }
+  }
+ },
+ "verdict": "PASS",
+ "fails": []
+}

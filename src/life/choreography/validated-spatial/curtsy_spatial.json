@@ -1,0 +1,86 @@
+{
+  "id": "curtsy",
+  "kind": "gesture",
+  "steps": [
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "extend",
+          "amount": 0.5,
+          "ticks": 3
+        },
+        {
+          "part": "both_legs",
+          "action": "bend",
+          "amount": 0.7,
+          "ticks": 3
+        },
+        {
+          "part": "left_leg",
+          "action": "retract",
+          "amount": 0.3,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "torso",
+          "action": "lower",
+          "amount": 0.2,
+          "ticks": 3
+        },
+        {
+          "part": "head",
+          "action": "lower",
+          "amount": 0.2,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "torso",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 3
+        },
+        {
+          "part": "head",
+          "action": "raise",
+          "amount": 0,
+          "ticks": 3
+        }
+      ]
+    },
+    {
+      "type": "parallel",
+      "steps": [
+        {
+          "part": "both_arms",
+          "action": "retract",
+          "amount": 0,
+          "ticks": 3
+        },
+        {
+          "part": "both_legs",
+          "action": "straighten",
+          "amount": 1,
+          "ticks": 3
+        },
+        {
+          "part": "left_leg",
+          "action": "extend",
+          "amount": 0,
+          "ticks": 3
+        }
+      ]
+    }
+  ]
+}

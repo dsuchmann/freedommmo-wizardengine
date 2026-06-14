@@ -1,0 +1,27 @@
+- generic [active] [ref=e1]:
+  - generic:
+    - generic:
+      - text: FreedomMMO — deterministic world slice
+      - button "📋" [ref=e3] [cursor=pointer]
+    - generic:
+      - text: WASD/arrows move · mousewheel zoom · R reset · T topology showcase · D debug
+      - text: M map · L pause sun · click overmap teleport
+      - text: seed 42 · chunks 1 · zoom 1.95
+      - text: fps 57 · update 117.1ms · draw 1.1ms · terrain GL tex 0 · atlas 0 · crt on (C) (G toggle) · workers 6 (0 ready) · pending 14 · ready 1 · bitmaps 0 · art sheets 3035/3036
+      - text: tile 1312, 1312 · chunk 20, 20 · z 0.00
+      - text: biome grassland · form plains · plateau 0 · form plains · features none
+      - text: material lush_grass · surface ground_cover
+      - text: elev 0.41 lift 1.1 slope 0.01
+      - text: micro soil+ground_cover+foliage_blades+flowers
+      - text: fertility 0.61 vegetation 0.65
+      - text: moist 0.57 heat 0.36
+      - text: morning · light 0.77 · sun height 0.33
+      - text: "weather: wind 0.79 @ 17° gust 0.00 · none 0.00 · clouds 0.30 · spring day 0 (0%) · fog 0.02 · temp 0.36 · humid 0.57"
+      - text: "overmap biomes 21/21: steppe 13%, ocean 13%, river 10%, hills 10%, arctic 9%, grassland 9%"
+      - text: "missing: none"
+      - text: "transitions loaded map: needed 1, missing 1 (grassland|stream)"
+      - text: debug off (0 toggle)
+      - text: "Wang data: no chunk data yet (press R to re-render)"
+  - generic [ref=e6]:
+    - text: click chunk-pixel to teleport · M toggle · F expand
+    - text: yellow pixel = current chunk · white box = loaded chunks

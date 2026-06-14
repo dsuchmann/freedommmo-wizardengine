@@ -1,0 +1,106 @@
+{
+ "direction": "e",
+ "race": "human",
+ "bodyType": "average",
+ "ageBand": "adult",
+ "parts": {
+  "head": {
+   "pivot": [
+    31.5,
+    57
+   ],
+   "ppu": 5.2
+  },
+  "torso": {
+   "pivot": [
+    32.0,
+    58
+   ],
+   "ppu": 3.438
+  },
+  "arm_upper_l": {
+   "pivot": [
+    31.5,
+    3
+   ],
+   "ppu": 7.25
+  },
+  "arm_upper_r": {
+   "pivot": [
+    31.5,
+    3
+   ],
+   "ppu": 7.25
+  },
+  "arm_fore_l": {
+   "pivot": [
+    31.5,
+    5
+   ],
+   "ppu": 7.857
+  },
+  "arm_fore_r": {
+   "pivot": [
+    31.5,
+    5
+   ],
+   "ppu": 7.857
+  },
+  "hand_l": {
+   "pivot": [
+    31.5,
+    6
+   ],
+   "ppu": 17.0
+  },
+  "hand_r": {
+   "pivot": [
+    31.5,
+    6
+   ],
+   "ppu": 17.0
+  },
+  "thigh_l": {
+   "pivot": [
+    31.0,
+    1
+   ],
+   "ppu": 5.636
+  },
+  "thigh_r": {
+   "pivot": [
+    31.0,
+    1
+   ],
+   "ppu": 5.636
+  },
+  "shin_l": {
+   "pivot": [
+    31.5,
+    1
+   ],
+   "ppu": 6.778
+  },
+  "shin_r": {
+   "pivot": [
+    31.5,
+    1
+   ],
+   "ppu": 6.778
+  },
+  "foot_l": {
+   "pivot": [
+    32.0,
+    9
+   ],
+   "ppu": 12.0
+  },
+  "foot_r": {
+   "pivot": [
+    32.0,
+    9
+   ],
+   "ppu": 12.0
+  }
+ }
+}

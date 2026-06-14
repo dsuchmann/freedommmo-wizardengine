@@ -1,0 +1,105 @@
+<h2>System Atlas — Draft 2</h2>
+<p class="subtitle">Changes from Draft 1: new Stratum 7 (the Shapers — competing gods as dungeon-masters), fauna added to Life, conversation modeled as the Mind↔Agency information channel rather than a system.</p>
+
+<style>
+  .stratum { border: 1px solid rgba(128,128,128,.35); border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; }
+  .stratum h3 { margin: 0 0 2px 0; }
+  .stratum .desc { font-size: .85em; opacity: .75; margin: 0 0 10px 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { border-radius: 8px; padding: 8px 12px; font-size: .85em; line-height: 1.35; max-width: 240px; }
+  .chip b { display: block; font-size: 1.02em; }
+  .chip small { opacity: .8; }
+  .built   { background: rgba( 70,160, 90,.18); border: 1px solid rgba( 70,160, 90,.55); }
+  .extend  { background: rgba(220,170, 40,.15); border: 1px solid rgba(220,170, 40,.55); }
+  .newsys  { background: rgba( 90,130,220,.15); border: 1px solid rgba( 90,130,220,.55); }
+  .driver  { background: rgba(200, 80,160,.16); border: 2px solid rgba(200, 80,160,.65); }
+  .shaper  { background: rgba(150, 90,220,.16); border: 2px dashed rgba(150, 90,220,.7); }
+  .legend { display:flex; gap:14px; flex-wrap: wrap; font-size:.8em; margin-bottom: 16px; }
+  .legend span { padding: 3px 10px; border-radius: 6px; }
+  .xcut { font-size:.85em; opacity:.85; margin-top:4px; }
+</style>
+
+<div class="legend">
+  <span class="built">built</span>
+  <span class="extend">designed before — extend &amp; port</span>
+  <span class="newsys">new — first-principles design</span>
+  <span class="driver">pinnacle driver — re-examined</span>
+  <span class="shaper">shaper — acts on all strata below</span>
+</div>
+
+<div class="stratum" style="border-style: dashed; border-color: rgba(150,90,220,.6);">
+  <h3>S7 · The Shapers</h3>
+  <p class="desc">Competing dungeon-masters. Not IN the world's causal ledger — they apply pressure on it, manifesting at intersections of region × culture × society.</p>
+  <div class="chips">
+    <div class="chip shaper"><b>Gods &amp; Domains</b><small>competing divine agents (War, Creation, Death, Chaos...); faith power from worship; mortals can ascend; intervene via events, blessings, disasters</small></div>
+    <div class="chip shaper"><b>Moral Cosmology</b><small>morality as a force field the shapers contest — not a stat on entities but a pressure that flows through cultures and regions, changing what time-acquisition is sanctioned</small></div>
+    <div class="chip shaper"><b>The Loremaster Function</b><small>world-level dramaturgy: which latent conflicts get fueled, which regions get catastrophes, pacing of history — the DM seat, possibly LLM-assisted</small></div>
+  </div>
+</div>
+
+<div class="stratum">
+  <h3>S6 · Story &amp; Meaning</h3>
+  <p class="desc">What the world remembers and tells.</p>
+  <div class="chips">
+    <div class="chip extend"><b>Causal Ledger</b><small>every action/decision/effect; ripple chains; impact matrix</small></div>
+    <div class="chip newsys"><b>History Generation</b><small>world boot: generations simulated pre-player; founding myths, wars, migrations</small></div>
+    <div class="chip newsys"><b>Goals &amp; Quests</b><small>shared intention nodes between entities (incl. player); outcomes remembered; betrayal possible</small></div>
+    <div class="chip newsys"><b>Lore &amp; Knowledge</b><small>what each entity knows vs what happened; rumor propagation; discovered recipes → canon</small></div>
+  </div>
+</div>
+
+<div class="stratum">
+  <h3>S5 · Society</h3>
+  <div class="chips">
+    <div class="chip extend"><b>Groups &amp; Culture</b><small>family→village→guild→nation; values, norms</small></div>
+    <div class="chip extend"><b>Economy &amp; Ownership</b><small>property, trade, markets, debt</small></div>
+    <div class="chip extend"><b>Settlements &amp; Zoning</b><small>region→city→district zoning; location scoring; growth</small></div>
+    <div class="chip newsys"><b>Pathways</b><small>worn paths (traffic suppresses flora) + paved roads; networks to places</small></div>
+    <div class="chip newsys"><b>Governance &amp; Conflict</b><small>law, factions, war, justice, territory</small></div>
+  </div>
+</div>
+
+<div class="stratum">
+  <h3>S4 · Life</h3>
+  <p class="desc">Conscious entities — and all living things on a continuum of mind. <b>Conversation = the channel between private Minds</b>: exploration of the shared goal-hypergraph, expression of intent; nothing telepathic, information only moves by exchange.</p>
+  <div class="chips">
+    <div class="chip driver"><b>Time Metabolism</b><small>THE goal function: finite time, consumption, transfer, death — re-derived from first principles</small></div>
+    <div class="chip newsys"><b>Body Assembly</b><small>feet→…→head, tens of thousands of part variants, blueprint-composed seamless entity + rig</small></div>
+    <div class="chip extend"><b>Identity</b><small>attributes, personality, name, race, life stage</small></div>
+    <div class="chip newsys"><b>Mind</b><small>private semantic memory graph + embeddings; deterministic context-assembly → cheap fast LLM; conversations decomposed back into the graph</small></div>
+    <div class="chip newsys"><b>Agency</b><small>game-theoretic decisions: goals, plans, risk; every action an active, remembered choice</small></div>
+    <div class="chip newsys"><b>Relationship Hypergraph</b><small>social/familial/sexual/employment/commercial/rivalry/communal n-ary edges</small></div>
+    <div class="chip newsys"><b>Fauna</b><small>animals = same Life stack with thinner Mind/Agency (instinct-weighted, no LLM); predation, domestication, ecology feed the time economy</small></div>
+  </div>
+</div>
+
+<div class="stratum">
+  <h3>S3 · Matter &amp; Made Things</h3>
+  <div class="chips">
+    <div class="chip extend"><b>Material System</b><small>grains: atomic matter, properties, transformation only</small></div>
+    <div class="chip extend"><b>Object System</b><small>instances, lifecycle, durability, break products; F2-F7 become citizens</small></div>
+    <div class="chip newsys"><b>Emergent Recipes</b><small>no predefined recipes: minimal rules → discovery → canon → teaching</small></div>
+    <div class="chip newsys"><b>Blueprints</b><small>nested settlement→building→wall-piece; quantized to generatable sprites; buildings as spatial structures</small></div>
+    <div class="chip extend"><b>Items &amp; Equipment</b><small>25+ slots, layering, synergies, sentimental value</small></div>
+  </div>
+</div>
+
+<div class="stratum">
+  <h3>S2 · World Substrate <i style="opacity:.6">(built)</i></h3>
+  <div class="chips">
+    <div class="chip built"><b>Terrain &amp; Biomes</b></div>
+    <div class="chip built"><b>Decoration Fields F0–F7</b></div>
+    <div class="chip built"><b>Rendering &amp; Atmosphere</b></div>
+    <div class="chip built"><b>Asset Pipeline</b></div>
+  </div>
+</div>
+
+<div class="stratum">
+  <h3>S1 · Simulation Kernel</h3>
+  <div class="chips">
+    <div class="chip newsys"><b>Hypergraph Store</b><small>THE data substrate for everything above; persistent, queryable, embedding-indexed</small></div>
+    <div class="chip newsys"><b>Sim Process &amp; Protocol</b><small>separate local process, MMO-shaped client/server protocol, ticks, scheduling</small></div>
+    <div class="chip newsys"><b>Simulation LOD</b><small>1M entities: attention bubble full-sim + LLM → procedural → statistical aggregates</small></div>
+    <div class="chip extend"><b>Determinism &amp; Deltas</b><small>seeded baseline + delta log; claims unify object permanence; settlements = permanent deltas</small></div>
+  </div>
+</div>

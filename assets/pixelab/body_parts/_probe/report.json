@@ -1,0 +1,145 @@
+{
+ "parts": {
+  "arm_upper_l": {
+   "bbox": [
+    19,
+    5,
+    45,
+    59
+   ],
+   "colors": 13
+  },
+  "arm_fore_l": {
+   "bbox": [
+    23,
+    4,
+    41,
+    63
+   ],
+   "colors": 17
+  },
+  "hand_l": {
+   "bbox": [
+    13,
+    0,
+    64,
+    64
+   ],
+   "colors": 22
+  },
+  "thigh_l": {
+   "bbox": [
+    19,
+    6,
+    45,
+    58
+   ],
+   "colors": 22
+  },
+  "shin_l": {
+   "bbox": [
+    21,
+    4,
+    43,
+    59
+   ],
+   "colors": 13
+  },
+  "foot_l": {
+   "bbox": [
+    4,
+    8,
+    61,
+    59
+   ],
+   "colors": 13
+  },
+  "thigh_r": {
+   "bbox": [
+    19,
+    6,
+    45,
+    58
+   ],
+   "colors": 22
+  },
+  "shin_r": {
+   "bbox": [
+    21,
+    4,
+    43,
+    59
+   ],
+   "colors": 13
+  },
+  "foot_r": {
+   "bbox": [
+    3,
+    8,
+    60,
+    59
+   ],
+   "colors": 13
+  },
+  "torso": {
+   "bbox": [
+    3,
+    6,
+    61,
+    58
+   ],
+   "colors": 13
+  },
+  "arm_upper_r": {
+   "bbox": [
+    19,
+    5,
+    45,
+    59
+   ],
+   "colors": 13
+  },
+  "arm_fore_r": {
+   "bbox": [
+    23,
+    4,
+    41,
+    63
+   ],
+   "colors": 17
+  },
+  "hand_r": {
+   "bbox": [
+    0,
+    0,
+    51,
+    64
+   ],
+   "colors": 22
+  },
+  "head": {
+   "bbox": [
+    10,
+    4,
+    54,
+    63
+   ],
+   "colors": 25
+  }
+ },
+ "palette": {
+  "union": 62,
+  "skin_shared": 12
+ },
+ "seams": {
+  "arm_u_l->arm_f_l": 0.901,
+  "arm_f_l->hand_l": 0.775,
+  "arm_u_r->arm_f_r": 0.862,
+  "arm_f_r->hand_r": 0.696,
+  "thigh_l->shin_l": 0.901,
+  "shin_l->foot_l": 0.644,
+  "thigh_r->shin_r": 0.901,
+  "shin_r->foot_r": 0.68
+ },
+ "verdict": "PASS"
+}

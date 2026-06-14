@@ -1,0 +1,120 @@
+<h2>Spatial Compiler: How primitives map to joints</h2>
+<p class="subtitle">The same instruction produces different joint angles depending on which bone in the chain it targets</p>
+
+<div class="section">
+<h3>Example: "raise left_arm, amount: 0.8"</h3>
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0;">
+  <div style="background:#1a1a2a; border-radius:8px; padding:16px;">
+    <div style="color:#9af; font-weight:bold; margin-bottom:8px;">What the LLM says:</div>
+    <pre style="color:#ddd; font-size:13px; margin:0;">{
+  part: "left_arm",
+  action: "raise",
+  amount: 0.8,
+  ticks: 4
+}</pre>
+  </div>
+  <div style="background:#1a1a2a; border-radius:8px; padding:16px;">
+    <div style="color:#9af; font-weight:bold; margin-bottom:8px;">What the compiler outputs:</div>
+    <pre style="color:#ddd; font-size:13px; margin:0;">{
+  arm_u_l: -136,  // 80% of [-170, 0]
+  arm_f_l: 0,     // stays straight
+  hand_l: 0       // stays neutral
+}</pre>
+    <div style="color:#888; font-size:11px; margin-top:8px;">
+      "raise" on upper arm = rotate toward overhead<br>
+      forearm + hand follow naturally (0 = straight)
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="section">
+<h3>The Mapping Rules</h3>
+<table style="width:100%; border-collapse:collapse; font-size:13px;">
+  <tr style="border-bottom:1px solid #333; color:#9af;">
+    <th style="text-align:left; padding:8px;">Primitive</th>
+    <th style="text-align:left; padding:8px;">Upper bone</th>
+    <th style="text-align:left; padding:8px;">Middle bone</th>
+    <th style="text-align:left; padding:8px;">End bone</th>
+  </tr>
+  <tr style="border-bottom:1px solid #222;">
+    <td style="padding:8px; color:#6d6;">raise</td>
+    <td style="padding:8px;">Rotate toward overhead<br><span style="color:#888">arm_u: toward -170/+170</span></td>
+    <td style="padding:8px;">Stays straight (0)<br><span style="color:#888">unless "bend" also applied</span></td>
+    <td style="padding:8px;">Stays neutral (0)</td>
+  </tr>
+  <tr style="border-bottom:1px solid #222;">
+    <td style="padding:8px; color:#6d6;">lower</td>
+    <td style="padding:8px;">Rotate toward rest<br><span style="color:#888">arm_u: toward 0</span></td>
+    <td style="padding:8px;">Stays straight</td>
+    <td style="padding:8px;">Stays neutral</td>
+  </tr>
+  <tr style="border-bottom:1px solid #222;">
+    <td style="padding:8px; color:#6d6;">bend</td>
+    <td style="padding:8px;">No change</td>
+    <td style="padding:8px;">Fold at joint<br><span style="color:#888">arm_f: toward -140/+140<br>shin: toward 140</span></td>
+    <td style="padding:8px;">Slight follow</td>
+  </tr>
+  <tr style="border-bottom:1px solid #222;">
+    <td style="padding:8px; color:#6d6;">extend</td>
+    <td style="padding:8px;">Rotate forward<br><span style="color:#888">arm_u: toward -90/+90</span></td>
+    <td style="padding:8px;">Straighten<br><span style="color:#888">toward 0</span></td>
+    <td style="padding:8px;">Neutral</td>
+  </tr>
+  <tr style="border-bottom:1px solid #222;">
+    <td style="padding:8px; color:#6d6;">retract</td>
+    <td style="padding:8px;">Rotate backward<br><span style="color:#888">arm_u: toward +50/-50</span></td>
+    <td style="padding:8px;">Fold in<br><span style="color:#888">bend at elbow/knee</span></td>
+    <td style="padding:8px;">Neutral</td>
+  </tr>
+</table>
+</div>
+
+<div class="section">
+<h3>Direction-Dependent Draw Order (Z)</h3>
+<p style="color:#aaa; margin-bottom:12px;">The same "extend left_arm forward" looks different from each direction — not because the joints change, but because of what's visible:</p>
+<div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px;">
+  <div style="background:#1a1a2a; border-radius:6px; padding:12px; text-align:center;">
+    <div style="color:#f0d060; font-weight:bold;">SOUTH (front)</div>
+    <div style="color:#888; font-size:11px; margin-top:6px;">
+      Arm extends TOWARD camera<br>
+      → foreshortens (shrinks)<br>
+      → draws IN FRONT of torso<br>
+      xProj: 1.0
+    </div>
+  </div>
+  <div style="background:#1a1a2a; border-radius:6px; padding:12px; text-align:center;">
+    <div style="color:#f0d060; font-weight:bold;">EAST (profile)</div>
+    <div style="color:#888; font-size:11px; margin-top:6px;">
+      Arm extends ACROSS screen<br>
+      → fully visible length<br>
+      → draw order: same layer<br>
+      xProj: 0.25
+    </div>
+  </div>
+  <div style="background:#1a1a2a; border-radius:6px; padding:12px; text-align:center;">
+    <div style="color:#f0d060; font-weight:bold;">NORTH (back)</div>
+    <div style="color:#888; font-size:11px; margin-top:6px;">
+      Arm extends AWAY from camera<br>
+      → foreshortens (shrinks)<br>
+      → draws BEHIND torso<br>
+      xProj: 1.0
+    </div>
+  </div>
+  <div style="background:#1a1a2a; border-radius:6px; padding:12px; text-align:center;">
+    <div style="color:#f0d060; font-weight:bold;">SE (diagonal)</div>
+    <div style="color:#888; font-size:11px; margin-top:6px;">
+      Arm extends PARTIALLY across<br>
+      → partial foreshortening<br>
+      → near arm in front, far behind<br>
+      xProj: 0.75
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="section">
+<h3>Key Insight: Joint angles DON'T change per direction</h3>
+<p style="color:#ccc;">The <strong>same joint angles</strong> render correctly from all 8 directions because the renderer's xProj/xSign/draw-order already handles the projection. The spatial compiler only needs to compute joints ONCE — the direction system does the rest.</p>
+<p style="color:#888; margin-top:8px;">Exception: "extend forward" may need slight draw-order hints for the renderer (e.g., "this arm is reaching toward the camera") so the painter order can adjust dynamically.</p>
+</div>

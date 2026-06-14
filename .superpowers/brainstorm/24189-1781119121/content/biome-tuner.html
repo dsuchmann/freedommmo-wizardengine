@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>FreedomMMO — Biome Atmosphere Tuner</title>
+<style>
+  :root { color-scheme: dark; }
+  body { background:#14161a; color:#e8e8e8; font-family: 'Segoe UI', system-ui, sans-serif; margin:0; padding:24px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .sub { color:#9aa; font-size:13px; margin-bottom:18px; }
+  .toolbar { position:sticky; top:0; z-index:50; background:#14161acc; backdrop-filter:blur(6px); padding:10px 0; display:flex; gap:12px; align-items:center; border-bottom:1px solid #2a2e35; margin-bottom:18px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(560px, 1fr)); gap:20px; }
+  .biome { background:#1b1e24; border:1px solid #2a2e35; border-radius:10px; padding:14px; }
+  .biome.saved { border-color:#3f8f5f; }
+  .biome h2 { font-size:15px; margin:0 0 8px; text-transform:capitalize; display:flex; justify-content:space-between; align-items:center; }
+  .biome h2 .flag { font-size:11px; color:#7fc89a; font-weight:normal; }
+  .preview { position:relative; border-radius:6px; overflow:hidden; background:#000; aspect-ratio: 600/460; }
+  .preview img { width:100%; height:100%; object-fit:cover; display:block; image-rendering:pixelated; }
+  .preview .ov { position:absolute; inset:0; pointer-events:none; }
+  .missing { display:flex; align-items:center; justify-content:center; height:100%; color:#667; font-size:13px; }
+  .moods { display:flex; gap:6px; margin:10px 0 8px; }
+  .mood { flex:1; text-align:center; font-size:12px; padding:6px 2px; border-radius:6px; border:1px solid #333a44; cursor:pointer; user-select:none; }
+  .mood:hover { border-color:#5af; }
+  .mood.active { background:#27415f; border-color:#5af; }
+  .sliders { display:grid; grid-template-columns:1fr 1fr; gap:4px 16px; }
+  .sl { display:grid; grid-template-columns:86px 1fr 38px; align-items:center; gap:8px; font-size:12px; color:#bcc5cf; }
+  .sl input { width:100%; accent-color:#5af; }
+  .sl .val { text-align:right; color:#8fa; font-variant-numeric:tabular-nums; }
+  .row { display:flex; gap:8px; margin-top:10px; align-items:center; }
+  button { background:#27415f; color:#dfe9f5; border:1px solid #3a5a80; border-radius:6px; padding:6px 14px; font-size:13px; cursor:pointer; }
+  button:hover { background:#31527a; }
+  button.minor { background:#23262d; border-color:#3a3e48; }
+  .nightbtn.on { background:#1c2440; border-color:#4a5aa0; }
+  #exportBtn { background:#2e5f41; border-color:#3f8f5f; font-weight:600; }
+  #status { font-size:12px; color:#9aa; }
+</style>
+</head>
+<body>
+<h1>Biome Atmosphere Tuner</h1>
+<div class="sub">
+  For each biome: pick a <b>mood direction</b>, then fine-tune. <b>Hue/Sat/Contrast/Bright/Warmth/Fog</b> preview live on the screenshot.
+  <b>Shadow</b> = how strong/long object shadows get; <b>Night floor</b> = how bright the darkest night stays (toggle 🌙 to preview).
+  Click <b>Save</b> on each biome you've tuned (card turns green), then <b>EXPORT ALL</b> at the top when finished. Your work auto-saves in the browser.
+</div>
+<div class="toolbar">
+  <button id="exportBtn" data-choice="" onclick="exportAll(this)">EXPORT ALL SELECTIONS</button>
+  <button class="minor" onclick="copyJSON()">Copy JSON to clipboard</button>
+  <span id="status">0 / 21 biomes saved</span>
+</div>
+<div class="grid" id="grid"></div>
+
+<script>
+const BIOMES = ['grassland','forest','dense_forest','tropical_forest','taiga','swamp','steppe','savanna','desert','beach','hills','mountains','tundra','arctic','volcanic','mystic','river','lake','shallow_water','ocean','deep_ocean'];
+const MOODS = {
+  filmic:      { label:'A Filmic',      ov1:'linear-gradient(160deg, rgba(255,160,60,VAR) 0%, rgba(255,120,40,calc(VAR*0.33)) 45%, rgba(0,60,80,calc(VAR*0.73)) 100%)', blend1:'overlay', ov2:'rgba(0,40,60,0.18)', blend2:'soft-light', f:'contrast(1.12)' },
+  painterly:   { label:'B Painterly',   ov1:'radial-gradient(circle at 20% 0%, rgba(255,210,90,calc(VAR*1.8)) 0%, rgba(255,170,60,calc(VAR*0.7)) 45%, rgba(120,80,140,0.12) 100%)', blend1:'screen', ov2:'rgba(255,150,40,0.14)', blend2:'overlay', f:'saturate(1.15)' },
+  muted:       { label:'C Muted',       ov1:'linear-gradient(180deg, rgba(180,130,80,calc(VAR*0.66)) 0%, rgba(60,70,110,calc(VAR*1.0)) 100%)', blend1:'soft-light', ov2:'radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 50%, rgba(10,15,30,0.40) 100%)', blend2:'normal', f:'saturate(0.82) contrast(1.08)' },
+  chiaroscuro: { label:'D Chiaroscuro', ov1:'linear-gradient(115deg, rgba(255,140,30,calc(VAR*1.4)) 0%, rgba(200,80,40,calc(VAR*0.4)) 40%, rgba(15,10,40,calc(VAR*1.65)) 100%)', blend1:'overlay', ov2:'radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 55%, rgba(5,5,20,0.38) 100%)', blend2:'normal', f:'contrast(1.28)' },
+};
+const SLIDERS = [
+  ['hue','Hue shift',-60,60,0,'°'], ['sat','Saturation',50,160,100,'%'],
+  ['con','Contrast',80,150,105,'%'], ['bri','Brightness',70,130,100,'%'],
+  ['warm','Warmth',0,100,30,'%'], ['fog','Fog density',0,100,15,'%'],
+  ['shadow','Shadow',0,100,50,'%'], ['night','Night floor',0,100,25,'%'],
+];
+const state = JSON.parse(localStorage.getItem('atmoTuner') || '{}');
+
+function defaults() { const d = { mood:'painterly', saved:false, nightPrev:false }; SLIDERS.forEach(s => d[s[0]] = s[4]); return d; }
+
+for (const b of BIOMES) if (!state[b]) state[b] = defaults();
+
+const grid = document.getElementById('grid');
+for (const b of BIOMES) {
+  const card = document.createElement('div');
+  card.className = 'biome'; card.id = 'card-' + b;
+  card.innerHTML = `
+    <h2>${b.replace(/_/g,' ')} <span class="flag"></span></h2>
+    <div class="preview">
+      <img src="http://localhost:8741/screenshots/_atmo_${b}.png" onerror="this.parentElement.innerHTML='<div class=missing>screenshot pending…</div>'">
+      <div class="ov ov1"></div><div class="ov ov2"></div><div class="ov ovfog"></div><div class="ov ovnight"></div>
+    </div>
+    <div class="moods">${Object.entries(MOODS).map(([k,m]) => `<div class="mood" data-mood="${k}" onclick="setMood('${b}','${k}')">${m.label}</div>`).join('')}</div>
+    <div class="sliders">${SLIDERS.map(s => `
+      <label class="sl">${s[1]}<input type="range" min="${s[2]}" max="${s[3]}" value="${state[b][s[0]]}" oninput="setVal('${b}','${s[0]}',this.value)"><span class="val" id="v-${b}-${s[0]}"></span></label>`).join('')}
+    </div>
+    <div class="row">
+      <button data-choice="" onclick="saveBiome('${b}', this)">Save ${b.replace(/_/g,' ')}</button>
+      <button class="minor nightbtn" onclick="toggleNight('${b}', this)">🌙 night preview</button>
+      <button class="minor" onclick="resetBiome('${b}')">Reset</button>
+    </div>`;
+  grid.appendChild(card);
+  render(b);
+}
+
+function setMood(b, m) { state[b].mood = m; state[b].saved = false; render(b); persist(); }
+function setVal(b, k, v) { state[b][k] = +v; state[b].saved = false; render(b); persist(); }
+function toggleNight(b, el) { state[b].nightPrev = !state[b].nightPrev; el.classList.toggle('on', state[b].nightPrev); render(b); }
+function resetBiome(b) { state[b] = defaults(); const c = document.getElementById('card-'+b); c.querySelectorAll('input').forEach((inp,i) => inp.value = SLIDERS[i][4]); render(b); persist(); }
+function persist() { localStorage.setItem('atmoTuner', JSON.stringify(state)); updateStatus(); }
+
+function render(b) {
+  const s = state[b], card = document.getElementById('card-' + b), m = MOODS[s.mood];
+  card.classList.toggle('saved', !!s.saved);
+  card.querySelector('.flag').textContent = s.saved ? '✓ saved' : '';
+  card.querySelectorAll('.mood').forEach(el => el.classList.toggle('active', el.dataset.mood === s.mood));
+  SLIDERS.forEach(sl => { const v = document.getElementById(`v-${b}-${sl[0]}`); if (v) v.textContent = s[sl[0]] + sl[5]; });
+  const img = card.querySelector('img'); if (!img) return;
+  img.style.filter = `${m.f} hue-rotate(${s.hue}deg) saturate(${s.sat}%) contrast(${s.con}%) brightness(${s.bri}%)`;
+  const warm = (s.warm / 100 * 0.55).toFixed(3);
+  const ov1 = card.querySelector('.ov1'), ov2 = card.querySelector('.ov2');
+  ov1.style.background = m.ov1.replace(/VAR/g, warm); ov1.style.mixBlendMode = m.blend1;
+  ov2.style.background = m.ov2; ov2.style.mixBlendMode = m.blend2;
+  const fogA = (s.fog / 100 * 0.5).toFixed(3);
+  card.querySelector('.ovfog').style.background = `rgba(205,215,225,${fogA})`;
+  const night = s.nightPrev ? (1 - s.night / 100) * 0.82 : 0;
+  card.querySelector('.ovnight').style.background = `rgba(8,12,38,${night.toFixed(3)})`;
+}
+
+function biomeConfig(b) { const { saved, nightPrev, ...cfg } = state[b]; return cfg; }
+
+function saveBiome(b, btn) {
+  state[b].saved = true;
+  btn.dataset.choice = 'biome:' + b + ':' + JSON.stringify(biomeConfig(b));
+  render(b); persist();
+}
+
+function exportAll(btn) {
+  const all = {}; for (const b of BIOMES) all[b] = biomeConfig(b);
+  btn.dataset.choice = 'EXPORT_ALL:' + JSON.stringify(all);
+  const n = BIOMES.filter(b => state[b].saved).length;
+  document.getElementById('status').textContent = `Exported all 21 (${n} explicitly saved) — return to the terminal`;
+}
+
+function copyJSON() {
+  const all = {}; for (const b of BIOMES) all[b] = biomeConfig(b);
+  navigator.clipboard.writeText(JSON.stringify(all, null, 2));
+  document.getElementById('status').textContent = 'JSON copied to clipboard';
+}
+
+function updateStatus() {
+  const n = BIOMES.filter(b => state[b].saved).length;
+  document.getElementById('status').textContent = `${n} / ${BIOMES.length} biomes saved`;
+}
+updateStatus();
+</script>
+</body>
+</html>

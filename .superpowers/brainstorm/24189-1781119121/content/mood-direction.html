@@ -1,0 +1,62 @@
+<h2>Which golden-hour mood direction feels right?</h2>
+<p class="subtitle">Same in-game steppe screenshot, four different grading/atmosphere directions (CSS approximations — the real shader version will be richer). This sets the personality of the whole lighting system.</p>
+
+<style>
+  .grade-card { position: relative; overflow: hidden; border-radius: 6px; }
+  .grade-card img { display: block; width: 100%; image-rendering: pixelated; }
+  .grade-card .ov { position: absolute; inset: 0; pointer-events: none; }
+</style>
+
+<div class="cards" style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+
+  <div class="card" data-choice="filmic" onclick="toggleSelect(this)">
+    <div class="card-image grade-card">
+      <img src="http://localhost:8741/screenshots/_atmo_daylight.png" style="filter:contrast(1.18) saturate(1.12) brightness(1.02);">
+      <div class="ov" style="background:linear-gradient(160deg, rgba(255,160,60,0.30) 0%, rgba(255,120,40,0.10) 45%, rgba(0,60,80,0.22) 100%); mix-blend-mode:overlay;"></div>
+      <div class="ov" style="background:rgba(0,40,60,0.18); mix-blend-mode:soft-light;"></div>
+    </div>
+    <div class="card-body">
+      <h3>A — Filmic teal &amp; orange</h3>
+      <p>Modern cinematic: warm amber light, shadows pushed toward teal. High contrast, controlled saturation. Think modern AAA "magic hour".</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="painterly" onclick="toggleSelect(this)">
+    <div class="card-image grade-card">
+      <img src="http://localhost:8741/screenshots/_atmo_daylight.png" style="filter:saturate(1.4) brightness(1.06) contrast(1.04);">
+      <div class="ov" style="background:radial-gradient(circle at 20% 0%, rgba(255,210,90,0.55) 0%, rgba(255,170,60,0.22) 45%, rgba(120,80,140,0.15) 100%); mix-blend-mode:screen;"></div>
+      <div class="ov" style="background:rgba(255,150,40,0.16); mix-blend-mode:overlay;"></div>
+    </div>
+    <div class="card-body">
+      <h3>B — Painterly golden glow</h3>
+      <p>Lush, warm, saturated — visible sun glow bleeding across the scene, soft bloom. Think Ghibli sunsets / Eastward. Optimistic rather than ominous.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="moody" onclick="toggleSelect(this)">
+    <div class="card-image grade-card">
+      <img src="http://localhost:8741/screenshots/_atmo_daylight.png" style="filter:saturate(0.72) contrast(1.14) brightness(0.88);">
+      <div class="ov" style="background:linear-gradient(180deg, rgba(180,130,80,0.20) 0%, rgba(60,70,110,0.30) 100%); mix-blend-mode:soft-light;"></div>
+      <div class="ov" style="background:radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 50%, rgba(10,15,30,0.45) 100%);"></div>
+    </div>
+    <div class="card-body">
+      <h3>C — Muted &amp; melancholy</h3>
+      <p>Desaturated, cool shadows, heavy vignette, restrained warm light. Quiet, lonely, atmospheric. Think Nordic indie / Sword &amp; Sworcery.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="chiaroscuro" onclick="toggleSelect(this)">
+    <div class="card-image grade-card">
+      <img src="http://localhost:8741/screenshots/_atmo_daylight.png" style="filter:contrast(1.38) saturate(1.18) brightness(0.96);">
+      <div class="ov" style="background:linear-gradient(115deg, rgba(255,140,30,0.42) 0%, rgba(200,80,40,0.12) 40%, rgba(15,10,40,0.50) 100%); mix-blend-mode:overlay;"></div>
+      <div class="ov" style="background:radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 55%, rgba(5,5,20,0.40) 100%);"></div>
+    </div>
+    <div class="card-body">
+      <h3>D — High-drama chiaroscuro</h3>
+      <p>Strong directional light vs deep shadow, vivid sky color crashing into darkness. Maximum drama: long black shadows, burning highlights. Think Blasphemous / Darkest Dungeon energy in daylight.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:14px;">Click the one that matches the feeling you want at sunrise/sunset. You can also mix ("B's glow but C's restraint") — say so in the terminal.</p>

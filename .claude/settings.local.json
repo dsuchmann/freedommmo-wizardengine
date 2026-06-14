@@ -17,7 +17,12 @@
       "mcp__pixellab__delete_object",
       "mcp__pixellab__list_projects",
       "mcp__pixellab__agent_help",
-      "mcp__pixellab__agent_feedback"
+      "mcp__pixellab__agent_feedback",
+      "mcp__plugin_playwright_playwright__browser_run_code_unsafe",
+      "mcp__plugin_playwright_playwright__browser_snapshot",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_evaluate",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot"
     ]
   }
 }

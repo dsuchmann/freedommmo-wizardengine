@@ -1,0 +1,105 @@
+<h2>System Atlas — Draft 1: the full enumeration</h2>
+<p class="subtitle">Every system the living world needs, carved into 6 strata. Color = status. Read bottom-up: each stratum consumes the ones below it. This is the carving to argue with — what's missing, what's miscarved, what should merge or split?</p>
+
+<style>
+  .stratum { border: 1px solid rgba(128,128,128,.35); border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; }
+  .stratum h3 { margin: 0 0 2px 0; }
+  .stratum .desc { font-size: .85em; opacity: .75; margin: 0 0 10px 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { border-radius: 8px; padding: 8px 12px; font-size: .85em; line-height: 1.35; max-width: 240px; }
+  .chip b { display: block; font-size: 1.02em; }
+  .chip small { opacity: .8; }
+  .built   { background: rgba( 70,160, 90,.18); border: 1px solid rgba( 70,160, 90,.55); }
+  .extend  { background: rgba(220,170, 40,.15); border: 1px solid rgba(220,170, 40,.55); }
+  .newsys  { background: rgba( 90,130,220,.15); border: 1px solid rgba( 90,130,220,.55); }
+  .driver  { background: rgba(200, 80,160,.16); border: 2px solid rgba(200, 80,160,.65); }
+  .legend { display:flex; gap:14px; flex-wrap: wrap; font-size:.8em; margin-bottom: 16px; }
+  .legend span { padding: 3px 10px; border-radius: 6px; }
+  .xcut { font-size:.85em; opacity:.85; margin-top:4px; }
+</style>
+
+<div class="legend">
+  <span class="built">built / mostly built</span>
+  <span class="extend">designed before — extend &amp; port</span>
+  <span class="newsys">new — needs first-principles design</span>
+  <span class="driver">pinnacle driver — being re-examined</span>
+</div>
+
+<div class="stratum">
+  <h3>S6 · Story &amp; Meaning</h3>
+  <p class="desc">What the world remembers and tells. Consumes everything below.</p>
+  <div class="chips">
+    <div class="chip extend"><b>Causal Ledger</b><small>every action/decision/effect recorded; ripple chains; impact matrix (old CAUSAL_TRACKING)</small></div>
+    <div class="chip newsys"><b>History Generation</b><small>world boot: simulate generations pre-player; founding myths, wars, migrations as causal chains</small></div>
+    <div class="chip newsys"><b>Goals &amp; Quests</b><small>shared intentions between entities (incl. player): "kill the bandit in 2 days" → joint goal node driving both behaviors, remembered outcomes (betrayal!)</small></div>
+    <div class="chip newsys"><b>Lore &amp; Knowledge</b><small>what each entity KNOWS (vs what happened); rumor propagation; discovered recipes becoming canon</small></div>
+  </div>
+</div>
+
+<div class="stratum">
+  <h3>S5 · Society</h3>
+  <p class="desc">Entities aggregated. The "conscious entities shape the landscape" layer.</p>
+  <div class="chips">
+    <div class="chip extend"><b>Groups &amp; Culture</b><small>family→village→guild→nation; values, norms, group time generation</small></div>
+    <div class="chip extend"><b>Economy &amp; Ownership</b><small>property, trade, markets, debt; who owns which plot/house/object</small></div>
+    <div class="chip extend"><b>Settlements &amp; Zoning</b><small>region→territory→city→district zoning; location scoring; growth over time (old world-compiler L11/L12)</small></div>
+    <div class="chip newsys"><b>Pathways</b><small>worn foot-paths (traffic suppresses F1-F4 via claims/deltas) + paved roads (placed objects); networks connecting places</small></div>
+    <div class="chip newsys"><b>Governance &amp; Conflict</b><small>law, factions, war/peace, justice, territory disputes</small></div>
+  </div>
+</div>
+
+<div class="stratum">
+  <h3>S4 · Life</h3>
+  <p class="desc">A single conscious entity, fully realized.</p>
+  <div class="chips">
+    <div class="chip driver"><b>Time Metabolism</b><small>THE goal function: finite time, consumption, transfer, death — being re-derived from first principles</small></div>
+    <div class="chip newsys"><b>Body Assembly</b><small>feet→shins→thighs→hips→torso→arms→head→hair/eyes/genitals; tens of thousands of part variants; blueprint composes seamless entity + animation rig</small></div>
+    <div class="chip extend"><b>Identity</b><small>attributes, personality (-100..+100 traits), name, race (humans/elves/dwarves/dragons/spirits...), life stage</small></div>
+    <div class="chip newsys"><b>Mind</b><small>semantic memory graph + embeddings; deterministic context-assembly → small/cheap LLM for language &amp; local reasoning; conversation decomposed back into the graph</small></div>
+    <div class="chip newsys"><b>Agency</b><small>game-theoretic decision-making: goals, plans, risk, choosing — every action an active choice that's remembered</small></div>
+    <div class="chip newsys"><b>Relationship Hypergraph</b><small>social, familial, sexual, employment, commercial, rivalry, communal edges — n-ary, weighted, history-bearing</small></div>
+  </div>
+</div>
+
+<div class="stratum">
+  <h3>S3 · Matter &amp; Made Things</h3>
+  <p class="desc">What stuff is and how it becomes other stuff. Feeds construction AND bodies AND loot.</p>
+  <div class="chips">
+    <div class="chip extend"><b>Material System</b><small>grains: atomic matter w/ properties (physical/magical/spiritual/technical); nothing destroyed, only transformed</small></div>
+    <div class="chip extend"><b>Object System</b><small>instances w/ lifecycle, durability, break products; F2-F7 decorations become citizens of this system</small></div>
+    <div class="chip newsys"><b>Emergent Recipes</b><small>NO predefined recipes: minimal assembly rules → discovered combinations become canonical, teachable, repeatable</small></div>
+    <div class="chip newsys"><b>Blueprints</b><small>nested: settlement→building→wall-section; quantized into generatable sprite pieces; buildings as spatial structures (walls/floors/doors/interiors), never house-sprites</small></div>
+    <div class="chip extend"><b>Items &amp; Equipment</b><small>25+ slots, layering, synergies, sentimental value</small></div>
+  </div>
+</div>
+
+<div class="stratum">
+  <h3>S2 · World Substrate <i style="opacity:.6">(largely built — your current project)</i></h3>
+  <div class="chips">
+    <div class="chip built"><b>Terrain &amp; Biomes</b><small>Wang tiles, 21 biomes, elevation, water</small></div>
+    <div class="chip built"><b>Decoration Fields F0–F7</b><small>natural landscape; claims system is the seed of object-permanence</small></div>
+    <div class="chip built"><b>Rendering &amp; Atmosphere</b><small>chunks, y-sorted sprites, lighting, weather, CRT</small></div>
+    <div class="chip built"><b>Asset Pipeline</b><small>PixelLab generation at scale (10k+ generations)</small></div>
+  </div>
+</div>
+
+<div class="stratum">
+  <h3>S1 · Simulation Kernel <i style="opacity:.6">(the ground everything stands on)</i></h3>
+  <div class="chips">
+    <div class="chip newsys"><b>Hypergraph Store</b><small>THE data substrate: nodes/hyperedges for everything above; persistent (SQLite-class), queryable, embedding-indexed</small></div>
+    <div class="chip newsys"><b>Sim Process &amp; Protocol</b><small>separate local process, MMO-shaped client/server protocol; ticks, scheduling</small></div>
+    <div class="chip newsys"><b>Simulation LOD</b><small>1M entities: attention bubble = full sim + LLM; nearby = procedural; distant = statistical aggregates; seamless promotion/demotion</small></div>
+    <div class="chip extend"><b>Determinism &amp; Deltas</b><small>seeded baseline + delta log; world heals; settlements = permanent deltas (answers your object-permanence worry)</small></div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Cross-cutting edges worth noticing</h3>
+  <p class="xcut">
+  • <b>Object permanence</b> (your F4/F5/F6 spawn-conflict worry) is one system, not three: the claims/placement substrate in S1-S2 — large claims first, smaller fields fill remaining space, destruction writes a delta, nothing "pops in".<br>
+  • <b>Pathways</b> = Society-stratum intent writing into Substrate-stratum claims (traffic suppresses flora).<br>
+  • <b>Body Assembly</b> = Blueprints applied to flesh: same nested-blueprint &amp; quantization machinery as buildings.<br>
+  • <b>Emergent Recipes</b> = Material System rules + Agency (someone must try the combination) + Lore (discovery propagates).<br>
+  • <b>Time Metabolism</b> touches literally every chip — which is why it's pink and re-examined first or early.
+  </p>
+</div>

@@ -1,0 +1,120 @@
+<h2>Hybrid Cliff + Wall Face: How It Actually Works</h2>
+<p class="subtitle">Breaking down the technical approach for the concerns raised</p>
+
+<div class="section" style="background:#1a1a2e;padding:20px;border-radius:8px;margin-bottom:24px;">
+  <h3 style="color:#ffd24a;margin-top:0;">The Cliff System Today</h3>
+  <div style="font-family:monospace;font-size:13px;color:#aaa;line-height:1.8;">
+    <div>Our terrain already has elevation levels (0-9). When tile A is at elevation 3</div>
+    <div>and tile B (south of A) is at elevation 2, the cliff renderer draws:</div>
+    <div style="margin:12px 0;padding:12px;background:#111;border-radius:4px;color:#9cf;">
+      <div>┌──────────────┐  ← top of elevated tile (floor)</div>
+      <div>│  Floor tile   │  ← terrain Wang tile at elevation 3</div>
+      <div>├──────────────┤  ← cliff edge</div>
+      <div>│▓▓ CLIFF FACE ▓▓│  ← south-facing vertical surface (cliff overlay)</div>
+      <div>│▓▓▓▓▓▓▓▓▓▓▓▓▓▓│  ← height = elevation difference × cliff_height</div>
+      <div>└──────────────┘  ← ground level</div>
+    </div>
+    <div style="color:#fa5;">This is EXACTLY what a building wall is.</div>
+    <div>Building floor = elevated tile. Wall face = cliff face. Already rendered</div>
+    <div>with correct lighting, z-order, corners, side edges.</div>
+  </div>
+</div>
+
+<h3>Concern 1: Stacking Height</h3>
+<div class="section" style="background:#1a1a2e;padding:20px;border-radius:8px;margin-bottom:16px;">
+  <div style="font-family:monospace;font-size:13px;color:#aaa;line-height:1.8;">
+    <div style="color:#6a6;">Current cliff face tiles are fixed height per elevation step.</div>
+    <div style="color:#6a6;">For buildings, we control the height per step.</div>
+    <div style="margin:12px 0;">
+      <div style="color:#fff;">Option: Building elevation uses a TALLER cliff face tile.</div>
+      <div>- Terrain cliff step = ~16px face height (subtle hills)</div>
+      <div>- Building cliff step = ~48-64px face height (one story wall)</div>
+      <div>- 2-story building = elevation +2 = two stacked face tiles</div>
+      <div>- Castle = elevation +5 = five stacked face tiles</div>
+    </div>
+    <div style="color:#fa5;">The cliff system already supports variable-height faces.</div>
+    <div style="color:#fa5;">We just need a "building wall" face tile instead of a "rock cliff" face tile.</div>
+  </div>
+</div>
+
+<h3>Concern 2: Windows on Cliff Faces</h3>
+<div class="section" style="background:#1a1a2e;padding:20px;border-radius:8px;margin-bottom:16px;">
+  <div style="font-family:monospace;font-size:13px;color:#aaa;line-height:1.8;">
+    <div style="color:#6a6;">The cliff face is a sprite drawn at a known position.</div>
+    <div style="color:#6a6;">We can composite window sprites ON TOP of it.</div>
+    <div style="margin:12px 0;padding:12px;background:#111;border-radius:4px;">
+      <div style="color:#9cf;">Layer 1: Cliff face tile (plain stone/brick wall)</div>
+      <div style="color:#9cf;">Layer 2: Window overlay sprite (with alpha channel)</div>
+      <div style="color:#9cf;">Layer 3: Interior glow pass (light from inside at night)</div>
+    </div>
+    <div style="margin-top:12px;">
+      <div style="color:#fff;">Window sprites are generated with:</div>
+      <div>- Transparent background (alpha channel)</div>
+      <div>- Correct 3/4 perspective matching the cliff face angle</div>
+      <div>- The wall face texture BEHIND the window is visible through glass</div>
+      <div>- At night: warm glow emanates from window (additive blend)</div>
+    </div>
+    <div style="margin-top:12px;color:#fa5;">
+      Windows are OVERLAY objects, not modifications to the wall tile.
+      Same window sprite works on any wall material.
+    </div>
+  </div>
+</div>
+
+<h3>Concern 3: Camera Angle Matching</h3>
+<div class="section" style="background:#1a1a2e;padding:20px;border-radius:8px;margin-bottom:16px;">
+  <div style="font-family:monospace;font-size:13px;color:#aaa;line-height:1.8;">
+    <div style="color:#6a6;">The cliff face has a known angle (determined by tile_view).</div>
+    <div style="color:#6a6;">Wall face sprites match this angle by using the same PixelLab settings.</div>
+    <div style="margin:12px 0;">
+      <div style="color:#fff;">Terrain cliffs use: "high top-down" view → ~15% depth</div>
+      <div style="color:#fff;">Wall face tiles use: same "high top-down" → same perspective</div>
+      <div style="color:#fff;">Window overlays use: same view settings → angles match</div>
+    </div>
+    <div style="color:#fa5;">
+      Everything generated with the same PixelLab view setting
+      automatically shares the same camera angle.
+    </div>
+  </div>
+</div>
+
+<h3>Concern 4: Light + Alpha Through Windows</h3>
+<div class="section" style="background:#1a1a2e;padding:20px;border-radius:8px;margin-bottom:16px;">
+  <div style="font-family:monospace;font-size:13px;color:#aaa;line-height:1.8;">
+    <div style="color:#6a6;">Windows need to show interior through glass AND emit light at night.</div>
+    <div style="margin:12px 0;padding:12px;background:#111;border-radius:4px;">
+      <div style="color:#9cf;">Daytime:</div>
+      <div>  Wall face (opaque) + window overlay (semi-transparent glass)</div>
+      <div>  Through the glass alpha: interior floor/furniture visible</div>
+      <div style="margin-top:8px;color:#9cf;">Nighttime:</div>
+      <div>  Same layers + warm light rectangle (additive blend)</div>
+      <div>  Creates the classic "glowing windows at night" RPG effect</div>
+    </div>
+    <div style="margin-top:12px;color:#fa5;">
+      This is a compositing problem, not a generation problem.
+      The renderer layers: wall → window (alpha) → light (additive).
+    </div>
+  </div>
+</div>
+
+<h3 style="color:#ffd24a;">Implementation Steps</h3>
+<div class="section" style="background:#1a1a2e;padding:20px;border-radius:8px;">
+  <div style="font-family:monospace;font-size:13px;color:#aaa;line-height:1.8;">
+    <div style="color:#fff;">Step 1: Building tiles get elevation +1 in chunk compiler</div>
+    <div style="color:#888;">  → cliff system auto-renders south face, side edges, corners</div>
+    <div style="color:#fff;">Step 2: Generate "building wall" cliff face tile (brick texture)</div>
+    <div style="color:#888;">  → replaces the rock cliff face at building positions</div>
+    <div style="color:#fff;">Step 3: Generate window overlay sprites (alpha, matching angle)</div>
+    <div style="color:#888;">  → composited on south face at window positions</div>
+    <div style="color:#fff;">Step 4: Generate door overlay sprites (alpha)</div>
+    <div style="color:#888;">  → composited on south face at door positions</div>
+    <div style="color:#fff;">Step 5: Night lighting pass</div>
+    <div style="color:#888;">  → warm glow rectangles at window positions (additive blend)</div>
+    <div style="color:#fff;">Step 6: Roof (separate system — covers the elevated platform)</div>
+    <div style="color:#888;">  → alpha-fades when player enters building</div>
+  </div>
+</div>
+
+<div style="margin-top:24px;text-align:center;">
+  <p class="subtitle">Does this approach address your concerns? Let me know in the terminal.</p>
+</div>

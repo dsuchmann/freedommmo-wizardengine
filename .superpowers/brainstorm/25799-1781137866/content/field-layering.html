@@ -1,0 +1,140 @@
+<h2>How should fields F3+ claim space from F2?</h2>
+<p class="subtitle">
+  Live demo with your actual game sprites (grassland: F0 soil + F2 grass/herbs + F3 stones/shells/seed heads).
+  Same deterministic scene in every panel — only the layering rule changes.
+  Toggle the footprint overlay to see the claim mask each F3 object would write.
+</p>
+
+<label style="display:inline-flex;align-items:center;gap:8px;margin:4px 0 14px;font-size:14px;cursor:pointer;">
+  <input type="checkbox" id="showFp" onchange="redrawAll()"> show base footprints + 8×8 claim cells
+</label>
+
+<div class="cards" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+  <div class="card" style="cursor:default;">
+    <div class="card-image" style="background:#000;"><canvas id="cv0" width="448" height="320" style="width:100%;image-rendering:pixelated;display:block;"></canvas></div>
+    <div class="card-body">
+      <h3>Today — no system</h3>
+      <p>F2 flora places blindly; grass blades sprout through and on top of stones, shells, and bones.</p>
+    </div>
+  </div>
+  <div class="card" data-choice="A-shared-claims" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#000;"><canvas id="cv1" width="448" height="320" style="width:100%;image-rendering:pixelated;display:block;"></canvas></div>
+    <div class="card-body">
+      <h3>A — Shared claim module</h3>
+      <p>Each F3 object claims its <b>base footprint</b> (not its whole sprite). F2 blades whose roots land in a claimed cell never spawn. Grass still hugs objects naturally — it just doesn't grow <i>through</i> them. Same rule later extends to F4 flowers, F5 boulders, F6 tree trunks, roads, buildings.</p>
+    </div>
+  </div>
+  <div class="card" data-choice="C-density-only" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#000;"><canvas id="cv2" width="448" height="320" style="width:100%;image-rendering:pixelated;display:block;"></canvas></div>
+    <div class="card-body">
+      <h3>C — Density tuning only</h3>
+      <p>Statistically thin F2 near F3 objects (no hard guarantee). Cheaper, but some blades still poke through — the overlap bug never fully goes away.</p>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:14px;">
+  Option B (worker computes masks, ships them to the main thread) produces the <i>same picture</i> as A,
+  but with chunk-message coupling, late claims on streamed chunks, and no way for future main-thread
+  placers (buildings) to claim back into the worker — so it has no panel. Click a card to pick, then tell me in the terminal.
+</p>
+
+<script>
+const GAME = 'http://localhost:8741';
+const TS = 32, TW = 14, TH = 10, ZOOM = 1; // canvas 448x320 = 14x10 tiles, upscaled by CSS
+
+function rand2(x, y, seed) {
+  let h = (x * 374761393 + y * 668265263) ^ (seed * 1274126177);
+  h = (h ^ (h >>> 13)) >>> 0; h = (h * 1103515245 + 12345) >>> 0;
+  return (h % 100000) / 100000;
+}
+
+const SOIL = [0,1,2,3,4,5].map(v => `${GAME}/assets/pixelab/landscape_v2/micro/soil/dry_loam/soil__dry_loam__v${String(v).padStart(3,'0')}.png`);
+const F2 = [];
+['tall_grass_blade','wild_herb','dandelion_stem'].forEach(o => { for (let v = 4; v < 12; v++)
+  F2.push(`${GAME}/assets/pixelab/landscape_v2/micro/small_flora/grassland/${o}/sf__grassland__${o}__v${String(v).padStart(3,'0')}.png`); });
+const F3 = [];
+['field_stone','snail_shell','seed_head','dried_flower'].forEach(o => { for (let v = 0; v < 6; v++)
+  F3.push(`${GAME}/assets/pixelab/landscape_v2/micro/small_scatter/grassland/${o}/ss__grassland__${o}__v${String(v).padStart(3,'0')}.png`); });
+
+const imgs = new Map();
+let pending = 0;
+function load(list) { list.forEach(u => { pending++; const im = new Image();
+  im.onload = () => { imgs.set(u, im); if (--pending === 0) redrawAll(); };
+  im.onerror = () => { if (--pending === 0) redrawAll(); }; im.src = u; }); }
+load(SOIL); load(F2); load(F3);
+function pick(list, r) { const ok = list.filter(u => imgs.has(u)); return ok.length ? imgs.get(ok[Math.floor(r * ok.length) % ok.length]) : null; }
+
+// Deterministic scene: F3 placements + F2 blades, shared by all panels
+function f3Placements() {
+  const out = [];
+  for (let ty = 0; ty < TH; ty++) for (let tx = 0; tx < TW; tx++) {
+    if (rand2(tx, ty, 9500) > 0.28) continue;
+    const n = rand2(tx, ty, 9501) > 0.6 ? 2 : 1;
+    for (let i = 0; i < n; i++) {
+      const ux = (rand2(tx, ty, 9510 + i) - 0.5) * 0.6, uy = (rand2(tx, ty, 9520 + i) - 0.5) * 0.6;
+      const size = TS * (0.7 + rand2(tx, ty, 9530 + i) * 0.3);
+      out.push({ x: (tx + 0.5 + ux) * TS, y: (ty + 0.5 + uy) * TS, size, r: rand2(tx, ty, 9540 + i),
+                 fw: size * 0.55, fh: size * 0.30 }); // base footprint ellipse, centered at sprite base
+    }
+  }
+  return out;
+}
+function f2Blades() {
+  const out = [];
+  for (let ty = 0; ty < TH; ty++) for (let tx = 0; tx < TW; tx++) {
+    const n = 4 + Math.floor(rand2(tx, ty, 7000) * 4);
+    for (let i = 0; i < n; i++) {
+      const ux = (rand2(tx, ty, 7010 + i) - 0.5) * 1.1, uy = (rand2(tx, ty, 7020 + i) - 0.5) * 1.1;
+      out.push({ x: (tx + 0.5 + ux) * TS, y: (ty + 0.5 + uy) * TS,
+                 size: TS * (0.8 + rand2(tx, ty, 7030 + i) * 0.4), r: rand2(tx, ty, 7040 + i),
+                 cull: rand2(tx, ty, 7050 + i) });
+    }
+  }
+  return out;
+}
+const SCAT = f3Placements(), BLADES = f2Blades();
+function inFootprint(b, s, scale) { // blade base vs scatter base ellipse (scaled)
+  const bx = b.x, by = b.y + b.size * 0.45;           // blade root
+  const sx = s.x, sy = s.y + s.size * 0.32;           // scatter base center
+  const dx = (bx - sx) / (s.fw * scale), dy = (by - sy) / (s.fh * scale);
+  return dx * dx + dy * dy < 1;
+}
+
+function drawPanel(id, mode) {
+  const cv = document.getElementById(id), ctx = cv.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#4d7a2e'; ctx.fillRect(0, 0, cv.width, cv.height);
+  for (let ty = 0; ty < TH; ty++) for (let tx = 0; tx < TW; tx++) {
+    const im = pick(SOIL, rand2(tx, ty, 6020));
+    if (im) { ctx.globalAlpha = 0.75; ctx.drawImage(im, tx * TS, ty * TS, TS, TS); ctx.globalAlpha = 1; }
+  }
+  let blades = BLADES;
+  if (mode === 'claims') blades = BLADES.filter(b => !SCAT.some(s => inFootprint(b, s, 1)));
+  else if (mode === 'density') blades = BLADES.filter(b => !SCAT.some(s => inFootprint(b, s, 1.5) && b.cull < 0.5));
+  // under-layer F2 first (roots above object base → behind), then F3, then F2 in front — approximates y-sort
+  const behind = [], front = [];
+  blades.forEach(b => { const root = b.y + b.size * 0.45;
+    (SCAT.some(s => Math.abs(b.x - s.x) < s.size * 0.6 && root < s.y + s.size * 0.32) ? behind : front).push(b); });
+  const blade = b => { const im = pick(F2, b.r); if (im) ctx.drawImage(im, b.x - b.size / 2, b.y - b.size / 2, b.size, b.size); };
+  behind.forEach(blade);
+  SCAT.forEach(s => { const im = pick(F3, s.r); if (im) ctx.drawImage(im, s.x - s.size / 2, s.y - s.size / 2, s.size, s.size); });
+  front.forEach(blade);
+  if (document.getElementById('showFp').checked) {
+    ctx.strokeStyle = 'rgba(80,160,255,0.25)'; ctx.lineWidth = 0.5;
+    for (let gx = 0; gx <= TW * 8; gx++) { ctx.beginPath(); ctx.moveTo(gx * 4, 0); ctx.lineTo(gx * 4, cv.height); ctx.stroke(); }
+    for (let gy = 0; gy <= TH * 8; gy++) { ctx.beginPath(); ctx.moveTo(0, gy * 4); ctx.lineTo(cv.width, gy * 4); ctx.stroke(); }
+    SCAT.forEach(s => { ctx.strokeStyle = '#ff5a5a'; ctx.lineWidth = 1.2; ctx.beginPath();
+      ctx.ellipse(s.x, s.y + s.size * 0.32, s.fw, s.fh, 0, 0, Math.PI * 2); ctx.stroke();
+      if (mode === 'claims') { ctx.fillStyle = 'rgba(255,90,90,0.18)';
+        for (let cx = 0; cx < TW * 8; cx++) for (let cy = 0; cy < TH * 8; cy++) {
+          const px = cx * 4 + 2, py = cy * 4 + 2;
+          const dx = (px - s.x) / s.fw, dy = (py - (s.y + s.size * 0.32)) / s.fh;
+          if (dx * dx + dy * dy < 1) ctx.fillRect(cx * 4, cy * 4, 4, 4);
+        } }
+    });
+  }
+}
+function redrawAll() { drawPanel('cv0', 'none'); drawPanel('cv1', 'claims'); drawPanel('cv2', 'density'); }
+redrawAll();
+</script>

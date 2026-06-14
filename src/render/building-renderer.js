@@ -247,66 +247,13 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
       }
     }
 
-    // ── Pass 2: East/West edge pieces ───────────────────────────
-    for (const sec of fp.sections) {
-      // East edge
-      const eastX = sec.x0 + sec.w;
-      for (let dy = 0; dy < sec.h; dy++) {
-        const ly = sec.y0 + dy;
-        if (floorSet.has(eastX + ',' + ly)) continue;
-        const wx = b.x + eastX;
-        const wy = b.y + ly;
-        const sx = Math.round(wx * tilePx - camX);
-        const sy = Math.round(wy * tilePx - camY);
-        if (sx + t < 0 || sx > w || sy + t < 0 || sy > h) continue;
-        if (_wallImgs.edge_ew) {
-          ctx.drawImage(_wallImgs.edge_ew, 0, 0, 32, 32, sx, sy, t, t);
-        }
-      }
-      // West edge
-      const westX = sec.x0 - 1;
-      for (let dy = 0; dy < sec.h; dy++) {
-        const ly = sec.y0 + dy;
-        if (floorSet.has(westX + ',' + ly)) continue;
-        const wx = b.x + westX;
-        const wy = b.y + ly;
-        const sx = Math.round(wx * tilePx - camX);
-        const sy = Math.round(wy * tilePx - camY);
-        if (sx + t < 0 || sx > w || sy + t < 0 || sy > h) continue;
-        if (_wallImgs.edge_ew) {
-          ctx.drawImage(_wallImgs.edge_ew, 0, 0, 32, 32, sx, sy, t, t);
-        }
-      }
-    }
+    // ── Pass 2: East/West edge — just the foundation border (honest absence until proper side sprites)
+    // East/west wall sprites don't look right yet. The foundation border
+    // drawn in the chunk compiler handles the visual edge for now.
 
-    // ── Pass 3: Interior south walls (room junctions) ───────────
-    for (const sec of fp.sections) {
-      const lastRow = sec.y0 + sec.h - 1;
-      for (let dx = 0; dx < sec.w; dx++) {
-        const lx = sec.x0 + dx, ly = lastRow;
-        // Interior: south neighbor is INSIDE building (another section)
-        const southInside = floorSet.has(lx + ',' + (ly + 1));
-        if (!southInside) continue;
-        // Check it's actually a different section (not same section)
-        const inSameSection = ly + 1 < sec.y0 + sec.h;
-        if (inSameSection) continue;
-
-        const wx = b.x + lx;
-        const wy = b.y + ly + 1;
-        const sx = Math.round(wx * tilePx - camX);
-        const sy = Math.round(wy * tilePx - camY) - wallH;
-        if (sx + t < 0 || sx > w || sy + wallH < 0 || sy > h) continue;
-
-        // Interior door/archway?
-        const key = lx + ',' + ly;
-        if (doorSet.has(key) && _wallImgs.interior_archway) {
-          ctx.drawImage(_wallImgs.interior_archway, 0, 0, 64, 128, sx, sy, t * 2, wallH);
-          dx++; // skip next tile (archway is 2 wide)
-        } else if (_wallImgs.interior_base) {
-          ctx.drawImage(_wallImgs.interior_base, 0, 0, 32, 128, sx, sy, t, wallH);
-        }
-      }
-    }
+    // ── Pass 3: Interior walls — DISABLED (wrong sprite, needs dedicated interior generation)
+    // Interior walls currently use exterior-like sprite. Honest absence until
+    // proper interior wall sprites are generated.
 
     // ── Pass 4: South exterior walls (most visible, drawn last) ──
     for (const sec of fp.sections) {
@@ -320,20 +267,22 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
         if (floorSet.has(lx + ',' + (ly + 1))) continue;
 
         const wx = b.x + lx;
-        const wy = b.y + ly + 1; // wall sits one row below the last floor tile
+        // Wall bottom edge aligns EXACTLY with the floor's south pixel edge
+        const floorBottomPx = Math.round((b.y + sec.y0 + sec.h) * tilePx - camY);
         const sx = Math.round(wx * tilePx - camX);
-        const sy = Math.round(wy * tilePx - camY) - wallH;
+        const sy = floorBottomPx - wallH;
         if (sx + t < 0 || sx > w || sy + wallH < 0 || sy > h) continue;
 
         const key = lx + ',' + ly;
 
         if (doorSet.has(key) && dx >= 2 && dx < sec.w - 2 && _wallImgs.south_door) {
-          // Door: 2 tiles wide, centered on this tile
+          // Door: 2 tiles wide
           ctx.drawImage(_wallImgs.south_door, 0, 0, 64, 128, sx, sy, t * 2, wallH);
-          skipSet.add(dx + 1); // next tile consumed by door
-        } else if (windowPositions.has(key) && _wallImgs.south_window) {
-          // Window: 1 tile wide replacement
-          ctx.drawImage(_wallImgs.south_window, 0, 0, 32, 128, sx, sy, t, wallH);
+          skipSet.add(dx + 1);
+        } else if (windowPositions.has(key) && dx >= 2 && dx < sec.w - 2 && _wallImgs.south_window) {
+          // Window: 2 tiles wide (64×128 sprite)
+          ctx.drawImage(_wallImgs.south_window, 0, 0, 64, 128, sx, sy, t * 2, wallH);
+          skipSet.add(dx + 1);
         } else if (_wallImgs.south_base) {
           // Plain wall column
           ctx.drawImage(_wallImgs.south_base, 0, 0, 32, 128, sx, sy, t, wallH);
