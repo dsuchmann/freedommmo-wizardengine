@@ -1184,24 +1184,9 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
 
       // ── Building wall tile: drawn INTO the chunk bitmap ──────────
       // Calibrated values from user tuning session (baked).
-      var wallHit = null;
-      try { wallHit = queryBuildingWall(wx, wy); }
-      catch (wallErr) { if (!tile._wallErrLogged) { console.error('[WALL ERROR]', wallErr.message); tile._wallErrLogged = true; } }
-      // DEBUG: log first wall hit to confirm wallIndex works
-      if (wallHit && !tile._wallDebugLogged) {
-        console.log('[WALL DEBUG] hit at', wx, wy, JSON.stringify(wallHit));
-        tile._wallDebugLogged = true;
-      }
-      if (wallHit) {
-        // DEBUG: LARGE red square to be unmissable
-        ctx.fillStyle = 'red';
-        ctx.fillRect(sx, sy, tileSize, tileSize);
-        var wUrl = wallTileUrl(wallHit.sprite);
-        var wBmp = imageCache.get(wUrl);
-        if (!wBmp && !tile._wallImgDebug) {
-          console.warn('[WALL IMG MISS]', wallHit.sprite, '→', wUrl, 'imageCache has', imageCache.size, 'entries');
-          tile._wallImgDebug = true;
-        }
+      // Wall rendering moved to post-pass (after all tiles, before bitmap transfer)
+      // to avoid coordinate issues with per-tile drawing.
+      if (false) { // DISABLED — wall post-pass below handles this
         if (wBmp) {
           var wSrc = wallSpriteSrc(wallHit.sprite);
           var WALL_Y_OFF = 0.25;    // wallYOffset
@@ -1327,6 +1312,81 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
   var wangMissing = 0;
   for (var wi = 0; wi < debugSuccesses.length; wi++) {
     if (!debugSuccesses[wi]) wangMissing++;
+  }
+
+  // ── Wall post-pass: draw building walls onto the chunk canvas ──────
+  // Uses the SAME positioning logic as the separate-pass renderer (building-renderer.js)
+  // but in chunk-local coordinates. Drawn AFTER terrain+soil+scatter, BEFORE bitmap transfer.
+  {
+    var WALL_Y_OFF = 0.25;
+    var WALL_H_TILES = 4;
+    var NORTH_Y_OFF = 0.25;
+    var EW_TILE_H = 0.40;
+    var EW_X_OFF = -0.30;
+    var wallHPx = Math.round(tileSize * WALL_H_TILES);
+    var wallPad = 1;
+
+    for (var wy2 = 0; wy2 < chunkSize; wy2++) {
+      for (var wx2 = 0; wx2 < chunkSize; wx2++) {
+        var gwx = chunk.cx * chunkSize + wx2;
+        var gwy = chunk.cy * chunkSize + wy2;
+        var wHit = queryBuildingWall(gwx, gwy);
+        if (!wHit) continue;
+
+        var wUrl2 = wallTileUrl(wHit.sprite);
+        var wBmp2 = imageCache.get(wUrl2);
+        if (!wBmp2) continue;
+        var wSrc2 = wallSpriteSrc(wHit.sprite);
+
+        var lsx = wx2 * tileSize;  // local chunk X
+        var lsy = wy2 * tileSize;  // local chunk Y
+
+        if (wHit.edge === 'south') {
+          // Wall bottom edge at floor south + offset, extends upward
+          var sWallTop = lsy + tileSize - wallHPx + Math.round(tileSize * WALL_Y_OFF);
+          var srcX2 = 0, srcW2 = wSrc2.w;
+          if (wHit.half === 'left') { srcW2 = Math.round(wSrc2.w / 2); }
+          else if (wHit.half === 'right') { srcX2 = Math.round(wSrc2.w / 2); srcW2 = Math.round(wSrc2.w / 2); }
+          // Clamp to canvas
+          var sTop = Math.max(0, sWallTop);
+          var sBot = Math.min(canvasSize, sWallTop + wallHPx);
+          if (sBot > sTop) {
+            var sF0 = (sTop - sWallTop) / wallHPx;
+            var sFH = (sBot - sTop) / wallHPx;
+            ctx.drawImage(wBmp2,
+              srcX2, Math.round(sF0 * wSrc2.h), srcW2, Math.round(sFH * wSrc2.h),
+              lsx, sTop, tileSize + wallPad, sBot - sTop + wallPad);
+          }
+
+        } else if (wHit.edge === 'north') {
+          // North wall: extends upward from tile top
+          var nWallTop = lsy - wallHPx + Math.round(tileSize * NORTH_Y_OFF);
+          var nTop = Math.max(0, nWallTop);
+          var nBot = Math.min(canvasSize, nWallTop + wallHPx);
+          if (nBot > nTop) {
+            var nF0 = (nTop - nWallTop) / wallHPx;
+            var nFH = (nBot - nTop) / wallHPx;
+            ctx.drawImage(wBmp2,
+              0, Math.round(nF0 * wSrc2.h), wSrc2.w, Math.round(nFH * wSrc2.h),
+              lsx, nTop, tileSize + wallPad, nBot - nTop + wallPad);
+          }
+
+        } else if (wHit.edge === 'east' || wHit.edge === 'west') {
+          var ewH2 = Math.round(tileSize * EW_TILE_H);
+          var ewXOff2 = Math.round(tileSize * EW_X_OFF);
+          var ewLsx = wHit.edge === 'west' ? lsx - ewXOff2 : lsx + ewXOff2;
+          if (ewLsx + tileSize > 0 && ewLsx < canvasSize && lsy + ewH2 > 0 && lsy < canvasSize) {
+            ctx.save();
+            ctx.translate(ewLsx + tileSize / 2, lsy + ewH2 / 2);
+            ctx.rotate(Math.PI / 2);
+            if (wHit.edge === 'west') ctx.scale(-1, 1);
+            ctx.drawImage(wBmp2, 0, 0, wSrc2.w, wSrc2.h,
+              -tileSize / 2, -ewH2 / 2, tileSize + wallPad, ewH2 + wallPad);
+            ctx.restore();
+          }
+        }
+      }
+    }
   }
 
   var bitmap = offscreen.transferToImageBitmap();
