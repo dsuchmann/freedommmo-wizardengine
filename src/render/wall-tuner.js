@@ -9,21 +9,21 @@ const TILE_OPTIONS = [
 
 // 'int' type steps by 1, 'float' by 0.05, 'bool' toggles, 'tile' cycles tile list
 const PARAM_DEFS = [
-  { key: 'wallYOffset',     type: 'float', default: 0.4,  desc: 'south wall Y offset' },
-  { key: 'cornerExtend',    type: 'int',   default: 1,    desc: 'tiles past floor before corner' },
+  { key: 'wallYOffset',     type: 'float', default: 0.25, desc: 'south wall Y offset' },
+  { key: 'cornerExtend',    type: 'int',   default: 0,    desc: 'tiles past floor before corner' },
   { key: 'wallHeight',      type: 'float', default: 4,    desc: 'wall height in tiles' },
   { key: 'northWall',       type: 'bool',  default: true,  desc: 'render north walls' },
-  { key: 'northYOffset',    type: 'float', default: 0,    desc: 'north wall Y offset' },
+  { key: 'northYOffset',    type: 'float', default: 0.25, desc: 'north wall Y offset' },
   { key: 'interiorWall',    type: 'bool',  default: false, desc: 'render interior walls' },
   { key: 'eastWestColumns', type: 'bool',  default: true,  desc: 'render east/west columns' },
-  { key: 'eastTile',        type: 'tile',  default: 7,    desc: 'east column sprite' },    // 7 = edge_ew
-  { key: 'westTile',        type: 'tile',  default: 7,    desc: 'west column sprite' },    // 7 = edge_ew
-  { key: 'ewTileHeight',    type: 'float', default: 1,    desc: 'east/west tile height' },
-  { key: 'ewXOffset',       type: 'float', default: 0,    desc: 'east/west X offset' },
+  { key: 'eastTile',        type: 'tile',  default: 7,    desc: 'east column sprite' },
+  { key: 'westTile',        type: 'tile',  default: 7,    desc: 'west column sprite' },
+  { key: 'ewTileHeight',    type: 'float', default: 0.40, desc: 'east/west tile height' },
+  { key: 'ewXOffset',       type: 'float', default: -0.30, desc: 'east/west X offset' },
   { key: 'ewFrequency',     type: 'int',   default: 1,    desc: 'paint every N tiles' },
   { key: 'ewFlipH',         type: 'bool',  default: false, desc: 'flip east/west horizontal' },
   { key: 'ewFlipV',         type: 'bool',  default: false, desc: 'flip east/west vertical' },
-  { key: 'ewRotate90',      type: 'bool',  default: false, desc: 'rotate east/west 90°' },
+  { key: 'ewRotate90',      type: 'bool',  default: true,  desc: 'rotate east/west 90°' },
 ];
 
 const PARAMS = {};
