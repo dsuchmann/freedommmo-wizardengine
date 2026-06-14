@@ -313,7 +313,15 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
     }
 
     // ── Pass 2: East/West edge columns ───────────────────────────
-    if (P.eastWestColumns && _wallImgs.south_corner_east) {
+    if (P.eastWestColumns) {
+      const eastImg = _wallImgs[P.eastTileName] || _wallImgs.south_corner_east;
+      const westImg = _wallImgs[P.westTileName] || _wallImgs.south_corner_west;
+      const ewH = Math.round(t * P.ewTileHeight);
+      const ewXOff = Math.round(t * P.ewXOffset);
+      // Source dimensions from image (use full height up to 128, width 32)
+      const eSrcH = eastImg ? Math.min(128, Math.round(P.ewTileHeight * 32)) : 32;
+      const wSrcH = westImg ? Math.min(128, Math.round(P.ewTileHeight * 32)) : 32;
+
       for (const sec of fp.sections) {
         // East edge
         for (let dy = 0; dy < sec.h; dy++) {
@@ -321,11 +329,10 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
           if (floorSet.has(lx + ',' + ly)) continue;
           const wx = b.x + lx;
           const wy = b.y + ly;
-          const sx = Math.round(wx * tilePx - camX);
+          const sx = Math.round(wx * tilePx - camX) + ewXOff;
           const sy = Math.round(wy * tilePx - camY);
-          if (sx + t < 0 || sx > w || sy + t < 0 || sy > h) continue;
-          // Draw the corner east piece as a column (just the top 32×32 of the corner)
-          ctx.drawImage(_wallImgs.south_corner_east, 0, 0, 32, 32, sx, sy, t + pad, t + pad);
+          if (sx + t < 0 || sx > w || sy + ewH < 0 || sy > h) continue;
+          if (eastImg) ctx.drawImage(eastImg, 0, 0, 32, eSrcH, sx, sy, t + pad, ewH + pad);
         }
         // West edge
         for (let dy = 0; dy < sec.h; dy++) {
@@ -333,10 +340,10 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
           if (floorSet.has(lx + ',' + ly)) continue;
           const wx = b.x + lx;
           const wy = b.y + ly;
-          const sx = Math.round(wx * tilePx - camX);
+          const sx = Math.round(wx * tilePx - camX) - ewXOff;
           const sy = Math.round(wy * tilePx - camY);
-          if (sx + t < 0 || sx > w || sy + t < 0 || sy > h) continue;
-          ctx.drawImage(_wallImgs.south_corner_west, 0, 0, 32, 32, sx, sy, t + pad, t + pad);
+          if (sx + t < 0 || sx > w || sy + ewH < 0 || sy > h) continue;
+          if (westImg) ctx.drawImage(westImg, 0, 0, 32, wSrcH, sx, sy, t + pad, ewH + pad);
         }
       }
     }
