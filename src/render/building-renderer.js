@@ -249,13 +249,30 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
       }
     }
 
-    // ── Pass 2: East/West edge — just the foundation border (honest absence until proper side sprites)
-    // East/west wall sprites don't look right yet. The foundation border
-    // drawn in the chunk compiler handles the visual edge for now.
+    // ── Pass 2: East/West — foundation border only (honest absence)
 
-    // ── Pass 3: Interior walls — DISABLED (wrong sprite, needs dedicated interior generation)
-    // Interior walls currently use exterior-like sprite. Honest absence until
-    // proper interior wall sprites are generated.
+    // ── Pass 3: Interior south walls at section junctions ──────
+    // Uses south_base as placeholder until proper interior sprites exist.
+    // Same height as exterior (4 tiles) so it matches.
+    for (const sec of fp.sections) {
+      const lastRow = sec.y0 + sec.h - 1;
+      for (let dx = 0; dx < sec.w; dx++) {
+        const lx = sec.x0 + dx, ly = lastRow;
+        const southInside = floorSet.has(lx + ',' + (ly + 1));
+        if (!southInside) continue;
+        // Verify it's a different section (not same section's interior)
+        if (ly + 1 < sec.y0 + sec.h) continue;
+
+        const wx = b.x + lx;
+        const floorBottomPx = Math.round((b.y + sec.y0 + sec.h) * tilePx - camY);
+        const sx = Math.round(wx * tilePx - camX);
+        const sy = floorBottomPx - wallH + Math.round(t * 0.15);
+        if (sx + t < 0 || sx > w || sy + wallH < 0 || sy > h) continue;
+        if (_wallImgs.south_base) {
+          ctx.drawImage(_wallImgs.south_base, 0, 0, 32, 128, sx, sy, t + 1, wallH + 1);
+        }
+      }
+    }
 
     // ── Pass 4: South exterior walls (most visible, drawn last) ──
     for (const sec of fp.sections) {
@@ -269,10 +286,11 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
         if (floorSet.has(lx + ',' + (ly + 1))) continue;
 
         const wx = b.x + lx;
-        // Wall bottom edge overlaps the floor's south pixel edge by 1px (no gap)
+        // Wall bottom edge sits AT the floor's south pixel edge
         const floorBottomPx = Math.round((b.y + sec.y0 + sec.h) * tilePx - camY);
         const sx = Math.round(wx * tilePx - camX);
-        const sy = floorBottomPx - wallH + 1; // +1 to overlap floor edge (kills the gap)
+        const sy = floorBottomPx - wallH + Math.round(t * 0.15); // slight overlap into floor edge
+        const pad = 1; // 1px overlap between adjacent tiles to kill seams
         if (sx + t < 0 || sx > w || sy + wallH < 0 || sy > h) continue;
 
         const key = lx + ',' + ly;
@@ -282,22 +300,17 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
         const isEastEnd = dx === sec.w - 1 || floorSet.has((lx + 1) + ',' + (ly + 1));
 
         if (isWestEnd && _wallImgs.south_corner_west) {
-          // West termination: left edge with molding
-          ctx.drawImage(_wallImgs.south_corner_west, 0, 0, 32, 128, sx, sy, t, wallH);
+          ctx.drawImage(_wallImgs.south_corner_west, 0, 0, 32, 128, sx, sy, t + pad, wallH + pad);
         } else if (isEastEnd && _wallImgs.south_corner_east) {
-          // East termination: right edge with molding
-          ctx.drawImage(_wallImgs.south_corner_east, 0, 0, 32, 128, sx, sy, t, wallH);
+          ctx.drawImage(_wallImgs.south_corner_east, 0, 0, 32, 128, sx, sy, t + pad, wallH + pad);
         } else if (doorSet.has(key) && dx >= 2 && dx < sec.w - 2 && _wallImgs.south_door) {
-          // Door: 2 tiles wide
-          ctx.drawImage(_wallImgs.south_door, 0, 0, 64, 128, sx, sy, t * 2, wallH);
+          ctx.drawImage(_wallImgs.south_door, 0, 0, 64, 128, sx, sy, t * 2 + pad, wallH + pad);
           skipSet.add(dx + 1);
         } else if (windowPositions.has(key) && dx >= 2 && dx < sec.w - 2 && _wallImgs.south_window) {
-          // Window: 2 tiles wide (64×128 sprite)
-          ctx.drawImage(_wallImgs.south_window, 0, 0, 64, 128, sx, sy, t * 2, wallH);
+          ctx.drawImage(_wallImgs.south_window, 0, 0, 64, 128, sx, sy, t * 2 + pad, wallH + pad);
           skipSet.add(dx + 1);
         } else if (_wallImgs.south_base) {
-          // Plain wall column (center brick, no molding)
-          ctx.drawImage(_wallImgs.south_base, 0, 0, 32, 128, sx, sy, t, wallH);
+          ctx.drawImage(_wallImgs.south_base, 0, 0, 32, 128, sx, sy, t + pad, wallH + pad);
         }
       }
     }
