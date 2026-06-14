@@ -217,5 +217,9 @@ export function getAllFloorTileURLs() {
   for (var i = 0; i <= 15; i++) {
     urls.push('/assets/pixelab/buildings/wall_cliff_stone/wall_cliff_stone__wang_' + i + '.png');
   }
+  // Wall face sprites
+  urls.push('/assets/pixelab/buildings/walls/stone_brick/wall_plain.png');
+  urls.push('/assets/pixelab/buildings/walls/stone_brick/wall_window.png');
+  urls.push('/assets/pixelab/buildings/walls/stone_brick/wall_door.png');
   return urls;
 }

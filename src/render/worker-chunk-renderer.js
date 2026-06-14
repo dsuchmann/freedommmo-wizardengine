@@ -1181,6 +1181,19 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
         }
         // Mark this tile as building-claimed for F0/F1/F3 suppression below
         tile._buildingFloor = true;
+
+        // Wall face: if the tile SOUTH of us is NOT a building tile, this is the
+        // south edge — draw the wall face sprite extending downward into the chunk.
+        var southIsBuilding = queryBuildingTile(wx, wy + 1);
+        if (!southIsBuilding) {
+          var wallUrl = '/assets/pixelab/buildings/walls/stone_brick/wall_plain.png';
+          var wallBmp = imageCache.get(wallUrl);
+          if (wallBmp) {
+            // Wall face: 2 tiles tall, drawn below the floor tile
+            var wallH = tileSize * 2;
+            ctx.drawImage(wallBmp, 0, 0, 256, 256, sx, sy + tileSize, tileSize, wallH);
+          }
+        }
       }
 
       // Collect debug data
