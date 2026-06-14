@@ -1033,6 +1033,18 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
       tile._elS  = nbS.climate ? nbS.climate.elevation : tile.climate.elevation;
       tile._elSW = nbSW.climate ? nbSW.climate.elevation : tile.climate.elevation;
 
+      // Building elevation boost: if this tile or neighbors are building floors,
+      // raise their effective elevation so the cliff system draws wall faces.
+      var BUILDING_EL_BOOST = 0.12; // +1 cliff level
+      var isBldg = queryBuildingTile(wx, wy);
+      var isBldgE = queryBuildingTile(wx + 1, wy);
+      var isBldgS = queryBuildingTile(wx, wy + 1);
+      var isBldgSE = queryBuildingTile(wx + 1, wy + 1);
+      if (isBldg)   tile.climate.elevation = Math.min(0.99, tile.climate.elevation + BUILDING_EL_BOOST);
+      if (isBldgE)  tile._elE  = Math.min(0.99, tile._elE + BUILDING_EL_BOOST);
+      if (isBldgS)  tile._elS  = Math.min(0.99, tile._elS + BUILDING_EL_BOOST);
+      if (isBldgSE) tile._elSE = Math.min(0.99, tile._elSE + BUILDING_EL_BOOST);
+
       // Transition pair detection — based on the 2×2 wang cell (tile, E, S, SE).
       // The wang mask uses these 4 corners, so the transition pair must match.
       tile.transitionPair = null;
