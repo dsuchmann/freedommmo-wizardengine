@@ -1184,9 +1184,16 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
 
       // ── Building wall tile: drawn INTO the chunk bitmap ──────────
       // Calibrated values from user tuning session (baked).
-      var wallHit = queryBuildingWall(wx, wy);
+      var wallHit = null;
+      try { wallHit = queryBuildingWall(wx, wy); }
+      catch (wallErr) { if (!tile._wallErrLogged) { console.error('[WALL ERROR]', wallErr.message); tile._wallErrLogged = true; } }
+      // DEBUG: log first wall hit to confirm wallIndex works
+      if (wallHit && !tile._wallDebugLogged) {
+        console.log('[WALL DEBUG] hit at', wx, wy, JSON.stringify(wallHit));
+        tile._wallDebugLogged = true;
+      }
       if (wallHit) {
-        // DEBUG: red dot at every wall tile to confirm wallIndex is working
+        // DEBUG: red dot at every wall tile
         ctx.fillStyle = 'rgba(255,0,0,0.5)';
         ctx.fillRect(sx, sy, 4, 4);
         var wUrl = wallTileUrl(wallHit.sprite);
