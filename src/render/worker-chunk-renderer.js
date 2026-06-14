@@ -1193,11 +1193,15 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
         tile._wallDebugLogged = true;
       }
       if (wallHit) {
-        // DEBUG: red dot at every wall tile
-        ctx.fillStyle = 'rgba(255,0,0,0.5)';
-        ctx.fillRect(sx, sy, 4, 4);
+        // DEBUG: LARGE red square to be unmissable
+        ctx.fillStyle = 'red';
+        ctx.fillRect(sx, sy, tileSize, tileSize);
         var wUrl = wallTileUrl(wallHit.sprite);
         var wBmp = imageCache.get(wUrl);
+        if (!wBmp && !tile._wallImgDebug) {
+          console.warn('[WALL IMG MISS]', wallHit.sprite, '→', wUrl, 'imageCache has', imageCache.size, 'entries');
+          tile._wallImgDebug = true;
+        }
         if (wBmp) {
           var wSrc = wallSpriteSrc(wallHit.sprite);
           var WALL_Y_OFF = 0.25;    // wallYOffset
