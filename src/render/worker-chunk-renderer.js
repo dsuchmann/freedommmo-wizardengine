@@ -1,6 +1,5 @@
 // Worker-compatible chunk renderer. Takes chunk data + neighbor tiles,
 // paints to OffscreenCanvas, returns ImageBitmap.
-console.log('[chunk-renderer] MODULE LOADED — wall code version 20260614h');
 import { drawWallsForBuildings } from './wall-draw.js';
 import { WALL_CONFIG } from './wall-config.js';
 

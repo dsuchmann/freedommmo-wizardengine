@@ -164,7 +164,7 @@ export function drawWallsForBuildings(ctx, buildings, wallImgs, tilePx, config, 
               ctx.save();
               ctx.translate(esx + t / 2, esy + ewH / 2);
               if (P.ewRotate90) ctx.rotate(Math.PI / 2);
-              ctx.drawImage(wallImgs.edge_ew, 0, 0, wallImgs.edge_ew.naturalWidth || 32, wallImgs.edge_ew.naturalHeight || 128,
+              ctx.drawImage(wallImgs.edge_ew, 0, 0, wallImgs.edge_ew.width || 32, wallImgs.edge_ew.height || 128,
                 -t / 2, -ewH / 2, t + pad, ewH + pad);
               ctx.restore();
             }
@@ -179,7 +179,7 @@ export function drawWallsForBuildings(ctx, buildings, wallImgs, tilePx, config, 
               ctx.translate(wsx + t / 2, wsy + ewH / 2);
               if (P.ewRotate90) ctx.rotate(Math.PI / 2);
               ctx.scale(-1, 1);
-              ctx.drawImage(wallImgs.edge_ew, 0, 0, wallImgs.edge_ew.naturalWidth || 32, wallImgs.edge_ew.naturalHeight || 128,
+              ctx.drawImage(wallImgs.edge_ew, 0, 0, wallImgs.edge_ew.width || 32, wallImgs.edge_ew.height || 128,
                 -t / 2, -ewH / 2, t + pad, ewH + pad);
               ctx.restore();
             }
