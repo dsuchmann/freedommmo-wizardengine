@@ -1316,7 +1316,7 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
 
   // ── Wall post-pass: inlined from separate-pass renderer ──────────
   // Mirrors building-renderer.js drawBuildingWalls() exactly, in chunk-local coords.
-  try {
+  if (false) { // DISABLED — finding what crashes
     var cX0 = chunk.cx * chunkSize;
     var cY0 = chunk.cy * chunkSize;
     var cBuildings = getBuildingsNearChunk(chunk.cx, chunk.cy, chunkSize);
