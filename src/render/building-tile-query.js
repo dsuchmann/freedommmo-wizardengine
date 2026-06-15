@@ -196,6 +196,7 @@ function cachedLayout(seed, mx, my) {
             if (!wallIndex.has(neKey)) wallIndex.set(neKey, { sprite: 'south_corner_east', edge: 'north', spriteW: 1 });
           } else {
             wallIndex.set(nKey, { sprite: 'south_base', edge: 'north', spriteW: 1 });
+          }
         }
       }
 
