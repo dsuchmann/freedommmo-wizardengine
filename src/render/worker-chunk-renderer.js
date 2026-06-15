@@ -1,7 +1,6 @@
 // Worker-compatible chunk renderer. Takes chunk data + neighbor tiles,
 // paints to OffscreenCanvas, returns ImageBitmap.
-import { drawWallsForBuildings } from './wall-draw.js';
-import { WALL_CONFIG } from './wall-config.js';
+// wall-draw.js import removed — causes worker crash. Wall drawing inlined below.
 
 // F3 suppression: placement keys that have been taken (sim truth). Set from chunk-worker via
 // setF3RemovedKeys(). When sim is absent this stays empty and behaviour is unchanged.
@@ -1315,26 +1314,146 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
     if (!debugSuccesses[wi]) wangMissing++;
   }
 
-  // ── Wall post-pass: shared drawing function (wall-draw.js) ──────────
-  // Uses the EXACT SAME code as the main-thread separate-pass renderer.
-  // Only difference: coordinate transform maps world tiles to chunk-local pixels.
+  // ── Wall post-pass: inlined from separate-pass renderer ──────────
+  // Mirrors building-renderer.js drawBuildingWalls() exactly, in chunk-local coords.
   {
-    var chunkX0 = chunk.cx * chunkSize;
-    var chunkY0 = chunk.cy * chunkSize;
-    var chunkBuildings = getBuildingsNearChunk(chunk.cx, chunk.cy, chunkSize);
-    if (chunkBuildings.length > 0) {
-      var chunkWallImgs = {
-        south_base: imageCache.get(wallTileUrl('south_base')),
-        south_window: imageCache.get(wallTileUrl('south_window')),
-        south_door: imageCache.get(wallTileUrl('south_door')),
-        south_corner_west: imageCache.get(wallTileUrl('south_corner_west')),
-        south_corner_east: imageCache.get(wallTileUrl('south_corner_east')),
-        edge_ew: imageCache.get(wallTileUrl('edge_ew')),
-      };
-      var toChunkX = function(wx) { return Math.round((wx - chunkX0) * tileSize); };
-      var toChunkY = function(wy) { return Math.round((wy - chunkY0) * tileSize); };
-      drawWallsForBuildings(ctx, chunkBuildings, chunkWallImgs, tileSize, WALL_CONFIG,
-        toChunkX, toChunkY, canvasSize, canvasSize);
+    var cX0 = chunk.cx * chunkSize;
+    var cY0 = chunk.cy * chunkSize;
+    var cBuildings = getBuildingsNearChunk(chunk.cx, chunk.cy, chunkSize);
+    var wImgs = {
+      south_base: imageCache.get(wallTileUrl('south_base')),
+      south_window: imageCache.get(wallTileUrl('south_window')),
+      south_door: imageCache.get(wallTileUrl('south_door')),
+      south_corner_west: imageCache.get(wallTileUrl('south_corner_west')),
+      south_corner_east: imageCache.get(wallTileUrl('south_corner_east')),
+      edge_ew: imageCache.get(wallTileUrl('edge_ew')),
+    };
+    if (cBuildings.length > 0 && wImgs.south_base) {
+      var WY = 0.25, WH = 4, NY = 0.25, EWH = 0.40, EWX = -0.30;
+      var wH = Math.round(tileSize * WH);
+      var wp = 1;
+      function tsx(wx) { return Math.round((wx - cX0) * tileSize); }
+      function tsy(wy) { return Math.round((wy - cY0) * tileSize); }
+
+      for (var wbi = 0; wbi < cBuildings.length; wbi++) {
+        var wb = cBuildings[wbi];
+        var wfp = wb.footprint;
+        var wfs = new Set();
+        for (var wsi = 0; wsi < wfp.sections.length; wsi++) {
+          var ws = wfp.sections[wsi];
+          for (var wdy = 0; wdy < ws.h; wdy++)
+            for (var wdx = 0; wdx < ws.w; wdx++)
+              wfs.add((ws.x0 + wdx) + ',' + (ws.y0 + wdy));
+        }
+        var wds = new Set();
+        if (wfp.doors) for (var wdi = 0; wdi < wfp.doors.length; wdi++)
+          wds.add(wfp.doors[wdi].x + ',' + wfp.doors[wdi].y);
+        // Windows
+        var wwp = new Set();
+        for (var wsi2 = 0; wsi2 < wfp.sections.length; wsi2++) {
+          var ws2 = wfp.sections[wsi2];
+          var wlr = ws2.y0 + ws2.h - 1;
+          var wiv = 0;
+          for (var wdx2 = 0; wdx2 < ws2.w; wdx2++) {
+            var wlx = ws2.x0 + wdx2, wly = wlr;
+            if (wfs.has(wlx + ',' + (wly + 1))) continue;
+            if (wds.has(wlx + ',' + wly)) { wiv = 0; continue; }
+            if (wdx2 < 2 || wdx2 >= ws2.w - 2) { wiv++; continue; }
+            if (wds.has((wlx-1)+','+wly) || wds.has((wlx+1)+','+wly)) { wiv++; continue; }
+            wiv++;
+            if (wiv % 3 === 0) wwp.add(wlx + ',' + wly);
+          }
+        }
+
+        // North walls
+        for (var wsi3 = 0; wsi3 < wfp.sections.length; wsi3++) {
+          var ws3 = wfp.sections[wsi3];
+          var wnr = ws3.y0;
+          for (var wdx3 = 0; wdx3 < ws3.w; wdx3++) {
+            var wnlx = ws3.x0 + wdx3;
+            if (wfs.has(wnlx + ',' + (wnr - 1))) continue;
+            var wnsx = tsx(wb.x + wnlx);
+            var wnsy = tsy(wb.y + wnr) - wH + Math.round(tileSize * NY);
+            if (wnsx + tileSize < 0 || wnsx > canvasSize || wnsy + wH < 0 || wnsy > canvasSize) continue;
+            var nwo = !wfs.has((wnlx-1)+','+wnr);
+            var neo = !wfs.has((wnlx+1)+','+wnr);
+            if (nwo && wImgs.south_corner_west) {
+              ctx.drawImage(wImgs.south_base, 0,0,32,128, wnsx, wnsy, tileSize+wp, wH+wp);
+              ctx.drawImage(wImgs.south_corner_west, 0,0,32,128, wnsx-tileSize, wnsy, tileSize+wp, wH+wp);
+            } else if (neo && wImgs.south_corner_east) {
+              ctx.drawImage(wImgs.south_base, 0,0,32,128, wnsx, wnsy, tileSize+wp, wH+wp);
+              ctx.drawImage(wImgs.south_corner_east, 0,0,32,128, wnsx+tileSize, wnsy, tileSize+wp, wH+wp);
+            } else {
+              ctx.drawImage(wImgs.south_base, 0,0,32,128, wnsx, wnsy, tileSize+wp, wH+wp);
+            }
+          }
+        }
+
+        // East/West edges
+        if (wImgs.edge_ew) {
+          var ewHp = Math.round(tileSize * EWH);
+          var ewXp = Math.round(tileSize * EWX);
+          for (var wsi4 = 0; wsi4 < wfp.sections.length; wsi4++) {
+            var ws4 = wfp.sections[wsi4];
+            for (var wdy4 = 0; wdy4 < ws4.h; wdy4++) {
+              // East
+              var elx4 = ws4.x0 + ws4.w, ely4 = ws4.y0 + wdy4;
+              if (!wfs.has(elx4+','+ely4)) {
+                var esx4 = tsx(wb.x+elx4)+ewXp, esy4 = tsy(wb.y+ely4);
+                if (esx4+tileSize>0 && esx4<canvasSize && esy4+ewHp>0 && esy4<canvasSize) {
+                  ctx.save(); ctx.translate(esx4+tileSize/2, esy4+ewHp/2); ctx.rotate(Math.PI/2);
+                  ctx.drawImage(wImgs.edge_ew, 0,0,wImgs.edge_ew.width||32,wImgs.edge_ew.height||128, -tileSize/2,-ewHp/2,tileSize+wp,ewHp+wp);
+                  ctx.restore();
+                }
+              }
+              // West
+              var wlx4 = ws4.x0-1, wly4 = ws4.y0+wdy4;
+              if (!wfs.has(wlx4+','+wly4)) {
+                var wsx4 = tsx(wb.x+wlx4)-ewXp, wsy4 = tsy(wb.y+wly4);
+                if (wsx4+tileSize>0 && wsx4<canvasSize && wsy4+ewHp>0 && wsy4<canvasSize) {
+                  ctx.save(); ctx.translate(wsx4+tileSize/2, wsy4+ewHp/2); ctx.rotate(Math.PI/2); ctx.scale(-1,1);
+                  ctx.drawImage(wImgs.edge_ew, 0,0,wImgs.edge_ew.width||32,wImgs.edge_ew.height||128, -tileSize/2,-ewHp/2,tileSize+wp,ewHp+wp);
+                  ctx.restore();
+                }
+              }
+            }
+          }
+        }
+
+        // South exterior walls
+        for (var wsi5 = 0; wsi5 < wfp.sections.length; wsi5++) {
+          var ws5 = wfp.sections[wsi5];
+          var wlr5 = ws5.y0 + ws5.h - 1;
+          var wskip = new Set();
+          var fbY = wb.y + ws5.y0 + ws5.h;
+          for (var wdx5 = 0; wdx5 < ws5.w; wdx5++) {
+            if (wskip.has(wdx5)) continue;
+            var slx = ws5.x0+wdx5, sly = wlr5;
+            if (wfs.has(slx+','+(sly+1))) continue;
+            var ssx5 = tsx(wb.x+slx);
+            var ssy5 = tsy(fbY) - wH + Math.round(tileSize * WY);
+            if (ssx5+tileSize<0 || ssx5>canvasSize || ssy5+wH<0 || ssy5>canvasSize) continue;
+            var sk = slx+','+sly;
+            var swo = !wfs.has((slx-1)+','+sly);
+            var seo = !wfs.has((slx+1)+','+sly);
+            if (swo && wImgs.south_corner_west) {
+              ctx.drawImage(wImgs.south_base,0,0,32,128,ssx5,ssy5,tileSize+wp,wH+wp);
+              ctx.drawImage(wImgs.south_corner_west,0,0,32,128,ssx5-tileSize,ssy5,tileSize+wp,wH+wp);
+            } else if (seo && wImgs.south_corner_east) {
+              ctx.drawImage(wImgs.south_base,0,0,32,128,ssx5,ssy5,tileSize+wp,wH+wp);
+              ctx.drawImage(wImgs.south_corner_east,0,0,32,128,ssx5+tileSize,ssy5,tileSize+wp,wH+wp);
+            } else if (wds.has(sk) && wdx5>=2 && wdx5<ws5.w-2 && wImgs.south_door) {
+              ctx.drawImage(wImgs.south_door,0,0,64,128,ssx5,ssy5,tileSize*2+wp,wH+wp);
+              wskip.add(wdx5+1);
+            } else if (wwp.has(sk) && wdx5>=2 && wdx5<ws5.w-2 && wImgs.south_window) {
+              ctx.drawImage(wImgs.south_window,0,0,64,128,ssx5,ssy5,tileSize*2+wp,wH+wp);
+              wskip.add(wdx5+1);
+            } else {
+              ctx.drawImage(wImgs.south_base,0,0,32,128,ssx5,ssy5,tileSize+wp,wH+wp);
+            }
+          }
+        }
+      }
     }
   }
 
