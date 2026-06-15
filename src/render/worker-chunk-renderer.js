@@ -1316,7 +1316,7 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
 
   // ── Wall post-pass: inlined from separate-pass renderer ──────────
   // Mirrors building-renderer.js drawBuildingWalls() exactly, in chunk-local coords.
-  {
+  try {
     var cX0 = chunk.cx * chunkSize;
     var cY0 = chunk.cy * chunkSize;
     var cBuildings = getBuildingsNearChunk(chunk.cx, chunk.cy, chunkSize);
@@ -1455,6 +1455,8 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
         }
       }
     }
+  } catch (wallErr) {
+    console.error('[WALL POST-PASS ERROR]', wallErr.message, wallErr.stack);
   }
 
   var bitmap = offscreen.transferToImageBitmap();
