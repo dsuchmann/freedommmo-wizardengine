@@ -8,6 +8,7 @@ import { worldEpochs } from '../../sim/chronicle/epochs.js';
 import { macroCellPeoples } from '../../sim/chronicle/races.js';
 import { regionChronicle, settlementState, chronicleTier } from '../../sim/chronicle/chronicle.js';
 import { layoutSettlement } from '../../sim/world/buildings/layout.js';
+import { resolveBuildingsInRange } from '../../sim/world/buildings/resolved-buildings.js';
 import { classifyBiome } from '../world/biomes.js';
 import { getWorldSeed } from '../core/world-seed.js';
 
@@ -33,44 +34,13 @@ function cachedLayout(seed, mx, my) {
   var mk = mx + ',' + my;
   if (_layoutCache.has(mk)) return _layoutCache.get(mk);
 
-  var cx = mx * MACRO_TILES + Math.floor(MACRO_TILES / 2);
-  var cy = my * MACRO_TILES + Math.floor(MACRO_TILES / 2);
-  var biome = classifyBiome(cx, cy);
-  var epochs = cachedEpochs(seed);
-  var peoples = macroCellPeoples(seed, mk, epochs, biome);
-  var chronicle = regionChronicle(seed, mk, peoples, biome.climate);
-  var state = settlementState(chronicle);
-
-  if (state === 'wilderness' || state === 'ruined') {
-    _layoutCache.set(mk, null);
-    if (_layoutCache.size > 200) _layoutCache.clear();
-    return null;
-  }
-
-  // Find site — same logic as genesis.js findSiteInMacro
-  var ox = Math.floor((rand(seed, mx * 7 + 1, my * 13 + 2) - 0.5) * MACRO_TILES * 0.5);
-  var oy = Math.floor((rand(seed, mx * 11 + 3, my * 17 + 4) - 0.5) * MACRO_TILES * 0.5);
-  var siteX = cx + ox, siteY = cy + oy;
-
-  var siteBiome = classifyBiome(siteX, siteY);
-  if (WATER[siteBiome.id]) {
-    _layoutCache.set(mk, null);
-    if (_layoutCache.size > 200) _layoutCache.clear();
-    return null;
-  }
-
-  var tier = chronicleTier(chronicle, seed, mk);
-  var foundingEv = null;
-  for (var i = 0; i < chronicle.length; i++) {
-    if (chronicle[i].type === 'ancient_founding' || chronicle[i].type === 'founding') {
-      foundingEv = chronicle[i]; break;
-    }
-  }
-  var race = foundingEv ? foundingEv.raceId : (peoples[0] ? peoples[0].raceId : 'human');
-
-  var layout;
-  try { layout = layoutSettlement(seed, { x: siteX, y: siteY }, tier, race, siteBiome.id); }
-  catch (e) {
+  // Resolved, de-overlapped, seed-respecting building set intersecting this macro.
+  // resolveBuildingsInRange pads internally by the neighbor ring, so a building from
+  // an adjacent settlement reaching into this macro is included and de-overlapped —
+  // the worker draws exactly the same set the main thread / overlay / click use.
+  var resolved = resolveBuildingsInRange(seed, mx, my, mx, my);
+  var buildings = resolved.buildings;
+  if (buildings.length === 0) {
     _layoutCache.set(mk, null);
     if (_layoutCache.size > 200) _layoutCache.clear();
     return null;
@@ -78,9 +48,7 @@ function cachedLayout(seed, mx, my) {
 
   // Build per-tile floor index from sections (not bounding box)
   var floorIndex = new Map();
-  var buildings = layout.buildings;
-  var maxB = Math.min(buildings.length, 80);
-  for (var bi = 0; bi < maxB; bi++) {
+  for (var bi = 0; bi < buildings.length; bi++) {
     var b = buildings[bi];
     var fp = b.footprint;
     var mat = (fp.interior && fp.interior.floor && fp.interior.floor.material) || 'wood_plank';
@@ -111,7 +79,7 @@ function cachedLayout(seed, mx, my) {
   // Build wall index: which world tiles have wall sprites hanging below/beside them.
   // Walls are keyed by the floor tile that owns them (the tile at the edge of the building).
   var wallIndex = new Map();
-  for (var bi2 = 0; bi2 < maxB; bi2++) {
+  for (var bi2 = 0; bi2 < buildings.length; bi2++) {
     var b2 = buildings[bi2];
     var fp2 = b2.footprint;
     var floorSet2 = new Set();
@@ -224,7 +192,7 @@ function cachedLayout(seed, mx, my) {
     }
   }
 
-  var result = { layout: layout, floorIndex: floorIndex, wallIndex: wallIndex };
+  var result = { buildings: buildings, floorIndex: floorIndex, wallIndex: wallIndex };
   _layoutCache.set(mk, result);
   if (_layoutCache.size > 200) _layoutCache.clear();
   return result;
@@ -240,12 +208,16 @@ export function getBuildingsNearChunk(chunkCX, chunkCY, chunkSize) {
   var mx0 = Math.floor(x0 / MACRO_TILES) - 1;
   var my0 = Math.floor(y0 / MACRO_TILES) - 1;
   var buildings = [];
+  var seen = new Set(); // a building spanning macros appears in several resolved sets (same ref)
   for (var dmy = 0; dmy <= 2; dmy++) {
     for (var dmx = 0; dmx <= 2; dmx++) {
       var entry = cachedLayout(seed, mx0 + dmx, my0 + dmy);
-      if (entry && entry.layout && entry.layout.buildings) {
-        for (var i = 0; i < entry.layout.buildings.length; i++) {
-          buildings.push(entry.layout.buildings[i]);
+      if (entry && entry.buildings) {
+        for (var i = 0; i < entry.buildings.length; i++) {
+          var b = entry.buildings[i];
+          if (seen.has(b)) continue;
+          seen.add(b);
+          buildings.push(b);
         }
       }
     }

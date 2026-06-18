@@ -55,12 +55,24 @@ export class ChunkProvider {
       }
     }
     const biomes = [...biomeSet];
+    // Tight "core" set: the biomes actually around the player right now. Workers
+    // gate their first paint on this small set (see chunk-worker preloadBiomes)
+    // so the world appears in seconds instead of blocking on all 21 biomes' wang
+    // art. The wider `biomes` set still streams in via backgroundLoadRemaining().
+    const coreSet = new Set();
+    const coreRadius = 5;
+    for (let dy = -coreRadius; dy <= coreRadius; dy++) {
+      for (let dx = -coreRadius; dx <= coreRadius; dx++) {
+        coreSet.add(sampleRegionalMapChunk(pcx + dx, pcy + dy).id);
+      }
+    }
+    const coreBiomes = [...coreSet];
     // Field 6 DISABLED — skip large object preloading to avoid 404 noise
     // preloadLargeObjectSprites(biomes);
     // Preload Field 2 wind sway animation frames on main thread
     preloadField2Animations(biomes);
     for (const worker of this.workers) {
-      worker.postMessage({ type: 'preloadBiomes', biomes });
+      worker.postMessage({ type: 'preloadBiomes', biomes, coreBiomes });
     }
   }
 
@@ -119,7 +131,7 @@ export class ChunkProvider {
     try {
       // Cache-bust: append timestamp so browser reloads worker modules on code changes
       const workerUrl = new URL('./chunk-worker.js', import.meta.url);
-      workerUrl.searchParams.set('v', '20260614b');
+      workerUrl.searchParams.set('v', '20260618a');
       const worker = new Worker(workerUrl, { type: 'module' });
       worker._imagesReady = false;
       worker.onmessage = event => {
