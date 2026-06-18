@@ -3,7 +3,7 @@ import { WORLD } from '../core/constants.js';
 import { setFieldTuning } from './field-tuning.js';
 import { clearClaimCaches } from './decoration-claims.js';
 import { ChunkCompiler } from './chunk-compiler.js';
-import { getAllWangImageURLs, getWangImageURLsForBiomes, getSoilImageURLs, getGroundCoverImageURLs, getSmallFloraImageURLs, getSmallScatterImageURLs } from '../render/wang-image-list.js';
+import { getAllWangImageURLs, getWangImageURLsForBiomes, getSoilImageURLs, getSoilImageURLsForBiomes, getGroundCoverImageURLs, getGroundCoverImageURLsForBiomes, getSmallFloraImageURLs, getSmallScatterImageURLs } from '../render/wang-image-list.js';
 import { renderChunkToBitmap, setF3RemovedKeys } from '../render/worker-chunk-renderer.js';
 import { denoiseBitmap } from '../render/sprite-denoise.js';
 import { getAllFloorTileURLs } from '../render/building-tile-query.js';
@@ -77,8 +77,13 @@ async function loadImageBatch(urls, batchSize) {
 
 // Phase 2: Background-load remaining wang tiles + scatter sprites after worker is already active.
 async function backgroundLoadRemaining() {
-  // Include scatter base variants + lifecycle-state sprites (404s for missing art are normal)
-  var allUrls = getAllWangImageURLs().concat(getSmallScatterImageURLs());
+  // Full streamed-area set: all wang + all soil + all ground cover (the critical
+  // gate only loaded the player's core biomes) + scatter base/lifecycle sprites
+  // (404s for missing art are normal). Already-cached URLs are filtered out below.
+  var allUrls = getAllWangImageURLs()
+    .concat(getSoilImageURLs())
+    .concat(getGroundCoverImageURLs())
+    .concat(getSmallScatterImageURLs());
   // Filter to only URLs not yet cached
   var remaining = allUrls.filter(function(url) { return !imageCache.has(url); });
   if (remaining.length === 0) {
@@ -222,18 +227,21 @@ self.onmessage = function(event) {
   }
 
   if (data.type === 'preloadBiomes') {
-    // Load wang + soil + ground cover together. Wait for all before rendering chunks.
-    // This ensures f0/f1 are always present when chunks paint.
-    var biomeUrls = getWangImageURLsForBiomes(data.biomes);
-    var soilUrls = getSoilImageURLs();
-    var gcUrls = getGroundCoverImageURLs();
+    // CRITICAL first-paint set: only the player's immediate ("core") biomes.
+    // Gating imagesReady on all 21 biomes' wang (~17k urls/worker) kept the
+    // world blank for minutes; the full set loads in backgroundLoadRemaining()
+    // and the repaint pass fills in any chunk that baked before it arrived.
+    var coreBiomes = data.coreBiomes || data.biomes;
+    var coreWang = getWangImageURLsForBiomes(coreBiomes);
+    var coreSoil = getSoilImageURLsForBiomes(coreBiomes);
+    var coreGc = getGroundCoverImageURLsForBiomes(coreBiomes);
     var floorUrls = getAllFloorTileURLs();
-    var allUrls = biomeUrls.concat(soilUrls).concat(gcUrls).concat(floorUrls);
+    var criticalUrls = coreWang.concat(coreSoil).concat(coreGc).concat(floorUrls);
     // Batch of 50 per worker — with up to 6 workers plus main-thread preloads,
     // larger batches exhaust the browser's network stack (ERR_INSUFFICIENT_RESOURCES)
-    loadImageBatch(allUrls, 50).then(function(result) {
+    loadImageBatch(criticalUrls, 50).then(function(result) {
       imagesReady = true;
-      self.postMessage({ type: 'imagesReady', loaded: result.loaded, failed: result.failed, total: allUrls.length });
+      self.postMessage({ type: 'imagesReady', loaded: result.loaded, failed: result.failed, total: criticalUrls.length });
       backgroundLoadRemaining();
     });
     return;

@@ -188,6 +188,23 @@ export function getSoilImageURLs() {
   return urls;
 }
 
+// Same as getSoilImageURLs but restricted to a given biome set — used for the
+// critical first-paint gate so workers don't block on all 21 materials.
+export function getSoilImageURLsForBiomes(biomes) {
+  var urls = [];
+  var seenMaterials = new Set();
+  for (var b = 0; b < biomes.length; b++) {
+    var mat = SOIL_MATERIALS[biomes[b]];
+    if (!mat || seenMaterials.has(mat)) continue;
+    seenMaterials.add(mat);
+    for (var v = 0; v < SOIL_VARIANT_COUNT; v++) {
+      var idx = v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v);
+      urls.push(SOIL_BASE_PATH + mat + '/soil__' + mat + '__v' + idx + '.png');
+    }
+  }
+  return urls;
+}
+
 export function soilMaterialForBiome(biome) {
   return SOIL_MATERIALS[biome] || 'loam';
 }
@@ -227,6 +244,23 @@ export function getGroundCoverImageURLs() {
       for (var v = 0; v < GC_VARIANT_COUNT; v++) {
         var idx = v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v);
         urls.push(GC_BASE_PATH + biome + '/' + objects[oi] + '/gc__' + biome + '__' + objects[oi] + '__v' + idx + '.png');
+      }
+    }
+  }
+  return urls;
+}
+
+// Same as getGroundCoverImageURLs but restricted to a given biome set — used
+// for the critical first-paint gate so workers don't block on all 21 biomes.
+export function getGroundCoverImageURLsForBiomes(biomes) {
+  var urls = [];
+  for (var b = 0; b < biomes.length; b++) {
+    var objects = GC_BIOME_OBJECTS_LIST[biomes[b]];
+    if (!objects) continue;
+    for (var oi = 0; oi < objects.length; oi++) {
+      for (var v = 0; v < GC_VARIANT_COUNT; v++) {
+        var idx = v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v);
+        urls.push(GC_BASE_PATH + biomes[b] + '/' + objects[oi] + '/gc__' + biomes[b] + '__' + objects[oi] + '__v' + idx + '.png');
       }
     }
   }
