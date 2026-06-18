@@ -20,11 +20,56 @@ import { initSimDebugOverlay } from './render/sim-debug-overlay.js';
 import { initWallTuner } from './render/wall-tuner.js';
 import { initCommandChat, isCommandChatOpen } from './ui/command-chat.js';
 import { initArmorSwap } from './ui/armor-swap.js';
+import { resolveBuildingsInRange } from '../sim/world/buildings/resolved-buildings.js';
+import { getWorldSeed } from './core/world-seed.js';
+import { MACRO } from '../sim/world/genesis.js';
+import { REGION } from '../sim/lod/aggregate.js';
+import { screenToWorldTile, pickInFloorView, toggleWallStyle } from './render/floor-view.js';
+import * as FV from './render/floor-view-state.js';
 
 const canvas = document.getElementById('game');
 const stats = document.getElementById('stats');
 const overmapCanvas = document.getElementById('overmap');
 const input = new InputState();
+
+// ── Interior floor-view: click a building to enter, route clicks/keys inside ──
+const MACRO_TILES = MACRO * REGION;
+canvas.addEventListener('pointerdown', (e) => {
+  if (FV.isFloorViewActive()) {
+    const hit = pickInFloorView(e.clientX, e.clientY, window.innerWidth, window.innerHeight);
+    if (hit.type === 'stair') FV.changeFloor(1) || FV.changeFloor(-1);     // up if possible, else down
+    else if (hit.type === 'lift') openLiftMenu();
+    else if (hit.type === 'unit') FV.enterUnit(hit.unitId);
+    return;
+  }
+  // not in floor view → did we click a building? resolve via the shared set
+  const { tileX, tileY } = screenToWorldTile(e.clientX, e.clientY);
+  const wx = Math.floor(tileX), wy = Math.floor(tileY);
+  const mx = Math.floor(wx / MACRO_TILES), my = Math.floor(wy / MACRO_TILES);
+  const { byTile } = resolveBuildingsInRange(getWorldSeed(), mx - 1, my - 1, mx + 1, my + 1);
+  const b = byTile.get(`${wx},${wy}`);
+  if (b && b.footprint && b.footprint.node) FV.enterBuilding(b.footprint.node, `${b.x},${b.y}`);
+});
+
+window.addEventListener('keydown', (e) => {
+  if (!FV.isFloorViewActive()) return;
+  if (e.key === 'Escape') { const fv = FV.getFloorView(); if (fv.enteredUnitId) FV.exitUnit(); else FV.exitFloorView(); }
+  else if (e.key === ',' || e.key === '[') FV.changeFloor(-1);
+  else if (e.key === '.' || e.key === ']') FV.changeFloor(1);
+  else if (e.key === 'f') toggleWallStyle();
+  else if (e.key === 'l') openLiftMenu();
+});
+
+// Minimal lift floor-picker: prompt-based for v1 (a styled menu can follow); honest + functional.
+function openLiftMenu() {
+  if (!FV.liftAvailable()) return;
+  const fv = FV.getFloorView();
+  const choice = window.prompt(`Lift — choose a floor (${fv.floorKeys[0]}…${fv.floorKeys[fv.floorKeys.length - 1]}):`, String(fv.floorIndex));
+  if (choice == null) return;
+  const target = parseInt(choice, 10);
+  if (!Number.isNaN(target)) FV.gotoFloor(target, 'lift');
+}
+
 initCommandChat(input);
 initArmorSwap((setId, setData) => {
   // Apply armor set to player's character equipment
