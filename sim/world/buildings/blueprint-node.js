@@ -18,6 +18,7 @@ import { floorCount, floorStackPlan } from './building-floors.js';
 import { selectStairCores, reserveLift } from './vertical.js';
 import { partitionFloor } from './floor-partition.js';
 import { generateInterior } from './interiors.js';
+import { unitSubFloorCount, selectPrivateStair } from './unit-vertical.js';
 
 // ── generic lazy node + kind registry ─────────────────────────────────────
 
@@ -157,16 +158,28 @@ registerKind('floor', {
 });
 
 // ── kind: unit ───────────────────────────────────────────────────────────────
+// A unit holds one deterministic room — UNLESS it is an eligible large unit that
+// becomes a 2-level mini-stack (a private internal stair, depth <= 1). Each sub-floor
+// is one room child; rooms are always leaves, so recursion never exceeds one level.
 registerKind('unit', {
   generatePayload(node) {
     const ctx = node.ancestorContext;
-    return { unitKind: ctx.unitKind, tiles: ctx.tiles, doorTile: ctx.doorTile };
+    const subFloors = unitSubFloorCount(node.seed, ctx.unitKind, ctx.tiles);
+    const privateStair = subFloors > 1 ? selectPrivateStair(ctx.tiles) : null;
+    return { unitKind: ctx.unitKind, tiles: ctx.tiles, doorTile: ctx.doorTile, subFloors, privateStair };
   },
-  childKeys() { return [0]; }, // exactly one deterministic room per unit (subFloor depth <= 1)
+  childKeys(node) {
+    const n = node.payload.subFloors;
+    return Array.from({ length: n }, (_, i) => i); // [0] single-floor; [0,1] multi-floor
+  },
   makeChild(node, roomIdx) {
     const ctx = node.ancestorContext;
+    const p = node.payload;
+    const isUpper = roomIdx > 0;
     const roomCtx = {
-      unitId: node.id, unitKind: ctx.unitKind, tiles: ctx.tiles, doorTile: ctx.doorTile,
+      unitId: node.id, unitKind: ctx.unitKind, tiles: ctx.tiles,
+      // sub-floor 0 enters from the floor circulation; upper sub-floors enter via the private stair
+      doorTile: isUpper ? p.privateStair : ctx.doorTile,
       typeId: ctx.typeId, race: ctx.race, tier: ctx.tier,
     };
     return makeNode('room', [...node.path, 'r', roomIdx], node.worldSeed, roomCtx);
