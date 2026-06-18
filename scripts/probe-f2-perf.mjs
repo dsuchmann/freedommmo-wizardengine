@@ -40,15 +40,23 @@ const res = await page.evaluate(async () => {
   await wait(300);
   const subTileRebuilds = window._f2Stats.rebuilds - r1;
 
-  // Leg 3: cross a tile boundary — expect at least one rebuild, and few.
+  // Leg 3: cross a few tile boundaries but stay WITHIN the hysteresis margin
+  // (3 tiles < REBUILD_MARGIN) — the pool must NOT rebuild (the whole point).
   const r2 = window._f2Stats.rebuilds;
-  p.x = startX + 1.2;
+  p.x = startX + 3;
   await wait(800);
-  const crossRebuilds = window._f2Stats.rebuilds - r2;
-  p.x = startX;
-  await wait(800);
+  const subMarginRebuilds = window._f2Stats.rebuilds - r2;
 
-  return { idleRebuilds, subTileRebuilds, crossRebuilds, maxDirty,
+  // Leg 4: move PAST the margin (6 tiles > REBUILD_MARGIN) — exactly one
+  // re-center rebuild (a handful at most), not one-per-tile.
+  const r3 = window._f2Stats.rebuilds;
+  p.x = startX + 9;
+  await wait(900);
+  const crossRebuilds = window._f2Stats.rebuilds - r3;
+  p.x = startX;
+  await wait(900);
+
+  return { idleRebuilds, subTileRebuilds, subMarginRebuilds, crossRebuilds, maxDirty,
     avgDirty: dirtySum / samples, poolN: window._f2PoolN || 0,
     activeCount: window._f2Stats.activeCount };
 });
@@ -60,6 +68,7 @@ await browser.close();
 // invariant is that dirty << poolN (no full rebuilds every frame). At 60fps
 // the active set is typically ~50-200; in headless it can be most of the pool.
 const ok = res.idleRebuilds === 0 && res.subTileRebuilds === 0
+  && res.subMarginRebuilds === 0           // hysteresis: sub-margin walk = no rebuild
   && res.crossRebuilds >= 1 && res.crossRebuilds <= 4
   && res.maxDirty < res.poolN;
 console.log(ok ? 'F2 PERF PROBE PASSED' : 'F2 PERF PROBE FAILED');

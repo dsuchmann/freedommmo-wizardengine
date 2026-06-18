@@ -15,6 +15,11 @@ import { tuneSize, tuneBiomeDensity, tuneObjDensity, tuneAnimEnabled, tuneStateW
 import { coalesceDirty, lowerBound } from './sprite-pool-util.js';
 
 var ANIM_RADIUS = 40; // tiles around player — large enough to cover full screen at any zoom
+var REBUILD_MARGIN = 4; // hysteresis: the pool collects this many extra tiles past the
+                        // viewport and only rebuilds once the player has moved this far.
+                        // Turns the old per-tile (and per-zoom-step) 71ms rebuild storm
+                        // into an occasional rebuild — walking/zooming no longer restitch
+                        // the whole instance buffer every frame.
 var FADE_INNER = 34; // fully opaque inside this radius
 var FRAME_COUNT = 9;
 var FRAME_DURATION = 120; // ms per frame
@@ -944,14 +949,24 @@ var _pool = {
   dirty: new Set(),     // instance idxs needing upload this frame
   shadowDirty: new Set(),
   pending: [],          // instance idxs whose image/atlas wasn't ready at rebuild
-  key: '',              // rebuild key — change forces rebuild
+  key: '',              // '' forces a rebuild (set by clearF2Pool / first frame)
+  centerX: 1e9, centerY: 1e9, // tile pos at last rebuild (1e9 => force first build)
+  radiusX: 0, radiusY: 0,     // collection radius (tiles) used at last rebuild
+  readyCount: -1,             // ready-chunk count at last rebuild (debounced trigger)
+  lastRebuildAt: -1e9,        // timeMs of last rebuild (ready-trigger debounce)
+  // RC3 dirty-gate: per-instance last-uploaded values; an instance only re-uploads
+  // when one of these actually changes (kills the full per-frame buffer re-upload).
+  lastRot: null, lastAlpha: null, lastU0: null, lastV0: null,
   lastTickMs: 0,
   uploaded: false,
 };
 var _f2Stats = { rebuilds: 0, dirtyInstances: 0, activeCount: 0, lastRebuildMs: 0, ticks: 0 };
 if (typeof window !== 'undefined') window._f2Stats = _f2Stats;
 
-export function clearF2Pool() { _pool.key = ''; }
+export function clearF2Pool() {
+  _pool.key = '';
+  _pool.centerX = 1e9; _pool.centerY = 1e9; _pool.readyCount = -1;
+}
 
 function _poolWriteStatic(idx, m, worldX, worldPivotY, sizeTiles, rot, alpha, rect) {
   var o = idx * SPRITE_FLOATS;
@@ -967,7 +982,7 @@ function _poolWriteStatic(idx, m, worldX, worldPivotY, sizeTiles, rot, alpha, re
   }
 }
 
-function _poolRebuild(chunkStore, player, glc, tilePxSnapped, radiusX, radiusY) {
+function _poolRebuild(chunkStore, player, glc, radiusX, radiusY) {
   var t0 = performance.now();
   var px = Math.floor(player.x);
   var py = Math.floor(player.y);
@@ -1044,6 +1059,13 @@ function _poolRebuild(chunkStore, player, glc, tilePxSnapped, radiusX, radiusY) 
     _pool.sortY = new Float32Array(Math.max(512, n * 2));
     _pool.shadowOf = new Int32Array(Math.max(512, n * 2));
     _pool.shadowMirror = new Float32Array(Math.max(4096, n * SPRITE_FLOATS * 2));
+    // Match the mirror's instance capacity exactly so a later grow that reuses
+    // the mirror (no realloc) can never index past these caches.
+    var cap = (_pool.mirror.length / SPRITE_FLOATS) | 0;
+    _pool.lastRot = new Float32Array(cap);
+    _pool.lastAlpha = new Float32Array(cap);
+    _pool.lastU0 = new Float32Array(cap);
+    _pool.lastV0 = new Float32Array(cap);
   }
   _pool.meta.length = 0;
   _pool.tiles = [];
@@ -1103,6 +1125,12 @@ function _poolRebuild(chunkStore, player, glc, tilePxSnapped, radiusX, radiusY) 
       alpha = e.edgeFade * imgFade(img, timeMs);
     }
     _poolWriteStatic(i, _pool.mirror, e.worldX, e.worldPivotY, e.sizeTiles, baseAngle, rect ? alpha : 0, rect);
+    // Seed the RC3 dirty-gate caches with what we just uploaded, so the first
+    // per-frame pass only re-uploads instances whose rot/alpha/uv actually move.
+    _pool.lastRot[i] = baseAngle;
+    _pool.lastAlpha[i] = rect ? alpha : 0;
+    _pool.lastU0[i] = rect ? rect.u0 : 0;
+    _pool.lastV0[i] = rect ? rect.v0 : 0;
     if (!rect || (img && img._f2At)) _pool.pending.push(i);
     if (isActive || (img && img._f2At)) _pool.active.set(i, true);
 
@@ -1133,8 +1161,8 @@ function _poolRebuild(chunkStore, player, glc, tilePxSnapped, radiusX, radiusY) 
 
   var ok = glc.ensurePoolCapacity('sprite', n + 1) && glc.ensurePoolCapacity('shadow', shCount + 1);
   if (ok) {
-    glc.uploadPoolRange('sprite', _pool.mirror, 0, n);
-    glc.uploadPoolRange('shadow', _pool.shadowMirror, 0, shCount);
+    glc.uploadPoolRange('sprite', _pool.mirror, 0, n, true);       // orphan: whole pool re-uploaded
+    glc.uploadPoolRange('shadow', _pool.shadowMirror, 0, shCount, true);
     _pool.uploaded = true;
   } else {
     _pool.uploaded = false;
@@ -1144,17 +1172,18 @@ function _poolRebuild(chunkStore, player, glc, tilePxSnapped, radiusX, radiusY) 
   if (typeof window !== 'undefined') window._f2PoolN = _pool.n;
 }
 
-function _poolKey(chunkStore, px, py, tilePxSnapped, radiusX, radiusY) {
-  var minCX = floorDiv(px - radiusX, WORLD.chunkSize);
-  var maxCX = floorDiv(px + radiusX, WORLD.chunkSize);
-  var minCY = floorDiv(py - radiusY, WORLD.chunkSize);
-  var maxCY = floorDiv(py + radiusY, WORLD.chunkSize);
+// Count ready chunks across the collection window — feeds the debounced
+// "new chunks streamed in" rebuild trigger (no longer part of a per-frame key).
+function _poolReadyCount(chunkStore, px, py, radius) {
+  var minCX = floorDiv(px - radius, WORLD.chunkSize);
+  var maxCX = floorDiv(px + radius, WORLD.chunkSize);
+  var minCY = floorDiv(py - radius, WORLD.chunkSize);
+  var maxCY = floorDiv(py + radius, WORLD.chunkSize);
   var ready = 0;
   for (var cy = minCY; cy <= maxCY; cy++)
     for (var cx = minCX; cx <= maxCX; cx++)
       if (chunkStore.getIfReady(cx, cy)) ready++;
-  // Round tilePxSnapped to integer so smooth zoom doesn't trigger per-frame rebuilds
-  return px + '|' + py + '|' + Math.round(tilePxSnapped) + '|' + radiusX + '|' + radiusY + '|' + ready;
+  return ready;
 }
 
 function _poolTick(timeMs, timeSec, glc, tilePxSnapped) {
@@ -1262,8 +1291,12 @@ function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, we
   var tilePxSnapped = chunkGrid.chunkPx / WORLD.chunkSize;
   var visibleTilesX = Math.ceil(w / tilePxSnapped / 2) + 2;
   var visibleTilesY = Math.ceil(h / tilePxSnapped / 2) + 2;
-  var radiusX = Math.min(ANIM_RADIUS, visibleTilesX);
-  var radiusY = Math.min(ANIM_RADIUS, visibleTilesY);
+  // Collect a margin past the viewport so walking within the margin doesn't
+  // restitch the pool. Radius is recomputed only AT rebuild time, so zoom alone
+  // never forces one (the GL shader upscales sprites via uCam — pool content is
+  // zoom-independent: drawSizePx = WORLD.tileSize * sizeTiles, no zoom term).
+  var needRX = Math.min(ANIM_RADIUS, visibleTilesX) + REBUILD_MARGIN;
+  var needRY = Math.min(ANIM_RADIUS, visibleTilesY) + REBUILD_MARGIN;
   var px = Math.floor(player.x);
   var py = Math.floor(player.y);
   var timeSec = timeMs * 0.001;
@@ -1272,11 +1305,22 @@ function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, we
   var wind = weather ? weather.wind() : { direction: 0.3, intensity: 0.3 };
   updateCurrents(timeSec, wind.direction, wind.intensity, player.x, player.y);
 
-  // Rebuild on key change (tile window, zoom, chunk readiness, tuner clear).
-  var key = _poolKey(chunkStore, px, py, tilePxSnapped, radiusX, radiusY);
-  if (key !== _pool.key || !_pool.uploaded) {
-    _pool.key = key;
-    _poolRebuild(chunkStore, player, glc, tilePxSnapped, radiusX, radiusY);
+  // Rebuild only when it actually matters:
+  //  - moved past the hysteresis margin (walk), or
+  //  - zoomed OUT far enough to need more coverage than we collected (grew), or
+  //  - new chunks streamed in (debounced so streaming doesn't storm rebuilds), or
+  //  - tuner cleared the pool / GL wasn't ready yet.
+  var moved = Math.abs(px - _pool.centerX) > REBUILD_MARGIN ||
+              Math.abs(py - _pool.centerY) > REBUILD_MARGIN;
+  var grew = needRX > _pool.radiusX || needRY > _pool.radiusY;
+  var ready = _poolReadyCount(chunkStore, px, py, _pool.radiusX || needRX);
+  var newChunks = ready > _pool.readyCount && (timeMs - _pool.lastRebuildAt) > 250;
+  if (_pool.key === '' || !_pool.uploaded || moved || grew || newChunks) {
+    _pool.key = 'built';
+    _pool.centerX = px; _pool.centerY = py;
+    _pool.radiusX = needRX; _pool.radiusY = needRY;
+    _pool.readyCount = ready; _pool.lastRebuildAt = timeMs;
+    _poolRebuild(chunkStore, player, glc, needRX, needRY);
     if (!_pool.uploaded) return false; // GL not ready — caller falls back to legacy path
   }
 
@@ -1346,28 +1390,43 @@ function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, we
         sway = (meta.tileRotCached || 0) * 1.2 * animBlend * bl.lifeSway;
       }
     }
-    // Write floats + mark dirty.
-    m[o + 3] = (bl ? bl.baseAngle : 0) + sway;
-    m[o + 4] = rect ? alpha : 0;
-    if (rect) { m[o + 5] = rect.u0; m[o + 6] = rect.v0; m[o + 7] = rect.du; m[o + 8] = rect.dv; }
-    _pool.dirty.add(i);
-    var sIdx = _pool.shadowOf[i];
-    if (sIdx >= 0) {
-      var so = sIdx * SPRITE_FLOATS;
-      var tier = 1.0 - sm[so + 3]; // diffusion slot was set at rebuild
-      sm[so + 4] = (rect ? alpha : 0) * meta.biomeShadowK * (0.30 + 0.70 * tier);
-      if (rect) { sm[so + 5] = rect.u0; sm[so + 6] = rect.v0; sm[so + 7] = rect.du; sm[so + 8] = rect.dv; }
-      _pool.shadowDirty.add(sIdx);
+    // RC3: only re-upload an instance whose rot/alpha/uv actually changed this
+    // frame. A settled sprite (no sway, fade done, same atlas cell) writes
+    // nothing — so the per-frame upload shrinks from ~the whole buffer to just
+    // the genuinely-animating handful.
+    var newRot = (bl ? bl.baseAngle : 0) + sway;
+    var newAlpha = rect ? alpha : 0;
+    var newU0 = rect ? rect.u0 : 0;
+    var newV0 = rect ? rect.v0 : 0;
+    if (newRot !== _pool.lastRot[i] || newAlpha !== _pool.lastAlpha[i] ||
+        newU0 !== _pool.lastU0[i] || newV0 !== _pool.lastV0[i]) {
+      m[o + 3] = newRot;
+      m[o + 4] = newAlpha;
+      if (rect) { m[o + 5] = rect.u0; m[o + 6] = rect.v0; m[o + 7] = rect.du; m[o + 8] = rect.dv; }
+      _pool.lastRot[i] = newRot; _pool.lastAlpha[i] = newAlpha;
+      _pool.lastU0[i] = newU0; _pool.lastV0[i] = newV0;
+      _pool.dirty.add(i);
+      var sIdx = _pool.shadowOf[i];
+      if (sIdx >= 0) {
+        var so = sIdx * SPRITE_FLOATS;
+        var tier = 1.0 - sm[so + 3]; // diffusion slot was set at rebuild
+        sm[so + 4] = newAlpha * meta.biomeShadowK * (0.30 + 0.70 * tier);
+        if (rect) { sm[so + 5] = rect.u0; sm[so + 6] = rect.v0; sm[so + 7] = rect.du; sm[so + 8] = rect.dv; }
+        _pool.shadowDirty.add(sIdx);
+      }
     }
     if (!stillActive) { if (!doneKeys) doneKeys = []; doneKeys.push(i); }
   });
   if (doneKeys) for (var d = 0; d < doneKeys.length; d++) _pool.active.delete(doneKeys[d]);
 
-  // Upload dirty ranges (full upload if heavily fragmented).
-  var FULL_FRACTION = 0.30, GAP = 8;
+  // Upload dirty ranges (full upload if heavily fragmented). With RC3 gating,
+  // dirty is usually a small handful, so the coalesced-range path runs and the
+  // full-buffer branch (which orphans the VBO) is the rare exception.
+  // FULL_FRACTION raised to 0.6 so scattered small edits don't collapse to full.
+  var FULL_FRACTION = 0.60, GAP = 8;
   if (_pool.dirty.size > 0) {
     if (_pool.dirty.size > _pool.n * FULL_FRACTION) {
-      glc.uploadPoolRange('sprite', m, 0, _pool.n);
+      glc.uploadPoolRange('sprite', m, 0, _pool.n, true); // orphan: full live range
     } else {
       var ranges = coalesceDirty(Array.from(_pool.dirty), GAP);
       for (var r = 0; r < ranges.length; r++) glc.uploadPoolRange('sprite', m, ranges[r].start, ranges[r].count);
@@ -1375,7 +1434,7 @@ function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, we
   }
   if (_pool.shadowDirty.size > 0) {
     if (_pool.shadowDirty.size > _pool.shadowN * FULL_FRACTION) {
-      glc.uploadPoolRange('shadow', sm, 0, _pool.shadowN);
+      glc.uploadPoolRange('shadow', sm, 0, _pool.shadowN, true); // orphan: full live range
     } else {
       var sRanges = coalesceDirty(Array.from(_pool.shadowDirty), GAP);
       for (var sr = 0; sr < sRanges.length; sr++) glc.uploadPoolRange('shadow', sm, sRanges[sr].start, sRanges[sr].count);

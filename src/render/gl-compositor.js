@@ -115,13 +115,13 @@ uniform float uShadowAlpha; // global strength (sun-height driven)
 uniform float uAtlasTexel;  // 1 / atlas size
 out vec4 outColor;
 void main() {
-  // 5-tap blur of atlas alpha, radius scaled by per-instance diffusion
+  // 3-tap diagonal blur of atlas alpha (was 5-tap) — radius scaled by per-instance
+  // diffusion. Two opposite diagonal taps cover both axes at 40% fewer fetches;
+  // shadows are soft dark blobs so the look is indistinguishable in motion.
   float r = vDiff * 1.6 * uAtlasTexel;
-  float sa = texture(uAtlas, vUV).a * 0.36
-           + (texture(uAtlas, vUV + vec2(r, 0.0)).a
-            + texture(uAtlas, vUV - vec2(r, 0.0)).a
-            + texture(uAtlas, vUV + vec2(0.0, r)).a
-            + texture(uAtlas, vUV - vec2(0.0, r)).a) * 0.16;
+  float sa = texture(uAtlas, vUV).a * 0.50
+           + (texture(uAtlas, vUV + vec2(r, r)).a
+            + texture(uAtlas, vUV - vec2(r, r)).a) * 0.25;
   // crisp large silhouettes keep a mild edge; diffuse flora stays soft
   float crisp = smoothstep(0.25, 0.75, sa);
   sa = mix(crisp, sa, clamp(vDiff * 2.0, 0.0, 1.0));
@@ -389,7 +389,10 @@ export class GLCompositor {
       antialias: false,
       depth: false,
       stencil: false,
-      preserveDrawingBuffer: true,
+      // false lets the driver swap (not copy) the backbuffer each frame. Nothing
+      // reads this canvas back (no toDataURL/readPixels on #glTerrain; Playwright
+      // screenshots composite the page), so preservation is pure per-frame cost.
+      preserveDrawingBuffer: false,
       powerPreference: 'high-performance'
     });
     if (!gl) {
@@ -1046,13 +1049,19 @@ export class GLCompositor {
 
   // Upload `count` instances from mirror (Float32Array of packed instances)
   // starting at instance index `start` (same index in VBO and mirror).
-  uploadPoolRange(kind, mirror, start, count) {
+  // orphan=true re-specs the buffer (bufferData(null)) before writing, so the
+  // driver hands back a fresh allocation instead of blocking the CPU until the
+  // GPU finishes reading last frame's VBO. ONLY pass orphan=true when `count`
+  // is the entire live range [0, n) — orphaning discards the whole buffer, so a
+  // partial write would leave the rest as garbage.
+  uploadPoolRange(kind, mirror, start, count, orphan) {
     if (!this.ok || !this.spritesOk || count === 0) return;
     var gl = this.gl;
     var p = this._pool && this._pool[kind];
     if (!p) return;
     if ((start + count) * SPRITE_STRIDE > p.capBytes) return;
     gl.bindBuffer(gl.ARRAY_BUFFER, p.vbo);
+    if (orphan) gl.bufferData(gl.ARRAY_BUFFER, p.capBytes, gl.DYNAMIC_DRAW);
     gl.bufferSubData(gl.ARRAY_BUFFER, start * SPRITE_STRIDE,
       mirror, start * SPRITE_FLOATS, count * SPRITE_FLOATS);
   }
