@@ -12,12 +12,14 @@ import { macroCellPeoples } from '../../sim/chronicle/races.js';
 import { regionChronicle, settlementState, chronicleTier } from '../../sim/chronicle/chronicle.js';
 import { classifyBiome } from '../world/biomes.js';
 import { rand } from '../../sim/kernel/rng.js';
+import { getWorldSeed } from '../core/world-seed.js';
+import { discoverSettlementsInMacroRange, suppressBySpacing } from '../../sim/world/buildings/settlement-discovery.js';
 
 const MAX_OVERLAY_BUILDINGS = 80; // cap layout generation for performance
 
 const EVENT_CAP = 50;
 const MACRO_TILES = MACRO * REGION;
-const WORLD_SEED = 42;  // must match sim seed
+// World seed read via getWorldSeed() at call time — no hardcoded 42.
 
 /** Discover all settlements visible on screen by evaluating the chronicle directly.
  *  Pure function — no sim needed. Returns [{x, y, tier, race, state, chronicleAge}]. */
@@ -30,74 +32,8 @@ function discoverSettlements(camX, camY, w, h, tilePx) {
   const mx0 = Math.floor(tileX0 / MACRO_TILES), mx1 = Math.ceil(tileX1 / MACRO_TILES);
   const my0 = Math.floor(tileY0 / MACRO_TILES), my1 = Math.ceil(tileY1 / MACRO_TILES);
 
-  const epochs = worldEpochs(WORLD_SEED);
-  const settlements = [];
-  for (let my = my0; my <= my1; my++) {
-    for (let mx = mx0; mx <= mx1; mx++) {
-      const mk = `${mx},${my}`;
-      const cx = mx * MACRO_TILES + Math.floor(MACRO_TILES / 2);
-      const cy = my * MACRO_TILES + Math.floor(MACRO_TILES / 2);
-      const biome = classifyBiome(cx, cy);
-      const peoples = macroCellPeoples(WORLD_SEED, mk, epochs, biome);
-      const chronicle = regionChronicle(WORLD_SEED, mk, peoples, biome.climate);
-      const state = settlementState(chronicle);
-      if (state === 'wilderness') continue;
-
-      // Same position logic as genesis
-      const ox = Math.floor((rand(WORLD_SEED, mx * 7 + 1, my * 13 + 2) - 0.5) * MACRO_TILES * 0.5);
-      const oy = Math.floor((rand(WORLD_SEED, mx * 11 + 3, my * 17 + 4) - 0.5) * MACRO_TILES * 0.5);
-      const x = cx + ox, y = cy + oy;
-
-      const foundingEv = chronicle.find(e => e.type === 'ancient_founding' || e.type === 'founding');
-      const race = foundingEv?.raceId ?? peoples[0]?.raceId ?? 'human';
-      const chronicleAge = chronicle.length > 0 ? Math.max(...chronicle.map(e => e.age ?? 0)) : 0;
-      const tier = state === 'ruined' ? 'ruins'
-        : chronicleTier(chronicle, WORLD_SEED, mk);
-
-      // Skip settlements centered on water
-      const siteBiome = classifyBiome(x, y);
-      if (['ocean', 'deep_ocean', 'lake', 'river', 'shallow_water'].includes(siteBiome.id)) continue;
-
-      const name = generateSettlementName(WORLD_SEED, x, y);
-      settlements.push({ x, y, tier, race, state, chronicleAge, biome: siteBiome.id, name });
-    }
-  }
-
-  // ── Spacing enforcement: larger settlements suppress nearby smaller ones ──
-  // Sort by tier rank (largest first). Each settlement has a suppression radius
-  // proportional to its size. Smaller settlements within that radius are removed.
-  const TIER_RANK = {};
-  TIER_NAMES.forEach((t, i) => TIER_RANK[t] = i);
-  TIER_RANK.ruins = -1;
-
-  // Minimum tile distance between settlement centers by tier
-  const MIN_SPACING = {
-    homestead: 30, hamlet: 40, village: 50, township: 60,
-    town: 80, borough: 100, city: 140, great_city: 180,
-    capital: 220, metropolis: 280, megacity: 350, world_capital: 440,
-    ruins: 30,
-  };
-
-  settlements.sort((a, b) => (TIER_RANK[b.tier] ?? 0) - (TIER_RANK[a.tier] ?? 0));
-  const kept = [];
-  for (const s of settlements) {
-    const spacing = MIN_SPACING[s.tier] ?? 50;
-    let tooClose = false;
-    for (const k of kept) {
-      const dist = Math.abs(s.x - k.x) + Math.abs(s.y - k.y);
-      // A smaller settlement is suppressed if it's within the LARGER settlement's spacing
-      const largerSpacing = MIN_SPACING[k.tier] ?? 50;
-      if (dist < largerSpacing && (TIER_RANK[k.tier] ?? 0) >= (TIER_RANK[s.tier] ?? 0)) {
-        tooClose = true; break;
-      }
-      // Two settlements of same tier: use the smaller spacing
-      if (dist < Math.min(spacing, largerSpacing) * 0.7) {
-        tooClose = true; break;
-      }
-    }
-    if (!tooClose) kept.push(s);
-  }
-  return kept;
+  // Shared, seed-respecting discovery + spacing (was a hardcoded-42 copy).
+  return suppressBySpacing(discoverSettlementsInMacroRange(getWorldSeed(), mx0, my0, mx1, my1));
 }
 
 let _discoveredCache = { key: '', settlements: [] };
@@ -256,7 +192,7 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
     let layout = null;
     try {
       const overlayTier = s.tier || 'village';
-      if (!isRuin) layout = layoutSettlement(42, { x: s.x, y: s.y }, overlayTier, s.race || 'human', s.biome || 'grassland');
+      if (!isRuin) layout = layoutSettlement(getWorldSeed(), { x: s.x, y: s.y }, overlayTier, s.race || 'human', s.biome || 'grassland');
       // Cap buildings for rendering performance
       if (layout && layout.buildings.length > MAX_OVERLAY_BUILDINGS) {
         layout = { ...layout, buildings: layout.buildings.slice(0, MAX_OVERLAY_BUILDINGS) };
@@ -592,7 +528,7 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
   } else if (selectedSettlement) {
     // Settlement aggregate view
     const s = selectedSettlement;
-    const layout = (() => { try { return layoutSettlement(42, { x: s.x, y: s.y }, s.tier || 'village', s.race || 'human', s.biome || 'grassland'); } catch { return null; } })();
+    const layout = (() => { try { return layoutSettlement(getWorldSeed(), { x: s.x, y: s.y }, s.tier || 'village', s.race || 'human', s.biome || 'grassland'); } catch { return null; } })();
     const lines = [];
     lines.push({ text: `${s.name} — ${(s.tier || 'village').toUpperCase()}`, color: '#ffd24a' });
     lines.push({ text: `Race: ${s.race} · Age: ${s.chronicleAge} ages · Biome: ${s.biome}`, color: '#aaa' });
@@ -661,7 +597,7 @@ let _lastDrawState = { camX: 0, camY: 0, tilePx: 32, settlements: [] };
 /** Scan outward from current camera position to find a settlement of the given tier.
  *  Evaluates macro-cells in expanding rings (up to 1000 cells out). */
 function findSettlementOfTier(targetTier, camX, camY, tilePx) {
-  const epochs = worldEpochs(WORLD_SEED);
+  const epochs = worldEpochs(getWorldSeed());
   const centerTileX = Math.floor(camX / tilePx + 500 / tilePx);
   const centerTileY = Math.floor(camY / tilePx + 400 / tilePx);
   const centerMx = Math.floor(centerTileX / MACRO_TILES);
@@ -677,17 +613,17 @@ function findSettlementOfTier(targetTier, camX, camY, tilePx) {
         const cx = mx * MACRO_TILES + Math.floor(MACRO_TILES / 2);
         const cy = my * MACRO_TILES + Math.floor(MACRO_TILES / 2);
         const biome = classifyBiome(cx, cy);
-        const peoples = macroCellPeoples(WORLD_SEED, mk, epochs, biome);
-        const chronicle = regionChronicle(WORLD_SEED, mk, peoples, biome.climate);
+        const peoples = macroCellPeoples(getWorldSeed(), mk, epochs, biome);
+        const chronicle = regionChronicle(getWorldSeed(), mk, peoples, biome.climate);
         const state = settlementState(chronicle);
         if (state === 'wilderness' || state === 'ruined') continue;
 
-        const tier = chronicleTier(chronicle, WORLD_SEED, mk);
+        const tier = chronicleTier(chronicle, getWorldSeed(), mk);
         if (tier !== targetTier) continue;
 
         // Found it - compute site position
-        const ox = Math.floor((rand(WORLD_SEED, mx * 7 + 1, my * 13 + 2) - 0.5) * MACRO_TILES * 0.5);
-        const oy = Math.floor((rand(WORLD_SEED, mx * 11 + 3, my * 17 + 4) - 0.5) * MACRO_TILES * 0.5);
+        const ox = Math.floor((rand(getWorldSeed(), mx * 7 + 1, my * 13 + 2) - 0.5) * MACRO_TILES * 0.5);
+        const oy = Math.floor((rand(getWorldSeed(), mx * 11 + 3, my * 17 + 4) - 0.5) * MACRO_TILES * 0.5);
         return { x: cx + ox, y: cy + oy };
       }
     }
