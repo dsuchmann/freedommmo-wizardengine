@@ -790,9 +790,10 @@ export class GLCompositor {
     this.sUCam = gl.getUniformLocation(prog, 'uCam');
     this.sUAtlas = gl.getUniformLocation(prog, 'uAtlas');
 
-    // Runtime shelf-packed sprite atlas. F2 sprites are ~32px so a 4096²
-    // atlas holds ~15k of them — far more than ever loads at once.
-    this.atlasSize = Math.min(4096, gl.getParameter(gl.MAX_TEXTURE_SIZE));
+    // Runtime shelf-packed sprite atlas. With F2 (32px), F4 (64px), F5
+    // (96px), and F6 (192px) sprites sharing one atlas, 4096² overflows
+    // in dense forests. 8192² gives 4× headroom with negligible VRAM cost.
+    this.atlasSize = Math.min(8192, gl.getParameter(gl.MAX_TEXTURE_SIZE));
     this.atlasTex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, this.atlasTex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, this.atlasSize, this.atlasSize, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);

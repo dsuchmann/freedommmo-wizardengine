@@ -6,6 +6,7 @@
 import { layoutSettlement } from './layout.js';
 import { discoverSettlementsInMacroRange, suppressBySpacing, MACRO_TILES } from './settlement-discovery.js';
 import { classifyBiome } from '../../../src/world/biomes.js';
+import { classifyTerrainForm } from '../../../src/world/terrain-forms.js';
 
 const WATER = new Set(['ocean', 'deep_ocean', 'lake', 'river', 'shallow_water', 'stream']);
 
@@ -46,6 +47,35 @@ function buildingTouchesWater(b) {
   return pts.some(([px, py]) => WATER.has(classifyBiome(px, py).id));
 }
 
+function buildingSpansCliff(b) {
+  const bb = b.footprint.boundingBox;
+  // Sample perimeter + center — enough to catch any cliff that crosses the
+  // footprint, without sampling every interior tile (expensive). Includes the
+  // north-wall band since that is visually part of the building.
+  const y0 = b.y - NORTH_CLAIM;
+  const y1 = b.y + bb.h + CLAIM_MARGIN - 1;
+  const x0 = b.x - CLAIM_MARGIN;
+  const x1 = b.x + bb.w + CLAIM_MARGIN - 1;
+  const pts = [
+    // corners
+    [x0, y0], [x1, y0], [x0, y1], [x1, y1],
+    // edge midpoints
+    [Math.floor((x0 + x1) / 2), y0], [Math.floor((x0 + x1) / 2), y1],
+    [x0, Math.floor((y0 + y1) / 2)], [x1, Math.floor((y0 + y1) / 2)],
+    // center
+    [Math.floor((x0 + x1) / 2), Math.floor((y0 + y1) / 2)],
+    // origin
+    [b.x, b.y],
+  ];
+  const originLevel = classifyTerrainForm(b.x, b.y).plateauLevel;
+  for (const [px, py] of pts) {
+    const tf = classifyTerrainForm(px, py);
+    if (tf.form === 'cliff' || tf.form === 'step') return true;
+    if (tf.plateauLevel !== originLevel) return true;
+  }
+  return false;
+}
+
 /**
  * Resolve every building whose tiles intersect the requested macro range
  * [mx0..mx1]x[my0..my1]. De-overlap is computed over the range PADDED by the
@@ -71,6 +101,7 @@ export function resolveBuildingsInRange(seed, mx0, my0, mx1, my1) {
       const b = layout.buildings[bi];
       const bb = b.footprint.boundingBox;
       if (buildingTouchesWater(b)) continue;
+      if (buildingSpansCliff(b)) continue;
 
       let overlaps = false;
       for (let dy = 0; dy < bb.h && !overlaps; dy++)
