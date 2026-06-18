@@ -11,6 +11,7 @@ import { biomeVariantFrameId } from '../assets/variant-selector.js';
 import { drawElevationOverlay } from './elevation-overlay.js';
 import { drawSimDebugOverlay } from './sim-debug-overlay.js';
 import { updateBuildingClaims, drawBuildingFloors, drawBuildingWalls } from './building-renderer.js';
+import { updateFloorViewTransform, drawFloorView } from './floor-view.js';
 import { initWallTuner, drawWallTuner } from './wall-tuner.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations, buildWaveField } from './water-wave-overlay.js';
 import { drawLargeObjects, preloadLargeObjectSprites, setPlayerDrawFn } from './large-object-renderer.js';
@@ -322,6 +323,8 @@ export class CanvasRenderer {
 
     // Update building claims (suppresses F2+ at building positions).
     updateBuildingClaims(camX, camY, tilePx, w, h);
+    // Stash the world transform for the floor-view enter-click (screen → world tile).
+    updateFloorViewTransform(camX, camY, tilePx, w, h);
 
     // Building floor drawing disabled — the separate-pass approach causes z-order
     // (player under floor) and lighting (bright at night) issues. Floors need to be
@@ -440,6 +443,9 @@ export class CanvasRenderer {
     // Sim debug overlay draws LAST (on top of atmosphere/lighting)
     drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h);
     drawWallTuner(ctx, w, h);
+    // Interior floor-view overlay — drawn last so it sits above lighting/atmosphere
+    // (inactive = early return, draws nothing).
+    drawFloorView(ctx, w, h, performance.now());
 
     if (glScene) {
       // Stage 4: per-tile water wave field, soft-light blended in the present
