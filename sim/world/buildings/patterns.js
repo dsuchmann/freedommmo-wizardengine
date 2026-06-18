@@ -132,13 +132,18 @@ function patternCompound(w, h, seed) {
     // three buildings: left, right, bottom-center, connected by corridors
     const leftW = Math.max(2, cx);
     const rightW = Math.max(2, w - cx - bw);
+    const topCorrY = Math.floor(bh / 2);
     sections.push(
       { x0: 0, y0: 0, w: leftW, h: bh },                           // left
       { x0: cx + bw, y0: 0, w: rightW, h: bh },                    // right
       { x0: cx, y0: h - bh, w: bw, h: bh },                        // bottom
-      { x0: leftW, y0: Math.floor(bh / 2), w: cx - leftW + bw, h: 1 }, // top corridor
-      { x0: cx, y0: bh, w: 1, h: h - 2 * bh },                     // vertical corridor
+      { x0: leftW, y0: topCorrY, w: cx - leftW + bw, h: 1 },       // top corridor (links left+right)
     );
+    // Vertical corridor links the top corridor down to the bottom building. Start one
+    // row BELOW the junction so it doesn't double-cover the top corridor's tile;
+    // adjacency keeps the union connected (the old span left the bottom an island).
+    const vcTop = topCorrY + 1, vcBot = h - bh - 1;
+    if (vcBot >= vcTop) sections.push({ x0: cx, y0: vcTop, w: 1, h: vcBot - vcTop + 1 });
   }
   return { sections };
 }
