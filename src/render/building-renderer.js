@@ -26,7 +26,7 @@ const _floorImgs = {};  // material id -> HTMLImageElement
 const _wallImgs = {};
 let _floorReady = false;
 
-function ensureFloorImages() {
+export function ensureFloorImages() {
   if (_floorReady) return;
   _floorReady = true;
   // Wall tile sprites (all multiples of 32px)
@@ -68,6 +68,11 @@ function ensureFloorImages() {
     img.onload = () => { _floorImgs[mat] = img; for (const [a, m] of Object.entries(aliases)) if (m === mat) _floorImgs[a] = img; };
   }
 }
+
+// Sprite accessors so the in-world interior renderer reuses the SAME loaded
+// images (do NOT duplicate the loaders). Returns null until onload populates them.
+export function getFloorImg(mat) { return _floorImgs[mat] || _floorImgs.wood_plank || null; }
+export function getWallImg(name) { return _wallImgs[name] || null; }
 
 // ── Settlement/building cache ──────────────────────────────────────
 let _cache = { key: '', buildings: [] };
