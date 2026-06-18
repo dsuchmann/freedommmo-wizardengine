@@ -1,5 +1,6 @@
 import { f4Placements, f5Placements, f6Placements } from '../world/decoration-claims.js';
 import { volumeForPlacement } from '../world/traversal-templates.js';
+import { isInside, getActiveInterior, isWalkableLocal } from '../render/active-interior.js';
 
 const PLAYER_R = 0.30;       // player capsule radius (tiles)
 const SUPPORT_EPS = 0.05;    // landing tolerance onto a standable top
@@ -133,14 +134,24 @@ export function movementCost(tile) {
   return cost;
 }
 
+// Interior wall/void collision: when the player is INSIDE a building, a destination
+// tile whose footprint-LOCAL cell is not walkable (wall / off-floor void) is rejected
+// exactly like impassable terrain. When NOT inside this is a no-op, so open-world
+// movement is byte-identical. Gate == draw: same isWalkableLocal the renderer uses.
+function interiorBlocks(destX, destY) {
+  if (!isInside()) return false;
+  const ai = getActiveInterior();
+  return !isWalkableLocal(Math.floor(destX) - ai.bx, Math.floor(destY) - ai.by);
+}
+
 export function resolveMovement(player, chunkStore, dx, dy, volumeSource) {
   const z = player.z || 0;
   const vols = volumeSource ? volumeSource(chunkStore, player.x, player.y)
                             : decorationVolumes(chunkStore, player.x, player.y);
   const nextX = player.x + dx;
   const nextY = player.y + dy;
-  if (canOccupy(chunkStore, nextX, player.y) && !volumesBlock(vols, nextX, player.y, z)) player.x = nextX;
-  if (canOccupy(chunkStore, player.x, nextY) && !volumesBlock(vols, player.x, nextY, z)) player.y = nextY;
+  if (canOccupy(chunkStore, nextX, player.y) && !volumesBlock(vols, nextX, player.y, z) && !interiorBlocks(nextX, player.y)) player.x = nextX;
+  if (canOccupy(chunkStore, player.x, nextY) && !volumesBlock(vols, player.x, nextY, z) && !interiorBlocks(player.x, nextY)) player.y = nextY;
   let floor = 0, under = false;
   for (let i = 0; i < vols.length; i++) {
     const f = floorZOf(vols[i], player.x, player.y, z);

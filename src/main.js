@@ -24,51 +24,17 @@ import { resolveBuildingsInRange } from '../sim/world/buildings/resolved-buildin
 import { getWorldSeed } from './core/world-seed.js';
 import { MACRO } from '../sim/world/genesis.js';
 import { REGION } from '../sim/lod/aggregate.js';
-import { screenToWorldTile, pickInFloorView, toggleWallStyle } from './render/floor-view.js';
-import * as FV from './render/floor-view-state.js';
+import * as AI from './render/active-interior.js';
 
 const canvas = document.getElementById('game');
 const stats = document.getElementById('stats');
 const overmapCanvas = document.getElementById('overmap');
 const input = new InputState();
 
-// ── Interior floor-view: click a building to enter, route clicks/keys inside ──
+// ── Diegetic walk-in interior: the player walks through a door tile to enter a
+// building; stairs/lift change floor by movement; walking off the footprint exits.
+// (The old click→dollhouse overlay is retired — floor-view.js stays inert.)
 const MACRO_TILES = MACRO * REGION;
-canvas.addEventListener('pointerdown', (e) => {
-  if (FV.isFloorViewActive()) {
-    const hit = pickInFloorView(e.clientX, e.clientY, window.innerWidth, window.innerHeight);
-    if (hit.type === 'stair') FV.changeFloor(1) || FV.changeFloor(-1);     // up if possible, else down
-    else if (hit.type === 'lift') openLiftMenu();
-    else if (hit.type === 'unit') FV.enterUnit(hit.unitId);
-    return;
-  }
-  // not in floor view → did we click a building? resolve via the shared set
-  const { tileX, tileY } = screenToWorldTile(e.clientX, e.clientY);
-  const wx = Math.floor(tileX), wy = Math.floor(tileY);
-  const mx = Math.floor(wx / MACRO_TILES), my = Math.floor(wy / MACRO_TILES);
-  const { byTile } = resolveBuildingsInRange(getWorldSeed(), mx - 1, my - 1, mx + 1, my + 1);
-  const b = byTile.get(`${wx},${wy}`);
-  if (b && b.footprint && b.footprint.node) FV.enterBuilding(b.footprint.node, `${b.x},${b.y}`);
-});
-
-window.addEventListener('keydown', (e) => {
-  if (!FV.isFloorViewActive()) return;
-  if (e.key === 'Escape') { const fv = FV.getFloorView(); if (fv.enteredUnitId) FV.exitUnit(); else FV.exitFloorView(); }
-  else if (e.key === ',' || e.key === '[') FV.changeFloor(-1);
-  else if (e.key === '.' || e.key === ']') FV.changeFloor(1);
-  else if (e.key === 'f') toggleWallStyle();
-  else if (e.key === 'l') openLiftMenu();
-});
-
-// Minimal lift floor-picker: prompt-based for v1 (a styled menu can follow); honest + functional.
-function openLiftMenu() {
-  if (!FV.liftAvailable()) return;
-  const fv = FV.getFloorView();
-  const choice = window.prompt(`Lift — choose a floor (${fv.floorKeys[0]}…${fv.floorKeys[fv.floorKeys.length - 1]}):`, String(fv.floorIndex));
-  if (choice == null) return;
-  const target = parseInt(choice, 10);
-  if (!Number.isNaN(target)) FV.gotoFloor(target, 'lift');
-}
 
 initCommandChat(input);
 initArmorSwap((setId, setData) => {
@@ -222,6 +188,41 @@ function update(dt) {
   lighting.update(dt);
   weather.update(dt, chunks.tileAt(player.x, player.y));
   player.update(input, dt, chunks, { movementCost, resolveMovement });
+  // ── Diegetic interior: walk-in via door tile · stairs/lift change floor · exit on
+  // walking off the footprint. Runs AFTER player.update() so it sees the new position.
+  {
+    const ptx = Math.floor(player.x), pty = Math.floor(player.y);
+    if (!AI.isInside()) {
+      // entering: stand on a building door tile → walk in
+      const mx = Math.floor(ptx / MACRO_TILES), my = Math.floor(pty / MACRO_TILES);
+      const { byTile } = resolveBuildingsInRange(getWorldSeed(), mx, my, mx, my);
+      const b = byTile.get(ptx + ',' + pty);
+      if (b && b.footprint && b.footprint.node && (b.footprint.doors || []).some(d => b.x + d.x === ptx && b.y + d.y === pty)) {
+        AI.enterAt(b);
+      }
+    } else {
+      const ai = AI.getActiveInterior();
+      const lx = ptx - ai.bx, ly = pty - ai.by;
+      const onFootprint = ai.layout.walkable.has(lx + ',' + ly)
+        || ai.layout.units.some(u => u.tiles.some(t => t.x === lx && t.y === ly))
+        || (ai.layout.stairTile && ai.layout.stairTile.x === lx && ai.layout.stairTile.y === ly)
+        || (ai.layout.liftTile && ai.layout.liftTile.x === lx && ai.layout.liftTile.y === ly);
+      if (!onFootprint) { AI.exitInterior(); }
+      else {
+        const trig = lx + ',' + ly;
+        const onStair = ai.layout.stairTile && ai.layout.stairTile.x === lx && ai.layout.stairTile.y === ly;
+        const onLift = ai.layout.liftTile && ai.layout.liftTile.x === lx && ai.layout.liftTile.y === ly;
+        if ((onStair || onLift) && ai.lastTrigger !== trig) {
+          const ax = input.axis ? input.axis() : { x: 0, y: 0 };
+          const dir = ax.y < -0.2 ? 1 : ax.y > 0.2 ? -1 : 1; // push up/north = ascend, down = descend, default up
+          AI.changeFloor(dir);
+          ai.lastTrigger = trig;
+        } else if (!onStair && !onLift) {
+          ai.lastTrigger = null; // reset edge-trigger when off the stair/lift
+        }
+      }
+    }
+  }
   // Sim intent routing: runs AFTER player.update() so player.interactPressed is
   // the single authoritative source for the 'f' press (player.update() sets it
   // unconditionally from input.wasPressed, so reading input.wasPressed here a
