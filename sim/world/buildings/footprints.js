@@ -6,6 +6,7 @@ import { rand, mix } from '../../kernel/rng.js';
 import { typeById } from './taxonomy.js';
 import { generatePattern } from './patterns.js';
 import { generateInterior } from './interiors.js';
+import { buildingNode } from './blueprint-node.js';
 
 // ── tile math ─────────────────────────────────────────────────────────
 
@@ -236,7 +237,7 @@ export function generateFootprint(seed, typeId, race, tier) {
   // 9. Generate interior (I0-I6 fields)
   const interior = generateInterior(mix(seed, 0x5050), typeId, race, tier, { sections, walls, doors, floors });
 
-  return {
+  const result = {
     typeId,
     typeName: type.name,
     category: type.category,
@@ -251,4 +252,17 @@ export function generateFootprint(seed, typeId, race, tier) {
     interior,
     boundingBox: bbox,
   };
+
+  // S2.6: attach the lazy multi-floor BlueprintNode. NON-ENUMERABLE so every existing
+  // field/snapshot stays byte-identical and structured-clone/JSON skip it (the node
+  // carries functions). It hands the node the footprint we just built, so
+  // node.payload.sections === sections. floorRange/stairCores are lazy by-products.
+  Object.defineProperty(result, 'node', {
+    enumerable: false, writable: false, configurable: true,
+    value: buildingNode(seed, {
+      bx: 0, by: 0, typeId, category: type.category, tier: tier ?? type.tier,
+      centrality: 0.5, race: race ?? type.race ?? null, sections,
+    }),
+  });
+  return result;
 }
