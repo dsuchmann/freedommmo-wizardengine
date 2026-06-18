@@ -8,14 +8,10 @@ import { generateFootprint } from './footprints.js';
 import { specializeBuilding } from './specializations.js';
 
 // ── Canonical 12-tier names (shared constant) ───────────────────────
-
-export const TIER_NAMES = [
-  'homestead', 'hamlet', 'village', 'township', 'town', 'borough',
-  'city', 'great_city', 'capital', 'metropolis', 'megacity', 'world_capital',
-];
-
-/** Map tier name to 1-based tier number. */
-export const TIER_INDEX = Object.fromEntries(TIER_NAMES.map((n, i) => [n, i + 1]));
+// Defined in the leaf module ./tiers.js (so building-floors can read them without
+// importing layout.js, which would form an import cycle); re-exported here for the
+// many existing importers of `layout.js`'s TIER_NAMES/TIER_INDEX.
+export { TIER_NAMES, TIER_INDEX } from './tiers.js';
 
 // ── District configurations by tier ──────────────────────────────────
 

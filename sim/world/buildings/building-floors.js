@@ -4,7 +4,7 @@
 // a building's floors depend only on the world seed, its own position+type, and
 // coarser ancestor values (settlement tier, lot centrality).
 
-import { TIER_NAMES } from './layout.js';
+import { TIER_NAMES } from './tiers.js';
 import { rand } from '../../kernel/rng.js';
 
 const TIER_RANK = {};
