@@ -11,9 +11,11 @@ import { biomeVariantFrameId } from '../assets/variant-selector.js';
 import { drawElevationOverlay } from './elevation-overlay.js';
 import { drawSimDebugOverlay } from './sim-debug-overlay.js';
 import { updateBuildingClaims, drawBuildingFloors, drawBuildingWalls } from './building-renderer.js';
-import { updateFloorViewTransform, drawFloorView } from './floor-view.js';
+import { updateFloorViewTransform } from './floor-view.js';
+import { drawInteriorFloorWorld, drawInteriorWallsWorld } from './interior-renderer.js';
 import { initWallTuner, drawWallTuner } from './wall-tuner.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations, buildWaveField } from './water-wave-overlay.js';
+import { drawRoofs } from './roof-overlay.js';
 import { drawLargeObjects, preloadLargeObjectSprites, setPlayerDrawFn } from './large-object-renderer.js';
 import { drawField2Animations, preloadField2Animations, drawWindWispOverlay, setField2PlayerDraw, setField2PlayerGL } from './field2-animator.js';
 import { findNearbyInteraction, objectReaction, performInteraction } from '../world/interactions.js';
@@ -332,6 +334,17 @@ export class CanvasRenderer {
     // share the same lighting, z-order, and pixel grid as terrain. TODO: chunk integration.
     // drawBuildingFloors(ctx, camX, camY, tilePx, w, h);
 
+    // Diegetic walk-in interior: when the player is INSIDE a building, dim the outer
+    // world and draw the active floor's tiles in-world HERE — after terrain/water,
+    // BEFORE the player/F2 sprites — so the player lands on top of the floor.
+    drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h);
+
+    // Procedural roof overlay — drawn HERE with the building layer (before F2 sprites,
+    // weather, lighting & atmosphere) so it receives day-night tint + fog + CRT and the
+    // player/F2 sprites draw ON TOP (correct z-order). Toggle 'k'. Guarded — can never
+    // break the frame. Full lighting/shadow parity needs chunk-bake (TODO above).
+    try { drawRoofs(ctx, camX, camY, tilePx, w, h); } catch (e) { /* roofs best-effort */ }
+
     // Wang debug overlay (toggle with D key)
     if (this.debugWang) {
       ctx.save();
@@ -418,6 +431,11 @@ export class CanvasRenderer {
       drawBuildingWalls(ctx, camX, camY, tilePx, w, h);
     }
 
+    // Diegetic walk-in interior walls — drawn AFTER the player/F2 sprites so walls
+    // occlude the player, EXCEPT the south wall near the player (see-through). Pass
+    // the player tile so the wall opens up around them.
+    drawInteriorWallsWorld(ctx, camX, camY, tilePx, w, h, { x: Math.floor(player.x), y: Math.floor(player.y) });
+
     // Weather AFTER all sprites — in GL mode most F2 sprites live on the GL
     // canvas (below this one), so fog/precip drawn earlier would cover them
     // but not the near-player 2D sprites, leaving a clear "spotlight" box
@@ -443,9 +461,8 @@ export class CanvasRenderer {
     // Sim debug overlay draws LAST (on top of atmosphere/lighting)
     drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h);
     drawWallTuner(ctx, w, h);
-    // Interior floor-view overlay — drawn last so it sits above lighting/atmosphere
-    // (inactive = early return, draws nothing).
-    drawFloorView(ctx, w, h, performance.now());
+    // (The click→dollhouse floor-view overlay is retired from gameplay — the
+    // diegetic walk-in interior above replaces it. floor-view.js stays inert.)
 
     if (glScene) {
       // Stage 4: per-tile water wave field, soft-light blended in the present
