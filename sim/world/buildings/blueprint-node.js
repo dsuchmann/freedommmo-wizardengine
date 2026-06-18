@@ -112,7 +112,7 @@ registerKind('building', {
       floorCount(node.worldSeed, ctx.bx | 0, ctx.by | 0, ctx.category, ctx.tier, ctx.centrality);
     const stackPlan = floorStackPlan(node.seed, floorRange, ctx.category);
     const stairCores = selectStairCores(sections);
-    const lift = reserveLift(aboveGroundFloors, stairCores[0] || null);
+    const lift = reserveLift(aboveGroundFloors, stairCores[0] || null, sections);
     return { sections, floorRange, aboveGroundFloors, stackPlan, stairCores, lift };
   },
   childKeys(node) {
@@ -139,7 +139,7 @@ registerKind('building', {
 registerKind('floor', {
   generatePayload(node) {
     const ctx = node.ancestorContext;
-    const { circulation, units } = partitionFloor(node.seed, ctx.sections, ctx.stairCore, ctx.floorUse);
+    const { circulation, units } = partitionFloor(node.seed, ctx.sections, ctx.stairCore, ctx.floorUse, ctx.lift ? ctx.lift.shaft : null);
     return {
       floorIndex: ctx.floorIndex, use: ctx.floorUse, stairCore: ctx.stairCore,
       lift: ctx.lift, circulation: [...circulation], units,

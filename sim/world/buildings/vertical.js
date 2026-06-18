@@ -80,9 +80,20 @@ export function selectStairCores(sections) {
  * this model only reserves the shaft + a destination interface. Returns null or
  * { shaft:{x,y}, mechanismId }.
  */
-export function reserveLift(aboveGroundFloors, stairCore) {
+export function reserveLift(aboveGroundFloors, stairCore, sections) {
   if (aboveGroundFloors <= LIFT_THRESHOLD || !stairCore) return null;
-  return { shaft: { x: stairCore.x + 1, y: stairCore.y }, mechanismId: 'generic-lift' };
+  return { shaft: liftShaftCell(stairCore, sections), mechanismId: 'generic-lift' };
+}
+
+/** Pick an interior floor cell adjacent to the stair core for the lift shaft (E,S,W,N
+ *  order). Falls back to core.x+1 when sections are unavailable. */
+function liftShaftCell(core, sections) {
+  if (!sections) return { x: core.x + 1, y: core.y };
+  const { interior } = interiorCells(sections);
+  const iset = new Set(interior.map(c => `${c.x},${c.y}`));
+  for (const [x, y] of [[core.x + 1, core.y], [core.x, core.y + 1], [core.x - 1, core.y], [core.x, core.y - 1]])
+    if (iset.has(`${x},${y}`) && !(x === core.x && y === core.y)) return { x, y };
+  return { x: core.x + 1, y: core.y };
 }
 
 export { LIFT_THRESHOLD };
