@@ -11,13 +11,15 @@ import { macroCellPeoples } from '../../sim/chronicle/races.js';
 import { regionChronicle, settlementState, chronicleTier } from '../../sim/chronicle/chronicle.js';
 import { classifyBiome } from '../world/biomes.js';
 import { rand } from '../../sim/kernel/rng.js';
-import { buildingClaimTiles } from '../world/decoration-claims.js';
+import { setArchitectureClaim } from '../world/decoration-claims.js';
+import { resolveBuildingsInRange } from '../../sim/world/buildings/resolved-buildings.js';
+import { getWorldSeed } from '../core/world-seed.js';
+import { WALL_CONFIG } from './wall-config.js';
 
 const MACRO_TILES = MACRO * REGION;
-const WORLD_SEED = 42;
-const WATER = new Set(['ocean', 'deep_ocean', 'lake', 'river', 'shallow_water', 'stream']);
-const MAX_BUILDINGS = 80;
-const CLAIM_MARGIN = 2;
+// Building discovery + flora-claim now come from the shared resolved-building set
+// (resolved-buildings.js), which de-overlaps across settlements and includes the
+// north-wall claim band. Seed comes from getWorldSeed() — no hardcoded 42.
 
 // ── Floor + wall tile images ────────────────────────────────────────
 const _floorImgs = {};  // material id -> HTMLImageElement
@@ -79,52 +81,11 @@ function discoverBuildings(camX, camY, w, h, tilePx) {
   const mx0 = Math.floor(tileX0 / MACRO_TILES), mx1 = Math.ceil(tileX1 / MACRO_TILES);
   const my0 = Math.floor(tileY0 / MACRO_TILES), my1 = Math.ceil(tileY1 / MACRO_TILES);
 
-  const epochs = worldEpochs(WORLD_SEED);
-  const buildings = [];
-  buildingClaimTiles.clear();
-
-  for (let my = my0; my <= my1; my++) {
-    for (let mx = mx0; mx <= mx1; mx++) {
-      const mk = `${mx},${my}`;
-      const cx = mx * MACRO_TILES + Math.floor(MACRO_TILES / 2);
-      const cy = my * MACRO_TILES + Math.floor(MACRO_TILES / 2);
-      const biome = classifyBiome(cx, cy);
-      const peoples = macroCellPeoples(WORLD_SEED, mk, epochs, biome);
-      const chronicle = regionChronicle(WORLD_SEED, mk, peoples, biome.climate);
-      const state = settlementState(chronicle);
-      if (state === 'wilderness' || state === 'ruined') continue;
-
-      const ox = Math.floor((rand(WORLD_SEED, mx * 7 + 1, my * 13 + 2) - 0.5) * MACRO_TILES * 0.5);
-      const oy = Math.floor((rand(WORLD_SEED, mx * 11 + 3, my * 17 + 4) - 0.5) * MACRO_TILES * 0.5);
-      const x = cx + ox, y = cy + oy;
-
-      const siteBiome = classifyBiome(x, y);
-      if (WATER.has(siteBiome.id)) continue;
-
-      const tier = chronicleTier(chronicle, WORLD_SEED, mk);
-      const race = (chronicle.find(e => e.type === 'ancient_founding' || e.type === 'founding'))?.raceId ?? peoples[0]?.raceId ?? 'human';
-
-      let layout;
-      try { layout = layoutSettlement(WORLD_SEED, { x, y }, tier, race, siteBiome.id); }
-      catch { continue; }
-
-      for (const b of layout.buildings.slice(0, MAX_BUILDINGS)) {
-        const bb = b.footprint.boundingBox;
-        if (WATER.has(classifyBiome(b.x, b.y).id)) continue;
-        if (WATER.has(classifyBiome(b.x + bb.w - 1, b.y + bb.h - 1).id)) continue;
-
-        buildings.push(b);
-        // Claim per section with margin
-        for (const sec of b.footprint.sections) {
-          for (let dy = -CLAIM_MARGIN; dy < sec.h + CLAIM_MARGIN; dy++) {
-            for (let dx = -CLAIM_MARGIN; dx < sec.w + CLAIM_MARGIN; dx++) {
-              buildingClaimTiles.add(`${b.x + sec.x0 + dx},${b.y + sec.y0 + dy}`);
-            }
-          }
-        }
-      }
-    }
-  }
+  // ONE resolved set (seed-respecting, capped, cross-settlement de-overlapped).
+  const { buildings, claimTiles } = resolveBuildingsInRange(getWorldSeed(), mx0, my0, mx1, my1);
+  // Architecture claim: suppress F2+ flora on building tiles (incl. the north-wall
+  // band, already in claimTiles) via a PURE predicate — no renderer-mutated Set.
+  setArchitectureClaim((wx, wy) => claimTiles.has(`${wx},${wy}`));
   return buildings;
 }
 

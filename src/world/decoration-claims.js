@@ -548,14 +548,22 @@ export function getClaimMask(wx, wy, tileInfo) {
 }
 
 // Point test in world art px — used by F2 to cull blades.
-/** Set of "wx,wy" world-tile keys occupied by buildings.
- *  Populated by the building renderer; checked here to suppress F2+ sprites. */
-export const buildingClaimTiles = new Set();
+// Architecture claim — the highest-priority claimant (buildings/roads), above F6.
+// A PURE predicate set by the resolved-building producer (renderer on the main
+// thread, building-tile-query in the worker). Replaces the old renderer-mutated
+// `buildingClaimTiles` Set so flora suppression is deterministic, not visit-order
+// dependent. Any tile the predicate claims fully suppresses F2+ flora.
+var _archClaim = function () { return false; };
+function architectureClaimAt(wx, wy) { return _archClaim(wx, wy); }
+export function setArchitectureClaim(predicate) {
+  var next = (typeof predicate === 'function') ? predicate : function () { return false; };
+  if (next !== _archClaim) { _archClaim = next; clearClaimCaches(); } // f4/f5/f6 caches don't key on arch state
+}
 
 export function isClaimedAt(px, py, tileInfo) {
   var wx = Math.floor(px / TILE_ART_PX), wy = Math.floor(py / TILE_ART_PX);
-  // Building claim: entire tile suppressed (plus 1-tile margin for clean edges)
-  if (buildingClaimTiles.has(wx + ',' + wy)) return true;
+  // Architecture (building) claim: entire tile suppressed.
+  if (architectureClaimAt(wx, wy)) return true;
   var mask = getClaimMask(wx, wy, tileInfo);
   var c = Math.floor((px - wx * TILE_ART_PX) / CELL_PX);
   var r = Math.floor((py - wy * TILE_ART_PX) / CELL_PX);
@@ -598,7 +606,7 @@ function trimFoot(cx, cy, size, drawPx, trim, wFrac, hFrac, legacyW, legacyH) {
 //              hasAnim, bx, by, fw, fh } — bx/by/fw/fh = base footprint
 // ellipse in world art px, same contract as f3 placements.
 export function f4Placements(wx, wy, tileInfo) {
-  if (buildingClaimTiles.has(wx + ',' + wy)) return EMPTY;
+  if (architectureClaimAt(wx, wy)) return EMPTY;
   var t = tileInfo(wx, wy);
   if (!t || t.transition) return EMPTY;
   var key = wx + ',' + wy + ',' + t.biome;
@@ -752,7 +760,7 @@ function f5Candidate(wx, wy, tileInfo) {
 // never both survive. Candidates are pure per-tile rolls, so this terminates
 // (no recursion through neighbors).
 export function f5Placements(wx, wy, tileInfo) {
-  if (buildingClaimTiles.has(wx + ',' + wy)) return EMPTY;
+  if (architectureClaimAt(wx, wy)) return EMPTY;
   var cand = f5Candidate(wx, wy, tileInfo);
   if (!cand.length) return cand;
   var key = wx + ',' + wy + ',res';
@@ -802,7 +810,7 @@ export function f5AnimUrlBase(p) {
 // future traversal system (Plan B). Claim = trunk base, not canopy: F2/F4
 // may grow under the canopy, just not through the trunk.
 export function f6Placements(wx, wy, tileInfo) {
-  if (buildingClaimTiles.has(wx + ',' + wy)) return EMPTY;
+  if (architectureClaimAt(wx, wy)) return EMPTY;
   var t = tileInfo(wx, wy);
   if (!t || t.transition) return EMPTY;
   var key = wx + ',' + wy + ',' + t.biome;
