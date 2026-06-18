@@ -62,8 +62,9 @@ function patternT(w, h, seed) {
 }
 
 function patternCourtyard(w, h, seed) {
-  // Four walls of a hollow rectangle.  Thickness is seeded.
-  const thick = Math.max(1, Math.floor(Math.min(w, h) * (0.2 + rand(seed, 0xCC01) * 0.15)));
+  // Four walls of a hollow rectangle.  Thickness is seeded, but >= 3 so the
+  // encircling band is a believable hallway (>= 1 interior tile, not a 1-tile sliver).
+  const thick = Math.max(3, Math.floor(Math.min(w, h) * (0.2 + rand(seed, 0xCC01) * 0.15)));
   const innerW = w - 2 * thick;
   const innerH = h - 2 * thick;
   if (innerW < 1 || innerH < 1) {

@@ -72,28 +72,68 @@ function boundingBox(sections) {
 
 // ── door placement ────────────────────────────────────────────────────
 
-/**
- * Pick door locations from wall tiles.  Prefer south-facing walls
- * (tiles whose southern neighbour is outside the footprint).
- * Returns array of { x, y } positions.
- */
-function placeDoors(walls, wallSet, tileSet, seed, numDoors) {
-  // south-facing: wall tile where (x, y+1) is outside
-  const southFacing = walls.filter(w => !tileSet.has(`${w.x},${w.y + 1}`));
-  // fallback: any wall tile on the edge
-  const candidates = southFacing.length >= numDoors ? southFacing : walls;
-  const doors = [];
-  const used = new Set();
-  for (let i = 0; i < numDoors && i < candidates.length; i++) {
-    const idx = Math.floor(rand(seed, 0xD001, i) * candidates.length);
-    let picked = candidates[idx];
-    // avoid duplicates
-    if (used.has(`${picked.x},${picked.y}`)) {
-      picked = candidates[(idx + 1) % candidates.length];
+const MIN_DOOR_SPACING = 5;   // min tile distance between two doors (no clustering)
+const DOOR_PER_TILES = 22;    // ~1 door per this many outer-perimeter tiles
+const MAX_DOORS = 4;
+// Minimum building dimension so even small buildings have a believable interior
+// (5 => at least a 3x3 interior after the 1-tile wall ring).
+const MIN_DIM = 5;
+
+/** Tiles OUTSIDE the footprint, reachable from the bounding-box border by 4-way
+ *  flood-fill over empty space. Enclosed courtyard holes are NOT reached, so this
+ *  distinguishes the true outer edge from inner courtyard edges. */
+function computeOutside(tileSet, bbox) {
+  const minX = bbox.x0 - 1, minY = bbox.y0 - 1;
+  const maxX = bbox.x0 + bbox.w, maxY = bbox.y0 + bbox.h; // inclusive ring
+  const outside = new Set();
+  const stack = [[minX, minY]];
+  outside.add(`${minX},${minY}`);
+  while (stack.length) {
+    const [x, y] = stack.pop();
+    const nbrs = [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]];
+    for (const [nx, ny] of nbrs) {
+      if (nx < minX || ny < minY || nx > maxX || ny > maxY) continue;
+      const key = `${nx},${ny}`;
+      if (outside.has(key) || tileSet.has(key)) continue;
+      outside.add(key);
+      stack.push([nx, ny]);
     }
-    doors.push({ x: picked.x, y: picked.y });
-    used.add(`${picked.x},${picked.y}`);
   }
+  return outside;
+}
+
+/**
+ * Place doors on the building's TRUE OUTER perimeter (never an inner courtyard
+ * edge), preferring south-facing tiles, spaced at least MIN_DOOR_SPACING apart,
+ * and capped by perimeter length — so no clusters of adjacent doors all opening
+ * onto the same outdoor space. Returns array of { x, y }.
+ */
+function placeDoors(walls, wallSet, tileSet, seed, bbox) {
+  const outside = computeOutside(tileSet, bbox);
+  const isOuter = (w) =>
+    outside.has(`${w.x},${w.y + 1}`) || outside.has(`${w.x},${w.y - 1}`) ||
+    outside.has(`${w.x - 1},${w.y}`) || outside.has(`${w.x + 1},${w.y}`);
+  const outerWalls = walls.filter(isOuter);
+  if (outerWalls.length === 0) return [];
+
+  const south = outerWalls.filter(w => outside.has(`${w.x},${w.y + 1}`));
+  const pref = south.length ? south : outerWalls;
+
+  // Deterministic order (seeded), then greedily place keeping spacing.
+  const ordered = pref
+    .map((w, i) => ({ w, k: rand(seed, 0xD001, w.x * 131 + w.y * 17 + i) }))
+    .sort((a, b) => a.k - b.k)
+    .map(o => o.w);
+
+  const maxDoors = Math.max(1, Math.min(MAX_DOORS, Math.round(outerWalls.length / DOOR_PER_TILES)));
+  const doors = [];
+  for (const w of ordered) {
+    if (doors.length >= maxDoors) break;
+    if (doors.every(d => Math.abs(d.x - w.x) + Math.abs(d.y - w.y) >= MIN_DOOR_SPACING)) {
+      doors.push({ x: w.x, y: w.y });
+    }
+  }
+  if (doors.length === 0) doors.push({ x: ordered[0].x, y: ordered[0].y }); // always at least one
   return doors;
 }
 
@@ -141,8 +181,8 @@ export function generateFootprint(seed, typeId, race, tier) {
 
   // 1. Determine size within type's range (scaled up 1.5× for visual presence on terrain)
   const SCALE = 1.5;
-  const w = Math.round((type.minW + Math.floor(rand(seed, 0x5001) * (type.maxW - type.minW + 1))) * SCALE);
-  const h = Math.round((type.minH + Math.floor(rand(seed, 0x5002) * (type.maxH - type.minH + 1))) * SCALE);
+  const w = Math.max(MIN_DIM, Math.round((type.minW + Math.floor(rand(seed, 0x5001) * (type.maxW - type.minW + 1))) * SCALE));
+  const h = Math.max(MIN_DIM, Math.round((type.minH + Math.floor(rand(seed, 0x5002) * (type.maxH - type.minH + 1))) * SCALE));
 
   // 2. Pick pattern from type's allowed patterns
   const patIdx = Math.floor(rand(seed, 0x5003) * type.patterns.length);
@@ -177,10 +217,9 @@ export function generateFootprint(seed, typeId, race, tier) {
     wallKeySet = new Set(walls.map(w => `${w.x},${w.y}`));
     floors = interiorTiles(tileSet, wallKeySet);
 
-    // 6. Doors — at least 1; larger buildings (area >= 40) get 2
-    const area = tileSet.size;
-    const numDoors = area >= 40 ? 2 : 1;
-    doors = placeDoors(walls, wallKeySet, tileSet, seed, numDoors);
+    // 6. Doors — on the true outer perimeter (not courtyard edges), spaced apart,
+    //    count capped by perimeter length so they never cluster.
+    doors = placeDoors(walls, wallKeySet, tileSet, seed, boundingBox(sections));
 
     // Remove door tiles from walls, add to floors
     const doorSet = new Set(doors.map(d => `${d.x},${d.y}`));

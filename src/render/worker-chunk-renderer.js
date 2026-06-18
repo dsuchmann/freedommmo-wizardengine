@@ -1320,6 +1320,13 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
     var cX0 = chunk.cx * chunkSize;
     var cY0 = chunk.cy * chunkSize;
     var cBuildings = getBuildingsNearChunk(chunk.cx, chunk.cy, chunkSize);
+    // Depth-sort: draw farther buildings (smaller south/front edge) first so a
+    // CLOSER building's walls occlude a farther building's. South edge = b.y + bb.h.
+    // (Orders buildings within this chunk's post-pass; walls that span across chunk
+    //  bitmaps still need the global Y-sorted wall pass — separate rendering spec.)
+    cBuildings.sort(function (a, b) {
+      return (a.y + a.footprint.boundingBox.h) - (b.y + b.footprint.boundingBox.h);
+    });
     var wImgs = {
       south_base: imageCache.get(wallTileUrl('south_base')),
       south_window: imageCache.get(wallTileUrl('south_window')),
