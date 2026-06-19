@@ -7,7 +7,7 @@ import { rand2, pickIndex } from '../core/random.js';
 import { SF_BIOME_OBJECTS_LIST, SF_BASE_PATH, SF_VARIANT_COUNT, SF_EXTRA_OBJECTS, sfVariantsFor, sfAnimVariantsFor } from './wang-image-list.js';
 import { clearBorderLines } from './sprite-denoise.js';
 import { floorDiv } from '../world/chunk.js';
-import { SPRITE_FLOATS } from './gl-compositor.js';
+import { SPRITE_FLOATS, ANIM_SPRITE_FLOATS } from './gl-compositor.js';
 import { getAtmosphere } from '../world/biome-atmosphere.js';
 import { isClaimedAt, f4Placements, f4SpriteUrl, f4AnimUrlBase, f5Placements, f5SpriteUrl, f5AnimUrlBase, f6Placements, f6SpriteUrl, f6AnimUrlBase } from '../world/decoration-claims.js';
 import { tuneSize, tuneBiomeDensity, tuneObjDensity, tuneAnimEnabled, tuneStateWeights, rollWeighted,
@@ -981,6 +981,47 @@ export function clearF2Pool() {
   _pool.centerX = 1e9; _pool.centerY = 1e9; _pool.readyCount = -1;
 }
 
+// === GPU-driven flora (Phase 2): static-instance buffer build ===
+// When on, the rebuild packs each sprite's animation frames as an atlas STRIP and
+// writes a static 20-float instance; the GPU shader animates it from uTime. Toggled
+// live via window._gpuFlora so it can be A/B'd against the CPU path.
+function gpuFloraOn() { return (typeof window !== 'undefined' && window._gpuFlora) === true; }
+
+// Resolve a sprite's frame strip (cached per url-set + size). Returns
+// {u0,v0,frameStride,du,dv,n} or null if any frame isn't loaded/packable yet.
+var _stripCache = new Map();
+function clearStripCache() { _stripCache.clear(); }
+function _resolveStrip(bl, simState, drawSizePx, glc) {
+  if (!bl) return null;
+  var urls = null;
+  if (simState && simState !== 'REMOVED') {
+    var su = f4SpriteUrl({ name: bl._f4Name, biome: bl._f4Biome, variant: bl._f4Variant, state: simState });
+    if (su) urls = [su]; else if (bl.stateUrl) urls = [bl.stateUrl];
+  }
+  if (!urls && bl.animUrlBase) {
+    var fc = bl.frameCount || FRAME_COUNT;
+    urls = [];
+    for (var f = 0; f < fc; f++) urls.push(bl.animUrlBase + 'frame_' + String(f).padStart(3, '0') + '.png');
+  }
+  if (!urls && bl.stateUrl) urls = [bl.stateUrl];
+  if (!urls && bl.staticUrl) urls = [bl.staticUrl];
+  if (!urls) return null;
+  var key = urls[0] + '#' + urls.length + '@' + Math.round(drawSizePx);
+  var cached = _stripCache.get(key);
+  if (cached !== undefined) return cached;
+  var imgs = [];
+  for (var k = 0; k < urls.length; k++) {
+    var img = loadFrame(urls[k], urls.length > 1 ? urls.length : null);
+    if (!img) return null;                 // a frame still loading — retry next rebuild
+    img = scaledFrame(img, drawSizePx);    // no throttle: a strip needs ALL frames together
+    if (!img) return null;
+    imgs.push(img);
+  }
+  var strip = glc.atlasStrip(imgs);
+  if (strip) _stripCache.set(key, strip);  // cache success; leave misses uncached to retry
+  return strip || null;
+}
+
 function _poolWriteStatic(idx, m, worldX, worldPivotY, sizeTiles, rot, alpha, rect) {
   var o = idx * SPRITE_FLOATS;
   m[o] = worldX;
@@ -1080,6 +1121,14 @@ function _poolRebuild(chunkStore, player, glc, radiusX, radiusY) {
     _pool.lastU0 = new Float32Array(cap);
     _pool.lastV0 = new Float32Array(cap);
   }
+  var gpuFlora = gpuFloraOn();
+  if (gpuFlora) {
+    if (!_pool.animMirror || _pool.animMirror.length < (n + 1) * ANIM_SPRITE_FLOATS)
+      _pool.animMirror = new Float32Array(Math.max(4096, (n + 1) * ANIM_SPRITE_FLOATS * 2));
+    if (!_pool.animShadowMirror || _pool.animShadowMirror.length < (n + 1) * ANIM_SPRITE_FLOATS)
+      _pool.animShadowMirror = new Float32Array(Math.max(4096, (n + 1) * ANIM_SPRITE_FLOATS * 2));
+    _pool.animPending = [];
+  }
   _pool.meta.length = 0;
   _pool.tiles = [];
   _pool.active.clear();
@@ -1161,6 +1210,29 @@ function _poolRebuild(chunkStore, player, glc, radiusX, radiusY) {
     }
     _pool.shadowOf[i] = sIdx;
 
+    // GPU-flora: write the STATIC instance for this sprite (the shader animates it).
+    if (gpuFlora) {
+      var gStrip = _resolveStrip(bl, null, drawSizePx, glc);
+      var ao = i * ANIM_SPRITE_FLOATS, am = _pool.animMirror;
+      if (gStrip) {
+        var sn = gStrip.n;
+        var tierA = (drawSizePx - WORLD.tileSize * minShadowTiles) / (WORLD.tileSize * 1.2);
+        tierA = tierA < 0 ? 0 : tierA > 1 ? 1 : tierA;
+        am[ao] = e.worldX; am[ao + 1] = e.worldPivotY; am[ao + 2] = e.sizeTiles; am[ao + 3] = baseAngle;
+        am[ao + 4] = gStrip.u0; am[ao + 5] = gStrip.v0; am[ao + 6] = gStrip.frameStride; am[ao + 7] = gStrip.du;
+        am[ao + 8] = sn; am[ao + 9] = restFrame % sn; am[ao + 10] = (bl && bl.loopCount) ? bl.loopCount : 1; am[ao + 11] = -99999;
+        am[ao + 12] = -1; am[ao + 13] = (bl && bl.lifeSway) ? bl.lifeSway : 0; am[ao + 14] = 0; am[ao + 15] = e.edgeFade;
+        am[ao + 16] = gStrip.dv; am[ao + 17] = e.biomeShadowK; am[ao + 18] = 1 - tierA; am[ao + 19] = (bl && bl.isRigid) ? 1 : 0;
+      } else {
+        for (var az = 0; az < ANIM_SPRITE_FLOATS; az++) am[ao + az] = 0; // invisible until strip ready
+        _pool.animPending.push(i);
+      }
+      if (sIdx >= 0) {
+        var aso = sIdx * ANIM_SPRITE_FLOATS, asm = _pool.animShadowMirror;
+        for (var sz = 0; sz < ANIM_SPRITE_FLOATS; sz++) asm[aso + sz] = am[ao + sz];
+      }
+    }
+
     _pool.meta.push({
       bl: e.bl, wx: e.wx, wy: e.wy, edgeFade: e.edgeFade,
       biomeShadowK: e.biomeShadowK, sizeTiles: e.sizeTiles,
@@ -1181,6 +1253,15 @@ function _poolRebuild(chunkStore, player, glc, radiusX, radiusY) {
     _pool.uploaded = true;
   } else {
     _pool.uploaded = false;
+  }
+  if (gpuFlora && glc.animOk &&
+      glc.ensureAnimCapacity('sprite', n + 1) && glc.ensureAnimCapacity('shadow', shCount + 1)) {
+    glc.uploadAnimRange('sprite', _pool.animMirror, 0, n, true);
+    glc.uploadAnimRange('shadow', _pool.animShadowMirror, 0, shCount, true);
+    _pool.animUploaded = true;
+    _pool.animN = n; _pool.animShadowN = shCount;
+  } else {
+    _pool.animUploaded = false;
   }
   _f2Stats.rebuilds++;
   _f2Stats.lastRebuildMs = performance.now() - t0;
@@ -1303,6 +1384,40 @@ function _poolTick(timeMs, timeSec, glc, tilePxSnapped) {
   }
 }
 
+// GPU-flora draw: shadows + sprites from the static buffer, with the same player
+// depth-split as the CPU path (flora behind player, player, flora in front). The
+// player stays a per-frame CPU sprite (slot _pool.n of the legacy buffer).
+function _drawGpuFlora(player, w, h, chunkGrid, timeMs, sun, glc, tilePxSnapped) {
+  var cam = {
+    x: chunkGrid.baseSX - chunkGrid.minCX * chunkGrid.chunkPx,
+    y: chunkGrid.baseSY - chunkGrid.minCY * chunkGrid.chunkPx,
+    scale: tilePxSnapped,
+  };
+  var n = _pool.animN || 0;
+  var sunH = sun ? sun.sunHeight : 1;
+  var sunUp = sunH < 0.08 ? (sunH / 0.08) * (sunH / 0.08) * (3 - 2 * (sunH / 0.08)) : 1;
+  if (sun && sunH > 0.001 && (_pool.animShadowN || 0) > 0) {
+    var shVec = { x: sun.shadowX * sun.shadowLength * 0.9, y: sun.shadowLength * 0.35 };
+    var shStrength = 0.50 * (0.62 + (1 - sunH) * 0.38) * sunUp;
+    glc.drawAnimShadows(0, _pool.animShadowN, w, h, cam, shVec, shStrength, timeMs);
+  }
+  var pRect = _playerGL ? glc.uploadPlayerSprite(_playerGL.canvas) : null;
+  var split = n;
+  if (pRect && _playerGL) {
+    split = lowerBound(_pool.sortY, player.y + 0.4, n);
+    var m = _pool.mirror, to = _pool.n * SPRITE_FLOATS;
+    m[to] = (_playerGL.pivotX - cam.x) / cam.scale;
+    m[to + 1] = (_playerGL.pivotY - cam.y) / cam.scale;
+    m[to + 2] = _playerGL.size / cam.scale;
+    m[to + 3] = 0; m[to + 4] = 1;
+    m[to + 5] = pRect.u0; m[to + 6] = pRect.v0; m[to + 7] = pRect.du; m[to + 8] = pRect.dv;
+    glc.uploadPoolRange('sprite', m, _pool.n, 1);
+  }
+  glc.drawAnimSprites(0, split, w, h, cam, timeMs);
+  if (pRect && _playerGL) glc.drawPoolSprites(_pool.n, 1, w, h, cam);
+  if (split < n) glc.drawAnimSprites(split, n - split, w, h, cam, timeMs);
+}
+
 function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, weather, sun, glc) {
   var tilePxSnapped = chunkGrid.chunkPx / WORLD.chunkSize;
   var visibleTilesX = Math.ceil(w / tilePxSnapped / 2) + 2;
@@ -1344,6 +1459,14 @@ function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, we
   if (timeMs - _pool.lastTickMs >= 100) {
     _pool.lastTickMs = timeMs;
     _poolTick(timeMs, timeSec, glc, tilePxSnapped);
+  }
+
+  // GPU-FLORA fast path: the static instance buffer + a uTime uniform drive frame
+  // selection, sway and fade entirely in the shader — so the ~85ms/frame per-sprite
+  // CPU resolve loop below is skipped entirely.
+  if (gpuFloraOn() && _pool.animUploaded && glc.animOk) {
+    _drawGpuFlora(player, w, h, chunkGrid, timeMs, sun, glc, tilePxSnapped);
+    return true;
   }
 
   // Per-frame: animate only the active list.
