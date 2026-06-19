@@ -11,15 +11,26 @@ import { ensureFloorImages, getFloorImg, getWallImg } from './building-renderer.
 const SHOW_TILES = true;    // floor on
 const SHOW_WALLS = false;   // walls off (separately broken)
 
+// Animated outer-world dim — eases on enter + floor change so climbing visibly recedes the
+// ground world (see drawInteriorFloorWorld).
+let _dimKey = null, _dimStart = 0, _dimFrom = 0, _dimCur = 0;
+
 /** Call AFTER terrain/water, BEFORE the player sprite draws (so the player lands on top). */
 export function drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h) {
-  if (!isInside()) return;
+  if (!isInside()) { _dimKey = null; _dimCur = 0; return; }
   ensureFloorImages();
   const ai = getActiveInterior(), L = ai.layout, t = Math.ceil(tilePx), pad = 1;
   ctx.save();
-  // Dim the outer world. Basement = black (underground); ground dims; each floor up recedes.
-  const dim = SHOW_TILES ? dimAlphaForFloor(ai.floorIndex) : 0.40; // triage: light dim so the player stays visible
-  ctx.fillStyle = `rgba(8,10,18,${dim.toFixed(3)})`;
+  // Dim the outer world — animated so changing floor visibly RECEDES the ground world (eases
+  // deeper going up, black underground), a sense of rising away from it.
+  const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : 0;
+  const targetDim = SHOW_TILES ? dimAlphaForFloor(ai.floorIndex) : 0.40;
+  const dimKey = ai.bx + ',' + ai.by + ',' + ai.floorIndex;
+  if (dimKey !== _dimKey) { _dimFrom = _dimCur; _dimStart = now; _dimKey = dimKey; }
+  const dk = Math.min(1, (now - _dimStart) / 340);
+  const de = dk < 0.5 ? 2 * dk * dk : 1 - Math.pow(-2 * dk + 2, 2) / 2;
+  _dimCur = _dimFrom + (targetDim - _dimFrom) * de;
+  ctx.fillStyle = `rgba(8,10,18,${_dimCur.toFixed(3)})`;
   ctx.fillRect(0, 0, w, h);
   if (SHOW_TILES) { // floor over the FULL footprint — DISABLED in triage (it covers the GL-layer player)
     ctx.imageSmoothingEnabled = false;

@@ -59,5 +59,7 @@ export function isInFootprint(lx, ly) {
  *  Full bokeh/clouds exaggeration is a deferred fast-follow. */
 export function dimAlphaForFloor(floorIndex) {
   if (floorIndex < 0) return 0.985; // basement: you're underground — the outside reads as black
-  return Math.min(0.9, 0.35 + floorIndex * 0.06); // ground dims; each floor up recedes further
+  // ground dims; each floor up recedes the outside MUCH further (near-black by ~floor 4), so
+  // climbing visibly leaves the ground world behind.
+  return Math.min(0.9, 0.4 + floorIndex * 0.14);
 }
