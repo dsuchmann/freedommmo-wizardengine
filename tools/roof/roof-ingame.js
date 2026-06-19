@@ -114,7 +114,10 @@ export function clearRoofCache() { cache.clear(); }
 // Draw one building's roof onto the game/preview canvas at the live camera.
 export function drawRoofForBuilding(ctx, b, camX, camY, tilePx, opts = {}) {
   const e = resolveForBuilding(b, opts.biome);
-  const wallLift = ROOF_TUNING.wallLiftTiles * tilePx;
+  // Lift the roof onto the STACKED wall top (N above-ground stories) so it caps the
+  // whole multi-story building, not the 1-story height.
+  const stories = Math.max(1, (opts.stories | 0) || 1);
+  const wallLift = (stories * WALL_CONFIG.wallHeight - WALL_CONFIG.wallYOffset) * tilePx;
   // Cap the visual rise to the building DEPTH so the ridge never climbs north of the
   // (uniform-lifted) north eave → roofs never extend past the north wall into the
   // neighbour. Deeper buildings get taller roofs; shallow ones stay appropriately low.

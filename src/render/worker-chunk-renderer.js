@@ -1379,7 +1379,17 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
           }
         }
 
-        // North walls
+        // Stories = above-ground floors (the multi-story wall stack). Guarded node
+        // access (node is non-enumerable + regenerated in-process here); default 1,
+        // capped so the stack stays within neighbour-chunk reach + sane bake cost.
+        var stories = 1;
+        try {
+          var _pl = wb.footprint && wb.footprint.node && wb.footprint.node.payload;
+          if (_pl && _pl.aboveGroundFloors > 0) stories = Math.min(_pl.aboveGroundFloors | 0, 12);
+        } catch (e) { stories = 1; }
+        wb._stories = stories; // hand to the roof bake so its lift sits on the stacked top
+
+        // North walls — STACKED `stories` tall
         for (var wsi3 = 0; wsi3 < wfp.sections.length; wsi3++) {
           var ws3 = wfp.sections[wsi3];
           var wnr = ws3.y0;
@@ -1387,18 +1397,20 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
             var wnlx = ws3.x0 + wdx3;
             if (wfs.has(wnlx + ',' + (wnr - 1))) continue;
             var wnsx = tsx(wb.x + wnlx);
-            var wnsy = tsy(wb.y + wnr) - wH + Math.round(tileSize * NY);
-            if (wnsx + tileSize < 0 || wnsx > canvasSize || wnsy + wH < 0 || wnsy > canvasSize) continue;
             var nwo = !wfs.has((wnlx-1)+','+wnr);
             var neo = !wfs.has((wnlx+1)+','+wnr);
-            if (nwo && wImgs.south_corner_west) {
-              ctx.drawImage(wImgs.south_base, 0,0,32,128, wnsx, wnsy, tileSize+wp, wH+wp);
-              ctx.drawImage(wImgs.south_corner_west, 0,0,32,128, wnsx-tileSize, wnsy, tileSize+wp, wH+wp);
-            } else if (neo && wImgs.south_corner_east) {
-              ctx.drawImage(wImgs.south_base, 0,0,32,128, wnsx, wnsy, tileSize+wp, wH+wp);
-              ctx.drawImage(wImgs.south_corner_east, 0,0,32,128, wnsx+tileSize, wnsy, tileSize+wp, wH+wp);
-            } else {
-              ctx.drawImage(wImgs.south_base, 0,0,32,128, wnsx, wnsy, tileSize+wp, wH+wp);
+            for (var nst = 0; nst < stories; nst++) {
+              var wnsy = tsy(wb.y + wnr) - wH + Math.round(tileSize * NY) - nst * wH;
+              if (wnsx + tileSize < 0 || wnsx > canvasSize || wnsy + wH < 0 || wnsy > canvasSize) continue;
+              if (nwo && wImgs.south_corner_west) {
+                ctx.drawImage(wImgs.south_base, 0,0,32,128, wnsx, wnsy, tileSize+wp, wH+wp);
+                ctx.drawImage(wImgs.south_corner_west, 0,0,32,128, wnsx-tileSize, wnsy, tileSize+wp, wH+wp);
+              } else if (neo && wImgs.south_corner_east) {
+                ctx.drawImage(wImgs.south_base, 0,0,32,128, wnsx, wnsy, tileSize+wp, wH+wp);
+                ctx.drawImage(wImgs.south_corner_east, 0,0,32,128, wnsx+tileSize, wnsy, tileSize+wp, wH+wp);
+              } else {
+                ctx.drawImage(wImgs.south_base, 0,0,32,128, wnsx, wnsy, tileSize+wp, wH+wp);
+              }
             }
           }
         }
@@ -1434,36 +1446,40 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
           }
         }
 
-        // South exterior walls
+        // South exterior walls — STACKED `stories` tall. Door on the GROUND story only;
+        // upper stories repeat the window columns (aligned). A 5-story reads 5-story.
         for (var wsi5 = 0; wsi5 < wfp.sections.length; wsi5++) {
           var ws5 = wfp.sections[wsi5];
           var wlr5 = ws5.y0 + ws5.h - 1;
-          var wskip = new Set();
           var fbY = wb.y + ws5.y0 + ws5.h;
-          for (var wdx5 = 0; wdx5 < ws5.w; wdx5++) {
-            if (wskip.has(wdx5)) continue;
-            var slx = ws5.x0+wdx5, sly = wlr5;
-            if (wfs.has(slx+','+(sly+1))) continue;
-            var ssx5 = tsx(wb.x+slx);
-            var ssy5 = tsy(fbY) - wH + Math.round(tileSize * WY);
-            if (ssx5+tileSize<0 || ssx5>canvasSize || ssy5+wH<0 || ssy5>canvasSize) continue;
-            var sk = slx+','+sly;
-            var swo = !wfs.has((slx-1)+','+sly);
-            var seo = !wfs.has((slx+1)+','+sly);
-            if (swo && wImgs.south_corner_west) {
-              ctx.drawImage(wImgs.south_base,0,0,32,128,ssx5,ssy5,tileSize+wp,wH+wp);
-              ctx.drawImage(wImgs.south_corner_west,0,0,32,128,ssx5-tileSize,ssy5,tileSize+wp,wH+wp);
-            } else if (seo && wImgs.south_corner_east) {
-              ctx.drawImage(wImgs.south_base,0,0,32,128,ssx5,ssy5,tileSize+wp,wH+wp);
-              ctx.drawImage(wImgs.south_corner_east,0,0,32,128,ssx5+tileSize,ssy5,tileSize+wp,wH+wp);
-            } else if (wds.has(sk) && wdx5>=2 && wdx5<ws5.w-2 && wImgs.south_door) {
-              ctx.drawImage(wImgs.south_door,0,0,64,128,ssx5,ssy5,tileSize*2+wp,wH+wp);
-              wskip.add(wdx5+1);
-            } else if (wwp.has(sk) && wdx5>=2 && wdx5<ws5.w-2 && wImgs.south_window) {
-              ctx.drawImage(wImgs.south_window,0,0,64,128,ssx5,ssy5,tileSize*2+wp,wH+wp);
-              wskip.add(wdx5+1);
-            } else {
-              ctx.drawImage(wImgs.south_base,0,0,32,128,ssx5,ssy5,tileSize+wp,wH+wp);
+          for (var sst = 0; sst < stories; sst++) {
+            var sGround = (sst === 0);
+            var wskip = new Set();
+            for (var wdx5 = 0; wdx5 < ws5.w; wdx5++) {
+              if (wskip.has(wdx5)) continue;
+              var slx = ws5.x0+wdx5, sly = wlr5;
+              if (wfs.has(slx+','+(sly+1))) continue;
+              var ssx5 = tsx(wb.x+slx);
+              var ssy5 = tsy(fbY) - wH + Math.round(tileSize * WY) - sst * wH;
+              if (ssx5+tileSize<0 || ssx5>canvasSize || ssy5+wH<0 || ssy5>canvasSize) continue;
+              var sk = slx+','+sly;
+              var swo = !wfs.has((slx-1)+','+sly);
+              var seo = !wfs.has((slx+1)+','+sly);
+              if (swo && wImgs.south_corner_west) {
+                ctx.drawImage(wImgs.south_base,0,0,32,128,ssx5,ssy5,tileSize+wp,wH+wp);
+                ctx.drawImage(wImgs.south_corner_west,0,0,32,128,ssx5-tileSize,ssy5,tileSize+wp,wH+wp);
+              } else if (seo && wImgs.south_corner_east) {
+                ctx.drawImage(wImgs.south_base,0,0,32,128,ssx5,ssy5,tileSize+wp,wH+wp);
+                ctx.drawImage(wImgs.south_corner_east,0,0,32,128,ssx5+tileSize,ssy5,tileSize+wp,wH+wp);
+              } else if (sGround && wds.has(sk) && wdx5>=2 && wdx5<ws5.w-2 && wImgs.south_door) {
+                ctx.drawImage(wImgs.south_door,0,0,64,128,ssx5,ssy5,tileSize*2+wp,wH+wp);
+                wskip.add(wdx5+1);
+              } else if (wwp.has(sk) && wdx5>=2 && wdx5<ws5.w-2 && wImgs.south_window) {
+                ctx.drawImage(wImgs.south_window,0,0,64,128,ssx5,ssy5,tileSize*2+wp,wH+wp);
+                wskip.add(wdx5+1);
+              } else {
+                ctx.drawImage(wImgs.south_base,0,0,32,128,ssx5,ssy5,tileSize+wp,wH+wp);
+              }
             }
           }
         }
@@ -1487,7 +1503,7 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
           for (var gdx = 0; gdx < rbBB.w; gdx++) { if (queryBuildingTile(rbB.x + gdx, rbB.y - gg)) { gHit = true; break; } }
           if (gHit) { rbGap = gg - 1; break; }
         }
-        try { _roofEngine.drawRoofForBuilding(ctx, rbB, rcamX, rcamY, tileSize, { imageCache: imageCache, northGapTiles: rbGap }); }
+        try { _roofEngine.drawRoofForBuilding(ctx, rbB, rcamX, rcamY, tileSize, { imageCache: imageCache, northGapTiles: rbGap, stories: rbB._stories || 1 }); }
         catch (roofErr) { if (!self.__roofLogged) { self.__roofLogged = true; console.error('[roof] draw failed:', roofErr && roofErr.message, roofErr && roofErr.stack); } }
       }
     }
