@@ -3,7 +3,7 @@ import { WORLD } from '../core/constants.js';
 import { setFieldTuning } from './field-tuning.js';
 import { clearClaimCaches } from './decoration-claims.js';
 import { ChunkCompiler } from './chunk-compiler.js';
-import { getAllWangImageURLs, getWangImageURLsForBiomes, getSoilImageURLs, getSoilImageURLsForBiomes, getGroundCoverImageURLs, getGroundCoverImageURLsForBiomes, getSmallFloraImageURLs, getSmallScatterImageURLs } from '../render/wang-image-list.js';
+import { getWangImageURLsForBiomes, getSoilImageURLsForBiomes, getGroundCoverImageURLsForBiomes, getSmallScatterImageURLs } from '../render/wang-image-list.js';
 import { renderChunkToBitmap, setF3RemovedKeys } from '../render/worker-chunk-renderer.js';
 import { denoiseBitmap } from '../render/sprite-denoise.js';
 import { getAllFloorTileURLs } from '../render/building-tile-query.js';
@@ -12,7 +12,6 @@ var compiler = new ChunkCompiler();
 var SLICE_ROWS = 8;
 var imageCache = new Map();
 var imagesReady = false;
-var backgroundLoadingDone = false;
 var chunksNeedingRepaint = [];
 var neighborCache = new Map();
 var MAX_NEIGHBOR_CACHE = 50;
@@ -26,10 +25,10 @@ function shouldDenoise(url) {
 }
 
 // fetch() with a hard timeout. Without this, a single stalled connection (likely
-// with thousands of image requests across ~6 workers) makes loadImageBatch's
-// Promise.all never resolve, so backgroundLoadingDone never fires and the world
-// never finishes loading. A timed-out request aborts and is treated exactly like
-// a failed load (retried once, then refilled by the repaint pass).
+// with many image requests across ~6 workers) makes loadImageBatch's Promise.all
+// never resolve, so a chunk's hot-load never completes and that chunk never paints.
+// A timed-out request aborts and is treated exactly like a failed load (retried
+// once, then refilled by the repaint pass).
 function fetchWithTimeout(url, ms) {
   var controller = new AbortController();
   var tid = setTimeout(function() { controller.abort(); }, ms);
@@ -86,36 +85,66 @@ async function loadImageBatch(urls, batchSize) {
   return { loaded: loaded, failed: failed };
 }
 
-// Phase 2: Background-load remaining wang tiles + scatter sprites after worker is already active.
-async function backgroundLoadRemaining() {
-  // Full streamed-area set: all wang + all soil + all ground cover (the critical
-  // gate only loaded the player's core biomes) + scatter base/lifecycle sprites
-  // (404s for missing art are normal). Already-cached URLs are filtered out below.
-  var allUrls = getAllWangImageURLs()
-    .concat(getSoilImageURLs())
-    .concat(getGroundCoverImageURLs())
-    .concat(getSmallScatterImageURLs());
-  // Filter to only URLs not yet cached
-  var remaining = allUrls.filter(function(url) { return !imageCache.has(url); });
-  if (remaining.length === 0) {
-    backgroundLoadingDone = true;
-    scheduleRepaintPass();
-    self.postMessage({ type: 'backgroundLoadDone', total: allUrls.length, cached: imageCache.size });
-    return;
+// On-demand biome asset loading. The old model eagerly fetched EVERY biome's
+// tiles up front (~22k urls x ~6 workers ≈ 130k fetches) — which permanently
+// saturated CPU/network and pinned the framerate at a few fps that never
+// recovered. Instead, each chunk loads ONLY the biomes it actually contains
+// (plus its 8 neighbors', so edge transitions resolve) the first time they are
+// seen. Walking into a new biome — or fast-travelling — hot-loads just that
+// biome; already-seen biomes are a no-op. This is the "load what's around me,
+// stream the rest as I move" model.
+var _loadedBiomes = new Set();
+var _scatterLoaded = false;
+
+function collectAreaBiomes(cx, cy, tiles) {
+  var set = new Set();
+  function scan(ts) {
+    if (!ts) return;
+    for (var i = 0; i < ts.length; i++) {
+      var t = ts[i];
+      if (t && t.biome) set.add(t.biome);
+    }
   }
-  // Load in steps and repaint flagged chunks AFTER EACH STEP, so incomplete
-  // chunks finalize PROGRESSIVELY as their images arrive — instead of waiting for
-  // the entire ~22k-image set (the old behavior, which left the world incomplete
-  // and storming for minutes). With the fetch timeout, this always runs to
-  // completion even if some requests fail.
-  var STEP = 1500;
-  for (var i = 0; i < remaining.length; i += STEP) {
-    await loadImageBatch(remaining.slice(i, i + STEP), 40);
-    scheduleRepaintPass();
+  scan(tiles);
+  // Neighbor chunks supply the biome on the far side of an edge transition tile.
+  for (var dy = -1; dy <= 1; dy++) {
+    for (var dx = -1; dx <= 1; dx++) {
+      if (dx === 0 && dy === 0) continue;
+      scan(neighborCache.get((cx + dx) + ',' + (cy + dy)));
+    }
   }
-  backgroundLoadingDone = true;
-  scheduleRepaintPass(); // final pass — chunks still incomplete now give up (asset genuinely absent)
-  self.postMessage({ type: 'backgroundLoadDone', total: allUrls.length, cached: imageCache.size });
+  return set;
+}
+
+async function ensureChunkBiomes(cx, cy, tiles) {
+  var biomes = collectAreaBiomes(cx, cy, tiles);
+  var arr = [];
+  var hasNew = false;
+  biomes.forEach(function(b) {
+    arr.push(b);
+    if (!_loadedBiomes.has(b)) hasNew = true;
+  });
+  // Fast path: this chunk's biomes (and the one-time scatter set) are all cached.
+  if (!hasNew && _scatterLoaded) return;
+
+  var urls = [];
+  if (hasNew) {
+    // getWangImageURLsForBiomes generates each biome's interior tiles AND the
+    // transitions between every pair in the set — so an area's tilesets + its
+    // internal seams all load together. Already-cached urls are filtered below.
+    urls = getWangImageURLsForBiomes(arr)
+      .concat(getSoilImageURLsForBiomes(arr))
+      .concat(getGroundCoverImageURLsForBiomes(arr));
+  }
+  if (!_scatterLoaded) {
+    // Scatter sprites (F3 debris) are biome-agnostic; load the set once. Flag set
+    // before the await so concurrent chunk compiles don't each re-add it.
+    _scatterLoaded = true;
+    urls = urls.concat(getSmallScatterImageURLs());
+  }
+  var missing = urls.filter(function(u) { return !imageCache.has(u); });
+  if (missing.length) await loadImageBatch(missing, 50);
+  biomes.forEach(function(b) { _loadedBiomes.add(b); });
 }
 
 // Repaint chunks that compiled while images were missing. Re-renders flagged
@@ -125,6 +154,11 @@ async function backgroundLoadRemaining() {
 // finalizes once its images arrive; once the load is done, remaining-incomplete
 // chunks give up (the asset is genuinely absent — honest absence).
 var repaintPassScheduled = false;
+// A flagged chunk retries a bounded number of times (~MAX*400ms) so async
+// resources — the roof engine import, building floors — can finalize, then gives
+// up. Wang/soil are no longer a repaint concern (hot-loaded before first paint),
+// so only a handful of building chunks ever flag, and only for a few seconds.
+var MAX_REPAINT_ATTEMPTS = 12;
 
 function scheduleRepaintPass() {
   if (repaintPassScheduled || chunksNeedingRepaint.length === 0) return;
@@ -149,19 +183,17 @@ function runRepaintPass() {
     var chunk = { cx: rchunk.cx, cy: rchunk.cy, tiles: tiles };
     var sun = { height: 0.5, ambient: 0.85 };
     var result = renderChunkToBitmap(chunk, neighborCache, sun, imageCache);
-    if (result.needsRepaint && !backgroundLoadingDone) {
-      // Still missing images, but more are streaming in — try again next pass.
-      chunksNeedingRepaint.push({ key: rchunk.key, cx: rchunk.cx, cy: rchunk.cy });
+    if (result.needsRepaint && (rchunk.attempts || 0) < MAX_REPAINT_ATTEMPTS) {
+      // An async resource is still loading — retry, bounded by the attempt cap.
+      chunksNeedingRepaint.push({ key: rchunk.key, cx: rchunk.cx, cy: rchunk.cy, attempts: (rchunk.attempts || 0) + 1 });
       stillIncomplete++;
     }
     self.postMessage({ type: 'chunkRepainted', key: rchunk.key, cx: rchunk.cx, cy: rchunk.cy, gen: tuneGen, bitmap: result.bitmap, wangDebug: result.debug }, [result.bitmap]);
   }
-  // Do NOT self-reschedule on every incomplete chunk: that re-renders + re-uploads
-  // flagged chunks every 400ms for the whole background load, flooding the main
-  // thread. Incomplete chunks were re-queued above; they get re-rendered the next
-  // time NEW images arrive — backgroundLoadRemaining calls scheduleRepaintPass once
-  // per load-step, and a final pass runs when the load finishes. So repaint work is
-  // proportional to image arrival, not wall-clock.
+  // Self-reschedule only while chunks remain under the attempt cap. Bounded by
+  // MAX_REPAINT_ATTEMPTS, so a building whose roof engine never loads stops
+  // retrying after a few seconds instead of looping forever.
+  if (stillIncomplete > 0) scheduleRepaintPass();
 }
 
 // Compute shore distance and shore angle for every tile in a chunk.
@@ -245,21 +277,22 @@ self.onmessage = function(event) {
 
   if (data.type === 'preloadBiomes') {
     // CRITICAL first-paint set: only the player's immediate ("core") biomes.
-    // Gating imagesReady on all 21 biomes' wang (~17k urls/worker) kept the
-    // world blank for minutes; the full set loads in backgroundLoadRemaining()
-    // and the repaint pass fills in any chunk that baked before it arrived.
+    // Everything else streams in on demand per-chunk (ensureChunkBiomes) as the
+    // player moves — we no longer eagerly fetch all 21 biomes up front, which
+    // permanently saturated the workers and pinned the framerate.
     var coreBiomes = data.coreBiomes || data.biomes;
     var coreWang = getWangImageURLsForBiomes(coreBiomes);
     var coreSoil = getSoilImageURLsForBiomes(coreBiomes);
     var coreGc = getGroundCoverImageURLsForBiomes(coreBiomes);
     var floorUrls = getAllFloorTileURLs();
     var criticalUrls = coreWang.concat(coreSoil).concat(coreGc).concat(floorUrls);
+    coreBiomes.forEach(function(b) { _loadedBiomes.add(b); }); // seed: core biomes are now cached
     // Batch of 50 per worker — with up to 6 workers plus main-thread preloads,
     // larger batches exhaust the browser's network stack (ERR_INSUFFICIENT_RESOURCES)
     loadImageBatch(criticalUrls, 50).then(function(result) {
       imagesReady = true;
       self.postMessage({ type: 'imagesReady', loaded: result.loaded, failed: result.failed, total: criticalUrls.length });
-      backgroundLoadRemaining();
+      // No eager all-biome background load — chunks hot-load their own biomes.
     });
     return;
   }
@@ -296,19 +329,25 @@ self.onmessage = function(event) {
     neighborCache.set(cacheKey, chunk.tiles);
     evictNeighborCache();
 
-    // Paint the chunk
-    var sun = { height: 0.5, ambient: 0.85 };
-    var result = renderChunkToBitmap(chunk, neighborCache, sun, imageCache);
+    // Hot-load this chunk's biome tilesets on demand, THEN paint — so the chunk
+    // renders complete the first time without an eager all-biome preload. The
+    // tile-slice data above was already posted synchronously, so the main thread
+    // has the chunk's logical data immediately; only the painted bitmap waits on
+    // the (usually-cached) biome load.
+    ensureChunkBiomes(cx, cy, chunk.tiles).then(function() {
+      var sun = { height: 0.5, ambient: 0.85 };
+      var result = renderChunkToBitmap(chunk, neighborCache, sun, imageCache);
 
-    // Track chunks that had missing images — they'll be repainted after background load
-    if (result.needsRepaint) {
-      console.log('[SOIL] chunk', cx + ',' + cy, 'painted incomplete (soilMissed=' + !result.hasSoil + ') — repaint scheduled');
-      chunksNeedingRepaint.push({ key: key, cx: cx, cy: cy, attempts: 0 });
-      scheduleRepaintPass();
-    }
+      // With wang/soil hot-loaded above, needsRepaint now only flags async
+      // resources (roof engine, building floors) — a few bounded retries, not a storm.
+      if (result.needsRepaint) {
+        chunksNeedingRepaint.push({ key: key, cx: cx, cy: cy, attempts: 0 });
+        scheduleRepaintPass();
+      }
 
-    // Transfer bitmap to main thread (zero-copy)
-    self.postMessage({ type: 'chunkPainted', key: key, cx: cx, cy: cy, gen: tuneGen, bitmap: result.bitmap, wangDebug: result.debug }, [result.bitmap]);
+      // Transfer bitmap to main thread (zero-copy)
+      self.postMessage({ type: 'chunkPainted', key: key, cx: cx, cy: cy, gen: tuneGen, bitmap: result.bitmap, wangDebug: result.debug }, [result.bitmap]);
+    });
   } else if (data.type === 'repaintChunk') {
     if (!imagesReady) return;
     var key = data.key;
