@@ -989,7 +989,15 @@ export function clearF2Pool() {
 // When on, the rebuild packs each sprite's animation frames as an atlas STRIP and
 // writes a static 20-float instance; the GPU shader animates it from uTime. Toggled
 // live via window._gpuFlora so it can be A/B'd against the CPU path.
-function gpuFloraOn() { return (typeof window !== 'undefined' && window._gpuFlora) === true; }
+// On = window._gpuFlora === true (session) OR localStorage 'gpuFlora'='1' (persists
+// across reloads, so the flag isn't lost on refresh). window._gpuFlora === false
+// force-disables either way.
+function gpuFloraOn() {
+  if (typeof window === 'undefined') return false;
+  if (window._gpuFlora === true) return true;
+  if (window._gpuFlora === false) return false;
+  try { return window.localStorage && localStorage.getItem('gpuFlora') === '1'; } catch (e) { return false; }
+}
 
 // Resolve a sprite's frame strip (cached per url-set + size). Returns
 // {u0,v0,frameStride,du,dv,n} or null if any frame isn't loaded/packable yet.
