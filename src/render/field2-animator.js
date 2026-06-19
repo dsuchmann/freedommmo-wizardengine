@@ -1379,26 +1379,50 @@ function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, we
       }
     }
 
-    // Resolve image: sim state > lifecycle state > anim frame > static.
-    var img = null;
-    if (bl && meta.simState === 'REMOVED') { img = null; }
-    else if (bl) {
-      var simUrl = (meta.simState && meta.simState !== 'REMOVED')
-        ? f4SpriteUrl({ name: bl._f4Name, biome: bl._f4Biome, variant: bl._f4Variant, state: meta.simState })
-        : null;
-      img = (simUrl || bl.stateUrl) ? loadFrame(simUrl || bl.stateUrl) : null;
-      if (!img && bl.animUrlBase) {
-        img = loadFrame(bl.animUrlBase + 'frame_' + String(frameIdx).padStart(3, '0') + '.png', bl.frameCount);
-      }
-      if (!img) img = loadFrame(bl.staticUrl);
+    // Resolve image (F2-MEMO): sim state > lifecycle state > anim frame > static.
+    // (loadFrame, scaledFrame, atlasRect) only change when the animation frame /
+    // sim-state changes (~8fps), yet this loop runs EVERY frame over ~all active
+    // sprites. Recomputing per sprite per frame — a URL string-build + 3 string-keyed
+    // Map.gets + a scaledFrame key-build — was the dominant per-frame CPU cost
+    // (~85ms over ~1600 sprites in dense flora => ~10fps while walking). Most sprites
+    // sit at restFrame (constant frameIdx), so cache img+rect keyed on
+    // (frameIdx, simState, atlasGen) and reuse on the frames where nothing changed.
+    var simKey = (bl && meta.simState && meta.simState !== 'REMOVED') ? meta.simState : null;
+    var img, rect;
+    if (bl && meta.simState === 'REMOVED') {
+      img = null; rect = null;
+    } else if (meta.cachedRect && meta.frameIdxCached === frameIdx
+               && meta.simStateCached === simKey && meta.atlasGenCached === glc.atlasGen) {
+      img = meta.cachedImg; rect = meta.cachedRect; // hot path: skip the resolve
     } else {
-      img = meta.img; // extra decor: static, only fades
+      if (bl) {
+        var simUrl = simKey
+          ? f4SpriteUrl({ name: bl._f4Name, biome: bl._f4Biome, variant: bl._f4Variant, state: meta.simState })
+          : null;
+        img = (simUrl || bl.stateUrl) ? loadFrame(simUrl || bl.stateUrl) : null;
+        if (!img && bl.animUrlBase) {
+          img = loadFrame(bl.animUrlBase + 'frame_' + String(frameIdx).padStart(3, '0') + '.png', bl.frameCount);
+        }
+        if (!img) img = loadFrame(bl.staticUrl);
+      } else {
+        img = meta.img; // extra decor: static, only fades
+      }
+      rect = null;
+      if (img) {
+        img = scaledFrame(img, meta.drawSizePx);
+        rect = glc.atlasRect(img, img.src || img._dnKey || '');
+      }
+      // Cache only a fully-resolved sprite; a not-yet-packed one (rect null) is left
+      // uncached so it re-resolves next frame and fills in.
+      if (img && rect) {
+        meta.cachedImg = img; meta.cachedRect = rect;
+        meta.frameIdxCached = frameIdx; meta.simStateCached = simKey;
+        meta.atlasGenCached = glc.atlasGen;
+      }
     }
 
-    var rect = null, alpha = 0, sway = 0;
+    var alpha = 0, sway = 0;
     if (img) {
-      img = scaledFrame(img, meta.drawSizePx);
-      rect = glc.atlasRect(img, img.src || img._dnKey || '');
       var fade = imgFade(img, timeMs);
       if (fade < 1) stillActive = true; // keep fading
       alpha = meta.edgeFade * fade;

@@ -832,6 +832,7 @@ export class GLCompositor {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     this.atlasRects = new Map(); // url -> {u0,v0,du,dv} | null (failed/full)
     this._lastAtlasReset = -99999;
+    this.atlasGen = 0; // bumped on atlas reset; consumers caching a rect (F2 memo) invalidate on change
     // Fixed region reserved for the player sprite, re-uploaded every frame so
     // the player participates in the depth-sorted instance batch.
     this._playerRegion = { x: 1, y: 1, w: 256, h: 256 };
@@ -940,6 +941,7 @@ export class GLCompositor {
       // overflow null (retried after the next reset).
       if (this.frame !== this._lastAtlasReset) {
         this._lastAtlasReset = this.frame;
+        this.atlasGen++; // relocates every sprite — invalidate any cached rects (F2 memo)
         this.atlasRects.clear();
         this._shelfX = 1;
         this._shelfY = this._playerRegion.y + this._playerRegion.h + 2;
