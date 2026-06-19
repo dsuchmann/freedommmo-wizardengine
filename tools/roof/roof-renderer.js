@@ -101,6 +101,21 @@ function lightVec(angleDeg, elevDeg) {
   return [Math.cos(e) * Math.cos(a), Math.cos(e) * Math.sin(a), Math.sin(e)];
 }
 
+// Texture-map a 32×32 tile (e.g. the biome ground texture) onto a projected facet
+// quad via an affine map (TL,TR,BL), clipped to the quad, then slope-shaded.
+function drawTexturedTile(ctx, q, tex, shade) {
+  const TL = q[0], TR = q[1], BL = q[3];
+  ctx.save();
+  ctx.beginPath(); ctx.moveTo(q[0].x, q[0].y); ctx.lineTo(q[1].x, q[1].y); ctx.lineTo(q[2].x, q[2].y); ctx.lineTo(q[3].x, q[3].y); ctx.closePath(); ctx.clip();
+  ctx.transform((TR.x - TL.x) / 32, (TR.y - TL.y) / 32, (BL.x - TL.x) / 32, (BL.y - TL.y) / 32, TL.x, TL.y);
+  try { ctx.drawImage(tex, 0, 0, 32, 32, 0, 0, 32, 32); } catch (e) { /* bad bitmap */ }
+  ctx.restore();
+  ctx.beginPath(); ctx.moveTo(q[0].x, q[0].y); ctx.lineTo(q[1].x, q[1].y); ctx.lineTo(q[2].x, q[2].y); ctx.lineTo(q[3].x, q[3].y); ctx.closePath();
+  ctx.fillStyle = shade < 1 ? `rgba(0,0,0,${Math.min(0.55, (1 - shade) * 0.7)})`
+    : `rgba(255,250,230,${Math.min(0.35, (shade - 1) * 0.5)})`;
+  ctx.fill();
+}
+
 function isPerimeter(grid, t) {
   const W = grid.W, H = grid.H;
   const roof = (i, j) => i >= 0 && j >= 0 && i < W && j < H && (grid.fp[j * W + i] || grid.isOverhang[j * W + i]);
@@ -136,7 +151,10 @@ export function drawRoof(ctx, grid, material, features, cfg, view) {
     const nrm = facetNormal(grid, t);
     let shade = ambient + (1 - ambient) * Math.max(0, nrm[0] * light[0] + nrm[1] * light[1] + nrm[2] * light[2]);
     if (t.isOverhang) shade *= 0.82;
-    material.fillTile(ctx, quad, t, shade, view, grid);
+    // cfg.texture = a 32×32 ImageBitmap (e.g. the biome ground tile) → texture-map it
+    // onto the facet + slope-shade; else fall back to the procedural material.
+    if (cfg.texture) drawTexturedTile(ctx, quad, cfg.texture, shade);
+    else material.fillTile(ctx, quad, t, shade, view, grid);
   }
 
   if (!cfg.noAccents) drawAccents(ctx, grid, view, cfg);

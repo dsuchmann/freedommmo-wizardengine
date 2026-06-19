@@ -290,7 +290,11 @@ export class CanvasRenderer {
         chunkJobs.push({ cx, cy, chunk, dist: Math.abs(cx - playerCX) + Math.abs(cy - playerCY) });
       }
     }
-    chunkJobs.sort((a, b) => a.dist - b.dist);
+    // Blit back-to-front by Y (north chunks first) so a SOUTH/front building's tall
+    // wall+roof — which paint into the NORTH chunk's pixels — draw OVER the back
+    // building, not under it. (Per-chunk sort can't fix a cross-chunk inversion; the
+    // distance sort let the closer/north chunk win.) Covers the 2D + GL blit loop.
+    chunkJobs.sort((a, b) => (a.cy - b.cy) || (a.cx - b.cx));
     for (const job of chunkJobs) {
       const { cx, cy, chunk } = job;
       const key = `${cx},${cy}`;

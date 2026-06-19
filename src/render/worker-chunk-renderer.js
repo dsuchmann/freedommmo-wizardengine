@@ -1478,7 +1478,16 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
     if (_roofEngine && cBuildings.length) {
       var rcamX = cX0 * tileSize, rcamY = cY0 * tileSize;
       for (var rbi = 0; rbi < cBuildings.length; rbi++) {
-        try { _roofEngine.drawRoofForBuilding(ctx, cBuildings[rbi], rcamX, rcamY, tileSize); }
+        var rbB = cBuildings[rbi], rbBB = rbB.footprint.boundingBox;
+        // empty-tile gap to the building NORTH of us → the roof clamps its pitch so it
+        // can't climb across the gap into the neighbour's south wall.
+        var rbGap = 5;
+        for (var gg = 1; gg <= 5; gg++) {
+          var gHit = false;
+          for (var gdx = 0; gdx < rbBB.w; gdx++) { if (queryBuildingTile(rbB.x + gdx, rbB.y - gg)) { gHit = true; break; } }
+          if (gHit) { rbGap = gg - 1; break; }
+        }
+        try { _roofEngine.drawRoofForBuilding(ctx, rbB, rcamX, rcamY, tileSize, { imageCache: imageCache, northGapTiles: rbGap }); }
         catch (roofErr) { if (!self.__roofLogged) { self.__roofLogged = true; console.error('[roof] draw failed:', roofErr && roofErr.message, roofErr && roofErr.stack); } }
       }
     }

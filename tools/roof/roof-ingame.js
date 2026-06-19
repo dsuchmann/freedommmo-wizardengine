@@ -21,6 +21,7 @@ export const ROOF_TUNING = {
   maxRoofTiles: 3.0,    // cap a roof's visual rise so steeples don't tower absurdly
   pitchCap: 1.3,        // clamp style pitch in-game
   surfaceOnly: true,    // v1: draw the roof SURFACE only (no crude turret/spire primitives yet)
+  useBiomeTexture: true,// EXPERIMENT: skin the roof with the biome's ground/soil texture
 };
 
 const cache = new Map(); // `${b.x},${b.y}` -> { grid, material, renderCfg, roof }
@@ -38,12 +39,35 @@ function bboxOf(secs) {
   return { w: x1 - x0, h: y1 - y0 };
 }
 
+// biome -> [interiorDir, mask] = the solid biome GROUND/soil texture (the interior
+// wang tile). Mirrors BIOME_INTERIOR in src/render/wang-image-list.js (hardcoded to
+// avoid pulling that module's deps into the browser preview). Lets us skin a roof with
+// the same texture pool the terrain uses for that biome.
+const GROUND_TEX = {
+  beach: ['beach_to_river', 0], desert: ['beach_to_desert', 15], grassland: ['forest_to_grassland', 15],
+  swamp: ['forest_to_swamp', 15], forest: ['forest_to_grassland', 0], dense_forest: ['dense_forest_to_forest', 0],
+  tropical_forest: ['forest_to_tropical_forest', 15], taiga: ['forest_to_taiga', 15], savanna: ['grassland_to_savanna', 15],
+  steppe: ['grassland_to_steppe', 15], tundra: ['arctic_to_tundra', 15], arctic: ['arctic_to_tundra', 0],
+  hills: ['grassland_to_hills', 15], mountains: ['hills_to_mountains', 15], volcanic: ['desert_to_volcanic', 15],
+  mystic: ['grassland_to_mystic', 15],
+};
+function getBiomeGroundTexture(biome, imageCache) {
+  const g = GROUND_TEX[biome];
+  if (!g || !imageCache) return null;
+  const url = `/assets/pixelab/landscape_v2/transitions/${g[0]}/wang/${g[0]}__wang_${g[1]}__v000.png`;
+  return imageCache.get(url) || null;
+}
+
 export function resolveForBuilding(b, biomeOverride) {
   const key = `${b.x},${b.y}`;
   let e = cache.get(key);
   if (e) return e;
   const fp = b.footprint;
-  const biome = biomeOverride || classifyBiome(b.x, b.y);
+  // classifyBiome returns {id, definition, climate} in-game; the preview passes a bare
+  // string. Normalize to the biome id STRING — else resolveRoof/getBiomeGroundTexture
+  // get an object key, silently fall back to the default profile + miss the texture.
+  const biomeRaw = biomeOverride || classifyBiome(b.x, b.y);
+  const biome = (biomeRaw && biomeRaw.id) || biomeRaw;
   const typeId = fp.typeId || 'house';
   const pattern = inferPattern(fp);
   const category = fp.category || 'residential';
@@ -94,12 +118,22 @@ export function drawRoofForBuilding(ctx, b, camX, camY, tilePx, opts = {}) {
   // Cap the visual rise to the building DEPTH so the ridge never climbs north of the
   // (uniform-lifted) north eave → roofs never extend past the north wall into the
   // neighbour. Deeper buildings get taller roofs; shallow ones stay appropriately low.
-  const depthCapTiles = Math.max(0.6, e.grid.bbox.h / 2 - 0.5);
+  const ownCap = Math.max(0.6, e.grid.bbox.h / 2 - 0.5);
+  // ALSO clamp to the gap to the building NORTH of us (probed by the worker via
+  // queryBuildingTile) so a deep building's pitch can't climb across the gap into the
+  // neighbour's south wall. A 1-tile gap → ~0.5-tile rise.
+  const gapCap = opts.northGapTiles != null ? Math.max(0.6, opts.northGapTiles - 0.5) : Infinity;
+  const depthCapTiles = Math.min(ownCap, gapCap);
   const riseTiles = Math.min(ROOF_TUNING.maxRoofTiles, depthCapTiles);
   const hScale = Math.min(tilePx * ROOF_TUNING.heightScale,
     (riseTiles * tilePx) / Math.max(1, e.grid.maxHeight));
   const view = makeGameView(b.x, b.y, camX, camY, tilePx, { wallLift, heightScale: hScale });
   const features = ROOF_TUNING.surfaceOnly ? null : opts.features || null;
+  // Skin the roof with the biome's GROUND texture (same pool as the soil) when the
+  // worker passes its imageCache; falls back to the procedural material if the tile
+  // isn't loaded yet or there's no cache (e.g. the browser preview).
+  e.renderCfg.texture = (ROOF_TUNING.useBiomeTexture && opts.imageCache)
+    ? getBiomeGroundTexture(e.biome, opts.imageCache) : null;
   drawRoof(ctx, e.grid, e.material, features, e.renderCfg, view);
   return e;
 }
