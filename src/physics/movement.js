@@ -138,10 +138,12 @@ export function movementCost(tile) {
 // tile whose footprint-LOCAL cell is not walkable (wall / off-floor void) is rejected
 // exactly like impassable terrain. When NOT inside this is a no-op, so open-world
 // movement is byte-identical. Gate == draw: same isWalkableLocal the renderer uses.
-function interiorBlocks(destX, destY) {
-  if (!isInside()) return false;
-  const ai = getActiveInterior();
-  return !isWalkableLocal(Math.floor(destX) - ai.bx, Math.floor(destY) - ai.by);
+function interiorBlocks(/* destX, destY */) {
+  // SLICE 1: hard interior wall collision is DEFERRED. The inset walkable set excludes the
+  // perimeter + doorway, so gating on it would trap the player at the entrance. The player
+  // roams freely for now; walls are visual. Slice 2 re-enables per-tile blocking with a
+  // proper door portal. (isInside/getActiveInterior/isWalkableLocal kept imported for then.)
+  return false;
 }
 
 export function resolveMovement(player, chunkStore, dx, dy, volumeSource) {

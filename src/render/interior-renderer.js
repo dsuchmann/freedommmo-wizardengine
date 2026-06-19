@@ -15,8 +15,7 @@ export function drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h) {
   ctx.fillRect(0, 0, w, h);
   // 2) floor tiles for the active floor (circulation + every unit tile), in-world
   const L = ai.layout, t = Math.ceil(tilePx), pad = 1;
-  const tiles = new Set(L.walkable);
-  for (const u of L.units) for (const tl of u.tiles) tiles.add(tl.x + ',' + tl.y);
+  const tiles = ai.footprint; // draw the floor over the FULL footprint — a complete room floor
   ctx.imageSmoothingEnabled = false;
   const floorImg = getFloorImg(ai.building.footprint?.interior?.floor?.material) || getFloorImg('wood_plank');
   for (const k of tiles) {
@@ -35,16 +34,17 @@ export function drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h) {
  *  the player, which is drawn see-through (skipped) so it never hides the character. */
 export function drawInteriorWallsWorld(ctx, camX, camY, tilePx, w, h, playerTile) {
   if (!isInside()) return;
-  const ai = getActiveInterior(), L = ai.layout, t = Math.ceil(tilePx), pad = 1;
-  const present = new Set(L.walkable);
-  for (const u of L.units) for (const tl of u.tiles) present.add(tl.x + ',' + tl.y);
+  const ai = getActiveInterior(), t = Math.ceil(tilePx), pad = 1;
+  const present = ai.footprint; // perimeter walls follow the full footprint
   const has = (x, y) => present.has(x + ',' + y);
+  const isDoor = (x, y) => ai.doors.some(d => d.x === x && d.y === y);
   const plx = playerTile ? playerTile.x - ai.bx : null, ply = playerTile ? playerTile.y - ai.by : null;
   const wallImg = getWallImg('south_base');
   ctx.save(); ctx.imageSmoothingEnabled = false;
   for (const k of present) {
     const [lx, ly] = k.split(',').map(Number);
     if (has(lx, ly + 1)) continue;               // not a south edge
+    if (isDoor(lx, ly)) continue;                // leave the doorway open
     // SEE-THROUGH: skip the south wall within 1 tile of the player so it never occludes them
     if (plx !== null && Math.abs(lx - plx) <= 1 && ly >= ply && ly - ply <= 1) continue;
     const wx = ai.bx + lx, wy = ai.by + ly;

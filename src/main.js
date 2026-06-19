@@ -203,11 +203,8 @@ function update(dt) {
     } else {
       const ai = AI.getActiveInterior();
       const lx = ptx - ai.bx, ly = pty - ai.by;
-      const onFootprint = ai.layout.walkable.has(lx + ',' + ly)
-        || ai.layout.units.some(u => u.tiles.some(t => t.x === lx && t.y === ly))
-        || (ai.layout.stairTile && ai.layout.stairTile.x === lx && ai.layout.stairTile.y === ly)
-        || (ai.layout.liftTile && ai.layout.liftTile.x === lx && ai.layout.liftTile.y === ly);
-      if (!onFootprint) { AI.exitInterior(); }
+      // "Still inside" = anywhere on the footprint (incl. the doorway). Walk fully off → exit.
+      if (!AI.isInFootprint(lx, ly)) { AI.exitInterior(); }
       else {
         const trig = lx + ',' + ly;
         const onStair = ai.layout.stairTile && ai.layout.stairTile.x === lx && ai.layout.stairTile.y === ly;
