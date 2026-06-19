@@ -20,9 +20,9 @@ var REBUILD_MARGIN = 4; // hysteresis: the pool collects this many extra tiles p
                         // Turns the old per-tile (and per-zoom-step) 71ms rebuild storm
                         // into an occasional rebuild — walking/zooming no longer restitch
                         // the whole instance buffer every frame.
-var GPU_REBUILD_MARGIN = 20; // GPU flora only: per-frame cost is 0, so collect a much
-                             // wider ring and rebuild ~5x less often (the rebuild is the
-                             // only remaining hitch). Pool grows but the GPU draws it free.
+var GPU_REBUILD_MARGIN = 12; // GPU flora only: per-frame cost is 0, so collect a wider
+                             // ring and rebuild ~3x less often (the rebuild is the only
+                             // remaining hitch). Pool grows but the GPU draws it free.
 var FADE_INNER = 34; // fully opaque inside this radius
 var FRAME_COUNT = 9;
 var FRAME_DURATION = 120; // ms per frame
@@ -1179,6 +1179,10 @@ function _poolRebuild(chunkStore, player, glc, radiusX, radiusY) {
     _pool.lastV0 = new Float32Array(cap);
   }
   var gpuFlora = gpuFloraOn();
+  // When the GPU will actually draw, skip the CPU resolve/atlas-pack entirely — it's
+  // pure waste (the GPU draws the strips) and packing both CPU frames AND strips
+  // overflows the atlas (thrash). Keeps worldX/Y in the mirror for the player split.
+  var gpuSkip = gpuFlora && glc.animOk;
   if (gpuFlora) {
     if (glc.atlasGen !== _stripAtlasGen) { clearStripCache(); _stripAtlasGen = glc.atlasGen; }
     if (!_pool.animMirror || _pool.animMirror.length < (n + 1) * ANIM_SPRITE_FLOATS)
@@ -1227,12 +1231,14 @@ function _poolRebuild(chunkStore, player, glc, radiusX, radiusY) {
           frameIdx = Math.floor((triggerDuration / FRAME_DURATION + bl.restFrame) % (bl.frameCount || FRAME_COUNT));
         }
       }
-      img = (bl.stateUrl) ? loadFrame(bl.stateUrl) : null;
-      if (!img && bl.animUrlBase) {
-        img = loadFrame(bl.animUrlBase + 'frame_' + String(frameIdx).padStart(3, '0') + '.png', bl.frameCount);
+      if (!gpuSkip) {
+        img = (bl.stateUrl) ? loadFrame(bl.stateUrl) : null;
+        if (!img && bl.animUrlBase) {
+          img = loadFrame(bl.animUrlBase + 'frame_' + String(frameIdx).padStart(3, '0') + '.png', bl.frameCount);
+        }
+        if (!img) img = loadFrame(bl.staticUrl);
       }
-      if (!img) img = loadFrame(bl.staticUrl);
-    } else {
+    } else if (!gpuSkip) {
       img = loadFrame(e.extraUrl);
     }
     // Art-pixel size for atlas — the shader upscales via uCam.z.
@@ -1253,7 +1259,7 @@ function _poolRebuild(chunkStore, player, glc, radiusX, radiusY) {
     _pool.lastAlpha[i] = rect ? alpha : 0;
     _pool.lastU0[i] = rect ? rect.u0 : 0;
     _pool.lastV0[i] = rect ? rect.v0 : 0;
-    if (!rect || (img && img._f2At)) _pool.pending.push(i);
+    if (!gpuSkip && (!rect || (img && img._f2At))) _pool.pending.push(i);
     if (isActive || (img && img._f2At)) _pool.active.set(i, true);
 
     var sIdx = -1;
