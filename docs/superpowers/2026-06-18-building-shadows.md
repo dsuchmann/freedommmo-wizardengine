@@ -26,7 +26,8 @@ to nothing at night. Hard-gated off when `!sun.isDaytime`.
 ## Debug / tuning knobs (console)
 - `window._buildingShadows = false` — hide all building shadows.
 - `window._buildingShadowDrape = false` — disable only the phase-2 façade drape (keep ground shadows).
-- `window._buildingShadowScale = 1.4` — multiply ground-shadow length (visual tuning).
+- `window._buildingShadowScale = 1.4` — multiply ground-shadow length (visual tuning). Default
+  `DEFAULT_SCALE = 1.49`, calibrated in `tools/shadow-gallery.html` (2026-06-19); the knob overrides it.
 
 A per-feature size/length tuner (the project convention) is a sensible follow-up; the scale knob above
 is the seam to wire it to.

@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import {
   convexHull, shadowProjection, buildingFloors, buildingShadowHull, MAX_LENGTH_TILES,
   southFacadeColumns, facadeRect, pointInHull, computeHulls, drapeRects,
+  resolveScale, DEFAULT_SCALE,
 } from '../../src/render/building-shadow.js';
 import { WALL_CONFIG } from '../../src/render/wall-config.js';
 import { buildingNode } from '../world/buildings/blueprint-node.js';
@@ -76,6 +77,16 @@ test('shadow length is clamped for very tall buildings at dusk', () => {
 test('projection scales with tilePx (screen px) and scale knob', () => {
   assert.ok(shadowProjection(NOON, 1, 128, 1).projY > shadowProjection(NOON, 1, 64, 1).projY);
   assert.ok(shadowProjection(NOON, 1, 64, 2).projY > shadowProjection(NOON, 1, 64, 1).projY);
+});
+
+test('resolveScale: unset/invalid -> calibrated DEFAULT_SCALE, valid override wins', () => {
+  assert.equal(DEFAULT_SCALE, 1.49);                 // calibrated in the gallery
+  assert.equal(resolveScale(undefined), 1.49);       // in-game, no knob set
+  assert.equal(resolveScale(0), 1.49);               // 0 invalid -> default
+  assert.equal(resolveScale(-3), 1.49);              // negative invalid -> default
+  assert.equal(resolveScale(NaN), 1.49);
+  assert.equal(resolveScale('2'), 2);                // numeric string override
+  assert.equal(resolveScale(1.2), 1.2);
 });
 
 // ── floor extraction ──────────────────────────────────────────────────

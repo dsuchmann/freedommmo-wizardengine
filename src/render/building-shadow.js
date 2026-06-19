@@ -26,6 +26,9 @@ export const SHADOW_TINT = '#2a2e2b';
 export const BASE_ALPHA = 0.18;
 // Clamp so a tall building at dusk (floors*3.75) can't sprawl a shadow across the whole town.
 export const MAX_LENGTH_TILES = 16;
+// Ground-shadow length multiplier, calibrated visually in tools/shadow-gallery.html (2026-06-19).
+// window._buildingShadowScale overrides this at runtime.
+export const DEFAULT_SCALE = 1.49;
 // Above this floor count the building reads as a tower; floors are capped to keep length sane.
 const MAX_FLOORS = 12;
 
@@ -50,6 +53,12 @@ export function convexHull(pts) {
   }
   lower.pop(); upper.pop();
   return lower.concat(upper);
+}
+
+/** Effective ground-length multiplier: the window override if valid (>0), else DEFAULT_SCALE. */
+export function resolveScale(v) {
+  const n = +v;
+  return Number.isFinite(n) && n > 0 ? n : DEFAULT_SCALE;
 }
 
 /** Above-ground floor count for a building (defensive — the lazy node/payload may be absent). */
@@ -214,7 +223,7 @@ export function drapeRects(buildings, hulls, tilePx, camX, camY) {
 export function drawBuildingShadows(ctx, buildings, camX, camY, tilePx, w, h, sun) {
   if (!sun || !sun.isDaytime || !buildings || !buildings.length) return;
   if (typeof window !== 'undefined' && window._buildingShadows === false) return;
-  const scale = (typeof window !== 'undefined' && +window._buildingShadowScale) || 1;
+  const scale = resolveScale(typeof window !== 'undefined' ? window._buildingShadowScale : undefined);
   const drapeOn = !(typeof window !== 'undefined' && window._buildingShadowDrape === false);
   const dayNight = sun.ambient != null ? sun.ambient : 1;
   const alpha = BASE_ALPHA * dayNight;
