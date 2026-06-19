@@ -35,10 +35,13 @@ const SHOW_TILES = true;    // floor ON — drawn as a top pass over the dimmed 
                             // world player is suppressed while inside, so no z-order clash)
 const SHOW_WALLS = true;    // walls + roof ON, with the spotlight cutaway (below)
 
-const INT_WALL_TILES = WALL_CONFIG.wallHeight; // interior walls one story tall (match exterior)
-const ROOF_RADIUS_TILES = 5.5;  // big see-through circle for the roof/ceiling
-const SWALL_RADIUS_TILES = 2.6;  // smaller circle for the south wall
-const ROOF_TINT = 'rgba(116,88,56,0.82)';
+// Interior walls REUSE the exterior wall geometry (the worker-chunk-renderer.js bake) so they
+// match it 1:1 — same sprites, same `0,8,…,112` crop, same WALL_CONFIG offsets — instead of a
+// re-invented billboard (which read at the wrong scale, dropped the door/window/corner sprites,
+// and used a full rotated brick for the E/W trim). The interior just draws a SINGLE story (the
+// active floor), lifted with the floor, door on the ground floor only. The one interior-specific
+// bit is the south-wall spotlight so the front wall never hides the player.
+const SWALL_RADIUS_TILES = 2.6;  // see-through circle punched in the south wall around the player
 
 // Spotlight cutaway: draw an OCCLUDER (south wall / roof) to an offscreen layer, punch a
 // soft radial hole around the player, then composite — so the structure stays solid but
@@ -65,51 +68,117 @@ function spotlightComposite(ctx, w, h, px, py, radius, drawFn) {
   ctx.drawImage(_maskCv, 0, 0);
 }
 
-// Draw the perimeter wall billboards on one SIDE of the footprint (n/s/e/w), one story tall,
-// lifted with the floor. South skips the doorway. Used solid for back/side walls and inside
-// the spotlight layer for the south wall.
-function drawEdgeWalls(ctx, ai, side, img, camX, camY, tilePx, lift, w, h) {
-  const t = Math.ceil(tilePx), wp = 1, wH = Math.round(tilePx * INT_WALL_TILES);
-  const has = (x, y) => ai.footprint.has(x + ',' + y);
-  const isDoor = (x, y) => ai.doors.some(d => d.x === x && d.y === y);
+// The wall-sprite set the interior shares with the exterior bake. Loaded by ensureFloorImages();
+// any piece may be null until onload (drawInteriorWallSet guards on south_base).
+function interiorWallImgs() {
+  return {
+    south_base: getWallImg('south_base'),
+    south_window: getWallImg('south_window'),
+    south_door: getWallImg('south_door'),
+    south_corner_west: getWallImg('south_corner_west'),
+    south_corner_east: getWallImg('south_corner_east'),
+    edge_ew: getWallImg('edge_ew'),
+  };
+}
+
+// Draw the active floor's perimeter walls EXACTLY as the exterior bake does
+// (worker-chunk-renderer.js §wall post-pass): same sprites, same `0,8,…,112` crop, same
+// WALL_CONFIG offsets — but a SINGLE story (this floor), lifted with the floor, and the door on
+// the ground floor only. `sides` selects which edges to draw so the caller can render N/E/W solid
+// (behind the player) and the S wall inside the spotlight layer (so it never hides the player).
+function drawInteriorWallSet(ctx, ai, wImgs, camX, camY, tilePx, lift, w, h, sides, isGround) {
+  if (!wImgs.south_base) return;
+  const t = Math.round(tilePx), wp = 1;
+  const WY = WALL_CONFIG.wallYOffset, WH = WALL_CONFIG.wallHeight, NY = WALL_CONFIG.northYOffset;
+  const wH = Math.round(t * WH);
+  const sxAt = (wx) => Math.round(wx * tilePx - camX);
+  const syAt = (wy) => Math.round(wy * tilePx - camY - lift);
+  const fp = ai.building.footprint, sections = fp.sections || [];
+  const floorSet = new Set();
+  for (const s of sections) for (let dy = 0; dy < s.h; dy++) for (let dx = 0; dx < s.w; dx++) floorSet.add((s.x0 + dx) + ',' + (s.y0 + dy));
+  const doorSet = new Set((fp.doors || []).map(d => d.x + ',' + d.y));
   ctx.imageSmoothingEnabled = false;
-  for (const k of ai.footprint) {
-    const [lx, ly] = k.split(',').map(Number);
-    let sx, sy;
-    if (side === 'n') { if (has(lx, ly - 1)) continue; sx = (ai.bx + lx) * tilePx - camX; sy = (ai.by + ly) * tilePx - camY - lift - wH; }
-    else if (side === 's') { if (has(lx, ly + 1)) continue; if (isDoor(lx, ly)) continue; sx = (ai.bx + lx) * tilePx - camX; sy = (ai.by + ly + 1) * tilePx - camY - lift - wH; }
-    else if (side === 'w') { if (has(lx - 1, ly)) continue; sx = (ai.bx + lx) * tilePx - camX; sy = (ai.by + ly + 1) * tilePx - camY - lift - wH; }
-    else { if (has(lx + 1, ly)) continue; sx = (ai.bx + lx) * tilePx - camX; sy = (ai.by + ly + 1) * tilePx - camY - lift - wH; }
-    sx = Math.round(sx); sy = Math.round(sy);
-    if (sx + t < 0 || sx > w || sy + wH < 0 || sy > h) continue;
-    if (!img) { ctx.fillStyle = '#7a756d'; ctx.fillRect(sx, sy, t, wH); continue; }
-    if (side === 'e' || side === 'w') {
-      // rotate the brick so the courses run vertically along the side wall
-      // (W = 90° CCW, E = 90° CW) instead of facing the camera like N/S.
-      ctx.save();
-      ctx.translate(sx + t / 2, sy + wH / 2);
-      ctx.rotate(side === 'w' ? -Math.PI / 2 : Math.PI / 2);
-      ctx.drawImage(img, 0, 8, 32, 112, -wH / 2, -t / 2, wH + wp, t + wp);
-      ctx.restore();
-    } else {
-      ctx.drawImage(img, 0, 8, 32, 112, sx, sy, t + wp, wH + wp);   // opaque band of the brick sprite
+
+  // NORTH (back wall) — rises up off the north edge, behind the player.
+  if (sides.north) {
+    for (const s of sections) {
+      const nr = s.y0;
+      for (let dx = 0; dx < s.w; dx++) {
+        const lx = s.x0 + dx;
+        if (floorSet.has(lx + ',' + (nr - 1))) continue;
+        const sx = sxAt(ai.bx + lx), sy = syAt(ai.by + nr) - wH + Math.round(t * NY);
+        if (sx + t < 0 || sx > w || sy + wH < 0 || sy > h) continue;
+        const wo = !floorSet.has((lx - 1) + ',' + nr), eo = !floorSet.has((lx + 1) + ',' + nr);
+        ctx.drawImage(wImgs.south_base, 0, 8, 32, 112, sx, sy, t + wp, wH + wp);
+        if (wo && wImgs.south_corner_west) ctx.drawImage(wImgs.south_corner_west, 0, 8, 32, 112, sx - t, sy, t + wp, wH + wp);
+        else if (eo && wImgs.south_corner_east) ctx.drawImage(wImgs.south_corner_east, 0, 8, 32, 112, sx + t, sy, t + wp, wH + wp);
+      }
+    }
+  }
+
+  // EAST / WEST — REAL brick side walls (the exterior's thin `edge_ew` trim read flimsy from
+  // inside). Use south_base rotated 90° (W = CCW, E = CW), one tile per exposed edge row, so the
+  // room reads as fully walled. A no-molding BODY band is sampled and tiled per row → uniform
+  // courses (no cap-repeat), matching the N/S brick colour. (User feedback: "use the south wall
+  // but rotated".)
+  if (sides.ew) {
+    const BX = 0, BY = 50, BW = 32, BH = 32; // a clean mid-brick band (skip the top molding cap)
+    for (const s of sections) {
+      const westCol = s.x0, eastCol = s.x0 + s.w - 1;
+      for (let dy = 0; dy < s.h; dy++) {
+        const ly = s.y0 + dy;
+        if (!floorSet.has((westCol - 1) + ',' + ly)) {          // west edge exposed → CCW
+          const cx = sxAt(ai.bx + westCol), cy = syAt(ai.by + ly);
+          if (cx + t > 0 && cx < w && cy + t > 0 && cy < h) {
+            ctx.save(); ctx.translate(cx + t / 2, cy + t / 2); ctx.rotate(-Math.PI / 2);
+            ctx.drawImage(wImgs.south_base, BX, BY, BW, BH, -t / 2, -t / 2, t + wp, t + wp); ctx.restore();
+          }
+        }
+        if (!floorSet.has((eastCol + 1) + ',' + ly)) {          // east edge exposed → CW
+          const cx = sxAt(ai.bx + eastCol), cy = syAt(ai.by + ly);
+          if (cx + t > 0 && cx < w && cy + t > 0 && cy < h) {
+            ctx.save(); ctx.translate(cx + t / 2, cy + t / 2); ctx.rotate(Math.PI / 2);
+            ctx.drawImage(wImgs.south_base, BX, BY, BW, BH, -t / 2, -t / 2, t + wp, t + wp); ctx.restore();
+          }
+        }
+      }
+    }
+  }
+
+  // SOUTH (front wall) — rises up over the interior, so it occludes the player; the caller draws
+  // it inside the spotlight. Door on the ground floor only; windows + corners match the exterior.
+  if (sides.south) {
+    for (const s of sections) {
+      const lr = s.y0 + s.h - 1, fbY = ai.by + s.y0 + s.h;
+      const win = new Set(); let iv = 0;
+      for (let dx = 0; dx < s.w; dx++) {
+        const lx = s.x0 + dx, ly = lr;
+        if (floorSet.has(lx + ',' + (ly + 1))) continue;
+        if (doorSet.has(lx + ',' + ly)) { iv = 0; continue; }
+        if (dx < 2 || dx >= s.w - 2) { iv++; continue; }
+        if (doorSet.has((lx - 1) + ',' + ly) || doorSet.has((lx + 1) + ',' + ly)) { iv++; continue; }
+        iv++; if (iv % 3 === 0) win.add(lx + ',' + ly);
+      }
+      const skip = new Set();
+      for (let dx = 0; dx < s.w; dx++) {
+        if (skip.has(dx)) continue;
+        const lx = s.x0 + dx, ly = lr;
+        if (floorSet.has(lx + ',' + (ly + 1))) continue;
+        const sx = sxAt(ai.bx + lx), sy = syAt(fbY) - wH + Math.round(t * WY);
+        if (sx + t < 0 || sx > w || sy + wH < 0 || sy > h) continue;
+        const k = lx + ',' + ly, wo = !floorSet.has((lx - 1) + ',' + ly), eo = !floorSet.has((lx + 1) + ',' + ly);
+        if (wo && wImgs.south_corner_west) { ctx.drawImage(wImgs.south_base, 0, 8, 32, 112, sx, sy, t + wp, wH + wp); ctx.drawImage(wImgs.south_corner_west, 0, 8, 32, 112, sx - t, sy, t + wp, wH + wp); }
+        else if (eo && wImgs.south_corner_east) { ctx.drawImage(wImgs.south_base, 0, 8, 32, 112, sx, sy, t + wp, wH + wp); ctx.drawImage(wImgs.south_corner_east, 0, 8, 32, 112, sx + t, sy, t + wp, wH + wp); }
+        else if (isGround && doorSet.has(k) && dx >= 2 && dx < s.w - 2 && wImgs.south_door) { ctx.drawImage(wImgs.south_door, 0, 8, 64, 112, sx, sy, t * 2 + wp, wH + wp); skip.add(dx + 1); }
+        else if (win.has(k) && dx >= 2 && dx < s.w - 2 && wImgs.south_window) { ctx.drawImage(wImgs.south_window, 0, 8, 64, 112, sx, sy, t * 2 + wp, wH + wp); skip.add(dx + 1); }
+        else ctx.drawImage(wImgs.south_base, 0, 8, 32, 112, sx, sy, t + wp, wH + wp);
+      }
     }
   }
 }
 
-// Roof/ceiling: tint each FOOTPRINT tile (+ the wall band above it), NOT the bounding box —
-// so an L/T/notched building's roof follows its real shape instead of painting a square over
-// the non-footprint corners. The big spotlight hole reveals the floor around the player.
-function drawRoofCeiling(ctx, ai, camX, camY, tilePx, lift) {
-  const t = Math.ceil(tilePx) + 1, wH = Math.round(tilePx * INT_WALL_TILES);
-  ctx.fillStyle = ROOF_TINT;
-  for (const k of ai.footprint) {
-    const [lx, ly] = k.split(',').map(Number);
-    const sx = Math.round((ai.bx + lx) * tilePx - camX);
-    const sy = Math.round((ai.by + ly) * tilePx - camY - lift) - wH; // tile top lifted, extended up by the wall band
-    ctx.fillRect(sx, sy, t, t + wH);
-  }
-}
+/** The ground floor = lowest above-ground floor (the one with the exterior door). */
+function groundFloorIndex(ai) { return ai.floorKeys.find(k => k >= 0) ?? ai.floorKeys[0]; }
 
 // Animated outer-world dim — eases on enter + floor change so climbing visibly recedes the
 // ground world (see drawInteriorFloorWorld).
@@ -160,12 +229,12 @@ export function drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h) {
     marker(ctx, ai, L.stairTile, '#caa23a', camX, camY, tilePx, t, lift); // fallback bidirectional core
   }
   if (L.liftTile) stairMarker(ctx, ai, L.liftTile, '#4aa6c8', '⇕', camX, camY, tilePx, t, lift);
-  // BACK + SIDE walls (N/E/W) — behind the player, solid (no occlusion of the player).
+  // BACK + SIDE walls (N/E/W) — behind the player, SOLID (they never occlude a player who is
+  // south of them). Same sprites/geometry as the exterior bake; the SOUTH wall is deferred to
+  // drawInteriorWallsWorld so it can fade around the player.
   if (SHOW_WALLS) {
-    const wallImg = getWallImg('south_base');
-    drawEdgeWalls(ctx, ai, 'n', wallImg, camX, camY, tilePx, lift, w, h);
-    drawEdgeWalls(ctx, ai, 'w', wallImg, camX, camY, tilePx, lift, w, h);
-    drawEdgeWalls(ctx, ai, 'e', wallImg, camX, camY, tilePx, lift, w, h);
+    drawInteriorWallSet(ctx, ai, interiorWallImgs(), camX, camY, tilePx, lift, w, h,
+      { north: true, ew: true, south: false }, ai.floorIndex === groundFloorIndex(ai));
   }
   ctx.restore();
 
@@ -183,23 +252,20 @@ export function drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h) {
   ctx.restore();
 }
 
-/** Call AFTER the player sprite. Draws the ROOF/ceiling (big spotlight) then the SOUTH wall
- *  (smaller spotlight) so the structure stays solid but fades around the player, who is never
- *  hidden. playerScreen = the player's on-screen point (the spotlight centre). */
+/** Call AFTER the player sprite. Draws the SOUTH (front) wall with a see-through hole around the
+ *  player, so the front wall occludes the room behind it but never the player. No opaque ceiling
+ *  slab — you look down INTO the room and see the whole interior + north wall. playerScreen = the
+ *  player's on-screen point (the spotlight centre). */
 export function drawInteriorWallsWorld(ctx, camX, camY, tilePx, w, h, playerTile, playerScreen) {
   if (!isInside() || !SHOW_WALLS) return;
   const ai = getActiveInterior();
   const lift = interiorLiftPx();
   const px = playerScreen ? playerScreen.x : w / 2;
   const py = (playerScreen ? playerScreen.y : h / 2) - tilePx * 0.6; // centre on the torso, not the feet
-  const wallImg = getWallImg('south_base');
   ctx.save();
-  // ROOF/ceiling first (big see-through circle) …
-  spotlightComposite(ctx, w, h, px, py, tilePx * ROOF_RADIUS_TILES,
-    (o) => drawRoofCeiling(o, ai, camX, camY, tilePx, lift));
-  // … then the SOUTH wall on top (smaller circle) so it occludes the room but never the player.
   spotlightComposite(ctx, w, h, px, py, tilePx * SWALL_RADIUS_TILES,
-    (o) => drawEdgeWalls(o, ai, 's', wallImg, camX, camY, tilePx, lift, w, h));
+    (o) => drawInteriorWallSet(o, ai, interiorWallImgs(), camX, camY, tilePx, lift, w, h,
+      { north: false, ew: false, south: true }, ai.floorIndex === groundFloorIndex(ai)));
   ctx.restore();
 }
 
