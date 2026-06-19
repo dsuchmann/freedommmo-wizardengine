@@ -1,0 +1,140 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Interior — full structure + spotlight cutaway</title>
+<style>
+  body{margin:0;background:#0d0f13;color:#cdd3da;font:13px/1.45 system-ui,sans-serif}
+  h1{font-size:15px;margin:14px 16px 2px}
+  p.note{margin:2px 16px 10px;color:#8a93a0;max-width:1180px}
+  canvas{display:block;margin:6px auto;border:1px solid #222;background:#0d0f13}
+  b.k{color:#ffd27a}
+</style></head>
+<body>
+<h1>Inside a building — full structure, spotlight cutaway</h1>
+<p class="note">All four walls (N/S/E/W) render and STACK per floor, the roof renders, and the south walls of the floors above &amp; below render too. Whatever would <b class="k">occlude the player</b> fades inside a soft circle centred on them — <b class="k">roof = big circle</b>, <b class="k">walls = smaller circle</b> — so structure is preserved but the player is never hidden. Drag the slider to move the player south behind the wall.</p>
+<canvas id="c" width="1200" height="620"></canvas>
+<div style="text-align:center;margin-top:6px">
+  <label style="color:#8a93a0">player south ↓ <input id="sy" type="range" min="0" max="100" value="35" style="width:280px;vertical-align:middle"></label>
+  <span id="lbl" style="color:#ffd27a;margin-left:10px"></span>
+</div>
+<script>
+const cv=document.getElementById('c'), X=cv.getContext('2d');
+const PW=388, PXs=[8,406,804], PY=40, PH=470;
+const slider=document.getElementById('sy'), lbl=document.getElementById('lbl');
+
+function panel(px,title,sub){
+  X.fillStyle='#11141a'; X.fillRect(px,PY,PW,PH);
+  X.strokeStyle='#2a2f38'; X.strokeRect(px+.5,PY+.5,PW,PH);
+  X.fillStyle='#e7ecf2'; X.font='bold 13px system-ui'; X.fillText(title, px+12, PY+20);
+  X.fillStyle='#8a93a0'; X.font='12px system-ui'; X.fillText(sub, px+12, PY+38);
+  return {cx:px+PW/2};
+}
+function clipPanel(px){ X.beginPath(); X.rect(px,PY+44,PW,PH-46); X.clip(); }
+function brick(bx,by,bw,bh,grad){
+  X.fillStyle=grad||'#8a857d'; X.fillRect(bx,by,bw,bh);
+  X.strokeStyle='rgba(40,34,28,.55)';X.lineWidth=1; const ch=7;
+  for(let r=0;r*ch<bh;r++){const yy=by+r*ch;X.beginPath();X.moveTo(bx,yy+.5);X.lineTo(bx+bw,yy+.5);X.stroke();
+    const off=(r%2)*7;for(let cxp=bx-off;cxp<bx+bw;cxp+=14){X.beginPath();X.moveTo(cxp+.5,yy);X.lineTo(cxp+.5,yy+ch);X.stroke();}}
+}
+function floorTiles(fx,fy,fw,fh){
+  X.save();X.beginPath();X.rect(fx,fy,fw,fh);X.clip();
+  X.fillStyle='#8a8d93';X.fillRect(fx,fy,fw,fh);
+  X.strokeStyle='rgba(60,62,68,.7)';X.lineWidth=1;
+  for(let xx=fx;xx<=fx+fw;xx+=16){X.beginPath();X.moveTo(xx+.5,fy);X.lineTo(xx+.5,fy+fh);X.stroke();}
+  for(let yy=fy;yy<=fy+fh;yy+=16){X.beginPath();X.moveTo(fx,yy+.5);X.lineTo(fx+fw,yy+.5);X.stroke();}
+  X.restore();
+}
+function player(cx,cy){
+  X.fillStyle='rgba(0,0,0,.30)';X.beginPath();X.ellipse(cx,cy+2,9,4,0,0,7);X.fill();
+  X.fillStyle='#3b6fb0';X.fillRect(cx-5,cy-16,10,12);
+  X.fillStyle='#e6c39a';X.beginPath();X.arc(cx,cy-20,5,0,7);X.fill();
+  X.fillStyle='#26456e';X.fillRect(cx-5,cy-5,4,6);X.fillRect(cx+1,cy-5,4,6);
+}
+// radial spotlight fill: transparent within ~innerFrac of R around (px,py), solid at R
+function spot(px,py,R,solid){
+  const g=X.createRadialGradient(px,py,Math.max(1,R*0.18),px,py,R);
+  g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(0.55,'rgba(0,0,0,0)'); g.addColorStop(1,solid);
+  return g;
+}
+function tag(tx,ty,txt,col){X.fillStyle=col||'#0bd6c7';X.font='11px system-ui';X.fillText(txt,tx,ty);}
+function arrow(ax,ay,bx,by,col){X.strokeStyle=col;X.fillStyle=col;X.lineWidth=1.5;X.beginPath();X.moveTo(ax,ay);X.lineTo(bx,by);X.stroke();const a=Math.atan2(by-ay,bx-ax);X.beginPath();X.moveTo(bx,by);X.lineTo(bx-7*Math.cos(a-.4),by-7*Math.sin(a-.4));X.lineTo(bx-7*Math.cos(a+.4),by-7*Math.sin(a+.4));X.closePath();X.fill();}
+
+// geometry of a room within a panel
+function room(px){ const rw=250, rh=200, rx=px+(PW-rw)/2, ry=PY+150; return {rx,ry,rw,rh,wall:18,cx:rx+rw/2}; }
+
+function draw(){
+  X.clearRect(0,0,cv.width,cv.height);
+  const south = +slider.value/100;  // 0..1 how far south the player is
+  lbl.textContent = south>0.62 ? 'player is BEHIND the south wall → it spotlights open' : 'player in the open';
+
+  /* PANEL 1 — full structure, no cutaway */
+  {const p=panel(PXs[0],'1 · FULL STRUCTURE','every wall + roof renders, stacked per floor');
+   X.save();clipPanel(PXs[0]);
+   const R=room(PXs[0]);
+   floorTiles(R.rx,R.ry,R.rw,R.rh);
+   brick(R.rx-R.wall,R.ry-14,R.rw+2*R.wall,16);            // N wall (back)
+   brick(R.rx-R.wall,R.ry,R.wall,R.rh);                    // W wall
+   brick(R.rx+R.rw,R.ry,R.wall,R.rh);                      // E wall
+   brick(R.rx-R.wall,R.ry+R.rh-30,R.rw+2*R.wall,44);       // S wall (front, billboard up)
+   // roof slab on top (solid here)
+   X.fillStyle='rgba(176,142,96,.96)';X.fillRect(R.rx-R.wall-6,R.ry-78,R.rw+2*R.wall+12,70);
+   X.fillStyle='rgba(0,0,0,.10)';X.fillRect(R.rx-R.wall-6,R.ry-20,R.rw+2*R.wall+12,12);
+   tag(R.rx-14,R.ry-84,'roof','#d9b06a');
+   tag(R.rx+R.rw-2,R.ry+10,'E wall','#cdd3da'); tag(R.rx-R.wall-2,R.ry+10,'W','#cdd3da');
+   tag(R.rx,R.ry-20,'N wall','#cdd3da'); tag(R.rx+4,R.ry+R.rh+6,'S wall','#cdd3da');
+   X.restore();
+   tag(PXs[0]+12,PY+PH-8,'solid from outside — the cutaway (panel 2) is what you see inside','#6f8aa0');
+  }
+
+  /* PANEL 2 — spotlight cutaway (single floor) */
+  {const p=panel(PXs[1],'2 · SPOTLIGHT CUTAWAY','roof = big soft circle · south wall = smaller circle');
+   X.save();clipPanel(PXs[1]);
+   const R=room(PXs[1]);
+   const plx=R.cx, ply=R.ry+30+south*(R.rh-50);
+   floorTiles(R.rx,R.ry,R.rw,R.rh);
+   brick(R.rx-R.wall,R.ry-14,R.rw+2*R.wall,16);   // N wall (behind player — stays solid)
+   brick(R.rx-R.wall,R.ry,R.wall,R.rh);           // W
+   brick(R.rx+R.rw,R.ry,R.wall,R.rh);             // E
+   player(plx,ply);
+   // SOUTH wall with a SMALL spotlight around the player
+   brick(R.rx-R.wall,R.ry+R.rh-30,R.rw+2*R.wall,44, spot(plx,ply,86,'rgba(138,133,125,1)'));
+   // ROOF with a BIG spotlight around the player
+   X.fillStyle=spot(plx,ply,150,'rgba(176,142,96,.96)');
+   X.fillRect(R.rx-R.wall-6,R.ry-78,R.rw+2*R.wall+12, (R.ry+R.rh+14)-(R.ry-78));
+   // rings to show the two radii
+   X.strokeStyle='rgba(255,210,122,.5)';X.setLineDash([4,4]);X.beginPath();X.arc(plx,ply,150,0,7);X.stroke();
+   X.strokeStyle='rgba(11,214,199,.55)';X.beginPath();X.arc(plx,ply,86,0,7);X.stroke();X.setLineDash([]);
+   tag(plx+150-40,ply-150+12,'roof circle','#ffd27a');
+   tag(plx+86-30,ply-86-2,'wall circle','#0bd6c7');
+   X.restore();
+   tag(PXs[1]+12,PY+PH-8,'outside the circles the roof + S wall stay solid → structure preserved','#6f8aa0');
+  }
+
+  /* PANEL 3 — multi-floor: floors below + above both draw, spotlight on the current floor */
+  {const p=panel(PXs[2],'3 · MULTI-FLOOR (you are on floor 2)','floor 1 S-wall below + floor 3..N + roof above — all draw, all spotlight-fade');
+   X.save();clipPanel(PXs[2]);
+   const R=room(PXs[2]);
+   const story=58;
+   const plx=R.cx, ply=R.ry+30+south*(R.rh-50);
+   // floor 1 (below) — its south wall sits one story SOUTH/down, dimmer
+   X.globalAlpha=0.85; brick(R.rx-R.wall,R.ry+R.rh-30+story,R.rw+2*R.wall,44, spot(plx,ply,150,'rgba(90,86,80,1)')); X.globalAlpha=1;
+   tag(R.rx+4,R.ry+R.rh+story+8,'floor 1 S-wall (below)','#7f8a9a');
+   // current floor 2
+   floorTiles(R.rx,R.ry,R.rw,R.rh);
+   brick(R.rx-R.wall,R.ry-14,R.rw+2*R.wall,16);
+   brick(R.rx-R.wall,R.ry,R.wall,R.rh);
+   brick(R.rx+R.rw,R.ry,R.wall,R.rh);
+   player(plx,ply);
+   brick(R.rx-R.wall,R.ry+R.rh-30,R.rw+2*R.wall,44, spot(plx,ply,86,'rgba(138,133,125,1)'));
+   // floor 3 (above) south wall sits one story NORTH/up, + roof above that
+   brick(R.rx-R.wall,R.ry+R.rh-30-story,R.rw+2*R.wall,44, spot(plx,ply,150,'rgba(150,145,136,1)'));
+   tag(R.rx+4,R.ry+R.rh-story-34,'floor 3 S-wall (above)','#b8b3a8');
+   X.fillStyle=spot(plx,ply,170,'rgba(176,142,96,.96)');
+   X.fillRect(R.rx-R.wall-6,R.ry-78-story, R.rw+2*R.wall+12, 70);
+   tag(R.rx-14,R.ry-84-story,'roof (top)','#d9b06a');
+   X.restore();
+   tag(PXs[2]+12,PY+PH-8,'every floor’s walls draw → full tower; spotlight keeps YOU visible on floor 2','#6f8aa0');
+  }
+}
+slider.addEventListener('input',draw);
+draw();
+</script>
+</body></html>
