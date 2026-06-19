@@ -196,8 +196,11 @@ function update(dt) {
       // entering: stand on a building door tile → walk in
       const mx = Math.floor(ptx / MACRO_TILES), my = Math.floor(pty / MACRO_TILES);
       const { byTile } = resolveBuildingsInRange(getWorldSeed(), mx, my, mx, my);
+      // SLICE 1 (doors unsolved — PixelLab door sprite + walk-in/out animation comes later):
+      // forgiving entry — stepping onto the building footprint puts you inside, so it's
+      // easy to get in. Door-gated entry + the walk-in animation are a future pass.
       const b = byTile.get(ptx + ',' + pty);
-      if (b && b.footprint && b.footprint.node && (b.footprint.doors || []).some(d => b.x + d.x === ptx && b.y + d.y === pty)) {
+      if (b && b.footprint && b.footprint.node) {
         AI.enterAt(b);
       }
     } else {
