@@ -1,0 +1,187 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Building Shadows — live preview (real building-shadow.js)</title>
+<style>
+  html,body{margin:0;background:#11131a;color:#cfd6e4;font:13px/1.5 system-ui,sans-serif}
+  .wrap{display:flex;gap:16px;padding:16px}
+  canvas{background:#000;border:1px solid #2a2f3d;border-radius:6px}
+  .panel{width:300px}
+  h1{font-size:15px;margin:0 0 4px}
+  .sub{color:#7e88a0;margin:0 0 14px}
+  .row{margin:10px 0}
+  label{display:block;color:#9aa4bc;margin-bottom:3px}
+  input[type=range]{width:100%}
+  .read{font-family:ui-monospace,monospace;color:#ffc24a;font-size:12px}
+  .k{display:flex;align-items:center;gap:7px;margin:6px 0}
+  .k input{margin:0}
+  .legend{margin-top:16px;border-top:1px solid #2a2f3d;padding-top:12px;color:#8b93ab}
+  .legend b{color:#cfd6e4}
+  button{background:#222838;color:#cfd6e4;border:1px solid #3a4256;border-radius:5px;padding:5px 10px;cursor:pointer}
+  button:hover{background:#2b3142}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <canvas id="c" width="760" height="760"></canvas>
+  <div class="panel">
+    <h1>Building shadows — live</h1>
+    <p class="sub">Drives the <b>real</b> <code>drawBuildingShadows()</code> + the real
+      <code>DayNightCycle.sun()</code>. Façades are drawn with the same <code>facadeRect()</code>
+      the drape lands on, so what you see is the shipped geometry.</p>
+
+    <div class="row">
+      <label>Time of day — <span class="read" id="timeRead"></span></label>
+      <input type="range" id="time" min="0" max="1000" value="430">
+      <button id="play">▶ sweep day</button>
+    </div>
+
+    <div class="row">
+      <div class="k"><input type="checkbox" id="shadows" checked><label style="margin:0">building shadows <span style="color:#5b647c">(_buildingShadows)</span></label></div>
+      <div class="k"><input type="checkbox" id="drape" checked><label style="margin:0">façade drape — climb walls <span style="color:#5b647c">(_buildingShadowDrape)</span></label></div>
+    </div>
+
+    <div class="row">
+      <label>ground length × <span class="read" id="scaleRead">1.0</span></label>
+      <input type="range" id="scale" min="50" max="250" value="100">
+    </div>
+
+    <div class="read" id="sunRead" style="margin-top:10px"></div>
+
+    <div class="legend">
+      <p><b>What you're looking at:</b> a tall 5-storey tower (centre) ringed by shorter houses.</p>
+      <p>• <b>Ground shadow</b> shoots <b>away from the sun</b> — straight down at noon, long to the
+         west at dawn, long to the east at dusk; length grows with storeys + low sun.</p>
+      <p>• <b>Drape</b>: where the tower's shadow reaches a neighbour, it <b>climbs that neighbour's
+         south wall</b> instead of lying flat — the "drench a surface at a different height" bit.</p>
+      <p>• Both fade out at night.</p>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { drawBuildingShadows, southFacadeColumns, facadeRect, buildingFloors } from '../src/render/building-shadow.js';
+import { DayNightCycle } from '../src/world/lighting.js';
+
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+
+// View: tile px + a downward camera offset so tall (4-tile/storey) façades fit on screen.
+const TILE = 15;
+const camX = 0, camY = -300;
+const sx = wx => wx * TILE - camX;
+const sy = wy => wy * TILE - camY;
+
+// Scene: shape matches what building-shadow.js reads — {x,y,footprint:{boundingBox,sections,node:{payload:{aboveGroundFloors}}}}.
+function B(x, y, w, h, floors, label) {
+  return { x, y, footprint: { boundingBox: { w, h }, sections: [{ x0: 0, y0: 0, w, h }],
+    node: { payload: { aboveGroundFloors: floors } } }, _label: label };
+}
+const buildings = [
+  B(15, 3, 5, 5, 5, 'tower (5)'),   // tall centre — long shadow that drenches whichever neighbour it covers
+  B(16, 9, 4, 3, 1, 'house S (1)'), // directly south — draped at NOON (short straight-down shadow)
+  B(24, 5, 3, 3, 1, 'shop E (1)'),  // east   — draped at DUSK (sun west → shadow east)
+  B(6, 5, 4, 4, 2, 'house W (2)'),  // west   — draped at DAWN (sun east → shadow west)
+  B(8, 13, 4, 3, 1, 'house (1)'),   // sw filler for scale
+];
+
+const cycle = new DayNightCycle(); cycle.paused = true;
+const $ = id => document.getElementById(id);
+let playing = false;
+
+function tileGrid() {
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
+  for (let x = 0; x <= 40; x++) { ctx.beginPath(); ctx.moveTo(sx(x), 0); ctx.lineTo(sx(x), H); ctx.stroke(); }
+  for (let y = -10; y <= 40; y++) { ctx.beginPath(); ctx.moveTo(0, sy(y)); ctx.lineTo(W, sy(y)); ctx.stroke(); }
+}
+
+function drawBuilding(b) {
+  const bb = b.footprint.boundingBox, stories = buildingFloors(b);
+  // façade columns drawn with the SAME facadeRect() the shadow drape uses → drape aligns exactly
+  const cols = southFacadeColumns(b);
+  // walls
+  for (const col of cols) {
+    const r = facadeRect(col.baseWorldY, col.wx, stories, TILE, camX, camY);
+    ctx.fillStyle = '#5a6072'; ctx.fillRect(r.x, r.y, r.w + 1, r.h);
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.strokeRect(r.x + .5, r.y + .5, r.w, r.h);
+    // storey/window lines for read
+    const storyH = r.h / stories;
+    ctx.fillStyle = '#3c4150';
+    for (let s = 0; s < stories; s++) {
+      const wy = r.y + s * storyH + storyH * 0.30;
+      ctx.fillRect(r.x + r.w * 0.30, wy, r.w * 0.40, storyH * 0.34);
+    }
+  }
+  // roof slab at the top of the stack, spanning the footprint width
+  if (cols.length) {
+    const top = facadeRect(b.y + bb.h, b.x, stories, TILE, camX, camY).y;
+    ctx.fillStyle = '#7d4a39';
+    ctx.fillRect(sx(b.x), top - TILE * 0.8, bb.w * TILE, TILE * 1.4);
+    ctx.fillStyle = '#8a5442';
+    ctx.fillRect(sx(b.x), top - TILE * 0.8, bb.w * TILE, TILE * 0.5);
+  }
+  // footprint outline on the ground (dashed) — base vs cast region
+  ctx.setLineDash([4, 3]); ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+  ctx.strokeRect(sx(b.x), sy(b.y), bb.w * TILE, bb.h * TILE); ctx.setLineDash([]);
+  // label
+  ctx.fillStyle = 'rgba(220,228,245,0.7)'; ctx.font = '11px ui-monospace,monospace';
+  ctx.fillText(b._label, sx(b.x) + 2, sy(b.y + bb.h) - 3);
+}
+
+function sunGlyph(sun) {
+  // place a sun marker along the top arc from its angle (0=east/right .. π=west/left)
+  const cx = W / 2, baseY = 40, rx = W * 0.42, ry = 26;
+  const gx = cx + Math.cos(Math.PI - sun.sunAngle) * rx;       // east at right
+  const gy = baseY + (1 - sun.sunHeight) * ry * 2;
+  ctx.beginPath(); ctx.arc(gx, gy, 9, 0, 7);
+  ctx.fillStyle = sun.isDaytime ? '#ffd76a' : '#6b7bb8'; ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.stroke();
+  ctx.fillStyle = '#7e88a0'; ctx.font = '11px ui-monospace';
+  ctx.fillText('sun (' + sun.label + ')', gx - 24, gy - 14);
+}
+
+function frame() {
+  if (playing) cycle.time = (cycle.time + 0.0016) % 1;
+  const t = playing ? cycle.time : (+$('time').value / 1000);
+  cycle.time = t; $('time').value = Math.round(t * 1000);
+  const sun = cycle.sun();
+
+  // toggles → the real console knobs the module reads (same gates as in-game)
+  window._buildingShadows = $('shadows').checked ? undefined : false; // undefined = on (default)
+  window._buildingShadowDrape = $('drape').checked ? undefined : false;
+  window._buildingShadowScale = +$('scale').value / 100;
+
+  // ground tint by day-night so the fade reads
+  const amb = sun.ambient;
+  ctx.fillStyle = `rgb(${28 + amb * 40},${30 + amb * 44},${36 + amb * 30})`;
+  ctx.fillRect(0, 0, W, H);
+  tileGrid();
+
+  // buildings back-to-front (north first) so southern ones overlap correctly
+  const sorted = buildings.slice().sort((a, b) => a.y - b.y);
+
+  // To show ground-only when drape is off but ground on, we still need façades drawn first.
+  for (const b of sorted) drawBuilding(b);
+
+  // === the real pass — exactly the canvas-renderer hook (after roofs, before player) ===
+  drawBuildingShadows(ctx, buildings, camX, camY, TILE, W, H, sun);
+
+  sunGlyph(sun);
+
+  $('timeRead').textContent = (t * 24).toFixed(1).padStart(4, '0') + ' h · ' + sun.label;
+  $('scaleRead').textContent = (+$('scale').value / 100).toFixed(2);
+  $('sunRead').innerHTML =
+    `shadowX ${sun.shadowX.toFixed(2)} &nbsp; shadowLen ${sun.shadowLength.toFixed(2)} ` +
+    `&nbsp; ambient ${sun.ambient.toFixed(2)} &nbsp; ${sun.isDaytime ? 'day' : 'NIGHT (no shadow)'}`;
+
+  requestAnimationFrame(frame);
+}
+
+$('play').onclick = () => { playing = !playing; $('play').textContent = playing ? '⏸ pause' : '▶ sweep day'; };
+$('time').oninput = () => { playing = false; $('play').textContent = '▶ sweep day'; };
+frame();
+</script>
+</body>
+</html>
