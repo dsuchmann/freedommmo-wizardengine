@@ -1343,6 +1343,12 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
       edge_ew: imageCache.get(wallTileUrl('edge_ew')),
     };
     if (cBuildings.length > 0 && wImgs.south_base) {
+      // Wall sprites are 128px (4-tile) canvases whose opaque art is only rows 8..119
+      // (a 3.5-tile wall with 8px transparent margins top + bottom). Drawn 1:1 those
+      // margins stack into a 16px SEE-THROUGH gap at every story boundary — the "seams".
+      // So every wall drawImage below samples source `0,8,W,112` (the opaque band only)
+      // into the full `wH+wp` slot: each story fills its slot, stories butt seamlessly,
+      // and wH stays 4 tiles so the roof lift / north claim are unaffected.
       var WY = 0.25, WH = 4, NY = 0.25, EWH = 0.40, EWX = -0.30;
       var wH = Math.round(tileSize * WH);
       var wp = 1;
@@ -1403,13 +1409,13 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
               var wnsy = tsy(wb.y + wnr) - wH + Math.round(tileSize * NY) - nst * wH;
               if (wnsx + tileSize < 0 || wnsx > canvasSize || wnsy + wH < 0 || wnsy > canvasSize) continue;
               if (nwo && wImgs.south_corner_west) {
-                ctx.drawImage(wImgs.south_base, 0,0,32,128, wnsx, wnsy, tileSize+wp, wH+wp);
-                ctx.drawImage(wImgs.south_corner_west, 0,0,32,128, wnsx-tileSize, wnsy, tileSize+wp, wH+wp);
+                ctx.drawImage(wImgs.south_base, 0,8,32,112, wnsx, wnsy, tileSize+wp, wH+wp);
+                ctx.drawImage(wImgs.south_corner_west, 0,8,32,112, wnsx-tileSize, wnsy, tileSize+wp, wH+wp);
               } else if (neo && wImgs.south_corner_east) {
-                ctx.drawImage(wImgs.south_base, 0,0,32,128, wnsx, wnsy, tileSize+wp, wH+wp);
-                ctx.drawImage(wImgs.south_corner_east, 0,0,32,128, wnsx+tileSize, wnsy, tileSize+wp, wH+wp);
+                ctx.drawImage(wImgs.south_base, 0,8,32,112, wnsx, wnsy, tileSize+wp, wH+wp);
+                ctx.drawImage(wImgs.south_corner_east, 0,8,32,112, wnsx+tileSize, wnsy, tileSize+wp, wH+wp);
               } else {
-                ctx.drawImage(wImgs.south_base, 0,0,32,128, wnsx, wnsy, tileSize+wp, wH+wp);
+                ctx.drawImage(wImgs.south_base, 0,8,32,112, wnsx, wnsy, tileSize+wp, wH+wp);
               }
             }
           }
@@ -1466,19 +1472,19 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
               var swo = !wfs.has((slx-1)+','+sly);
               var seo = !wfs.has((slx+1)+','+sly);
               if (swo && wImgs.south_corner_west) {
-                ctx.drawImage(wImgs.south_base,0,0,32,128,ssx5,ssy5,tileSize+wp,wH+wp);
-                ctx.drawImage(wImgs.south_corner_west,0,0,32,128,ssx5-tileSize,ssy5,tileSize+wp,wH+wp);
+                ctx.drawImage(wImgs.south_base,0,8,32,112,ssx5,ssy5,tileSize+wp,wH+wp);
+                ctx.drawImage(wImgs.south_corner_west,0,8,32,112,ssx5-tileSize,ssy5,tileSize+wp,wH+wp);
               } else if (seo && wImgs.south_corner_east) {
-                ctx.drawImage(wImgs.south_base,0,0,32,128,ssx5,ssy5,tileSize+wp,wH+wp);
-                ctx.drawImage(wImgs.south_corner_east,0,0,32,128,ssx5+tileSize,ssy5,tileSize+wp,wH+wp);
+                ctx.drawImage(wImgs.south_base,0,8,32,112,ssx5,ssy5,tileSize+wp,wH+wp);
+                ctx.drawImage(wImgs.south_corner_east,0,8,32,112,ssx5+tileSize,ssy5,tileSize+wp,wH+wp);
               } else if (sGround && wds.has(sk) && wdx5>=2 && wdx5<ws5.w-2 && wImgs.south_door) {
-                ctx.drawImage(wImgs.south_door,0,0,64,128,ssx5,ssy5,tileSize*2+wp,wH+wp);
+                ctx.drawImage(wImgs.south_door,0,8,64,112,ssx5,ssy5,tileSize*2+wp,wH+wp);
                 wskip.add(wdx5+1);
               } else if (wwp.has(sk) && wdx5>=2 && wdx5<ws5.w-2 && wImgs.south_window) {
-                ctx.drawImage(wImgs.south_window,0,0,64,128,ssx5,ssy5,tileSize*2+wp,wH+wp);
+                ctx.drawImage(wImgs.south_window,0,8,64,112,ssx5,ssy5,tileSize*2+wp,wH+wp);
                 wskip.add(wdx5+1);
               } else {
-                ctx.drawImage(wImgs.south_base,0,0,32,128,ssx5,ssy5,tileSize+wp,wH+wp);
+                ctx.drawImage(wImgs.south_base,0,8,32,112,ssx5,ssy5,tileSize+wp,wH+wp);
               }
             }
           }
