@@ -133,6 +133,109 @@ void main() {
 export var SPRITE_FLOATS = 9;
 var SPRITE_STRIDE = SPRITE_FLOATS * 4;
 
+// === GPU-driven flora ("anim sprite") ===
+// A STATIC per-instance buffer (uploaded once per pool rebuild; a sprite's slot is
+// re-patched only at 10Hz when a wind gust triggers it). The vertex shader derives
+// the current animation frame, the sway rotation and the fade-in alpha from a uTime
+// uniform — so the per-frame CPU cost (the ~85ms resolve loop) disappears entirely.
+// Frames are packed as a contiguous horizontal STRIP in the atlas, so frame i lives
+// at u0 + i*frameStride and the shader needs no per-frame lookup.
+// Layout (5 vec4 = 20 floats):
+//   a0 pivotX, pivotY, size(tiles), baseAngle
+//   a1 baseU0, v0, frameStride, sampleDu
+//   a2 frameCount, restFrame, loopCount, triggerTime(ms; <=-99998 = never)
+//   a3 spawnTime(ms; <=0 = no fade), lifeSway, tileRot, edgeFade
+//   a4 sampleDv, biomeShadow, diffusion(=1-tier), rigid(>0.5 = no sway)
+export var ANIM_SPRITE_FLOATS = 20;
+var ANIM_SPRITE_STRIDE = ANIM_SPRITE_FLOATS * 4;
+var ANIM_FRAME_DUR = 120; // ms per anim frame — MUST match field2-animator FRAME_DURATION
+
+// Shared GLSL: derive frameIdx + animBlend from uTime — a direct port of the CPU
+// resolve (field2-animator _poolFrame). uFrameDur = FRAME_DURATION (ms/frame).
+var ANIM_FRAME_GLSL = `
+float animFrame(vec4 a2, float uTime, float uFrameDur, out float animBlend) {
+  animBlend = 0.0;
+  float frameCount = a2.x, restFrame = a2.y, loopCount = a2.z, triggerTime = a2.w;
+  if (triggerTime <= -99998.0) return restFrame;          // never gusted -> rest
+  float blCycle = frameCount * uFrameDur;
+  float elapsed = uTime - triggerTime;
+  float dur = blCycle * loopCount;
+  if (elapsed >= 0.0 && elapsed <= dur) {
+    float cp = elapsed / blCycle;
+    animBlend = (cp < 1.0) ? min(1.0, cp * 2.0)
+              : (cp > loopCount - 1.0) ? max(0.0, (loopCount - cp) * 2.0)
+              : 1.0;
+    return floor(mod(elapsed / uFrameDur + restFrame, frameCount));
+  }
+  if (elapsed > dur) return floor(mod(dur / uFrameDur + restFrame, frameCount)); // freeze on end
+  return restFrame;                                        // startDelay (elapsed < 0)
+}`;
+
+var ANIM_SPRITE_VERT_SRC = `#version 300 es
+precision highp float;
+in vec2 aUnit;
+in vec4 a0; in vec4 a1; in vec4 a2; in vec4 a3; in vec4 a4;
+uniform vec2 uViewport;
+uniform vec3 uCam;       // x,y = screen-px offset, z = px per tile
+uniform float uTime;     // ms
+uniform float uFrameDur; // ms per anim frame
+out vec2 vUV;
+out float vAlpha;
+${ANIM_FRAME_GLSL}
+void main() {
+  float animBlend;
+  float frameIdx = animFrame(a2, uTime, uFrameDur, animBlend);
+  float sway = (a4.w > 0.5) ? 0.0 : (a3.z * 1.2 * animBlend * a3.y); // tileRot*1.2*blend*lifeSway
+  float rot = a0.w + sway;
+  float sizePx = a0.z * uCam.z;
+  vec2 pivotPx = a0.xy * uCam.z + uCam.xy;
+  vec2 local = vec2(aUnit.x * sizePx - sizePx * 0.5, aUnit.y * sizePx - sizePx);
+  float c = cos(rot), s = sin(rot);
+  vec2 px = pivotPx + vec2(local.x * c - local.y * s, local.x * s + local.y * c);
+  gl_Position = vec4(px.x / uViewport.x * 2.0 - 1.0, 1.0 - px.y / uViewport.y * 2.0, 0.0, 1.0);
+  vec2 uv0 = vec2(a1.x + frameIdx * a1.z, a1.y);
+  vUV = uv0 + aUnit * vec2(a1.w, a4.x);
+  float fade = (a3.x > 0.0) ? clamp((uTime - a3.x) / 400.0, 0.0, 1.0) : 1.0;
+  vAlpha = a3.w * fade;
+}`;
+
+var ANIM_SHADOW_VERT_SRC = `#version 300 es
+precision highp float;
+in vec2 aUnit;
+in vec4 a0; in vec4 a1; in vec4 a2; in vec4 a3; in vec4 a4;
+uniform vec2 uViewport;
+uniform vec3 uCam;
+uniform float uTime;
+uniform float uFrameDur;
+uniform vec2 uShadowVec;
+out vec2 vUV;
+out float vAlpha;
+out float vH;
+out float vDiff;
+${ANIM_FRAME_GLSL}
+void main() {
+  float animBlend;
+  float frameIdx = animFrame(a2, uTime, uFrameDur, animBlend);
+  float sizePx = a0.z * uCam.z;
+  vec2 pivotPx = a0.xy * uCam.z + uCam.xy;
+  float hgt = 1.0 - aUnit.y;
+  float diff = a4.z;
+  float shadowLen = length(uShadowVec);
+  float flatK = clamp(1.0 - shadowLen / 2.5, 0.0, 1.0);
+  float vert = mix(0.85, 0.40, flatK);
+  float wide = 1.0 + diff * 0.45;
+  vec2 base = vec2((aUnit.x - 0.5) * sizePx * wide, hgt * sizePx * vert);
+  vec2 px = pivotPx + base + hgt * sizePx * uShadowVec;
+  gl_Position = vec4(px.x / uViewport.x * 2.0 - 1.0, 1.0 - px.y / uViewport.y * 2.0, 0.0, 1.0);
+  vec2 uv0 = vec2(a1.x + frameIdx * a1.z, a1.y);
+  vUV = uv0 + aUnit * vec2(a1.w, a4.x);
+  float fade = (a3.x > 0.0) ? clamp((uTime - a3.x) / 400.0, 0.0, 1.0) : 1.0;
+  float spriteAlpha = a3.w * fade;
+  vAlpha = spriteAlpha * a4.y * (0.30 + 0.70 * (1.0 - diff)); // a4.y=biomeShadow, tier=1-diff
+  vH = hgt;
+  vDiff = diff;
+}`;
+
 // --- Stage 3: 1:1 art-res scene framebuffer + sharp-bilinear present ---
 // The whole GL scene (terrain + sprites) renders at art resolution (one
 // texel per art pixel) into an offscreen framebuffer, snapped to integer
@@ -904,6 +1007,186 @@ export class GLCompositor {
       this.shadowOk = true;
     }
     this.spritesOk = true;
+    this._initAnimSprites();
+  }
+
+  // === GPU-driven flora machinery (additive; old CPU path untouched) ===
+  // Two programs (sprite + shadow) read a STATIC 20-float instance buffer and derive
+  // frame/sway/fade from uTime. Frames live as contiguous strips in the same atlas.
+  _buildAnimVao(prog, vbo) {
+    var gl = this.gl;
+    var vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.unitVbo);
+    var lU = gl.getAttribLocation(prog, 'aUnit');
+    gl.enableVertexAttribArray(lU);
+    gl.vertexAttribPointer(lU, 2, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    var locs = [];
+    var names = ['a0', 'a1', 'a2', 'a3', 'a4'];
+    for (var i = 0; i < names.length; i++) {
+      var loc = gl.getAttribLocation(prog, names[i]);
+      locs.push(loc);
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, 4, gl.FLOAT, false, ANIM_SPRITE_STRIDE, i * 16);
+      gl.vertexAttribDivisor(loc, 1);
+    }
+    gl.bindVertexArray(null);
+    return { vao: vao, locs: locs };
+  }
+
+  _initAnimSprites() {
+    if (!this.spritesOk) return;
+    var gl = this.gl;
+    this.animOk = false;
+    var prog = this._buildProgram(ANIM_SPRITE_VERT_SRC, SPRITE_FRAG_SRC);
+    if (!prog) return;
+    this.animProgram = prog;
+    this.aUViewport = gl.getUniformLocation(prog, 'uViewport');
+    this.aUCam = gl.getUniformLocation(prog, 'uCam');
+    this.aUTime = gl.getUniformLocation(prog, 'uTime');
+    this.aUFrameDur = gl.getUniformLocation(prog, 'uFrameDur');
+    this.aUAtlas = gl.getUniformLocation(prog, 'uAtlas');
+    this.animVbo = gl.createBuffer();
+    this._animCapBytes = 0;
+    var sv = this._buildAnimVao(prog, this.animVbo);
+    this.animVao = sv.vao; this._animLocs = sv.locs;
+
+    var sprog = this._buildProgram(ANIM_SHADOW_VERT_SRC, SHADOW_FRAG_SRC);
+    if (!sprog) return;
+    this.animShadowProgram = sprog;
+    this.asUViewport = gl.getUniformLocation(sprog, 'uViewport');
+    this.asUCam = gl.getUniformLocation(sprog, 'uCam');
+    this.asUTime = gl.getUniformLocation(sprog, 'uTime');
+    this.asUFrameDur = gl.getUniformLocation(sprog, 'uFrameDur');
+    this.asUAtlas = gl.getUniformLocation(sprog, 'uAtlas');
+    this.asUShadowVec = gl.getUniformLocation(sprog, 'uShadowVec');
+    this.asUShadowAlpha = gl.getUniformLocation(sprog, 'uShadowAlpha');
+    this.asUAtlasTexel = gl.getUniformLocation(sprog, 'uAtlasTexel');
+    this.animShadowVbo = gl.createBuffer();
+    this._animShadowCapBytes = 0;
+    var sh = this._buildAnimVao(sprog, this.animShadowVbo);
+    this.animShadowVao = sh.vao; this._animShadowLocs = sh.locs;
+    this.animOk = true;
+  }
+
+  // Pack N same-size frames as a contiguous horizontal strip (1px gaps). Returns
+  // {u0,v0,frameStride,du,dv,n} (frame i at u0 + i*frameStride) or null if it
+  // doesn't fit / sizes differ — caller falls back to the CPU path for that sprite.
+  atlasStrip(frames) {
+    if (!this.ok || !this.spritesOk || !frames || !frames.length) return null;
+    var gl = this.gl;
+    var f0 = frames[0];
+    var w = f0.naturalWidth || f0.width, h = f0.naturalHeight || f0.height;
+    if (!w || !h) return null;
+    var n = frames.length, A = this.atlasSize, stride = w + 1, totalW = n * stride;
+    if (totalW + 1 > A || h + 2 > A) return null;
+    if (this._shelfX + totalW + 1 > A) { this._shelfY += this._shelfH + 1; this._shelfX = 1; this._shelfH = 0; }
+    if (this._shelfY + h + 1 > A) return null; // atlas full — caller retries after reset
+    var x0 = this._shelfX, y0 = this._shelfY;
+    gl.bindTexture(gl.TEXTURE_2D, this.atlasTex);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+    for (var i = 0; i < n; i++) {
+      var fi = frames[i];
+      if ((fi.naturalWidth || fi.width) !== w || (fi.naturalHeight || fi.height) !== h) {
+        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); return null;
+      }
+      try { gl.texSubImage2D(gl.TEXTURE_2D, 0, x0 + i * stride, y0, gl.RGBA, gl.UNSIGNED_BYTE, fi); }
+      catch (e) { gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); return null; }
+    }
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    this._shelfX = x0 + totalW + 1;
+    if (h > this._shelfH) this._shelfH = h;
+    var s = 0.5; // half-texel inset (NEAREST)
+    return { u0: (x0 + s) / A, v0: (y0 + s) / A, frameStride: stride / A,
+             du: (w - 2 * s) / A, dv: (h - 2 * s) / A, n: n };
+  }
+
+  ensureAnimCapacity(kind, instCount) {
+    if (!this.animOk) return false;
+    var gl = this.gl;
+    var vbo = kind === 'shadow' ? this.animShadowVbo : this.animVbo;
+    var capKey = kind === 'shadow' ? '_animShadowCapBytes' : '_animCapBytes';
+    var bytes = Math.max(4096 * ANIM_SPRITE_STRIDE, instCount * ANIM_SPRITE_STRIDE);
+    if (bytes > this[capKey]) {
+      this[capKey] = bytes * 2;
+      gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+      gl.bufferData(gl.ARRAY_BUFFER, this[capKey], gl.DYNAMIC_DRAW);
+      gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    }
+    return true;
+  }
+
+  uploadAnimRange(kind, mirror, start, count, orphan) {
+    if (!this.animOk || count === 0) return;
+    var gl = this.gl;
+    var vbo = kind === 'shadow' ? this.animShadowVbo : this.animVbo;
+    var cap = kind === 'shadow' ? this._animShadowCapBytes : this._animCapBytes;
+    if ((start + count) * ANIM_SPRITE_STRIDE > cap) return;
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    if (orphan) gl.bufferData(gl.ARRAY_BUFFER, cap, gl.DYNAMIC_DRAW);
+    gl.bufferSubData(gl.ARRAY_BUFFER, start * ANIM_SPRITE_STRIDE,
+      mirror, start * ANIM_SPRITE_FLOATS, count * ANIM_SPRITE_FLOATS);
+  }
+
+  _pointAnimAttribs(vbo, locs, startInst) {
+    var gl = this.gl;
+    var base = startInst * ANIM_SPRITE_STRIDE;
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    for (var i = 0; i < 5; i++) gl.vertexAttribPointer(locs[i], 4, gl.FLOAT, false, ANIM_SPRITE_STRIDE, base + i * 16);
+  }
+
+  drawAnimSprites(start, count, cssW, cssH, cam, timeMs) {
+    if (!this.animOk || count === 0) return;
+    var gl = this.gl;
+    gl.useProgram(this.animProgram);
+    gl.bindVertexArray(this.animVao);
+    if (this.sceneActive) gl.uniform2f(this.aUViewport, this._artW, this._artH);
+    else gl.uniform2f(this.aUViewport, cssW, cssH);
+    gl.uniform3f(this.aUCam, cam.x, cam.y, cam.scale);
+    gl.uniform1f(this.aUTime, timeMs);
+    gl.uniform1f(this.aUFrameDur, ANIM_FRAME_DUR);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.atlasTex);
+    gl.uniform1i(this.aUAtlas, 0);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    try {
+      this._pointAnimAttribs(this.animVbo, this._animLocs, start);
+      gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
+    } finally {
+      this._pointAnimAttribs(this.animVbo, this._animLocs, 0);
+      gl.bindVertexArray(null);
+    }
+    gl.disable(gl.BLEND);
+  }
+
+  drawAnimShadows(start, count, cssW, cssH, cam, shadowVec, strength, timeMs) {
+    if (!this.animOk || count === 0) return;
+    var gl = this.gl;
+    gl.useProgram(this.animShadowProgram);
+    gl.bindVertexArray(this.animShadowVao);
+    if (this.sceneActive) gl.uniform2f(this.asUViewport, this._artW, this._artH);
+    else gl.uniform2f(this.asUViewport, cssW, cssH);
+    gl.uniform3f(this.asUCam, cam.x, cam.y, cam.scale);
+    gl.uniform1f(this.asUTime, timeMs);
+    gl.uniform1f(this.asUFrameDur, ANIM_FRAME_DUR);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.atlasTex);
+    gl.uniform1i(this.asUAtlas, 0);
+    gl.uniform2f(this.asUShadowVec, shadowVec.x, shadowVec.y);
+    gl.uniform1f(this.asUShadowAlpha, strength);
+    gl.uniform1f(this.asUAtlasTexel, 1 / (this.atlasSize || 1));
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    try {
+      this._pointAnimAttribs(this.animShadowVbo, this._animShadowLocs, start);
+      gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
+    } finally {
+      this._pointAnimAttribs(this.animShadowVbo, this._animShadowLocs, 0);
+      gl.bindVertexArray(null);
+    }
+    gl.disable(gl.BLEND);
   }
 
   // Pack an Image into the atlas (or return its cached rect). Returns
