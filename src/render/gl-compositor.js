@@ -360,6 +360,9 @@ void main() {
 // Evict chunk textures not drawn for this many frames.
 var EVICT_AFTER_FRAMES = 600;
 var SWEEP_INTERVAL = 256;
+// Max NEW chunk-bitmap texImage2D uploads per frame. Spreads the boundary-crossing
+// burst (up to ~6 workers finishing at once) across frames to kill walk stutter.
+var CHUNK_UPLOAD_BUDGET = 2;
 
 function parseColor(css) {
   // Supports '#rgb', '#rrggbb', 'rgb(...)' / 'rgba(...)'. Fallback: dark slate.
@@ -759,11 +762,28 @@ export class GLCompositor {
   // Upload (or reuse) the chunk bitmap as a texture and draw it as a quad.
   // Identity check on the bitmap reference handles chunk repaints: the
   // provider creates a NEW ImageBitmap on repaint, triggering re-upload.
+  //
+  // UPLOAD THROTTLE: each chunk bitmap is a large (~2048²) texImage2D. Crossing a
+  // chunk boundary delivers a burst of new chunks (up to ~6 workers at once), and
+  // uploading them all in one frame stalls it (measured: frames with uploads ~131ms
+  // vs ~0 without) — the walk stutter. So cap NEW uploads per frame; over-budget
+  // brand-new chunks draw one frame later (a barely-visible edge fill-in as you
+  // walk into them), and over-budget repaints keep showing their existing texture.
   drawChunk(key, bitmap, sx, sy, dw, dh) {
     if (!this.ok) return;
     var gl = this.gl;
+    // Reset the per-frame upload budget when the frame advances (same pattern as
+    // the atlas reset below; avoids needing a hook in beginFrame/beginScene).
+    if (this.frame !== this._uploadFrame) { this._uploadFrame = this.frame; this._uploadsThisFrame = 0; }
     var entry = this.textures.get(key);
-    if (!entry || entry.bmp !== bitmap) {
+    var needsUpload = !entry || entry.bmp !== bitmap;
+    if (needsUpload && this._uploadsThisFrame >= CHUNK_UPLOAD_BUDGET) {
+      // Over budget this frame — defer the upload to spread the burst.
+      if (!entry) return;                 // brand-new chunk: draw it next frame instead
+      gl.bindTexture(gl.TEXTURE_2D, entry.tex); // repaint: keep drawing the stale tex
+      entry.lastUsed = this.frame;        // it IS still on-screen — don't let it get evicted
+      // (entry.bmp left unchanged so needsUpload stays true → re-uploaded a later frame)
+    } else if (needsUpload) {
       var tex = entry ? entry.tex : gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, tex);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
@@ -773,6 +793,7 @@ export class GLCompositor {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       entry = { tex: tex, bmp: bitmap, lastUsed: this.frame };
       this.textures.set(key, entry);
+      this._uploadsThisFrame++;
     } else {
       gl.bindTexture(gl.TEXTURE_2D, entry.tex);
       entry.lastUsed = this.frame;
