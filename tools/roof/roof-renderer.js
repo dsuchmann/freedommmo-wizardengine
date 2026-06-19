@@ -119,6 +119,31 @@ function drawTexturedTile(ctx, q, tex, shade) {
   ctx.fill();
 }
 
+// Average colour of a texture, sampled once to a 1×1 canvas and cached per bitmap.
+// Used as an opaque BASE COAT under the textured facets: the dark slits the user saw
+// are hairline inter-facet seams exposing the dark roof→wall SKIRT drawn underneath
+// (the facets are planar in projection, so the affine fill is exact — not a gap). A
+// roof-coloured base coat makes any residual seam read as roof, never a dark slit.
+const _texAvg = new WeakMap();
+function sampledBaseColor(tex) {
+  if (_texAvg.has(tex)) return _texAvg.get(tex);
+  let c = null;
+  try {
+    let cv = null;
+    if (typeof OffscreenCanvas !== 'undefined') cv = new OffscreenCanvas(1, 1);
+    else if (typeof document !== 'undefined') { cv = document.createElement('canvas'); cv.width = 1; cv.height = 1; }
+    if (cv) {
+      const cx = cv.getContext('2d', { willReadFrequently: true });
+      cx.imageSmoothingEnabled = true;
+      cx.drawImage(tex, 0, 0, tex.width || 32, tex.height || 32, 0, 0, 1, 1);
+      const d = cx.getImageData(0, 0, 1, 1).data;
+      if (d[3] > 0) c = 'rgb(' + d[0] + ',' + d[1] + ',' + d[2] + ')';
+    }
+  } catch (e) { c = null; }
+  _texAvg.set(tex, c);
+  return c;
+}
+
 function isPerimeter(grid, t) {
   const W = grid.W, H = grid.H;
   const roof = (i, j) => i >= 0 && j >= 0 && i < W && j < H && (grid.fp[j * W + i] || grid.isOverhang[j * W + i]);
@@ -156,8 +181,18 @@ export function drawRoof(ctx, grid, material, features, cfg, view) {
     if (t.isOverhang) shade *= 0.82;
     // cfg.texture = a 32×32 ImageBitmap (e.g. the biome ground tile) → texture-map it
     // onto the facet + slope-shade; else fall back to the procedural material.
-    if (cfg.texture) drawTexturedTile(ctx, quad, cfg.texture, shade);
-    else material.fillTile(ctx, quad, t, shade, view, grid);
+    if (cfg.texture) {
+      // base coat (roof's own colour) UNDER the texture so a hairline facet seam shows
+      // roof, not the dark skirt beneath — kills the "see-through" dark slits.
+      const base = sampledBaseColor(cfg.texture);
+      if (base) {
+        ctx.fillStyle = base;
+        ctx.beginPath(); ctx.moveTo(quad[0].x, quad[0].y);
+        for (let kk = 1; kk < 4; kk++) ctx.lineTo(quad[kk].x, quad[kk].y);
+        ctx.closePath(); ctx.fill();
+      }
+      drawTexturedTile(ctx, quad, cfg.texture, shade);
+    } else material.fillTile(ctx, quad, t, shade, view, grid);
   }
 
   if (!cfg.noAccents) drawAccents(ctx, grid, view, cfg);

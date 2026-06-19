@@ -325,10 +325,12 @@ export class CanvasRenderer {
     // Pass sun only in GL-scene mode: there the present shader darkens the GL
     // canvas below, so the overlay must self-dim. The 2D path darkens this
     // canvas with a fullscreen fill in drawLighting (after this call) instead.
-    drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, h, performance.now() / 1000, weather ? weather.wind() : null, glOn, glScene ? sun : null);
-
-    // Update building claims (suppresses F2+ at building positions).
+    // Update building claims (suppresses F2+ at building positions) BEFORE the water
+    // overlay so it can read the height-aware architecture claim and skip wave/foam/
+    // seaweed over the tiles a tall roof rises across (else water shimmers over the roof).
     updateBuildingClaims(camX, camY, tilePx, w, h);
+
+    drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, h, performance.now() / 1000, weather ? weather.wind() : null, glOn, glScene ? sun : null);
     // Stash the world transform for the floor-view enter-click (screen → world tile).
     updateFloorViewTransform(camX, camY, tilePx, w, h);
 

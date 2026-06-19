@@ -5,6 +5,7 @@
 
 import { WORLD } from '../core/constants.js';
 import { rand2 } from '../core/random.js';
+import { architectureClaimAt } from '../world/decoration-claims.js';
 
 const SEAWEED_ANIM_PATH = '/assets/pixelab/landscape_v2/micro/ground_cover/shallow_water/seaweed_strand/anim/';
 const SEAWEED_VARIANTS = 8;
@@ -107,7 +108,9 @@ export function buildWaveField(chunkStore, tile0X, tile0Y, tilesW, tilesH, timeS
       var idx = (ty * tilesW + tx) * 4;
       var val = 128;
       var tile = chunkStore.tileAt(tile0X + tx, tile0Y + ty);
-      if (tile && isWaterBiome(tile.biome) && !tile.transitionPair) {
+      // A tall building's baked roof rises over the water tiles to its north; skip
+      // those (claimed) so the GL wave field doesn't shimmer over the roof.
+      if (tile && isWaterBiome(tile.biome) && !tile.transitionPair && !architectureClaimAt(tile0X + tx, tile0Y + ty)) {
         var wave = waveValue(tile, tile0X + tx, tile0Y + ty, timeSeconds);
         val = Math.max(0, Math.min(255, 128 + wave * 160));
         hasWater = true;
@@ -234,8 +237,11 @@ export function drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, 
         const ly = ty - tMinY;
         const idx = (ly * visW + lx) * 4;
 
-        if (!tile || !isWaterBiome(tile.biome) || tx <= 0 || tx >= cs - 1 || ty <= 0 || ty >= cs - 1) {
-          // Non-water or chunk edge: neutral gray (no modulation)
+        // architectureClaimAt → a building's tall roof covers this water tile on screen;
+        // keep it neutral so the soft-light wave doesn't shimmer over the baked roof.
+        if (!tile || !isWaterBiome(tile.biome) || tx <= 0 || tx >= cs - 1 || ty <= 0 || ty >= cs - 1
+            || architectureClaimAt(vc.cx * cs + tx, vc.cy * cs + ty)) {
+          // Non-water, chunk edge, or building-covered: neutral gray (no modulation)
           pixels[idx] = 128;
           pixels[idx + 1] = 128;
           pixels[idx + 2] = 128;
@@ -338,6 +344,8 @@ export function drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, 
           const idx = (ly * visW + lx) * 4;
 
           if (!tile) { foamPx[idx] = 0; foamPx[idx+1] = 0; foamPx[idx+2] = 0; foamPx[idx+3] = 0; continue; }
+          // Building's tall roof covers this tile on screen → no foam over the roof.
+          if (architectureClaimAt(vc.cx * cs + tx, vc.cy * cs + ty)) { foamPx[idx] = 0; foamPx[idx+1] = 0; foamPx[idx+2] = 0; foamPx[idx+3] = 0; continue; }
 
           const dtl = landDist[ty * cs + tx];
           const isWater = isWaterBiome(tile.biome);
@@ -406,6 +414,7 @@ export function drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, 
           for (let tx = tMinX; tx < tMaxX; tx++) {
             const tile = chunk.tiles[ty * cs + tx];
             if (!tile) continue;
+            if (architectureClaimAt(vc.cx * cs + tx, vc.cy * cs + ty)) continue; // under a building roof
             const dtl = landDist[ty * cs + tx];
             if (!isWaterBiome(tile.biome)) continue;
             if (dtl > 3) continue;
@@ -447,6 +456,7 @@ export function drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, 
         const tile = chunk.tiles[ty * cs + tx];
         if (!tile || tile.biome !== 'shallow_water') continue;
         if (tile.transitionPair) continue;
+        if (architectureClaimAt(vc.cx * cs + tx, vc.cy * cs + ty)) continue; // under a building roof
 
         const wxT = vc.cx * cs + tx;
         const wyT = vc.cy * cs + ty;

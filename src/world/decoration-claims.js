@@ -554,7 +554,10 @@ export function getClaimMask(wx, wy, tileInfo) {
 // `buildingClaimTiles` Set so flora suppression is deterministic, not visit-order
 // dependent. Any tile the predicate claims fully suppresses F2+ flora.
 var _archClaim = function () { return false; };
-function architectureClaimAt(wx, wy) { return _archClaim(wx, wy); }
+// Exported so present-time render passes (e.g. the water-wave overlay) can suppress
+// themselves over a building's tall screen silhouette — the claim now includes the
+// height-aware north band, so a water tile a tall roof rises over reads as claimed.
+export function architectureClaimAt(wx, wy) { return _archClaim(wx, wy); }
 export function setArchitectureClaim(predicate) {
   var next = (typeof predicate === 'function') ? predicate : function () { return false; };
   if (next !== _archClaim) { _archClaim = next; clearClaimCaches(); } // f4/f5/f6 caches don't key on arch state
