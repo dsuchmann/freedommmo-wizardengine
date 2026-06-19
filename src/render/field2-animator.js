@@ -1025,8 +1025,8 @@ function _resolveStrip(bl, simState, drawSizePx, glc, extraUrl) {
   var imgs = [];
   for (var k = 0; k < urls.length; k++) {
     var img = loadFrame(urls[k], urls.length > 1 ? urls.length : null);
-    if (!img) return null;                 // a frame still loading — retry next rebuild
-    img = scaledFrame(img, drawSizePx);    // no throttle: a strip needs ALL frames together
+    if (!img) return null;              // a frame still loading — retry next tick
+    img = scaledFrame(img, drawSizePx); // bounded by the caller's amortized/pending deadline
     if (!img) return null;
     imgs.push(img);
   }
@@ -1056,14 +1056,19 @@ function _patchGpuAnim(glc) {
   var am = _pool.animMirror, n = _pool.animN || 0, m = _pool.mirror;
   if (!am) return;
   if (_pool.animPending && _pool.animPending.length) {
-    var still = [];
-    for (var p = 0; p < _pool.animPending.length; p++) {
-      var pi = _pool.animPending[p], pm = _pool.meta[pi];
+    // TIME-BUDGETED: packing a strip is texSubImage2D x frameCount. When a big batch of
+    // frames finishes loading at once, packing them ALL in one tick froze the frame for
+    // ~1s. Cap the work per tick; deferred strips retry next tick so the fill spreads.
+    var still = [], pend = _pool.animPending, deadline = performance.now() + 4, p = 0;
+    for (; p < pend.length; p++) {
+      if (performance.now() >= deadline) break;
+      var pi = pend[p], pm = _pool.meta[pi];
       var strip = _resolveStrip(pm.bl, pm.simState, pm.drawSizePx, glc, pm.extraUrl);
       if (strip) _writeAnimInst(am, pi, m[pi * SPRITE_FLOATS], m[pi * SPRITE_FLOATS + 1], pm.sizeTiles,
         pm.bl, pm.drawSizePx, pm.edgeFade, pm.biomeShadowK, pm.tileRotCached, strip);
       else still.push(pi);
     }
+    for (; p < pend.length; p++) still.push(pend[p]); // budget hit — retry these next tick
     _pool.animPending = still;
   }
   var gusting = 0;
@@ -1456,7 +1461,7 @@ function _poolTick(timeMs, timeSec, glc, tilePxSnapped) {
 // the CURRENT static buffer every frame for free, build the NEXT pool incrementally
 // across frames into staging buffers, then swap — no single frame ever freezes.
 var _gb = null;          // active build state (null = idle)
-var AMORT_BUDGET_MS = 6; // build work per frame; rest of the 16ms frame stays free
+var AMORT_BUDGET_MS = 8; // build work per frame; leaves headroom in a 16ms frame for the draw
 
 function _startAmortBuild(chunkStore, player, glc, radiusX, radiusY) {
   var px = Math.floor(player.x), py = Math.floor(player.y);
@@ -1464,51 +1469,51 @@ function _startAmortBuild(chunkStore, player, glc, radiusX, radiusY) {
   _gb = {
     chunkStore: chunkStore, glc: glc, px: px, py: py, radiusX: radiusX, radiusY: radiusY,
     maxR: maxR, fadeStart: maxR - 6, centerX: px, centerY: py,
-    phase: 'collect', wy: py - radiusY, entries: [], tiles: [],
+    phase: 'collect', wy: py - radiusY, wx: px - radiusX, entries: [], tiles: [],
     n: 0, idx: 0, shCount: 0,
     animMirror: null, animShadowMirror: null, mirror: null, meta: [], sortY: null, shadowOf: null, animPending: [],
   };
 }
 
-// One row of the collection scan (mirror of _poolRebuild's inner wx loop).
-function _collectRowGpu(g, wy) {
-  var px = g.px, py = g.py, radiusX = g.radiusX, maxR = g.maxR, fadeStart = g.fadeStart, chunkStore = g.chunkStore;
-  for (var wx = px - radiusX; wx <= px + radiusX; wx++) {
-    var cx = floorDiv(wx, WORLD.chunkSize), cy = floorDiv(wy, WORLD.chunkSize);
-    var chunk = chunkStore.getIfReady(cx, cy);
-    if (!chunk) continue;
-    var tx = ((wx % WORLD.chunkSize) + WORLD.chunkSize) % WORLD.chunkSize;
-    var ty = ((wy % WORLD.chunkSize) + WORLD.chunkSize) % WORLD.chunkSize;
-    var tile = chunk.tiles[ty * WORLD.chunkSize + tx];
-    if (!tile) continue;
-    var objects = SF_BIOME_OBJECTS_LIST[tile.biome];
-    if (!objects || objects.length === 0) continue;
-    if (tile.transitionPair) continue;
-    var tkey = wx + ',' + wy, desc;
-    if (_tileDescCache.has(tkey)) desc = _tileDescCache.get(tkey);
-    else {
-      var built = buildTileDescriptor(chunkStore, tile, objects, wx, wy);
-      desc = built.desc;
-      if (built.cacheable) { if (_tileDescCache.size >= MAX_TILE_DESC_CACHE) _tileDescCache.clear(); _tileDescCache.set(tkey, desc); }
-    }
-    if (!desc) continue;
-    var dist = Math.max(Math.abs(wx - px), Math.abs(wy - py));
-    var edgeFade = dist <= fadeStart ? 1.0 : Math.max(0, 1.0 - (dist - fadeStart) / (maxR - fadeStart));
-    var biomeShadowK = getAtmosphere(tile.biome).shadow / 100;
-    var tileEntry = { wx: wx, wy: wy, first: -1, count: 0, biomeShadowK: biomeShadowK };
-    for (var b = 0; b < desc.blades.length; b++) {
-      var bl = desc.blades[b];
-      g.entries.push({ sortY: wy + bl.sortYOff, worldX: wx + 0.5 + bl.offUX,
-        worldPivotY: wy + 0.5 + bl.offUY + bl.lifeScale * 0.5, sizeTiles: bl.lifeScale,
-        bl: bl, wx: wx, wy: wy, edgeFade: edgeFade, biomeShadowK: biomeShadowK, tileRef: tileEntry });
-    }
-    if (desc.extra) {
-      g.entries.push({ sortY: wy + 0.5, worldX: wx + 0.5 + desc.extra.offUX,
-        worldPivotY: wy + 0.5 + desc.extra.offUY + 0.5, sizeTiles: 1.0,
-        bl: null, extraUrl: desc.extra.url, wx: wx, wy: wy, edgeFade: edgeFade, biomeShadowK: biomeShadowK, tileRef: tileEntry });
-    }
-    if (g.entries.length && g.entries[g.entries.length - 1].tileRef === tileEntry) g.tiles.push(tileEntry);
+// One TILE of the collection scan (mirror of _poolRebuild's inner body). Per-tile so
+// the build can yield mid-row — buildTileDescriptor for an uncached tile is ~0.5ms and
+// a full row of new tiles would otherwise overshoot the frame budget.
+function _collectTileGpu(g, wx, wy) {
+  var px = g.px, py = g.py, maxR = g.maxR, fadeStart = g.fadeStart, chunkStore = g.chunkStore;
+  var cx = floorDiv(wx, WORLD.chunkSize), cy = floorDiv(wy, WORLD.chunkSize);
+  var chunk = chunkStore.getIfReady(cx, cy);
+  if (!chunk) return;
+  var tx = ((wx % WORLD.chunkSize) + WORLD.chunkSize) % WORLD.chunkSize;
+  var ty = ((wy % WORLD.chunkSize) + WORLD.chunkSize) % WORLD.chunkSize;
+  var tile = chunk.tiles[ty * WORLD.chunkSize + tx];
+  if (!tile) return;
+  var objects = SF_BIOME_OBJECTS_LIST[tile.biome];
+  if (!objects || objects.length === 0) return;
+  if (tile.transitionPair) return;
+  var tkey = wx + ',' + wy, desc;
+  if (_tileDescCache.has(tkey)) desc = _tileDescCache.get(tkey);
+  else {
+    var built = buildTileDescriptor(chunkStore, tile, objects, wx, wy);
+    desc = built.desc;
+    if (built.cacheable) { if (_tileDescCache.size >= MAX_TILE_DESC_CACHE) _tileDescCache.clear(); _tileDescCache.set(tkey, desc); }
   }
+  if (!desc) return;
+  var dist = Math.max(Math.abs(wx - px), Math.abs(wy - py));
+  var edgeFade = dist <= fadeStart ? 1.0 : Math.max(0, 1.0 - (dist - fadeStart) / (maxR - fadeStart));
+  var biomeShadowK = getAtmosphere(tile.biome).shadow / 100;
+  var tileEntry = { wx: wx, wy: wy, first: -1, count: 0, biomeShadowK: biomeShadowK };
+  for (var b = 0; b < desc.blades.length; b++) {
+    var bl = desc.blades[b];
+    g.entries.push({ sortY: wy + bl.sortYOff, worldX: wx + 0.5 + bl.offUX,
+      worldPivotY: wy + 0.5 + bl.offUY + bl.lifeScale * 0.5, sizeTiles: bl.lifeScale,
+      bl: bl, wx: wx, wy: wy, edgeFade: edgeFade, biomeShadowK: biomeShadowK, tileRef: tileEntry });
+  }
+  if (desc.extra) {
+    g.entries.push({ sortY: wy + 0.5, worldX: wx + 0.5 + desc.extra.offUX,
+      worldPivotY: wy + 0.5 + desc.extra.offUY + 0.5, sizeTiles: 1.0,
+      bl: null, extraUrl: desc.extra.url, wx: wx, wy: wy, edgeFade: edgeFade, biomeShadowK: biomeShadowK, tileRef: tileEntry });
+  }
+  if (g.entries.length && g.entries[g.entries.length - 1].tileRef === tileEntry) g.tiles.push(tileEntry);
 }
 
 // One sprite's static instance (mirror of _poolRebuild's GPU write, gpuSkip path).
@@ -1538,7 +1543,15 @@ function _amortStep(deadline) {
   var g = _gb; if (!g) return;
   var _t0 = performance.now();
   if (g.phase === 'collect') {
-    while (g.wy <= g.py + g.radiusY) { _collectRowGpu(g, g.wy); g.wy++; if (performance.now() >= deadline) break; }
+    var stop = false;
+    while (g.wy <= g.py + g.radiusY && !stop) {
+      while (g.wx <= g.px + g.radiusX) {
+        _collectTileGpu(g, g.wx, g.wy);
+        g.wx++;
+        if (performance.now() >= deadline) { stop = true; break; }
+      }
+      if (!stop) { g.wx = g.px - g.radiusX; g.wy++; }
+    }
     if (g.wy > g.py + g.radiusY) {
       g.entries.sort(function (a, b) { return a.sortY - b.sortY; });
       g.n = g.entries.length;
@@ -1648,13 +1661,11 @@ function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, we
   // AMORTIZED across frames (build the next pool into staging buffers while the GPU
   // keeps drawing the current one, then swap) so no single frame freezes.
   if (gpuFloraOn() && glc.animOk) {
-    var cold = !_pool.animUploaded;
-    if ((cold || moved || grew || newChunks) && !_gb) {
+    if ((!_pool.animUploaded || moved || grew || newChunks) && !_gb) {
       _pool.key = 'built'; _pool.centerX = px; _pool.centerY = py;
       _pool.radiusX = needRX; _pool.radiusY = needRY;
       _pool.readyCount = ready; _pool.lastRebuildAt = timeMs;
-      if (cold) _poolRebuild(chunkStore, player, glc, needRX, needRY); // first paint: synchronous
-      else _startAmortBuild(chunkStore, player, glc, needRX, needRY);  // warm: spread over frames
+      _startAmortBuild(chunkStore, player, glc, needRX, needRY); // first paint AND warm: both spread
     }
     if (_gb) _amortStep(performance.now() + AMORT_BUDGET_MS);
     var tickRanG = false;
@@ -1662,9 +1673,8 @@ function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, we
     if (_pool.animUploaded) {
       if (tickRanG) _patchGpuAnim(glc);
       _drawGpuFlora(player, w, h, chunkGrid, timeMs, sun, glc, tilePxSnapped);
-      return true;
     }
-    // cold build didn't upload (GL not ready) — fall through to legacy path this frame
+    return true; // GPU owns flora (drawn, or building on first paint — terrain still renders)
   }
 
   // ===== Legacy CPU path =====
