@@ -5,11 +5,12 @@ import { buildingNode } from '../world/buildings/blueprint-node.js';
 import { resolveFloorLayout } from '../world/buildings/floor-layout.js';
 
 test('material differs by floor use (distinct floors read differently)', () => {
-  assert.equal(floorMaterial('lobby'), 'marble');
+  assert.equal(floorMaterial('lobby'), 'wood_plank');  // houses enter on wood, not white marble
+  assert.equal(floorMaterial('hall'), 'marble');       // grand civic floors keep marble
   assert.equal(floorMaterial('shopfront'), 'stone_slab');
   assert.equal(floorMaterial('residential'), 'wood_plank');
   assert.equal(floorMaterial('storage'), 'packed_dirt');
-  assert.notEqual(floorMaterial('lobby'), floorMaterial('residential'));
+  assert.notEqual(floorMaterial('shopfront'), floorMaterial('residential'));
 });
 
 test('unknown/empty use falls back to wood_plank, deterministic', () => {

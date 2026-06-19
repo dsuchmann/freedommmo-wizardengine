@@ -17,7 +17,7 @@ let _dimKey = null, _dimStart = 0, _dimFrom = 0, _dimCur = 0;
 
 // Solid placeholder color per material — drawn until the floor sprite finishes loading, so a
 // cold enter shows a floor immediately instead of white/blank while the worker hogs the network.
-const MAT_COLOR = { marble: '#c9ccd4', stone_slab: '#8d9097', wood_plank: '#8a6a45', packed_dirt: '#9a7d55', terracotta: '#b5683f' };
+const MAT_COLOR = { marble: '#a6aab4', stone_slab: '#83868c', wood_plank: '#8a6a45', packed_dirt: '#9a7d55', terracotta: '#b5683f' };
 
 /** Call AFTER terrain/water, BEFORE the player sprite draws (so the player lands on top). */
 export function drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h) {

@@ -4,7 +4,8 @@
 // resolveFloorLayout, the interior renderer, and (eventually) the worker floor bake.
 
 const BY_USE = {
-  lobby: 'marble', common: 'marble', hall: 'marble', gallery: 'marble', religious: 'marble',
+  lobby: 'wood_plank', common: 'wood_plank', // houses/apartments enter on a homey wood floor, not white marble
+  hall: 'marble', gallery: 'marble', religious: 'marble', // grand civic floors keep marble
   shopfront: 'stone_slab', commercial: 'stone_slab', shop: 'stone_slab', market: 'stone_slab', craft: 'stone_slab',
   residential: 'wood_plank', apartment: 'wood_plank', mixed: 'wood_plank',
   storage: 'packed_dirt',
