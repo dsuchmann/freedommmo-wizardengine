@@ -15,6 +15,10 @@ const SHOW_WALLS = false;   // walls off (separately broken)
 // ground world (see drawInteriorFloorWorld).
 let _dimKey = null, _dimStart = 0, _dimFrom = 0, _dimCur = 0;
 
+// Solid placeholder color per material — drawn until the floor sprite finishes loading, so a
+// cold enter shows a floor immediately instead of white/blank while the worker hogs the network.
+const MAT_COLOR = { marble: '#c9ccd4', stone_slab: '#8d9097', wood_plank: '#8a6a45', packed_dirt: '#9a7d55', terracotta: '#b5683f' };
+
 /** Call AFTER terrain/water, BEFORE the player sprite draws (so the player lands on top). */
 export function drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h) {
   if (!isInside()) { _dimKey = null; _dimCur = 0; return; }
@@ -35,11 +39,13 @@ export function drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h) {
   if (SHOW_TILES) { // floor over the FULL footprint — DISABLED in triage (it covers the GL-layer player)
     ctx.imageSmoothingEnabled = false;
     const floorImg = getFloorImg(ai.layout.material) || getFloorImg('wood_plank'); // material per floor use
+    const fallback = MAT_COLOR[ai.layout.material] || MAT_COLOR.wood_plank;        // solid color until the sprite loads
     for (const k of ai.footprint) {
       const [lx, ly] = k.split(',').map(Number);
       const sx = Math.floor((ai.bx + lx) * tilePx - camX), sy = Math.floor((ai.by + ly) * tilePx - camY);
       if (sx + t < 0 || sy + t < 0 || sx > w || sy > h) continue;
       if (floorImg) ctx.drawImage(floorImg, sx, sy, t + pad, t + pad);
+      else { ctx.fillStyle = fallback; ctx.fillRect(sx, sy, t + pad, t + pad); } // no white during cold load
     }
   }
   // stair + lift markers — kept ON in triage so you can find them and test up/down.
