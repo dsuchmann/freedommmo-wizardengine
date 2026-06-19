@@ -422,7 +422,13 @@ function loadFrame(url, frameCount) {
 var DOWNSCALE_BUCKETS = [0.5, 0.33, 0.25];
 var _downCache = new Map(); // (img.src + '@' + bucket) -> canvas
 
-function scaledFrame(img, destPx) {
+// Throttle NEW (cache-miss) downscales per frame. Walking ~4 tiles rebuilds the F2
+// pool and downscales a strip of ~200 new sprites at once (stepwise canvas halving) —
+// the dominant per-rebuild walk-stutter cost when entering new flora. Over budget →
+// return null; the caller defers the sprite to `pending` and retries it next frame.
+// frameId omitted (callers resolving already-cached active sprites) = no throttle.
+var DOWNSCALE_BUDGET = 12, _dsFrame = -1, _dsThisFrame = 0;
+function scaledFrame(img, destPx, frameId) {
   var native = img.naturalWidth || img.width;
   if (!native || destPx >= native * 0.66) return img;
   var ratio = destPx / native;
@@ -435,6 +441,13 @@ function scaledFrame(img, destPx) {
   var key = img.src + '@' + bucket;
   var hit = _downCache.get(key);
   if (hit) return hit;
+  // Cache miss = the expensive path. Throttle to DOWNSCALE_BUDGET per frame so a
+  // walk-into-new-flora burst spreads over a few frames (caller defers via `pending`).
+  if (frameId !== undefined) {
+    if (frameId !== _dsFrame) { _dsFrame = frameId; _dsThisFrame = 0; }
+    if (_dsThisFrame >= DOWNSCALE_BUDGET) return null;
+    _dsThisFrame++;
+  }
   // Stepwise halving down to the bucket size (better than one big smooth pass)
   var src = img, w = native, h = img.naturalHeight || img.height;
   var target = Math.max(2, Math.round(native * bucket));
@@ -1120,9 +1133,11 @@ function _poolRebuild(chunkStore, player, glc, radiusX, radiusY) {
     var drawSizePx = WORLD.tileSize * e.sizeTiles;
     var rect = null, alpha = 0;
     if (img) {
-      img = scaledFrame(img, drawSizePx);
-      rect = glc.atlasRect(img, img.src || img._dnKey || '');
-      alpha = e.edgeFade * imgFade(img, timeMs);
+      img = scaledFrame(img, drawSizePx, glc.frame); // null if over per-frame downscale budget
+      if (img) {
+        rect = glc.atlasRect(img, img.src || img._dnKey || '');
+        alpha = e.edgeFade * imgFade(img, timeMs);
+      }
     }
     _poolWriteStatic(i, _pool.mirror, e.worldX, e.worldPivotY, e.sizeTiles, baseAngle, rect ? alpha : 0, rect);
     // Seed the RC3 dirty-gate caches with what we just uploaded, so the first
@@ -1278,7 +1293,8 @@ function _poolTick(timeMs, timeSec, glc, tilePxSnapped) {
         || loadFrame(pm.bl.staticUrl))
       : loadFrame(pm.extraUrl || '');
     if (!img) continue;
-    img = scaledFrame(img, pm.drawSizePx);
+    img = scaledFrame(img, pm.drawSizePx, glc.frame);
+    if (!img) continue; // over downscale budget this frame — retry next frame
     var rect = glc.atlasRect(img, img.src || img._dnKey || '');
     if (!rect) continue;
     pm.img = img;
