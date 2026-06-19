@@ -1,0 +1,156 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Interior walk-in — mockup</title>
+<style>
+  body{margin:0;background:#0d0f13;color:#cdd3da;font:13px/1.4 system-ui,sans-serif}
+  h1{font-size:15px;margin:14px 16px 2px}
+  p.note{margin:2px 16px 10px;color:#8a93a0;max-width:1180px}
+  canvas{display:block;margin:6px auto;border:1px solid #222;background:#0d0f13}
+  b.k{color:#ffd27a}
+</style></head>
+<body>
+<h1>Diegetic building interior — what walking in &amp; climbing should look like</h1>
+<p class="note">Top-down 2.5D, same projection as terrain. Not a popup/blueprint overlay — you walk through the door into <b class="k">real in-world floor tiles</b>. Three frames: outside → step inside (floor 1) → climb the stairs (floor 2).</p>
+<canvas id="c" width="1200" height="560"></canvas>
+<script>
+const cv=document.getElementById('c'), x=cv.getContext('2d');
+x.imageSmoothingEnabled=false;
+const PW=388, PX=[8,406,804], PY=40, PH=470;
+
+function panel(px,title,sub){
+  x.save();
+  x.fillStyle='#11141a'; x.fillRect(px,PY,PW,PH);
+  x.strokeStyle='#2a2f38'; x.strokeRect(px+.5,PY+.5,PW,PH);
+  x.fillStyle='#e7ecf2'; x.font='bold 13px system-ui'; x.fillText(title, px+12, PY+20);
+  x.fillStyle='#8a93a0'; x.font='12px system-ui'; x.fillText(sub, px+12, PY+38);
+  x.restore();
+  return {cx:px+PW/2, top:PY+52, px};
+}
+function rrect(rx,ry,rw,rh,r,fill){x.beginPath();x.moveTo(rx+r,ry);x.arcTo(rx+rw,ry,rx+rw,ry+rh,r);x.arcTo(rx+rw,ry+rh,rx,ry+rh,r);x.arcTo(rx,ry+rh,rx,ry,r);x.arcTo(rx,ry,rx+rw,ry,r);x.closePath();x.fillStyle=fill;x.fill();}
+// ground/terrain fill with a dab of texture
+function ground(px,py,w,h,dim){
+  x.save();x.beginPath();x.rect(px,py,w,h);x.clip();
+  x.fillStyle='#7d9a55'; x.fillRect(px,py,w,h);
+  x.globalAlpha=.5; x.fillStyle='#6c8a48';
+  for(let i=0;i<70;i++){const gx=px+((i*53)%w),gy=py+((i*97)%h);x.fillRect(gx,gy,3,3);}
+  x.globalAlpha=1;
+  if(dim>0){x.fillStyle='rgba(6,8,14,'+dim+')';x.fillRect(px,py,w,h);}
+  x.restore();
+}
+// brick wall billboard (vertical), optional ghost (see-through)
+function wall(wx,wy,w,h,ghost){
+  x.save();
+  x.globalAlpha = ghost?0.22:1;
+  x.fillStyle='#8a857d'; x.fillRect(wx,wy,w,h);
+  x.strokeStyle='rgba(40,34,28,'+(ghost?0.5:0.9)+')'; x.lineWidth=1;
+  const ch=7;
+  for(let r=0;r*ch<h;r++){const yy=wy+r*ch; x.beginPath();x.moveTo(wx,yy+.5);x.lineTo(wx+w,yy+.5);x.stroke();
+    const off=(r%2)*7; for(let cxp=wx-off; cxp<wx+w; cxp+=14){x.beginPath();x.moveTo(cxp+.5,yy);x.lineTo(cxp+.5,yy+ch);x.stroke();}}
+  x.restore();
+}
+// wood plank floor
+function floor(fx,fy,w,h){
+  x.save();x.beginPath();x.rect(fx,fy,w,h);x.clip();
+  x.fillStyle='#9c6b3f'; x.fillRect(fx,fy,w,h);
+  x.strokeStyle='rgba(60,38,20,.55)';x.lineWidth=1;
+  for(let yy=fy;yy<fy+h;yy+=11){x.beginPath();x.moveTo(fx,yy+.5);x.lineTo(fx+w,yy+.5);x.stroke();}
+  for(let i=0;i<40;i++){const gx=fx+((i*71)%w),gy=fy+(Math.floor(i*71/w)*11);x.beginPath();x.moveTo(gx+.5,gy);x.lineTo(gx+.5,gy+11);x.stroke();}
+  x.restore();
+}
+function player(cx,cy){
+  x.fillStyle='rgba(0,0,0,.28)';x.beginPath();x.ellipse(cx,cy+2,9,4,0,0,7);x.fill();
+  x.fillStyle='#3b6fb0';x.fillRect(cx-5,cy-16,10,12);          // body
+  x.fillStyle='#e6c39a';x.beginPath();x.arc(cx,cy-20,5,0,7);x.fill(); // head
+  x.fillStyle='#26456e';x.fillRect(cx-5,cy-5,4,6);x.fillRect(cx+1,cy-5,4,6);
+}
+function stairs(sx,sy,w,h,up){
+  x.fillStyle='#b9b2a6';
+  const steps=5,sh=h/steps;
+  for(let i=0;i<steps;i++){const wfrac=up?(i+1)/steps:(steps-i)/steps; x.fillStyle=i%2?'#aaa294':'#bcb5a8'; x.fillRect(sx+(w*(1-wfrac))/2, sy+i*sh, w*wfrac, sh-1);}
+  x.fillStyle='#5a5448';x.font='10px system-ui';x.textAlign='center';x.fillText(up?'▲ up':'▼ dn', sx+w/2, sy+h+11);x.textAlign='left';
+}
+function arrow(ax,ay,bx,by,col,txt){
+  x.strokeStyle=col;x.fillStyle=col;x.lineWidth=2;
+  x.beginPath();x.moveTo(ax,ay);x.lineTo(bx,by);x.stroke();
+  const a=Math.atan2(by-ay,bx-ax);x.beginPath();x.moveTo(bx,by);x.lineTo(bx-9*Math.cos(a-.4),by-9*Math.sin(a-.4));x.lineTo(bx-9*Math.cos(a+.4),by-9*Math.sin(a+.4));x.closePath();x.fill();
+  if(txt){x.fillStyle=col;x.font='bold 11px system-ui';x.fillText(txt,(ax+bx)/2+8,(ay+by)/2);}
+}
+function tag(tx,ty,txt,col){x.fillStyle=col||'#0bd6c7';x.font='11px system-ui';x.fillText(txt,tx,ty);}
+
+/* ---------- PANEL 1: OUTSIDE ---------- */
+(()=>{const p=panel(PX[0],'1 · OUTSIDE the building','roof + 4 walls up; you approach the door');
+  ground(p.px+1,PY+52,PW-2,PH-54,0);
+  const bw=150,bh=150, bx=p.cx-bw/2, by=PY+150;
+  // wall stack (south face) + roof
+  wall(bx,by,bw,bh,false);
+  // door + windows on south wall
+  x.fillStyle='#6a4a2c';x.fillRect(p.cx-12,by+bh-34,24,34);
+  x.fillStyle='#2a3540';x.fillRect(bx+18,by+30,20,18);x.fillRect(bx+bw-38,by+30,20,18);
+  // roof (tan, lifted on top)
+  x.fillStyle='#c9a06a';x.beginPath();x.moveTo(bx-8,by);x.lineTo(bx+bw+8,by);x.lineTo(bx+bw-18,by-86);x.lineTo(bx+18,by-86);x.closePath();x.fill();
+  x.fillStyle='rgba(0,0,0,.12)';x.beginPath();x.moveTo(p.cx,by-86);x.lineTo(bx+bw+8,by);x.lineTo(p.cx,by);x.closePath();x.fill();
+  player(p.cx, by+bh+40);
+  arrow(p.cx, by+bh+24, p.cx, by+bh+2, '#0bd6c7','walk in');
+  tag(bx-2, by-92,'roof (solid)');
+  tag(bx+2, by+bh+70,'door');
+})();
+
+/* ---------- PANEL 2: INSIDE, FLOOR 1 ---------- */
+(()=>{const p=panel(PX[1],'2 · STEP INSIDE  ·  floor 1 (ground)','world dims · roof fades · you stand on REAL floor tiles');
+  ground(p.px+1,PY+52,PW-2,PH-54,0.62);                 // dimmed outer world
+  const rw=210, rh=150, rx=p.cx-rw/2, ry=PY+150;        // room
+  // faded roof outline
+  x.strokeStyle='rgba(201,160,106,.35)';x.setLineDash([5,4]);x.lineWidth=1.5;x.strokeRect(rx-8,ry-10,rw+16,rh+18);x.setLineDash([]);
+  tag(rx-6, ry-16,'roof faded out ↑','rgba(201,160,106,.85)');
+  // floor tiles
+  floor(rx,ry,rw,rh);
+  // north + side walls (solid), drawn behind/around the floor
+  wall(rx-10,ry-2,10,rh,false);            // west
+  wall(rx+rw,ry-2,10,rh,false);            // east
+  wall(rx-10,ry-12,rw+20,12,false);        // north (back)
+  // south wall ghosted so the camera sees in
+  wall(rx-10,ry+rh,rw+20,12,true);
+  // stairs in NE corner
+  stairs(rx+rw-44,ry+8,36,36,true);
+  // a table
+  x.fillStyle='#6c4a2a';x.fillRect(rx+26,ry+rh-46,34,20);
+  player(p.cx-10, ry+rh-26);
+  // labels
+  tag(rx+rw-66, ry+6,'stairs ▲','#ffd27a');
+  tag(rx+4, ry+rh+8,'south wall = see-through','#0bd6c7');
+  tag(rx+4, ry+rh+24,'(so you can see inside)','#6f8aa0');
+  tag(rx+rw-78, ry+rh-2,'you on the floor','#cdd3da');
+})();
+
+/* ---------- PANEL 3: INSIDE, FLOOR 2 ---------- */
+(()=>{const p=panel(PX[2],'3 · CLIMB THE STAIRS  ·  floor 2','floor + you LIFT north 1 story · ground recedes below');
+  // receded ground far below, extra dim + clouds/bokeh
+  ground(p.px+1,PY+52,PW-2,PH-54,0.74);
+  x.save();x.globalAlpha=.5;for(let i=0;i<6;i++){const cxp=p.px+30+i*60, cyp=PH-30+PY-(i%2)*14;x.fillStyle='rgba(220,228,238,.5)';x.beginPath();x.ellipse(cxp,cyp,26,10,0,0,7);x.fill();}x.globalAlpha=1;x.restore();
+  tag(p.px+12, PH+PY-12,'ground world recedes (dim + clouds/bokeh)','#6f8aa0');
+  const rw=210, rh=150, rx=p.cx-rw/2;
+  const ry1=PY+150;                 // where floor-1 sat (ghost)
+  const lift=78;                    // one story-height north
+  const ry=ry1-lift;                // floor-2 position (lifted north)
+  // ghost of floor-1 footprint to show the shift
+  x.strokeStyle='rgba(120,130,145,.5)';x.setLineDash([4,4]);x.strokeRect(rx,ry1,rw,rh);x.setLineDash([]);
+  tag(rx+4, ry1+rh/2,'(floor-1 spot)','#5d6a7a');
+  // lift arrow
+  arrow(rx-22, ry1+10, rx-22, ry+10, '#ffd27a','+1 story north');
+  // floor 2 (lifted)
+  floor(rx,ry,rw,rh);
+  wall(rx-10,ry-2,10,rh,false);
+  wall(rx+rw,ry-2,10,rh,false);
+  wall(rx-10,ry-12,rw+20,12,false);
+  wall(rx-10,ry+rh,rw+20,12,true);
+  stairs(rx+rw-44,ry+8,36,36,false);
+  player(p.cx-10, ry+rh-26);
+  tag(rx+rw-66, ry+6,'stairs ▼','#ffd27a');
+  tag(rx-2, ry-22,'only THIS floor renders','#0bd6c7');
+  tag(rx+rw-78, ry+rh-2,'you, now higher up','#cdd3da');
+})();
+
+// footer legend
+x.fillStyle='#8a93a0';x.font='12px system-ui';
+x.fillText('Key: walking up/down a stair tile shifts the whole floor + player NORTH by one story-height (≈4 tiles) — that vertical jump IS the "I changed floors" cue. Lift/elevator = a single clean step instead of a stair climb.', 12, PH+PY+24);
+</script>
+</body></html>
