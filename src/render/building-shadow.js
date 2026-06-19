@@ -31,6 +31,12 @@ export const MAX_LENGTH_TILES = 16;
 export const DEFAULT_SCALE = 1.49;
 // Above this floor count the building reads as a tower; floors are capped to keep length sane.
 const MAX_FLOORS = 12;
+// Height mask: a building's on-screen silhouette = footprint + a north band covering the stacked
+// walls + roof rise. Base 8 tiles mirrors resolved-buildings.js NORTH_CLAIM (1-storey wall+roof);
+// each extra storey adds STORY_TILES, matching the worker's wall stack — keep these in sync.
+const NORTH_SILHOUETTE_BASE = 8;
+// Height-mask cell size in screen px (≈¼ tile). Coarser = cheaper per-blade lookup, less crisp.
+export const HEIGHT_MASK_CELL = 8;
 
 /**
  * Andrew's monotone-chain convex hull. Pure. Input/Output: [{x,y},...].
@@ -191,19 +197,24 @@ export function drapeRects(buildings, hulls, tilePx, camX, camY) {
   const rects = [];
   for (const B of buildings) {
     if (!B || !B.footprint || !B.footprint.sections) continue;
-    const stories = buildingFloors(B);
+    const neighbourStoreys = buildingFloors(B);
     for (const col of southFacadeColumns(B)) {
       // test the last interior tile centre of the column (the foot of the wall, on the ground)
       const tx = (col.wx + 0.5) * tilePx - camX;
       const ty = (col.baseWorldY - 0.5) * tilePx - camY;
-      let drench = false;
+      let casterStoreys = 0;
       for (const c of hulls) {
         if (c.b === B) continue; // a building never drenches its own wall
         const bb = c.bbox;
         if (tx < bb.minX || tx > bb.maxX || ty < bb.minY || ty > bb.maxY) continue;
-        if (pointInHull(tx, ty, c.hull)) { drench = true; break; }
+        if (pointInHull(tx, ty, c.hull)) { casterStoreys = buildingFloors(c.b); break; }
       }
-      if (drench) rects.push(facadeRect(col.baseWorldY, col.wx, stories, tilePx, camX, camY));
+      // Height respect: the shadow climbs only as high as the CASTER is tall — a 1-storey
+      // building's shadow can't scale a 5-storey wall. Cap to min(caster, neighbour).
+      if (casterStoreys > 0) {
+        const climb = Math.min(casterStoreys, neighbourStoreys);
+        rects.push(facadeRect(col.baseWorldY, col.wx, climb, tilePx, camX, camY));
+      }
     }
   }
   return rects;
@@ -225,6 +236,57 @@ export function footprintRects(buildings, tilePx, camX, camY) {
   return rects;
 }
 
+// ── Height mask: the shared "is something taller here?" primitive ─────
+// A shadow only survives at a screen pixel if its caster is at least as tall as the building
+// occupying that pixel. building-shadow.js owns this because it already resolves the building
+// set and knows each building's height. F2/GL consume it via getBuildingHeightMask() /
+// window._buildingHeightMask (see docs/superpowers/...-shadow-height-contract.md).
+
+/** Full on-screen silhouette of a building (footprint + north wall/roof band), tagged with storeys. */
+export function buildingSilhouetteRect(b, tilePx, camX, camY) {
+  const bb = b.footprint.boundingBox;
+  const storeys = buildingFloors(b);
+  const northBand = NORTH_SILHOUETTE_BASE + (storeys - 1) * STORY_TILES; // tiles the walls+roof rise north
+  const x = b.x * tilePx - camX;
+  const yTop = (b.y - northBand) * tilePx - camY;
+  const yBot = (b.y + bb.h) * tilePx - camY;
+  return { x, y: yTop, w: bb.w * tilePx, h: yBot - yTop, storeys, b };
+}
+
+/**
+ * Per-frame screen-space height grid: each cell = storeys of the TALLEST building silhouette over
+ * that pixel (0 = open ground). Pure. Shape carries the transform it was built under (stale-guard).
+ */
+export function buildHeightMask(buildings, camX, camY, tilePx, w, h, cell = HEIGHT_MASK_CELL) {
+  const cols = Math.max(1, Math.ceil(w / cell)), rows = Math.max(1, Math.ceil(h / cell));
+  const data = new Uint8Array(cols * rows);
+  for (const b of buildings || []) {
+    if (!b || !b.footprint || !b.footprint.boundingBox) continue;
+    const r = buildingSilhouetteRect(b, tilePx, camX, camY);
+    if (r.x + r.w < 0 || r.y + r.h < 0 || r.x > w || r.y > h) continue; // off-screen
+    const c0 = Math.max(0, Math.floor(r.x / cell)), c1 = Math.min(cols - 1, Math.floor((r.x + r.w) / cell));
+    const r0 = Math.max(0, Math.floor(r.y / cell)), r1 = Math.min(rows - 1, Math.floor((r.y + r.h) / cell));
+    const sv = r.storeys;
+    for (let ry = r0; ry <= r1; ry++) {
+      const base = ry * cols;
+      for (let cx = c0; cx <= c1; cx++) if (sv > data[base + cx]) data[base + cx] = sv;
+    }
+  }
+  return { w, h, cols, rows, cell, camX, camY, tilePx, data };
+}
+
+/** Tallest building storeys at a screen pixel (0 if no mask / out of bounds). */
+export function sampleHeight(mask, sx, sy) {
+  if (!mask || sx < 0 || sy < 0 || sx >= mask.w || sy >= mask.h) return 0;
+  const c = Math.floor(sx / mask.cell), r = Math.floor(sy / mask.cell);
+  if (c < 0 || r < 0 || c >= mask.cols || r >= mask.rows) return 0;
+  return mask.data[r * mask.cols + c];
+}
+
+// The most recently built mask — published so F2/GL read the SAME per-frame grid.
+let _heightMask = null;
+export function getBuildingHeightMask() { return _heightMask; }
+
 function fillPolys(ctx, polys) {
   ctx.beginPath();
   for (const poly of polys) {
@@ -235,22 +297,52 @@ function fillPolys(ctx, polys) {
   ctx.fill(); // nonzero winding — overlapping regions merge at one alpha (no double-darkening)
 }
 
+/** Heat overlay of the height mask (window._buildingHeightMaskDebug) — taller = brighter. */
+function drawHeightMaskDebug(ctx, mask) {
+  if (!mask) return;
+  ctx.save();
+  for (let r = 0; r < mask.rows; r++) {
+    const base = r * mask.cols;
+    for (let c = 0; c < mask.cols; c++) {
+      const v = mask.data[base + c];
+      if (!v) continue;
+      ctx.fillStyle = `rgba(${Math.min(255, 60 + v * 32)},70,210,0.35)`;
+      ctx.fillRect(c * mask.cell, r * mask.cell, mask.cell, mask.cell);
+    }
+  }
+  ctx.restore();
+}
+
 /**
  * Draw building shadows. Call AFTER terrain/water/roofs and BEFORE the player/F2 sprites
  * (canvas-renderer.js, just after drawRoofs). Best-effort: never throws.
  *
+ * Also builds + publishes the per-frame HEIGHT MASK (getBuildingHeightMask() /
+ * window._buildingHeightMask) — the shared primitive grass/GL shadows clip against so a short
+ * object's shadow never draws over a taller building. See the shadow-height contract doc.
+ *
  * Phase 1 = ground shadows: each building's footprint swept away from the sun. Only the WAKE
- * shows — the fill is clipped to EXCLUDE every building's footprint, so no shadow lies "under"
- * a building (a shadow that reaches a building is left to phase 2 to climb its wall instead).
- * Phase 2 = drape: where a shadow reaches a neighbour, it climbs that neighbour's south façade
- * (drawn UNCLIPPED, since it intentionally darkens the wall over the footprint).
+ * shows — the fill is clipped to EXCLUDE every footprint AND every TALLER building's silhouette,
+ * so no shadow lies under a building nor paints across a taller neighbour's roof.
+ * Phase 2 = drape: where a shadow reaches a neighbour, it climbs that neighbour's south façade,
+ * but only as high as the CASTER is tall (a short building can't scale a tall wall).
  *
  * Debug toggles: window._buildingShadows=false hides all; window._buildingShadowDrape=false
- * disables only the façade drape (phase 2); window._buildingShadowScale tunes ground length.
+ * disables the drape; window._buildingShadowScale tunes ground length;
+ * window._buildingHeightMaskOn=false stops building the mask; window._buildingHeightMaskDebug
+ * paints the mask as a heat overlay.
  */
 export function drawBuildingShadows(ctx, buildings, camX, camY, tilePx, w, h, sun) {
   if (!sun || !sun.isDaytime || !buildings || !buildings.length) return;
   if (typeof window !== 'undefined' && window._buildingShadows === false) return;
+
+  // Build + publish the height mask FIRST — F2/GL read it this same frame (canvas-renderer calls
+  // us before F2). It carries its transform; a stale/null mask means "no suppression" downstream.
+  if (!(typeof window !== 'undefined' && window._buildingHeightMaskOn === false)) {
+    _heightMask = buildHeightMask(buildings, camX, camY, tilePx, w, h);
+    if (typeof window !== 'undefined') window._buildingHeightMask = _heightMask;
+  }
+
   const scale = resolveScale(typeof window !== 'undefined' ? window._buildingShadowScale : undefined);
   const drapeOn = !(typeof window !== 'undefined' && window._buildingShadowDrape === false);
   const dayNight = sun.ambient != null ? sun.ambient : 1;
@@ -260,12 +352,27 @@ export function drawBuildingShadows(ctx, buildings, camX, camY, tilePx, w, h, su
   const hulls = computeHulls(buildings, sun, tilePx, camX, camY, scale);
   if (!hulls.length) return;
 
-  const groundPolys = [];
-  for (const c of hulls) {
-    const bb = c.bbox;
-    if (bb.maxX < 0 || bb.maxY < 0 || bb.minX > w || bb.minY > h) continue; // off-screen
-    groundPolys.push(c.hull);
+  const onScreen = (bb) => !(bb.maxX < 0 || bb.maxY < 0 || bb.minX > w || bb.minY > h);
+  const visible = hulls.filter((c) => onScreen(c.bbox));
+
+  // Occluder silhouettes (footprint + wall/roof band) of on-screen buildings, with their height.
+  const sils = [];
+  for (const b of buildings) {
+    if (!b || !b.footprint || !b.footprint.boundingBox) continue;
+    const s = buildingSilhouetteRect(b, tilePx, camX, camY);
+    if (s.x + s.w < 0 || s.y + s.h < 0 || s.x > w || s.y > h) continue;
+    sils.push(s);
   }
+
+  // Group ground hulls: those with NO taller occluder merge into one fill (no double-darkening);
+  // those overshadowed by a taller building get an individual fill clipped off those silhouettes.
+  const merged = [], capped = [];
+  for (const c of visible) {
+    const cs = buildingFloors(c.b);
+    const taller = sils.filter((s) => s.b !== c.b && s.storeys > cs);
+    if (taller.length) capped.push({ hull: c.hull, taller }); else merged.push(c.hull);
+  }
+
   const drapePolys = [];
   if (drapeOn) {
     for (const r of drapeRects(buildings, hulls, tilePx, camX, camY)) {
@@ -276,28 +383,39 @@ export function drawBuildingShadows(ctx, buildings, camX, camY, tilePx, w, h, su
       ]));
     }
   }
-  if (!groundPolys.length && !drapePolys.length) return;
+  if (!merged.length && !capped.length && !drapePolys.length) {
+    if (typeof window !== 'undefined' && window._buildingHeightMaskDebug) drawHeightMaskDebug(ctx, _heightMask);
+    return;
+  }
 
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.globalAlpha = alpha;
   ctx.fillStyle = SHADOW_TINT;
 
-  // Ground shadows — clipped to (screen MINUS every footprint) so a building's own shadow (and a
-  // neighbour's) never paints over the building itself. Only the wake, away from the light, shows.
-  if (groundPolys.length) {
+  // Ground shadows under the footprint-exclusion clip (the WAKE-only rule). Each ctx.clip with a
+  // single exclusion rect intersects the running clip, so successive clips subtract a union safely.
+  if (merged.length || capped.length) {
     ctx.save();
     ctx.beginPath();
     ctx.rect(0, 0, w, h);
     for (const fr of footprintRects(buildings, tilePx, camX, camY)) ctx.rect(fr.x, fr.y, fr.w, fr.h);
-    ctx.clip('evenodd'); // even-odd: screen(1) with each footprint(+1) → footprints excluded
-    fillPolys(ctx, groundPolys);
+    ctx.clip('evenodd'); // screen MINUS every footprint
+    if (merged.length) fillPolys(ctx, merged);
+    for (const cg of capped) {
+      ctx.save();
+      for (const s of cg.taller) { // additionally clip this shadow off each taller silhouette
+        ctx.beginPath(); ctx.rect(0, 0, w, h); ctx.rect(s.x, s.y, s.w, s.h); ctx.clip('evenodd');
+      }
+      fillPolys(ctx, [cg.hull]);
+      ctx.restore();
+    }
     ctx.restore(); // drop the footprint clip
   }
 
-  // Drape — the shadow climbing a neighbour's façade. NOT clipped: the façade sits over the
-  // footprint screen area on purpose (that IS the wall we want drenched).
+  // Drape — the shadow climbing a neighbour's façade (height-capped in drapeRects). Unclipped.
   if (drapePolys.length) fillPolys(ctx, drapePolys);
 
   ctx.restore();
+  if (typeof window !== 'undefined' && window._buildingHeightMaskDebug) drawHeightMaskDebug(ctx, _heightMask);
 }

@@ -8,6 +8,7 @@ import {
   convexHull, shadowProjection, buildingFloors, buildingShadowHull, MAX_LENGTH_TILES,
   southFacadeColumns, facadeRect, pointInHull, computeHulls, drapeRects,
   resolveScale, DEFAULT_SCALE, footprintRects,
+  buildingSilhouetteRect, buildHeightMask, sampleHeight, STORY_TILES,
 } from '../../src/render/building-shadow.js';
 import { WALL_CONFIG } from '../../src/render/wall-config.js';
 import { buildingNode } from '../world/buildings/blueprint-node.js';
@@ -192,4 +193,60 @@ test('the swept hull DOES cover the footprint centre — which is why the clip m
   const fr = footprintRects([b], 64, 0, 0)[0];
   assert.ok(cx >= fr.x && cx <= fr.x + fr.w && cy >= fr.y && cy <= fr.y + fr.h,
     'and footprintRects covers that centre, so the clip excludes it');
+});
+
+// ── height mask: the shared primitive shadows clip against ────────────
+test('buildingSilhouetteRect: footprint + north band of 8+(stories-1)*4 tiles, tagged with storeys', () => {
+  const r1 = buildingSilhouetteRect(fakeBS(0, 10, 4, 3, 1), 64, 0, 0); // 1-storey
+  assert.equal(r1.storeys, 1);
+  assert.equal(r1.x, 0); assert.equal(r1.w, 4 * 64);
+  // band north = 8 tiles for 1-storey; top = (10 - 8)*64, bottom = (10+3)*64
+  assert.equal(r1.y, (10 - 8) * 64);
+  assert.equal(r1.y + r1.h, (10 + 3) * 64);
+  const r5 = buildingSilhouetteRect(fakeBS(0, 10, 4, 3, 5), 64, 0, 0); // 5-storey
+  assert.equal(r5.storeys, 5);
+  assert.equal(r5.y, (10 - (8 + 4 * STORY_TILES)) * 64); // taller → band reaches further north
+});
+
+test('buildHeightMask: empty viewport is all zero', () => {
+  const m = buildHeightMask([], 0, 0, 64, 256, 256);
+  assert.ok(m.data.every(v => v === 0));
+});
+
+test('buildHeightMask: a building stamps its silhouette cells with its storeys', () => {
+  const m = buildHeightMask([fakeBS(1, 1, 2, 2, 3)], 0, 0, 64, 512, 512, 8);
+  // a cell inside the footprint (tile ~1.5,1.5 → px 96,96) reads 3 storeys
+  assert.equal(sampleHeight(m, 96, 96), 3);
+  // a cell in the north band (tile 1.5, 0.5 → px 96, 32; band covers y from (1-8) up) reads 3
+  assert.equal(sampleHeight(m, 96, 32), 3);
+  // open ground far away reads 0
+  assert.equal(sampleHeight(m, 400, 400), 0);
+});
+
+test('buildHeightMask: overlapping buildings keep the MAX storeys per cell', () => {
+  const tall = fakeBS(2, 2, 3, 3, 6), short = fakeBS(2, 2, 3, 3, 2); // same spot
+  const m = buildHeightMask([short, tall], 0, 0, 64, 512, 512, 8);
+  assert.equal(sampleHeight(m, (2.5) * 64, (2.5) * 64), 6, 'taller wins');
+});
+
+test('sampleHeight: out-of-bounds and null mask read 0 (degrade, never throw)', () => {
+  const m = buildHeightMask([fakeBS(0, 0, 2, 2, 4)], 0, 0, 64, 256, 256);
+  assert.equal(sampleHeight(m, -5, 10), 0);
+  assert.equal(sampleHeight(m, 10, 9999), 0);
+  assert.equal(sampleHeight(null, 10, 10), 0);
+});
+
+// ── drape height cap: a short caster can't climb a tall wall ───────────
+test('drape height is capped by the CASTER storeys, not the neighbour', () => {
+  // A (1-storey) sits just north of wide B (5-storey); at noon A's shadow (scale 3) reaches B's
+  // south wall foot. The drape on B must rise only ~1 storey (caster), not B's full 5.
+  const A = fakeBS(2, 0, 3, 2, 1);
+  const B = fakeBS(0, 2, 7, 3, 5);
+  const hulls = computeHulls([A, B], NOON, 64, 0, 0, 3);
+  const rects = drapeRects([A, B], hulls, 64, 0, 0);
+  assert.ok(rects.length > 0, 'A drapes some of B');
+  const cappedH = facadeRect(5, 2, 1, 64, 0, 0).h;   // min(caster1, neighbour5) = 1 storey
+  const fullH = facadeRect(5, 2, 5, 64, 0, 0).h;     // the OLD wrong height
+  assert.ok(rects.every(r => r.h === cappedH), 'every drape rect rises only the caster height');
+  assert.notEqual(cappedH, fullH);
 });
