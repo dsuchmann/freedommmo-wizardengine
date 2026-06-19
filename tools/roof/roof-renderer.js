@@ -1,0 +1,219 @@
+// roof-renderer.js — 3/4 oblique CANVAS renderer for a roof grid.
+//
+// Pure procedural: no images. Projects each tile's four (smoothed) corners into a
+// 3/4 view, sorts back-to-front, shades each facet by its normal vs a light, hands
+// the quad to the MATERIAL to skin, then draws eave fascia, accent creases, and
+// finally the FEATURE pass (turrets / buttresses / crenellations / decks …).
+
+const VIEW = { yScale: 0.60, hScaleFactor: 1.0 };
+
+// Build a view transform that fits `grid` into a w×h canvas with margin.
+export function computeView(grid, cw, ch, margin = 0.86) {
+  const span = grid.W, depth = grid.H;
+  const yScale = VIEW.yScale, hf = VIEW.hScaleFactor;
+  // pick a tile size that fits both axes (height lifts the top edge up)
+  const tileW = (cw * margin) / span;
+  const tileH = (ch * margin) / (depth * yScale + grid.maxHeight * hf + 2.5);
+  const tile = Math.max(4, Math.min(tileW, tileH));
+  const view = {
+    tile, yScale, hScale: tile * hf,
+    ox: 0, oy: 0,
+    cx0: grid.gox, cy0: grid.goy,
+    project(gx, gy, hh) {
+      return {
+        x: this.ox + (gx - grid.gox) * this.tile,
+        y: this.oy + (gy - grid.goy) * this.tile * this.yScale - hh * this.hScale,
+      };
+    },
+  };
+  // center: project every corner with origin 0, then translate to canvas center
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (let cy = 0; cy <= grid.H; cy++) for (let cx = 0; cx <= grid.W; cx++) {
+    const hh = grid.cornerH[cy * grid.CW + cx];
+    const x = (cx) * tile, y = (cy) * tile * yScale - hh * view.hScale;
+    if (x < minX) minX = x; if (x > maxX) maxX = x;
+    if (y < minY) minY = y; if (y > maxY) maxY = y;
+  }
+  view.ox = cw / 2 - (minX + maxX) / 2;
+  view.oy = ch / 2 - (minY + maxY) / 2;
+  return view;
+}
+
+// GAME-PROJECTION view: matches the shipped renderer exactly — flat 1:1 top-down
+// (sx = wx*tilePx - camX, sy = wy*tilePx - camY), with roof HEIGHT expressed as a
+// pure upward pixel lift sitting on top of the building's wall band. originWx/Wy =
+// the building's world tile origin (b.x/b.y); grid tile coords are added to it.
+export function makeGameView(originWx, originWy, camX, camY, tilePx, opts = {}) {
+  const wallLift = opts.wallLift ?? 3.75 * tilePx; // wall top: (wallHeight - yOffset)*tilePx
+  const hScale = opts.heightScale ?? tilePx * 0.55;
+  // UNIFORM lift: every eave sits on its wall top (north AND south walls are both the
+  // tall 4-tile sprite), so the roof never terminates short of the north wall. The
+  // roof not extending past the north edge is handled by CAPPING the roof height to
+  // the building depth (see roof-ingame.js), so the ridge can't rise north of the eave.
+  return {
+    tile: tilePx, yScale: 1, hScale, game: true,
+    project(gx, gy, hh) {
+      return {
+        x: (originWx + gx) * tilePx - camX,
+        y: (originWy + gy) * tilePx - camY - wallLift - hh * hScale,
+      };
+    },
+  };
+}
+
+function corner(grid, view, cx, cy) {
+  const hh = grid.cornerH[cy * grid.CW + cx];
+  return view.project(grid.gox + cx, grid.goy + cy, hh);
+}
+
+// expand a quad outward from its centroid so neighbours overlap ~0.5px → no seams
+function inflateQuad(q, frac) {
+  let cx = 0, cy = 0; for (const p of q) { cx += p.x; cy += p.y; } cx /= 4; cy /= 4;
+  const s = 1 + frac;
+  return [
+    { x: cx + (q[0].x - cx) * s, y: cy + (q[0].y - cy) * s },
+    { x: cx + (q[1].x - cx) * s, y: cy + (q[1].y - cy) * s },
+    { x: cx + (q[2].x - cx) * s, y: cy + (q[2].y - cy) * s },
+    { x: cx + (q[3].x - cx) * s, y: cy + (q[3].y - cy) * s },
+  ];
+}
+
+function tileQuad(grid, view, t) {
+  return [
+    corner(grid, view, t.i, t.j),
+    corner(grid, view, t.i + 1, t.j),
+    corner(grid, view, t.i + 1, t.j + 1),
+    corner(grid, view, t.i, t.j + 1),
+  ];
+}
+
+function facetNormal(grid, t) {
+  const i = t.i, j = t.j, CW = grid.CW;
+  const h00 = grid.cornerH[j * CW + i], h10 = grid.cornerH[j * CW + i + 1];
+  const h01 = grid.cornerH[(j + 1) * CW + i];
+  const nx = h00 - h10, ny = h00 - h01, nz = 1;
+  const l = Math.hypot(nx, ny, nz) || 1;
+  return [nx / l, ny / l, nz / l];
+}
+
+function lightVec(angleDeg, elevDeg) {
+  const a = (angleDeg * Math.PI) / 180, e = (elevDeg * Math.PI) / 180;
+  return [Math.cos(e) * Math.cos(a), Math.cos(e) * Math.sin(a), Math.sin(e)];
+}
+
+function isPerimeter(grid, t) {
+  const W = grid.W, H = grid.H;
+  const roof = (i, j) => i >= 0 && j >= 0 && i < W && j < H && (grid.fp[j * W + i] || grid.isOverhang[j * W + i]);
+  return !roof(t.i, t.j - 1) || !roof(t.i, t.j + 1) || !roof(t.i + 1, t.j) || !roof(t.i - 1, t.j);
+}
+
+export function drawRoof(ctx, grid, material, features, cfg, view) {
+  const cw = ctx.canvas.width, ch = ctx.canvas.height;
+  if (!cfg.noClear) ctx.clearRect(0, 0, cw, ch);
+  if (cfg.background !== false && !cfg.noClear) { ctx.fillStyle = cfg.background || '#0e1014'; ctx.fillRect(0, 0, cw, ch); }
+
+  const light = lightVec(cfg.lightAngle ?? 235, cfg.lightElev ?? 52);
+  const ambient = cfg.ambient ?? 0.34;
+
+  // painter order: back (north) and low first; features drawn last
+  const order = grid.tiles.slice().sort((a, b) => (a.gy - b.gy) || (a.h - b.h) || (a.gx - b.gx));
+
+  // ground shadow (soft ellipse under the footprint) — skip when overlaying the game
+  if (!cfg.noShadow) drawGroundShadow(ctx, grid, view);
+
+  // ROOF→WALL SKIRT (the "roof-wall tile"): drop every perimeter edge straight down
+  // to the wall-top plane (h=0 in the game projection) so the roof terminates flush
+  // on the south wall / gable ends instead of floating above it. Drawn FIRST so the
+  // roof surface sits cleanly on top.
+  if (!cfg.noSkirt) for (const t of order) {
+    if (t.isOverhang || t.role === 'eave') drawSkirt(ctx, grid, view, t, material);
+  }
+
+  // overlap tiles slightly to kill inter-facet seams
+  const infl = 1.4 / Math.max(8, view.tile);
+  for (const t of order) {
+    const quad = inflateQuad(tileQuad(grid, view, t), infl);
+    const nrm = facetNormal(grid, t);
+    let shade = ambient + (1 - ambient) * Math.max(0, nrm[0] * light[0] + nrm[1] * light[1] + nrm[2] * light[2]);
+    if (t.isOverhang) shade *= 0.82;
+    material.fillTile(ctx, quad, t, shade, view, grid);
+  }
+
+  if (!cfg.noAccents) drawAccents(ctx, grid, view, cfg);
+  if (material.trim) material.trim(ctx, grid, view, cfg);
+  if (features && features.draw) features.draw(ctx, grid, view, cfg, { light, ambient });
+}
+
+// The roof-wall transition piece. In the GAME projection (view.game) the perimeter
+// drops to h=0 = the wall top, so it reads as a gable end / rake board terminating
+// on the wall. In the oblique gallery it's just a thin eave fascia.
+function drawSkirt(ctx, grid, view, t, material) {
+  const baseDrop = (grid.params && grid.params.fascia) || 0.5;
+  const edges = [
+    [[t.i, t.j], [t.i + 1, t.j], 'n'],
+    [[t.i + 1, t.j], [t.i + 1, t.j + 1], 'e'],
+    [[t.i + 1, t.j + 1], [t.i, t.j + 1], 's'],
+    [[t.i, t.j + 1], [t.i, t.j], 'w'],
+  ];
+  const outside = (i, j) => {
+    if (i < 0 || j < 0 || i >= grid.W || j >= grid.H) return true;
+    return !(grid.fp[j * grid.W + i] || grid.isOverhang[j * grid.W + i]);
+  };
+  const nb = { n: [0, -1], e: [1, 0], s: [0, 1], w: [-1, 0] };
+  for (const [c1, c2, d] of edges) {
+    const [oi, oj] = nb[d];
+    if (!outside(t.i + oi, t.j + oj)) continue;
+    const ch1 = grid.cornerH[c1[1] * grid.CW + c1[0]], ch2 = grid.cornerH[c2[1] * grid.CW + c2[0]];
+    // Only the SOUTH face bridges all the way down to the wall top (h=0) — that's the
+    // visible "roof→wall cliff" the user wants terminated. N/E/W keep a thin eave
+    // fascia so the overhang still curves/flares (no dark erased gable faces).
+    const toWall = view.game && d === 's';
+    const bH1 = toWall ? 0 : Math.max(0, ch1 - baseDrop);
+    const bH2 = toWall ? 0 : Math.max(0, ch2 - baseDrop);
+    if (ch1 - bH1 < 0.02 && ch2 - bH2 < 0.02) continue; // nothing to bridge
+    const top1 = corner(grid, view, c1[0], c1[1]), top2 = corner(grid, view, c2[0], c2[1]);
+    const bot1 = view.project(grid.gox + c1[0], grid.goy + c1[1], bH1);
+    const bot2 = view.project(grid.gox + c2[0], grid.goy + c2[1], bH2);
+    ctx.beginPath();
+    ctx.moveTo(top1.x, top1.y); ctx.lineTo(top2.x, top2.y);
+    ctx.lineTo(bot2.x, bot2.y); ctx.lineTo(bot1.x, bot1.y); ctx.closePath();
+    const dShade = d === 's' ? 0.88 : d === 'n' ? 0.5 : 0.66; // sunlit south / shadowed north
+    ctx.fillStyle = material.fasciaColor ? material.fasciaColor(dShade) : 'rgba(30,24,18,0.9)';
+    ctx.fill();
+  }
+}
+
+function drawGroundShadow(ctx, grid, view) {
+  const c = view.project(grid.bbox.x0 + grid.bbox.w / 2, grid.bbox.y0 + grid.bbox.h / 2, 0);
+  ctx.save();
+  ctx.globalAlpha = 0.28;
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.ellipse(c.x, c.y + grid.bbox.h * view.tile * view.yScale * 0.18,
+    grid.bbox.w * view.tile * 0.55, grid.bbox.h * view.tile * view.yScale * 0.55, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+// ridge / hip / valley creases as subtle strokes
+function drawAccents(ctx, grid, view, cfg) {
+  ctx.save();
+  ctx.lineWidth = Math.max(1, view.tile * 0.06);
+  for (const t of grid.tiles) {
+    if (t.role === 'ridge' || t.role === 'peak') {
+      const q = tileQuad(grid, view, t);
+      ctx.strokeStyle = 'rgba(255,255,235,0.30)';
+      ctx.beginPath(); ctx.moveTo(q[0].x, q[0].y);
+      for (let k = 1; k < 4; k++) ctx.lineTo(q[k].x, q[k].y);
+      ctx.closePath(); ctx.stroke();
+    } else if (t.role === 'valley') {
+      const q = tileQuad(grid, view, t);
+      ctx.strokeStyle = 'rgba(0,0,0,0.30)';
+      ctx.beginPath(); ctx.moveTo(q[0].x, q[0].y); ctx.lineTo(q[2].x, q[2].y); ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+// utilities shared with features/materials
+export { corner, tileQuad, facetNormal, lightVec };

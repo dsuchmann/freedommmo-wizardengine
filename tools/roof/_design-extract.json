@@ -1,0 +1,2334 @@
+{
+ "configs": [
+  {
+   "name": "Alpine Frost-Steeple",
+   "biome": "arctic",
+   "buildingType": "chapel",
+   "footprintShape": "T",
+   "style": "gable",
+   "material": "mat_slate",
+   "features": [
+    "feat-overhang-eave",
+    "feat-buttress",
+    "feat-ridge-crest",
+    "feat-snow-ice",
+    "feat-weathervane"
+   ],
+   "params": {
+    "style": {
+     "pitch": 2.7,
+     "ridgeOrientation": "auto-long",
+     "gableReturn": 0,
+     "overhang": 0.6
+    },
+    "material": {
+     "hue": 208,
+     "variegation": 0.3,
+     "courseHeight": 4,
+     "slateWidth": 5,
+     "spec": 0.4,
+     "weathering": 0.3,
+     "moss": 0.05
+    },
+    "overhang": {
+     "overhang": 0.6,
+     "soffitDepth": 0.6,
+     "fasciaWidth": 2,
+     "bracketStyle": "corbel",
+     "dropShadow": 0.45
+    },
+    "buttress": {
+     "mode": "pier",
+     "spacing": 3,
+     "projection": 0.7,
+     "steps": 4,
+     "pinnacle": true,
+     "archCurve": 0.4
+    },
+    "ridgeCrest": {
+     "crestMotif": "ironRail",
+     "crestHeight": 0.35,
+     "finial": "orb",
+     "endSweep": 0,
+     "density": 1
+    },
+    "snowIce": {
+     "amount": 0.85,
+     "slopeThreshold": 0.45,
+     "icicles": 0.6,
+     "driftBias": 0.4,
+     "tint": "snow"
+    },
+    "weathervane": {
+     "figure": "arrow",
+     "mastHeight": 1.2,
+     "cardinals": true,
+     "material": "iron"
+    }
+   },
+   "rationale": "Near-vertical white-slate gable sheds heavy snow; thick snow crest on ridge + eave icicles read instantly as deep-winter; pier buttresses br"
+  },
+  {
+   "name": "Trapper's Gambrel Barn",
+   "biome": "taiga",
+   "buildingType": "barn",
+   "footprintShape": "rectangle",
+   "style": "gambrel",
+   "material": "mat_wood_plank",
+   "features": [
+    "feat-overhang-eave",
+    "feat-dormer",
+    "feat-chimney",
+    "feat-moss-vines"
+   ],
+   "params": {
+    "style": {
+     "lowerPitch": 2.8,
+     "upperPitch": 0.55,
+     "breakFrac": 0.55,
+     "ridgeOrientation": "auto-long"
+    },
+    "material": {
+     "hue": 30,
+     "plankWidth": 9,
+     "battenStyle": "batten",
+     "grain": 0.55,
+     "knots": 0.4,
+     "weathering": 0.4,
+     "moss": 0.2
+    },
+    "overhang": {
+     "overhang": 0.7,
+     "soffitDepth": 0.5,
+     "fasciaWidth": 3,
+     "bracketStyle": "exposedRafter",
+     "dropShadow": 0.4
+    },
+    "dormer": {
+     "count": 2,
+     "heightBand": 0.6,
+     "dormerForm": "shed",
+     "windowGlow": 0.4,
+     "width": 1.3
+    },
+    "chimney": {
+     "count": 1,
+     "height": 1.8,
+     "pots": 1,
+     "crownStyle": "capstone",
+     "smoke": 0.2
+    },
+    "moss": {
+     "coverage": 0.3,
+     "mossBias": 0.6,
+     "vines": 0.2,
+     "palette": "mossGreen",
+     "age": 0.5
+    }
+   },
+   "rationale": "Classic barn dog-leg silhouette maximizes loft volume; board-and-batten plank skin with exposed rafters is the boreal timber vernacular. The"
+  },
+  {
+   "name": "Sod-Berm Longhouse",
+   "biome": "tundra",
+   "buildingType": "longhouse",
+   "footprintShape": "rectangle",
+   "style": "shed",
+   "material": "mat_sod_green",
+   "features": [
+    "feat-overhang-eave",
+    "feat-chimney",
+    "feat-rooftop-garden",
+    "feat-snow-ice"
+   ],
+   "params": {
+    "style": {
+     "pitch": 0.6,
+     "slopeDir": "S",
+     "headerWall": true,
+     "overhang": 0.5
+    },
+    "material": {
+     "hue": 92,
+     "bladeDensity": 40,
+     "flowerDensity": 0.15,
+     "earthEave": 8,
+     "dryness": 0.3,
+     "weathering": 0.35,
+     "moss": 0.5
+    },
+    "overhang": {
+     "overhang": 0.5,
+     "soffitDepth": 0.55,
+     "fasciaWidth": 2,
+     "bracketStyle": "none",
+     "dropShadow": 0.35
+    },
+    "chimney": {
+     "count": 2,
+     "height": 1.4,
+     "pots": 0,
+     "crownStyle": "corbelled",
+     "smoke": 0.4
+    },
+    "rooftopGarden": {
+     "density": 0.4,
+     "plantMix": "wild",
+     "plantersShape": "sodSheet",
+     "trellis": false,
+     "biomeTint": "arctic"
+    },
+    "snowIce": {
+     "amount": 0.3,
+     "slopeThreshold": 0.5,
+     "icicles": 0.1,
+     "driftBias": 0.5,
+     "tint": "frost"
+    }
+   },
+   "rationale": "Low mono-pitch frozen-turf roof bermed into the wind, smoke-vent stacks and a hardy-moss garden surface — the only living green-roof in the "
+  },
+  {
+   "name": "Cottage Cross-Gable Manor",
+   "biome": "forest",
+   "buildingType": "manor",
+   "footprintShape": "L",
+   "style": "cross-gabled",
+   "material": "mat_clay_tile",
+   "features": [
+    "feat-overhang-eave",
+    "feat-dormer",
+    "feat-rain-gutters",
+    "feat-ridge-crest",
+    "feat-chimney"
+   ],
+   "params": {
+    "style": {
+     "pitch": 1.1,
+     "wingForm": "gable",
+     "equalizeRidges": true,
+     "minorWingScale": 0.85
+    },
+    "material": {
+     "hue": 16,
+     "sat": 0.62,
+     "barrelPitch": 8,
+     "courseHeight": 6,
+     "corrugation": 0.6,
+     "weathering": 0.3,
+     "moss": 0.25
+    },
+    "overhang": {
+     "overhang": 0.45,
+     "soffitDepth": 0.5,
+     "fasciaWidth": 2,
+     "bracketStyle": "dentil",
+     "dropShadow": 0.4
+    },
+    "dormer": {
+     "count": 3,
+     "heightBand": 0.4,
+     "dormerForm": "gable",
+     "windowGlow": 0.5,
+     "width": 1
+    },
+    "rainGutters": {
+     "present": true,
+     "downspouts": 4,
+     "gargoyles": 0.1,
+     "material": "copper",
+     "waterArc": false
+    },
+    "ridgeCrest": {
+     "crestMotif": "beadedTile",
+     "crestHeight": 0.25,
+     "finial": "orb",
+     "endSweep": 0,
+     "density": 1
+    },
+    "chimney": {
+     "count": 2,
+     "height": 2,
+     "pots": 2,
+     "crownStyle": "corbelled",
+     "smoke": 0.3
+    }
+   },
+   "rationale": "Two clay-tile gable ridges crossing at right angles over the L-footprint auto-generate valleys at the reentrant corner — the showcase of the"
+  },
+  {
+   "name": "Thatch Roundhouse Granary",
+   "biome": "grassland",
+   "buildingType": "granary",
+   "footprintShape": "round-tower",
+   "style": "conical-spire",
+   "material": "mat_thatch",
+   "features": [
+    "feat-overhang-eave",
+    "feat-ridge-crest",
+    "feat-stepped-eave-overhang-tiers"
+   ],
+   "params": {
+    "style": {
+     "spireHeight": 7,
+     "coneSharpness": 2,
+     "facets": 0,
+     "flareBase": 0.3
+    },
+    "material": {
+     "hue": 46,
+     "fiberDensity": 50,
+     "fiberLen": 12,
+     "thickness": 10,
+     "ridgeStyle": "patterned",
+     "weathering": 0.35,
+     "moss": 0.3
+    },
+    "overhang": {
+     "overhang": 0.9,
+     "soffitDepth": 0.5,
+     "fasciaWidth": 0,
+     "bracketStyle": "none",
+     "dropShadow": 0.4
+    },
+    "ridgeCrest": {
+     "crestMotif": "none",
+     "crestHeight": 0,
+     "finial": "none",
+     "endSweep": 0,
+     "density": 1
+    },
+    "steppedEave": {
+     "tiers": 1,
+     "cornerUpsweep": 0,
+     "flare": 0.5,
+     "corniceReturn": false,
+     "cornerFinial": "none"
+    }
+   },
+   "rationale": "Smooth conical thatch over a round footprint with a woven patterned ridge-comb and a deep flared drip-eave to keep grain dry and vermin out."
+  },
+  {
+   "name": "Adobe Battlement Deck",
+   "biome": "desert",
+   "buildingType": "watchtower",
+   "footprintShape": "square",
+   "style": "crenellated",
+   "material": "mat_flat_stone",
+   "features": [
+    "feat-walkable-deck",
+    "feat-battlements",
+    "feat-parapet-molding",
+    "feat-corner-turret",
+    "feat-rooftop-garden"
+   ],
+   "params": {
+    "style": {
+     "crenelPeriod": 2,
+     "merlonHeight": 1.2,
+     "crenelHeight": 0.3,
+     "cornerTurrets": true
+    },
+    "material": {
+     "stoneType": "sandstone",
+     "val": 0.55,
+     "flagSize": 14,
+     "jointDepth": 0.5,
+     "grain": 0.35,
+     "weathering": 0.35,
+     "moss": 0.05
+    },
+    "walkableDeck": {
+     "coverage": 0.7,
+     "surface": "stonePaver",
+     "edgeGuard": "battlement",
+     "stairHead": true,
+     "pattern": "grid"
+    },
+    "battlements": {
+     "merlonWidth": 0.6,
+     "embrasureWidth": 0.4,
+     "crenelHeight": 0.5,
+     "merlonCap": "flat",
+     "arrowSlits": true,
+     "machicolation": 0.2
+    },
+    "parapetMolding": {
+     "height": 0.5,
+     "moldingStyle": "corbelTable",
+     "bandCount": 2,
+     "coping": "flat",
+     "corbelTable": true
+    },
+    "cornerTurret": {
+     "count": 4,
+     "radius": 1.2,
+     "height": 2,
+     "crossSection": "square",
+     "capStyle": "crenellated",
+     "machicolation": true
+    },
+    "rooftopGarden": {
+     "density": 0.3,
+     "plantMix": "shrubs",
+     "plantersShape": "pots",
+     "trellis": true,
+     "biomeTint": "desert"
+    }
+   },
+   "rationale": "Flat sandstone deck ringed by an alternating merlon/embrasure battlement with corner bartizan turrets and a shade-trellis succulent garden —"
+  },
+  {
+   "name": "Widow's-Walk Tile Villa",
+   "biome": "beach",
+   "buildingType": "villa",
+   "footprintShape": "courtyard-ring",
+   "style": "hip",
+   "material": "mat_clay_tile",
+   "features": [
+    "feat-overhang-eave",
+    "feat-walkable-deck",
+    "feat-rain-gutters",
+    "feat-hanging-lanterns"
+   ],
+   "params": {
+    "style": {
+     "pitch": 0.75,
+     "overhang": 0.8,
+     "ridgeBias": 0,
+     "seed": 1407
+    },
+    "material": {
+     "hue": 20,
+     "sat": 0.55,
+     "barrelPitch": 9,
+     "courseHeight": 6,
+     "corrugation": 0.65,
+     "weathering": 0.4,
+     "moss": 0.15
+    },
+    "overhang": {
+     "overhang": 0.8,
+     "soffitDepth": 0.55,
+     "fasciaWidth": 2,
+     "bracketStyle": "scroll",
+     "dropShadow": 0.4
+    },
+    "walkableDeck": {
+     "coverage": 0.5,
+     "surface": "woodPlank",
+     "edgeGuard": "railing",
+     "stairHead": true,
+     "pattern": "herringbone"
+    },
+    "rainGutters": {
+     "present": true,
+     "downspouts": 4,
+     "gargoyles": 0,
+     "material": "copper",
+     "waterArc": false
+    },
+    "hangingLanterns": {
+     "count": 8,
+     "lanternShape": "globe",
+     "glow": 0.6,
+     "sag": 0.3,
+     "glowColor": "warm"
+    }
+   },
+   "rationale": "Low clay-tile hip around a courtyard ring with a railed planked widow's-walk over the flat center and lanterns strung under deep sun-overhan"
+  },
+  {
+   "name": "Slate Lookout Turret Hall",
+   "biome": "hills",
+   "buildingType": "town_hall",
+   "footprintShape": "L",
+   "style": "hip-and-valley-compound",
+   "material": "mat_slate",
+   "features": [
+    "feat-overhang-eave",
+    "feat-corner-turret",
+    "feat-buttress",
+    "feat-dormer",
+    "feat-rain-gutters"
+   ],
+   "params": {
+    "style": {
+     "pitch": 0.95,
+     "courtyardInward": false,
+     "ridgeCapHeight": 0,
+     "valleyDepth": 1.1
+    },
+    "material": {
+     "hue": 214,
+     "variegation": 0.45,
+     "courseHeight": 4,
+     "slateWidth": 6,
+     "spec": 0.35,
+     "weathering": 0.3,
+     "moss": 0.12
+    },
+    "overhang": {
+     "overhang": 0.45,
+     "soffitDepth": 0.5,
+     "fasciaWidth": 2,
+     "bracketStyle": "corbel",
+     "dropShadow": 0.4
+    },
+    "cornerTurret": {
+     "count": 2,
+     "radius": 1.3,
+     "height": 2.5,
+     "crossSection": "round",
+     "capStyle": "conical",
+     "machicolation": false
+    },
+    "buttress": {
+     "mode": "pier",
+     "spacing": 3.5,
+     "projection": 0.6,
+     "steps": 3,
+     "pinnacle": true,
+     "archCurve": 0.5
+    },
+    "dormer": {
+     "count": 3,
+     "heightBand": 0.4,
+     "dormerForm": "hip",
+     "windowGlow": 0.45,
+     "width": 1
+    },
+    "rainGutters": {
+     "present": true,
+     "downspouts": 4,
+     "gargoyles": 0.15,
+     "material": "lead",
+     "waterArc": false
+    }
+   },
+   "rationale": "Full hip-and-valley over an L-footprint with corner lookout turrets reading across the valley and stepped buttresses — the highland civic ha"
+  },
+  {
+   "name": "Stilt Steeple Swamp Hut",
+   "biome": "swamp",
+   "buildingType": "tide_lodge",
+   "footprintShape": "rectangle",
+   "style": "catslide-witch",
+   "material": "mat_thatch",
+   "features": [
+    "feat-overhang-eave",
+    "feat-rain-gutters",
+    "feat-moss-vines",
+    "feat-ridge-crest"
+   ],
+   "params": {
+    "style": {
+     "pitch": 1.4,
+     "catslideReach": 4,
+     "sweepDir": "S",
+     "curveSag": 0.2
+    },
+    "material": {
+     "hue": 44,
+     "fiberDensity": 55,
+     "fiberLen": 13,
+     "thickness": 11,
+     "ridgeStyle": "sedge",
+     "weathering": 0.5,
+     "moss": 0.6
+    },
+    "overhang": {
+     "overhang": 1.2,
+     "soffitDepth": 0.6,
+     "fasciaWidth": 0,
+     "bracketStyle": "none",
+     "dropShadow": 0.45
+    },
+    "rainGutters": {
+     "present": true,
+     "downspouts": 3,
+     "gargoyles": 0,
+     "material": "wood",
+     "waterArc": false
+    },
+    "moss": {
+     "coverage": 0.55,
+     "mossBias": 0.7,
+     "vines": 0.4,
+     "palette": "jungle",
+     "age": 0.6
+    },
+    "ridgeCrest": {
+     "crestMotif": "none",
+     "crestHeight": 0,
+     "finial": "none",
+     "endSweep": 0,
+     "density": 1
+    }
+   },
+   "rationale": "A very steep thatch with one slope sweeping low over an attached wing nearly to the ground, enormous overhang and gutters to throw rainwater"
+  },
+  {
+   "name": "Palm Pavilion Pagoda",
+   "biome": "tropical_forest",
+   "buildingType": "temple",
+   "footprintShape": "square",
+   "style": "pagoda-tiered",
+   "material": "mat_glazed_ceramic",
+   "features": [
+    "feat-overhang-eave",
+    "feat-stepped-eave-overhang-tiers",
+    "feat-ridge-crest",
+    "feat-central-spire"
+   ],
+   "params": {
+    "style": {
+     "tierCount": 4,
+     "tierPitch": 0.8,
+     "eaveFlare": 0.6,
+     "tierShrink": 0.7
+    },
+    "material": {
+     "glazeHue": 150,
+     "sat": 0.8,
+     "gloss": 5,
+     "spec": 0.65,
+     "tileForm": "pantile",
+     "crackle": 0.25,
+     "courseColor": false
+    },
+    "overhang": {
+     "overhang": 1,
+     "soffitDepth": 0.5,
+     "fasciaWidth": 2,
+     "bracketStyle": "dentil",
+     "dropShadow": 0.4
+    },
+    "steppedEave": {
+     "tiers": 4,
+     "cornerUpsweep": 0.7,
+     "flare": 0.6,
+     "corniceReturn": false,
+     "cornerFinial": "horn"
+    },
+    "ridgeCrest": {
+     "crestMotif": "roofComb",
+     "crestHeight": 0.4,
+     "finial": "horn",
+     "endSweep": 0.6,
+     "density": 1
+    },
+    "centralSpire": {
+     "height": 4,
+     "baseRadius": 0.7,
+     "segments": 4,
+     "twist": 0,
+     "finial": "orb"
+    }
+   },
+   "rationale": "Four diminishing jade-glazed tiers with dramatically upswept flared eaves and horn finials — the East-Asian temple in a rainforest. Glossy j"
+  },
+  {
+   "name": "Basalt Bastion Keep",
+   "biome": "volcanic",
+   "buildingType": "armory",
+   "footprintShape": "square",
+   "style": "flat-parapet",
+   "material": "mat_flat_stone",
+   "features": [
+    "feat-walkable-deck",
+    "feat-parapet-molding",
+    "feat-battlements",
+    "feat-buttress",
+    "feat-chimney"
+   ],
+   "params": {
+    "style": {
+     "parapetHeight": 1,
+     "deckHeight": 0.2,
+     "crown": 0.05,
+     "walkable": true
+    },
+    "material": {
+     "stoneType": "basalt",
+     "val": 0.3,
+     "flagSize": 16,
+     "jointDepth": 0.6,
+     "grain": 0.4,
+     "weathering": 0.4,
+     "moss": 0.1
+    },
+    "walkableDeck": {
+     "coverage": 0.65,
+     "surface": "gravel",
+     "edgeGuard": "battlement",
+     "stairHead": true,
+     "pattern": "random"
+    },
+    "parapetMolding": {
+     "height": 0.6,
+     "moldingStyle": "corbelTable",
+     "bandCount": 1,
+     "coping": "chamfered",
+     "corbelTable": true
+    },
+    "battlements": {
+     "merlonWidth": 0.7,
+     "embrasureWidth": 0.4,
+     "crenelHeight": 0.6,
+     "merlonCap": "sloped",
+     "arrowSlits": true,
+     "machicolation": 0.3
+    },
+    "buttress": {
+     "mode": "pier",
+     "spacing": 3,
+     "projection": 0.7,
+     "steps": 3,
+     "pinnacle": false,
+     "archCurve": 0.3
+    },
+    "chimney": {
+     "count": 2,
+     "height": 1.6,
+     "pots": 0,
+     "crownStyle": "flared",
+     "smoke": 0.5
+    }
+   },
+   "rationale": "Low near-black basalt flat-deck with a sloped-cap battlement and corbel-table parapet, buttressed, ember-venting stacks — the volcanic ashla"
+  },
+  {
+   "name": "Crystal Witch-Hat Spire",
+   "biome": "mystic",
+   "buildingType": "crystal_nexus",
+   "footprintShape": "round-tower",
+   "style": "conical-spire",
+   "material": "mat_crystal_gem",
+   "features": [
+    "feat-central-spire",
+    "feat-overhang-eave",
+    "feat-arcane-solar-panels",
+    "feat-weathervane"
+   ],
+   "params": {
+    "style": {
+     "spireHeight": 14,
+     "coneSharpness": 3.5,
+     "facets": 8,
+     "flareBase": 0.1
+    },
+    "material": {
+     "gemHue": 280,
+     "facetSize": 9,
+     "edge": 0.6,
+     "glow": 0.6,
+     "sparkle": 0.5,
+     "dispersion": 0.3,
+     "weathering": 0.1
+    },
+    "centralSpire": {
+     "height": 6,
+     "baseRadius": 0.6,
+     "segments": 5,
+     "twist": 0.3,
+     "finial": "crystal"
+    },
+    "overhang": {
+     "overhang": 0.4,
+     "soffitDepth": 0.4,
+     "fasciaWidth": 1,
+     "bracketStyle": "none",
+     "dropShadow": 0.3
+    },
+    "arcaneSolar": {
+     "apparatus": "crystalFocus",
+     "count": 4,
+     "tilt": 0.4,
+     "glow": 0.6,
+     "palette": "manaViolet",
+     "weathering": 0.1
+    },
+    "weathervane": {
+     "figure": "star",
+     "mastHeight": 1.5,
+     "cardinals": true,
+     "material": "gilded"
+    }
+   },
+   "rationale": "A tall faceted amethyst witch-hat spire glowing from within, jeweled into 8 facets with a twisting crystal finial — the mage-tower of the en"
+  },
+  {
+   "name": "Alpine Chalet Throw-Eave",
+   "biome": "mountains",
+   "buildingType": "inn",
+   "footprintShape": "rectangle",
+   "style": "gable",
+   "material": "mat_wood_shingle",
+   "features": [
+    "feat-overhang-eave",
+    "feat-buttress",
+    "feat-chimney",
+    "feat-snow-ice",
+    "feat-banners-flags"
+   ],
+   "params": {
+    "style": {
+     "pitch": 1.9,
+     "ridgeOrientation": "auto-long",
+     "gableReturn": 0.1,
+     "overhang": 1.3
+    },
+    "material": {
+     "hue": 24,
+     "sat": 0.4,
+     "val": 0.48,
+     "courseHeight": 5,
+     "shakeWidth": 7,
+     "weathering": 0.4,
+     "moss": 0.1
+    },
+    "overhang": {
+     "overhang": 1.3,
+     "soffitDepth": 0.6,
+     "fasciaWidth": 3,
+     "bracketStyle": "exposedRafter",
+     "dropShadow": 0.45
+    },
+    "buttress": {
+     "mode": "pier",
+     "spacing": 4,
+     "projection": 0.6,
+     "steps": 2,
+     "pinnacle": false,
+     "archCurve": 0.3
+    },
+    "chimney": {
+     "count": 1,
+     "height": 2.2,
+     "pots": 1,
+     "crownStyle": "capstone",
+     "smoke": 0.4
+    },
+    "snowIce": {
+     "amount": 0.6,
+     "slopeThreshold": 0.5,
+     "icicles": 0.5,
+     "driftBias": 0.5,
+     "tint": "snow"
+    },
+    "banners": {
+     "count": 2,
+     "flagShape": "rectangle",
+     "windStrength": 0.5,
+     "charge": "auto",
+     "size": 1
+    }
+   },
+   "rationale": "Steep cedar-shake gable with a massive snow-throw overhang and exposed rafter tails — the alpine chalet inn. Heavy eave projection + snow lo"
+  },
+  {
+   "name": "Bone Beast-Lair Carapace",
+   "biome": "dense_forest",
+   "buildingType": "shrine",
+   "footprintShape": "square",
+   "style": "pyramidal",
+   "material": "mat_bone",
+   "features": [
+    "feat-central-spire",
+    "feat-ridge-crest",
+    "feat-overhang-eave",
+    "feat-moss-vines"
+   ],
+   "params": {
+    "style": {
+     "apexHeight": 5,
+     "apexSharpness": 1.4,
+     "finial": true,
+     "overhang": 0.5
+    },
+    "material": {
+     "val": 0.8,
+     "warmth": 0.4,
+     "plateSize": 15,
+     "sutureWiggle": 0.6,
+     "ridgeFeature": "vertebrae",
+     "weathering": 0.45,
+     "moss": 0.3
+    },
+    "centralSpire": {
+     "height": 3,
+     "baseRadius": 0.7,
+     "segments": 3,
+     "twist": 0,
+     "finial": "none"
+    },
+    "ridgeCrest": {
+     "crestMotif": "dragonSpine",
+     "crestHeight": 0.4,
+     "finial": "animalHead",
+     "endSweep": 0,
+     "density": 1
+    },
+    "overhang": {
+     "overhang": 0.5,
+     "soffitDepth": 0.55,
+     "fasciaWidth": 0,
+     "bracketStyle": "none",
+     "dropShadow": 0.4
+    },
+    "moss": {
+     "coverage": 0.35,
+     "mossBias": 0.7,
+     "vines": 0.3,
+     "palette": "mossGreen",
+     "age": 0.6
+    }
+   },
+   "rationale": "A bleached-bone pyramidal cap with skull-suture joints, a vertebrae spine ridge and a beast-skull finial — the necromantic/tribal lair shrin"
+  },
+  {
+   "name": "Imperial Glazed Dutch-Gable",
+   "biome": "savanna",
+   "buildingType": "courthouse",
+   "footprintShape": "T",
+   "style": "dutch-gable",
+   "material": "mat_glazed_ceramic",
+   "features": [
+    "feat-overhang-eave",
+    "feat-ridge-crest",
+    "feat-parapet-molding",
+    "feat-skylight-clerestory"
+   ],
+   "params": {
+    "style": {
+     "pitch": 1,
+     "gabletRings": 2,
+     "gabletDrop": 0.5,
+     "ridgeOrientation": "auto-long"
+    },
+    "material": {
+     "glazeHue": 50,
+     "sat": 0.85,
+     "gloss": 6,
+     "spec": 0.7,
+     "tileForm": "flat",
+     "crackle": 0.3,
+     "courseColor": true
+    },
+    "overhang": {
+     "overhang": 0.5,
+     "soffitDepth": 0.5,
+     "fasciaWidth": 2,
+     "bracketStyle": "scroll",
+     "dropShadow": 0.4
+    },
+    "ridgeCrest": {
+     "crestMotif": "beadedTile",
+     "crestHeight": 0.3,
+     "finial": "akroterion",
+     "endSweep": 0.2,
+     "density": 1
+    },
+    "parapetMolding": {
+     "height": 0.5,
+     "moldingStyle": "greekKey",
+     "bandCount": 2,
+     "coping": "rounded",
+     "corbelTable": false
+    },
+    "skylight": {
+     "count": 2,
+     "glazingStyle": "lantern",
+     "size": 1.2,
+     "clerestory": true,
+     "glow": 0.4
+    }
+   },
+   "rationale": "Imperial-yellow glazed flat tiles in banded color courses, hip rising to a decorative gablet wall at the ridge, with a Greek-key molded gabl"
+  },
+  {
+   "name": "Verdigris Cloister Ring",
+   "biome": "forest",
+   "buildingType": "monastery",
+   "footprintShape": "courtyard-ring",
+   "style": "domed-courtyard-ring",
+   "material": "mat_copper_patina",
+   "features": [
+    "feat-overhang-eave",
+    "feat-rooftop-garden",
+    "feat-rain-gutters",
+    "feat-cupola"
+   ],
+   "params": {
+    "style": {
+     "pitch": 0.85,
+     "ringMode": "dual-hip",
+     "innerEaveLift": 0.4,
+     "ridgeOffset": 0
+    },
+    "material": {
+     "patinaHue": 165,
+     "coverage": 0.7,
+     "blotchScale": 16,
+     "streak": 0.5,
+     "seamPitch": 9,
+     "weathering": 0.5
+    },
+    "overhang": {
+     "overhang": 0.6,
+     "soffitDepth": 0.55,
+     "fasciaWidth": 2,
+     "bracketStyle": "corbel",
+     "dropShadow": 0.4
+    },
+    "rooftopGarden": {
+     "density": 0.4,
+     "plantMix": "herbs",
+     "plantersShape": "beds",
+     "trellis": true,
+     "biomeTint": "temperate"
+    },
+    "rainGutters": {
+     "present": true,
+     "downspouts": 6,
+     "gargoyles": 0.2,
+     "material": "copper",
+     "waterArc": false
+    },
+    "cupola": {
+     "present": true,
+     "baseShape": "octagon",
+     "capStyle": "dome",
+     "openness": 0.4,
+     "scale": 1.2
+    }
+   },
+   "rationale": "A continuous verdigris-copper doughnut roof sloping both to the street and inward over the cloister walk, with a herb-garden colonnade lift "
+  },
+  {
+   "name": "Sawtooth Glassworks",
+   "biome": "steppe",
+   "buildingType": "glassblower",
+   "footprintShape": "rectangle",
+   "style": "sawtooth",
+   "material": "mat_lead_pewter",
+   "features": [
+    "feat-skylight-clerestory",
+    "feat-overhang-eave",
+    "feat-chimney",
+    "feat-rain-gutters"
+   ],
+   "params": {
+    "style": {
+     "period": 5,
+     "toothHeight": 2,
+     "faceWidth": 1,
+     "runAxis": "auto-long"
+    },
+    "material": {
+     "val": 0.45,
+     "sheen": 0.18,
+     "bayWidth": 16,
+     "dripPitch": 13,
+     "mottle": 0.4,
+     "weathering": 0.4
+    },
+    "skylight": {
+     "count": 4,
+     "glazingStyle": "mullioned",
+     "size": 1,
+     "clerestory": true,
+     "glow": 0.5
+    },
+    "overhang": {
+     "overhang": 0.4,
+     "soffitDepth": 0.45,
+     "fasciaWidth": 2,
+     "bracketStyle": "none",
+     "dropShadow": 0.35
+    },
+    "chimney": {
+     "count": 2,
+     "height": 2.5,
+     "pots": 0,
+     "crownStyle": "flat",
+     "smoke": 0.6
+    },
+    "rainGutters": {
+     "present": true,
+     "downspouts": 4,
+     "gargoyles": 0,
+     "material": "lead",
+     "waterArc": false
+    }
+   },
+   "rationale": "A row of north-light sawtooth ridges with vertical glazed clerestory faces over a wide span — the industrial glassworks. Dull lead-pewter ba"
+  },
+  {
+   "name": "Bright-Copper Onion Dome",
+   "biome": "mystic",
+   "buildingType": "oracle_chamber",
+   "footprintShape": "round-tower",
+   "style": "domed",
+   "material": "mat_copper_bright",
+   "features": [
+    "feat-central-spire",
+    "feat-overhang-eave",
+    "feat-ridge-crest",
+    "feat-banners-flags"
+   ],
+   "params": {
+    "style": {
+     "domeHeight": 7,
+     "profile": "ogee-onion",
+     "drumRings": 2,
+     "finial": true
+    },
+    "material": {
+     "hue": 22,
+     "sat": 0.72,
+     "gloss": 3.5,
+     "spec": 0.6,
+     "seamPitch": 8,
+     "hammered": false,
+     "weathering": 0.1
+    },
+    "centralSpire": {
+     "height": 3,
+     "baseRadius": 0.5,
+     "segments": 2,
+     "twist": 0.4,
+     "finial": "crescent"
+    },
+    "overhang": {
+     "overhang": 0.5,
+     "soffitDepth": 0.45,
+     "fasciaWidth": 1,
+     "bracketStyle": "none",
+     "dropShadow": 0.35
+    },
+    "ridgeCrest": {
+     "crestMotif": "none",
+     "crestHeight": 0,
+     "finial": "none",
+     "endSweep": 0,
+     "density": 1
+    },
+    "banners": {
+     "count": 3,
+     "flagShape": "pennant",
+     "windStrength": 0.6,
+     "charge": "star",
+     "size": 0.9
+    }
+   },
+   "rationale": "A polished bright-copper onion dome on a cylindrical drum, twisting spiral seams up to a crescent finial — the oracle's chamber. The hot pin"
+  },
+  {
+   "name": "Saltbox Tavern",
+   "biome": "grassland",
+   "buildingType": "tavern",
+   "footprintShape": "rectangle",
+   "style": "saltbox",
+   "material": "mat_wood_shingle",
+   "features": [
+    "feat-overhang-eave",
+    "feat-chimney",
+    "feat-hanging-lanterns",
+    "feat-dormer"
+   ],
+   "params": {
+    "style": {
+     "ridgePos": 0.62,
+     "peakHeight": 3,
+     "ridgeOrientation": "auto-long",
+     "rearExtend": 0.2
+    },
+    "material": {
+     "hue": 30,
+     "sat": 0.42,
+     "val": 0.5,
+     "courseHeight": 5,
+     "shakeWidth": 7,
+     "weathering": 0.45,
+     "moss": 0.18
+    },
+    "overhang": {
+     "overhang": 0.5,
+     "soffitDepth": 0.5,
+     "fasciaWidth": 2,
+     "bracketStyle": "none",
+     "dropShadow": 0.4
+    },
+    "chimney": {
+     "count": 1,
+     "height": 2,
+     "pots": 2,
+     "crownStyle": "corbelled",
+     "smoke": 0.4
+    },
+    "hangingLanterns": {
+     "count": 6,
+     "lanternShape": "iron",
+     "glow": 0.6,
+     "sag": 0.3,
+     "glowColor": "warm"
+    },
+    "dormer": {
+     "count": 2,
+     "heightBand": 0.45,
+     "dormerForm": "gable",
+     "windowGlow": 0.6,
+     "width": 1
+    }
+   },
+   "rationale": "An asymmetric off-center ridge gives a short steep front and long sweeping rear catslide — the colonial lean-to-grown tavern. Warm weathered"
+  },
+  {
+   "name": "Barrel-Vault Market Hall",
+   "biome": "desert",
+   "buildingType": "bazaar",
+   "footprintShape": "rectangle",
+   "style": "barrel-vault",
+   "material": "mat_clay_tile",
+   "features": [
+    "feat-overhang-eave",
+    "feat-skylight-clerestory",
+    "feat-rooftop-garden",
+    "feat-hanging-lanterns"
+   ],
+   "params": {
+    "style": {
+     "vaultHeight": 4,
+     "profile": "pointed-gothic",
+     "ridgeOrientation": "auto-long",
+     "ribCount": 5
+    },
+    "material": {
+     "hue": 12,
+     "sat": 0.7,
+     "barrelPitch": 8,
+     "courseHeight": 6,
+     "corrugation": 0.6,
+     "weathering": 0.3,
+     "moss": 0.1
+    },
+    "overhang": {
+     "overhang": 0.7,
+     "soffitDepth": 0.5,
+     "fasciaWidth": 2,
+     "bracketStyle": "corbel",
+     "dropShadow": 0.4
+    },
+    "skylight": {
+     "count": 3,
+     "glazingStyle": "rose",
+     "size": 1.4,
+     "clerestory": false,
+     "glow": 0.4
+    },
+    "rooftopGarden": {
+     "density": 0.3,
+     "plantMix": "shrubs",
+     "plantersShape": "pots",
+     "trellis": true,
+     "biomeTint": "desert"
+    },
+    "hangingLanterns": {
+     "count": 10,
+     "lanternShape": "teardrop",
+     "glow": 0.6,
+     "sag": 0.35,
+     "glowColor": "warm"
+    }
+   },
+   "rationale": "A pointed-Gothic clay barrel vault with structural ribs over a wide bazaar, rose skylights and strings of teardrop lanterns under deep overh"
+  },
+  {
+   "name": "Stepped Ziggurat Pueblo",
+   "biome": "desert",
+   "buildingType": "monument",
+   "footprintShape": "square",
+   "style": "stepped-ziggurat",
+   "material": "mat_flat_stone",
+   "features": [
+    "feat-walkable-deck",
+    "feat-rooftop-garden",
+    "feat-parapet-molding",
+    "feat-banners-flags"
+   ],
+   "params": {
+    "style": {
+     "stepDepth": 2,
+     "stepRise": 1,
+     "maxSteps": 5,
+     "ledgeWalkable": true
+    },
+    "material": {
+     "stoneType": "limestone",
+     "val": 0.6,
+     "flagSize": 13,
+     "jointDepth": 0.45,
+     "grain": 0.35,
+     "weathering": 0.4,
+     "moss": 0.05
+    },
+    "walkableDeck": {
+     "coverage": 0.5,
+     "surface": "stonePaver",
+     "edgeGuard": "parapet",
+     "stairHead": true,
+     "pattern": "grid"
+    },
+    "rooftopGarden": {
+     "density": 0.45,
+     "plantMix": "mixed",
+     "plantersShape": "beds",
+     "trellis": false,
+     "biomeTint": "desert"
+    },
+    "parapetMolding": {
+     "height": 0.4,
+     "moldingStyle": "plain",
+     "bandCount": 1,
+     "coping": "flat",
+     "corbelTable": false
+    },
+    "banners": {
+     "count": 4,
+     "flagShape": "gonfalon",
+     "windStrength": 0.4,
+     "charge": "chevron",
+     "size": 1.2
+    }
+   },
+   "rationale": "Concentric setback limestone terraces rising in discrete walkable steps — a mesoamerican/art-deco temple-monument with hanging gardens on ea"
+  },
+  {
+   "name": "Half-Hip Cottage Inn",
+   "biome": "forest",
+   "buildingType": "cottage",
+   "footprintShape": "L",
+   "style": "half-hip-jerkinhead",
+   "material": "mat_wood_shingle",
+   "features": [
+    "feat-overhang-eave",
+    "feat-dormer",
+    "feat-chimney",
+    "feat-moss-vines",
+    "feat-rain-gutters"
+   ],
+   "params": {
+    "style": {
+     "pitch": 1.2,
+     "clipFrac": 0.5,
+     "clipRings": 2,
+     "ridgeOrientation": "auto-long"
+    },
+    "material": {
+     "hue": 34,
+     "sat": 0.45,
+     "val": 0.52,
+     "courseHeight": 5,
+     "shakeWidth": 6,
+     "weathering": 0.35,
+     "moss": 0.25
+    },
+    "overhang": {
+     "overhang": 0.55,
+     "soffitDepth": 0.5,
+     "fasciaWidth": 2,
+     "bracketStyle": "none",
+     "dropShadow": 0.4
+    },
+    "dormer": {
+     "count": 2,
+     "heightBand": 0.4,
+     "dormerForm": "eyebrow",
+     "windowGlow": 0.55,
+     "width": 1.1
+    },
+    "chimney": {
+     "count": 1,
+     "height": 1.8,
+     "pots": 2,
+     "crownStyle": "corbelled",
+     "smoke": 0.35
+    },
+    "moss": {
+     "coverage": 0.35,
+     "mossBias": 0.65,
+     "vines": 0.35,
+     "palette": "mossGreen",
+     "age": 0.55
+    },
+    "rainGutters": {
+     "present": true,
+     "downspouts": 3,
+     "gargoyles": 0,
+     "material": "wood",
+     "waterArc": false
+    }
+   },
+   "rationale": "An English cottage where the gable ends are clipped back into small half-hips, eyebrow dormers and mossy shakes — the storybook forest cotta"
+  },
+  {
+   "name": "Butterfly Beach Pavilion",
+   "biome": "beach",
+   "buildingType": "sand_pavilion",
+   "footprintShape": "rectangle",
+   "style": "butterfly",
+   "material": "mat_wood_plank",
+   "features": [
+    "feat-overhang-eave",
+    "feat-walkable-deck",
+    "feat-rain-gutters",
+    "feat-hanging-lanterns"
+   ],
+   "params": {
+    "style": {
+     "pitch": 0.6,
+     "valleyAxis": "auto-long",
+     "eaveLift": 0.7,
+     "centralScupper": true
+    },
+    "material": {
+     "hue": 34,
+     "plankWidth": 10,
+     "battenStyle": "gapped-deck",
+     "grain": 0.4,
+     "knots": 0.25,
+     "weathering": 0.45,
+     "moss": 0.1
+    },
+    "overhang": {
+     "overhang": 0.8,
+     "soffitDepth": 0.5,
+     "fasciaWidth": 2,
+     "bracketStyle": "exposedRafter",
+     "dropShadow": 0.4
+    },
+    "walkableDeck": {
+     "coverage": 0.4,
+     "surface": "woodPlank",
+     "edgeGuard": "railing",
+     "stairHead": false,
+     "pattern": "grid"
+    },
+    "rainGutters": {
+     "present": true,
+     "downspouts": 2,
+     "gargoyles": 0,
+     "material": "copper",
+     "waterArc": false
+    },
+    "hangingLanterns": {
+     "count": 7,
+     "lanternShape": "paper",
+     "glow": 0.6,
+     "sag": 0.35,
+     "glowColor": "warm"
+    }
+   },
+   "rationale": "An inverted V roof with upswept high eaves draining to a central scupper gutter — a mid-century, water-harvesting open beach pavilion in dri"
+  },
+  {
+   "name": "Fungal Glow Moss-Den",
+   "biome": "swamp",
+   "buildingType": "moss_den",
+   "footprintShape": "round-tower",
+   "style": "domed",
+   "material": "mat_fungal_glow",
+   "features": [
+    "feat-overhang-eave",
+    "feat-moss-vines",
+    "feat-arcane-solar-panels",
+    "feat-hanging-lanterns"
+   ],
+   "params": {
+    "style": {
+     "domeHeight": 4,
+     "profile": "parabolic",
+     "drumRings": 0,
+     "finial": true
+    },
+    "material": {
+     "capHue": 330,
+     "glowHue": 175,
+     "glow": 0.65,
+     "capSize": 9,
+     "mycelium": 0.5,
+     "pulse": 0.35,
+     "weathering": 0.3
+    },
+    "overhang": {
+     "overhang": 0.6,
+     "soffitDepth": 0.55,
+     "fasciaWidth": 0,
+     "bracketStyle": "none",
+     "dropShadow": 0.4
+    },
+    "moss": {
+     "coverage": 0.5,
+     "mossBias": 0.7,
+     "vines": 0.4,
+     "palette": "mysticGlow",
+     "age": 0.6
+    },
+    "arcaneSolar": {
+     "apparatus": "crystalFocus",
+     "count": 3,
+     "tilt": 0,
+     "glow": 0.55,
+     "palette": "voidGreen",
+     "weathering": 0.2
+    },
+    "hangingLanterns": {
+     "count": 5,
+     "lanternShape": "globe",
+     "glow": 0.5,
+     "sag": 0.4,
+     "glowColor": "green"
+    }
+   },
+   "rationale": "A parabolic dome grown from overlapping bracket-fungus caps and mycelium webbing, bioluminescent pores pulsing cyan at night — the spore-cul"
+  },
+  {
+   "name": "Living-Bark Dryad Twin-Wing",
+   "biome": "tropical_forest",
+   "buildingType": "root_hall",
+   "footprintShape": "twin-wing",
+   "style": "mansard",
+   "material": "mat_bark_living",
+   "features": [
+    "feat-overhang-eave",
+    "feat-rooftop-garden",
+    "feat-ridge-crest",
+    "feat-moss-vines",
+    "feat-skylight-clerestory"
+   ],
+   "params": {
+    "style": {
+     "lowerRings": 2,
+     "lowerPitch": 2.4,
+     "upperPitch": 0.25,
+     "clampHeight": 4,
+     "dormerDensity": 0.3
+    },
+    "material": {
+     "hue": 30,
+     "furrowScale": 7,
+     "roughness": 0.6,
+     "sprouts": 0.5,
+     "ribStyle": "branching",
+     "weathering": 0.4,
+     "moss": 0.6
+    },
+    "overhang": {
+     "overhang": 0.7,
+     "soffitDepth": 0.55,
+     "fasciaWidth": 0,
+     "bracketStyle": "exposedRafter",
+     "dropShadow": 0.4
+    },
+    "rooftopGarden": {
+     "density": 0.5,
+     "plantMix": "wild",
+     "plantersShape": "wild",
+     "trellis": true,
+     "biomeTint": "mystic"
+    },
+    "ridgeCrest": {
+     "crestMotif": "none",
+     "crestHeight": 0.3,
+     "finial": "leaf",
+     "endSweep": 0,
+     "density": 1
+    },
+    "moss": {
+     "coverage": 0.55,
+     "mossBias": 0.7,
+     "vines": 0.45,
+     "palette": "jungle",
+     "age": 0.6
+    },
+    "skylight": {
+     "count": 2,
+     "glazingStyle": "flush",
+     "size": 1,
+     "clerestory": false,
+     "glow": 0.3
+    }
+   },
+   "rationale": "A steep-skirted mansard clamped to a flat planted top, skinned in furrowed living bark with branching wood ribs sprouting leaf clusters and "
+  }
+ ],
+ "params": [
+  {
+   "name": "footprintShape",
+   "group": "shape",
+   "kind": "enum",
+   "options": [
+    "square",
+    "rectangle",
+    "L",
+    "T",
+    "U-court",
+    "cross",
+    "courtyard-ring",
+    "twin-wing",
+    "campus",
+    "long-arcade",
+    "round-tower"
+   ],
+   "default": "L",
+   "appliesTo": "all"
+  },
+  {
+   "name": "footprintScale",
+   "group": "shape",
+   "kind": "int",
+   "min": 4,
+   "max": 16,
+   "step": 1,
+   "default": "10",
+   "appliesTo": "all"
+  },
+  {
+   "name": "pitch",
+   "group": "shape",
+   "kind": "range",
+   "min": 0.2,
+   "max": 2.5,
+   "step": 0.05,
+   "default": "0.9",
+   "appliesTo": "all forms except flat/conical-radial"
+  },
+  {
+   "name": "overhang",
+   "group": "shape",
+   "kind": "range",
+   "min": 0,
+   "max": 3,
+   "step": 0.05,
+   "default": "0.5",
+   "appliesTo": "all"
+  },
+  {
+   "name": "ridgeOrientation",
+   "group": "shape",
+   "kind": "enum",
+   "options": [
+    "auto-long",
+    "auto-short",
+    "EW",
+    "NS"
+   ],
+   "default": "auto-long",
+   "appliesTo": "gable, gambrel, half-hip, cross-gabled, saltbox, barrel-vault, dutch-gable, butterfly, sawtooth, monitor"
+  },
+  {
+   "name": "northTilt",
+   "group": "shape",
+   "kind": "range",
+   "min": 0,
+   "max": 1,
+   "step": 0.05,
+   "default": "0.35",
+   "appliesTo": "all sloped forms"
+  },
+  {
+   "name": "asymmetry",
+   "group": "shape",
+   "kind": "range",
+   "min": -0.4,
+   "max": 0.4,
+   "step": 0.05,
+   "default": "0",
+   "appliesTo": "hip, gable, saltbox, courtyard-ring"
+  },
+  {
+   "name": "perWingCaps",
+   "group": "shape",
+   "kind": "bool",
+   "default": "false",
+   "appliesTo": "compound footprints (L, T, U, cross, campus, twin-wing)"
+  },
+  {
+   "name": "form",
+   "group": "style",
+   "kind": "enum",
+   "options": [
+    "hip",
+    "gable",
+    "flat-parapet",
+    "mansard",
+    "gambrel",
+    "shed",
+    "pyramidal",
+    "conical-spire",
+    "domed",
+    "sawtooth",
+    "butterfly",
+    "stepped-ziggurat",
+    "crenellated",
+    "half-hip",
+    "monitor",
+    "cross-gabled",
+    "hip-and-valley",
+    "saltbox",
+    "pagoda-tiered",
+    "barrel-vault",
+    "dutch-gable",
+    "catslide",
+    "courtyard-ring"
+   ],
+   "default": "hip",
+   "appliesTo": "all"
+  },
+  {
+   "name": "clampHeight",
+   "group": "style",
+   "kind": "range",
+   "min": 0,
+   "max": 1,
+   "step": 0.05,
+   "default": "0",
+   "appliesTo": "flat-parapet, mansard, hip-and-valley, stepped-ziggurat"
+  },
+  {
+   "name": "mansardKnee",
+   "group": "style",
+   "kind": "int",
+   "min": 1,
+   "max": 5,
+   "step": 1,
+   "default": "2",
+   "appliesTo": "mansard, gambrel"
+  },
+  {
+   "name": "steepPitch",
+   "group": "style",
+   "kind": "range",
+   "min": 1,
+   "max": 4,
+   "step": 0.1,
+   "default": "2.4",
+   "appliesTo": "mansard, gambrel"
+  },
+  {
+   "name": "shallowPitch",
+   "group": "style",
+   "kind": "range",
+   "min": 0.05,
+   "max": 1,
+   "step": 0.05,
+   "default": "0.25",
+   "appliesTo": "mansard, gambrel"
+  },
+  {
+   "name": "profileCurve",
+   "group": "style",
+   "kind": "enum",
+   "options": [
+    "straight",
+    "hemisphere",
+    "ogee-onion",
+    "parabolic",
+    "segmental",
+    "pointed-gothic"
+   ],
+   "default": "straight",
+   "appliesTo": "domed, barrel-vault, conical-spire"
+  },
+  {
+   "name": "spireSharpness",
+   "group": "style",
+   "kind": "range",
+   "min": 0.5,
+   "max": 6,
+   "step": 0.1,
+   "default": "2.5",
+   "appliesTo": "conical-spire, pyramidal"
+  },
+  {
+   "name": "stepRun",
+   "group": "style",
+   "kind": "int",
+   "min": 1,
+   "max": 4,
+   "step": 1,
+   "default": "2",
+   "appliesTo": "stepped-ziggurat, pagoda-tiered"
+  },
+  {
+   "name": "stepRise",
+   "group": "style",
+   "kind": "range",
+   "min": 0.3,
+   "max": 2,
+   "step": 0.1,
+   "default": "1.0",
+   "appliesTo": "stepped-ziggurat, pagoda-tiered"
+  },
+  {
+   "name": "sawtoothPeriod",
+   "group": "style",
+   "kind": "int",
+   "min": 3,
+   "max": 12,
+   "step": 1,
+   "default": "5",
+   "appliesTo": "sawtooth, monitor"
+  },
+  {
+   "name": "jitter",
+   "group": "style",
+   "kind": "range",
+   "min": 0,
+   "max": 0.15,
+   "step": 0.01,
+   "default": "0.04",
+   "appliesTo": "all"
+  },
+  {
+   "name": "material",
+   "group": "material",
+   "kind": "enum",
+   "options": [
+    "wood-shingle",
+    "slate",
+    "clay-tile",
+    "thatch",
+    "flat-stone",
+    "wood-plank",
+    "copper-bright",
+    "copper-patina",
+    "lead-pewter",
+    "sod-green",
+    "bone",
+    "crystal",
+    "fungal-glow",
+    "tar-pitch",
+    "glazed-ceramic",
+    "bark-living"
+   ],
+   "default": "wood-shingle",
+   "appliesTo": "all"
+  },
+  {
+   "name": "hue",
+   "group": "material",
+   "kind": "range",
+   "min": 0,
+   "max": 360,
+   "step": 1,
+   "default": "28",
+   "appliesTo": "all materials with a tunable base color"
+  },
+  {
+   "name": "saturation",
+   "group": "material",
+   "kind": "range",
+   "min": 0.1,
+   "max": 0.95,
+   "step": 0.02,
+   "default": "0.45",
+   "appliesTo": "all materials"
+  },
+  {
+   "name": "value",
+   "group": "material",
+   "kind": "range",
+   "min": 0.06,
+   "max": 0.92,
+   "step": 0.02,
+   "default": "0.52",
+   "appliesTo": "all materials"
+  },
+  {
+   "name": "courseHeight",
+   "group": "material",
+   "kind": "range",
+   "min": 3,
+   "max": 12,
+   "step": 0.5,
+   "default": "5",
+   "appliesTo": "wood-shingle, slate, clay-tile, lead-pewter, tar-pitch, glazed-ceramic"
+  },
+  {
+   "name": "unitWidth",
+   "group": "material",
+   "kind": "range",
+   "min": 4,
+   "max": 26,
+   "step": 0.5,
+   "default": "7",
+   "appliesTo": "wood-shingle (shake), slate, clay-tile (barrel), wood-plank, copper (seam), lead (bay)"
+  },
+  {
+   "name": "specular",
+   "group": "material",
+   "kind": "range",
+   "min": 0,
+   "max": 1,
+   "step": 0.05,
+   "default": "0.35",
+   "appliesTo": "slate, copper-bright, copper-patina, lead-pewter, glazed-ceramic, crystal"
+  },
+  {
+   "name": "weathering",
+   "group": "material",
+   "kind": "range",
+   "min": 0,
+   "max": 1,
+   "step": 0.05,
+   "default": "0.3",
+   "appliesTo": "all materials"
+  },
+  {
+   "name": "moss",
+   "group": "material",
+   "kind": "range",
+   "min": 0,
+   "max": 1,
+   "step": 0.05,
+   "default": "0.15",
+   "appliesTo": "all non-metal materials"
+  },
+  {
+   "name": "emissiveGlow",
+   "group": "material",
+   "kind": "range",
+   "min": 0,
+   "max": 1,
+   "step": 0.05,
+   "default": "0",
+   "appliesTo": "crystal, fungal-glow, glazed-ceramic"
+  },
+  {
+   "name": "turrets",
+   "group": "features",
+   "kind": "bool",
+   "default": "false",
+   "appliesTo": "convex footprint corners (hip-corner roles)"
+  },
+  {
+   "name": "turretCount",
+   "group": "features",
+   "kind": "int",
+   "min": 0,
+   "max": 8,
+   "step": 1,
+   "default": "4",
+   "appliesTo": "turrets feature when enabled"
+  },
+  {
+   "name": "turretCap",
+   "group": "features",
+   "kind": "enum",
+   "options": [
+    "conical",
+    "domed",
+    "pyramidal",
+    "crenellated",
+    "candle-snuff"
+   ],
+   "default": "conical",
+   "appliesTo": "turrets feature when enabled"
+  },
+  {
+   "name": "buttresses",
+   "group": "features",
+   "kind": "enum",
+   "options": [
+    "none",
+    "pier",
+    "flying",
+    "both"
+   ],
+   "default": "none",
+   "appliesTo": "long straight eave runs and tall ridge-beside-low-wing junctions"
+  },
+  {
+   "name": "buttressSpacing",
+   "group": "features",
+   "kind": "range",
+   "min": 1.5,
+   "max": 8,
+   "step": 0.5,
+   "default": "3",
+   "appliesTo": "buttresses feature when not none"
+  },
+  {
+   "name": "spire",
+   "group": "features",
+   "kind": "bool",
+   "default": "false",
+   "appliesTo": "peak tile / ridge midpoint"
+  },
+  {
+   "name": "spireHeight",
+   "group": "features",
+   "kind": "range",
+   "min": 1,
+   "max": 10,
+   "step": 0.5,
+   "default": "4",
+   "appliesTo": "spire feature when enabled"
+  },
+  {
+   "name": "dormerCount",
+   "group": "features",
+   "kind": "int",
+   "min": 0,
+   "max": 12,
+   "step": 1,
+   "default": "0",
+   "appliesTo": "south/east-facing slope role tiles"
+  },
+  {
+   "name": "chimneyCount",
+   "group": "features",
+   "kind": "int",
+   "min": 0,
+   "max": 8,
+   "step": 1,
+   "default": "1",
+   "appliesTo": "ridge and hearth-bearing slope/flat tiles"
+  },
+  {
+   "name": "ridgeCrest",
+   "group": "features",
+   "kind": "enum",
+   "options": [
+    "none",
+    "sawtooth",
+    "fleur",
+    "iron-rail",
+    "roof-comb",
+    "beaded-tile",
+    "dragon-spine"
+   ],
+   "default": "none",
+   "appliesTo": "ridge and peak role tiles"
+  },
+  {
+   "name": "endSweep",
+   "group": "features",
+   "kind": "range",
+   "min": 0,
+   "max": 1,
+   "step": 0.05,
+   "default": "0",
+   "appliesTo": "ridge termini and hip-corner eaves (pagoda-tiered, glazed-ceramic builds)"
+  },
+  {
+   "name": "walkableDeck",
+   "group": "features",
+   "kind": "range",
+   "min": 0,
+   "max": 1,
+   "step": 0.05,
+   "default": "0",
+   "appliesTo": "flat-clamped cap regions (flat-parapet, mansard, stepped, crenellated)"
+  },
+  {
+   "name": "deckSurface",
+   "group": "features",
+   "kind": "enum",
+   "options": [
+    "stone-paver",
+    "wood-plank",
+    "tile",
+    "gravel",
+    "lead-flat"
+   ],
+   "default": "stone-paver",
+   "appliesTo": "walkableDeck when > 0"
+  },
+  {
+   "name": "rooftopGarden",
+   "group": "features",
+   "kind": "range",
+   "min": 0,
+   "max": 1,
+   "step": 0.05,
+   "default": "0",
+   "appliesTo": "walkableDeck regions"
+  },
+  {
+   "name": "battlements",
+   "group": "features",
+   "kind": "bool",
+   "default": "false",
+   "appliesTo": "flat-deck eave ring / crenellated wall-tops"
+  },
+  {
+   "name": "merlonWidth",
+   "group": "features",
+   "kind": "range",
+   "min": 0.3,
+   "max": 1.5,
+   "step": 0.1,
+   "default": "0.6",
+   "appliesTo": "battlements when enabled"
+  },
+  {
+   "name": "parapetMolding",
+   "group": "features",
+   "kind": "enum",
+   "options": [
+    "none",
+    "plain",
+    "dentil",
+    "egg-and-dart",
+    "billet",
+    "greek-key",
+    "corbel-table"
+   ],
+   "default": "none",
+   "appliesTo": "flat-deck / parapet eave ring"
+  },
+  {
+   "name": "fasciaBracket",
+   "group": "features",
+   "kind": "enum",
+   "options": [
+    "none",
+    "corbel",
+    "dentil",
+    "exposed-rafter",
+    "scroll"
+   ],
+   "default": "none",
+   "appliesTo": "overhang eave underside"
+  },
+  {
+   "name": "snowAmount",
+   "group": "features",
+   "kind": "range",
+   "min": 0,
+   "max": 1,
+   "step": 0.05,
+   "default": "0",
+   "appliesTo": "all tiles, biased by slope normal"
+  },
+  {
+   "name": "lanternCount",
+   "group": "features",
+   "kind": "int",
+   "min": 0,
+   "max": 30,
+   "step": 1,
+   "default": "0",
+   "appliesTo": "eave ring and corner/turret tips"
+  },
+  {
+   "name": "flagCount",
+   "group": "features",
+   "kind": "int",
+   "min": 0,
+   "max": 12,
+   "step": 1,
+   "default": "0",
+   "appliesTo": "peak, turret tips, ridge termini"
+  },
+  {
+   "name": "weathervane",
+   "group": "features",
+   "kind": "bool",
+   "default": "false",
+   "appliesTo": "single peak / tallest feature tip"
+  },
+  {
+   "name": "lightAngle",
+   "group": "lighting",
+   "kind": "range",
+   "min": 0,
+   "max": 360,
+   "step": 5,
+   "default": "215",
+   "appliesTo": "all tiles and 3D features"
+  },
+  {
+   "name": "lightElevation",
+   "group": "lighting",
+   "kind": "range",
+   "min": 10,
+   "max": 90,
+   "step": 5,
+   "default": "55",
+   "appliesTo": "all tiles and 3D features"
+  },
+  {
+   "name": "ambient",
+   "group": "lighting",
+   "kind": "range",
+   "min": 0.15,
+   "max": 0.75,
+   "step": 0.05,
+   "default": "0.45",
+   "appliesTo": "all tiles and 3D features"
+  },
+  {
+   "name": "heightScale",
+   "group": "lighting",
+   "kind": "range",
+   "min": 0.25,
+   "max": 1,
+   "step": 0.05,
+   "default": "0.5",
+   "appliesTo": "projection of all tiles and features"
+  },
+  {
+   "name": "obliqueTilt",
+   "group": "lighting",
+   "kind": "range",
+   "min": 0.5,
+   "max": 1,
+   "step": 0.02,
+   "default": "0.82",
+   "appliesTo": "projection of all tiles and features"
+  },
+  {
+   "name": "seed",
+   "group": "seed",
+   "kind": "int",
+   "min": 0,
+   "max": 65535,
+   "step": 1,
+   "default": "0",
+   "appliesTo": "all stochastic passes (jitter, material noise, weathering, moss, feature placement)"
+  }
+ ],
+ "reviewHighs": [
+  {
+   "lens": "completeness",
+   "area": "Existing implementation ignored",
+   "problem": "A working roof-geometry.js and roof-styles.js ALREADY EXIST in tools/roof/ (created 2026-06-18) with a concrete API: buildRoofGrid(sections, opts) returning {tiles, roleTiles, cornerH, height, ...}, a STYLES registry of ",
+   "fix": "Rebase the design onto the existing tools/roof/ code as source of truth. Adopt buildRoofGrid's actual signature and return shape (or explicitly justify and migrate it). Pick ONE home: keep geometry/styles in tools/roof/ "
+  },
+  {
+   "lens": "completeness",
+   "area": "Projection incompatible with shipped renderer",
+   "problem": "The design's projection (py = originY + gy*TILE*KY - h*KH with KY~0.82 ground foreshortening, 'cavalier-Y oblique') is NOT what the game uses. The real renderer (src/render/wall-draw.js, building-renderer.js) is straight",
+   "fix": "Either (a) match the shipped convention: no ground foreshortening (KY=1), height = pure upward pixel offset like wallHeight, align the roof eave baseline to wall-sprite tops (floorBottomPx - wallH); or (b) explicitly sco"
+  },
+  {
+   "lens": "completeness",
+   "area": "HIP/VALLEY classification not implemented",
+   "problem": "The design's centerpiece ('the crux: HIP vs VALLEY is one sign flip on the in-between diagonal') is NOT implemented and the existing classifier cannot produce it. tools/roof/roof-geometry.js declares ROLE.HIP but NEVER a",
+   "fix": "Actually implement the 8-neighborhood diagonal test: HIP when both flanking cardinals descend and the in-between diagonal is lower (convex); VALLEY when the diagonal is higher (concave). Add ROLE.HIP to roleTiles. Add a "
+  },
+  {
+   "lens": "completeness",
+   "area": "Buttresses, turrets, walkable, crenellation all unbuilt and under-specified",
+   "problem": "The user EXPLICITLY asked for buttresses, turrets, walkable decks/gardens/battlements, crenellation/molding. The design lists these in a 22-feature 'headline (full catalogs exist)' summary, but roof-features.js, roof-mat",
+   "fix": "For each of the four explicitly-requested features specify the concrete derivation: buttress = pick perimeter outward-facing SLOPE tiles every buttressSpacing along long eave runs, emit lit prism + optional flying arc; t"
+  },
+  {
+   "lens": "feasibility",
+   "area": "Projection / integration with existing renderer",
+   "problem": "The design's central projection claim ('cavalier-Y oblique with KY~0.82 ground foreshortening, height pushes tile up-and-north') does NOT match the engine. building-renderer.js draws floors and walls in a FLAT 1:1 top-do",
+   "fix": "Decide ONE projection for the whole building stack and make the roof obey it. Either (a) keep the engine's existing flat-top-down + south-billboard convention: roof eave aligns 1:1 with the footprint (KY=1) and height is"
+  },
+  {
+   "lens": "feasibility",
+   "area": "MATERIAL feasibility: thatch, sod, bark-living, bone, fungal, crystal at 32px in canvas",
+   "problem": "Several materials are claimed to render distinctly with primitives but at 32px/tile under a global multiply-tint they will collapse toward indistinguishable noise. 'Bark-living', 'sod-green', and 'thatch' all reduce to t",
+   "fix": "Prove distinctness empirically before committing to 16: build a swatch contact sheet (one tile per material at game zoom, same role/normal/light) FIRST and eyeball it. Differentiate by STRUCTURAL primitive, not just hue:"
+  },
+  {
+   "lens": "feasibility",
+   "area": "FORM feasibility: domed / conical-spire / barrel-vault / onion via a tile heightmap",
+   "problem": "A curved surface (dome, onion, cone, barrel vault) drawn as discrete 32px bilinear quads on a coarse footprint (footprintScale 4-16 tiles) will read as a faceted polyhedron, not a smooth curve -- a 6-tile-wide dome is a ",
+   "fix": "Render curved forms as FEATURE primitives, not as tile heightmaps. A dome/onion/cone/spire turret is a single lit canvas shape (radial-gradient ellipse for dome, drawn cone for spire) placed at the peak, with the tile he"
+  },
+  {
+   "lens": "architecture",
+   "area": "Projection / engine integration (roofRef on-canvas)",
+   "problem": "The design claims the roof is \"compatible with the engine's wx*tilePx - camX convention\" and \"rides on top\" of building floors/walls, with projection py = originY + gy*TILE*KY - h*KH, KY~=0.82. The actual engine does NOT",
+   "fix": "Pick ONE world->screen projection and make the roof use exactly it. Either (a) adopt the engine's actual convention: footprint stays orthographic (KY=1 in world), and height lifts the roof in screen-Y only (sy_base = wy*"
+  },
+  {
+   "lens": "architecture",
+   "area": "Design vs. already-built code drift (no-mock honesty of the doc itself)",
+   "problem": "The synthesis presents itself as verified against the repo but contradicts the code that already exists in tools/roof/. (1) It claims 25 styles; tools/roof/roof-styles.js STYLES has 15. (2) Its headline 'crux' is 'HIP vs",
+   "fix": "Reconcile the doc to the codebase explicitly: either (a) mark these as the TARGET design and list the concrete deltas from the current tools/roof/*.js (add HIP classification, add slopeDir+level+walkable to RoofTile, rai"
+  },
+  {
+   "lens": "architecture",
+   "area": "Atlas / wall-section quantization (CLAUDE.md decision #6, spec line 28)",
+   "problem": "The design's load-bearing atlas claim is that (role, slopeDir, level) is 'the per-tile draw key ... the atlas-quantized generatable pieces, exactly the quantization rule walls already follow.' But the building spec (2026",
+   "fix": "Either commit to genuine quantization (define a finite LEVEL ladder by integer-flooring height into discrete bands; snap slopeDir to a fixed 8-set; emit roof tiles as actual blueprint nodes analogous to wall-section so t"
+  }
+ ],
+ "styleIds": [
+  "hip",
+  "gable",
+  "flat-parapet",
+  "mansard",
+  "gambrel",
+  "shed",
+  "pyramidal",
+  "conical-spire",
+  "domed",
+  "sawtooth",
+  "butterfly",
+  "stepped-ziggurat",
+  "crenellated",
+  "half-hip-jerkinhead",
+  "monitor-clerestory",
+  "cross-gabled",
+  "hip-and-valley-compound",
+  "saltbox",
+  "pagoda-tiered",
+  "barrel-vault",
+  "dutch-gable",
+  "catslide-witch",
+  "domed-courtyard-ring"
+ ],
+ "materialIds": [
+  "mat_wood_shingle",
+  "mat_slate",
+  "mat_clay_tile",
+  "mat_thatch",
+  "mat_flat_stone",
+  "mat_wood_plank",
+  "mat_copper_bright",
+  "mat_copper_patina",
+  "mat_lead_pewter",
+  "mat_sod_green",
+  "mat_bone",
+  "mat_crystal_gem",
+  "mat_fungal_glow",
+  "mat_tar_pitch",
+  "mat_glazed_ceramic",
+  "mat_bark_living"
+ ],
+ "featureIds": [
+  "feat-overhang-eave",
+  "feat-corner-turret",
+  "feat-central-spire",
+  "feat-buttress",
+  "feat-dormer",
+  "feat-chimney",
+  "feat-ridge-crest",
+  "feat-cupola",
+  "feat-walkable-deck",
+  "feat-rooftop-garden",
+  "feat-battlements",
+  "feat-parapet-molding",
+  "feat-skylight-clerestory",
+  "feat-weathervane",
+  "feat-snow-ice",
+  "feat-moss-vines",
+  "feat-hanging-lanterns",
+  "feat-banners-flags",
+  "feat-rain-gutters",
+  "feat-arcane-solar-panels",
+  "feat-stepped-eave-overhang-tiers"
+ ]
+}
