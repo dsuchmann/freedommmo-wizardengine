@@ -1,0 +1,102 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Interior — stair flow</title>
+<style>
+  body{margin:0;background:#0d0f13;color:#cdd3da;font:13px/1.45 system-ui,sans-serif}
+  h1{font-size:15px;margin:14px 16px 2px}
+  p.note{margin:2px 16px 10px;color:#8a93a0;max-width:1180px}
+  canvas{display:block;margin:6px auto;border:1px solid #222;background:#0d0f13}
+  b.k{color:#ffd27a}
+</style></head>
+<body>
+<h1>Stairs &amp; lift — clearer up/down flow</h1>
+<p class="note">Today one <b class="k">yellow</b> tile = stairs (up AND down) and a <b class="k">blue</b> tile = lift (up AND down) — no direction, and chaining floors is fiddly. Proposed: a <b class="k">landing</b> you arrive on, a <b class="k">gap</b>, then a dedicated <b style="color:#5ec98a">▲ UP</b> tile and <b style="color:#e0913f">▼ DOWN</b> tile so direction is obvious and you climb deliberately. The lift stays one tile but reads as a lift (pick a floor).</p>
+<canvas id="c" width="1200" height="560"></canvas>
+<script>
+const X=document.getElementById('c').getContext('2d');
+const PW=388, PXs=[8,406,804], PY=40, PH=480, T=34;
+function panel(px,title,sub){
+  X.fillStyle='#11141a';X.fillRect(px,PY,PW,PH);
+  X.strokeStyle='#2a2f38';X.strokeRect(px+.5,PY+.5,PW,PH);
+  X.fillStyle='#e7ecf2';X.font='bold 13px system-ui';X.fillText(title,px+12,PY+20);
+  X.fillStyle='#8a93a0';X.font='12px system-ui';X.fillText(sub,px+12,PY+38);
+  return {cx:px+PW/2};
+}
+function floorGrid(px,py,cols,rows){
+  X.fillStyle='#8a8d93';X.fillRect(px,py,cols*T,rows*T);
+  X.strokeStyle='rgba(60,62,68,.7)';X.lineWidth=1;
+  for(let c=0;c<=cols;c++){X.beginPath();X.moveTo(px+c*T+.5,py);X.lineTo(px+c*T+.5,py+rows*T);X.stroke();}
+  for(let r=0;r<=rows;r++){X.beginPath();X.moveTo(px,py+r*T+.5);X.lineTo(px+cols*T,py+r*T+.5);X.stroke();}
+}
+function tile(px,py,fill,label,sub){
+  X.fillStyle=fill;X.fillRect(px+2,py+2,T-4,T-4);
+  if(label){X.fillStyle='#1a1f17';X.font='bold 15px system-ui';X.textAlign='center';X.fillText(label,px+T/2,py+T/2+5);X.textAlign='left';}
+  if(sub){X.fillStyle='#cdd3da';X.font='10px system-ui';X.fillText(sub,px+T+4,py+T/2+3);}
+}
+function upTile(px,py){ // green, stepped up + ▲
+  tile(px,py,'#5ec98a');
+  X.fillStyle='rgba(255,255,255,.35)';for(let i=0;i<3;i++)X.fillRect(px+5,py+T-8-i*7,T-10-i*6,4);
+  X.fillStyle='#13351f';X.font='bold 14px system-ui';X.textAlign='center';X.fillText('▲',px+T/2,py+13);X.textAlign='left';
+}
+function downTile(px,py){ // amber, stepped down + ▼
+  tile(px,py,'#e0913f');
+  X.fillStyle='rgba(0,0,0,.22)';for(let i=0;i<3;i++)X.fillRect(px+5+i*3,py+6+i*7,T-10-i*6,4);
+  X.fillStyle='#3a2410';X.font='bold 14px system-ui';X.textAlign='center';X.fillText('▼',px+T/2,py+T-4);X.textAlign='left';
+}
+function landing(px,py){ tile(px,py,'#cfd6df'); X.fillStyle='#5a6270';X.font='10px system-ui';X.textAlign='center';X.fillText('land',px+T/2,py+T/2+4);X.textAlign='left'; }
+function lift(px,py){ tile(px,py,'#4aa6c8'); X.fillStyle='#0e2c38';X.font='bold 13px system-ui';X.textAlign='center';X.fillText('⇕',px+T/2,py+T/2+5);X.textAlign='left'; }
+function player(cx,cy){
+  X.fillStyle='rgba(0,0,0,.3)';X.beginPath();X.ellipse(cx,cy+2,8,3.5,0,0,7);X.fill();
+  X.fillStyle='#3b6fb0';X.fillRect(cx-4,cy-14,8,10);X.fillStyle='#e6c39a';X.beginPath();X.arc(cx,cy-17,4,0,7);X.fill();
+}
+function tag(tx,ty,txt,col){X.fillStyle=col||'#0bd6c7';X.font='11px system-ui';X.fillText(txt,tx,ty);}
+function arrow(ax,ay,bx,by,col){X.strokeStyle=col;X.fillStyle=col;X.lineWidth=2;X.beginPath();X.moveTo(ax,ay);X.lineTo(bx,by);X.stroke();const a=Math.atan2(by-ay,bx-ax);X.beginPath();X.moveTo(bx,by);X.lineTo(bx-8*Math.cos(a-.4),by-8*Math.sin(a-.4));X.lineTo(bx-8*Math.cos(a+.4),by-8*Math.sin(a+.4));X.closePath();X.fill();}
+
+/* PANEL 1 — today (confusing) */
+{const p=panel(PXs[0],'1 · TODAY  (confusing)','one yellow + one blue, no direction');
+ const gx=p.cx-3*T, gy=PY+120; floorGrid(gx,gy,6,7);
+ tile(gx+2*T,gy+2*T,'#caa23a','?','up & down?'); tag(gx+2*T,gy+2*T-4,'yellow = stairs','#caa23a');
+ lift(gx+4*T,gy+4*T); tag(gx+4*T-2,gy+4*T-4,'blue = lift','#4aa6c8');
+ tag(gx+T+6,gy+4*T+4,'up & down?','#cdd3da');
+ player(gx+2.5*T,gy+5.5*T);
+ tag(PXs[0]+12,PY+PH-46,'· same tile does up AND down → which way am I going?','#c98a8a');
+ tag(PXs[0]+12,PY+PH-30,'· stand on it and it can re-fire → hard to climb 1 at a time','#c98a8a');
+ tag(PXs[0]+12,PY+PH-14,'· stairs vs lift look like the same job','#c98a8a');
+}
+
+/* PANEL 2 — proposed stairwell on one floor */
+{const p=panel(PXs[1],'2 · PROPOSED stairwell  (one floor)','landing → gap → dedicated ▲ up / ▼ down');
+ const gx=p.cx-3*T, gy=PY+110; floorGrid(gx,gy,6,7);
+ // a stairwell column: landing (arrive) → gap → UP, with DOWN beside, lift separate
+ landing(gx+2*T,gy+5*T);  tag(gx+3*T+4,gy+5*T+T/2+3,'landing — you arrive here','#cfd6df');
+ // gap row (plain floor) at row 4 — nothing
+ tag(gx+3*T+4,gy+4*T+T/2+3,'gap (plain floor) — no mis-trigger','#8a93a0');
+ upTile(gx+2*T,gy+3*T);   tag(gx+3*T+4,gy+3*T+T/2+3,'▲ UP — step on to climb 1 floor','#5ec98a');
+ downTile(gx+1*T,gy+5*T); tag(gx-2,gy+6*T+14,'▼ DOWN — descend 1 floor','#e0913f');
+ lift(gx+4*T,gy+3*T);     tag(gx+5*T+2,gy+3*T+T/2+3,'lift ⇕ — pick a floor','#4aa6c8');
+ player(gx+2.5*T,gy+5.5*T);
+ arrow(gx+2.5*T,gy+5*T-2,gx+2.5*T,gy+4*T+4,'#5ec98a');
+ tag(PXs[1]+12,PY+PH-14,'arrive on the landing, walk up through the gap, step on ▲ to go up again','#6f8aa0');
+}
+
+/* PANEL 3 — climbing multiple floors */
+{const p=panel(PXs[2],'3 · CLIMB SEVERAL FLOORS','each floor repeats: land → ▲ ; deliberate, one at a time');
+ const gx=p.cx-1.5*T, story=128, baseY=PY+PH-150;
+ for(let f=0;f<3;f++){
+   const gy=baseY - f*story;
+   floorGrid(gx,gy,3,3);
+   X.fillStyle='#7f8a9a';X.font='11px system-ui';X.fillText('floor '+(f+1),gx-54,gy+T+4);
+   landing(gx+1*T,gy+2*T);
+   upTile(gx+1*T,gy+0*T);
+   if(f>0) downTile(gx+2*T,gy+2*T);
+   // climb path
+   if(f<2){ arrow(gx+1.5*T,gy+2*T,gx+1.5*T,gy+1*T+4,'#5ec98a'); }
+ }
+ player(gx+1.5*T,baseY+2.5*T);
+ // big climb arrow up the side
+ arrow(gx-20,baseY+2*T, gx-20, baseY-2*story+T, '#ffd27a');
+ tag(gx-44,baseY-2*story-2,'climb','#ffd27a');
+ tag(PXs[2]+12,PY+PH-30,'step ▲ → arrive on next landing → walk to ▲ → up again.','#6f8aa0');
+ tag(PXs[2]+12,PY+PH-14,'the gap between landing and ▲ is what makes it one floor per step.','#6f8aa0');
+}
+</script>
+</body></html>
