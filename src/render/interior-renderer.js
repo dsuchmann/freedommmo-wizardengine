@@ -4,11 +4,12 @@
 import { getActiveInterior, isInside, dimAlphaForFloor } from './active-interior.js';
 import { ensureFloorImages, getFloorImg, getWallImg } from './building-renderer.js';
 
-// TEMP safety gate: the in-world floor tiles + walls are disabled because they draw on the
-// 2D 'game' canvas which sits ABOVE the GL layer the player renders on — so they cover the
-// character — and the wall sprite rendered squished. Re-enabled with correct layering +
-// wall height + circular see-through once the draw-order recon lands. Entering still dims.
-const SHOW_TILES = false;
+// The player now draws ON TOP of everything (z-order flipped), so the in-world interior FLOOR
+// should layer UNDER the player: floor drawn over the baked roof, character standing on the
+// floor. Re-enabling the floor to test exactly that. Walls stay OFF — they render squished and
+// come back with the chunk-pipeline fix.
+const SHOW_TILES = true;    // floor on
+const SHOW_WALLS = false;   // walls off (separately broken)
 
 /** Call AFTER terrain/water, BEFORE the player sprite draws (so the player lands on top). */
 export function drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h) {
@@ -40,7 +41,7 @@ export function drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h) {
  *  the player, which is drawn see-through (skipped) so it never hides the character. */
 export function drawInteriorWallsWorld(ctx, camX, camY, tilePx, w, h, playerTile) {
   if (!isInside()) return;
-  if (!SHOW_TILES) return; // TEMP: walls render squished/broken — restored after the wall-height + circular-see-through fix
+  if (!SHOW_WALLS) return; // walls render squished/broken — restored with the chunk-pipeline fix
   const ai = getActiveInterior(), t = Math.ceil(tilePx), pad = 1;
   const present = ai.footprint; // perimeter walls follow the full footprint
   const has = (x, y) => present.has(x + ',' + y);
