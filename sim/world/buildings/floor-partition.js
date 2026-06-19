@@ -70,6 +70,31 @@ function singleUnit(interior, core, kind) {
   return { circulation, units: [{ unitKind: kind, tiles: tiles.map(c => ({ x: c.x, y: c.y })), doorTile: { x: door.x, y: door.y } }] };
 }
 
+/** Reserve the NORTH-SOUTH stair well as walkable circulation: the core is the LANDING,
+ *  the tile one north is the UP stair, one south is the DOWN stair — so the climb chains
+ *  (arrive on the landing, the next up-stair is directly ahead). Only the well tiles that
+ *  are interior get reserved (a thin building just gets fewer, and floor-layout falls back
+ *  to the single core). Removes reserved tiles from any unit, like carveLift. */
+function carveWell(part, core, interiorSet) {
+  if (!core) return part;
+  const wells = [];
+  for (const dy of [-1, 0, 1]) { const k = key(core.x, core.y + dy); if (interiorSet.has(k)) wells.push(k); }
+  for (const k of wells) part.circulation.add(k);
+  const units = [];
+  for (const u of part.units) {
+    const tiles = u.tiles.filter(t => !wells.includes(key(t.x, t.y)));
+    if (tiles.length === 0) continue; // unit fully absorbed by the well → drop it
+    let door = u.doorTile;
+    if (wells.includes(key(door.x, door.y))) {
+      const nd = tiles.find(t => adjToCirc(t, part.circulation)) || tiles[0];
+      door = { x: nd.x, y: nd.y };
+    }
+    units.push({ unitKind: u.unitKind, tiles, doorTile: door });
+  }
+  part.units = units;
+  return part;
+}
+
 /** Ensure the lift shaft tile is walkable circulation on this floor (removing it from
  *  any unit it landed in). No-op when the shaft is not part of this floor's interior. */
 function carveLift(part, liftShaft, interiorSet) {
@@ -106,7 +131,7 @@ export function partitionFloor(seed, sections, stairCore, floorUse, liftShaft = 
   const kind = UNIT_KIND[floorUse] || 'room';
 
   if (SINGLE_USE.has(floorUse) || interior.length < MIN_MULTI) {
-    return carveLift(singleUnit(interior, core, kind), liftShaft, interiorSet);
+    return carveLift(carveWell(singleUnit(interior, core, kind), core, interiorSet), liftShaft, interiorSet);
   }
 
   // Corridor through the core along the longer interior axis.
@@ -132,6 +157,6 @@ export function partitionFloor(seed, sections, stairCore, floorUse, liftShaft = 
     }
   }
 
-  if (units.length === 0) return carveLift(singleUnit(interior, core, kind), liftShaft, interiorSet); // deterministic fallback
-  return carveLift({ circulation, units }, liftShaft, interiorSet);
+  if (units.length === 0) return carveLift(carveWell(singleUnit(interior, core, kind), core, interiorSet), liftShaft, interiorSet); // deterministic fallback
+  return carveLift(carveWell({ circulation, units }, core, interiorSet), liftShaft, interiorSet);
 }

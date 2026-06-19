@@ -149,9 +149,17 @@ export function drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h) {
       else { ctx.fillStyle = fallback; ctx.fillRect(sx, sy, t + pad, t + pad); } // no white during cold load
     }
   }
-  // stair + lift markers — lifted with the floor so they sit on the right tile.
-  marker(ctx, ai, L.stairTile, '#caa23a', camX, camY, tilePx, t, lift);
-  if (L.liftTile) marker(ctx, ai, L.liftTile, '#4aa6c8', camX, camY, tilePx, t, lift);
+  // stair-WELL markers — landing (subtle) + ▲ up (green) / ▼ down (amber), lift ⇕ (blue).
+  // Lifted with the floor so they sit on the right tile. Falls back to a single core tile
+  // on thin buildings with no N-S well.
+  if (L.upTile || L.downTile) {
+    if (L.landingTile) marker(ctx, ai, L.landingTile, 'rgba(207,214,223,0.45)', camX, camY, tilePx, t, lift);
+    if (L.upTile) stairMarker(ctx, ai, L.upTile, '#5ec98a', '▲', camX, camY, tilePx, t, lift);
+    if (L.downTile) stairMarker(ctx, ai, L.downTile, '#e0913f', '▼', camX, camY, tilePx, t, lift);
+  } else {
+    marker(ctx, ai, L.stairTile, '#caa23a', camX, camY, tilePx, t, lift); // fallback bidirectional core
+  }
+  if (L.liftTile) stairMarker(ctx, ai, L.liftTile, '#4aa6c8', '⇕', camX, camY, tilePx, t, lift);
   // BACK + SIDE walls (N/E/W) — behind the player, solid (no occlusion of the player).
   if (SHOW_WALLS) {
     const wallImg = getWallImg('south_base');
@@ -199,4 +207,16 @@ function marker(ctx, ai, tile, color, camX, camY, tilePx, t, lift = 0) {
   if (!tile) return;
   const sx = Math.floor((ai.bx + tile.x) * tilePx - camX), sy = Math.floor((ai.by + tile.y) * tilePx - camY) - lift;
   ctx.fillStyle = color; ctx.fillRect(sx + 2, sy + 2, t - 4, t - 4);
+}
+
+// A stair/lift tile with a direction glyph (▲ up / ▼ down / ⇕ lift) so the way is obvious.
+function stairMarker(ctx, ai, tile, color, sym, camX, camY, tilePx, t, lift = 0) {
+  if (!tile) return;
+  const sx = Math.floor((ai.bx + tile.x) * tilePx - camX), sy = Math.floor((ai.by + tile.y) * tilePx - camY) - lift;
+  ctx.fillStyle = color; ctx.fillRect(sx + 2, sy + 2, t - 4, t - 4);
+  ctx.fillStyle = 'rgba(20,24,16,0.9)';
+  ctx.font = 'bold ' + Math.round(t * 0.6) + 'px system-ui';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(sym, sx + t / 2, sy + t / 2 + 1);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
 }

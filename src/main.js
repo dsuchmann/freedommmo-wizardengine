@@ -222,15 +222,27 @@ function update(dt) {
       if (!AI.isInFootprint(lx, ly)) { AI.exitInterior(); }
       else {
         const trig = lx + ',' + ly;
-        const onStair = ai.layout.stairTile && ai.layout.stairTile.x === lx && ai.layout.stairTile.y === ly;
-        const onLift = ai.layout.liftTile && ai.layout.liftTile.x === lx && ai.layout.liftTile.y === ly;
-        if ((onStair || onLift) && ai.lastTrigger !== trig) {
-          const ax = input.axis ? input.axis() : { x: 0, y: 0 };
-          const dir = ax.y < -0.2 ? 1 : ax.y > 0.2 ? -1 : 1; // push up/north = ascend, down = descend, default up
-          AI.changeFloor(dir);
+        const L = ai.layout;
+        const at = (t) => t && t.x === lx && t.y === ly;
+        const onUp = at(L.upTile), onDown = at(L.downTile), onLift = at(L.liftTile);
+        // The landing/core triggers ONLY as a fallback when this building has no N-S well
+        // (thin footprint) — otherwise the core is the safe landing and never triggers.
+        const onCoreFallback = !L.upTile && !L.downTile && at(L.stairTile);
+        if ((onUp || onDown || onLift || onCoreFallback) && ai.lastTrigger !== trig) {
+          let dir;
+          if (onUp) dir = 1;
+          else if (onDown) dir = -1;
+          else { const ax = input.axis ? input.axis() : { x: 0, y: 0 }; dir = ax.y < -0.2 ? 1 : ax.y > 0.2 ? -1 : 1; } // lift/fallback: push up=ascend
+          const changed = AI.changeFloor(dir);
           ai.lastTrigger = trig;
-        } else if (!onStair && !onLift) {
-          ai.lastTrigger = null; // reset edge-trigger when off the stair/lift
+          // Land on the new floor's LANDING so the next up-stair is directly ahead (north) —
+          // keep walking north to keep climbing. (ai.layout was re-resolved by changeFloor.)
+          if (changed && (onUp || onDown)) {
+            const land = ai.layout.landingTile;
+            if (land) { player.x = ai.bx + land.x + 0.5; player.y = ai.by + land.y + 0.5; }
+          }
+        } else if (!onUp && !onDown && !onLift && !onCoreFallback) {
+          ai.lastTrigger = null; // reset edge-trigger when off every stair/lift tile
         }
       }
     }
