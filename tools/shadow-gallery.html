@@ -40,6 +40,9 @@
     <div class="row">
       <div class="k"><input type="checkbox" id="shadows" checked><label style="margin:0">building shadows <span style="color:#5b647c">(_buildingShadows)</span></label></div>
       <div class="k"><input type="checkbox" id="drape" checked><label style="margin:0">façade drape — climb walls <span style="color:#5b647c">(_buildingShadowDrape)</span></label></div>
+      <div class="k"><input type="checkbox" id="respectH" checked><label style="margin:0"><b>grass shadows respect height</b></label></div>
+      <div class="k"><input type="checkbox" id="showBlocked"><label style="margin:0">…show blocked grass shadows (red)</label></div>
+      <div class="k"><input type="checkbox" id="showMask"><label style="margin:0">show height mask (heat overlay)</label></div>
     </div>
 
     <div class="row">
@@ -50,19 +53,23 @@
     <div class="read" id="sunRead" style="margin-top:10px"></div>
 
     <div class="legend">
-      <p><b>What you're looking at:</b> a tall 5-storey tower (centre) ringed by shorter houses.</p>
+      <p><b>What you're looking at:</b> a tall 5-storey tower (centre) ringed by shorter houses + grass tufts.</p>
       <p>• <b>Ground shadow</b> shoots <b>away from the sun</b> — straight down at noon, long to the
          west at dawn, long to the east at dusk; length grows with storeys + low sun.</p>
-      <p>• <b>Drape</b>: where the tower's shadow reaches a neighbour, it <b>climbs that neighbour's
-         south wall</b> instead of lying flat — the "drench a surface at a different height" bit.</p>
-      <p>• Both fade out at night.</p>
+      <p>• <b>Drape</b>: where the tower's shadow reaches a neighbour it <b>climbs that wall</b> — but
+         only as high as the <b>caster</b> is tall (a short building can't scale a tall one).</p>
+      <p>• <b>Grass respects height:</b> scrub to <b>dusk</b> (long shadows) and toggle the checkbox —
+         grass shadows that would streak onto the tower roof are <b>cut off at the building</b>
+         (they sample the height mask; grass = 0 storeys &lt; any building). "show blocked" draws the
+         cut shadows in red; "show height mask" overlays the mask the grass samples.</p>
+      <p>• Everything fades out at night.</p>
     </div>
   </div>
 </div>
 
 <script type="module">
 // Absolute paths (served from project root) so the page works even if the URL has a trailing slash.
-import { drawBuildingShadows, southFacadeColumns, facadeRect, buildingFloors } from '/src/render/building-shadow.js';
+import { drawBuildingShadows, southFacadeColumns, facadeRect, buildingFloors, sampleHeight } from '/src/render/building-shadow.js';
 import { DayNightCycle } from '/src/world/lighting.js';
 
 const cv = document.getElementById('c');
@@ -88,9 +95,65 @@ const buildings = [
   B(8, 13, 4, 3, 1, 'house (1)'),   // sw filler for scale
 ];
 
+// Grass tufts ringing the tower — short objects whose shadows streak toward the buildings.
+// (caster height = 0 storeys, like real F2 flora.) Demonstrates the height-mask occlusion.
+const grass = [];
+for (const [gx, gy] of [               // a ring hugging the tower (x15-20,y3-8) on every side
+  [13.5, 4], [13.5, 6], [14, 8],       // west  — blocked at dusk (shadow east)
+  [21, 4], [21, 6], [20.5, 8],         // east  — blocked at dawn (shadow west)
+  [16, 1.5], [18, 1.5], [19.5, 2],     // north
+  [16, 9.2], [18, 9.2], [14.5, 9],     // south — blocked at noon (shadow down)
+  [11.5, 10.5], [23, 10], [17, 11],    // scattered for scale
+]) grass.push({ x: gx, y: gy });
+
 const cycle = new DayNightCycle(); cycle.paused = true;
 const $ = id => document.getElementById(id);
 let playing = false;
+
+// Grass shadows: a sheared streak from the blade base to its landing point, using the SAME shVec
+// the F2 system uses. When "respect height" is on we sample the published height mask at the
+// LANDING point and drop the shadow if a building stands there (grass=0 storeys < any building) —
+// exactly the rule the F2 contract asks field2-animator.js to apply per blade.
+function drawGrassShadows(sun) {
+  const mask = (typeof window !== 'undefined') ? window._buildingHeightMask : null;
+  const respect = $('respectH').checked;
+  const showBlocked = $('showBlocked').checked;
+  const size = TILE * 1.4; // blade shadow reach in px
+  const vx = sun.shadowX * sun.shadowLength * 0.9, vy = sun.shadowLength * 0.35;
+  const maxReach = TILE * 4; // clamp so long dusk streaks don't overshoot far past the tower
+  for (const g of grass) {
+    const rx = sx(g.x + 0.5), ry = sy(g.y + 1);          // blade base on the ground
+    let ox = vx * size, oy = vy * size;
+    const mag = Math.hypot(ox, oy) || 1;
+    if (mag > maxReach) { ox = ox / mag * maxReach; oy = oy / mag * maxReach; }
+    const lx = rx + ox, ly = ry + oy;                     // shadow landing (far tip)
+    const blocked = respect && mask && sampleHeight(mask, lx, ly) > 0;
+    if (blocked) {
+      if (showBlocked) { // faint red where the shadow WOULD have streaked onto a building
+        ctx.save(); ctx.globalAlpha = 0.5; ctx.strokeStyle = '#e0506a'; ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(lx, ly); ctx.stroke(); ctx.restore();
+      }
+      continue;
+    }
+    // a thin sheared shadow blob root→tip
+    ctx.save(); ctx.globalAlpha = 0.18 * sun.ambient; ctx.fillStyle = '#2a2e2b';
+    ctx.beginPath();
+    ctx.moveTo(rx - 3, ry); ctx.lineTo(rx + 3, ry); ctx.lineTo(lx + 1.5, ly); ctx.lineTo(lx - 1.5, ly);
+    ctx.closePath(); ctx.fill(); ctx.restore();
+  }
+}
+function drawGrass() {
+  ctx.save(); ctx.strokeStyle = '#4f7d3a'; ctx.lineWidth = 2;
+  for (const g of grass) {
+    const rx = sx(g.x + 0.5), ry = sy(g.y + 1);
+    ctx.beginPath();
+    ctx.moveTo(rx, ry); ctx.lineTo(rx - 2, ry - 7);
+    ctx.moveTo(rx, ry); ctx.lineTo(rx + 2, ry - 8);
+    ctx.moveTo(rx, ry); ctx.lineTo(rx, ry - 9);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
 
 function tileGrid() {
   ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
@@ -153,6 +216,7 @@ function frame() {
   window._buildingShadows = $('shadows').checked ? undefined : false; // undefined = on (default)
   window._buildingShadowDrape = $('drape').checked ? undefined : false;
   window._buildingShadowScale = +$('scale').value / 100;
+  window._buildingHeightMaskDebug = $('showMask').checked ? true : false;
 
   // ground tint by day-night so the fade reads
   const amb = sun.ambient;
@@ -167,7 +231,13 @@ function frame() {
   for (const b of sorted) drawBuilding(b);
 
   // === the real pass — exactly the canvas-renderer hook (after roofs, before player) ===
+  // (builds + publishes window._buildingHeightMask, and paints the heat overlay if showMask is on)
   drawBuildingShadows(ctx, buildings, camX, camY, TILE, W, H, sun);
+
+  // Grass shadows + sprites draw AFTER (like F2 in-game). The shadows clip against the mask the
+  // building pass just published — the height-respect rule the F2 contract specifies.
+  drawGrassShadows(sun);
+  drawGrass();
 
   sunGlyph(sun);
 
