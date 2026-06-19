@@ -10,7 +10,7 @@ Walls bake at a **fixed height** — `wall-config.js: wallHeight = 4` (tiles), u
 - `b.footprint.node.payload.aboveGroundFloors` — the story count (≥0 floors). **This is the wall-stack height in floors.**
 - `…payload.floorRange = [min, max]` — `min < 0` ⇒ basements (don't add exterior stories for basements; they're below grade).
 - `…payload.lift` (present ⟺ `aboveGroundFloors > 3`) and `…stackPlan[i].use` per floor — useful if you want per-band façade variety (shopfront ground vs residential upper), optional for v1.
-- Per-building `facadeArchetype` / per-floor `facadeBand` exist in the data model for window/balcony/setback patterns (v2 — v1 can be uniform).
+- **Per-floor façade bands (now a real, tested function):** `facadeBands(b.footprint.node.payload)` in `sim/world/buildings/facade.js` → `[{ index, use, window, door }]` bottom→top, one per **above-ground** story (basements excluded). Story `0` carries the entrance (`door: true`); `window` ∈ `shop | residential | grand | arched | slit | none | plain` by the floor's use. Use this to vary the stacked windows per story (shopfront ground, residential windows above) instead of a uniform box — no need to invent per-floor patterns yourself.
 
 ## What v1 needs (worker wall bake)
 1. **Height = stories.** Replace the fixed `wallHeight` for a building's exterior wall with `wallHeight * aboveGroundFloors` (each story = one `south_base` 32×128 sprite stacked vertically). The wall now rises `~4 * aboveGroundFloors` tiles in screen space.
