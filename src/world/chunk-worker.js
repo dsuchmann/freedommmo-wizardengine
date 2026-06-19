@@ -25,6 +25,17 @@ function shouldDenoise(url) {
   return url.includes('/small_flora/');
 }
 
+// fetch() with a hard timeout. Without this, a single stalled connection (likely
+// with thousands of image requests across ~6 workers) makes loadImageBatch's
+// Promise.all never resolve, so backgroundLoadingDone never fires and the world
+// never finishes loading. A timed-out request aborts and is treated exactly like
+// a failed load (retried once, then refilled by the repaint pass).
+function fetchWithTimeout(url, ms) {
+  var controller = new AbortController();
+  var tid = setTimeout(function() { controller.abort(); }, ms);
+  return fetch(url, { signal: controller.signal }).finally(function() { clearTimeout(tid); });
+}
+
 // Load a batch of image URLs into the cache. Returns {loaded, failed}.
 // Retries failed URLs once with a smaller batch size to handle server overload.
 async function loadImageBatch(urls, batchSize) {
@@ -36,7 +47,7 @@ async function loadImageBatch(urls, batchSize) {
     await Promise.all(batch.map(async function(url) {
       if (imageCache.has(url)) { loaded++; return; }
       try {
-        var response = await fetch(url);
+        var response = await fetchWithTimeout(url, 12000);
         // Non-ok responses (server overload, transient errors) are retried below
         if (!response.ok) { failedUrls.push(url); failed++; return; }
         var blob = await response.blob();
@@ -60,7 +71,7 @@ async function loadImageBatch(urls, batchSize) {
       await Promise.all(rBatch.map(async function(url) {
         if (imageCache.has(url)) return;
         try {
-          var response = await fetch(url);
+          var response = await fetchWithTimeout(url, 12000);
           if (!response.ok) return; // failed twice — repaint pass will retry later
           var blob = await response.blob();
           var bmp = await createImageBitmap(blob);
@@ -88,43 +99,45 @@ async function backgroundLoadRemaining() {
   var remaining = allUrls.filter(function(url) { return !imageCache.has(url); });
   if (remaining.length === 0) {
     backgroundLoadingDone = true;
+    scheduleRepaintPass();
     self.postMessage({ type: 'backgroundLoadDone', total: allUrls.length, cached: imageCache.size });
     return;
   }
-  await loadImageBatch(remaining, 40);
+  // Load in steps and repaint flagged chunks AFTER EACH STEP, so incomplete
+  // chunks finalize PROGRESSIVELY as their images arrive — instead of waiting for
+  // the entire ~22k-image set (the old behavior, which left the world incomplete
+  // and storming for minutes). With the fetch timeout, this always runs to
+  // completion even if some requests fail.
+  var STEP = 1500;
+  for (var i = 0; i < remaining.length; i += STEP) {
+    await loadImageBatch(remaining.slice(i, i + STEP), 40);
+    scheduleRepaintPass();
+  }
   backgroundLoadingDone = true;
+  scheduleRepaintPass(); // final pass — chunks still incomplete now give up (asset genuinely absent)
   self.postMessage({ type: 'backgroundLoadDone', total: allUrls.length, cached: imageCache.size });
-
-  // Repaint any chunks that compiled with missing images (soil, wang tiles)
-  scheduleRepaintPass();
 }
 
-// Repaint chunks that compiled while images were missing. Re-fetches any
-// still-missing soil/wang URLs first so the repaint actually has the images.
-// Re-flags chunks that still come out incomplete (up to MAX_REPAINT_ATTEMPTS).
-var MAX_REPAINT_ATTEMPTS = 3;
+// Repaint chunks that compiled while images were missing. Re-renders flagged
+// chunks with WHATEVER IS CURRENTLY CACHED (no blocking load — the background
+// loader fills the cache and re-triggers this per step). While the background
+// load is still running, a chunk that's still incomplete is re-queued so it
+// finalizes once its images arrive; once the load is done, remaining-incomplete
+// chunks give up (the asset is genuinely absent — honest absence).
 var repaintPassScheduled = false;
 
 function scheduleRepaintPass() {
-  if (repaintPassScheduled || !backgroundLoadingDone || chunksNeedingRepaint.length === 0) return;
+  if (repaintPassScheduled || chunksNeedingRepaint.length === 0) return;
   repaintPassScheduled = true;
-  setTimeout(runRepaintPass, 250);
+  setTimeout(runRepaintPass, 400);
 }
 
-async function runRepaintPass() {
+function runRepaintPass() {
   repaintPassScheduled = false;
   if (chunksNeedingRepaint.length === 0) return;
 
-  // Re-fetch anything still missing (failed loads from earlier batches).
-  // Include scatter URLs so chunks that baked before F3 images loaded get debris.
-  var critical = getSoilImageURLs().concat(getAllWangImageURLs()).concat(getSmallScatterImageURLs()).concat(getAllFloorTileURLs());
-  var missing = critical.filter(function(url) { return !imageCache.has(url); });
-  if (missing.length > 0) {
-    await loadImageBatch(missing, 40);
-  }
-  console.log('[SOIL REPAINT] pass:', chunksNeedingRepaint.length, 'chunks flagged,', missing.length, 'images were missing');
-
   var toRepaint = chunksNeedingRepaint.splice(0);
+  var stillIncomplete = 0;
   for (var ri = 0; ri < toRepaint.length; ri++) {
     var rchunk = toRepaint[ri];
     var tiles = neighborCache.get(rchunk.cx + ',' + rchunk.cy);
@@ -136,15 +149,14 @@ async function runRepaintPass() {
     var chunk = { cx: rchunk.cx, cy: rchunk.cy, tiles: tiles };
     var sun = { height: 0.5, ambient: 0.85 };
     var result = renderChunkToBitmap(chunk, neighborCache, sun, imageCache);
-    if (result.needsRepaint) {
-      console.warn('[SOIL REPAINT] chunk', rchunk.cx + ',' + rchunk.cy, 'STILL incomplete after repaint (attempt ' + ((rchunk.attempts || 0) + 1) + ')');
-      if ((rchunk.attempts || 0) + 1 < MAX_REPAINT_ATTEMPTS) {
-        chunksNeedingRepaint.push({ key: rchunk.key, cx: rchunk.cx, cy: rchunk.cy, attempts: (rchunk.attempts || 0) + 1 });
-      }
+    if (result.needsRepaint && !backgroundLoadingDone) {
+      // Still missing images, but more are streaming in — try again next pass.
+      chunksNeedingRepaint.push({ key: rchunk.key, cx: rchunk.cx, cy: rchunk.cy });
+      stillIncomplete++;
     }
     self.postMessage({ type: 'chunkRepainted', key: rchunk.key, cx: rchunk.cx, cy: rchunk.cy, gen: tuneGen, bitmap: result.bitmap, wangDebug: result.debug }, [result.bitmap]);
   }
-  scheduleRepaintPass();
+  if (stillIncomplete > 0) scheduleRepaintPass();
 }
 
 // Compute shore distance and shore angle for every tile in a chunk.
