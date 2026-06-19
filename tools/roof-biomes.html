@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Roof Rules — auto roofs per biome</title>
+<style>
+  :root { --bg:#0c0e13; --panel:#14171f; --panel2:#1b1f29; --line:#262b37; --ink:#e8eaf0; --dim:#9aa3b4; --accent:#7cc4ff; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:13px/1.4 ui-sans-serif,system-ui,Segoe UI,Roboto,sans-serif; }
+  header { position:sticky; top:0; z-index:10; background:#0c0e13f2; border-bottom:1px solid var(--line); padding:9px 16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  header h1 { font-size:14px; margin:0; font-weight:650; }
+  header a { color:var(--accent); font-size:12px; text-decoration:none; }
+  header .spacer { flex:1; }
+  .swatch { width:16px; height:16px; border-radius:4px; border:1px solid #0006; display:inline-block; vertical-align:-3px; margin-right:6px; }
+  .biomeName { font-size:14px; font-weight:650; min-width:230px; }
+  .biomeName .num { color:var(--accent); }
+  button { background:var(--panel2); color:var(--ink); border:1px solid var(--line); border-radius:7px; padding:6px 11px; cursor:pointer; font-size:12px; }
+  button:hover { border-color:#3a4150; }
+  select.jump { background:var(--panel2); color:var(--ink); border:1px solid var(--line); border-radius:7px; padding:6px; }
+  .rules { padding:10px 16px; color:var(--dim); font-size:12px; border-bottom:1px solid var(--line); display:flex; gap:24px; flex-wrap:wrap; }
+  .rules b { color:var(--ink); font-weight:600; }
+  .rules .rank code { color:#bcd; }
+  .stage { padding:16px; }
+  .note { color:var(--dim); font-size:12px; margin:0 0 12px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(216px,1fr)); gap:13px; }
+  .bld { background:var(--panel); border:1px solid var(--line); border-radius:11px; overflow:hidden; }
+  .bld canvas { display:block; width:100%; height:210px; background:#0a0c11; }
+  .bld .cap { padding:6px 9px; font-size:11px; color:var(--dim); }
+  .bld .cap b { color:var(--ink); font-weight:600; font-size:12px; }
+  .bld .cap .sm { display:block; margin-top:2px; }
+  .bld .cap code { color:#9fd; }
+  .err { color:#f99; font-size:10px; padding:5px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Roof Rules</h1>
+  <a href="./roof-gallery.html">→ presets gallery</a>
+  <button id="prev">◀ Prev</button>
+  <div class="biomeName" id="biomeName"></div>
+  <button id="next">Next ▶</button>
+  <select class="jump" id="jump"></select>
+  <span class="spacer"></span>
+  <button id="reseed">Reseed</button>
+</header>
+<div class="rules" id="rules"></div>
+<div class="stage">
+  <p class="note">Every building's roof is <b>auto-resolved</b> by <code>resolveRoof(biome, type, tier, seed, pattern)</code> — biome sets the climate palette &amp; pitch, building type overlays its program, the footprint pattern constrains the style. Real footprints from <code>generateFootprint</code>. ← → arrow keys change biome.</p>
+  <div class="grid" id="grid"></div>
+</div>
+
+<script type="module">
+import { buildRoofGrid } from './roof/roof-geometry.js';
+import { makeMaterial } from './roof/roof-materials.js';
+import { makeFeatures } from './roof/roof-features.js';
+import { drawRoof, computeView } from './roof/roof-renderer.js';
+import { resolveConfig } from './roof/roof-config.js';
+import { resolveRoof, LAND_BIOMES, BIOME_PROFILES } from './roof/roof-rules.js';
+import { realFootprint } from './roof/real-buildings.js';
+import { BIOMES } from '../src/world/biome-definitions.js';
+
+const ROSTER = ['cottage', 'house', 'manor', 'inn', 'blacksmith', 'market_stall', 'warehouse', 'granary', 'barn', 'mill', 'watchtower', 'chapel', 'temple', 'monastery', 'town_hall', 'shrine'];
+const N = LAND_BIOMES.length;
+let biomeIdx = 0, reseed = 1;
+const gridEl = document.getElementById('grid');
+
+function sizeCanvas(canvas, h) {
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = canvas.clientWidth || 220;
+  canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+  const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, w, h };
+}
+
+function renderCard(canvas, biome, typeId, seed) {
+  try {
+    const fp = realFootprint(typeId, seed);
+    if (!fp || !fp.sections.length) throw new Error('no footprint');
+    const roof = resolveRoof(biome, typeId, 'town', seed, fp.pattern, fp.category);
+    const { ctx, w, h } = sizeCanvas(canvas, 210);
+    const R = resolveConfig(roof, { sections: fp.sections });
+    const grid = buildRoofGrid(R.sections, R.geom);
+    drawRoof(ctx, grid, makeMaterial(R.materialId, R.matOpts), makeFeatures(R.renderCfg), R.renderCfg, computeView(grid, w, h));
+    return { fp, roof };
+  } catch (e) {
+    const ctx = canvas.getContext('2d'); ctx.fillStyle = '#1a0e0e'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#f88'; ctx.font = '10px monospace'; ctx.fillText('err: ' + e.message, 6, 16);
+    return null;
+  }
+}
+
+function renderBiome() {
+  const biome = LAND_BIOMES[biomeIdx];
+  const col = (BIOMES[biome] && BIOMES[biome].color) || '#888';
+  document.getElementById('biomeName').innerHTML =
+    `<span class="swatch" style="background:${col}"></span><span class="num">${biomeIdx + 1}/${N}</span> ${biome}`;
+  document.getElementById('jump').value = String(biomeIdx);
+  const prof = BIOME_PROFILES[biome];
+  document.getElementById('rules').innerHTML =
+    `<span class="rank"><b>styles</b> ${prof.styles.map(s => `<code>${s}</code>`).join(' › ')}</span>` +
+    `<span class="rank"><b>materials</b> ${prof.materials.map(s => `<code>${s}</code>`).join(' › ')}</span>` +
+    `<span><b>pitch</b> ${prof.pitch[0]}–${prof.pitch[1]} · <b>overhang</b> ${prof.overhang[0]}–${prof.overhang[1]} · <b>walkable decks</b> ${prof.deck ? 'yes' : 'no'}${prof.snow ? ' · <b>snow</b> (no flat roofs)' : ''}</span>`;
+
+  gridEl.innerHTML = '';
+  ROSTER.forEach((typeId, i) => {
+    const card = document.createElement('div'); card.className = 'bld';
+    const canvas = document.createElement('canvas');
+    const cap = document.createElement('div'); cap.className = 'cap';
+    card.appendChild(canvas); card.appendChild(cap); gridEl.appendChild(card);
+    const seed = reseed * 100000 + biomeIdx * 1000 + i * 7 + 1;
+    const res = renderCard(canvas, biome, typeId, seed);
+    if (res) cap.innerHTML = `<b>${res.fp.typeName}</b><span class="sm"><code>${res.roof.style}</code> · <code>${res.roof.material}</code> · ${res.fp.pattern}${res.roof.features.length ? ' · ' + res.roof.features.join(', ') : ''}</span>`;
+    else cap.innerHTML = `<b>${typeId}</b>`;
+  });
+}
+
+const jump = document.getElementById('jump');
+LAND_BIOMES.forEach((b, i) => { const o = document.createElement('option'); o.value = i; o.textContent = `${i + 1}. ${b}`; jump.appendChild(o); });
+jump.addEventListener('change', () => { biomeIdx = +jump.value; renderBiome(); });
+document.getElementById('prev').addEventListener('click', () => { biomeIdx = (biomeIdx - 1 + N) % N; renderBiome(); });
+document.getElementById('next').addEventListener('click', () => { biomeIdx = (biomeIdx + 1) % N; renderBiome(); });
+document.getElementById('reseed').addEventListener('click', () => { reseed++; renderBiome(); });
+window.addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') { biomeIdx = (biomeIdx - 1 + N) % N; renderBiome(); } if (e.key === 'ArrowRight') { biomeIdx = (biomeIdx + 1) % N; renderBiome(); } });
+window.addEventListener('resize', () => { clearTimeout(window._rt); window._rt = setTimeout(renderBiome, 200); });
+
+requestAnimationFrame(renderBiome);
+</script>
+</body>
+</html>

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Roof Gallery — roofs on real game buildings</title>
+<style>
+  :root { --bg:#0c0e13; --panel:#14171f; --panel2:#1b1f29; --line:#262b37; --ink:#e8eaf0; --dim:#9aa3b4; --accent:#7cc4ff; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:13px/1.4 ui-sans-serif,system-ui,Segoe UI,Roboto,sans-serif; }
+  header { position:sticky; top:0; z-index:10; background:#0c0e13f2; border-bottom:1px solid var(--line); padding:9px 16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  header h1 { font-size:14px; margin:0; font-weight:650; }
+  header .spacer { flex:1; }
+  .pagelabel { font-size:13px; font-weight:600; min-width:330px; }
+  .pagelabel .num { color:var(--accent); }
+  .pagelabel .tags { color:var(--dim); font-weight:400; font-size:12px; }
+  button { background:var(--panel2); color:var(--ink); border:1px solid var(--line); border-radius:7px; padding:6px 11px; cursor:pointer; font-size:12px; }
+  button:hover { border-color:#3a4150; }
+  button.primary { background:#1d3a55; border-color:#2c5a83; }
+  select.jump { background:var(--panel2); color:var(--ink); border:1px solid var(--line); border-radius:7px; padding:6px; max-width:240px; }
+  .layout { display:grid; grid-template-columns:1fr 410px; gap:0; }
+  .stage { padding:16px; }
+  .note { color:var(--dim); font-size:12px; margin:0 0 12px; }
+  .buildings { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:14px; }
+  .bld { background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  .bld canvas { display:block; width:100%; height:300px; background:#0a0c11; }
+  .bld .cap { padding:7px 10px; font-size:11.5px; color:var(--dim); display:flex; justify-content:space-between; }
+  .bld .cap b { color:var(--ink); font-weight:600; }
+  .err { color:#f99; font-size:11px; padding:6px; }
+  .rationale { margin-top:14px; color:#c3c9d6; font-size:12.5px; background:#10131a; border:1px solid var(--line); border-radius:8px; padding:9px 11px; }
+  .pend { margin-top:9px; color:#c9a; font-size:11.5px; }
+  .inspector { border-left:1px solid var(--line); background:var(--panel); height:calc(100vh - 51px); position:sticky; top:51px; overflow-y:auto; padding:14px; }
+  .inspector h2 { font-size:14px; margin:0 0 2px; }
+  .inspector .isub { color:var(--dim); font-size:12px; margin-bottom:10px; }
+  .grp { margin-top:12px; }
+  .grp h3 { font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--dim); margin:0 0 6px; border-bottom:1px solid var(--line); padding-bottom:4px; }
+  .ctl { display:flex; align-items:center; gap:8px; margin:5px 0; }
+  .ctl label { width:104px; color:var(--dim); font-size:11.5px; flex:none; }
+  .ctl input[type=range] { flex:1; }
+  .ctl select { flex:1; background:var(--panel2); color:var(--ink); border:1px solid var(--line); border-radius:6px; padding:3px; }
+  .ctl .val { width:42px; text-align:right; font-variant-numeric:tabular-nums; font-size:11px; }
+  .toggles { display:flex; flex-wrap:wrap; gap:5px; }
+  .tg { font-size:11px; padding:3px 8px; border-radius:20px; border:1px solid #2a3140; background:#1a1f29; color:#8c96a8; cursor:pointer; user-select:none; }
+  .tg.on { background:#1d3a55; border-color:#2c5a83; color:#cfe6ff; }
+  code { color:#9fd; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Roof Gallery</h1>
+  <button id="prev">◀ Prev</button>
+  <div class="pagelabel" id="pageLabel"></div>
+  <button id="next">Next ▶</button>
+  <select class="jump" id="jump"></select>
+  <span class="spacer"></span>
+  <button id="reseed">Reseed buildings</button>
+</header>
+<div class="layout">
+  <div class="stage">
+    <p class="note">Roof applied to <b>3 real game buildings</b> from <code>generateFootprint</code> (real footprint shapes &amp; sizes). The roof style is applied exactly as configured even when the real shape differs from the ideal — that surfaces where biome/type→style rules are needed. ← → arrow keys paginate.</p>
+    <div class="buildings" id="buildings"></div>
+    <div id="extra"></div>
+  </div>
+  <div class="inspector" id="inspector"></div>
+</div>
+
+<script type="module">
+import { buildRoofGrid } from './roof/roof-geometry.js';
+import { makeMaterial } from './roof/roof-materials.js';
+import { makeFeatures } from './roof/roof-features.js';
+import { drawRoof, computeView } from './roof/roof-renderer.js';
+import { CONFIGS, resolveConfig, getRealBuildings, EDITOR_PARAMS, TOGGLE_FEATURES } from './roof/roof-config.js';
+
+const N = CONFIGS.length;
+let page = 0, buildingSeed = 1;
+const overrides = CONFIGS.map(() => ({}));
+const bldCache = new Map();            // `${page}:${seed}` -> [3 footprints]
+const bldEl = document.getElementById('buildings');
+const inspEl = document.getElementById('inspector');
+let stageCanvases = [];
+
+function buildingsFor(p) {
+  const key = p + ':' + buildingSeed;
+  if (!bldCache.has(key)) bldCache.set(key, getRealBuildings(CONFIGS[p], 3, buildingSeed * 1000 + p * 7 + 1));
+  return bldCache.get(key);
+}
+
+function sizeCanvas(canvas, h) {
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = canvas.clientWidth || 320;
+  canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+  const ctx = canvas.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, w, h };
+}
+
+function renderBuilding(canvas, cfg, ov, sections) {
+  try {
+    const { ctx, w, h } = sizeCanvas(canvas, 300);
+    const R = resolveConfig(cfg, { ...ov, sections });
+    const grid = buildRoofGrid(R.sections, R.geom);
+    const view = computeView(grid, w, h);
+    drawRoof(ctx, grid, makeMaterial(R.materialId, R.matOpts), makeFeatures(R.renderCfg), R.renderCfg, view);
+  } catch (e) {
+    const ctx = canvas.getContext('2d'); ctx.fillStyle = '#1a0e0e'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#f88'; ctx.font = '11px monospace'; ctx.fillText('error: ' + e.message, 8, 18);
+    console.error(cfg.name, e);
+  }
+}
+
+function buildStage() {
+  const cfg = CONFIGS[page];
+  const blds = buildingsFor(page);
+  bldEl.innerHTML = '';
+  stageCanvases = [];
+  blds.forEach((b) => {
+    const card = document.createElement('div'); card.className = 'bld';
+    card.innerHTML = `<canvas></canvas><div class="cap"><b>${b.typeName}</b><span><code>${b.pattern}</code> · ${b.w}×${b.h}</span></div>`;
+    bldEl.appendChild(card);
+    stageCanvases.push({ canvas: card.querySelector('canvas'), sections: b.sections });
+  });
+  // extra: rationale + pending
+  const ex = document.getElementById('extra'); ex.innerHTML = '';
+  if (cfg.pending && cfg.pending.length) {
+    const p = document.createElement('div'); p.className = 'pend';
+    p.innerHTML = '⌀ not yet drawn (honest absence): ' + cfg.pending.join(', '); ex.appendChild(p);
+  }
+  if (cfg.rationale) { const r = document.createElement('div'); r.className = 'rationale'; r.textContent = cfg.rationale; ex.appendChild(r); }
+  renderStage();
+}
+
+function renderStage() {
+  const cfg = CONFIGS[page];
+  for (const sc of stageCanvases) renderBuilding(sc.canvas, cfg, overrides[page], sc.sections);
+}
+
+// ── inspector ────────────────────────────────────────────────────────────────
+function curVal(name, fallback) {
+  const o = overrides[page], c = CONFIGS[page];
+  return o[name] !== undefined ? o[name] : (c[name] !== undefined ? c[name] : fallback);
+}
+function buildInspector() {
+  const cfg = CONFIGS[page];
+  inspEl.innerHTML = '';
+  const h2 = document.createElement('h2'); h2.textContent = cfg.name; inspEl.appendChild(h2);
+  const sub = document.createElement('div'); sub.className = 'isub';
+  sub.innerHTML = `${cfg.biome} · ${cfg.type} · <code>${cfg.style}</code> / <code>${cfg.material}</code>`; inspEl.appendChild(sub);
+
+  const groups = {};
+  for (const p of EDITOR_PARAMS) (groups[p.group] = groups[p.group] || []).push(p);
+  for (const [gname, params] of Object.entries(groups)) {
+    const g = document.createElement('div'); g.className = 'grp'; g.innerHTML = `<h3>${gname}</h3>`;
+    for (const p of params) g.appendChild(makeControl(p));
+    inspEl.appendChild(g);
+  }
+  const fg = document.createElement('div'); fg.className = 'grp'; fg.innerHTML = `<h3>features (drawn)</h3>`;
+  const tg = document.createElement('div'); tg.className = 'toggles';
+  TOGGLE_FEATURES.forEach(f => {
+    const active = new Set(curVal('features', cfg.features || []));
+    const b = document.createElement('span'); b.className = 'tg' + (active.has(f) ? ' on' : ''); b.textContent = f;
+    b.addEventListener('click', () => {
+      const cur = new Set(curVal('features', cfg.features || []));
+      cur.has(f) ? cur.delete(f) : cur.add(f);
+      overrides[page].features = [...cur]; b.classList.toggle('on'); renderStage();
+    });
+    tg.appendChild(b);
+  });
+  fg.appendChild(tg); inspEl.appendChild(fg);
+
+  const row = document.createElement('div'); row.className = 'grp';
+  const copy = document.createElement('button'); copy.textContent = 'Copy config';
+  copy.addEventListener('click', () => navigator.clipboard.writeText(JSON.stringify({ ...cfg, ...overrides[page] }, null, 2)));
+  const reset = document.createElement('button'); reset.textContent = 'Reset'; reset.style.marginLeft = '6px';
+  reset.addEventListener('click', () => { overrides[page] = {}; buildInspector(); renderStage(); });
+  row.appendChild(copy); row.appendChild(reset); inspEl.appendChild(row);
+}
+function makeControl(p) {
+  const row = document.createElement('div'); row.className = 'ctl';
+  const lab = document.createElement('label'); lab.textContent = p.name; row.appendChild(lab);
+  if (p.kind === 'enum') {
+    const sel = document.createElement('select');
+    p.options.forEach(o => { const op = document.createElement('option'); op.value = o; op.textContent = o; sel.appendChild(op); });
+    sel.value = curVal(p.name, p.options[0]);
+    sel.addEventListener('change', () => { overrides[page][p.name] = sel.value; renderStage(); });
+    row.appendChild(sel);
+  } else {
+    const inp = document.createElement('input'); inp.type = 'range'; inp.min = p.min; inp.max = p.max; inp.step = p.step;
+    const def = +curVal(p.name, (p.min + p.max) / 2); inp.value = isNaN(def) ? (p.min + p.max) / 2 : def;
+    const val = document.createElement('span'); val.className = 'val'; val.textContent = inp.value;
+    inp.addEventListener('input', () => {
+      const v = p.kind === 'int' ? Math.round(+inp.value) : +inp.value;
+      overrides[page][p.name] = v; val.textContent = v; renderStage();
+    });
+    row.appendChild(inp); row.appendChild(val);
+  }
+  return row;
+}
+
+// ── page nav ─────────────────────────────────────────────────────────────────
+function setPage(p) {
+  page = (p + N) % N;
+  const cfg = CONFIGS[page];
+  document.getElementById('pageLabel').innerHTML =
+    `<span class="num">${page + 1}/${N}</span> — ${cfg.name} <span class="tags">· ${cfg.biome} · ${cfg.type}</span>`;
+  document.getElementById('jump').value = String(page);
+  buildStage(); buildInspector();
+}
+
+const jump = document.getElementById('jump');
+CONFIGS.forEach((c, i) => { const o = document.createElement('option'); o.value = i; o.textContent = `${i + 1}. ${c.name} (${c.style})`; jump.appendChild(o); });
+jump.addEventListener('change', () => setPage(+jump.value));
+document.getElementById('prev').addEventListener('click', () => setPage(page - 1));
+document.getElementById('next').addEventListener('click', () => setPage(page + 1));
+document.getElementById('reseed').addEventListener('click', () => { bldCache.clear(); buildingSeed++; buildStage(); });
+window.addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') setPage(page - 1); if (e.key === 'ArrowRight') setPage(page + 1); });
+window.addEventListener('resize', () => { clearTimeout(window._rt); window._rt = setTimeout(renderStage, 200); });
+
+requestAnimationFrame(() => setPage(0));
+</script>
+</body>
+</html>

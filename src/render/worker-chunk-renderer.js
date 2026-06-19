@@ -15,6 +15,13 @@ import { rand2 } from '../core/random.js';
 import { SS_BIOME_OBJECTS, f3Placements, f3SpriteUrl } from '../world/decoration-claims.js';
 import { queryBuildingTile, queryBuildingWall, isBuildingClaimed, floorTileUrl, wallTileUrl, wallSpriteSrc, getBuildingsNearChunk } from './building-tile-query.js';
 
+// Procedural roof bake — loaded LAZILY + guarded (line 3 above notes a bad worker
+// import once crashed all chunk rendering). If the module graph fails to resolve, the
+// reference stays null → no roofs, terrain unaffected. Chunks baked before it resolves
+// simply re-bake with roofs later.
+var _roofEngine = null;
+import('../../tools/roof/roof-ingame.js').then(function (m) { _roofEngine = m; }).catch(function (e) { console.error('[roof] engine load FAILED:', e && e.message); });
+
 // PixelLab wang tile index = NW*8 + NE*4 + SW*2 + SE*1 where 1=upper biome.
 // Game cornerMask uses same bit positions but 1=lower biome.
 // So wang_index = cornerMask XOR 15 (complement all bits).
@@ -1462,6 +1469,19 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
         }
       }
     }
+
+    // ── Roof bake: on top of the walls, INSIDE the chunk bitmap → roofs get the
+    // present-pass day-night/lighting/shadow in BOTH 2D and GL (unlike the old
+    // main-thread overlay, which the GL present shader never touched). Same depth
+    // order as walls (south/closer draws last). Lazy engine + per-roof guarded.
+    var roofPending = (cBuildings.length > 0 && !_roofEngine); // engine not loaded yet → re-bake
+    if (_roofEngine && cBuildings.length) {
+      var rcamX = cX0 * tileSize, rcamY = cY0 * tileSize;
+      for (var rbi = 0; rbi < cBuildings.length; rbi++) {
+        try { _roofEngine.drawRoofForBuilding(ctx, cBuildings[rbi], rcamX, rcamY, tileSize); }
+        catch (roofErr) { if (!self.__roofLogged) { self.__roofLogged = true; console.error('[roof] draw failed:', roofErr && roofErr.message, roofErr && roofErr.stack); } }
+      }
+    }
   } catch (wallErr) {
     console.error('[WALL POST-PASS ERROR]', wallErr.message, wallErr.stack);
   }
@@ -1470,7 +1490,7 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
   return {
     bitmap: bitmap,
     hasSoil: hasSoil,
-    needsRepaint: soilResult.missedSoil || wangMissing > 0 || scatterMissed > 0 || floorMissing > 0,
+    needsRepaint: soilResult.missedSoil || wangMissing > 0 || scatterMissed > 0 || floorMissing > 0 || (typeof roofPending !== 'undefined' && roofPending),
     scatterMissingUrls: scatterMissing.size > 0 ? [...scatterMissing] : null,
     debug: {
       masks: debugMasks, successes: debugSuccesses, srcs: debugSrcs, biomes: debugBiomes,
