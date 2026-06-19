@@ -156,6 +156,14 @@ function _onSimClose() {
 let last = performance.now();
 let frame = 0;
 
+// Cache the diegetic-entry building resolve. resolveBuildingsInRange() is a full
+// settlement discovery + layout + de-overlap + cliff-sample pass (~hundreds of ms);
+// calling it EVERY frame just to check the player's door tile was the dominant
+// update() cost (measured ~440ms/frame). It's pure f(seed, macro-cell), so caching
+// by the player's macro-cell — which changes only once per ~64 tiles of travel —
+// is behavior-identical and drops the per-frame cost to a Map.get().
+let _entryByTile = null, _entryCellX = NaN, _entryCellY = NaN;
+
 function update(dt) {
   if (input.wasPressed('r')) {
     renderer.chunkRenderCache.clear();
@@ -195,7 +203,11 @@ function update(dt) {
     if (!AI.isInside()) {
       // entering: stand on a building door tile → walk in
       const mx = Math.floor(ptx / MACRO_TILES), my = Math.floor(pty / MACRO_TILES);
-      const { byTile } = resolveBuildingsInRange(getWorldSeed(), mx, my, mx, my);
+      if (mx !== _entryCellX || my !== _entryCellY) {
+        _entryByTile = resolveBuildingsInRange(getWorldSeed(), mx, my, mx, my).byTile;
+        _entryCellX = mx; _entryCellY = my;
+      }
+      const byTile = _entryByTile;
       // SLICE 1 (doors unsolved — PixelLab door sprite + walk-in/out animation comes later):
       // forgiving entry — stepping onto the building footprint puts you inside, so it's
       // easy to get in. Door-gated entry + the walk-in animation are a future pass.
