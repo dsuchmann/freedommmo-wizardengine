@@ -363,6 +363,11 @@ var SWEEP_INTERVAL = 256;
 // Max NEW chunk-bitmap texImage2D uploads per frame. Spreads the boundary-crossing
 // burst (up to ~6 workers finishing at once) across frames to kill walk stutter.
 var CHUNK_UPLOAD_BUDGET = 2;
+// Max NEW sprite atlas packs (texSubImage2D) per frame. Walking 4 tiles rebuilds the
+// F2 pool and pulls a whole strip of new tiles (~200+ sprites) that all pack at once
+// — a per-rebuild stutter. Over-budget sprites return null and the pool's `pending`
+// list retries them next frame, so they fill in over a few frames instead of stalling.
+var SPRITE_PACK_BUDGET = 32;
 
 function parseColor(css) {
   // Supports '#rgb', '#rrggbb', 'rgb(...)' / 'rgba(...)'. Fallback: dark slate.
@@ -910,6 +915,11 @@ export class GLCompositor {
     var h = img.naturalHeight || img.height;
     // Canvases (downscale cache) have no .complete — only gate Images on decode
     if (!w || !h || img.complete === false) return null; // not decoded yet — retry later
+    // THROTTLE new packs per frame to spread the walk-into-new-flora burst. An
+    // over-budget (but ready) sprite is deferred exactly like a not-yet-decoded one
+    // — caller pushes it to `pending` and retries next frame.
+    if (this.frame !== this._packFrame) { this._packFrame = this.frame; this._packsThisFrame = 0; }
+    if (this._packsThisFrame >= SPRITE_PACK_BUDGET) return null;
     var A = this.atlasSize;
     if (w + 2 > A || h + 2 > A) {
       this.atlasRects.set(url, null); // sprite larger than the whole atlas
@@ -957,6 +967,7 @@ export class GLCompositor {
       return null;
     }
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    this._packsThisFrame++;
     this._shelfX += w + 1;
     if (h > this._shelfH) this._shelfH = h;
     // Half-texel inset prevents NEAREST bleed from neighboring sprites
