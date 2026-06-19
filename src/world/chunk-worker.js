@@ -156,7 +156,12 @@ function runRepaintPass() {
     }
     self.postMessage({ type: 'chunkRepainted', key: rchunk.key, cx: rchunk.cx, cy: rchunk.cy, gen: tuneGen, bitmap: result.bitmap, wangDebug: result.debug }, [result.bitmap]);
   }
-  if (stillIncomplete > 0) scheduleRepaintPass();
+  // Do NOT self-reschedule on every incomplete chunk: that re-renders + re-uploads
+  // flagged chunks every 400ms for the whole background load, flooding the main
+  // thread. Incomplete chunks were re-queued above; they get re-rendered the next
+  // time NEW images arrive — backgroundLoadRemaining calls scheduleRepaintPass once
+  // per load-step, and a final pass runs when the load finishes. So repaint work is
+  // proportional to image arrival, not wall-clock.
 }
 
 // Compute shore distance and shore angle for every tile in a chunk.
