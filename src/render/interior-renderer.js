@@ -82,21 +82,33 @@ function drawEdgeWalls(ctx, ai, side, img, camX, camY, tilePx, lift, w, h) {
     else { if (has(lx + 1, ly)) continue; sx = (ai.bx + lx) * tilePx - camX; sy = (ai.by + ly + 1) * tilePx - camY - lift - wH; }
     sx = Math.round(sx); sy = Math.round(sy);
     if (sx + t < 0 || sx > w || sy + wH < 0 || sy > h) continue;
-    if (img) ctx.drawImage(img, 0, 8, 32, 112, sx, sy, t + wp, wH + wp);   // opaque band of the brick sprite
-    else { ctx.fillStyle = '#7a756d'; ctx.fillRect(sx, sy, t, wH); }
+    if (!img) { ctx.fillStyle = '#7a756d'; ctx.fillRect(sx, sy, t, wH); continue; }
+    if (side === 'e' || side === 'w') {
+      // rotate the brick so the courses run vertically along the side wall
+      // (W = 90° CCW, E = 90° CW) instead of facing the camera like N/S.
+      ctx.save();
+      ctx.translate(sx + t / 2, sy + wH / 2);
+      ctx.rotate(side === 'w' ? -Math.PI / 2 : Math.PI / 2);
+      ctx.drawImage(img, 0, 8, 32, 112, -wH / 2, -t / 2, wH + wp, t + wp);
+      ctx.restore();
+    } else {
+      ctx.drawImage(img, 0, 8, 32, 112, sx, sy, t + wp, wH + wp);   // opaque band of the brick sprite
+    }
   }
 }
 
-// Roof/ceiling: a tinted slab over the footprint bbox (+ the wall band above it). The big
-// spotlight hole lets you see the floor around you while the edges keep the roof's shape.
+// Roof/ceiling: tint each FOOTPRINT tile (+ the wall band above it), NOT the bounding box —
+// so an L/T/notched building's roof follows its real shape instead of painting a square over
+// the non-footprint corners. The big spotlight hole reveals the floor around the player.
 function drawRoofCeiling(ctx, ai, camX, camY, tilePx, lift) {
-  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
-  for (const k of ai.footprint) { const [lx, ly] = k.split(',').map(Number); if (lx < x0) x0 = lx; if (ly < y0) y0 = ly; if (lx + 1 > x1) x1 = lx + 1; if (ly + 1 > y1) y1 = ly + 1; }
-  const wH = Math.round(tilePx * INT_WALL_TILES);
-  const sx = Math.round((ai.bx + x0) * tilePx - camX), sy = Math.round((ai.by + y0) * tilePx - camY - lift - wH);
-  const sw = Math.round((x1 - x0) * tilePx), sh = Math.round((y1 - y0) * tilePx + wH);
+  const t = Math.ceil(tilePx) + 1, wH = Math.round(tilePx * INT_WALL_TILES);
   ctx.fillStyle = ROOF_TINT;
-  ctx.fillRect(sx, sy, sw, sh);
+  for (const k of ai.footprint) {
+    const [lx, ly] = k.split(',').map(Number);
+    const sx = Math.round((ai.bx + lx) * tilePx - camX);
+    const sy = Math.round((ai.by + ly) * tilePx - camY - lift) - wH; // tile top lifted, extended up by the wall band
+    ctx.fillRect(sx, sy, t, t + wH);
+  }
 }
 
 // Animated outer-world dim — eases on enter + floor change so climbing visibly recedes the
