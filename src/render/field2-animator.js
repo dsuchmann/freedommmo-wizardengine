@@ -20,9 +20,10 @@ var REBUILD_MARGIN = 4; // hysteresis: the pool collects this many extra tiles p
                         // Turns the old per-tile (and per-zoom-step) 71ms rebuild storm
                         // into an occasional rebuild — walking/zooming no longer restitch
                         // the whole instance buffer every frame.
-var GPU_REBUILD_MARGIN = 12; // GPU flora only: per-frame cost is 0, so collect a wider
-                             // ring and rebuild ~3x less often (the rebuild is the only
-                             // remaining hitch). Pool grows but the GPU draws it free.
+var GPU_REBUILD_MARGIN = 6; // GPU flora: a SMALL bump over the CPU margin. With the CPU
+                            // resolve skipped, each rebuild is light, so keep the pool
+                            // small (less frame-loading + a sub-frame rebuild that won't
+                            // drop a frame) rather than big-and-rare.
 var FADE_INNER = 34; // fully opaque inside this radius
 var FRAME_COUNT = 9;
 var FRAME_DURATION = 120; // ms per frame
