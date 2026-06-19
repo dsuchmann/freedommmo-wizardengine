@@ -458,10 +458,7 @@ export class CanvasRenderer {
       drawBuildingWalls(ctx, camX, camY, tilePx, w, h);
     }
 
-    // Diegetic walk-in interior walls — drawn AFTER the player/F2 sprites so walls
-    // occlude the player, EXCEPT the south wall near the player (see-through). Pass
-    // the player tile so the wall opens up around them.
-    drawInteriorWallsWorld(ctx, camX, camY, tilePx, w, h, { x: Math.floor(player.x), y: Math.floor(player.y) });
+    // (Interior walls + roof moved to the end-of-frame interior top-pass, below.)
 
     // Weather AFTER all sprites — in GL mode most F2 sprites live on the GL
     // canvas (below this one), so fog/precip drawn earlier would cover them
@@ -538,10 +535,13 @@ export class CanvasRenderer {
     // (dim + per-floor north lift), then the player lifted by the SAME offset so they
     // rise together as you climb; the world-layer player was suppressed above.
     if (_inside) {
-      drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h);
+      drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h);          // dim + floor + back/side walls (N/E/W)
       // Player stays CENTRED — the camera glide (camY -= lift) makes the world recede instead
       // of the player drifting up. The floor re-adds the lift so it tracks the player.
       this.drawPlayerAt(w / 2, _playerScreenY, camera.zoom, player);
+      // Roof + south wall ON TOP with the spotlight cutaway (centre = player's on-screen point).
+      drawInteriorWallsWorld(ctx, camX, camY, tilePx, w, h,
+        { x: Math.floor(player.x), y: Math.floor(player.y) }, { x: w / 2, y: _playerScreenY });
     }
   }
 
