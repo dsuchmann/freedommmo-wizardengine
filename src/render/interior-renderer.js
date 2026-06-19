@@ -8,7 +8,12 @@ import { ensureFloorImages, getFloorImg, getWallImg } from './building-renderer.
 // should layer UNDER the player: floor drawn over the baked roof, character standing on the
 // floor. Re-enabling the floor to test exactly that. Walls stay OFF — they render squished and
 // come back with the chunk-pipeline fix.
-const SHOW_TILES = true;    // floor on
+// Floor tiles OFF: drawing the in-world floor on the 2D overlay only works while the player is
+// drawn on top of it, but the render pipeline (mid-rewrite by the roof/chunk + optimization
+// agents) keeps flipping the player z-order — so the floor intermittently covers the character
+// and reads white. Stable state = dim + markers + visible character. The real lit floor comes
+// from the WORKER bake (pipeline contract), the only place it stays correct.
+const SHOW_TILES = false;   // floor off (revived by the worker-baked pipeline interior)
 const SHOW_WALLS = false;   // walls off (separately broken)
 
 // Animated outer-world dim — eases on enter + floor change so climbing visibly recedes the
