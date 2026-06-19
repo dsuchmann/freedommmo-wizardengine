@@ -118,23 +118,40 @@ function placeDoors(walls, wallSet, tileSet, seed, bbox) {
   if (outerWalls.length === 0) return [];
 
   const south = outerWalls.filter(w => outside.has(`${w.x},${w.y + 1}`));
-  const pref = south.length ? south : outerWalls;
+  const doors = [];
 
-  // Deterministic order (seeded), then greedily place keeping spacing.
+  // GUARANTEE a south-facing FRONT entrance: every building gets a clear door on its
+  // SOUTHERNMOST outer row (the wall the player approaches from below), at the tile nearest
+  // that row's centre (seeded tiebreak). This kills both the "no visible door" case (door
+  // landing on a recessed/back south edge) and gives a consistent front door.
+  if (south.length) {
+    let maxY = -Infinity;
+    for (const w of south) if (w.y > maxY) maxY = w.y;
+    const frontRow = south.filter(w => w.y === maxY);
+    let minx = Infinity, maxx = -Infinity;
+    for (const w of frontRow) { if (w.x < minx) minx = w.x; if (w.x > maxx) maxx = w.x; }
+    const cx = (minx + maxx) / 2;
+    frontRow.sort((a, b) =>
+      (Math.abs(a.x - cx) - Math.abs(b.x - cx)) ||
+      (rand(seed, 0xD002, a.x * 7 + 1) - rand(seed, 0xD002, b.x * 7 + 1)));
+    doors.push({ x: frontRow[0].x, y: frontRow[0].y });
+  }
+
+  // Additional doors: seeded order, south-preferred, each spaced ≥ MIN_DOOR_SPACING from every
+  // already-placed door (incl. the guaranteed front door) — so no clusters of adjacent doors.
+  const pref = south.length ? south : outerWalls;
   const ordered = pref
     .map((w, i) => ({ w, k: rand(seed, 0xD001, w.x * 131 + w.y * 17 + i) }))
     .sort((a, b) => a.k - b.k)
     .map(o => o.w);
-
   const maxDoors = Math.max(1, Math.min(MAX_DOORS, Math.round(outerWalls.length / DOOR_PER_TILES)));
-  const doors = [];
   for (const w of ordered) {
     if (doors.length >= maxDoors) break;
     if (doors.every(d => Math.abs(d.x - w.x) + Math.abs(d.y - w.y) >= MIN_DOOR_SPACING)) {
       doors.push({ x: w.x, y: w.y });
     }
   }
-  if (doors.length === 0) doors.push({ x: ordered[0].x, y: ordered[0].y }); // always at least one
+  if (doors.length === 0) doors.push({ x: ordered[0].x, y: ordered[0].y }); // no south edge at all → fallback
   return doors;
 }
 
