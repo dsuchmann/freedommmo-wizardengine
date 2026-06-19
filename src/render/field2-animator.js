@@ -990,21 +990,22 @@ function gpuFloraOn() { return (typeof window !== 'undefined' && window._gpuFlor
 // Resolve a sprite's frame strip (cached per url-set + size). Returns
 // {u0,v0,frameStride,du,dv,n} or null if any frame isn't loaded/packable yet.
 var _stripCache = new Map();
+var _stripAtlasGen = -1; // atlas reset relocates strips -> drop the cache + re-pack
 function clearStripCache() { _stripCache.clear(); }
-function _resolveStrip(bl, simState, drawSizePx, glc) {
-  if (!bl) return null;
+function _resolveStrip(bl, simState, drawSizePx, glc, extraUrl) {
   var urls = null;
-  if (simState && simState !== 'REMOVED') {
+  if (!bl) { if (extraUrl) urls = [extraUrl]; else return null; } // extra decor: 1-frame static
+  if (bl && simState && simState !== 'REMOVED') {
     var su = f4SpriteUrl({ name: bl._f4Name, biome: bl._f4Biome, variant: bl._f4Variant, state: simState });
     if (su) urls = [su]; else if (bl.stateUrl) urls = [bl.stateUrl];
   }
-  if (!urls && bl.animUrlBase) {
+  if (!urls && bl && bl.animUrlBase) {
     var fc = bl.frameCount || FRAME_COUNT;
     urls = [];
     for (var f = 0; f < fc; f++) urls.push(bl.animUrlBase + 'frame_' + String(f).padStart(3, '0') + '.png');
   }
-  if (!urls && bl.stateUrl) urls = [bl.stateUrl];
-  if (!urls && bl.staticUrl) urls = [bl.staticUrl];
+  if (!urls && bl && bl.stateUrl) urls = [bl.stateUrl];
+  if (!urls && bl && bl.staticUrl) urls = [bl.staticUrl];
   if (!urls) return null;
   var key = urls[0] + '#' + urls.length + '@' + Math.round(drawSizePx);
   var cached = _stripCache.get(key);
@@ -1020,6 +1021,59 @@ function _resolveStrip(bl, simState, drawSizePx, glc) {
   var strip = glc.atlasStrip(imgs);
   if (strip) _stripCache.set(key, strip);  // cache success; leave misses uncached to retry
   return strip || null;
+}
+
+// Write one 20-float static instance. Single source of truth for the layout, used
+// by both the rebuild and the pending-strip retry.
+function _writeAnimInst(am, i, worldX, worldPivotY, sizeTiles, bl, drawSizePx, edgeFade, biomeShadowK, tileRot, strip) {
+  var ao = i * ANIM_SPRITE_FLOATS;
+  var tier = (drawSizePx - WORLD.tileSize * 0.6) / (WORLD.tileSize * 1.2);
+  tier = tier < 0 ? 0 : tier > 1 ? 1 : tier;
+  var sn = strip.n;
+  am[ao] = worldX; am[ao + 1] = worldPivotY; am[ao + 2] = sizeTiles; am[ao + 3] = bl ? (bl.baseAngle || 0) : 0;
+  am[ao + 4] = strip.u0; am[ao + 5] = strip.v0; am[ao + 6] = strip.frameStride; am[ao + 7] = strip.du;
+  am[ao + 8] = sn; am[ao + 9] = (bl ? (bl.restFrame || 0) : 0) % sn; am[ao + 10] = (bl && bl.loopCount) ? bl.loopCount : 1; am[ao + 11] = -99999;
+  am[ao + 12] = -1; am[ao + 13] = (bl && bl.lifeSway) ? bl.lifeSway : 0; am[ao + 14] = tileRot || 0; am[ao + 15] = edgeFade;
+  am[ao + 16] = strip.dv; am[ao + 17] = biomeShadowK; am[ao + 18] = 1 - tier; am[ao + 19] = (bl && bl.isRigid) ? 1 : 0;
+}
+
+// 10Hz: refresh each sprite's gust trigger time + per-tile wind rotation (so the
+// shader sways), retry any strip that wasn't loaded at rebuild, then re-upload.
+// O(n) at 10Hz — the per-FRAME cost stays zero (the shader animates from uTime).
+function _patchGpuAnim(glc) {
+  var am = _pool.animMirror, n = _pool.animN || 0, m = _pool.mirror;
+  if (!am) return;
+  if (_pool.animPending && _pool.animPending.length) {
+    var still = [];
+    for (var p = 0; p < _pool.animPending.length; p++) {
+      var pi = _pool.animPending[p], pm = _pool.meta[pi];
+      var strip = _resolveStrip(pm.bl, pm.simState, pm.drawSizePx, glc, pm.extraUrl);
+      if (strip) _writeAnimInst(am, pi, m[pi * SPRITE_FLOATS], m[pi * SPRITE_FLOATS + 1], pm.sizeTiles,
+        pm.bl, pm.drawSizePx, pm.edgeFade, pm.biomeShadowK, pm.tileRotCached, strip);
+      else still.push(pi);
+    }
+    _pool.animPending = still;
+  }
+  var gusting = 0;
+  for (var i = 0; i < n; i++) {
+    var meta = _pool.meta[i], bl = meta.bl, ao = i * ANIM_SPRITE_FLOATS;
+    var tt = -99999;
+    if (bl) { var td = triggerTimes.get(meta.wx * 10000 + meta.wy * 100 + bl.bi); if (td) tt = td.time; }
+    if (tt > -99998) gusting++;
+    am[ao + 11] = tt;
+    am[ao + 14] = meta.tileRotCached || 0;
+  }
+  _f2Stats.gpuGusting = gusting;
+  var asm = _pool.animShadowMirror, sn2 = _pool.animShadowN || 0;
+  if (asm) {
+    for (var j = 0; j < n; j++) {
+      var sIdx = _pool.shadowOf[j];
+      if (sIdx >= 0) { var so = sIdx * ANIM_SPRITE_FLOATS, jo = j * ANIM_SPRITE_FLOATS;
+        for (var f = 0; f < ANIM_SPRITE_FLOATS; f++) asm[so + f] = am[jo + f]; }
+    }
+  }
+  glc.uploadAnimRange('sprite', am, 0, n, true);
+  if (sn2 > 0) glc.uploadAnimRange('shadow', asm, 0, sn2, true);
 }
 
 function _poolWriteStatic(idx, m, worldX, worldPivotY, sizeTiles, rot, alpha, rect) {
@@ -1123,6 +1177,7 @@ function _poolRebuild(chunkStore, player, glc, radiusX, radiusY) {
   }
   var gpuFlora = gpuFloraOn();
   if (gpuFlora) {
+    if (glc.atlasGen !== _stripAtlasGen) { clearStripCache(); _stripAtlasGen = glc.atlasGen; }
     if (!_pool.animMirror || _pool.animMirror.length < (n + 1) * ANIM_SPRITE_FLOATS)
       _pool.animMirror = new Float32Array(Math.max(4096, (n + 1) * ANIM_SPRITE_FLOATS * 2));
     if (!_pool.animShadowMirror || _pool.animShadowMirror.length < (n + 1) * ANIM_SPRITE_FLOATS)
@@ -1212,17 +1267,10 @@ function _poolRebuild(chunkStore, player, glc, radiusX, radiusY) {
 
     // GPU-flora: write the STATIC instance for this sprite (the shader animates it).
     if (gpuFlora) {
-      var gStrip = _resolveStrip(bl, null, drawSizePx, glc);
+      var gStrip = _resolveStrip(bl, null, drawSizePx, glc, e.extraUrl);
       var ao = i * ANIM_SPRITE_FLOATS, am = _pool.animMirror;
       if (gStrip) {
-        var sn = gStrip.n;
-        var tierA = (drawSizePx - WORLD.tileSize * minShadowTiles) / (WORLD.tileSize * 1.2);
-        tierA = tierA < 0 ? 0 : tierA > 1 ? 1 : tierA;
-        am[ao] = e.worldX; am[ao + 1] = e.worldPivotY; am[ao + 2] = e.sizeTiles; am[ao + 3] = baseAngle;
-        am[ao + 4] = gStrip.u0; am[ao + 5] = gStrip.v0; am[ao + 6] = gStrip.frameStride; am[ao + 7] = gStrip.du;
-        am[ao + 8] = sn; am[ao + 9] = restFrame % sn; am[ao + 10] = (bl && bl.loopCount) ? bl.loopCount : 1; am[ao + 11] = -99999;
-        am[ao + 12] = -1; am[ao + 13] = (bl && bl.lifeSway) ? bl.lifeSway : 0; am[ao + 14] = 0; am[ao + 15] = e.edgeFade;
-        am[ao + 16] = gStrip.dv; am[ao + 17] = e.biomeShadowK; am[ao + 18] = 1 - tierA; am[ao + 19] = (bl && bl.isRigid) ? 1 : 0;
+        _writeAnimInst(am, i, e.worldX, e.worldPivotY, e.sizeTiles, bl, drawSizePx, e.edgeFade, e.biomeShadowK, 0, gStrip);
       } else {
         for (var az = 0; az < ANIM_SPRITE_FLOATS; az++) am[ao + az] = 0; // invisible until strip ready
         _pool.animPending.push(i);
@@ -1456,15 +1504,20 @@ function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, we
   }
 
   // 10Hz trigger tick.
+  var tickRan = false;
   if (timeMs - _pool.lastTickMs >= 100) {
     _pool.lastTickMs = timeMs;
     _poolTick(timeMs, timeSec, glc, tilePxSnapped);
+    tickRan = true;
   }
 
   // GPU-FLORA fast path: the static instance buffer + a uTime uniform drive frame
   // selection, sway and fade entirely in the shader — so the ~85ms/frame per-sprite
-  // CPU resolve loop below is skipped entirely.
+  // CPU resolve loop below is skipped entirely. The 10Hz patch refreshes gust
+  // trigger times + per-tile wind (and retries late strips); the shader interpolates
+  // every frame in between.
   if (gpuFloraOn() && _pool.animUploaded && glc.animOk) {
+    if (tickRan) _patchGpuAnim(glc);
     _drawGpuFlora(player, w, h, chunkGrid, timeMs, sun, glc, tilePxSnapped);
     return true;
   }
