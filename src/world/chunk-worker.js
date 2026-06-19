@@ -102,7 +102,15 @@ function collectAreaBiomes(cx, cy, tiles) {
     if (!ts) return;
     for (var i = 0; i < ts.length; i++) {
       var t = ts[i];
-      if (t && t.biome) set.add(t.biome);
+      if (!t) continue;
+      if (t.biome) set.add(t.biome);
+      // A transition tile renders TWO biomes' substrate (from + to). If we only load
+      // tile.biome, the paired biome's soil never loads -> [SOIL MISS] -> the chunk
+      // re-renders forever, saturating the workers and stuttering the main thread.
+      if (t.transitionPair) {
+        if (t.transitionPair.from) set.add(t.transitionPair.from);
+        if (t.transitionPair.to) set.add(t.transitionPair.to);
+      }
     }
   }
   scan(tiles);
