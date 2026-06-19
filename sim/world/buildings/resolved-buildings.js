@@ -128,12 +128,21 @@ export function resolveBuildingsInRange(seed, mx0, my0, mx1, my1) {
   const byTile = new Map();
   const claimTiles = new Set();
   for (const b of buildings) {
+    // North claim is height-aware: a multi-story building's stacked walls + roof rise
+    // ~stories*wallHeight tiles north of its footprint, so flora (a later present-time
+    // pass) must be suppressed across that whole screen-projected extent or trees/grass
+    // draw on top of the tall building. 1-story buildings keep the flat NORTH_CLAIM band.
+    let northClaim = NORTH_CLAIM;
+    try {
+      const agf = b.footprint.node && b.footprint.node.payload && b.footprint.node.payload.aboveGroundFloors;
+      if (agf > 1) northClaim = NORTH_CLAIM + (Math.min(agf | 0, 12) - 1) * 4;
+    } catch (e) {}
     for (const sec of b.footprint.sections) {
       for (let dy = 0; dy < sec.h; dy++)
         for (let dx = 0; dx < sec.w; dx++)
           byTile.set((b.x + sec.x0 + dx) + ',' + (b.y + sec.y0 + dy), b);
-      // claim band: north extends by the wall-height band, other sides by CLAIM_MARGIN
-      for (let dy = -NORTH_CLAIM; dy < sec.h + CLAIM_MARGIN; dy++)
+      // claim band: north extends by the (height-aware) wall band, other sides by CLAIM_MARGIN
+      for (let dy = -northClaim; dy < sec.h + CLAIM_MARGIN; dy++)
         for (let dx = -CLAIM_MARGIN; dx < sec.w + CLAIM_MARGIN; dx++)
           claimTiles.add((b.x + sec.x0 + dx) + ',' + (b.y + sec.y0 + dy));
     }
