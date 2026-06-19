@@ -106,7 +106,10 @@ function lightVec(angleDeg, elevDeg) {
 function drawTexturedTile(ctx, q, tex, shade) {
   const TL = q[0], TR = q[1], BL = q[3];
   ctx.save();
-  ctx.beginPath(); ctx.moveTo(q[0].x, q[0].y); ctx.lineTo(q[1].x, q[1].y); ctx.lineTo(q[2].x, q[2].y); ctx.lineTo(q[3].x, q[3].y); ctx.closePath(); ctx.clip();
+  // NO per-cell clip: clipping anti-aliases each cell edge → sub-pixel transparent
+  // seams that line up along the pitch and read as see-through. The affine drawImage
+  // fills the (already-inflated) quad and overlaps neighbours, covering the seams.
+  ctx.imageSmoothingEnabled = false;
   ctx.transform((TR.x - TL.x) / 32, (TR.y - TL.y) / 32, (BL.x - TL.x) / 32, (BL.y - TL.y) / 32, TL.x, TL.y);
   try { ctx.drawImage(tex, 0, 0, 32, 32, 0, 0, 32, 32); } catch (e) { /* bad bitmap */ }
   ctx.restore();

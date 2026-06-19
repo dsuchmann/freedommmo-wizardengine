@@ -206,10 +206,15 @@ export function getBuildingsNearChunk(chunkCX, chunkCY, chunkSize) {
   var seed = getWorldSeed();
   var x0 = chunkCX * chunkSize, y0 = chunkCY * chunkSize;
   var mx0 = Math.floor(x0 / MACRO_TILES) - 1;
-  var my0 = Math.floor(y0 / MACRO_TILES) - 1;
+  // Y reach extended to ±2 macros: a multi-story building's STACKED walls rise far NORTH
+  // of its footprint (~4 * aboveGroundFloors tiles) and its settlement may be anchored a
+  // macro away — so a chunk must gather buildings further north/south to bake the
+  // wall/roof slices that land in it (else upper stories drop at chunk seams → gaps +
+  // misalignment). The per-story/per-tile bounds cull discards off-chunk slices cheaply.
+  var my0 = Math.floor(y0 / MACRO_TILES) - 2;
   var buildings = [];
   var seen = new Set(); // a building spanning macros appears in several resolved sets (same ref)
-  for (var dmy = 0; dmy <= 2; dmy++) {
+  for (var dmy = 0; dmy <= 4; dmy++) {
     for (var dmx = 0; dmx <= 2; dmx++) {
       var entry = cachedLayout(seed, mx0 + dmx, my0 + dmy);
       if (entry && entry.buildings) {
