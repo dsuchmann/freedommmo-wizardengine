@@ -26,6 +26,18 @@ the drape is drawn unclipped (the wall it darkens sits over the footprint on pur
 `#2a2e2b` at `0.18 × sun.ambient` (large-object-renderer.js tree-shadow tint/alpha), so shadows fade
 to nothing at night. Hard-gated off when `!sun.isDaytime`.
 
+## Height respect (the shared mask)
+Shadows now respect relative height — a short object's shadow can't draw over a taller building.
+`drawBuildingShadows` builds + publishes a per-frame **height mask** (`getBuildingHeightMask()` /
+`window._buildingHeightMask`): a `Uint8Array` grid (cell 8px) where each cell = the tallest building
+storeys over that screen pixel (footprint + the `8+(storeys-1)*4`-tile wall/roof north band), 0 = open.
+The rule any shadow applies: a contribution survives only if `casterStoreys >= sampleHeight(landing)`.
+- **My drape** climbs only `min(caster, neighbour)` storeys (a 1-storey shadow can't scale a 5-storey wall).
+- **My ground shadows** are additionally clipped off any taller building's silhouette.
+- **Grass (F2) shadows** are the other agent's: they consume the mask per the contract in
+  `docs/superpowers/2026-06-19-shadow-height-contract.md` (sample at the shadow landing point, grass = 0
+  storeys → drop the shadow where mask>0). The shadow gallery demonstrates the effect with toggles.
+
 ## Debug / tuning knobs (console)
 - `window._buildingShadows = false` — hide all building shadows.
 - `window._buildingShadowDrape = false` — disable only the phase-2 façade drape (keep ground shadows).
