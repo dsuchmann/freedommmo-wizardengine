@@ -74,6 +74,11 @@ export function ensureFloorImages() {
 export function getFloorImg(mat) { return _floorImgs[mat] || _floorImgs.wood_plank || null; }
 export function getWallImg(name) { return _wallImgs[name] || null; }
 
+// The current resolved building set (refreshed by updateBuildingClaims). Exposed so the
+// ground-shadow pass reads the SAME cache the frame already built — no second resolve.
+// Valid only after updateBuildingClaims() ran this frame (canvas-renderer.js:331).
+export function getCachedBuildings() { return _cache.buildings; }
+
 // ── Settlement/building cache ──────────────────────────────────────
 let _cache = { key: '', buildings: [] };
 

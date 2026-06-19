@@ -10,7 +10,8 @@ import { setChunkStore, getDebugWangData, setDebugWangData } from './wang-terrai
 import { biomeVariantFrameId } from '../assets/variant-selector.js';
 import { drawElevationOverlay } from './elevation-overlay.js';
 import { drawSimDebugOverlay } from './sim-debug-overlay.js';
-import { updateBuildingClaims, drawBuildingFloors, drawBuildingWalls } from './building-renderer.js';
+import { updateBuildingClaims, drawBuildingFloors, drawBuildingWalls, getCachedBuildings } from './building-renderer.js';
+import { drawBuildingShadows } from './building-shadow.js';
 import { updateFloorViewTransform } from './floor-view.js';
 import { drawInteriorFloorWorld, drawInteriorWallsWorld } from './interior-renderer.js';
 import { initWallTuner, drawWallTuner } from './wall-tuner.js';
@@ -350,6 +351,18 @@ export class CanvasRenderer {
     // player/F2 sprites draw ON TOP (correct z-order). Toggle 'k'. Guarded — can never
     // break the frame. Full lighting/shadow parity needs chunk-bake (TODO above).
     try { drawRoofs(ctx, camX, camY, tilePx, w, h); } catch (e) { /* roofs best-effort */ }
+
+    // Building GROUND shadows — cast AWAY from the sun, length scaled by aboveGroundFloors and
+    // how low the sun sits. Drawn AFTER terrain/water/roofs (so they darken those pixels — a tall
+    // building shades a shorter neighbour's roof) and BEFORE the player/F2 sprites (so the player
+    // stands ON the shadow). Reads the building set updateBuildingClaims() refreshed at :331 —
+    // never re-resolves. Best-effort: never breaks the frame. Toggle: window._buildingShadows.
+    try {
+      const _bShadows = getCachedBuildings();
+      if (_bShadows && _bShadows.length && sun.isDaytime) {
+        drawBuildingShadows(ctx, _bShadows, camX, camY, tilePx, w, h, sun);
+      }
+    } catch (e) { /* shadows best-effort */ }
 
     // Wang debug overlay (toggle with D key)
     if (this.debugWang) {
