@@ -17,6 +17,8 @@
 // Phase 2 (drape onto neighbour walls — "drench a surface at a different height") builds on the
 // SAME building set + sun vector and is layered on top later; this file is phase 1 (ground).
 
+import { WALL_CONFIG } from './wall-config.js';
+
 // Per-story height in tiles — matches the exterior wall stack (WALL_CONFIG.wallHeight = 4).
 export const STORY_TILES = 4;
 // Tree-shadow style (large-object-renderer.js:325-326): RGB 42,46,43 at 0.18 opacity.
@@ -91,42 +93,165 @@ export function buildingShadowHull(b, sun, tilePx, camX, camY, scale) {
   return convexHull(pts);
 }
 
+// ── Phase 2: drape onto neighbour façades ─────────────────────────────
+// When a building's ground shadow reaches a NEIGHBOUR building, the shadow shouldn't lie flat
+// over its roof — it should climb the neighbour's visible south façade ("drench the surface at
+// a different height"). The façade is the worker-baked south-wall stack; its screen geometry is
+// derived from the SHARED WALL_CONFIG (wallHeight/wallYOffset) — the exact constants the worker
+// uses (worker-chunk-renderer.js:1352-1469) — so this aligns by construction, not by copying it.
+
+function floorSetOf(fp) {
+  const s = new Set();
+  for (const sec of fp.sections)
+    for (let dy = 0; dy < sec.h; dy++)
+      for (let dx = 0; dx < sec.w; dx++)
+        s.add((sec.x0 + dx) + ',' + (sec.y0 + dy));
+  return s;
+}
+
 /**
- * Draw ground shadows for every building. Call AFTER terrain/water/roofs and BEFORE the
- * player/F2 sprites (canvas-renderer.js, just after drawRoofs). Best-effort: never throws.
- * Debug: window._buildingShadows = false to hide; window._buildingShadowScale to tune length.
+ * South-facing exterior façade columns, mirroring the worker's south-wall stack condition
+ * (a column exists where the tile's south neighbour is OUTSIDE the footprint). Each entry:
+ *   { wx: world tile x, baseWorldY: world y of the façade base = section bottom row + 1 }.
+ */
+export function southFacadeColumns(b) {
+  const fp = b.footprint;
+  if (!fp || !fp.sections) return [];
+  const fs = floorSetOf(fp);
+  const cols = [];
+  for (const sec of fp.sections) {
+    const lastRow = sec.y0 + sec.h - 1;
+    const baseWorldY = b.y + sec.y0 + sec.h;
+    for (let dx = 0; dx < sec.w; dx++) {
+      const lx = sec.x0 + dx;
+      if (fs.has(lx + ',' + (lastRow + 1))) continue; // south neighbour inside — no exterior wall here
+      cols.push({ wx: b.x + lx, baseWorldY });
+    }
+  }
+  return cols;
+}
+
+/**
+ * Screen rect {x,y,w,h} of a south-façade column's stacked wall, matching the worker bake:
+ * bottom edge at base*tilePx - camY + tilePx*wallYOffset, height = stories * tilePx * wallHeight.
+ */
+export function facadeRect(baseWorldY, wx, stories, tilePx, camX, camY) {
+  const wHpx = tilePx * WALL_CONFIG.wallHeight;
+  const yOff = tilePx * WALL_CONFIG.wallYOffset;
+  const height = stories * wHpx;
+  const yBottom = baseWorldY * tilePx - camY + yOff;
+  return { x: wx * tilePx - camX, y: yBottom - height, w: tilePx, h: height };
+}
+
+/** Point-in-convex-polygon (winding-agnostic): inside if px,py is on one consistent side of every edge. */
+export function pointInHull(px, py, hull) {
+  let sign = 0;
+  for (let i = 0; i < hull.length; i++) {
+    const a = hull[i], b = hull[(i + 1) % hull.length];
+    const cross = (b.x - a.x) * (py - a.y) - (b.y - a.y) * (px - a.x);
+    if (cross !== 0) {
+      const s = cross > 0 ? 1 : -1;
+      if (sign === 0) sign = s; else if (s !== sign) return false;
+    }
+  }
+  return true;
+}
+
+/** Per-building shadow hulls + screen bbox, computed once per frame. */
+export function computeHulls(buildings, sun, tilePx, camX, camY, scale) {
+  const out = [];
+  for (const b of buildings) {
+    if (!b || !b.footprint || !b.footprint.boundingBox) continue;
+    const hull = buildingShadowHull(b, sun, tilePx, camX, camY, scale);
+    if (hull.length < 3) continue;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const p of hull) {
+      if (p.x < minX) minX = p.x; if (p.y < minY) minY = p.y;
+      if (p.x > maxX) maxX = p.x; if (p.y > maxY) maxY = p.y;
+    }
+    out.push({ b, hull, bbox: { minX, minY, maxX, maxY } });
+  }
+  return out;
+}
+
+/**
+ * Façade rects to darken: for every building, each south-façade column whose base sits inside
+ * ANOTHER building's ground-shadow hull gets its full stacked wall drenched. Pure.
+ */
+export function drapeRects(buildings, hulls, tilePx, camX, camY) {
+  const rects = [];
+  for (const B of buildings) {
+    if (!B || !B.footprint || !B.footprint.sections) continue;
+    const stories = buildingFloors(B);
+    for (const col of southFacadeColumns(B)) {
+      // test the last interior tile centre of the column (the foot of the wall, on the ground)
+      const tx = (col.wx + 0.5) * tilePx - camX;
+      const ty = (col.baseWorldY - 0.5) * tilePx - camY;
+      let drench = false;
+      for (const c of hulls) {
+        if (c.b === B) continue; // a building never drenches its own wall
+        const bb = c.bbox;
+        if (tx < bb.minX || tx > bb.maxX || ty < bb.minY || ty > bb.maxY) continue;
+        if (pointInHull(tx, ty, c.hull)) { drench = true; break; }
+      }
+      if (drench) rects.push(facadeRect(col.baseWorldY, col.wx, stories, tilePx, camX, camY));
+    }
+  }
+  return rects;
+}
+
+/**
+ * Draw building shadows. Call AFTER terrain/water/roofs and BEFORE the player/F2 sprites
+ * (canvas-renderer.js, just after drawRoofs). Best-effort: never throws.
+ *
+ * Phase 1 = ground shadows (cast away from sun, length ∝ height). Phase 2 = drape: where a
+ * shadow reaches a neighbour, it climbs that neighbour's south façade. Both go into ONE
+ * nonzero-winding fill so they merge at a single alpha (no double-darkened seams).
+ *
+ * Debug toggles: window._buildingShadows=false hides all; window._buildingShadowDrape=false
+ * disables only the façade drape (phase 2); window._buildingShadowScale tunes ground length.
  */
 export function drawBuildingShadows(ctx, buildings, camX, camY, tilePx, w, h, sun) {
   if (!sun || !sun.isDaytime || !buildings || !buildings.length) return;
   if (typeof window !== 'undefined' && window._buildingShadows === false) return;
   const scale = (typeof window !== 'undefined' && +window._buildingShadowScale) || 1;
+  const drapeOn = !(typeof window !== 'undefined' && window._buildingShadowDrape === false);
   const dayNight = sun.ambient != null ? sun.ambient : 1;
   const alpha = BASE_ALPHA * dayNight;
   if (alpha < 0.01) return; // deep night — nothing to draw
+
+  const hulls = computeHulls(buildings, sun, tilePx, camX, camY, scale);
+  if (!hulls.length) return;
+
+  // Every shadow region as a CCW polygon (hulls already CCW; façade rects routed through
+  // convexHull so all subpaths share winding → nonzero fill merges them with no holes).
+  const polys = [];
+  for (const c of hulls) {
+    const bb = c.bbox;
+    if (bb.maxX < 0 || bb.maxY < 0 || bb.minX > w || bb.minY > h) continue; // off-screen
+    polys.push(c.hull);
+  }
+  if (drapeOn) {
+    for (const r of drapeRects(buildings, hulls, tilePx, camX, camY)) {
+      if (r.x + r.w < 0 || r.y + r.h < 0 || r.x > w || r.y > h) continue;
+      polys.push(convexHull([
+        { x: r.x, y: r.y }, { x: r.x + r.w, y: r.y },
+        { x: r.x + r.w, y: r.y + r.h }, { x: r.x, y: r.y + r.h },
+      ]));
+    }
+  }
+  if (!polys.length) return;
 
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.globalAlpha = alpha;
   ctx.fillStyle = SHADOW_TINT;
   ctx.beginPath();
-  let any = false;
-  for (const b of buildings) {
-    if (!b || !b.footprint || !b.footprint.boundingBox) continue;
-    const hull = buildingShadowHull(b, sun, tilePx, camX, camY, scale);
-    if (hull.length < 3) continue;
-    // cull hulls entirely off-screen
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    for (const p of hull) {
-      if (p.x < minX) minX = p.x; if (p.y < minY) minY = p.y;
-      if (p.x > maxX) maxX = p.x; if (p.y > maxY) maxY = p.y;
-    }
-    if (maxX < 0 || maxY < 0 || minX > w || minY > h) continue;
-    ctx.moveTo(hull[0].x, hull[0].y);
-    for (let i = 1; i < hull.length; i++) ctx.lineTo(hull[i].x, hull[i].y);
+  for (const poly of polys) {
+    ctx.moveTo(poly[0].x, poly[0].y);
+    for (let i = 1; i < poly.length; i++) ctx.lineTo(poly[i].x, poly[i].y);
     ctx.closePath();
-    any = true;
   }
-  // ONE fill (nonzero winding) — overlapping neighbour shadows merge at a single alpha.
-  if (any) ctx.fill();
+  ctx.fill(); // nonzero winding — all regions merge at one alpha
   ctx.restore();
 }

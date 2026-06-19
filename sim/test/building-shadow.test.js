@@ -6,7 +6,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   convexHull, shadowProjection, buildingFloors, buildingShadowHull, MAX_LENGTH_TILES,
+  southFacadeColumns, facadeRect, pointInHull, computeHulls, drapeRects,
 } from '../../src/render/building-shadow.js';
+import { WALL_CONFIG } from '../../src/render/wall-config.js';
 import { buildingNode } from '../world/buildings/blueprint-node.js';
 
 // Real sun shapes at three times of day (see lighting.js:112-138).
@@ -21,6 +23,16 @@ function polyArea(h) { // shoelace
 }
 function fakeB(w, h, floors) {
   return { x: 0, y: 0, footprint: { boundingBox: { w, h }, node: { payload: { aboveGroundFloors: floors } } } };
+}
+// fake with sections (needed for façade-column + drape geometry)
+function fakeBS(x, y, w, h, floors) {
+  return {
+    x, y,
+    footprint: {
+      boundingBox: { w, h }, sections: [{ x0: 0, y0: 0, w, h }],
+      node: { payload: { aboveGroundFloors: floors } },
+    },
+  };
 }
 
 // ── convex hull ───────────────────────────────────────────────────────
@@ -101,4 +113,54 @@ test('dawn shadow reaches west of the footprint left edge', () => {
 test('hull area exceeds the footprint area (shadow adds cast region)', () => {
   const fpArea = 4 * 64 * 3 * 64;
   assert.ok(polyArea(buildingShadowHull(fakeB(4, 3, 2), DUSK, 64, 0, 0, 1)) > fpArea);
+});
+
+// ── phase 2: façade columns + drape ───────────────────────────────────
+test('southFacadeColumns: one column per width tile, base just past the section', () => {
+  const cols = southFacadeColumns(fakeBS(0, 0, 4, 3, 1));
+  assert.equal(cols.length, 4);
+  for (let i = 0; i < 4; i++) assert.equal(cols[i].wx, i);
+  assert.equal(cols[0].baseWorldY, 3); // y0(0)+h(3) — the row just south of the footprint
+});
+
+test('facadeRect matches the worker stack: height = stories*wallHeight*tilePx, bottom = base+yOff', () => {
+  const r = facadeRect(3, 0, 2, 64, 0, 0); // baseWorldY=3, wx=0, 2 stories, tilePx=64
+  const wHpx = 64 * WALL_CONFIG.wallHeight, yOff = 64 * WALL_CONFIG.wallYOffset;
+  assert.equal(r.w, 64);
+  assert.equal(r.h, 2 * wHpx);
+  assert.equal(r.y + r.h, 3 * 64 + yOff); // bottom edge sits at the footprint south edge + wallYOffset
+  assert.equal(r.x, 0);
+});
+
+test('facadeRect grows taller with more stories', () => {
+  assert.ok(facadeRect(3, 0, 5, 64, 0, 0).h > facadeRect(3, 0, 1, 64, 0, 0).h);
+});
+
+test('pointInHull: inside vs outside a square hull', () => {
+  const sq = convexHull([{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 10 }, { x: 0, y: 10 }]);
+  assert.ok(pointInHull(5, 5, sq));
+  assert.ok(!pointInHull(20, 5, sq));
+});
+
+test('drape: a tall building over a neighbour in its shadow drenches that neighbour façade', () => {
+  // A is tall at the origin; at noon its shadow projects straight down (south).
+  const A = fakeBS(0, 0, 4, 3, 6);
+  const B = fakeBS(0, 4, 4, 3, 1); // directly south, within A's noon shadow reach
+  const buildings = [A, B];
+  const hulls = computeHulls(buildings, NOON, 64, 0, 0, 1);
+  const rects = drapeRects(buildings, hulls, 64, 0, 0);
+  assert.ok(rects.length > 0, 'B columns are drenched by A shadow');
+});
+
+test('drape: a far-away neighbour is NOT drenched', () => {
+  const A = fakeBS(0, 0, 4, 3, 6);
+  const B = fakeBS(40, 0, 4, 3, 1); // far east — A noon shadow points south, never reaches B
+  const hulls = computeHulls([A, B], NOON, 64, 0, 0, 1);
+  assert.equal(drapeRects([A, B], hulls, 64, 0, 0).length, 0);
+});
+
+test('drape: a lone building never drenches itself', () => {
+  const A = fakeBS(0, 0, 4, 3, 6);
+  const hulls = computeHulls([A], DUSK, 64, 0, 0, 1);
+  assert.equal(drapeRects([A], hulls, 64, 0, 0).length, 0);
 });
