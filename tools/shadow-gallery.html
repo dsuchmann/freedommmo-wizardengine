@@ -61,8 +61,9 @@
 </div>
 
 <script type="module">
-import { drawBuildingShadows, southFacadeColumns, facadeRect, buildingFloors } from '../src/render/building-shadow.js';
-import { DayNightCycle } from '../src/world/lighting.js';
+// Absolute paths (served from project root) so the page works even if the URL has a trailing slash.
+import { drawBuildingShadows, southFacadeColumns, facadeRect, buildingFloors } from '/src/render/building-shadow.js';
+import { DayNightCycle } from '/src/world/lighting.js';
 
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
