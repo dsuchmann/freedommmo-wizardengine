@@ -35,6 +35,19 @@ export function drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h) {
   marker(ctx, ai, L.stairTile, '#caa23a', camX, camY, tilePx, t);
   if (L.liftTile) marker(ctx, ai, L.liftTile, '#4aa6c8', camX, camY, tilePx, t);
   ctx.restore();
+
+  // Diagnostic HUD: which floor + the building's range — so floor-changes are visible even
+  // though every floor currently draws the same placeholder material. If the number changes
+  // when you cross the stair, the up/down logic works; if it says single-floor, there's no
+  // up/down to do.
+  const fk = ai.floorKeys, lo = fk[0], hi = fk[fk.length - 1];
+  ctx.save();
+  ctx.fillStyle = 'rgba(16,20,28,0.88)'; ctx.fillRect(10, 10, 300, 28);
+  ctx.fillStyle = '#ffc24a'; ctx.font = 'bold 14px monospace'; ctx.textBaseline = 'middle';
+  ctx.fillText(hi > lo
+    ? `INSIDE · Floor ${ai.floorIndex}  (range ${lo}..${hi})  walk the gold tile`
+    : `INSIDE · Floor ${ai.floorIndex}  (single-floor — no up/down)`, 18, 25);
+  ctx.restore();
 }
 
 /** Call AFTER the player sprite, so walls occlude the player — EXCEPT the south wall near
