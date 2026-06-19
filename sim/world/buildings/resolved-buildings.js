@@ -19,7 +19,8 @@ export const NEIGHBOR_RING_R = Math.ceil(MAX_SETTLEMENT_RADIUS / MACRO_TILES);
 export const MAX_RESOLVED_BUILDINGS = 80;
 
 const CLAIM_MARGIN = 2;   // footprint margin for flora suppression (matches building-renderer)
-const NORTH_CLAIM = 4;    // north-wall height band (matches building-renderer NORTH_CLAIM)
+const NORTH_CLAIM = 8;    // north band — must cover the full screen height the ROOF lifts
+                         // to (wall ~3.75 + roof rise), else F2 flora draws over the roof.
 
 // Memoize per-settlement layouts so the neighbor-ring padding (and repeated
 // per-macro resolves in the worker) don't recompute the same settlement's layout.

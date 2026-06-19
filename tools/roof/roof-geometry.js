@@ -159,15 +159,18 @@ export function buildRoofGrid(sections, opts = {}) {
     for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
       const k = idx(i, j); if (fp[k]) continue;
       // nearest footprint tile (small search within overhang ring)
-      let best = null, bestD = 1e9;
+      let best = null, bestD = 1e9, bestJ = -1;
       for (let dj = -ovh; dj <= ovh; dj++) for (let di = -ovh; di <= ovh; di++) {
         const ni = i + di, nj = j + dj;
         if (ni < 0 || nj < 0 || ni >= W || nj >= H) continue;
         if (!fp[idx(ni, nj)]) continue;
         const dd = Math.hypot(di, dj);
-        if (dd < bestD) { bestD = dd; best = idx(ni, nj); }
+        if (dd < bestD) { bestD = dd; best = idx(ni, nj); bestJ = nj; }
       }
       if (best != null && bestD <= ovh + 0.5) {
+        // Skip NORTH-side overhang (nearest footprint tile is to the SOUTH): a north
+        // eave/overhang would poke up past the north wall into the building behind.
+        if (opts.noNorthOverhang && bestJ > j) continue;
         isOverhang[k] = 1;
         height[k] = height[best] - droop * bestD;
       }

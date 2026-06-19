@@ -55,9 +55,14 @@ export function resolveForBuilding(b, biomeOverride) {
   // that's short and clearly pitched, not a towering flat-topped slab on wide footprints.
   const bb = bboxOf(fp.sections);
   roof.ridgeOrientation = bb.w >= bb.h ? 'ew' : 'ns';
-  // keep the rules' overhang (the eaves) — forcing 0 erased the E/W edges.
+  // keep the rules' overhang (E/W/S eave flare), but NO north overhang (it would poke
+  // past the north wall into the building behind).
   const R = resolveConfig(roof, { sections: fp.sections });
+  R.geom.noNorthOverhang = true;
   const grid = buildRoofGrid(R.sections, R.geom);
+  // shift the heightmap so the perimeter EAVE sits at h=0 (the lifted wall-top plane),
+  // so the roof's back edge is flush with the north wall top, not floating above it.
+  normalizeEaveToZero(grid);
   const material = makeMaterial(R.materialId, R.matOpts);
   // background:false + noClear → overlay-safe; noShadow → game has its own; noAccents
   // → kill the white ridge outlines.
@@ -65,6 +70,19 @@ export function resolveForBuilding(b, biomeOverride) {
   e = { grid, material, renderCfg, roof, biome };
   cache.set(key, e);
   return e;
+}
+
+// Shift the whole heightmap down so the lowest FOOTPRINT (non-overhang) tile — the
+// eave — sits at h=0. Overhang tiles go slightly negative (droop below the wall top =
+// eave overhang); the back/north eave lands exactly on the north wall top.
+function normalizeEaveToZero(grid) {
+  let minH = Infinity;
+  for (const t of grid.tiles) if (!t.isOverhang && t.h < minH) minH = t.h;
+  if (!isFinite(minH) || minH === 0) return;
+  for (let k = 0; k < grid.height.length; k++) grid.height[k] -= minH;
+  for (let k = 0; k < grid.cornerH.length; k++) grid.cornerH[k] -= minH;
+  for (const t of grid.tiles) t.h -= minH;
+  grid.maxHeight = Math.max(0, grid.maxHeight - minH);
 }
 
 export function clearRoofCache() { cache.clear(); }
