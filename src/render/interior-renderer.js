@@ -4,27 +4,33 @@
 import { getActiveInterior, isInside, dimAlphaForFloor } from './active-interior.js';
 import { ensureFloorImages, getFloorImg, getWallImg } from './building-renderer.js';
 
+// TEMP safety gate: the in-world floor tiles + walls are disabled because they draw on the
+// 2D 'game' canvas which sits ABOVE the GL layer the player renders on — so they cover the
+// character — and the wall sprite rendered squished. Re-enabled with correct layering +
+// wall height + circular see-through once the draw-order recon lands. Entering still dims.
+const SHOW_TILES = false;
+
 /** Call AFTER terrain/water, BEFORE the player sprite draws (so the player lands on top). */
 export function drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h) {
   if (!isInside()) return;
   ensureFloorImages();
-  const ai = getActiveInterior();
-  // 1) dim the outer world (height-scaled). Drawn first so the interior floor (next) is bright over it.
+  const ai = getActiveInterior(), L = ai.layout, t = Math.ceil(tilePx), pad = 1;
   ctx.save();
-  ctx.fillStyle = `rgba(8,10,18,${dimAlphaForFloor(ai.floorIndex).toFixed(3)})`;
+  // Dim the outer world. Basement = black (underground); ground dims; each floor up recedes.
+  const dim = SHOW_TILES ? dimAlphaForFloor(ai.floorIndex) : 0.40; // triage: light dim so the player stays visible
+  ctx.fillStyle = `rgba(8,10,18,${dim.toFixed(3)})`;
   ctx.fillRect(0, 0, w, h);
-  // 2) floor tiles for the active floor (circulation + every unit tile), in-world
-  const L = ai.layout, t = Math.ceil(tilePx), pad = 1;
-  const tiles = ai.footprint; // draw the floor over the FULL footprint — a complete room floor
-  ctx.imageSmoothingEnabled = false;
-  const floorImg = getFloorImg(ai.building.footprint?.interior?.floor?.material) || getFloorImg('wood_plank');
-  for (const k of tiles) {
-    const [lx, ly] = k.split(',').map(Number);
-    const sx = Math.floor((ai.bx + lx) * tilePx - camX), sy = Math.floor((ai.by + ly) * tilePx - camY);
-    if (sx + t < 0 || sy + t < 0 || sx > w || sy > h) continue;
-    if (floorImg) ctx.drawImage(floorImg, sx, sy, t + pad, t + pad);
+  if (SHOW_TILES) { // floor over the FULL footprint — DISABLED in triage (it covers the GL-layer player)
+    ctx.imageSmoothingEnabled = false;
+    const floorImg = getFloorImg(ai.building.footprint?.interior?.floor?.material) || getFloorImg('wood_plank');
+    for (const k of ai.footprint) {
+      const [lx, ly] = k.split(',').map(Number);
+      const sx = Math.floor((ai.bx + lx) * tilePx - camX), sy = Math.floor((ai.by + ly) * tilePx - camY);
+      if (sx + t < 0 || sy + t < 0 || sx > w || sy > h) continue;
+      if (floorImg) ctx.drawImage(floorImg, sx, sy, t + pad, t + pad);
+    }
   }
-  // 3) stair + lift markers (placeholder tint until dedicated sprites land)
+  // stair + lift markers — kept ON in triage so you can find them and test up/down.
   marker(ctx, ai, L.stairTile, '#caa23a', camX, camY, tilePx, t);
   if (L.liftTile) marker(ctx, ai, L.liftTile, '#4aa6c8', camX, camY, tilePx, t);
   ctx.restore();
@@ -34,6 +40,7 @@ export function drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h) {
  *  the player, which is drawn see-through (skipped) so it never hides the character. */
 export function drawInteriorWallsWorld(ctx, camX, camY, tilePx, w, h, playerTile) {
   if (!isInside()) return;
+  if (!SHOW_TILES) return; // TEMP: walls render squished/broken — restored after the wall-height + circular-see-through fix
   const ai = getActiveInterior(), t = Math.ceil(tilePx), pad = 1;
   const present = ai.footprint; // perimeter walls follow the full footprint
   const has = (x, y) => present.has(x + ',' + y);

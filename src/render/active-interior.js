@@ -58,6 +58,6 @@ export function isInFootprint(lx, ly) {
 /** Outer-world dim alpha — grows with height (first taste of "the world recedes").
  *  Full bokeh/clouds exaggeration is a deferred fast-follow. */
 export function dimAlphaForFloor(floorIndex) {
-  const above = Math.max(0, floorIndex);
-  return Math.min(0.9, 0.35 + above * 0.06);
+  if (floorIndex < 0) return 0.985; // basement: you're underground — the outside reads as black
+  return Math.min(0.9, 0.35 + floorIndex * 0.06); // ground dims; each floor up recedes further
 }
