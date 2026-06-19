@@ -13,7 +13,7 @@ import { drawSimDebugOverlay } from './sim-debug-overlay.js';
 import { updateBuildingClaims, drawBuildingFloors, drawBuildingWalls, getCachedBuildings } from './building-renderer.js';
 import { drawBuildingShadows } from './building-shadow.js';
 import { updateFloorViewTransform } from './floor-view.js';
-import { drawInteriorFloorWorld, drawInteriorWallsWorld, interiorLiftPx } from './interior-renderer.js';
+import { drawInteriorFloorWorld, drawInteriorWallsWorld, interiorLiftPx, updateInteriorLift } from './interior-renderer.js';
 import { isInside } from './active-interior.js';
 import { initWallTuner, drawWallTuner } from './wall-tuner.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations, buildWaveField } from './water-wave-overlay.js';
@@ -266,7 +266,11 @@ export class CanvasRenderer {
     }
 
     const camX = player.x * tilePx - w / 2;
-    const camY = player.y * tilePx - h / 2 + (camera.elevationOffsetY ?? 0);
+    // Interior camera glide: advance the eased per-floor lift, then subtract it from camY so
+    // the WORLD slides DOWN (recedes below) while the player stays centred. The interior floor
+    // re-adds the lift so it stays locked under the player. Outside a building the lift is 0.
+    const _interiorLift = updateInteriorLift(tilePx);
+    const camY = player.y * tilePx - h / 2 + (camera.elevationOffsetY ?? 0) - _interiorLift;
     const minCX = floorDiv(Math.floor(camX / tilePx), WORLD.chunkSize) - 1;
     const minCY = floorDiv(Math.floor(camY / tilePx), WORLD.chunkSize) - 1;
     const maxCX = floorDiv(Math.ceil((camX + w) / tilePx), WORLD.chunkSize) + 1;
@@ -535,7 +539,9 @@ export class CanvasRenderer {
     // rise together as you climb; the world-layer player was suppressed above.
     if (_inside) {
       drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h);
-      this.drawPlayerAt(w / 2, _playerScreenY - interiorLiftPx(tilePx), camera.zoom, player);
+      // Player stays CENTRED — the camera glide (camY -= lift) makes the world recede instead
+      // of the player drifting up. The floor re-adds the lift so it tracks the player.
+      this.drawPlayerAt(w / 2, _playerScreenY, camera.zoom, player);
     }
   }
 

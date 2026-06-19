@@ -5,14 +5,22 @@ import { getActiveInterior, isInside, dimAlphaForFloor } from './active-interior
 import { ensureFloorImages, getFloorImg, getWallImg } from './building-renderer.js';
 import { WALL_CONFIG } from './wall-config.js';
 
-// Per-floor NORTH screen lift: floor N's tiles + the player draw `N · storyHeight`
-// tiles north of the footprint, reusing the SAME per-story step the exterior wall
-// stack uses (WALL_CONFIG.wallHeight). Ground floor (index 0) = 0; each floor up lifts
-// one story so climbing reads as rising; basement (negative) sinks below ground.
-export function interiorLiftPx(tilePx) {
+// Per-floor NORTH lift = `floorIndex · storyHeight · tilePx`, reusing the exterior wall
+// stack's per-story step (WALL_CONFIG.wallHeight). The camera subtracts this from camY so
+// the WORLD recedes downward while the player stays centred; the interior floor re-adds it
+// so it stays locked under the player. EASED so changing floors glides. updateInteriorLift()
+// advances the ease ONCE per frame; interiorLiftPx() returns the cached value (it's read
+// many times a frame — camera, floor, markers — so it must be stable, not recomputed).
+let _liftCur = 0, _liftKey = null;
+export function updateInteriorLift(tilePx) {
   const ai = getActiveInterior();
-  return ai ? ai.floorIndex * WALL_CONFIG.wallHeight * tilePx : 0;
+  const target = ai ? ai.floorIndex * WALL_CONFIG.wallHeight * tilePx : 0;
+  const key = ai ? ai.bx + ',' + ai.by : null;
+  if (key !== _liftKey) { _liftCur = target; _liftKey = key; }   // snap on enter/exit a building
+  else { _liftCur += (target - _liftCur) * 0.18; if (Math.abs(target - _liftCur) < 0.5) _liftCur = target; } // glide on floor change
+  return _liftCur;
 }
+export function interiorLiftPx() { return _liftCur; }
 
 // The player now draws ON TOP of everything (z-order flipped), so the in-world interior FLOOR
 // should layer UNDER the player: floor drawn over the baked roof, character standing on the
@@ -40,7 +48,7 @@ export function drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h) {
   if (!isInside()) { _dimKey = null; _dimCur = 0; return; }
   ensureFloorImages();
   const ai = getActiveInterior(), L = ai.layout, t = Math.ceil(tilePx), pad = 1;
-  const lift = interiorLiftPx(tilePx); // per-floor north screen offset (floor + player rise together)
+  const lift = interiorLiftPx(); // eased per-floor offset (re-centres the floor under the player vs the camera glide)
   ctx.save();
   // Dim the outer world — animated so changing floor visibly RECEDES the ground world (eases
   // deeper going up, black underground), a sense of rising away from it.
