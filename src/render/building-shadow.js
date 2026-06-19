@@ -209,13 +209,41 @@ export function drapeRects(buildings, hulls, tilePx, camX, camY) {
   return rects;
 }
 
+/** Screen rects of every building's actual footprint tiles (sections) — the area a shadow must
+ *  NOT cover (it's under the building). Used to clip the ground-shadow fill. Pure. */
+export function footprintRects(buildings, tilePx, camX, camY) {
+  const rects = [];
+  for (const b of buildings) {
+    if (!b || !b.footprint || !b.footprint.sections) continue;
+    for (const sec of b.footprint.sections) {
+      rects.push({
+        x: (b.x + sec.x0) * tilePx - camX, y: (b.y + sec.y0) * tilePx - camY,
+        w: sec.w * tilePx, h: sec.h * tilePx,
+      });
+    }
+  }
+  return rects;
+}
+
+function fillPolys(ctx, polys) {
+  ctx.beginPath();
+  for (const poly of polys) {
+    ctx.moveTo(poly[0].x, poly[0].y);
+    for (let i = 1; i < poly.length; i++) ctx.lineTo(poly[i].x, poly[i].y);
+    ctx.closePath();
+  }
+  ctx.fill(); // nonzero winding — overlapping regions merge at one alpha (no double-darkening)
+}
+
 /**
  * Draw building shadows. Call AFTER terrain/water/roofs and BEFORE the player/F2 sprites
  * (canvas-renderer.js, just after drawRoofs). Best-effort: never throws.
  *
- * Phase 1 = ground shadows (cast away from sun, length ∝ height). Phase 2 = drape: where a
- * shadow reaches a neighbour, it climbs that neighbour's south façade. Both go into ONE
- * nonzero-winding fill so they merge at a single alpha (no double-darkened seams).
+ * Phase 1 = ground shadows: each building's footprint swept away from the sun. Only the WAKE
+ * shows — the fill is clipped to EXCLUDE every building's footprint, so no shadow lies "under"
+ * a building (a shadow that reaches a building is left to phase 2 to climb its wall instead).
+ * Phase 2 = drape: where a shadow reaches a neighbour, it climbs that neighbour's south façade
+ * (drawn UNCLIPPED, since it intentionally darkens the wall over the footprint).
  *
  * Debug toggles: window._buildingShadows=false hides all; window._buildingShadowDrape=false
  * disables only the façade drape (phase 2); window._buildingShadowScale tunes ground length.
@@ -232,35 +260,44 @@ export function drawBuildingShadows(ctx, buildings, camX, camY, tilePx, w, h, su
   const hulls = computeHulls(buildings, sun, tilePx, camX, camY, scale);
   if (!hulls.length) return;
 
-  // Every shadow region as a CCW polygon (hulls already CCW; façade rects routed through
-  // convexHull so all subpaths share winding → nonzero fill merges them with no holes).
-  const polys = [];
+  const groundPolys = [];
   for (const c of hulls) {
     const bb = c.bbox;
     if (bb.maxX < 0 || bb.maxY < 0 || bb.minX > w || bb.minY > h) continue; // off-screen
-    polys.push(c.hull);
+    groundPolys.push(c.hull);
   }
+  const drapePolys = [];
   if (drapeOn) {
     for (const r of drapeRects(buildings, hulls, tilePx, camX, camY)) {
       if (r.x + r.w < 0 || r.y + r.h < 0 || r.x > w || r.y > h) continue;
-      polys.push(convexHull([
+      drapePolys.push(convexHull([
         { x: r.x, y: r.y }, { x: r.x + r.w, y: r.y },
         { x: r.x + r.w, y: r.y + r.h }, { x: r.x, y: r.y + r.h },
       ]));
     }
   }
-  if (!polys.length) return;
+  if (!groundPolys.length && !drapePolys.length) return;
 
   ctx.save();
   ctx.imageSmoothingEnabled = false;
   ctx.globalAlpha = alpha;
   ctx.fillStyle = SHADOW_TINT;
-  ctx.beginPath();
-  for (const poly of polys) {
-    ctx.moveTo(poly[0].x, poly[0].y);
-    for (let i = 1; i < poly.length; i++) ctx.lineTo(poly[i].x, poly[i].y);
-    ctx.closePath();
+
+  // Ground shadows — clipped to (screen MINUS every footprint) so a building's own shadow (and a
+  // neighbour's) never paints over the building itself. Only the wake, away from the light, shows.
+  if (groundPolys.length) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, w, h);
+    for (const fr of footprintRects(buildings, tilePx, camX, camY)) ctx.rect(fr.x, fr.y, fr.w, fr.h);
+    ctx.clip('evenodd'); // even-odd: screen(1) with each footprint(+1) → footprints excluded
+    fillPolys(ctx, groundPolys);
+    ctx.restore(); // drop the footprint clip
   }
-  ctx.fill(); // nonzero winding — all regions merge at one alpha
+
+  // Drape — the shadow climbing a neighbour's façade. NOT clipped: the façade sits over the
+  // footprint screen area on purpose (that IS the wall we want drenched).
+  if (drapePolys.length) fillPolys(ctx, drapePolys);
+
   ctx.restore();
 }

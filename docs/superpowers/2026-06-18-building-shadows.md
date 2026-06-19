@@ -8,8 +8,11 @@
 Buildings cast a ground shadow projected **away from the sun**, with length that grows with
 `aboveGroundFloors` and with how low the sun sits (`sun.shadowLength`: 0.9 noon → 3.75 dusk).
 The shape is the footprint swept in the shadow direction (convex hull of footprint corners ∪
-corners+projection). When that shadow reaches a **neighbour** building it climbs the neighbour's
-visible south façade ("drench the surface at a different height") instead of lying flat on its roof.
+corners+projection). Only the **wake** renders — the ground fill is clipped to exclude every
+building's footprint (even-odd: screen rect + each footprint), so a shadow never paints over the
+building casting it, nor lies flat "under" a neighbour. When a shadow reaches a **neighbour** it
+climbs the neighbour's visible south façade ("drench the surface at a different height") instead —
+the drape is drawn unclipped (the wall it darkens sits over the footprint on purpose).
 
 ## How it's wired
 - `building-renderer.js` exports `getCachedBuildings()` → the same resolved set `updateBuildingClaims()`

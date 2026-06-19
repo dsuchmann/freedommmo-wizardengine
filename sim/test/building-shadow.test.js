@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import {
   convexHull, shadowProjection, buildingFloors, buildingShadowHull, MAX_LENGTH_TILES,
   southFacadeColumns, facadeRect, pointInHull, computeHulls, drapeRects,
-  resolveScale, DEFAULT_SCALE,
+  resolveScale, DEFAULT_SCALE, footprintRects,
 } from '../../src/render/building-shadow.js';
 import { WALL_CONFIG } from '../../src/render/wall-config.js';
 import { buildingNode } from '../world/buildings/blueprint-node.js';
@@ -174,4 +174,22 @@ test('drape: a lone building never drenches itself', () => {
   const A = fakeBS(0, 0, 4, 3, 6);
   const hulls = computeHulls([A], DUSK, 64, 0, 0, 1);
   assert.equal(drapeRects([A], hulls, 64, 0, 0).length, 0);
+});
+
+// ── wake-only: footprint is excluded from the ground shadow ────────────
+test('footprintRects: section screen rects in world→screen coords', () => {
+  const rects = footprintRects([fakeBS(2, 1, 4, 3, 1)], 64, 0, 0);
+  assert.equal(rects.length, 1);
+  assert.deepEqual(rects[0], { x: 2 * 64, y: 1 * 64, w: 4 * 64, h: 3 * 64 });
+});
+
+test('the swept hull DOES cover the footprint centre — which is why the clip must remove it', () => {
+  // Documents the bug the wake-clip fixes: without clipping, a building shadows itself.
+  const b = fakeBS(0, 0, 4, 3, 5);
+  const hull = buildingShadowHull(b, NOON, 64, 0, 0, 1);
+  const cx = (b.x + 4 / 2) * 64, cy = (b.y + 3 / 2) * 64; // footprint centre, screen
+  assert.ok(pointInHull(cx, cy, hull), 'footprint centre is inside the swept hull');
+  const fr = footprintRects([b], 64, 0, 0)[0];
+  assert.ok(cx >= fr.x && cx <= fr.x + fr.w && cy >= fr.y && cy <= fr.y + fr.h,
+    'and footprintRects covers that centre, so the clip excludes it');
 });
