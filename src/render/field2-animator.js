@@ -20,6 +20,9 @@ var REBUILD_MARGIN = 4; // hysteresis: the pool collects this many extra tiles p
                         // Turns the old per-tile (and per-zoom-step) 71ms rebuild storm
                         // into an occasional rebuild — walking/zooming no longer restitch
                         // the whole instance buffer every frame.
+var GPU_REBUILD_MARGIN = 20; // GPU flora only: per-frame cost is 0, so collect a much
+                             // wider ring and rebuild ~5x less often (the rebuild is the
+                             // only remaining hitch). Pool grows but the GPU draws it free.
 var FADE_INNER = 34; // fully opaque inside this radius
 var FRAME_COUNT = 9;
 var FRAME_DURATION = 120; // ms per frame
@@ -1474,8 +1477,13 @@ function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, we
   // restitch the pool. Radius is recomputed only AT rebuild time, so zoom alone
   // never forces one (the GL shader upscales sprites via uCam — pool content is
   // zoom-independent: drawSizePx = WORLD.tileSize * sizeTiles, no zoom term).
-  var needRX = Math.min(ANIM_RADIUS, visibleTilesX) + REBUILD_MARGIN;
-  var needRY = Math.min(ANIM_RADIUS, visibleTilesY) + REBUILD_MARGIN;
+  // GPU flora has ZERO per-frame cost regardless of pool size, so collect a much
+  // wider margin and rebuild far less often — the rebuild (every REBUILD_MARGIN
+  // tiles) is the only remaining hitch. CPU path keeps the tight margin (its
+  // per-frame loop scales with pool size).
+  var rebuildMargin = (gpuFloraOn() && glc && glc.animOk) ? GPU_REBUILD_MARGIN : REBUILD_MARGIN;
+  var needRX = Math.min(ANIM_RADIUS, visibleTilesX) + rebuildMargin;
+  var needRY = Math.min(ANIM_RADIUS, visibleTilesY) + rebuildMargin;
   var px = Math.floor(player.x);
   var py = Math.floor(player.y);
   var timeSec = timeMs * 0.001;
@@ -1489,8 +1497,8 @@ function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, we
   //  - zoomed OUT far enough to need more coverage than we collected (grew), or
   //  - new chunks streamed in (debounced so streaming doesn't storm rebuilds), or
   //  - tuner cleared the pool / GL wasn't ready yet.
-  var moved = Math.abs(px - _pool.centerX) > REBUILD_MARGIN ||
-              Math.abs(py - _pool.centerY) > REBUILD_MARGIN;
+  var moved = Math.abs(px - _pool.centerX) > rebuildMargin ||
+              Math.abs(py - _pool.centerY) > rebuildMargin;
   var grew = needRX > _pool.radiusX || needRY > _pool.radiusY;
   var ready = _poolReadyCount(chunkStore, px, py, _pool.radiusX || needRX);
   var newChunks = ready > _pool.readyCount && (timeMs - _pool.lastRebuildAt) > 250;
