@@ -30,5 +30,5 @@ export function resolveFloorLayout(buildingNode, floorIndex) {
   if (liftTile) eat(liftTile.x, liftTile.y);
   if (minX === Infinity) { minX = minY = 0; maxX = maxY = 0; }
 
-  return { floorIndex, use: f.use, walkable, units, stairTile, liftTile, multiFloorUnits, bounds: { minX, minY, maxX, maxY } };
+  return { floorIndex, use: f.use, material: f.material, walkable, units, stairTile, liftTile, multiFloorUnits, bounds: { minX, minY, maxX, maxY } };
 }

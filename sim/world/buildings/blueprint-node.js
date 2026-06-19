@@ -19,6 +19,7 @@ import { selectStairCores, reserveLift } from './vertical.js';
 import { partitionFloor } from './floor-partition.js';
 import { generateInterior } from './interiors.js';
 import { unitSubFloorCount, selectPrivateStair } from './unit-vertical.js';
+import { floorMaterial } from './floor-materials.js';
 
 // ── generic lazy node + kind registry ─────────────────────────────────────
 
@@ -141,8 +142,8 @@ registerKind('floor', {
     const ctx = node.ancestorContext;
     const { circulation, units } = partitionFloor(node.seed, ctx.sections, ctx.stairCore, ctx.floorUse, ctx.lift ? ctx.lift.shaft : null);
     return {
-      floorIndex: ctx.floorIndex, use: ctx.floorUse, stairCore: ctx.stairCore,
-      lift: ctx.lift, circulation: [...circulation], units,
+      floorIndex: ctx.floorIndex, use: ctx.floorUse, material: floorMaterial(ctx.floorUse),
+      stairCore: ctx.stairCore, lift: ctx.lift, circulation: [...circulation], units,
     };
   },
   childKeys(node) { return node.payload.units.map((_, i) => i); },

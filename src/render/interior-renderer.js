@@ -34,7 +34,7 @@ export function drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h) {
   ctx.fillRect(0, 0, w, h);
   if (SHOW_TILES) { // floor over the FULL footprint — DISABLED in triage (it covers the GL-layer player)
     ctx.imageSmoothingEnabled = false;
-    const floorImg = getFloorImg(ai.building.footprint?.interior?.floor?.material) || getFloorImg('wood_plank');
+    const floorImg = getFloorImg(ai.layout.material) || getFloorImg('wood_plank'); // material per floor use
     for (const k of ai.footprint) {
       const [lx, ly] = k.split(',').map(Number);
       const sx = Math.floor((ai.bx + lx) * tilePx - camX), sy = Math.floor((ai.by + ly) * tilePx - camY);
