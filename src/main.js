@@ -228,16 +228,26 @@ function update(dt) {
         // The landing/core triggers ONLY as a fallback when this building has no N-S well
         // (thin footprint) — otherwise the core is the safe landing and never triggers.
         const onCoreFallback = !L.upTile && !L.downTile && at(L.stairTile);
-        if ((onUp || onDown || onLift || onCoreFallback) && ai.lastTrigger !== trig) {
+        // DIRECTION INTENT: you only ascend the up-stair while walking NORTH into it, and
+        // descend the down-stair while walking SOUTH — so brushing the tile sideways or
+        // standing on it never changes floors (was too sensitive). Lift/fallback read the axis.
+        const ax = input.axis ? input.axis() : { x: 0, y: 0 };
+        const upGo = onUp && ax.y < -0.35;
+        const downGo = onDown && ax.y > 0.35;
+        // Cooldown paces the climb so you can't blast through several floors at once.
+        const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : 0;
+        const coolOk = !ai.lastFloorAt || (now - ai.lastFloorAt) > 320;
+        if ((upGo || downGo || onLift || onCoreFallback) && ai.lastTrigger !== trig && coolOk) {
           let dir;
-          if (onUp) dir = 1;
-          else if (onDown) dir = -1;
-          else { const ax = input.axis ? input.axis() : { x: 0, y: 0 }; dir = ax.y < -0.2 ? 1 : ax.y > 0.2 ? -1 : 1; } // lift/fallback: push up=ascend
+          if (upGo) dir = 1;
+          else if (downGo) dir = -1;
+          else dir = ax.y < -0.2 ? 1 : ax.y > 0.2 ? -1 : 1; // lift/fallback: push up=ascend
           const changed = AI.changeFloor(dir);
           ai.lastTrigger = trig;
+          if (changed) ai.lastFloorAt = now;
           // Land on the new floor's LANDING so the next up-stair is directly ahead (north) —
           // keep walking north to keep climbing. (ai.layout was re-resolved by changeFloor.)
-          if (changed && (onUp || onDown)) {
+          if (changed && (upGo || downGo)) {
             const land = ai.layout.landingTile;
             if (land) { player.x = ai.bx + land.x + 0.5; player.y = ai.by + land.y + 0.5; }
           }
