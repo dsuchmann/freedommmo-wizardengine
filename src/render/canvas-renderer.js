@@ -13,7 +13,8 @@ import { drawSimDebugOverlay } from './sim-debug-overlay.js';
 import { updateBuildingClaims, drawBuildingFloors, drawBuildingWalls, getCachedBuildings } from './building-renderer.js';
 import { drawBuildingShadows } from './building-shadow.js';
 import { updateFloorViewTransform } from './floor-view.js';
-import { drawInteriorFloorWorld, drawInteriorWallsWorld } from './interior-renderer.js';
+import { drawInteriorFloorWorld, drawInteriorWallsWorld, interiorLiftPx } from './interior-renderer.js';
+import { isInside } from './active-interior.js';
 import { initWallTuner, drawWallTuner } from './wall-tuner.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations, buildWaveField } from './water-wave-overlay.js';
 import { drawRoofs } from './roof-overlay.js';
@@ -341,10 +342,9 @@ export class CanvasRenderer {
     // share the same lighting, z-order, and pixel grid as terrain. TODO: chunk integration.
     // drawBuildingFloors(ctx, camX, camY, tilePx, w, h);
 
-    // Diegetic walk-in interior: when the player is INSIDE a building, dim the outer
-    // world and draw the active floor's tiles in-world HERE — after terrain/water,
-    // BEFORE the player/F2 sprites — so the player lands on top of the floor.
-    drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h);
+    // Diegetic walk-in interior is drawn as a TOP pass at the very end of draw() (after
+    // the GL present) so the lifted floor + player sit above the dimmed world and dodge
+    // the GL/2D player z-order split. The world player is suppressed below while inside.
 
     // Procedural roof overlay — drawn HERE with the building layer (before F2 sprites,
     // weather, lighting & atmosphere) so it receives day-night tint + fog + CRT and the
@@ -403,14 +403,18 @@ export class CanvasRenderer {
     // Register player draw into field2's depth-sorted buffer BEFORE drawing
     var _self = this;
     var _playerScreenY = h / 2 - elevationLift(focusTile.climate.elevation) * camera.zoom;
-    setField2PlayerDraw(function(drawCtx) {
+    // While INSIDE a building the player is drawn by the interior top-pass (lifted with
+    // the floor), so suppress the world-layer player here to avoid a double-draw / the
+    // floor-over-GL-player z-order clash.
+    const _inside = isInside();
+    setField2PlayerDraw(_inside ? function(){} : function(drawCtx) {
       _self.drawPlayerAt(w / 2, _playerScreenY, camera.zoom, player);
     });
     // In GL mode, also composite the player into a small offscreen canvas so
     // field2 can upload it to the sprite atlas and draw it INSIDE the
     // depth-sorted GL batch — keeping all F2 sprites in one ordering domain
     // (a 2D/GL split pops sprite depth at the split boundary while walking).
-    if (glOn && this.glc.spritesOk) {
+    if (!_inside && glOn && this.glc.spritesOk) {
       var PC = 256; // matches glc._playerRegion
       var PBASE = 192; // player baseline row inside the canvas
       if (!this._playerCanvas) {
@@ -524,6 +528,15 @@ export class CanvasRenderer {
       this.glc.presentScene(w, h, camera.zoom, fracX, fracY);
     }
     if (glOn) this.glc.endFrame();
+
+    // ── Diegetic interior TOP-PASS — drawn last so the lifted floor + player read ABOVE
+    // the dimmed world (the exterior roof/walls stay faded underneath). Floor first
+    // (dim + per-floor north lift), then the player lifted by the SAME offset so they
+    // rise together as you climb; the world-layer player was suppressed above.
+    if (_inside) {
+      drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h);
+      this.drawPlayerAt(w / 2, _playerScreenY - interiorLiftPx(tilePx), camera.zoom, player);
+    }
   }
 
   drawContactOverlay(player, w, h, zoom, timeSeconds) {

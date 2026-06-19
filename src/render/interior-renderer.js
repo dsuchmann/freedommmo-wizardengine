@@ -3,6 +3,16 @@
 // position, and makes the south wall see-through near the player so it never occludes them.
 import { getActiveInterior, isInside, dimAlphaForFloor } from './active-interior.js';
 import { ensureFloorImages, getFloorImg, getWallImg } from './building-renderer.js';
+import { WALL_CONFIG } from './wall-config.js';
+
+// Per-floor NORTH screen lift: floor N's tiles + the player draw `N · storyHeight`
+// tiles north of the footprint, reusing the SAME per-story step the exterior wall
+// stack uses (WALL_CONFIG.wallHeight). Ground floor (index 0) = 0; each floor up lifts
+// one story so climbing reads as rising; basement (negative) sinks below ground.
+export function interiorLiftPx(tilePx) {
+  const ai = getActiveInterior();
+  return ai ? ai.floorIndex * WALL_CONFIG.wallHeight * tilePx : 0;
+}
 
 // The player now draws ON TOP of everything (z-order flipped), so the in-world interior FLOOR
 // should layer UNDER the player: floor drawn over the baked roof, character standing on the
@@ -13,8 +23,9 @@ import { ensureFloorImages, getFloorImg, getWallImg } from './building-renderer.
 // agents) keeps flipping the player z-order — so the floor intermittently covers the character
 // and reads white. Stable state = dim + markers + visible character. The real lit floor comes
 // from the WORKER bake (pipeline contract), the only place it stays correct.
-const SHOW_TILES = false;   // floor off (revived by the worker-baked pipeline interior)
-const SHOW_WALLS = false;   // walls off (separately broken)
+const SHOW_TILES = true;    // floor ON — drawn as a top pass over the dimmed world (the
+                            // world player is suppressed while inside, so no z-order clash)
+const SHOW_WALLS = false;   // interior walls off for now (dimmed exterior frames the room)
 
 // Animated outer-world dim — eases on enter + floor change so climbing visibly recedes the
 // ground world (see drawInteriorFloorWorld).
@@ -29,6 +40,7 @@ export function drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h) {
   if (!isInside()) { _dimKey = null; _dimCur = 0; return; }
   ensureFloorImages();
   const ai = getActiveInterior(), L = ai.layout, t = Math.ceil(tilePx), pad = 1;
+  const lift = interiorLiftPx(tilePx); // per-floor north screen offset (floor + player rise together)
   ctx.save();
   // Dim the outer world — animated so changing floor visibly RECEDES the ground world (eases
   // deeper going up, black underground), a sense of rising away from it.
@@ -41,21 +53,21 @@ export function drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h) {
   _dimCur = _dimFrom + (targetDim - _dimFrom) * de;
   ctx.fillStyle = `rgba(8,10,18,${_dimCur.toFixed(3)})`;
   ctx.fillRect(0, 0, w, h);
-  if (SHOW_TILES) { // floor over the FULL footprint — DISABLED in triage (it covers the GL-layer player)
+  if (SHOW_TILES) { // floor over the FULL footprint, lifted north by the per-floor offset
     ctx.imageSmoothingEnabled = false;
     const floorImg = getFloorImg(ai.layout.material) || getFloorImg('wood_plank'); // material per floor use
     const fallback = MAT_COLOR[ai.layout.material] || MAT_COLOR.wood_plank;        // solid color until the sprite loads
     for (const k of ai.footprint) {
       const [lx, ly] = k.split(',').map(Number);
-      const sx = Math.floor((ai.bx + lx) * tilePx - camX), sy = Math.floor((ai.by + ly) * tilePx - camY);
+      const sx = Math.floor((ai.bx + lx) * tilePx - camX), sy = Math.floor((ai.by + ly) * tilePx - camY) - lift;
       if (sx + t < 0 || sy + t < 0 || sx > w || sy > h) continue;
       if (floorImg) ctx.drawImage(floorImg, sx, sy, t + pad, t + pad);
       else { ctx.fillStyle = fallback; ctx.fillRect(sx, sy, t + pad, t + pad); } // no white during cold load
     }
   }
-  // stair + lift markers — kept ON in triage so you can find them and test up/down.
-  marker(ctx, ai, L.stairTile, '#caa23a', camX, camY, tilePx, t);
-  if (L.liftTile) marker(ctx, ai, L.liftTile, '#4aa6c8', camX, camY, tilePx, t);
+  // stair + lift markers — lifted with the floor so they sit on the right tile.
+  marker(ctx, ai, L.stairTile, '#caa23a', camX, camY, tilePx, t, lift);
+  if (L.liftTile) marker(ctx, ai, L.liftTile, '#4aa6c8', camX, camY, tilePx, t, lift);
   ctx.restore();
 
   // Diagnostic HUD: which floor + the building's range — so floor-changes are visible even
@@ -101,8 +113,8 @@ export function drawInteriorWallsWorld(ctx, camX, camY, tilePx, w, h, playerTile
   ctx.restore();
 }
 
-function marker(ctx, ai, tile, color, camX, camY, tilePx, t) {
+function marker(ctx, ai, tile, color, camX, camY, tilePx, t, lift = 0) {
   if (!tile) return;
-  const sx = Math.floor((ai.bx + tile.x) * tilePx - camX), sy = Math.floor((ai.by + tile.y) * tilePx - camY);
+  const sx = Math.floor((ai.bx + tile.x) * tilePx - camX), sy = Math.floor((ai.by + tile.y) * tilePx - camY) - lift;
   ctx.fillStyle = color; ctx.fillRect(sx + 2, sy + 2, t - 4, t - 4);
 }
