@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { generatePattern } from '../world/buildings/patterns.js';
 import { generateFootprint } from '../world/buildings/footprints.js';
-import { BUILDING_TYPES } from '../world/buildings/taxonomy.js';
+import { BUILDING_TYPES, typeById } from '../world/buildings/taxonomy.js';
 
 // ── Task 2: pattern generators ────────────────────────────────────────
 
@@ -166,4 +166,17 @@ test('open-air buildings have no walls', () => {
 test('unknown typeId returns null', () => {
   const fp = generateFootprint(42, 'does_not_exist');
   assert.equal(fp, null);
+});
+
+test('generateFootprint: interior meets the function minimum (feature-rich types get more floor)', () => {
+  for (const typeId of ['cottage', 'manor', 'temple', 'blacksmith']) {
+    let minSeen = Infinity;
+    for (let s = 0; s < 12; s++) {
+      const fp = generateFootprint(s * 1000 + 7, typeId, 'human');
+      if (!fp) continue;
+      minSeen = Math.min(minSeen, fp.floors.length);
+    }
+    const req = (typeById(typeId).features || []).filter(f => f.required).length;
+    assert.ok(minSeen >= Math.max(9, 4 + req * 3), `${typeId} floor=${minSeen} below function minimum`);
+  }
 });

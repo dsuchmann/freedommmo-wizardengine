@@ -80,6 +80,14 @@ const MAX_DOORS = 4;
 // (5 => at least a 3x3 interior after the 1-tile wall ring).
 const MIN_DIM = 5;
 
+// A building must contain its REQUIRED features with room to move — derive a minimum floor-tile
+// count from them (each required feature needs ~3 tiles of clearance over a base interior). This
+// is the per-function "square-peg minimum": a 7-feature manor needs more floor than a 2-feature hut.
+function minFloorTilesFor(type) {
+  const req = (type.features || []).filter(f => f.required).length;
+  return Math.max(9, 4 + req * 3);
+}
+
 /** Tiles OUTSIDE the footprint, reachable from the bounding-box border by 4-way
  *  flood-fill over empty space. Enclosed courtyard holes are NOT reached, so this
  *  distinguishes the true outer edge from inner courtyard edges. */
@@ -197,52 +205,36 @@ export function generateFootprint(seed, typeId, race, tier) {
   const type = typeById(typeId);
   if (!type) return null;
 
-  // 1. Determine size within type's range (scaled up 1.5× for visual presence on terrain)
+  // 1–5. Determine size, pick pattern, generate sections, compute walls/floors/doors.
+  //      Wrapped in a GROW LOOP: sparse patterns (L, courtyard) can leave fewer interior
+  //      tiles than the building's required features need.  We expand w/h by +1 per
+  //      iteration (up to 6 steps) until floor count meets the function minimum.
   const SCALE = 1.5;
-  const w = Math.max(MIN_DIM, Math.round((type.minW + Math.floor(rand(seed, 0x5001) * (type.maxW - type.minW + 1))) * SCALE));
-  const h = Math.max(MIN_DIM, Math.round((type.minH + Math.floor(rand(seed, 0x5002) * (type.maxH - type.minH + 1))) * SCALE));
-
-  // 2. Pick pattern from type's allowed patterns
-  const patIdx = Math.floor(rand(seed, 0x5003) * type.patterns.length);
-  const patternName = type.patterns[patIdx];
-
-  // 3. Generate sections
-  const patSeed = mix(seed, 0x5004);
-  const { sections } = generatePattern(patternName, w, h, patSeed);
-
-  // 4. Collect tiles
-  const tileSet = allTiles(sections);
-
-  // 5. Walls + floors
-  let walls, wallKeySet, floors, doors;
-  if (type.open) {
-    // Open-air: no walls, all tiles are floors
-    walls = [];
-    wallKeySet = new Set();
-    floors = [];
-    for (const key of tileSet) {
-      const [x, y] = key.split(',').map(Number);
-      floors.push({ x, y });
+  const need = minFloorTilesFor(type);
+  let w, h, patternName, sections, tileSet, walls, wallKeySet, floors, doors;
+  for (let grow = 0; grow <= 6; grow++) {
+    w = Math.max(MIN_DIM, Math.round((type.minW + Math.floor(rand(seed, 0x5001) * (type.maxW - type.minW + 1))) * SCALE) + grow);
+    h = Math.max(MIN_DIM, Math.round((type.minH + Math.floor(rand(seed, 0x5002) * (type.maxH - type.minH + 1))) * SCALE) + grow);
+    const patIdx = Math.floor(rand(seed, 0x5003) * type.patterns.length);
+    patternName = type.patterns[patIdx];
+    sections = generatePattern(patternName, w, h, mix(seed, 0x5004)).sections;
+    tileSet = allTiles(sections);
+    if (type.open) {
+      walls = []; wallKeySet = new Set();
+      floors = []; for (const key of tileSet) { const [x, y] = key.split(',').map(Number); floors.push({ x, y }); }
+      const southEdge = floors.filter(f => !tileSet.has(`${f.x},${f.y + 1}`));
+      const di = Math.floor(rand(seed, 0x5010) * Math.max(1, southEdge.length));
+      doors = southEdge.length ? [{ x: southEdge[di].x, y: southEdge[di].y }] : [];
+    } else {
+      walls = perimeterTiles(sections, tileSet);
+      wallKeySet = new Set(walls.map(wl => `${wl.x},${wl.y}`));
+      floors = interiorTiles(tileSet, wallKeySet);
+      doors = placeDoors(walls, wallKeySet, tileSet, seed, boundingBox(sections));
+      const doorSet = new Set(doors.map(d => `${d.x},${d.y}`));
+      walls = walls.filter(wl => !doorSet.has(`${wl.x},${wl.y}`));
+      floors = [...floors, ...doors.map(d => ({ x: d.x, y: d.y }))];
     }
-    // Open-air buildings still get a door marker at south edge
-    const southEdge = floors.filter(f => !tileSet.has(`${f.x},${f.y + 1}`));
-    doors = southEdge.length > 0
-      ? [{ x: southEdge[Math.floor(rand(seed, 0x5010) * southEdge.length)].x,
-           y: southEdge[Math.floor(rand(seed, 0x5010) * southEdge.length)].y }]
-      : [];
-  } else {
-    walls = perimeterTiles(sections, tileSet);
-    wallKeySet = new Set(walls.map(w => `${w.x},${w.y}`));
-    floors = interiorTiles(tileSet, wallKeySet);
-
-    // 6. Doors — on the true outer perimeter (not courtyard edges), spaced apart,
-    //    count capped by perimeter length so they never cluster.
-    doors = placeDoors(walls, wallKeySet, tileSet, seed, boundingBox(sections));
-
-    // Remove door tiles from walls, add to floors
-    const doorSet = new Set(doors.map(d => `${d.x},${d.y}`));
-    walls = walls.filter(w => !doorSet.has(`${w.x},${w.y}`));
-    floors = [...floors, ...doors.map(d => ({ x: d.x, y: d.y }))];
+    if (floors.length >= need) break; // coherent: enough interior for the function
   }
 
   // 7. Place features on floor tiles
