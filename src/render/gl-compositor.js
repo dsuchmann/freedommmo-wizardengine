@@ -59,6 +59,9 @@ in float aAlpha;
 in vec4 aUV;       // u0, v0, du, dv
 uniform vec2 uViewport;
 uniform vec3 uCam; // x,y = screen-px offset, z = px per tile (tilePxSnapped)
+uniform float uDepthOn;    // 0 = legacy (z=0); 1 = depth from baseline (building↔player occlusion)
+uniform float uDepthRef;   // reference tile Y (screen centre) — must match the building-depth pass
+uniform float uDepthScale; // tiles→depth slope (must match building-depth.js DEPTH_SCALE)
 out vec2 vUV;
 out float vAlpha;
 void main() {
@@ -69,7 +72,14 @@ void main() {
   float s = sin(aPSR.w);
   vec2 px = pivotPx + vec2(local.x * c - local.y * s, local.x * s + local.y * c);
   vec2 clip = vec2(px.x / uViewport.x * 2.0 - 1.0, 1.0 - px.y / uViewport.y * 2.0);
-  gl_Position = vec4(clip, 0.0, 1.0);
+  // Depth from the sprite's BASELINE (aPSR.y, world tiles): larger Y = more south = nearer =
+  // smaller depth. NDC z = 2d-1 → gl_FragDepth = d, matching the building-depth pass exactly.
+  float z = 0.0;
+  if (uDepthOn > 0.5) {
+    float d = clamp(0.5 - (aPSR.y - uDepthRef) * uDepthScale, 0.0, 1.0);
+    z = d * 2.0 - 1.0;
+  }
+  gl_Position = vec4(clip, z, 1.0);
   vUV = aUV.xy + aUnit * aUV.zw;
   vAlpha = aAlpha;
 }`;
@@ -1033,6 +1043,9 @@ export class GLCompositor {
     this.sUViewport = gl.getUniformLocation(prog, 'uViewport');
     this.sUCam = gl.getUniformLocation(prog, 'uCam');
     this.sUAtlas = gl.getUniformLocation(prog, 'uAtlas');
+    this.sUDepthOn = gl.getUniformLocation(prog, 'uDepthOn');
+    this.sUDepthRef = gl.getUniformLocation(prog, 'uDepthRef');
+    this.sUDepthScale = gl.getUniformLocation(prog, 'uDepthScale');
 
     // Runtime shelf-packed sprite atlas. With F2 (32px), F4 (64px), F5
     // (96px), and F6 (192px) sprites sharing one atlas, 4096² overflows
@@ -1521,6 +1534,19 @@ export class GLCompositor {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.atlasTex);
     gl.uniform1i(this.sUAtlas, 0);
+    // Depth occlusion (player): test against the building-depth buffer so the sprite is hidden
+    // behind buildings, but DON'T write depth (depthMask false) so flora ordering is unchanged.
+    var depthOn = !!this._spriteDepth;
+    if (depthOn) {
+      gl.uniform1f(this.sUDepthOn, 1);
+      gl.uniform1f(this.sUDepthRef, this._spriteDepth.refY);
+      gl.uniform1f(this.sUDepthScale, this._spriteDepth.scale);
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthFunc(gl.LEQUAL);
+      gl.depthMask(false);
+    } else if (this.sUDepthOn) {
+      gl.uniform1f(this.sUDepthOn, 0);
+    }
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     try {
@@ -1533,7 +1559,13 @@ export class GLCompositor {
       gl.bindVertexArray(null);
     }
     gl.disable(gl.BLEND);
+    if (depthOn) { gl.disable(gl.DEPTH_TEST); gl.depthMask(true); }
   }
+
+  // Enable building-depth occlusion for the player pool draw (refY/scale must match the
+  // building-depth pass). Cleared with clearSpriteDepth() after the player is drawn.
+  setSpriteDepth(refY, scale) { this._spriteDepth = { refY: refY, scale: scale }; }
+  clearSpriteDepth() { this._spriteDepth = null; }
 
   drawPoolShadows(start, count, cssW, cssH, cam, shadowVec, strength) {
     if (!this.ok || !this.shadowOk || count === 0) return;

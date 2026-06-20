@@ -15,7 +15,7 @@ import { drawBuildingShadows } from './building-shadow.js';
 import { updateFloorViewTransform } from './floor-view.js';
 import { drawInteriorFloorWorld, drawInteriorWallsWorld, interiorLiftPx, updateInteriorLift } from './interior-renderer.js';
 import { buildOccluderBitmap } from './building-occluder.js';
-import { buildBuildingDepthBitmap } from './building-depth.js';
+import { buildBuildingDepthBitmap, DEPTH_SCALE } from './building-depth.js';
 import { isInside } from './active-interior.js';
 import { initWallTuner, drawWallTuner } from './wall-tuner.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations, buildWaveField } from './water-wave-overlay.js';
@@ -449,10 +449,13 @@ export class CanvasRenderer {
     // batch, so the player sprite depth-tests against it — occluded at ANY distance, no rise-band,
     // and building COLOUR stays baked (this never touches colour). window._depthOcclusionDebug
     // dumps the depth as greyscale to verify alignment.
+    let _depthActive = false;
     if (glScene && typeof window !== 'undefined' && window._depthOcclusion) {
       const _refY = (camY + h / 2) / tilePx;
       const _dbmp = buildBuildingDepthBitmap(getCachedBuildings(), camX, camY, tilePx, w, h, _refY);
       if (_dbmp) this.glc.writeBuildingDepth(_dbmp, !!window._depthOcclusionDebug);
+      this.glc.setSpriteDepth(_refY, DEPTH_SCALE); // player draw depth-tests against the building depth
+      _depthActive = true;
     }
 
     // === FIELD 2: ANIMATED WIND SWAY ===
@@ -464,6 +467,7 @@ export class CanvasRenderer {
       const f2Grid = { baseSX, baseSY, minCX, minCY, chunkPx };
       drawField2Animations(ctx, chunkStore, player, camera, w, h, f2Grid, performance.now(), weather, sun, glOn ? this.glc : null);
     }
+    if (_depthActive) this.glc.clearSpriteDepth(); // player drawn; stop depth-testing subsequent pool draws
 
     // Building walls: rendered in chunk pipeline via shared wall-draw.js.
     // Separate-pass only when tuner is active (for live calibration).
@@ -544,7 +548,7 @@ export class CanvasRenderer {
       // those buildings with a see-through hole around the player and blit it into the scene FBO
       // HERE — after the sprite batch, before present — so the present pass lights/CRTs it just
       // like the baked building. No-op when nothing is in front of the player. (Not while inside.)
-      if (!_inside) {
+      if (!_inside && !(typeof window !== 'undefined' && window._depthOcclusion)) {
         const _occ = buildOccluderBitmap(getCachedBuildings(), camX, camY, tilePx, w, h,
           { x: w / 2, y: _playerScreenY }, player);
         if (_occ) this.glc.drawSceneOverlayBitmap(_occ);
