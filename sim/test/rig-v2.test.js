@@ -11,7 +11,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { solvePose } from '../../src/life/pose.js';
-import { validateRig } from '../../src/life/rig.js';
+import { validateRig, applyProportions } from '../../src/life/rig.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const V2_PATH = join(ROOT, 'src/life/rigs/humanoid.v2.json');
@@ -96,4 +96,19 @@ test('v2 rig is valid under the extended validator', () => {
 
 test('v1 rig still valid (back-compat)', () => {
   assert.deepEqual(validateRig(loadRigRaw()), []);   // [] = no violations
+});
+
+// --- Task 4: per-entity proportion scaling -------------------------------
+test('applyProportions scales bone lengths/pivots and lowers/raises feet', () => {
+  const v2 = loadRigV2();
+  const child = applyProportions(v2, { all: 0.5 });          // half-size
+  assert.equal(child.bones.thigh_l.length, v2.bones.thigh_l.length * 0.5);
+  // identity vector is a no-op
+  const same = applyProportions(v2, {});
+  assert.equal(same.bones.thigh_l.length, v2.bones.thigh_l.length);
+  // foot tip y scales with the body (grounding stays consistent)
+  const restJoints = {};
+  const tallFoot = solvePose(v2, restJoints).foot_l.tip.y;
+  const shortFoot = solvePose(child, restJoints).foot_l.tip.y;
+  assert.ok(Math.abs(shortFoot) < Math.abs(tallFoot), 'smaller body → foot closer to root');
 });

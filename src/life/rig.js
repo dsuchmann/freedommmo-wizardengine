@@ -91,3 +91,20 @@ export function comOf(rig) {
   }
   return { x: mx / m, y: my / m, mass: m };
 }
+
+/** Per-entity proportion scaling. Returns a deep-scaled COPY of the rig.
+ *  vector = { all?, <boneName>: scalar }; each bone's length + pivot magnitude
+ *  is scaled by `vector[name] ?? vector.all ?? 1`. The identity vector ({} or
+ *  unspecified) is a no-op, so the whole skeleton (and its sockets, which ride
+ *  the bones) shrinks/grows together while grounding stays consistent. */
+export function applyProportions(rig, vector = {}) {
+  const s = (name) => vector[name] ?? vector.all ?? 1;
+  const out = structuredClone(rig);
+  for (const [name, b] of Object.entries(out.bones)) {
+    const k = s(name);
+    if (k === 1) continue;
+    b.length *= k;
+    b.pivot = [b.pivot[0] * k, b.pivot[1] * k];
+  }
+  return out;
+}
