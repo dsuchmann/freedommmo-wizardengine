@@ -32,19 +32,31 @@ void main() {
   outColor = texture(uTex, vUV);
 }`;
 
-// Building-depth pass: sample a grey-encoded depth bitmap (R = baseline depth, A = building mask)
-// and write it into the scene FBO's DEPTH buffer so the player sprite can depth-test against it.
-// Colour is written only in debug (gated by colourMask in JS). Reuses VERT_SRC (uPos/uSize quad).
+// Building-depth pass: write a building silhouette into the scene FBO's DEPTH buffer at a flat
+// per-building depth (uDepthZ = the south baseline mapped to NDC z) so the player sprite can
+// depth-test against it. The depth comes from the QUAD's gl_Position.z, NOT gl_FragDepth — Chrome
+// on Windows (ANGLE/D3D) SILENTLY IGNORES fragment gl_FragDepth writes, which is why the depth
+// pass produced no occlusion. One draw per near building; the frag only discards outside the
+// silhouette (alpha mask). Colour is written only in debug (colourMask in JS).
+var DEPTHWRITE_VERT_SRC = `#version 300 es
+precision highp float;
+in vec2 aUnit;
+uniform vec2 uPos; uniform vec2 uSize; uniform vec2 uViewport; uniform float uDepthZ;
+out vec2 vUV;
+void main() {
+  vec2 px = uPos + aUnit * uSize;
+  vec2 clip = vec2(px.x / uViewport.x * 2.0 - 1.0, 1.0 - px.y / uViewport.y * 2.0);
+  gl_Position = vec4(clip, uDepthZ, 1.0); // geometry-z depth (works on ANGLE; gl_FragDepth does not)
+  vUV = aUnit;
+}`;
 var DEPTHWRITE_FRAG_SRC = `#version 300 es
 precision highp float;
 in vec2 vUV;
 uniform sampler2D uTex;
 out vec4 outColor;
 void main() {
-  vec4 t = texture(uTex, vUV);
-  if (t.a < 0.5) discard;           // no building here → leave depth at far (1.0)
-  gl_FragDepth = t.r;               // grey baseline depth
-  outColor = vec4(t.r, t.r, t.r, 1.0); // reaches the colour buffer only when colourMask is on (debug)
+  if (texture(uTex, vUV).a < 0.5) discard; // outside the building silhouette → leave depth far
+  outColor = vec4(0.6, 0.3, 0.3, 1.0);      // reaches colour only when colourMask is on (debug)
 }`;
 
 // --- Stage 2: instanced sprite pipeline (F2 small flora) ---
@@ -993,17 +1005,18 @@ export class GLCompositor {
   // call AFTER the chunk blit, BEFORE the sprite batch, so the player sprite can depth-test against
   // it. R = baseline depth, A = building mask (transparent → depth left far). debug=true also dumps
   // the depth as greyscale colour to verify alignment. Reuses VERT_SRC's uPos/uSize quad.
-  writeBuildingDepth(bitmap, debug) {
+  writeBuildingDepth(bitmap, depthZ, debug) {
     if (!this.ok || !this.sceneActive || !bitmap || this.depthWriteOk === false) return;
     var gl = this.gl;
     if (!this.depthWriteProgram) {
-      var prog = this._buildProgram(VERT_SRC, DEPTHWRITE_FRAG_SRC);
+      var prog = this._buildProgram(DEPTHWRITE_VERT_SRC, DEPTHWRITE_FRAG_SRC);
       if (!prog) { this.depthWriteOk = false; return; }
       this.depthWriteProgram = prog;
       this.dwUViewport = gl.getUniformLocation(prog, 'uViewport');
       this.dwUPos = gl.getUniformLocation(prog, 'uPos');
       this.dwUSize = gl.getUniformLocation(prog, 'uSize');
       this.dwUTex = gl.getUniformLocation(prog, 'uTex');
+      this.dwUDepthZ = gl.getUniformLocation(prog, 'uDepthZ');
       this.depthWriteVao = gl.createVertexArray();
       gl.bindVertexArray(this.depthWriteVao);
       gl.bindBuffer(gl.ARRAY_BUFFER, this.unitVbo);
@@ -1020,6 +1033,7 @@ export class GLCompositor {
     gl.uniform2f(this.dwUViewport, this._artW, this._artH);
     gl.uniform2f(this.dwUPos, 0, 0);
     gl.uniform2f(this.dwUSize, this._artW, this._artH);
+    gl.uniform1f(this.dwUDepthZ, depthZ);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this._depthTex);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
@@ -1030,7 +1044,7 @@ export class GLCompositor {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.uniform1i(this.dwUTex, 0);
     gl.enable(gl.DEPTH_TEST);
-    gl.depthFunc(gl.ALWAYS);
+    gl.depthFunc(gl.LESS);     // nearer building (smaller z) wins where silhouettes overlap
     gl.depthMask(true);
     gl.disable(gl.BLEND);
     gl.colorMask(!!debug, !!debug, !!debug, !!debug);
@@ -1548,7 +1562,7 @@ export class GLCompositor {
     // Depth occlusion (player): test against the building-depth buffer so the sprite is hidden
     // behind buildings, but DON'T write depth (depthMask false) so flora ordering is unchanged.
     var depthOn = !!this._spriteDepth;
-    if (this.sUSeeThrough) gl.uniform1f(this.sUSeeThrough, (seeThrough && this._spriteDepth) ? (this._spriteDepth.see || 0.7) : 0);
+    if (this.sUSeeThrough) gl.uniform1f(this.sUSeeThrough, (seeThrough && this._spriteDepth) ? (typeof this._spriteDepth.see === 'number' ? this._spriteDepth.see : 0.45) : 0);
     if (depthOn) {
       gl.uniform1f(this.sUDepthOn, 1);
       gl.uniform1f(this.sUDepthRef, this._spriteDepth.refY);

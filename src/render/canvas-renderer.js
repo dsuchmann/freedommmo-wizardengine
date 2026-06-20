@@ -16,7 +16,7 @@ import { updateFloorViewTransform } from './floor-view.js';
 import { drawInteriorFloorWorld, drawInteriorWallsWorld, interiorLiftPx, updateInteriorLift } from './interior-renderer.js';
 import { buildInteriorSceneBitmap } from './interior-gl.js';
 import { buildOccluderBitmap } from './building-occluder.js';
-import { buildBuildingDepthBitmap, DEPTH_SCALE } from './building-depth.js';
+import { nearDepthBuildings, renderBuildingSilhouette, tileDepth, DEPTH_SCALE } from './building-depth.js';
 import { isInside } from './active-interior.js';
 import { initWallTuner, drawWallTuner } from './wall-tuner.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations, buildWaveField } from './water-wave-overlay.js';
@@ -453,11 +453,21 @@ export class CanvasRenderer {
     let _depthActive = false;
     if (glScene && typeof window !== 'undefined' && window._depthOcclusion !== false) {
       const _refY = (camY + h / 2) / tilePx;
-      const _dbmp = buildBuildingDepthBitmap(getCachedBuildings(), camX, camY, tilePx, w, h, _refY);
-      if (_dbmp) this.glc.writeBuildingDepth(_dbmp, !!window._depthOcclusionDebug);
-      const _see = (typeof window._depthSeeStrength === 'number') ? window._depthSeeStrength : 0.7;
-      this.glc.setSpriteDepth(_refY, DEPTH_SCALE, _see); // player depth-tests against the building depth + soft reveal
-      _depthActive = true;
+      const _blds = nearDepthBuildings(getCachedBuildings(), camX, camY, tilePx, w, h);
+      const _dbg = !!window._depthOcclusionDebug;
+      let _wrote = false;
+      for (const _b of _blds) {
+        const _sil = renderBuildingSilhouette(_b, camX, camY, tilePx, w, h);
+        if (!_sil) continue;
+        const _z = tileDepth(_b.y + _b.footprint.boundingBox.h, _refY) * 2 - 1; // baseline → NDC z (geometry-z depth)
+        this.glc.writeBuildingDepth(_sil, _z, _dbg);
+        _wrote = true;
+      }
+      if (_wrote) {
+        const _see = (typeof window._depthSeeStrength === 'number') ? window._depthSeeStrength : 0.45;
+        this.glc.setSpriteDepth(_refY, DEPTH_SCALE, _see); // player depth-tests against the building depth + soft reveal
+        _depthActive = true;
+      }
     }
 
     // === FIELD 2: ANIMATED WIND SWAY ===
