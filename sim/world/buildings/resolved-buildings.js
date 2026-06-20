@@ -5,10 +5,14 @@
 
 import { layoutSettlement } from './layout.js';
 import { discoverSettlementsInMacroRange, suppressBySpacing, MACRO_TILES } from './settlement-discovery.js';
-import { classifyBiome } from '../../../src/world/biomes.js';
+import { classifyBiomeNoStream } from '../../../src/world/biomes.js';
 import { classifyTerrainForm } from '../../../src/world/terrain-forms.js';
 
-const WATER = new Set(['ocean', 'deep_ocean', 'lake', 'river', 'shallow_water', 'stream']);
+// Basin water rejects a building site. 'stream' (the 1-wide additive hydrology channel)
+// is intentionally NOT here: placement uses the stream-free classifier, so a building may
+// clip a creek (it just covers it) — same policy as settlement discovery. This also keeps
+// the cold streamAt() neighbourhood trace (~1s) out of the per-building water test.
+const WATER = new Set(['ocean', 'deep_ocean', 'lake', 'river', 'shallow_water']);
 
 // world_capital is TIER_SIZE 440 wide / TIER_RADIUS 220 — the worst-case half-footprint.
 export const MAX_SETTLEMENT_RADIUS = 220;
@@ -38,17 +42,43 @@ function memoLayout(seed, s) {
   return layout;
 }
 
-function buildingTouchesWater(b) {
+// Terrain is a pure, immutable function of (x,y), but classifyBiomeNoStream / classifyTerrainForm
+// are expensive and the relocation spiral re-samples the same tiles thousands of times. Cache
+// per-tile verdicts in bounded persistent maps — deterministic (same input → same verdict) and
+// safe across resolves (terrain never changes). This is what makes relocation affordable.
+const _waterTileCache = new Map();
+function isWaterTile(px, py) {
+  const k = px + ',' + py;
+  let v = _waterTileCache.get(k);
+  if (v === undefined) {
+    v = WATER.has(classifyBiomeNoStream(px, py).id);
+    if (_waterTileCache.size < 400000) _waterTileCache.set(k, v);
+  }
+  return v;
+}
+const _formTileCache = new Map();
+function tileForm(px, py) {
+  const k = px + ',' + py;
+  let v = _formTileCache.get(k);
+  if (v === undefined) {
+    const tf = classifyTerrainForm(px, py);
+    v = { form: tf.form, level: tf.plateauLevel };
+    if (_formTileCache.size < 400000) _formTileCache.set(k, v);
+  }
+  return v;
+}
+
+export function buildingTouchesWater(b) {
   const bb = b.footprint.boundingBox;
   const pts = [
     [b.x, b.y], [b.x + bb.w - 1, b.y],
     [b.x, b.y + bb.h - 1], [b.x + bb.w - 1, b.y + bb.h - 1],
     [b.x + Math.floor(bb.w / 2), b.y + Math.floor(bb.h / 2)],
   ];
-  return pts.some(([px, py]) => WATER.has(classifyBiome(px, py).id));
+  return pts.some(([px, py]) => isWaterTile(px, py));
 }
 
-function buildingSpansCliff(b) {
+export function buildingSpansCliff(b) {
   const bb = b.footprint.boundingBox;
   // Sample perimeter + center — enough to catch any cliff that crosses the
   // footprint, without sampling every interior tile (expensive). Includes the
@@ -68,13 +98,123 @@ function buildingSpansCliff(b) {
     // origin
     [b.x, b.y],
   ];
-  const originLevel = classifyTerrainForm(b.x, b.y).plateauLevel;
+  const originLevel = tileForm(b.x, b.y).level;
   for (const [px, py] of pts) {
-    const tf = classifyTerrainForm(px, py);
+    const tf = tileForm(px, py);
     if (tf.form === 'cliff' || tf.form === 'step') return true;
-    if (tf.plateauLevel !== originLevel) return true;
+    if (tf.level !== originLevel) return true;
   }
   return false;
+}
+
+// How far (in tiles) a suppressed building may search for a valid site before we accept
+// honest absence. Generous enough to clear a typical shoreline/cliff band; bounded so the
+// (memoized, once-per-settlement) search can't run away. Tunable.
+export const MAX_RELOCATE_RADIUS = 12;
+
+// Deterministic nearest-first search for a valid origin for a building whose intended site
+// is invalid (water/cliff). Pure f(terrain, localOccupied): tests only the terrain field and
+// the settlement's own already-placed footprints (range-independent) — never the cross-settlement
+// occupied set. Canonical ring scan order => identical result every run. Returns {x,y} or null.
+export function relocateBuilding(b, localOccupied) {
+  const bb = b.footprint.boundingBox, w = bb.w, h = bb.h;
+  const halfW = Math.floor(w / 2), halfH = Math.floor(h / 2);
+  // Validity check inlined with the cached tile lookups — NO per-candidate object/array
+  // allocation (the spiral evaluates thousands of tiles; the old probe + sample-array allocs
+  // dominated the cost). Sample points are IDENTICAL to buildingTouchesWater + buildingSpansCliff,
+  // so the result is byte-for-byte unchanged.
+  const fitsAt = (nx, ny) => {
+    // water: 4 corners + center
+    if (isWaterTile(nx, ny) || isWaterTile(nx + w - 1, ny) || isWaterTile(nx, ny + h - 1)
+      || isWaterTile(nx + w - 1, ny + h - 1) || isWaterTile(nx + halfW, ny + halfH)) return false;
+    // cliff/step/plateau-change over the claim band (matches buildingSpansCliff exactly)
+    const y0 = ny - NORTH_CLAIM, y1 = ny + h + CLAIM_MARGIN - 1;
+    const x0 = nx - CLAIM_MARGIN, x1 = nx + w + CLAIM_MARGIN - 1;
+    const mx = Math.floor((x0 + x1) / 2), my = Math.floor((y0 + y1) / 2);
+    const lvl = tileForm(nx, ny).level;
+    const cliff = (px, py) => { const t = tileForm(px, py); return t.form === 'cliff' || t.form === 'step' || t.level !== lvl; };
+    if (cliff(x0, y0) || cliff(x1, y0) || cliff(x0, y1) || cliff(x1, y1) || cliff(mx, y0) || cliff(mx, y1)
+      || cliff(x0, my) || cliff(x1, my) || cliff(mx, my) || cliff(nx, ny)) return false;
+    // intra-settlement occupancy
+    for (let dy = 0; dy < h; dy++)
+      for (let dx = 0; dx < w; dx++)
+        if (localOccupied.has((nx + dx) + ',' + (ny + dy))) return false;
+    return true;
+  };
+  for (let r = 1; r <= MAX_RELOCATE_RADIUS; r++) {
+    for (let dx = -r; dx <= r; dx++) {
+      if (fitsAt(b.x + dx, b.y - r)) return { x: b.x + dx, y: b.y - r };
+      if (fitsAt(b.x + dx, b.y + r)) return { x: b.x + dx, y: b.y + r };
+    }
+    for (let dy = -r + 1; dy <= r - 1; dy++) {
+      if (fitsAt(b.x - r, b.y + dy)) return { x: b.x - r, y: b.y + dy };
+      if (fitsAt(b.x + r, b.y + dy)) return { x: b.x + r, y: b.y + dy };
+    }
+  }
+  return null;
+}
+
+// [TEMP probe] per-resolve accumulators (reset at the top of resolveBuildingsInRange)
+let _pLayoutMs = 0, _pLayoutCold = 0, _pWaterMs = 0, _pCliffMs = 0, _pCliffN = 0, _pBldScanned = 0;
+
+// Per-settlement candidate buildings: a settlement's layout filtered to the buildings that
+// pass the (pure, per-building) water + cliff tests. This filtering was the dominant resolve
+// cost — buildingTouchesWater sampling alone ran ~420ms/crossing because the loop re-tested
+// EVERY scanned building on EVERY macro-cell crossing. The verdict is a pure f(seed, settlement)
+// (independent of the query range and of other settlements), so memoize it: a crossing then
+// re-pays only for settlements it has never resolved before. Cross-settlement de-overlap stays
+// in resolveBuildingsInRange — that part IS range/priority-order dependent.
+const _candidateMemo = new Map();
+export function clearCandidateMemo() { _candidateMemo.clear(); }
+function settlementCandidates(seed, s) {
+  const key = `${seed}:${s.x},${s.y}:${s.tier}:${s.race}:${s.biome}`;
+  const hit = _candidateMemo.get(key);
+  if (hit) return hit;
+  const _P = (typeof performance !== 'undefined'); // [TEMP probe]
+  const _l0 = _P ? performance.now() : 0;
+  const layout = memoLayout(seed, s);
+  if (_P) { const _ld = performance.now() - _l0; _pLayoutMs += _ld; if (_ld > 1) _pLayoutCold++; }
+  const out = [];
+  if (layout && layout.buildings) {
+    const cap = Math.min(layout.buildings.length, MAX_RESOLVED_BUILDINGS);
+    // Intra-settlement occupancy (bounding-box tiles) of buildings already fixed in place —
+    // so a relocated building avoids its own settlement's buildings. Pure f(seed,settlement),
+    // range-independent (never reads the cross-settlement occupied set).
+    const localOccupied = new Set();
+    const mark = (x, y, bb) => {
+      for (let dy = 0; dy < bb.h; dy++)
+        for (let dx = 0; dx < bb.w; dx++) localOccupied.add((x + dx) + ',' + (y + dy));
+    };
+    // Pass 1: classify; valid-in-place buildings become fixed anchors.
+    const bad = new Array(cap);
+    for (let bi = 0; bi < cap; bi++) {
+      const b = layout.buildings[bi];
+      _pBldScanned++; // [TEMP probe]
+      const _w0 = _P ? performance.now() : 0;
+      const tw = buildingTouchesWater(b);
+      if (_P) _pWaterMs += performance.now() - _w0;
+      const _c0 = _P ? performance.now() : 0;
+      const sc = tw ? false : buildingSpansCliff(b);
+      if (_P) { _pCliffMs += performance.now() - _c0; _pCliffN++; }
+      bad[bi] = tw || sc;
+      if (!bad[bi]) mark(b.x, b.y, b.footprint.boundingBox);
+    }
+    // Pass 2: keep original order; relocate the invalid ones around the fixed anchors and
+    // each other (mark each relocation so later ones avoid it). Drop only if truly boxed in.
+    for (let bi = 0; bi < cap; bi++) {
+      const b = layout.buildings[bi];
+      if (!bad[bi]) { out.push(b); continue; }
+      const at = relocateBuilding(b, localOccupied);
+      if (at) {
+        mark(at.x, at.y, b.footprint.boundingBox);
+        out.push({ ...b, x: at.x, y: at.y, relocatedFrom: { x: b.x, y: b.y } });
+      }
+      // else: honest absence — no valid site within MAX_RELOCATE_RADIUS (stranded on water)
+    }
+  }
+  if (_candidateMemo.size > 2000) _candidateMemo.clear();
+  _candidateMemo.set(key, out);
+  return out;
 }
 
 /**
@@ -85,24 +225,24 @@ function buildingSpansCliff(b) {
  * Returns { buildings, byTile: Map<'wx,wy',building>, claimTiles: Set<'wx,wy'> }.
  */
 export function resolveBuildingsInRange(seed, mx0, my0, mx1, my1) {
+  const _P = (typeof performance !== 'undefined'); // [TEMP probe]
+  const _rt0 = _P ? performance.now() : 0;
+  _pLayoutMs = 0; _pLayoutCold = 0; _pWaterMs = 0; _pCliffMs = 0; _pCliffN = 0; _pBldScanned = 0;
   const R = NEIGHBOR_RING_R;
   const kept = suppressBySpacing(
     discoverSettlementsInMacroRange(seed, mx0 - R, my0 - R, mx1 + R, my1 + R));
+  const _tDisc = _P ? performance.now() : 0; // [TEMP probe]
 
   const all = [];
   const occupied = new Set(); // bounding-box occupancy (+CLAIM_MARGIN); first writer wins
 
   for (const s of kept) {
     if (s.state === 'ruined' || s.tier === 'ruins') continue; // ruins have no standing buildings to draw
-    const layout = memoLayout(seed, s);
-    if (!layout || !layout.buildings) continue;
-
-    const cap = Math.min(layout.buildings.length, MAX_RESOLVED_BUILDINGS);
-    for (let bi = 0; bi < cap; bi++) {
-      const b = layout.buildings[bi];
+    // Per-settlement candidates (layout + water + cliff) are memoized — pure f(seed,settlement).
+    // Candidates keep the original layout order, so the de-overlap result is byte-identical.
+    const candidates = settlementCandidates(seed, s);
+    for (const b of candidates) {
       const bb = b.footprint.boundingBox;
-      if (buildingTouchesWater(b)) continue;
-      if (buildingSpansCliff(b)) continue;
 
       let overlaps = false;
       for (let dy = 0; dy < bb.h && !overlaps; dy++)
@@ -117,6 +257,7 @@ export function resolveBuildingsInRange(seed, mx0, my0, mx1, my1) {
     }
   }
 
+  const _tLoop = _P ? performance.now() : 0; // [TEMP probe]
   // Filter to buildings intersecting the REQUESTED range's tile extent.
   const tx0 = mx0 * MACRO_TILES, ty0 = my0 * MACRO_TILES;
   const tx1 = (mx1 + 1) * MACRO_TILES, ty1 = (my1 + 1) * MACRO_TILES;
@@ -145,6 +286,27 @@ export function resolveBuildingsInRange(seed, mx0, my0, mx1, my1) {
       for (let dy = -northClaim; dy < sec.h + CLAIM_MARGIN; dy++)
         for (let dx = -CLAIM_MARGIN; dx < sec.w + CLAIM_MARGIN; dx++)
           claimTiles.add((b.x + sec.x0 + dx) + ',' + (b.y + sec.y0 + dy));
+    }
+  }
+  if (_P) { // [TEMP probe] — globalThis works in both browser (window) and node
+    const _w = globalThis;
+    const _tEnd = performance.now();
+    const _rd = _tEnd - _rt0;
+    _w._dbgResolveLast = _rd;
+    _w._dbgResolveN = (_w._dbgResolveN || 0) + 1;
+    _w._dbgResolveSum = (_w._dbgResolveSum || 0) + _rd;
+    if (_rd > (_w._dbgResolveMax || 0)) {
+      _w._dbgResolveMax = _rd;
+      _w._dbgResolveBreakdown = {
+        totalMs: +_rd.toFixed(1),
+        discoverMs: +(_tDisc - _rt0).toFixed(1),
+        settleLoopMs: +(_tLoop - _tDisc).toFixed(1),
+        byTileBuildMs: +(_tEnd - _tLoop).toFixed(1),
+        layoutMs: +_pLayoutMs.toFixed(1), layoutColdSettlements: _pLayoutCold,
+        cliffMs: +_pCliffMs.toFixed(1), cliffSamples: _pCliffN,
+        waterMs: +_pWaterMs.toFixed(1),
+        settlements: kept.length, buildingsScanned: _pBldScanned, buildingsKept: buildings.length,
+      };
     }
   }
   return { buildings, byTile, claimTiles };

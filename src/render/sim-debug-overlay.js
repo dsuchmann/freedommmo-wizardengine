@@ -14,6 +14,7 @@ import { classifyBiome } from '../world/biomes.js';
 import { rand } from '../../sim/kernel/rng.js';
 import { getWorldSeed } from '../core/world-seed.js';
 import { discoverSettlementsInMacroRange, suppressBySpacing } from '../../sim/world/buildings/settlement-discovery.js';
+import { resolveBuildingsInRange } from '../../sim/world/buildings/resolved-buildings.js';
 
 const MAX_OVERLAY_BUILDINGS = 80; // cap layout generation for performance
 
@@ -37,6 +38,7 @@ function discoverSettlements(camX, camY, w, h, tilePx) {
 }
 
 let _discoveredCache = { key: '', settlements: [] };
+let _resolvedBldCache = { key: '', buildings: [] }; // resolved building set, cached by macro-range (resolve is expensive)
 
 // ── Floor tile images ──────────────────────────────────────────────
 const FLOOR_TILES = {};  // material -> HTMLImageElement
@@ -178,9 +180,6 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
   const BUILDING_COLORS = {
     wall: 'rgba(70,80,95,0.7)', door: 'rgba(160,110,60,0.8)', floor: 'rgba(200,190,170,0.25)',
   };
-  // Global occupied tile tracker — prevents cross-settlement building overlap
-  const globalOccupied = new Set();
-  _renderedBuildings = [];
   for (const s of allSettlements) {
     const rc = RACE_COLORS[s.race] ?? DEFAULT_RACE;
     const isRuin = s.state === 'ruined' || s.tier === 'ruins';
@@ -211,70 +210,6 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
           if (i === 0) ctx.moveTo(px2, py2); else ctx.lineTo(px2, py2);
         }
         ctx.stroke();
-      }
-
-      // Buildings: draw as filled bounding-box outlines (fast) with type labels
-      for (const b of layout.buildings) {
-        const fp = b.footprint;
-        const bb = fp.boundingBox;
-
-        // Skip buildings touching any water (check corners + center)
-        const WATER = new Set(['ocean', 'deep_ocean', 'lake', 'river', 'shallow_water', 'stream']);
-        const checkPoints = [
-          [b.x, b.y], [b.x + bb.w - 1, b.y],
-          [b.x, b.y + bb.h - 1], [b.x + bb.w - 1, b.y + bb.h - 1],
-          [b.x + Math.floor(bb.w / 2), b.y + Math.floor(bb.h / 2)],
-        ];
-        if (checkPoints.some(([px, py]) => WATER.has(classifyBiome(px, py).id))) continue;
-
-        // Cross-settlement overlap check: skip if any tile already occupied
-        let overlaps = false;
-        for (let dy = 0; dy < bb.h && !overlaps; dy++) {
-          for (let dx = 0; dx < bb.w && !overlaps; dx++) {
-            if (globalOccupied.has(`${b.x + dx},${b.y + dy}`)) overlaps = true;
-          }
-        }
-        if (overlaps) continue;
-        // Mark tiles as occupied (with 2-tile margin)
-        for (let dy = -2; dy < bb.h + 2; dy++) {
-          for (let dx = -2; dx < bb.w + 2; dx++) {
-            globalOccupied.add(`${b.x + dx},${b.y + dy}`);
-          }
-        }
-
-        const bsx = Math.floor(b.x * tilePx - camX), bsy = Math.floor(b.y * tilePx - camY);
-        const bw = Math.ceil(bb.w * tilePx), bh = Math.ceil(bb.h * tilePx);
-        if (bsx > w || bsy > h || bsx + bw < 0 || bsy + bh < 0) continue;
-
-        // Fill + outline per section (matches actual footprint shape, not bounding box)
-        const t = Math.ceil(tilePx);
-        for (const sec of fp.sections) {
-          const ssx = Math.floor((b.x + sec.x0) * tilePx - camX);
-          const ssy = Math.floor((b.y + sec.y0) * tilePx - camY);
-          const sw = Math.ceil(sec.w * tilePx), sh = Math.ceil(sec.h * tilePx);
-          ctx.fillStyle = BUILDING_COLORS.floor;
-          ctx.fillRect(ssx, ssy, sw, sh);
-          ctx.strokeStyle = BUILDING_COLORS.wall;
-          ctx.lineWidth = Math.max(1, tilePx * 0.1);
-          ctx.strokeRect(ssx + 0.5, ssy + 0.5, sw - 1, sh - 1);
-        }
-        // Doors: small colored marks
-        for (const d2 of fp.doors) {
-          const dsx = Math.floor((b.x + d2.x) * tilePx - camX);
-          const dsy = Math.floor((b.y + d2.y) * tilePx - camY);
-          ctx.fillStyle = BUILDING_COLORS.door;
-          ctx.fillRect(dsx, dsy, Math.ceil(tilePx), Math.ceil(tilePx));
-        }
-        // Building label: show brand name if available, otherwise type name
-        if (tilePx >= 6) {
-          ctx.font = '9px monospace';
-          ctx.textAlign = 'left';
-          ctx.fillStyle = 'rgba(255,255,255,0.85)';
-          const label = b.brand?.name || fp.typeName || fp.typeId;
-          ctx.fillText(label, bsx + 2, bsy - 2);
-        }
-        // Track for click detection
-        _renderedBuildings.push({ screenX: bsx, screenY: bsy, screenW: bw, screenH: bh, building: b, settlement: s });
       }
 
       // District labels at district centers
@@ -328,6 +263,52 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
       ctx.lineWidth = 1;
       ctx.stroke();
     }
+  }
+
+  // ── Buildings: draw the SAME resolved (de-overlapped, relocated) set the world spawns,
+  // so the overlay never shows ghosts that don't materialize. (Was: a separate per-settlement
+  // layout filtered by water-only — which diverged from the cliff-aware resolver.)
+  _renderedBuildings = [];
+  const mt = MACRO_TILES;
+  const mx0 = Math.floor((camX / tilePx) / mt) - 1, my0 = Math.floor((camY / tilePx) / mt) - 1;
+  const mx1 = Math.floor(((camX + w) / tilePx) / mt) + 1, my1 = Math.floor(((camY + h) / tilePx) / mt) + 1;
+  // resolveBuildingsInRange is expensive on a cold range — cache by the visible macro-range so it
+  // only recomputes when you cross a macro cell, not every frame (memoized resolves are still warm).
+  const rbKey = mx0 + ',' + my0 + ',' + mx1 + ',' + my1;
+  if (_resolvedBldCache.key !== rbKey) {
+    let blds = [];
+    try { blds = resolveBuildingsInRange(getWorldSeed(), mx0, my0, mx1, my1).buildings; } catch { blds = []; } // honest absence
+    _resolvedBldCache = { key: rbKey, buildings: blds };
+  }
+  const resolved = _resolvedBldCache.buildings;
+  const tBld = Math.ceil(tilePx);
+  for (const b of resolved) {
+    const fp = b.footprint, bb = fp.boundingBox;
+    const bsx = Math.floor(b.x * tilePx - camX), bsy = Math.floor(b.y * tilePx - camY);
+    const bw = Math.ceil(bb.w * tilePx), bh = Math.ceil(bb.h * tilePx);
+    if (bsx > w || bsy > h || bsx + bw < 0 || bsy + bh < 0) continue;
+    for (const sec of fp.sections) {
+      const ssx = Math.floor((b.x + sec.x0) * tilePx - camX);
+      const ssy = Math.floor((b.y + sec.y0) * tilePx - camY);
+      const sw = Math.ceil(sec.w * tilePx), sh = Math.ceil(sec.h * tilePx);
+      ctx.fillStyle = BUILDING_COLORS.floor;
+      ctx.fillRect(ssx, ssy, sw, sh);
+      ctx.strokeStyle = b.relocatedFrom ? 'rgba(120,200,255,0.9)' : BUILDING_COLORS.wall; // relocated = blue edge
+      ctx.lineWidth = Math.max(1, tilePx * 0.1);
+      ctx.strokeRect(ssx + 0.5, ssy + 0.5, sw - 1, sh - 1);
+    }
+    for (const d2 of fp.doors) {
+      const dsx = Math.floor((b.x + d2.x) * tilePx - camX);
+      const dsy = Math.floor((b.y + d2.y) * tilePx - camY);
+      ctx.fillStyle = BUILDING_COLORS.door;
+      ctx.fillRect(dsx, dsy, tBld, tBld);
+    }
+    if (tilePx >= 6) {
+      ctx.font = '9px monospace'; ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fillText(b.brand?.name || fp.typeName || fp.typeId, bsx + 2, bsy - 2);
+    }
+    _renderedBuildings.push({ screenX: bsx, screenY: bsy, screenW: bw, screenH: bh, building: b, settlement: null });
   }
 
   // ── Plots: building footprint boxes ───────────────────────────────
