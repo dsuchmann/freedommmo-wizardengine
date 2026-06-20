@@ -14,6 +14,7 @@ import { updateBuildingClaims, drawBuildingFloors, drawBuildingWalls, getCachedB
 import { drawBuildingShadows } from './building-shadow.js';
 import { updateFloorViewTransform } from './floor-view.js';
 import { drawInteriorFloorWorld, drawInteriorWallsWorld, interiorLiftPx, updateInteriorLift } from './interior-renderer.js';
+import { buildOccluderBitmap } from './building-occluder.js';
 import { isInside } from './active-interior.js';
 import { initWallTuner, drawWallTuner } from './wall-tuner.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations, buildWaveField } from './water-wave-overlay.js';
@@ -526,6 +527,16 @@ export class CanvasRenderer {
         playerY: player.y * tilePx,
         playerLight: 1,
       });
+      // GL-native building→player occlusion: a building IN FRONT of the player (baked into the
+      // chunk below the sprite batch) would wrongly draw under them. Build an overlay bitmap of
+      // those buildings with a see-through hole around the player and blit it into the scene FBO
+      // HERE — after the sprite batch, before present — so the present pass lights/CRTs it just
+      // like the baked building. No-op when nothing is in front of the player. (Not while inside.)
+      if (!_inside) {
+        const _occ = buildOccluderBitmap(getCachedBuildings(), camX, camY, tilePx, w, h,
+          { x: w / 2, y: _playerScreenY }, player);
+        if (_occ) this.glc.drawSceneOverlayBitmap(_occ);
+      }
       this.glc.presentScene(w, h, camera.zoom, fracX, fracY);
     }
     if (glOn) this.glc.endFrame();

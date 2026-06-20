@@ -911,6 +911,42 @@ export class GLCompositor {
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
 
+  // Blit an RGBA overlay bitmap onto the SCENE framebuffer — call AFTER the sprite batch and
+  // BEFORE presentScene, so the present pass lights / day-nights / CRTs it IDENTICALLY to the
+  // baked chunks (used for GL-native building→player occlusion; see CLAUDE.md: everything goes
+  // through GL). Reuses the chunk program + quad; uploads premultiplied + blends
+  // ONE/ONE_MINUS_SRC_ALPHA (matching the sprite batch) so the bitmap's transparent areas and
+  // its see-through hole composite over the scene. The bitmap is authored at art = CSS-px
+  // resolution (artW = w), so it fills the whole scene FBO 1:1.
+  drawSceneOverlayBitmap(bitmap) {
+    if (!this.ok || !this.sceneActive || !bitmap) return;
+    var gl = this.gl;
+    // The sprite batch left its own program/VAO bound — rebind the chunk quad pipeline + FBO.
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.sceneFbo);
+    gl.viewport(0, 0, this._artW, this._artH);
+    gl.useProgram(this.program);
+    gl.bindVertexArray(this.vao);
+    gl.uniform2f(this.uViewport, this._artW, this._artH);
+    gl.uniform1i(this.uTex, 0);
+    gl.activeTexture(gl.TEXTURE0);
+    if (!this._overlayTex) this._overlayTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, this._overlayTex);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); // premultiplied alpha (same as sprites)
+    gl.uniform2f(this.uPos, 0, 0);
+    gl.uniform2f(this.uSize, this._artW, this._artH);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.disable(gl.BLEND);
+    gl.bindVertexArray(null);
+  }
+
   // --- Stage 2: sprite atlas + instanced rendering ---
 
   _initSprites() {
