@@ -26,7 +26,7 @@ const STORY = WALL_CONFIG.wallHeight; // 4
 
 // Cutaway shape — radial by default (consistent with the interior). Live-tunable from the
 // console: window._occluderSpot.mode = 'band' | 'circle', radii, or .enabled = false.
-export const SPOT = { mode: 'circle', radiusTiles: 2.6, bandHalfTiles: 1.7, enabled: true };
+export const SPOT = { mode: 'circle', radiusTiles: 2.6, bandHalfTiles: 1.7, enabled: true, clipBelowFeetTiles: 0.4 };
 if (typeof window !== 'undefined') window._occluderSpot = SPOT;
 
 // Roof engine (the SAME module the worker bakes with) — lazy + guarded so a roof failure never
@@ -206,6 +206,15 @@ export function buildOccluderBitmap(buildings, camX, camY, tilePx, w, h, playerS
     drawWalls(o, b, wi, camX, camY, tilePx, w, h);
     if (_roof) { try { _roof.drawRoofForBuilding(o, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache }); } catch { /* skip roof */ } }
   }
+
+  // DEPTH GUARD: only the building ABOVE the player's feet occludes the player. The building's
+  // lower parts (BELOW the player on screen) don't cover the player, and re-drawing them on top
+  // of the scene wrongly pops THIS building in front of buildings that are SOUTH of it (closer to
+  // camera) — the "redrawn whole building on top of the one it's behind" bug. Clear everything
+  // below the feet so the baked scene (incl. the in-front building) shows there. (Proper
+  // per-object building depth sort is the long-term fix; this clips the over-draw.)
+  const clipY = Math.round(playerScreen.y + tilePx * SPOT.clipBelowFeetTiles);
+  if (clipY < h) o.clearRect(0, clipY, w, h - clipY);
 
   // Spotlight hole around the player (centre on the torso, not the feet) — destination-out so the
   // building stays solid but fades to transparent at the player, revealing them through it.
