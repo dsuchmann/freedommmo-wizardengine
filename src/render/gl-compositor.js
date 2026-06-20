@@ -631,7 +631,8 @@ export class GLCompositor {
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.sceneFbo);
     gl.viewport(0, 0, artW, artH);
     gl.clearColor(this._skyRGB[0], this._skyRGB[1], this._skyRGB[2], 1);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clearDepth(1.0); // 1.0 = far; the building-depth pass writes nearer values where buildings are
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.useProgram(this.program);
     gl.bindVertexArray(this.vao);
     gl.uniform2f(this.uViewport, artW, artH);
@@ -710,6 +711,7 @@ export class GLCompositor {
       gl.bindVertexArray(null);
       this.sceneTex = gl.createTexture();
       this.sceneFbo = gl.createFramebuffer();
+      this.sceneDepthRb = gl.createRenderbuffer(); // depth buffer for GL-native player↔building occlusion
       this._sceneAllocW = 0;
       this._sceneAllocH = 0;
     }
@@ -727,6 +729,12 @@ export class GLCompositor {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       gl.bindFramebuffer(gl.FRAMEBUFFER, this.sceneFbo);
       gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.sceneTex, 0);
+      // Depth attachment, sized with the scene. INERT until the building-depth pass writes into it
+      // and the player sprite depth-tests against it (GL-native building↔player occlusion). All
+      // existing draws keep depth-test OFF, so adding this changes nothing on its own.
+      gl.bindRenderbuffer(gl.RENDERBUFFER, this.sceneDepthRb);
+      gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, this._sceneAllocW, this._sceneAllocH);
+      gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.sceneDepthRb);
       var status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       if (status !== gl.FRAMEBUFFER_COMPLETE) {
