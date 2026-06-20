@@ -137,7 +137,7 @@ let playing = true;
 let restMode = false;        // overrides program with all-zero joints
 let clock = 0;               // accumulated ticks (loops)
 
-const TPS = 30;              // ticks per second for playback
+const TPS = 10;              // ticks/sec — matches the game's canonical motion-player.js TICKS_PER_SEC
 
 // ── Inlined proportion scaling (do NOT import rig.js — it pulls node:fs) ──
 // Clone the rig and multiply each bone.length and bone.pivot by the group scalar.
@@ -352,10 +352,16 @@ function draw() {
   }
 }
 
-function loop() {
+let _lastT = null;
+function loop(now) {
+  if (now == null) now = performance.now();
+  if (_lastT == null) _lastT = now;
+  const dt = Math.min(0.1, (now - _lastT) / 1000); // real seconds, clamped (tab-refocus guard)
+  _lastT = now;
   if (playing && !restMode && keyframes.length) {
-    clock += (1 / 60) * TPS; // assume ~60fps rAF; advance ticks accordingly
+    clock += dt * TPS; // advance by REAL elapsed time → correct speed at any refresh rate
   }
+  window.__rigClock = clock; // test/debug hook: playback position in ticks
   draw();
   requestAnimationFrame(loop);
 }
