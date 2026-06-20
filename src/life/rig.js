@@ -43,6 +43,7 @@ export function validateRig(rig) {
     if (!bones[name]) v.push(`joint ${name}: no such bone`);
     if (!(j.min < j.max)) v.push(`joint ${name}: min >= max`);
     if (!(j.stiffness > 0 && j.stiffness <= 1)) v.push(`joint ${name}: stiffness out of (0,1]`);
+    if (j.twist && !(j.twist.min <= j.twist.max)) v.push(`joint ${name}: twist min > max`);
   }
   for (const name of Object.keys(bones)) {
     if (name !== 'root' && !(rig.joints ?? {})[name]) v.push(`bone ${name}: missing joint limits`);
@@ -59,6 +60,11 @@ export function validateRig(rig) {
   for (const [g, p] of Object.entries(rig.gaits ?? {})) {
     if (!(p.cycleTicks > 0)) v.push(`gait ${g}: cycleTicks must be positive`);
   }
+  for (const [s, sk] of Object.entries(rig.sockets ?? {})) {
+    if (!bones[sk.bone]) v.push(`socket ${s}: unknown bone ${sk.bone}`);
+    if (!Array.isArray(sk.offset) || sk.offset.length < 2) v.push(`socket ${s}: bad offset`);
+  }
+  if (rig.proportions && !Array.isArray(rig.proportions.axes)) v.push('proportions.axes must be an array');
   return v;
 }
 

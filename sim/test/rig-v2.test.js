@@ -11,6 +11,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { solvePose } from '../../src/life/pose.js';
+import { validateRig } from '../../src/life/rig.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const V2_PATH = join(ROOT, 'src/life/rigs/humanoid.v2.json');
@@ -86,4 +87,13 @@ test('v2 preserves v1 world pose for every driven bone, across all programs', ()
       assert.ok(approx(s1[b].worldDeg, s2[b].worldDeg, 1e-4), `${st.file} ${b} worldDeg drift`);
     }
   }
+});
+
+test('v2 rig is valid under the extended validator', () => {
+  const v2 = loadRigV2();
+  assert.deepEqual(validateRig(v2), []);   // [] = no violations
+});
+
+test('v1 rig still valid (back-compat)', () => {
+  assert.deepEqual(validateRig(loadRigRaw()), []);   // [] = no violations
 });

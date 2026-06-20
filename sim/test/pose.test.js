@@ -67,6 +67,6 @@ test('ikReach2 solves reachable targets round-trip and refuses unreachable', () 
 });
 
 test('constants', () => {
-  assert.deepEqual(REST_UP, ['spine', 'head']);
+  assert.deepEqual(REST_UP, ['spine', 'chest', 'neck', 'head']);
   assert.equal(MAX_DEG_PER_TICK, 30);
 });

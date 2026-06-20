@@ -2,7 +2,7 @@
 // Pure geometry: FK solve, center of mass, support polygon, analytic 2-bone IK.
 // No kernel imports — consumed by the validator, executor, and (later) renderer.
 
-export const REST_UP = ['spine', 'head'];          // bones whose rest direction is +y
+export const REST_UP = ['spine', 'chest', 'neck', 'head'];   // bones whose rest direction is +y
 export const MAX_DEG_PER_TICK = 30;                // continuity limit (validator ground truth)
 
 const DEG = Math.PI / 180;
