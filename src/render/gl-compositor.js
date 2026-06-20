@@ -32,6 +32,21 @@ void main() {
   outColor = texture(uTex, vUV);
 }`;
 
+// Building-depth pass: sample a grey-encoded depth bitmap (R = baseline depth, A = building mask)
+// and write it into the scene FBO's DEPTH buffer so the player sprite can depth-test against it.
+// Colour is written only in debug (gated by colourMask in JS). Reuses VERT_SRC (uPos/uSize quad).
+var DEPTHWRITE_FRAG_SRC = `#version 300 es
+precision highp float;
+in vec2 vUV;
+uniform sampler2D uTex;
+out vec4 outColor;
+void main() {
+  vec4 t = texture(uTex, vUV);
+  if (t.a < 0.5) discard;           // no building here → leave depth at far (1.0)
+  gl_FragDepth = t.r;               // grey baseline depth
+  outColor = vec4(t.r, t.r, t.r, 1.0); // reaches the colour buffer only when colourMask is on (debug)
+}`;
+
 // --- Stage 2: instanced sprite pipeline (F2 small flora) ---
 // Sprites live in a runtime shelf-packed atlas. Each instance replicates the
 // 2D path's pivot math: translate(sx, sy + halfDraw); rotate(a); drawImage at
@@ -44,8 +59,12 @@ in float aAlpha;
 in vec4 aUV;       // u0, v0, du, dv
 uniform vec2 uViewport;
 uniform vec3 uCam; // x,y = screen-px offset, z = px per tile (tilePxSnapped)
+uniform float uDepthOn;    // 0 = legacy (z=0); 1 = depth from baseline (building↔player occlusion)
+uniform float uDepthRef;   // reference tile Y (screen centre) — must match the building-depth pass
+uniform float uDepthScale; // tiles→depth slope (must match building-depth.js DEPTH_SCALE)
 out vec2 vUV;
 out float vAlpha;
+out vec2 vLocal;
 void main() {
   float sizePx = aPSR.z * uCam.z;
   vec2 pivotPx = aPSR.xy * uCam.z + uCam.xy;
@@ -54,19 +73,34 @@ void main() {
   float s = sin(aPSR.w);
   vec2 px = pivotPx + vec2(local.x * c - local.y * s, local.x * s + local.y * c);
   vec2 clip = vec2(px.x / uViewport.x * 2.0 - 1.0, 1.0 - px.y / uViewport.y * 2.0);
-  gl_Position = vec4(clip, 0.0, 1.0);
+  // Depth from the sprite's BASELINE (aPSR.y, world tiles): larger Y = more south = nearer =
+  // smaller depth. NDC z = 2d-1 → gl_FragDepth = d, matching the building-depth pass exactly.
+  float z = 0.0;
+  if (uDepthOn > 0.5) {
+    float d = clamp(0.5 - (aPSR.y - uDepthRef) * uDepthScale, 0.0, 1.0);
+    z = d * 2.0 - 1.0;
+  }
+  gl_Position = vec4(clip, z, 1.0);
   vUV = aUV.xy + aUnit * aUV.zw;
   vAlpha = aAlpha;
+  vLocal = aUnit; // 0..1 over the quad (y: 1=feet, 0=head) — for the see-through soft falloff
 }`;
 
 var SPRITE_FRAG_SRC = `#version 300 es
 precision highp float;
 in vec2 vUV;
 in float vAlpha;
+in vec2 vLocal;
 uniform sampler2D uAtlas;
+uniform float uSeeThrough; // >0 = the occluded "ghost" reveal: strength, faded torso→edges
 out vec4 outColor;
 void main() {
-  outColor = texture(uAtlas, vUV) * vAlpha; // premultiplied alpha
+  vec4 c = texture(uAtlas, vUV) * vAlpha; // premultiplied alpha
+  if (uSeeThrough > 0.001) {
+    float r = distance(vLocal, vec2(0.5, 0.58));
+    c *= uSeeThrough * (1.0 - smoothstep(0.30, 0.66, r)); // semi-transparent "you're behind this"
+  }
+  outColor = c;
 }`;
 
 // Silhouette shadows: same instance data as sprites, but the quad is sheared
@@ -631,7 +665,8 @@ export class GLCompositor {
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.sceneFbo);
     gl.viewport(0, 0, artW, artH);
     gl.clearColor(this._skyRGB[0], this._skyRGB[1], this._skyRGB[2], 1);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clearDepth(1.0); // 1.0 = far; the building-depth pass writes nearer values where buildings are
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.useProgram(this.program);
     gl.bindVertexArray(this.vao);
     gl.uniform2f(this.uViewport, artW, artH);
@@ -710,6 +745,7 @@ export class GLCompositor {
       gl.bindVertexArray(null);
       this.sceneTex = gl.createTexture();
       this.sceneFbo = gl.createFramebuffer();
+      this.sceneDepthRb = gl.createRenderbuffer(); // depth buffer for GL-native player↔building occlusion
       this._sceneAllocW = 0;
       this._sceneAllocH = 0;
     }
@@ -727,6 +763,12 @@ export class GLCompositor {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       gl.bindFramebuffer(gl.FRAMEBUFFER, this.sceneFbo);
       gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.sceneTex, 0);
+      // Depth attachment, sized with the scene. INERT until the building-depth pass writes into it
+      // and the player sprite depth-tests against it (GL-native building↔player occlusion). All
+      // existing draws keep depth-test OFF, so adding this changes nothing on its own.
+      gl.bindRenderbuffer(gl.RENDERBUFFER, this.sceneDepthRb);
+      gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, this._sceneAllocW, this._sceneAllocH);
+      gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.sceneDepthRb);
       var status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       if (status !== gl.FRAMEBUFFER_COMPLETE) {
@@ -947,6 +989,59 @@ export class GLCompositor {
     gl.bindVertexArray(null);
   }
 
+  // Write the per-building DEPTH bitmap (building-depth.js) into the scene FBO's depth buffer —
+  // call AFTER the chunk blit, BEFORE the sprite batch, so the player sprite can depth-test against
+  // it. R = baseline depth, A = building mask (transparent → depth left far). debug=true also dumps
+  // the depth as greyscale colour to verify alignment. Reuses VERT_SRC's uPos/uSize quad.
+  writeBuildingDepth(bitmap, debug) {
+    if (!this.ok || !this.sceneActive || !bitmap || this.depthWriteOk === false) return;
+    var gl = this.gl;
+    if (!this.depthWriteProgram) {
+      var prog = this._buildProgram(VERT_SRC, DEPTHWRITE_FRAG_SRC);
+      if (!prog) { this.depthWriteOk = false; return; }
+      this.depthWriteProgram = prog;
+      this.dwUViewport = gl.getUniformLocation(prog, 'uViewport');
+      this.dwUPos = gl.getUniformLocation(prog, 'uPos');
+      this.dwUSize = gl.getUniformLocation(prog, 'uSize');
+      this.dwUTex = gl.getUniformLocation(prog, 'uTex');
+      this.depthWriteVao = gl.createVertexArray();
+      gl.bindVertexArray(this.depthWriteVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.unitVbo);
+      var dloc = gl.getAttribLocation(prog, 'aUnit');
+      gl.enableVertexAttribArray(dloc);
+      gl.vertexAttribPointer(dloc, 2, gl.FLOAT, false, 0, 0);
+      gl.bindVertexArray(null);
+      this._depthTex = gl.createTexture();
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.sceneFbo);
+    gl.viewport(0, 0, this._artW, this._artH);
+    gl.useProgram(this.depthWriteProgram);
+    gl.bindVertexArray(this.depthWriteVao);
+    gl.uniform2f(this.dwUViewport, this._artW, this._artH);
+    gl.uniform2f(this.dwUPos, 0, 0);
+    gl.uniform2f(this.dwUSize, this._artW, this._artH);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this._depthTex);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.uniform1i(this.dwUTex, 0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.ALWAYS);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+    gl.colorMask(!!debug, !!debug, !!debug, !!debug);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    // Restore defaults — the sprite batch enables depth-test only for the player; present is 2D.
+    gl.colorMask(true, true, true, true);
+    gl.depthFunc(gl.LEQUAL);
+    gl.disable(gl.DEPTH_TEST);
+    gl.bindVertexArray(null);
+  }
+
   // --- Stage 2: sprite atlas + instanced rendering ---
 
   _initSprites() {
@@ -957,6 +1052,10 @@ export class GLCompositor {
     this.sUViewport = gl.getUniformLocation(prog, 'uViewport');
     this.sUCam = gl.getUniformLocation(prog, 'uCam');
     this.sUAtlas = gl.getUniformLocation(prog, 'uAtlas');
+    this.sUDepthOn = gl.getUniformLocation(prog, 'uDepthOn');
+    this.sUDepthRef = gl.getUniformLocation(prog, 'uDepthRef');
+    this.sUDepthScale = gl.getUniformLocation(prog, 'uDepthScale');
+    this.sUSeeThrough = gl.getUniformLocation(prog, 'uSeeThrough');
 
     // Runtime shelf-packed sprite atlas. With F2 (32px), F4 (64px), F5
     // (96px), and F6 (192px) sprites sharing one atlas, 4096² overflows
@@ -1432,10 +1531,11 @@ export class GLCompositor {
 
   // Draw instances [start, start+count) of the persistent sprite pool.
   // cam = { x, y, scale } (screen-px offset + px-per-tile).
-  drawPoolSprites(start, count, cssW, cssH, cam) {
+  drawPoolSprites(start, count, cssW, cssH, cam, seeThrough) {
     if (!this.ok || !this.spritesOk || count === 0) return;
     var p = this._pool && this._pool.sprite;
     if (!p) return;
+    if (seeThrough && !this._spriteDepth) return; // see-through reveal only with depth occlusion on
     var gl = this.gl;
     gl.useProgram(this.spriteProgram);
     gl.bindVertexArray(this.spriteVao);
@@ -1445,6 +1545,20 @@ export class GLCompositor {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.atlasTex);
     gl.uniform1i(this.sUAtlas, 0);
+    // Depth occlusion (player): test against the building-depth buffer so the sprite is hidden
+    // behind buildings, but DON'T write depth (depthMask false) so flora ordering is unchanged.
+    var depthOn = !!this._spriteDepth;
+    if (this.sUSeeThrough) gl.uniform1f(this.sUSeeThrough, (seeThrough && this._spriteDepth) ? (this._spriteDepth.see || 0.7) : 0);
+    if (depthOn) {
+      gl.uniform1f(this.sUDepthOn, 1);
+      gl.uniform1f(this.sUDepthRef, this._spriteDepth.refY);
+      gl.uniform1f(this.sUDepthScale, this._spriteDepth.scale);
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthFunc(seeThrough ? gl.GREATER : gl.LEQUAL); // GREATER → draw the ghost ONLY where occluded
+      gl.depthMask(false);
+    } else if (this.sUDepthOn) {
+      gl.uniform1f(this.sUDepthOn, 0);
+    }
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     try {
@@ -1457,7 +1571,13 @@ export class GLCompositor {
       gl.bindVertexArray(null);
     }
     gl.disable(gl.BLEND);
+    if (depthOn) { gl.disable(gl.DEPTH_TEST); gl.depthMask(true); }
   }
+
+  // Enable building-depth occlusion for the player pool draw (refY/scale must match the
+  // building-depth pass). Cleared with clearSpriteDepth() after the player is drawn.
+  setSpriteDepth(refY, scale, see) { this._spriteDepth = { refY: refY, scale: scale, see: see }; }
+  clearSpriteDepth() { this._spriteDepth = null; }
 
   drawPoolShadows(start, count, cssW, cssH, cam, shadowVec, strength) {
     if (!this.ok || !this.shadowOk || count === 0) return;
