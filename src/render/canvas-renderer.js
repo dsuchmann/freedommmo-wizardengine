@@ -450,11 +450,12 @@ export class CanvasRenderer {
     // and building COLOUR stays baked (this never touches colour). window._depthOcclusionDebug
     // dumps the depth as greyscale to verify alignment.
     let _depthActive = false;
-    if (glScene && typeof window !== 'undefined' && window._depthOcclusion) {
+    if (glScene && typeof window !== 'undefined' && window._depthOcclusion !== false) {
       const _refY = (camY + h / 2) / tilePx;
       const _dbmp = buildBuildingDepthBitmap(getCachedBuildings(), camX, camY, tilePx, w, h, _refY);
       if (_dbmp) this.glc.writeBuildingDepth(_dbmp, !!window._depthOcclusionDebug);
-      this.glc.setSpriteDepth(_refY, DEPTH_SCALE); // player draw depth-tests against the building depth
+      const _see = (typeof window._depthSeeStrength === 'number') ? window._depthSeeStrength : 0.7;
+      this.glc.setSpriteDepth(_refY, DEPTH_SCALE, _see); // player depth-tests against the building depth + soft reveal
       _depthActive = true;
     }
 
@@ -548,7 +549,8 @@ export class CanvasRenderer {
       // those buildings with a see-through hole around the player and blit it into the scene FBO
       // HERE — after the sprite batch, before present — so the present pass lights/CRTs it just
       // like the baked building. No-op when nothing is in front of the player. (Not while inside.)
-      if (!_inside && !(typeof window !== 'undefined' && window._depthOcclusion)) {
+      // Heuristic overlay occluder — now only a FALLBACK when depth occlusion is explicitly off.
+      if (!_inside && typeof window !== 'undefined' && window._depthOcclusion === false) {
         const _occ = buildOccluderBitmap(getCachedBuildings(), camX, camY, tilePx, w, h,
           { x: w / 2, y: _playerScreenY }, player);
         if (_occ) this.glc.drawSceneOverlayBitmap(_occ);

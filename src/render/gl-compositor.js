@@ -64,6 +64,7 @@ uniform float uDepthRef;   // reference tile Y (screen centre) — must match th
 uniform float uDepthScale; // tiles→depth slope (must match building-depth.js DEPTH_SCALE)
 out vec2 vUV;
 out float vAlpha;
+out vec2 vLocal;
 void main() {
   float sizePx = aPSR.z * uCam.z;
   vec2 pivotPx = aPSR.xy * uCam.z + uCam.xy;
@@ -82,16 +83,24 @@ void main() {
   gl_Position = vec4(clip, z, 1.0);
   vUV = aUV.xy + aUnit * aUV.zw;
   vAlpha = aAlpha;
+  vLocal = aUnit; // 0..1 over the quad (y: 1=feet, 0=head) — for the see-through soft falloff
 }`;
 
 var SPRITE_FRAG_SRC = `#version 300 es
 precision highp float;
 in vec2 vUV;
 in float vAlpha;
+in vec2 vLocal;
 uniform sampler2D uAtlas;
+uniform float uSeeThrough; // >0 = the occluded "ghost" reveal: strength, faded torso→edges
 out vec4 outColor;
 void main() {
-  outColor = texture(uAtlas, vUV) * vAlpha; // premultiplied alpha
+  vec4 c = texture(uAtlas, vUV) * vAlpha; // premultiplied alpha
+  if (uSeeThrough > 0.001) {
+    float r = distance(vLocal, vec2(0.5, 0.58));
+    c *= uSeeThrough * (1.0 - smoothstep(0.30, 0.66, r)); // semi-transparent "you're behind this"
+  }
+  outColor = c;
 }`;
 
 // Silhouette shadows: same instance data as sprites, but the quad is sheared
@@ -1046,6 +1055,7 @@ export class GLCompositor {
     this.sUDepthOn = gl.getUniformLocation(prog, 'uDepthOn');
     this.sUDepthRef = gl.getUniformLocation(prog, 'uDepthRef');
     this.sUDepthScale = gl.getUniformLocation(prog, 'uDepthScale');
+    this.sUSeeThrough = gl.getUniformLocation(prog, 'uSeeThrough');
 
     // Runtime shelf-packed sprite atlas. With F2 (32px), F4 (64px), F5
     // (96px), and F6 (192px) sprites sharing one atlas, 4096² overflows
@@ -1521,10 +1531,11 @@ export class GLCompositor {
 
   // Draw instances [start, start+count) of the persistent sprite pool.
   // cam = { x, y, scale } (screen-px offset + px-per-tile).
-  drawPoolSprites(start, count, cssW, cssH, cam) {
+  drawPoolSprites(start, count, cssW, cssH, cam, seeThrough) {
     if (!this.ok || !this.spritesOk || count === 0) return;
     var p = this._pool && this._pool.sprite;
     if (!p) return;
+    if (seeThrough && !this._spriteDepth) return; // see-through reveal only with depth occlusion on
     var gl = this.gl;
     gl.useProgram(this.spriteProgram);
     gl.bindVertexArray(this.spriteVao);
@@ -1537,12 +1548,13 @@ export class GLCompositor {
     // Depth occlusion (player): test against the building-depth buffer so the sprite is hidden
     // behind buildings, but DON'T write depth (depthMask false) so flora ordering is unchanged.
     var depthOn = !!this._spriteDepth;
+    if (this.sUSeeThrough) gl.uniform1f(this.sUSeeThrough, (seeThrough && this._spriteDepth) ? (this._spriteDepth.see || 0.7) : 0);
     if (depthOn) {
       gl.uniform1f(this.sUDepthOn, 1);
       gl.uniform1f(this.sUDepthRef, this._spriteDepth.refY);
       gl.uniform1f(this.sUDepthScale, this._spriteDepth.scale);
       gl.enable(gl.DEPTH_TEST);
-      gl.depthFunc(gl.LEQUAL);
+      gl.depthFunc(seeThrough ? gl.GREATER : gl.LEQUAL); // GREATER → draw the ghost ONLY where occluded
       gl.depthMask(false);
     } else if (this.sUDepthOn) {
       gl.uniform1f(this.sUDepthOn, 0);
@@ -1564,7 +1576,7 @@ export class GLCompositor {
 
   // Enable building-depth occlusion for the player pool draw (refY/scale must match the
   // building-depth pass). Cleared with clearSpriteDepth() after the player is drawn.
-  setSpriteDepth(refY, scale) { this._spriteDepth = { refY: refY, scale: scale }; }
+  setSpriteDepth(refY, scale, see) { this._spriteDepth = { refY: refY, scale: scale, see: see }; }
   clearSpriteDepth() { this._spriteDepth = null; }
 
   drawPoolShadows(start, count, cssW, cssH, cam, shadowVec, strength) {
