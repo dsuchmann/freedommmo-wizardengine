@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rig Viewer — canonical humanoid v2</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font: 13px/1.4 ui-monospace, "Cascadia Code", Consolas, monospace;
+    background: #0e1116; color: #cdd3dc; display: flex; height: 100vh; overflow: hidden;
+  }
+  #stage { flex: 1; position: relative; min-width: 0; }
+  #canvas { display: block; width: 100%; height: 100%; background:
+    radial-gradient(circle at 50% 40%, #1a2230 0%, #0e1116 70%); }
+  #panel {
+    width: 320px; flex: 0 0 320px; padding: 14px 16px; overflow-y: auto;
+    background: #141923; border-left: 1px solid #232b38;
+  }
+  h1 { font-size: 14px; margin: 0 0 4px; color: #e8edf4; letter-spacing: .3px; }
+  .sub { color: #6b7686; font-size: 11px; margin: 0 0 14px; }
+  .group { margin: 0 0 16px; border-top: 1px solid #232b38; padding-top: 12px; }
+  .group:first-of-type { border-top: 0; padding-top: 0; }
+  label { display: block; margin: 0 0 4px; color: #9aa6b6; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+  select, button {
+    font: inherit; background: #1c2430; color: #cdd3dc; border: 1px solid #2c3645;
+    border-radius: 5px; padding: 6px 8px; width: 100%; cursor: pointer;
+  }
+  select:hover, button:hover { border-color: #3a4658; }
+  button.active { background: #2b6cb0; border-color: #3b82c4; color: #fff; }
+  .row { display: flex; gap: 8px; margin: 8px 0 0; }
+  .row button { width: auto; flex: 1; }
+  .slider { margin: 0 0 10px; }
+  .slider .v { float: right; color: #7fb2e8; }
+  input[type=range] { width: 100%; accent-color: #3b82c4; }
+  #status { font-size: 11px; color: #6b7686; margin-top: 8px; white-space: pre-wrap; word-break: break-word; }
+  .legend { font-size: 10px; color: #6b7686; line-height: 1.6; margin-top: 6px; }
+  .err { color: #ff8585; }
+  .ok { color: #7ee787; }
+</style>
+</head>
+<body>
+  <div id="stage"><canvas id="canvas"></canvas></div>
+  <div id="panel">
+    <h1>Rig Viewer</h1>
+    <p class="sub">canonical humanoid.v2 — bones, joints &amp; sockets (Canvas2D dev tool)</p>
+
+    <div class="group">
+      <label for="dir">Direction (facing)</label>
+      <select id="dir">
+        <option value="s">s — south (front)</option>
+        <option value="se">se</option>
+        <option value="e">e — east (profile)</option>
+        <option value="ne">ne</option>
+        <option value="n">n — north (back)</option>
+        <option value="nw">nw</option>
+        <option value="w">w — west (profile)</option>
+        <option value="sw">sw</option>
+      </select>
+    </div>
+
+    <div class="group">
+      <label for="prog">Program (choreography)</label>
+      <select id="prog"></select>
+      <div class="row">
+        <button id="playpause">Pause</button>
+        <button id="rest">Rest</button>
+      </div>
+      <div id="status"></div>
+    </div>
+
+    <div class="group">
+      <label>Proportions</label>
+      <div class="slider"><span>overall<span class="v" id="v-all">1.00</span></span>
+        <input type="range" id="s-all" min="0.4" max="2" step="0.05" value="1"></div>
+      <div class="slider"><span>arms<span class="v" id="v-arms">1.00</span></span>
+        <input type="range" id="s-arms" min="0.4" max="2" step="0.05" value="1"></div>
+      <div class="slider"><span>legs<span class="v" id="v-legs">1.00</span></span>
+        <input type="range" id="s-legs" min="0.4" max="2" step="0.05" value="1"></div>
+      <div class="slider"><span>torso<span class="v" id="v-torso">1.00</span></span>
+        <input type="range" id="s-torso" min="0.4" max="2" step="0.05" value="1"></div>
+      <button id="reset-prop">Reset proportions</button>
+    </div>
+
+    <div class="group">
+      <label>Legend</label>
+      <div class="legend">
+        white line = bone (origin→tip)<br>
+        cyan dot = joint origin<br>
+        colored dot = socket (label + rot tick)<br>
+        magenta cross = root / baseline
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+import { solvePose } from '../src/life/pose.js';
+import { solveSockets } from '../src/life/sockets.js';
+
+// ── Per-direction projection (mirrors src/render/humanoid-player-renderer.js DIRS) ──
+const DIRS = {
+  s:  { xProj: 1,    xSign: -1 },
+  n:  { xProj: 1,    xSign: +1 },
+  e:  { xProj: 0.25, xSign: -1 },
+  w:  { xProj: 0.25, xSign: +1 },
+  se: { xProj: 0.75, xSign: -1 },
+  sw: { xProj: 0.75, xSign: +1 },
+  ne: { xProj: 0.75, xSign: -1 },
+  nw: { xProj: 0.75, xSign: +1 },
+};
+
+// Distinct color per socket so each reads as its own anchor.
+const SOCKET_COLORS = {
+  grip_l: '#ff5d5d', grip_r: '#ff9d3d', crown: '#ffe14d', collar: '#8bd450',
+  pauldron_l: '#3ddc97', pauldron_r: '#3ddccd', chest: '#4db8ff', back: '#6d8cff',
+  belt: '#a872ff', hip_l: '#ff5dc8', hip_r: '#ff5d8f',
+};
+// Group each bone into a limb group for proportion scaling.
+const ARMS = new Set(['clavicle_l','arm_u_l','arm_f_l','hand_l','clavicle_r','arm_u_r','arm_f_r','hand_r']);
+const LEGS = new Set(['thigh_l','shin_l','foot_l','toe_l','thigh_r','shin_r','foot_r','toe_r']);
+const TORSO = new Set(['spine','chest','neck','head']);
+
+const DEG = Math.PI / 180;
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const statusEl = document.getElementById('status');
+
+let baseRig = null;          // untouched fetched rig
+const prop = { all: 1, arms: 1, legs: 1, torso: 1 };
+let dir = 's';
+
+// ── Choreography playback state ──
+let program = null;          // raw fetched program json
+let keyframes = [];          // flattened ordered [{joints, ticks}]
+let playing = true;
+let restMode = false;        // overrides program with all-zero joints
+let clock = 0;               // accumulated ticks (loops)
+
+const TPS = 30;              // ticks per second for playback
+
+// ── Inlined proportion scaling (do NOT import rig.js — it pulls node:fs) ──
+// Clone the rig and multiply each bone.length and bone.pivot by the group scalar.
+function scaledRig() {
+  const k = (name) => {
+    let m = prop.all;
+    if (ARMS.has(name)) m *= prop.arms;
+    else if (LEGS.has(name)) m *= prop.legs;
+    else if (TORSO.has(name)) m *= prop.torso;
+    return m;
+  };
+  const out = { ...baseRig, bones: {}, joints: baseRig.joints, sockets: baseRig.sockets };
+  for (const [name, b] of Object.entries(baseRig.bones)) {
+    const s = k(name);
+    out.bones[name] = { ...b, length: b.length * s, pivot: [b.pivot[0] * s, b.pivot[1] * s] };
+  }
+  return out;
+}
+
+// ── Flatten the choreography tree → ordered list of pose keyframes ──
+// sequence = concatenate children in order; parallel = merge child joint maps
+// (shared ticks); pose = a single keyframe. Other ops (balance, etc.) carry no
+// pose data and are skipped (their joints stay at their last value / lerp).
+function flatten(node) {
+  if (!node || typeof node !== 'object') return [];
+  if (node.op === 'pose') {
+    return [{ joints: node.joints || {}, ticks: node.ticks || 1 }];
+  }
+  if (node.op === 'parallel') {
+    // Merge every descendant pose at this level into one keyframe; ticks = max child span.
+    const merged = {};
+    let ticks = 0;
+    for (const c of node.children || []) {
+      for (const kf of flatten(c)) {
+        Object.assign(merged, kf.joints);
+        ticks = Math.max(ticks, kf.ticks);
+      }
+    }
+    return ticks ? [{ joints: merged, ticks }] : [];
+  }
+  if (node.op === 'sequence') {
+    const out = [];
+    for (const c of node.children || []) out.push(...flatten(c));
+    return out;
+  }
+  // balance / unknown ops: descend so any nested poses still surface, but the
+  // op itself produces no keyframe.
+  const out = [];
+  for (const c of node.children || []) out.push(...flatten(c));
+  return out;
+}
+
+function loadProgram(json) {
+  program = json;
+  keyframes = flatten(json.root);
+  clock = 0;
+  restMode = false;
+  document.getElementById('rest').classList.remove('active');
+}
+
+// Total ticks across all keyframes (one loop). Min 1 to avoid /0.
+function totalTicks() {
+  return Math.max(1, keyframes.reduce((s, k) => s + k.ticks, 0));
+}
+
+// Sample joint angles at fractional tick t (looping), lerping between the
+// keyframe entered at t and the next. A joint absent from the next keyframe
+// holds; a joint absent from the current keyframe is treated as 0 baseline.
+function sampleJoints(t) {
+  if (restMode || keyframes.length === 0) return {};
+  const total = totalTicks();
+  let u = ((t % total) + total) % total;
+  // Find the keyframe interval containing u.
+  let i = 0, acc = 0;
+  for (; i < keyframes.length; i++) {
+    if (u < acc + keyframes[i].ticks) break;
+    acc += keyframes[i].ticks;
+  }
+  if (i >= keyframes.length) i = keyframes.length - 1;
+  const cur = keyframes[i];
+  const next = keyframes[(i + 1) % keyframes.length];
+  const span = cur.ticks || 1;
+  const frac = Math.min(1, Math.max(0, (u - acc) / span));
+  // Union of joints in both frames so a joint dropped by `next` lerps toward 0.
+  const out = {};
+  const names = new Set([...Object.keys(cur.joints), ...Object.keys(next.joints)]);
+  for (const n of names) {
+    const a = cur.joints[n] ?? 0;
+    const b = next.joints[n] ?? 0;
+    out[n] = a + (b - a) * frac;
+  }
+  return out;
+}
+
+// ── Projection: rig space → screen. Mirrors the renderer's mapping:
+//   screenX = cx + xSign * x * xProj * scale ; screenY = baseY - y * scale
+// (rig +y is up; the renderer's groundY - origin.y*S does the same flip). ──
+let view = { cx: 0, baseY: 0, scale: 6 };
+function project(p) {
+  const d = DIRS[dir];
+  return {
+    x: view.cx + d.xSign * p.x * d.xProj * view.scale,
+    y: view.baseY - p.y * view.scale,
+  };
+}
+// Project a unit direction (for socket rot ticks). A rig-space CCW angle's
+// direction vector is (sin, restY*cos)-style; we just take the rotated rest-up
+// vector (0,1) by `deg`, then apply the same x projection + y flip.
+function projectDir(deg) {
+  const a = deg * DEG;
+  const vx = -Math.sin(a), vy = Math.cos(a); // rot of (0,1) by deg CCW
+  const d = DIRS[dir];
+  return { x: d.xSign * vx * d.xProj, y: -vy };
+}
+
+function fit(solved) {
+  // Compute rig-space bounds across bones to size the view each frame.
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const b of Object.values(solved)) {
+    for (const pt of [b.origin, b.tip]) {
+      minX = Math.min(minX, pt.x); maxX = Math.max(maxX, pt.x);
+      minY = Math.min(minY, pt.y); maxY = Math.max(maxY, pt.y);
+    }
+  }
+  const w = canvas.width, h = canvas.height;
+  const margin = 80;
+  const rangeX = Math.max(8, (maxX - minX));
+  const rangeY = Math.max(8, (maxY - minY));
+  const scale = Math.min((w - margin * 2) / rangeX, (h - margin * 2) / rangeY);
+  view.scale = Math.min(scale, 14);
+  // Center horizontally on rig x=0 (root). Baseline so the figure is vertically centered.
+  view.cx = w / 2;
+  const midY = (minY + maxY) / 2;
+  view.baseY = h / 2 + midY * view.scale;
+}
+
+let ready = false;
+function draw() {
+  if (!baseRig) return;
+  const rig = scaledRig();
+  const joints = sampleJoints(clock);
+  const solved = solvePose(rig, joints);
+  const sockets = solveSockets(rig, solved);
+
+  fit(solved);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Baseline (feet line) — lowest foot tip y in rig space.
+  const footY = Math.min(solved.foot_l.tip.y, solved.foot_r.tip.y,
+                         solved.toe_l?.tip.y ?? Infinity, solved.toe_r?.tip.y ?? Infinity);
+  const baselineScreenY = view.baseY - footY * view.scale;
+  ctx.strokeStyle = 'rgba(255,80,200,0.25)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, baselineScreenY); ctx.lineTo(canvas.width, baselineScreenY); ctx.stroke();
+
+  // Bones as lines.
+  ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.strokeStyle = '#e8edf4';
+  for (const [name, b] of Object.entries(solved)) {
+    if (rig.bones[name].length === 0) continue;
+    const o = project(b.origin), t = project(b.tip);
+    ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(t.x, t.y); ctx.stroke();
+  }
+  // Joint dots.
+  ctx.fillStyle = '#4ad9ff';
+  for (const b of Object.values(solved)) {
+    const o = project(b.origin);
+    ctx.beginPath(); ctx.arc(o.x, o.y, 3, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Root / baseline marker.
+  const rootP = project(solved.root.origin);
+  ctx.strokeStyle = '#ff50c8'; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(rootP.x - 6, rootP.y); ctx.lineTo(rootP.x + 6, rootP.y);
+  ctx.moveTo(rootP.x, rootP.y - 6); ctx.lineTo(rootP.x, rootP.y + 6);
+  ctx.stroke();
+
+  // Sockets: colored labeled dots + a short rot tick.
+  ctx.font = '10px ui-monospace, monospace';
+  let socketCount = 0;
+  for (const [name, sk] of Object.entries(sockets)) {
+    socketCount++;
+    const p = project(sk.origin);
+    const col = SOCKET_COLORS[name] || '#ffffff';
+    // rot tick
+    const dv = projectDir(sk.rot);
+    ctx.strokeStyle = col; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(p.x, p.y);
+    ctx.lineTo(p.x + dv.x * 12, p.y + dv.y * 12); ctx.stroke();
+    // dot
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#0e1116'; ctx.lineWidth = 1; ctx.stroke();
+    // label
+    ctx.fillStyle = col;
+    ctx.fillText(name, p.x + 7, p.y + 3);
+  }
+
+  // HUD: direction + frame.
+  ctx.fillStyle = 'rgba(205,211,220,0.5)';
+  ctx.font = '11px ui-monospace, monospace';
+  ctx.fillText(`dir=${dir}  prog=${program?.id ?? '—'}  ${restMode ? 'REST' : (playing ? 'play' : 'paused')}`, 14, 20);
+
+  if (!ready) {
+    ready = true;
+    window.__rigViewerReady = {
+      bones: Object.keys(rig.bones).length,
+      sockets: socketCount,
+    };
+    statusEl.innerHTML = `<span class="ok">ready</span> — ${Object.keys(rig.bones).length} bones, ${socketCount} sockets`;
+  }
+}
+
+function loop() {
+  if (playing && !restMode && keyframes.length) {
+    clock += (1 / 60) * TPS; // assume ~60fps rAF; advance ticks accordingly
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+
+function resize() {
+  const dpr = window.devicePixelRatio || 1;
+  const r = canvas.getBoundingClientRect();
+  canvas.width = Math.round(r.width * dpr);
+  canvas.height = Math.round(r.height * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // setTransform sets device-px scaling; our draw math uses CSS px via width/height —
+  // so undo and use raw device px instead for simplicity.
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  canvas.width = Math.round(r.width);
+  canvas.height = Math.round(r.height);
+}
+window.addEventListener('resize', resize);
+
+// ── Controls ──
+document.getElementById('dir').addEventListener('change', e => { dir = e.target.value; });
+
+document.getElementById('playpause').addEventListener('click', e => {
+  playing = !playing;
+  e.target.textContent = playing ? 'Pause' : 'Play';
+});
+document.getElementById('rest').addEventListener('click', e => {
+  restMode = !restMode;
+  e.target.classList.toggle('active', restMode);
+});
+
+function bindSlider(id, key) {
+  const el = document.getElementById('s-' + id);
+  const vEl = document.getElementById('v-' + id);
+  el.addEventListener('input', () => {
+    prop[key] = parseFloat(el.value);
+    vEl.textContent = prop[key].toFixed(2);
+  });
+}
+bindSlider('all', 'all'); bindSlider('arms', 'arms');
+bindSlider('legs', 'legs'); bindSlider('torso', 'torso');
+document.getElementById('reset-prop').addEventListener('click', () => {
+  for (const k of ['all','arms','legs','torso']) {
+    prop[k] = 1;
+    document.getElementById('s-' + k).value = 1;
+    document.getElementById('v-' + k).textContent = '1.00';
+  }
+});
+
+// ── Program picker: a curated set of known choreography files (fetched on demand). ──
+const PROGRAMS = [
+  'chop_motion','wave','jumping_jacks','dance_improvised','wave_both','clap','cheer',
+  'bow','curtsy','salute','shrug','nod','flex','point_forward','beckon','squat',
+  'lunge','pushup','situp','plank','stretch_arms','toe_touch','kneel','pray',
+  'jump_in_place','march_in_place','spin_around','hammer','dig','sweep','sit_down',
+];
+const progSel = document.getElementById('prog');
+for (const id of PROGRAMS) {
+  const opt = document.createElement('option');
+  opt.value = id; opt.textContent = id;
+  progSel.appendChild(opt);
+}
+progSel.value = 'chop_motion';
+progSel.addEventListener('change', () => fetchProgram(progSel.value));
+
+async function fetchProgram(id) {
+  statusEl.textContent = `loading ${id}…`;
+  try {
+    const r = await fetch(`../src/life/choreography/${id}.json`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const json = await r.json();
+    loadProgram(json);
+    document.getElementById('playpause').textContent = playing ? 'Pause' : 'Play';
+    statusEl.innerHTML = `<span class="ok">${id}</span> — ${keyframes.length} keyframes, ${totalTicks()} ticks/loop`;
+  } catch (err) {
+    statusEl.innerHTML = `<span class="err">failed to load ${id}: ${err.message}</span>`;
+  }
+}
+
+// ── Boot ──
+async function boot() {
+  resize();
+  try {
+    const r = await fetch('../src/life/rigs/humanoid.v2.json');
+    if (!r.ok) throw new Error(`rig HTTP ${r.status}`);
+    baseRig = await r.json();
+  } catch (err) {
+    statusEl.innerHTML = `<span class="err">failed to load rig: ${err.message}</span>`;
+    return;
+  }
+  await fetchProgram('chop_motion');
+  loop();
+}
+boot();
+</script>
+</body>
+</html>
