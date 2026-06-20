@@ -12,6 +12,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { solvePose } from '../../src/life/pose.js';
 import { validateRig, applyProportions } from '../../src/life/rig.js';
+import { solveSockets } from '../../src/life/sockets.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const V2_PATH = join(ROOT, 'src/life/rigs/humanoid.v2.json');
@@ -111,4 +112,19 @@ test('applyProportions scales bone lengths/pivots and lowers/raises feet', () =>
   const tallFoot = solvePose(v2, restJoints).foot_l.tip.y;
   const shortFoot = solvePose(child, restJoints).foot_l.tip.y;
   assert.ok(Math.abs(shortFoot) < Math.abs(tallFoot), 'smaller body → foot closer to root');
+});
+
+// --- Task 5: socket world-transform resolution --------------------------
+test('solveSockets places each socket on its bone with offset + rotation', () => {
+  const v2 = loadRigV2();
+  const solved = solvePose(v2, {});
+  const sk = solveSockets(v2, solved);
+  for (const name of Object.keys(v2.sockets)) {
+    assert.ok(Number.isFinite(sk[name].origin.x), `socket ${name} unresolved`);
+    assert.ok(Number.isFinite(sk[name].rot), `socket ${name} no rotation`);
+  }
+  // grip_r rides hand_r: its origin is within the hand bone span
+  const hr = solved.hand_r;
+  const span = Math.hypot(hr.tip.x - hr.origin.x, hr.tip.y - hr.origin.y) + 5;
+  assert.ok(Math.hypot(sk.grip_r.origin.x - hr.origin.x, sk.grip_r.origin.y - hr.origin.y) <= span);
 });
