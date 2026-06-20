@@ -1,11 +1,16 @@
 // sim/world/buildings/layout.js -- World Compiler Phase B: district layout + building placement.
 // Pure functions: seed + site + tier -> complete building catalog with positions.
-// No kernel state, no classifyBiome, no tileCost. All spatial decisions via seeded noise.
+// No kernel state, no tileCost. Spatial decisions via seeded noise; building SITES are then
+// filtered against terrain suitability (water/cliff) via terrain-suitability.js so buildings
+// don't spawn in water or across a cliff — the atlas's "Settlements & Zoning reads terrain
+// suitability". This keeps the resolver's expensive relocation spiral a rare safety net instead
+// of the common case (~40-50% of coastal buildings were landing in water before).
 
 import { rand, mix } from '../../kernel/rng.js';
 import { typesForTier, typesInCategory } from './taxonomy.js';
 import { generateFootprint } from './footprints.js';
 import { specializeBuilding } from './specializations.js';
+import { siteBuildable } from './terrain-suitability.js';
 
 // ── Canonical 12-tier names (shared constant) ───────────────────────
 // Defined in the leaf module ./tiers.js (so building-floors can read them without
@@ -353,7 +358,7 @@ export function placeBuildings(seed, site, tier, race, districts, spines) {
     const ax = Math.round(site.x + Math.cos(midAngle) * midR);
     const ay = Math.round(site.y + Math.sin(midAngle) * midR);
     const fp = generateFootprint(mix(ps, 0xBA00, ax, ay), d.anchor, race);
-    if (!wouldCollide(ax, ay, fp)) {
+    if (!wouldCollide(ax, ay, fp) && siteBuildable(ax, ay, fp)) {
       markOccupied(ax, ay, fp);
       const b = { x: ax, y: ay, footprint: fp, district: d.kind, isAnchor: true };
       assignIdentity(b, mix(ps, 0xBA01, ax, ay));
@@ -398,7 +403,7 @@ export function placeBuildings(seed, site, tier, race, districts, spines) {
           if (!type) { globalIdx++; continue; }
 
           const fp = generateFootprint(mix(ps, 0xBF00, wx, wy, globalIdx), type.id, race);
-          if (!wouldCollide(wx, wy, fp)) {
+          if (!wouldCollide(wx, wy, fp) && siteBuildable(wx, wy, fp)) {
             markOccupied(wx, wy, fp);
             const b = { x: wx, y: wy, footprint: fp, district: d.kind, isAnchor: false };
             assignIdentity(b, mix(ps, 0xBF01, wx, wy, globalIdx));
@@ -428,7 +433,7 @@ export function placeBuildings(seed, site, tier, race, districts, spines) {
       if (!type) continue;
 
       const fp = generateFootprint(mix(ps, 0xBD10, wx, wy, scatterIdx), type.id, race);
-      if (!wouldCollide(wx, wy, fp)) {
+      if (!wouldCollide(wx, wy, fp) && siteBuildable(wx, wy, fp)) {
         markOccupied(wx, wy, fp);
         const b = { x: wx, y: wy, footprint: fp, district: d.kind, isAnchor: false };
         assignIdentity(b, mix(ps, 0xBD11, wx, wy, scatterIdx));

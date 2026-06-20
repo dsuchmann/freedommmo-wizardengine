@@ -5,14 +5,11 @@
 
 import { layoutSettlement } from './layout.js';
 import { discoverSettlementsInMacroRange, suppressBySpacing, MACRO_TILES } from './settlement-discovery.js';
-import { classifyBiomeNoStream } from '../../../src/world/biomes.js';
-import { classifyTerrainForm } from '../../../src/world/terrain-forms.js';
-
-// Basin water rejects a building site. 'stream' (the 1-wide additive hydrology channel)
-// is intentionally NOT here: placement uses the stream-free classifier, so a building may
-// clip a creek (it just covers it) — same policy as settlement discovery. This also keeps
-// the cold streamAt() neighbourhood trace (~1s) out of the per-building water test.
-const WATER = new Set(['ocean', 'deep_ocean', 'lake', 'river', 'shallow_water']);
+import {
+  buildingTouchesWater, buildingSpansCliff, isWaterTile, tileForm, CLAIM_MARGIN, NORTH_CLAIM,
+} from './terrain-suitability.js';
+// Re-export the suitability predicates so existing consumers + tests keep importing them here.
+export { buildingTouchesWater, buildingSpansCliff } from './terrain-suitability.js';
 
 // world_capital is TIER_SIZE 440 wide / TIER_RADIUS 220 — the worst-case half-footprint.
 export const MAX_SETTLEMENT_RADIUS = 220;
@@ -22,9 +19,7 @@ export const NEIGHBOR_RING_R = Math.ceil(MAX_SETTLEMENT_RADIUS / MACRO_TILES);
 // Kept in Slice 1 (spec §12: remove only once the per-macro resolved index makes it cheap).
 export const MAX_RESOLVED_BUILDINGS = 80;
 
-const CLAIM_MARGIN = 2;   // footprint margin for flora suppression (matches building-renderer)
-const NORTH_CLAIM = 8;    // north band — must cover the full screen height the ROOF lifts
-                         // to (wall ~3.75 + roof rise), else F2 flora draws over the roof.
+// CLAIM_MARGIN / NORTH_CLAIM now live in ./terrain-suitability.js (imported above).
 
 // Memoize per-settlement layouts so the neighbor-ring padding (and repeated
 // per-macro resolves in the worker) don't recompute the same settlement's layout.
@@ -42,70 +37,6 @@ function memoLayout(seed, s) {
   return layout;
 }
 
-// Terrain is a pure, immutable function of (x,y), but classifyBiomeNoStream / classifyTerrainForm
-// are expensive and the relocation spiral re-samples the same tiles thousands of times. Cache
-// per-tile verdicts in bounded persistent maps — deterministic (same input → same verdict) and
-// safe across resolves (terrain never changes). This is what makes relocation affordable.
-const _waterTileCache = new Map();
-function isWaterTile(px, py) {
-  const k = px + ',' + py;
-  let v = _waterTileCache.get(k);
-  if (v === undefined) {
-    v = WATER.has(classifyBiomeNoStream(px, py).id);
-    if (_waterTileCache.size < 400000) _waterTileCache.set(k, v);
-  }
-  return v;
-}
-const _formTileCache = new Map();
-function tileForm(px, py) {
-  const k = px + ',' + py;
-  let v = _formTileCache.get(k);
-  if (v === undefined) {
-    const tf = classifyTerrainForm(px, py);
-    v = { form: tf.form, level: tf.plateauLevel };
-    if (_formTileCache.size < 400000) _formTileCache.set(k, v);
-  }
-  return v;
-}
-
-export function buildingTouchesWater(b) {
-  const bb = b.footprint.boundingBox;
-  const pts = [
-    [b.x, b.y], [b.x + bb.w - 1, b.y],
-    [b.x, b.y + bb.h - 1], [b.x + bb.w - 1, b.y + bb.h - 1],
-    [b.x + Math.floor(bb.w / 2), b.y + Math.floor(bb.h / 2)],
-  ];
-  return pts.some(([px, py]) => isWaterTile(px, py));
-}
-
-export function buildingSpansCliff(b) {
-  const bb = b.footprint.boundingBox;
-  // Sample perimeter + center — enough to catch any cliff that crosses the
-  // footprint, without sampling every interior tile (expensive). Includes the
-  // north-wall band since that is visually part of the building.
-  const y0 = b.y - NORTH_CLAIM;
-  const y1 = b.y + bb.h + CLAIM_MARGIN - 1;
-  const x0 = b.x - CLAIM_MARGIN;
-  const x1 = b.x + bb.w + CLAIM_MARGIN - 1;
-  const pts = [
-    // corners
-    [x0, y0], [x1, y0], [x0, y1], [x1, y1],
-    // edge midpoints
-    [Math.floor((x0 + x1) / 2), y0], [Math.floor((x0 + x1) / 2), y1],
-    [x0, Math.floor((y0 + y1) / 2)], [x1, Math.floor((y0 + y1) / 2)],
-    // center
-    [Math.floor((x0 + x1) / 2), Math.floor((y0 + y1) / 2)],
-    // origin
-    [b.x, b.y],
-  ];
-  const originLevel = tileForm(b.x, b.y).level;
-  for (const [px, py] of pts) {
-    const tf = tileForm(px, py);
-    if (tf.form === 'cliff' || tf.form === 'step') return true;
-    if (tf.level !== originLevel) return true;
-  }
-  return false;
-}
 
 // How far (in tiles) a suppressed building may search for a valid site before we accept
 // honest absence. Generous enough to clear a typical shoreline/cliff band; bounded so the
