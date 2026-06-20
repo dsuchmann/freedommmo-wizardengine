@@ -14,6 +14,7 @@ import { updateBuildingClaims, drawBuildingFloors, drawBuildingWalls, getCachedB
 import { drawBuildingShadows } from './building-shadow.js';
 import { updateFloorViewTransform } from './floor-view.js';
 import { drawInteriorFloorWorld, drawInteriorWallsWorld, interiorLiftPx, updateInteriorLift } from './interior-renderer.js';
+import { buildInteriorSceneBitmap } from './interior-gl.js';
 import { buildOccluderBitmap } from './building-occluder.js';
 import { isInside } from './active-interior.js';
 import { initWallTuner, drawWallTuner } from './wall-tuner.js';
@@ -536,6 +537,12 @@ export class CanvasRenderer {
         const _occ = buildOccluderBitmap(getCachedBuildings(), camX, camY, tilePx, w, h,
           { x: w / 2, y: _playerScreenY }, player);
         if (_occ) this.glc.drawSceneOverlayBitmap(_occ);
+      } else {
+        // Interior BACK layer (dim + floor + markers + N/E/W walls) blitted INTO the GL scene
+        // so the present pass lights/CRTs it like terrain (CLAUDE.md: everything through GL).
+        // The player + S (front) wall still draw on the 2D ctx on top — follow-up migrates those.
+        const _ib = buildInteriorSceneBitmap(camX, camY, tilePx, w, h);
+        if (_ib) this.glc.drawSceneOverlayBitmap(_ib);
       }
       this.glc.presentScene(w, h, camera.zoom, fracX, fracY);
     }
@@ -546,12 +553,17 @@ export class CanvasRenderer {
     // (dim + per-floor north lift), then the player lifted by the SAME offset so they
     // rise together as you climb; the world-layer player was suppressed above.
     if (_inside) {
-      drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h);          // dim + floor + back/side walls (N/E/W)
+      // GL path blits the interior back layer in-scene (above, lit by the present pass);
+      // only the 2D-fallback path (GL scene unavailable) draws it here on the ctx.
+      if (!glScene) drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h);  // dim + floor + back/side walls (N/E/W)
       // Player stays CENTRED — the camera glide (camY -= lift) makes the world recede instead
       // of the player drifting up. The floor re-adds the lift so it tracks the player.
       this.drawPlayerAt(w / 2, _playerScreenY, camera.zoom, player);
-      // Roof + south wall ON TOP with the spotlight cutaway (centre = player's on-screen point).
-      drawInteriorWallsWorld(ctx, camX, camY, tilePx, w, h,
+      // Roof + south wall ON TOP with the spotlight cutaway. ONLY on the 2D-fallback path:
+      // in GL mode this drew a multi-story brick mass + roof in front of the player (the
+      // "structure/roof encircling us" the round building showed). The GL back layer is now
+      // a clean one-story room with an open/see-through south, so suppress the 2D mass.
+      if (!glScene) drawInteriorWallsWorld(ctx, camX, camY, tilePx, w, h,
         { x: Math.floor(player.x), y: Math.floor(player.y) }, { x: w / 2, y: _playerScreenY });
     }
   }
