@@ -234,3 +234,16 @@ export function buildOccluderBitmap(buildings, camX, camY, tilePx, w, h, playerS
   o.globalCompositeOperation = 'source-over';
   return _cv;
 }
+
+/** Draw ONE building's walls+roof TEXTURED (no hole, no clip) onto ctx — the exact silhouette the
+ *  baked building occupies on screen. Shared with the depth pass (building-depth.js), which
+ *  recolours this silhouette to a per-building depth value. Returns false if wall sprites aren't
+ *  loaded yet. */
+export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
+  const wi = wallImgs();
+  if (!wi.south_base) return false;
+  ensureRoof();
+  drawWalls(ctx, b, wi, camX, camY, tilePx, w, h);
+  if (_roof) { try { _roof.drawRoofForBuilding(ctx, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache }); } catch { /* skip roof */ } }
+  return true;
+}

@@ -15,6 +15,7 @@ import { drawBuildingShadows } from './building-shadow.js';
 import { updateFloorViewTransform } from './floor-view.js';
 import { drawInteriorFloorWorld, drawInteriorWallsWorld, interiorLiftPx, updateInteriorLift } from './interior-renderer.js';
 import { buildOccluderBitmap } from './building-occluder.js';
+import { buildBuildingDepthBitmap } from './building-depth.js';
 import { isInside } from './active-interior.js';
 import { initWallTuner, drawWallTuner } from './wall-tuner.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations, buildWaveField } from './water-wave-overlay.js';
@@ -441,6 +442,17 @@ export class CanvasRenderer {
       });
     } else {
       setField2PlayerGL(null);
+    }
+
+    // BUILDING DEPTH PASS (GL-native player↔building occlusion, gated by window._depthOcclusion).
+    // Write near buildings' baseline depth into the scene FBO's depth buffer BEFORE the sprite
+    // batch, so the player sprite depth-tests against it — occluded at ANY distance, no rise-band,
+    // and building COLOUR stays baked (this never touches colour). window._depthOcclusionDebug
+    // dumps the depth as greyscale to verify alignment.
+    if (glScene && typeof window !== 'undefined' && window._depthOcclusion) {
+      const _refY = (camY + h / 2) / tilePx;
+      const _dbmp = buildBuildingDepthBitmap(getCachedBuildings(), camX, camY, tilePx, w, h, _refY);
+      if (_dbmp) this.glc.writeBuildingDepth(_dbmp, !!window._depthOcclusionDebug);
     }
 
     // === FIELD 2: ANIMATED WIND SWAY ===

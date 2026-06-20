@@ -32,6 +32,21 @@ void main() {
   outColor = texture(uTex, vUV);
 }`;
 
+// Building-depth pass: sample a grey-encoded depth bitmap (R = baseline depth, A = building mask)
+// and write it into the scene FBO's DEPTH buffer so the player sprite can depth-test against it.
+// Colour is written only in debug (gated by colourMask in JS). Reuses VERT_SRC (uPos/uSize quad).
+var DEPTHWRITE_FRAG_SRC = `#version 300 es
+precision highp float;
+in vec2 vUV;
+uniform sampler2D uTex;
+out vec4 outColor;
+void main() {
+  vec4 t = texture(uTex, vUV);
+  if (t.a < 0.5) discard;           // no building here → leave depth at far (1.0)
+  gl_FragDepth = t.r;               // grey baseline depth
+  outColor = vec4(t.r, t.r, t.r, 1.0); // reaches the colour buffer only when colourMask is on (debug)
+}`;
+
 // --- Stage 2: instanced sprite pipeline (F2 small flora) ---
 // Sprites live in a runtime shelf-packed atlas. Each instance replicates the
 // 2D path's pivot math: translate(sx, sy + halfDraw); rotate(a); drawImage at
@@ -952,6 +967,59 @@ export class GLCompositor {
     gl.uniform2f(this.uSize, this._artW, this._artH);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.disable(gl.BLEND);
+    gl.bindVertexArray(null);
+  }
+
+  // Write the per-building DEPTH bitmap (building-depth.js) into the scene FBO's depth buffer —
+  // call AFTER the chunk blit, BEFORE the sprite batch, so the player sprite can depth-test against
+  // it. R = baseline depth, A = building mask (transparent → depth left far). debug=true also dumps
+  // the depth as greyscale colour to verify alignment. Reuses VERT_SRC's uPos/uSize quad.
+  writeBuildingDepth(bitmap, debug) {
+    if (!this.ok || !this.sceneActive || !bitmap || this.depthWriteOk === false) return;
+    var gl = this.gl;
+    if (!this.depthWriteProgram) {
+      var prog = this._buildProgram(VERT_SRC, DEPTHWRITE_FRAG_SRC);
+      if (!prog) { this.depthWriteOk = false; return; }
+      this.depthWriteProgram = prog;
+      this.dwUViewport = gl.getUniformLocation(prog, 'uViewport');
+      this.dwUPos = gl.getUniformLocation(prog, 'uPos');
+      this.dwUSize = gl.getUniformLocation(prog, 'uSize');
+      this.dwUTex = gl.getUniformLocation(prog, 'uTex');
+      this.depthWriteVao = gl.createVertexArray();
+      gl.bindVertexArray(this.depthWriteVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.unitVbo);
+      var dloc = gl.getAttribLocation(prog, 'aUnit');
+      gl.enableVertexAttribArray(dloc);
+      gl.vertexAttribPointer(dloc, 2, gl.FLOAT, false, 0, 0);
+      gl.bindVertexArray(null);
+      this._depthTex = gl.createTexture();
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.sceneFbo);
+    gl.viewport(0, 0, this._artW, this._artH);
+    gl.useProgram(this.depthWriteProgram);
+    gl.bindVertexArray(this.depthWriteVao);
+    gl.uniform2f(this.dwUViewport, this._artW, this._artH);
+    gl.uniform2f(this.dwUPos, 0, 0);
+    gl.uniform2f(this.dwUSize, this._artW, this._artH);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this._depthTex);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.uniform1i(this.dwUTex, 0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.ALWAYS);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+    gl.colorMask(!!debug, !!debug, !!debug, !!debug);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    // Restore defaults — the sprite batch enables depth-test only for the player; present is 2D.
+    gl.colorMask(true, true, true, true);
+    gl.depthFunc(gl.LEQUAL);
+    gl.disable(gl.DEPTH_TEST);
     gl.bindVertexArray(null);
   }
 
