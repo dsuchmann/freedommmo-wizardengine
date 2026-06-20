@@ -493,8 +493,7 @@ export function specializeBuilding(seed, typeId, tier, communitySpecializations)
   const specs = SPECIALIZATIONS[typeId];
   if (!specs || specs.length === 0) {
     // No specializations for this type (residential, infrastructure, etc.)
-    const brand = generateBrand(seed, typeId, typeId);
-    return { specialization: null, brand, owner: brand.owner, inventory: { base: [], specialty: [] } };
+    return { specialization: null, inventory: { base: [], specialty: [] } };
   }
 
   const h = mix(seed, hashStr(typeId), 0xF001);
@@ -523,10 +522,9 @@ export function specializeBuilding(seed, typeId, tier, communitySpecializations)
 
   communitySpecializations.add(spec.id);
 
-  const brand = generateBrand(seed, typeId, spec.id);
   const inventory = generateInventory(mix(seed, 0xF003), spec);
 
-  return { specialization: spec, brand, owner: brand.owner, inventory };
+  return { specialization: spec, inventory };
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────

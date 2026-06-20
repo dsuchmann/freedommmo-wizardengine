@@ -10,6 +10,7 @@ import { rand, mix } from '../../kernel/rng.js';
 import { typesForTier, typesInCategory } from './taxonomy.js';
 import { generateFootprint } from './footprints.js';
 import { specializeBuilding } from './specializations.js';
+import { occupancyProvider } from './occupancy-provider.js';
 import { siteBuildable } from './terrain-suitability.js';
 
 // ── Canonical 12-tier names (shared constant) ───────────────────────
@@ -331,14 +332,16 @@ export function placeBuildings(seed, site, tier, race, districts, spines) {
     }
   }
 
-  /** Assign specialization, brand, owner, and inventory to a placed building. */
+  /** Supply (architectural niche) from specialize; demand (occupant brand/owner) from the
+   *  swappable occupancyProvider — keyed by the building's deterministic seed. */
   function assignIdentity(b, bSeed) {
     const typeId = b.footprint.typeId;
-    const result = specializeBuilding(bSeed, typeId, tier, communitySpecs);
-    b.specialization = result.specialization;
-    b.brand = result.brand;
-    b.owner = result.owner;
-    b.inventory = result.inventory;
+    const { specialization, inventory } = specializeBuilding(bSeed, typeId, tier, communitySpecs);
+    b.specialization = specialization;
+    b.inventory = inventory;
+    const occ = occupancyProvider(bSeed, `${b.x},${b.y}`, specialization?.id || b.footprint.category || typeId);
+    b.brand = { name: occ.name, owner: occ.owner };
+    b.owner = occ.owner;
   }
 
   /** Pick a building type from the allowed categories for this district kind. */
