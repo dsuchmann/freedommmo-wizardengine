@@ -535,7 +535,8 @@ def submit(state, t):
 
 
 def finalize_base(t, info):
-    resp, code = api_call("GET", f"objects/{info['object_id']}")
+    obj_id = info["object_id"]
+    resp, code = api_call("GET", f"objects/{obj_id}")
     if not resp:
         return None  # keep polling
     status = resp.get("status")
@@ -548,12 +549,22 @@ def finalize_base(t, info):
         su = resp.get("storage_urls") or {}
         urls = [su[k] for k in sorted(su) if k.startswith("frame_")] or \
                ([su["unknown"]] if su.get("unknown") else [])
-    for url in urls:
+    chosen = None
+    for i, url in enumerate(urls):
         data = fetch_bytes(url)
         if valid_png(data):
             save_png(data, t["out"])
-            return True
-    return False
+            chosen = i
+            break
+    if chosen is None:
+        return False
+    # Resolve the multi-candidate 'review' so objects don't pile up in the
+    # PixelLab account (mirrors bulk_generate_f6.py:532 — only needed when the
+    # generation produced multiple candidates). Best-effort; we already have the PNG.
+    if len(urls) > 1:
+        api_call("POST", f"objects/{obj_id}/select-frames",
+                 {"indices": [chosen], "common_tag": t["id"].replace("/", "_")[:60]})
+    return True
 
 
 def _extract_images(last):
