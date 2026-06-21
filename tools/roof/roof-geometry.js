@@ -235,15 +235,34 @@ export function buildRoofGrid(sections, opts = {}) {
     const n = hAt(i, j - 1), s = hAt(i, j + 1), e = hAt(i + 1, j), w = hAt(i - 1, j);
     const flatish = Math.abs((t.normal[0])) < 0.06 && Math.abs(t.normal[1]) < 0.06;
     const neigh = [n, s, e, w].filter(v => v != null);
-    const localMax = neigh.every(v => h >= v - 1e-6);
     const localMin = neigh.every(v => h <= v + 1e-6);
-    const ridgeNS = n != null && s != null && h >= n - 1e-6 && h >= s - 1e-6 && (e == null || w == null || h < Math.max(e, w) + 0.5);
-    const ridgeEW = e != null && w != null && h >= e - 1e-6 && h >= w - 1e-6 && (n == null || s == null || h < Math.max(n, s) + 0.5);
+    // Per-axis comparisons. A tile TOPS an axis when it's >= both that axis's neighbours
+    // (apex of the descent on that axis); it STRICTLY tops when it's strictly above both.
+    const EPS = 0.08;
+    // "tops" an axis = >= both that axis's neighbours (sits at the top of the descent).
+    // "descends" an axis = strictly above at least ONE neighbour on it (a real slope falls
+    // away, not a flat shelf). "flat" an axis = within EPS of both neighbours (a level run).
+    const topsNS = (n == null || h >= n - 1e-6) && (s == null || h >= s - 1e-6) && (n != null || s != null);
+    const topsEW = (e == null || h >= e - 1e-6) && (w == null || h >= w - 1e-6) && (e != null || w != null);
+    const descNS = (n != null && h > n + EPS) || (s != null && h > s + EPS);
+    const descEW = (e != null && h > e + EPS) || (w != null && h > w + EPS);
+    const flatNS = (n == null || Math.abs(h - n) <= EPS) && (s == null || Math.abs(h - s) <= EPS);
+    const flatEW = (e == null || Math.abs(h - e) <= EPS) && (w == null || Math.abs(h - w) <= EPS);
+    // RIDGE = the apex LINE where two opposing slopes meet: it TOPS the ridge-perpendicular
+    // axis with a real DESCENT on that axis, and runs ~FLAT along the ridge-parallel axis (a
+    // line, not a point). The old loose `>=`-on-both-axes test flagged the whole interior as
+    // ridge because a mid-slope hip tile has EQUAL cross-slope neighbours → graph-paper of
+    // accent strokes. Requiring descent on one axis + flat on the other isolates the line.
+    const ridgeEWline = topsNS && descNS && flatEW; // slopes fall N & S => an E-W ridge line
+    const ridgeNSline = topsEW && descEW && flatNS; // slopes fall E & W => an N-S ridge line
+    const isRidge = ridgeEWline || ridgeNSline;
+    // PEAK = an isolated summit: tops + descends on BOTH axes (a pyramid/cone tip), not a line.
+    const isPeak = topsNS && topsEW && descNS && descEW && !flatNS && !flatEW;
     if (t.distEdge <= 1.2) t.role = ROLE.EAVE;
-    else if (flatish && h > 0.25) t.role = ROLE.DECK;
-    else if (localMax && h > 0.5) t.role = ROLE.PEAK;
+    else if (flatish && h > 0.25 && !isRidge && !isPeak) t.role = ROLE.DECK;
+    else if (isPeak && h > 0.5) t.role = ROLE.PEAK;
     else if (localMin && neigh.length >= 3 && h > 0.2) t.role = ROLE.VALLEY;
-    else if ((ridgeNS || ridgeEW) && h > 0.4) t.role = ROLE.RIDGE;
+    else if (isRidge && h > 0.4) t.role = ROLE.RIDGE;
     else t.role = ROLE.SLOPE;
   }
 
