@@ -18,7 +18,7 @@ import { WALL_CONFIG } from './wall-config.js';
 import { getWallImg } from './building-renderer.js';
 import { buildingFloors } from './building-shadow.js';
 import { queryBuildingTile } from './building-tile-query.js';
-import { wallAssetDir, wallPieceFile, roofAssetDir, roofTextureFile } from '../../sim/world/buildings/building-material-registry.js';
+import { wallAssetDir, wallPieceFile, roofAssetDir, roofTextureFile, ROOF_FASCIA_FILE } from '../../sim/world/buildings/building-material-registry.js';
 
 // Tiles the wall+roof silhouette projects NORTH of the footprint (mirrors building-shadow.js
 // NORTH_SILHOUETTE_BASE / resolved-buildings NORTH_CLAIM: 8 for a 1-storey wall+roof, +4/storey).
@@ -78,6 +78,10 @@ const _imageCache = {
 // back to the biome ground texture). Lets a grassland roof read as a ROOF, not as soil.
 function roofTexFor(b) {
   return (b && b.biome && b.roofSlug) ? _imageCache.get(roofAssetDir(b.biome, b.roofSlug) + roofTextureFile(0)) : null;
+}
+// Per-material eave/rake trim board (ROOF lane draws it on the skirt; degrades to procedural fasciaColor if absent).
+function roofFasciaFor(b) {
+  return (b && b.biome && b.roofSlug) ? _imageCache.get(roofAssetDir(b.biome, b.roofSlug) + ROOF_FASCIA_FILE) : null;
 }
 
 // Empty-tile gap to the building NORTH of us — mirrors the worker's roof clamp so the re-drawn
@@ -289,7 +293,7 @@ export function buildOccluderBitmap(buildings, camX, camY, tilePx, w, h, playerS
   occ.sort((a, b) => (a.y + a.footprint.boundingBox.h) - (b.y + b.footprint.boundingBox.h));
   for (const b of occ) {
     drawWalls(o, b, camX, camY, tilePx, w, h);
-    if (_roof) { try { _roof.drawRoofForBuilding(o, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b) }); } catch { /* skip roof */ } }
+    if (_roof) { try { _roof.drawRoofForBuilding(o, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b), roofFascia: roofFasciaFor(b) }); } catch { /* skip roof */ } }
   }
 
   // DEPTH GUARD: only the building ABOVE the player's feet occludes the player. The building's
@@ -328,6 +332,6 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   if (!getWallImg('south_base')) return false; // stone_brick fallback must be loaded
   ensureRoof();
   drawWalls(ctx, b, camX, camY, tilePx, w, h);
-  if (_roof) { try { _roof.drawRoofForBuilding(ctx, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b) }); } catch { /* skip roof */ } }
+  if (_roof) { try { _roof.drawRoofForBuilding(ctx, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b), roofFascia: roofFasciaFor(b) }); } catch { /* skip roof */ } }
   return true;
 }
