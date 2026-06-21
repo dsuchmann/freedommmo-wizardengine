@@ -94,13 +94,17 @@ export function resolveForBuilding(b, biomeOverride) {
   // past the north wall into the building behind).
   const R = resolveConfig(roof, { sections: fp.sections });
   R.geom.noNorthOverhang = true;
-  // GAME projection: a SMALL downward droop on the E/W/S overhang ring so the eave
-  // reads as a real OVERHANG (a flared lip just below the wall-top plane), not an inset
-  // flat cut. Keep it small: too much droop projects the overhang DOWN behind the wall
-  // (flat top-down + vertical lift), hidden, and the wall's corner columns (footprint ±1)
-  // poke up past the roof and it looks inset. North is excluded by noNorthOverhang so it
-  // can't poke the neighbour. NOTE: 0.18 is a conservative VISUAL TUNING value — verify
-  // in tools/roof-ingame-preview.html and in-game and adjust to taste.
+  // ROOF-REVEAL (user's #1): the roof must NOT hide the south wall. In the flat top-down
+  // game projection the SOUTH overhang ring drapes ~1.1 tiles DOWN over the visible south
+  // wall — covering the foundation/door/window. Suppress the south overhang so the south
+  // eave terminates AT the footprint edge (= the wall top), revealing the full 4-tile
+  // south wall + cap below the roof. The E/W overhang is KEPT (flared lip), so the roof
+  // still reads as a real overhang from the sides, not an inset flat cut. North is already
+  // excluded (noNorthOverhang) so it can't poke into the neighbour behind.
+  R.geom.noSouthOverhang = true;
+  // SMALL downward droop on the remaining (E/W) overhang ring so its eave reads as a real
+  // flared lip just below the wall-top plane. Kept small (0.18): too much droop projects
+  // the overhang DOWN behind the wall and the corner columns poke up past it (inset look).
   R.geom.overhangDroop = 0.18;
   const grid = buildRoofGrid(R.sections, R.geom);
   // shift the heightmap so the perimeter EAVE sits at h=0 (the lifted wall-top plane),

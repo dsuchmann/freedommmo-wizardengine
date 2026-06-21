@@ -42,3 +42,22 @@ test('noNorthOverhang: no overhang tile sits NORTH of the footprint', () => {
       `overhang tile at (${t.i},${t.j}) must not be a NORTH ring tile`);
   }
 });
+
+test('noSouthOverhang: no overhang tile sits SOUTH of the footprint (wall stays visible)', () => {
+  // ROOF-REVEAL: suppressing the south overhang lets the south eave terminate at the
+  // footprint edge (= the wall top) so the full south wall shows below the roof.
+  const g = buildRoofGrid([{ x0: 0, y0: 0, w: 9, h: 6 }],
+    { style: 'hip', overhang: 1, overhangDroop: 0.18, noNorthOverhang: true, noSouthOverhang: true, params: P });
+  for (const t of g.tiles) {
+    if (!t.isOverhang) continue;
+    // an overhang tile whose nearest footprint neighbour is to the NORTH would sit SOUTH
+    // of the building (draping over the visible south wall); assert none exist.
+    const northFp = g.fp[(t.j - 1) * g.W + t.i];
+    assert.ok(!(northFp && !g.fp[t.j * g.W + t.i] && t.j > g.ovh + 0),
+      `overhang tile at (${t.i},${t.j}) must not be a SOUTH ring tile`);
+  }
+  // E/W overhang must still exist (the flared lip is kept on the sides).
+  const ewOverhang = g.tiles.filter(t => t.isOverhang &&
+    (g.fp[t.j * g.W + t.i - 1] || g.fp[t.j * g.W + t.i + 1]));
+  assert.ok(ewOverhang.length >= 2, 'E/W overhang lip is preserved');
+});

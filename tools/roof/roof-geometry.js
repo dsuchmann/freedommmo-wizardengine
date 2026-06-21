@@ -171,6 +171,12 @@ export function buildRoofGrid(sections, opts = {}) {
         // Skip NORTH-side overhang (nearest footprint tile is to the SOUTH): a north
         // eave/overhang would poke up past the north wall into the building behind.
         if (opts.noNorthOverhang && bestJ > j) continue;
+        // Skip SOUTH-side overhang (nearest footprint tile is to the NORTH): in the flat
+        // top-down game projection a south overhang ring drapes ~1 tile DOWN over the
+        // visible south wall, hiding the foundation/door/window. Suppressing it lets the
+        // south eave terminate AT the footprint edge (= the wall top), so the full south
+        // wall stays visible below the roof. E/W overhang is kept for the flared look.
+        if (opts.noSouthOverhang && bestJ < j) continue;
         isOverhang[k] = 1;
         height[k] = height[best] - droop * bestD;
       }
