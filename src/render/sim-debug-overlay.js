@@ -15,6 +15,8 @@ import { rand } from '../../sim/kernel/rng.js';
 import { getWorldSeed } from '../core/world-seed.js';
 import { discoverSettlementsInMacroRange, suppressBySpacing } from '../../sim/world/buildings/settlement-discovery.js';
 import { resolveBuildingsInRange } from '../../sim/world/buildings/resolved-buildings.js';
+import { buildingTenancies } from '../../sim/world/buildings/tenancy.js';
+import { occupancyProvider } from '../../sim/world/buildings/occupancy-provider.js';
 
 const MAX_OVERLAY_BUILDINGS = 80; // cap layout generation for performance
 
@@ -419,12 +421,50 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
     const s = selectedSettlement;
     const fp = b.footprint;
     const lines = [];
-    lines.push({ text: `${b.brand?.name ?? fp.typeName}`, color: '#ffd24a' });
+    // Tenancies + per-floor occupants (Slice 3): supply (buildingTenancies) + demand (occupancyProvider).
+    let tenancies = [];
+    try { if (fp.node) tenancies = buildingTenancies(fp.node); } catch (e) { tenancies = []; }
+    const occOf = (t) => occupancyProvider(getWorldSeed(), `${b.x},${b.y}`, t.id);
+    const primary = tenancies.find(t => t.kind !== 'household');
+    const titleName = primary ? occOf(primary).name : (b.brand?.name ?? fp.typeName);
+    lines.push({ text: `${titleName}`, color: '#ffd24a' });
     lines.push({ text: ``, color: '#666' });
     lines.push({ text: `TYPE: ${fp.typeName} (${fp.category})`, color: '#ccc' });
     if (b.specialization) lines.push({ text: `SPECIALIZATION: ${b.specialization.name}`, color: '#9cf' });
     if (b.specialization?.desc) lines.push({ text: `  "${b.specialization.desc}"`, color: '#888' });
     lines.push({ text: `DISTRICT: ${b.district}`, color: '#ada' });
+    // ── Floor-by-floor occupancy: who controls what, and which occupants span floors ──
+    if (tenancies.length) {
+      const orgs = tenancies.filter(t => t.kind !== 'household');
+      const households = tenancies.filter(t => t.kind === 'household');
+      lines.push({ text: ``, color: '#666' });
+      lines.push({ text: `OCCUPANTS: ${orgs.length} org${orgs.length !== 1 ? 's' : ''}, ${households.length} household${households.length !== 1 ? 's' : ''}`, color: '#9cf' });
+      for (const t of orgs.slice(0, 6)) {
+        const fl = t.floors;
+        const span = fl.length > 1 ? `fl ${Math.min(...fl)}–${Math.max(...fl)}` : `fl ${fl[0]}`;
+        lines.push({ text: `  [${t.kind}] ${occOf(t).name} (${span})`, color: '#adf' });
+      }
+      for (const t of households.slice(0, 5)) {
+        lines.push({ text: `  [household] ${occOf(t).name} (fl ${t.floors[0]})`, color: '#9bd' });
+      }
+      if (households.length > 5) lines.push({ text: `  …and ${households.length - 5} more households`, color: '#789' });
+      const stack = fp.node?.payload?.stackPlan ?? [];
+      if (stack.length) {
+        const floorTns = new Map();
+        for (const t of tenancies) for (const f of t.floors) { const a = floorTns.get(f) ?? []; a.push(t); floorTns.set(f, a); }
+        lines.push({ text: `FLOORS:`, color: '#9cf' });
+        for (const sp of stack) {
+          const ts = floorTns.get(sp.index) ?? [];
+          let who = '—';
+          if (ts.length === 1) who = occOf(ts[0]).name;
+          else if (ts.length > 1) {
+            const hh = ts.filter(t => t.kind === 'household').length;
+            who = hh === ts.length ? `${hh} households` : `${ts.length} occupants`;
+          }
+          lines.push({ text: `  ${sp.index}: ${sp.use} → ${who}`, color: '#bbb' });
+        }
+      }
+    }
     lines.push({ text: ``, color: '#666' });
     if (s) {
       lines.push({ text: `SETTLEMENT: ${s.name}`, color: '#ddd' });
