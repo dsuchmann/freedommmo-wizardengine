@@ -20,6 +20,25 @@ import { buildingFloors } from './building-shadow.js';
 import { queryBuildingTile } from './building-tile-query.js';
 import { wallAssetDir, wallPieceFile, roofAssetDir, roofTextureFile, ROOF_FASCIA_FILE } from '../../sim/world/buildings/building-material-registry.js';
 
+// Source rect of the E/W side-face cap. The grassland edge_ew strip is a 32x128 quoin/side-cap;
+// sample its LEFT quoin column (x=0..16) as the true vertical corner post (`isQuoinStrip`) — drawing
+// the whole 32-wide face as a thin rotated strip gave the featureless square-block look. The legacy
+// stone_brick fallback edge_ew is a flat 32x32 trim with NO distinct quoin column → use it whole.
+export function ewQuoinRect(isQuoinStrip, iw, ih) {
+  return isQuoinStrip ? [0, 0, 16, ih || 128] : [0, 0, iw || 32, ih || 32];
+}
+
+// Deterministic run-bond variant index for a wall column so adjacent base tiles use shifted mortar
+// joints and the 32px strip stops reading as a fixed repeat. nVariants includes the base (index 0)
+// + the rb1..rb(n-1) shifted strips. Hash of the column index (large-prime XOR) → stable per column.
+export function runBondVariant(col, nVariants) {
+  const n = Math.max(1, nVariants | 0);
+  let x = (col | 0) ^ 0x9e3779b9;
+  x = Math.imul(x ^ (x >>> 16), 0x45d9f3b);
+  x = (x ^ (x >>> 16)) >>> 0;
+  return x % n;
+}
+
 // Tiles the wall+roof silhouette projects NORTH of the footprint (mirrors building-shadow.js
 // NORTH_SILHOUETTE_BASE / resolved-buildings NORTH_CLAIM: 8 for a 1-storey wall+roof, +4/storey).
 const NORTH_BAND_BASE = 8;
@@ -107,15 +126,23 @@ function wallImgs(b) {
   const w = (piece, opts) => pilotPiece(b, piece, opts) || getWallImg(piece);
   const wear = { wear: 'normal' };
   const base = w('south_base', wear);
+  // Run-bond variants of south_base (rb1/rb2/rb3) — the renderer shifts the mortar joint per wall
+  // column so the 32px strip doesn't read as a fixed repeat. Only the per-(biome,wallSlug) pilot
+  // pieces have them; the stone_brick fallback has none, so the variant array is just [base].
+  const baseVariants = [base];
+  for (let n = 1; n <= 3; n++) { const v = pilotPiece(b, 'south_base', { rbVariant: n }); if (v) baseVariants.push(v); }
   return {
     south_base: base,
+    south_base_variants: baseVariants,
     south_window: w('south_window', { shape: (b && b.windowShape) || 'arched' }),
     south_door: w('south_door', { shape: (b && b.doorShape) || 'plank' }),
     south_doorway: w('south_doorway', wear), // wall with the door CUT OUT (decoupled-door pilot)
     south_corner_west: w('south_corner_west', wear),
     south_corner_east: w('south_corner_east', wear),
     edge_ew: w('edge_ew', wear),
-    isPilot: !!(base && (base.naturalWidth || 0) >= 96),
+    // True only when the per-(biome,wallSlug) pilot edge_ew loaded — a full-height structured quoin
+    // strip whose left 16px is the corner post. The stone_brick fallback edge_ew is a flat trim.
+    edgeIsQuoin: !!pilotPiece(b, 'edge_ew', wear),
   };
 }
 
@@ -142,46 +169,35 @@ export function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
   const t = Math.round(tilePx), wp = 1;
   const wH = Math.round(tilePx * WALL_CONFIG.wallHeight);
   const WY = WALL_CONFIG.wallYOffset, NY = WALL_CONFIG.northYOffset;
-  const EWH = WALL_CONFIG.ewTileHeight, EWX = WALL_CONFIG.ewXOffset;
+  const EWX = WALL_CONFIG.ewXOffset;
   const stories = buildingFloors(b);
   const fp = b.footprint, sections = fp.sections || [];
-  const tsx = (wx) => Math.round(wx * tilePx - camX);
   const tsy = (wy) => Math.round(wy * tilePx - camY);
   const floorSet = new Set();
   for (const s of sections) for (let dy = 0; dy < s.h; dy++) for (let dx = 0; dx < s.w; dx++) floorSet.add((s.x0 + dx) + ',' + (s.y0 + dy));
   const doorSet = new Set((fp.doors || []).map(d => d.x + ',' + d.y));
 
-  // Pilot pieces are raw 128² facades (a 4-bay wall with the cap/foundation bands and, for
-  // window/door, a centred feature). To tile them to ANY building width WITHOUT fragmenting
-  // diagonal braces or seaming at non-32 zoom, each on-screen tile draws its slice of a
-  // UNIFORMLY-scaled 4-tile facade unit, clipped to the tile — so adjacent tiles reconstruct
-  // one continuous facade (zoom-robust), and a wide piece shows the facade's centred 2 tiles.
-  // Legacy stone_brick pieces are pre-cut 32/64-wide strips with an 8px top inset.
-  const P = wi.isPilot;
-  // A pilot facade has 3 vertical bands: a cap/beam (top ~18/128), a foundation course
-  // (bottom ~22/128), and the wall surface between. On a MULTI-STORY wall, drawing the full
-  // facade per story repeats the cap+foundation as a molding band at every floor. So per story
-  // we pick a vertical band: ground story keeps the foundation but drops the cap; the top story
-  // keeps the cap but drops the foundation; middle stories show only the surface. The cap then
-  // appears only at the roofline and the foundation only at the floor. Single story = full facade.
-  const SY = (vb) => vb === 'capmid' ? [0, 106] : vb === 'midfound' ? [18, 128] : vb === 'mid' ? [18, 106] : [0, 128];
-  const vbandFor = (st) => stories === 1 ? 'full' : (st === 0 ? 'midfound' : (st === stories - 1 ? 'capmid' : 'mid'));
-  // c = section-relative tile column (so each building's facade starts clean at its left edge).
-  // dw = boundary-derived screen width for this tile (from tileExtent); falls back to the old
-  // fixed pad only if a caller omits it (defensive — every live call now passes one).
-  const facadeTile = (img, c, dx, dy, vb, dw) => {
-    const ew = dw || (t + wp);
-    if (!P) { const cb = cropBox(img.naturalWidth || 32, img.naturalHeight || 128, dx, dy, ew, wH + wp); ctx.drawImage(img, cb.sx, cb.sy, cb.sw, cb.sh, cb.dx, cb.dy, cb.dw, cb.dh); return; }
-    const ux = dx - ((((c) % 4) + 4) % 4) * t, s = SY(vb);
-    ctx.save(); ctx.beginPath(); ctx.rect(dx, dy, ew, wH + wp); ctx.clip();
-    ctx.drawImage(img, 0, s[0], 128, s[1] - s[0], ux, dy, 4 * t, wH + wp); ctx.restore();
+  // Grassland wall pieces are now 32x128 STRUCTURED STRIPS (cap+body+foundation baked in) and the
+  // wide pieces (south_doorway/window) are 64x128 — both drop straight into the isotropic per-32px
+  // crop. The old isPilot 4-bay clip-and-uniform-scale hack (for 128² facades) is retired: each
+  // tile draws its strip at the full source height into the boundary-derived dest width. dw =
+  // boundary-derived screen width for this tile (from tileExtent); falls back to the old fixed pad
+  // only if a caller omits it (defensive — every live call now passes one).
+  const baseFor = (col) => {
+    const vs = wi.south_base_variants;
+    return (vs && vs.length > 1) ? vs[runBondVariant(col, vs.length)] : wi.south_base;
   };
-  const facadeWide = (img, dx, dy, vb, dw) => {
+  const facadeTile = (img, c, dx, dy, dw) => {
+    if (!img) return;
+    const ew = dw || (t + wp);
+    const cb = cropBox(img.naturalWidth || 32, img.naturalHeight || 128, dx, dy, ew, wH + wp);
+    ctx.drawImage(img, cb.sx, cb.sy, cb.sw, cb.sh, cb.dx, cb.dy, cb.dw, cb.dh);
+  };
+  const facadeWide = (img, dx, dy, dw) => {
+    if (!img) return;
     const ew = dw || (2 * t + wp);
-    if (!P) { const cb = cropBox(img.naturalWidth || 64, img.naturalHeight || 128, dx, dy, ew, wH + wp); ctx.drawImage(img, cb.sx, cb.sy, cb.sw, cb.sh, cb.dx, cb.dy, cb.dw, cb.dh); return; }
-    const ux = dx - t, s = SY(vb); // the facade's centred 2 tiles (window/door) land at dx..dx+2t
-    ctx.save(); ctx.beginPath(); ctx.rect(dx, dy, ew, wH + wp); ctx.clip();
-    ctx.drawImage(img, 0, s[0], 128, s[1] - s[0], ux, dy, 4 * t, wH + wp); ctx.restore();
+    const cb = cropBox(img.naturalWidth || 64, img.naturalHeight || 128, dx, dy, ew, wH + wp);
+    ctx.drawImage(img, cb.sx, cb.sy, cb.sw, cb.sh, cb.dx, cb.dy, cb.dw, cb.dh);
   };
 
   // NORTH walls — stacked
@@ -195,38 +211,46 @@ export function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
       for (let st = 0; st < stories; st++) {
         const sy = tsy(b.y + nr) - wH + Math.round(t * NY) - st * wH;
         if (sx + t < 0 || sx > w || sy + wH < 0 || sy > h) continue;
-        const vb = vbandFor(st);
-        facadeTile(wi.south_base, lx - s.x0, sx, sy, vb, ex.dw);
-        if (wo && wi.south_corner_west) { const exw = tileExtent(b.x + lx - 1, tilePx, camX, 1); facadeTile(wi.south_corner_west, 0, exw.dx, sy, vb, exw.dw); }
-        else if (eo && wi.south_corner_east) { const exe = tileExtent(b.x + lx + 1, tilePx, camX, 1); facadeTile(wi.south_corner_east, 3, exe.dx, sy, vb, exe.dw); }
+        facadeTile(baseFor(lx), lx - s.x0, sx, sy, ex.dw);
+        // Corner pieces sit one tile OUTSIDE the footprint; their buttress shoulder is transparent,
+        // so back-fill a south_base under the outboard tile first (no see-through to terrain).
+        if (wo && wi.south_corner_west) { const exw = tileExtent(b.x + lx - 1, tilePx, camX, 1); facadeTile(baseFor(lx - 1), 0, exw.dx, sy, exw.dw); facadeTile(wi.south_corner_west, 0, exw.dx, sy, exw.dw); }
+        else if (eo && wi.south_corner_east) { const exe = tileExtent(b.x + lx + 1, tilePx, camX, 1); facadeTile(baseFor(lx + 1), 3, exe.dx, sy, exe.dw); facadeTile(wi.south_corner_east, 3, exe.dx, sy, exe.dw); }
       }
     }
   }
 
-  // EAST/WEST edge trims (worker uses the rotated edge_ew strip)
+  // EAST/WEST side facades — a FULL-HEIGHT upright quoin COLUMN (not a thin rotated strip). The
+  // 32x128 edge_ew is a vertical quoin/side-cap; we draw it like a wall (wH tall, stacked per
+  // story) on the east + west columns just outside each section, sampling the x=0 quoin column so
+  // it reads as a real corner post — killing the square-block look. The WEST edge is mirrored.
   if (wi.edge_ew) {
-    const ewH = Math.round(t * EWH), ewX = Math.round(t * EWX);
-    const iw = wi.edge_ew.naturalWidth || wi.edge_ew.width || 32, ih = wi.edge_ew.naturalHeight || wi.edge_ew.height || 32;
-    // The E/W cap is a thin rotated strip; sample one facade column for pilot pieces.
-    const er = P ? [16, 0, 32, 128] : [0, 0, iw, ih];
-    const ew = (dx, dy) => ctx.drawImage(wi.edge_ew, er[0], er[1], er[2], er[3], dx, dy, t + wp, ewH + wp);
+    const ewX = Math.round(t * EWX);
+    const iw = wi.edge_ew.naturalWidth || wi.edge_ew.width || 32, ih = wi.edge_ew.naturalHeight || wi.edge_ew.height || 128;
+    const er = ewQuoinRect(wi.edgeIsQuoin, iw, ih);
     for (const s of sections) {
       for (let dy = 0; dy < s.h; dy++) {
         const ely = s.y0 + dy;
-        const elx = s.x0 + s.w;
-        if (!floorSet.has(elx + ',' + ely)) {
-          const ex = tsx(b.x + elx) + ewX, ey = tsy(b.y + ely);
-          if (ex + t > 0 && ex < w && ey + ewH > 0 && ey < h) {
-            ctx.save(); ctx.translate(ex + t / 2, ey + ewH / 2); ctx.rotate(Math.PI / 2);
-            ew(-t / 2, -ewH / 2); ctx.restore();
+        const elxE = s.x0 + s.w, elxW = s.x0 - 1;
+        const eOpen = !floorSet.has(elxE + ',' + ely), wOpen = !floorSet.has(elxW + ',' + ely);
+        for (let st = 0; st < stories; st++) {
+          const sy = tsy(b.y + ely + 1) - wH + Math.round(t * WY) - st * wH;
+          // East edge — upright full-height column, quoin-sourced.
+          if (eOpen) {
+            const exE = tileExtent(b.x + elxE, tilePx, camX, 1);
+            const dxE = exE.dx + ewX;
+            if (dxE + exE.dw > 0 && dxE < w && sy + wH > 0 && sy < h)
+              ctx.drawImage(wi.edge_ew, er[0], er[1], er[2], er[3], dxE, sy, exE.dw, wH + wp);
           }
-        }
-        const wlx = s.x0 - 1;
-        if (!floorSet.has(wlx + ',' + ely)) {
-          const wx = tsx(b.x + wlx) - ewX, wy = tsy(b.y + ely);
-          if (wx + t > 0 && wx < w && wy + ewH > 0 && wy < h) {
-            ctx.save(); ctx.translate(wx + t / 2, wy + ewH / 2); ctx.rotate(Math.PI / 2); ctx.scale(-1, 1);
-            ew(-t / 2, -ewH / 2); ctx.restore();
+          // West edge — mirrored quoin.
+          if (wOpen) {
+            const exW = tileExtent(b.x + elxW, tilePx, camX, 1);
+            const dxW = exW.dx - ewX;
+            if (dxW + exW.dw > 0 && dxW < w && sy + wH > 0 && sy < h) {
+              ctx.save(); ctx.translate(dxW + exW.dw, sy); ctx.scale(-1, 1);
+              ctx.drawImage(wi.edge_ew, er[0], er[1], er[2], er[3], 0, 0, exW.dw, wH + wp);
+              ctx.restore();
+            }
           }
         }
       }
@@ -255,12 +279,12 @@ export function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
         const ex = tileExtent(b.x + lx, tilePx, camX, 1); const sx = ex.dx;
         const sy = tsy(fbY) - wH + Math.round(t * WY) - st * wH;
         if (sx + t < 0 || sx > w || sy + wH < 0 || sy > h) continue;
-        const k = lx + ',' + ly, c = lx - s.x0, vb = vbandFor(st), wo = !floorSet.has((lx - 1) + ',' + ly), eo = !floorSet.has((lx + 1) + ',' + ly);
-        if (wo && wi.south_corner_west) { facadeTile(wi.south_base, c, sx, sy, vb, ex.dw); const exw = tileExtent(b.x + lx - 1, tilePx, camX, 1); facadeTile(wi.south_corner_west, 0, exw.dx, sy, vb, exw.dw); }
-        else if (eo && wi.south_corner_east) { facadeTile(wi.south_base, c, sx, sy, vb, ex.dw); const exe = tileExtent(b.x + lx + 1, tilePx, camX, 1); facadeTile(wi.south_corner_east, 3, exe.dx, sy, vb, exe.dw); }
-        else if (ground && doorSet.has(k) && dx >= 2 && dx < s.w - 2 && (wi.south_doorway || wi.south_door)) { const ex2 = tileExtent(b.x + lx, tilePx, camX, 2); facadeWide(wi.south_doorway || wi.south_door, sx, sy, vb, ex2.dw); skip.add(dx + 1); }
-        else if (win.has(k) && dx >= 2 && dx < s.w - 2 && wi.south_window) { const ex2 = tileExtent(b.x + lx, tilePx, camX, 2); facadeWide(wi.south_window, sx, sy, vb, ex2.dw); skip.add(dx + 1); }
-        else facadeTile(wi.south_base, c, sx, sy, vb, ex.dw);
+        const k = lx + ',' + ly, c = lx - s.x0, wo = !floorSet.has((lx - 1) + ',' + ly), eo = !floorSet.has((lx + 1) + ',' + ly);
+        if (wo && wi.south_corner_west) { facadeTile(baseFor(lx), c, sx, sy, ex.dw); const exw = tileExtent(b.x + lx - 1, tilePx, camX, 1); facadeTile(baseFor(lx - 1), 0, exw.dx, sy, exw.dw); facadeTile(wi.south_corner_west, 0, exw.dx, sy, exw.dw); }
+        else if (eo && wi.south_corner_east) { facadeTile(baseFor(lx), c, sx, sy, ex.dw); const exe = tileExtent(b.x + lx + 1, tilePx, camX, 1); facadeTile(baseFor(lx + 1), 3, exe.dx, sy, exe.dw); facadeTile(wi.south_corner_east, 3, exe.dx, sy, exe.dw); }
+        else if (ground && doorSet.has(k) && dx >= 2 && dx < s.w - 2 && (wi.south_doorway || wi.south_door)) { const ex2 = tileExtent(b.x + lx, tilePx, camX, 2); facadeWide(wi.south_doorway || wi.south_door, sx, sy, ex2.dw); skip.add(dx + 1); }
+        else if (win.has(k) && dx >= 2 && dx < s.w - 2 && wi.south_window) { const ex2 = tileExtent(b.x + lx, tilePx, camX, 2); facadeWide(wi.south_window, sx, sy, ex2.dw); skip.add(dx + 1); }
+        else facadeTile(baseFor(lx), c, sx, sy, ex.dw);
       }
     }
   }

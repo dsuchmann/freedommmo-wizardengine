@@ -25,7 +25,7 @@ globalThis.Image = class {
 };
 // No OffscreenCanvas / document needed for drawWalls (caller passes the ctx in).
 
-const { cropBox, tileExtent, drawWalls } = await import('../../src/render/building-occluder.js');
+const { cropBox, tileExtent, drawWalls, runBondVariant, ewQuoinRect } = await import('../../src/render/building-occluder.js');
 const { ensureFloorImages } = await import('../../src/render/building-renderer.js');
 ensureFloorImages(); // populates the stone_brick fallback wall sprites via the Image shim
 
@@ -160,4 +160,25 @@ test('drawWalls (real engine): adjacent south-wall tiles are dest-x contiguous �
 test('drawWalls runs clean (no throw) on a fallback stone_brick building', () => {
   const ctx = recCtx();
   assert.doesNotThrow(() => drawWalls(ctx, fakeBuilding(), 0, 0, 32, 800, 600));
+});
+
+// ── FIX 3: runBondVariant — deterministic per-column variant pick (breaks the 32px repeat) ──
+test('runBondVariant is deterministic and in-range; not constant across columns', () => {
+  // 1 variant -> always 0 (no run-bond art)
+  for (let c = 0; c < 10; c++) assert.equal(runBondVariant(c, 1), 0);
+  // n variants -> stable per column, within [0,n)
+  const seen = new Set();
+  for (let c = 0; c < 64; c++) {
+    const v = runBondVariant(c, 4);
+    assert.ok(v >= 0 && v < 4, `variant in range for col ${c}`);
+    assert.equal(runBondVariant(c, 4), v, 'deterministic for the same column');
+    seen.add(v);
+  }
+  assert.ok(seen.size > 1, 'variants actually vary across columns (not a fixed repeat)');
+});
+
+// ── FIX 4: ewQuoinRect — quoin column for the structured strip, whole tile for the flat trim ──
+test('ewQuoinRect samples the x=0 quoin column for a structured strip, whole face otherwise', () => {
+  assert.deepEqual(ewQuoinRect(true, 32, 128), [0, 0, 16, 128], 'quoin strip -> left 16px column');
+  assert.deepEqual(ewQuoinRect(false, 32, 32), [0, 0, 32, 32], 'flat trim -> whole face');
 });
