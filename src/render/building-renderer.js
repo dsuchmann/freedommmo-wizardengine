@@ -44,8 +44,8 @@ export function ensureFloorImages() {
   };
   for (const [key, file] of Object.entries(wallPieces)) {
     const img = new Image();
+    img.onload = () => { _wallImgs[key] = img; };  // attach handler BEFORE src so a cached load can't beat it
     img.src = WALL_BASE + file;
-    img.onload = () => { _wallImgs[key] = img; };
   }
   // Solid interior tile per material (wang_15 = all corners upper = full floor)
   const mats = {
@@ -64,8 +64,8 @@ export function ensureFloorImages() {
   for (const [mat, file] of Object.entries(mats)) {
     const img = new Image();
     const folder = mat === 'marble' ? 'marble_white' : mat === 'tile_ceramic' ? 'terracotta' : mat;
+    img.onload = () => { _floorImgs[mat] = img; for (const [a, m] of Object.entries(aliases)) if (m === mat) _floorImgs[a] = img; };  // attach BEFORE src
     img.src = `/assets/pixelab/buildings/floors/${folder}/${file}`;
-    img.onload = () => { _floorImgs[mat] = img; for (const [a, m] of Object.entries(aliases)) if (m === mat) _floorImgs[a] = img; };
   }
 }
 
