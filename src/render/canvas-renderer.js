@@ -16,6 +16,7 @@ import { updateFloorViewTransform } from './floor-view.js';
 import { drawInteriorFloorWorld, drawInteriorWallsWorld, interiorLiftPx, updateInteriorLift } from './interior-renderer.js';
 import { buildInteriorSceneBitmap } from './interior-gl.js';
 import { buildOccluderBitmap } from './building-occluder.js';
+import { buildDoorLeafBitmap } from './door-leaves.js';
 import { buildBuildingLayerBitmaps } from './building-layer.js';
 import { nearDepthBuildings, renderBuildingSilhouette, tileDepth, DEPTH_SCALE } from './building-depth.js';
 import { isInside } from './active-interior.js';
@@ -590,6 +591,10 @@ export class CanvasRenderer {
           { x: w / 2, y: _playerScreenY }, player);
         if (_occ) this.glc.drawSceneOverlayBitmap(_occ);
       }
+      // Decoupled-door pilot: door LEAVES over the baked doorway openings, swung on a hinge by
+      // player proximity. Per-frame + GL-composited like the occluder (everything-through-GL).
+      const _dl = buildDoorLeafBitmap(getCachedBuildings(), camX, camY, tilePx, w, h, player);
+      if (_dl) this.glc.drawSceneOverlayBitmap(_dl);
       this.glc.presentScene(w, h, camera.zoom, fracX, fracY);
     }
     if (glOn) this.glc.endFrame();

@@ -142,6 +142,7 @@ export function wallPieceFile(pieceKey, opts = {}) {
     case 'north_back':
     case 'edge_ew':
     case 'interior_base':
+    case 'south_doorway':
       return `${pieceKey}__${wear}.png`;
     case 'interior_archway':
       return 'interior_archway.png';

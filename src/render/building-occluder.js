@@ -86,6 +86,7 @@ function wallImgs(b) {
     south_base: base,
     south_window: w('south_window', { shape: (b && b.windowShape) || 'arched' }),
     south_door: w('south_door', { shape: (b && b.doorShape) || 'plank' }),
+    south_doorway: w('south_doorway', wear), // wall with the door CUT OUT (decoupled-door pilot)
     south_corner_west: w('south_corner_west', wear),
     south_corner_east: w('south_corner_east', wear),
     edge_ew: w('edge_ew', wear),
@@ -226,7 +227,7 @@ function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
         const k = lx + ',' + ly, c = lx - s.x0, vb = vbandFor(st), wo = !floorSet.has((lx - 1) + ',' + ly), eo = !floorSet.has((lx + 1) + ',' + ly);
         if (wo && wi.south_corner_west) { facadeTile(wi.south_base, c, sx, sy, vb); facadeTile(wi.south_corner_west, 0, sx - t, sy, vb); }
         else if (eo && wi.south_corner_east) { facadeTile(wi.south_base, c, sx, sy, vb); facadeTile(wi.south_corner_east, 3, sx + t, sy, vb); }
-        else if (ground && doorSet.has(k) && dx >= 2 && dx < s.w - 2 && wi.south_door) { facadeWide(wi.south_door, sx, sy, vb); skip.add(dx + 1); }
+        else if (ground && doorSet.has(k) && dx >= 2 && dx < s.w - 2 && (wi.south_doorway || wi.south_door)) { facadeWide(wi.south_doorway || wi.south_door, sx, sy, vb); skip.add(dx + 1); }
         else if (win.has(k) && dx >= 2 && dx < s.w - 2 && wi.south_window) { facadeWide(wi.south_window, sx, sy, vb); skip.add(dx + 1); }
         else facadeTile(wi.south_base, c, sx, sy, vb);
       }
