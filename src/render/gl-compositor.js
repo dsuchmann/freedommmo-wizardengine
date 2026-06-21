@@ -32,6 +32,26 @@ void main() {
   outColor = texture(uTex, vUV);
 }`;
 
+// Building spotlight overlay: blit the FRONT building bitmap over the scene but fade it to nothing
+// in a soft radial hole around the player, so you see THROUGH it to yourself on the real terrain.
+// Reuses the chunk VERT_SRC quad (z=0 — the Y-split, not depth, orders player-vs-building). The
+// hole is a GPU smoothstep on the distance from each fragment to the player's screen centre. NOTE
+// gl_FragCoord origin is bottom-left in the FBO; uPlayerPx is top-left CSS/art px → flip Y.
+var SPOTLIGHT_FRAG_SRC = `#version 300 es
+precision highp float;
+in vec2 vUV;
+uniform sampler2D uTex;
+uniform vec2 uViewport;   // _artW, _artH
+uniform vec2 uPlayerPx;   // player screen centre (top-left origin)
+uniform float uSpotInner; // px: fully clear at/inside this radius
+uniform float uSpotOuter; // px: fully solid building at/outside this radius
+out vec4 outColor;
+void main() {
+  vec2 frag = vec2(gl_FragCoord.x, uViewport.y - gl_FragCoord.y); // → top-left origin
+  float hole = smoothstep(uSpotInner, uSpotOuter, distance(frag, uPlayerPx)); // 0 at player → 1 out
+  outColor = texture(uTex, vUV) * hole; // premultiplied: fades colour AND alpha together
+}`;
+
 // Building-depth pass: write a building silhouette into the scene FBO's DEPTH buffer at a flat
 // per-building depth (uDepthZ = the south baseline mapped to NDC z) so the player sprite can
 // depth-test against it. The depth comes from the QUAD's gl_Position.z, NOT gl_FragDepth — Chrome
@@ -996,6 +1016,60 @@ export class GLCompositor {
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); // premultiplied alpha (same as sprites)
     gl.uniform2f(this.uPos, 0, 0);
     gl.uniform2f(this.uSize, this._artW, this._artH);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.disable(gl.BLEND);
+    gl.bindVertexArray(null);
+  }
+
+  // Like drawSceneOverlayBitmap, but blits the FRONT building bitmap with a GPU spotlight hole
+  // around the player (playerPx in art/CSS px, top-left origin; spotInner/spotOuter in px). Call
+  // AFTER the sprite batch, BEFORE presentScene. Premultiplied ONE/ONE_MINUS_SRC_ALPHA.
+  drawBuildingSpotlightOverlay(bitmap, playerPx, spotInner, spotOuter) {
+    if (!this.ok || !this.sceneActive || !bitmap) return;
+    var gl = this.gl;
+    if (!this.spotProgram) {
+      var prog = this._buildProgram(VERT_SRC, SPOTLIGHT_FRAG_SRC);
+      if (!prog) { this.spotProgram = null; this.spotOk = false; return; }
+      this.spotProgram = prog;
+      this.spotUViewport = gl.getUniformLocation(prog, 'uViewport');
+      this.spotUPos = gl.getUniformLocation(prog, 'uPos');
+      this.spotUSize = gl.getUniformLocation(prog, 'uSize');
+      this.spotUTex = gl.getUniformLocation(prog, 'uTex');
+      this.spotUPlayerPx = gl.getUniformLocation(prog, 'uPlayerPx');
+      this.spotUInner = gl.getUniformLocation(prog, 'uSpotInner');
+      this.spotUOuter = gl.getUniformLocation(prog, 'uSpotOuter');
+      this.spotVao = gl.createVertexArray();
+      gl.bindVertexArray(this.spotVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.unitVbo);
+      var loc = gl.getAttribLocation(prog, 'aUnit');
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+      gl.bindVertexArray(null);
+    }
+    if (this.spotOk === false) return;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.sceneFbo);
+    gl.viewport(0, 0, this._artW, this._artH);
+    gl.useProgram(this.spotProgram);
+    gl.bindVertexArray(this.spotVao);
+    gl.uniform2f(this.spotUViewport, this._artW, this._artH);
+    gl.uniform2f(this.spotUPlayerPx, playerPx.x, playerPx.y);
+    gl.uniform1f(this.spotUInner, spotInner);
+    gl.uniform1f(this.spotUOuter, spotOuter);
+    gl.uniform1i(this.spotUTex, 0);
+    gl.activeTexture(gl.TEXTURE0);
+    if (!this._spotTex) this._spotTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, this._spotTex);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.uniform2f(this.spotUPos, 0, 0);
+    gl.uniform2f(this.spotUSize, this._artW, this._artH);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     gl.disable(gl.BLEND);
     gl.bindVertexArray(null);
