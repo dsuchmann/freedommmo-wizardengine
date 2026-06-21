@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Building Asset Preview — walls + roofs</title>
+<style>
+  :root { --bg:#14171c; --panel:#1c2128; --line:#2b323c; --ink:#e6e9ef; --dim:#8b94a3; --accent:#7cc4ff; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:14px/1.5 ui-sans-serif,system-ui,Segoe UI,Roboto,sans-serif; }
+  header { position:sticky; top:0; z-index:10; background:#0f1216ee; backdrop-filter:blur(6px);
+           border-bottom:1px solid var(--line); padding:12px 20px; display:flex; gap:18px; align-items:center; flex-wrap:wrap; }
+  h1 { font-size:15px; margin:0; font-weight:650; letter-spacing:.02em; }
+  h1 .sub { color:var(--dim); font-weight:400; }
+  label { color:var(--dim); font-size:12px; }
+  select, input[type=range] { background:var(--panel); color:var(--ink); border:1px solid var(--line);
+           border-radius:6px; padding:5px 8px; font:inherit; }
+  main { padding:20px; max-width:1300px; margin:0 auto; }
+  section { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px 18px; margin-bottom:18px; }
+  section > h2 { font-size:13px; margin:0 0 12px; color:var(--accent); letter-spacing:.04em; text-transform:uppercase; }
+  section > .hint { color:var(--dim); font-size:12px; margin:-6px 0 14px; }
+  .row { display:flex; gap:18px; flex-wrap:wrap; align-items:flex-end; }
+  .cell { text-align:center; }
+  .cell .cap { color:var(--dim); font-size:11px; margin-top:6px; }
+  img.px { image-rendering:pixelated; image-rendering:crisp-edges; background:
+            repeating-conic-gradient(#23272e 0% 25%, #1a1e24 0% 50%) 50% / 16px 16px;
+            border:1px solid var(--line); border-radius:4px; }
+  img.broken { opacity:.18; }
+  .wallstrip { display:flex; gap:0; align-items:flex-end; padding:10px; overflow-x:auto;
+               background:repeating-conic-gradient(#23272e 0% 25%,#1a1e24 0% 50%) 50% / 20px 20px;
+               border:1px solid var(--line); border-radius:8px; }
+  .wallstrip img { image-rendering:pixelated; display:block; }
+  .tilegrid { display:inline-grid; gap:0; padding:10px;
+              background:repeating-conic-gradient(#23272e 0% 25%,#1a1e24 0% 50%) 50% / 20px 20px;
+              border:1px solid var(--line); border-radius:8px; }
+  .tilegrid img { image-rendering:pixelated; display:block; }
+  .crop { overflow:hidden; display:inline-block; }
+  .badge { display:inline-block; font-size:10px; color:var(--dim); border:1px solid var(--line);
+           border-radius:99px; padding:1px 8px; margin-left:8px; }
+  .controls { display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Building Asset Preview <span class="sub">· biome-anchored walls + roofs</span></h1>
+  <div class="controls">
+    <label>biome <select id="biome"></select></label>
+    <label>wall material <select id="mat"></select></label>
+    <label>roof material <select id="roof"></select></label>
+    <label>wear <select id="wear">
+      <option>normal</option><option>weathered</option><option>damaged</option><option>mossy</option>
+    </select></label>
+    <label>zoom <input id="zoom" type="range" min="1" max="5" step="0.5" value="3"> <span id="zoomv">3×</span></label>
+  </div>
+</header>
+<main>
+  <section>
+    <h2>Tileability test <span class="badge" id="tt-dims"></span></h2>
+    <div class="hint">south_base repeated 6×3 with NO gaps. Look for visible seams (bad) vs. a continuous wall (good).
+      Pieces are raw 128×128 squares — this shows whether the full square tiles, which decides the crop.</div>
+    <div id="tile-test"></div>
+  </section>
+
+  <section>
+    <h2>Assembled wall strip</h2>
+    <div class="hint">corner · base · window · base · door · base · corner — as the renderer would lay them out (here at native square size).</div>
+    <div id="wall-strip" class="wallstrip"></div>
+  </section>
+
+  <section>
+    <h2>Wear states</h2>
+    <div class="row" id="wear-row"></div>
+  </section>
+
+  <section>
+    <h2>Window variants <span class="badge">6</span></h2>
+    <div class="row" id="windows"></div>
+  </section>
+
+  <section>
+    <h2>Door variants — closed · open · animated <span class="badge">up to 6</span></h2>
+    <div class="hint">Third tile in each group cycles the open/close animation frames.</div>
+    <div class="row" id="doors"></div>
+  </section>
+
+  <section>
+    <h2>Sides &amp; back</h2>
+    <div class="row" id="sides"></div>
+  </section>
+
+  <section>
+    <h2>Interior face (the sandwich)</h2>
+    <div class="row" id="interior"></div>
+  </section>
+
+  <section>
+    <h2>Roof texture <span class="badge" id="roof-dims"></span></h2>
+    <div class="hint">roof_top tiled 5×5 (should read as a roof, distinct from ground), plus its 3 interpolation variants and the fascia/eave-drop.</div>
+    <div id="roof-tile"></div>
+    <div class="row" id="roof-variants" style="margin-top:14px"></div>
+  </section>
+</main>
+
+<script>
+// ── config: must match scripts/bulk_generate_buildings.py + the registry ──
+const BASE = '../assets/pixelab/buildings';
+const BIOMES = ['grassland','forest','desert','mountains','ocean','deep_ocean','shallow_water',
+  'beach','river','lake','dense_forest','tropical_forest','taiga','savanna','steppe','swamp',
+  'tundra','arctic','hills','volcanic','mystic'];
+// wall + roof material slugs per biome (mirrors building-materials.json; extend as biomes are generated)
+const MATS = {
+  grassland: { walls:['wattle_daub','timber_frame','fieldstone','cob'],
+               roofs:['thatch','wood_shingle','clay_tile','turf_sod'] },
+};
+const WINDOW_SHAPES = ['arched','round','shuttered','lattice','bay','slit'];
+const DOOR_SHAPES   = ['plank','iron_banded','arched_double','carved','rounded','studded'];
+const WEARS = ['normal','weathered','damaged','mossy'];
+
+let ZOOM = 3, WALL_PX = 128, ROOF_PX = 64;
+const $ = s => document.querySelector(s);
+
+function img(src, w, h, cap) {
+  const wrap = document.createElement('div'); wrap.className = 'cell';
+  const im = document.createElement('img'); im.className = 'px';
+  im.style.width = (w*ZOOM)+'px'; im.style.height = (h*ZOOM)+'px';
+  im.src = src; im.onerror = () => im.classList.add('broken');
+  wrap.appendChild(im);
+  if (cap) { const c = document.createElement('div'); c.className='cap'; c.textContent=cap; wrap.appendChild(c); }
+  return wrap;
+}
+function wallDir(b,m){ return `${BASE}/walls/${b}/${m}/`; }
+function roofDir(b,m){ return `${BASE}/roof/${b}/${m}/`; }
+
+function render() {
+  const b = $('#biome').value, m = $('#mat').value, rm = $('#roof').value, wear = $('#wear').value;
+  const d = wallDir(b,m);
+  $('#tt-dims').textContent = `${WALL_PX}×${WALL_PX}px squares`;
+  $('#roof-dims').textContent = `${ROOF_PX}×${ROOF_PX}px`;
+
+  // tileability 6×3
+  const tt = $('#tile-test'); tt.innerHTML = '';
+  const grid = document.createElement('div'); grid.className='tilegrid';
+  grid.style.gridTemplateColumns = `repeat(6, ${WALL_PX*ZOOM}px)`;
+  for (let i=0;i<18;i++){ const im=document.createElement('img');
+    im.style.width=im.style.height=(WALL_PX*ZOOM)+'px'; im.src=d+`south_base__${wear}.png`;
+    im.onerror=()=>im.style.opacity=.15; grid.appendChild(im); }
+  tt.appendChild(grid);
+
+  // assembled strip
+  const strip = $('#wall-strip'); strip.innerHTML='';
+  const seq = [['south_corner_west__'+wear], ['south_base__'+wear], ['south_window__arched'],
+               ['south_base__'+wear], ['south_door__plank'], ['south_base__'+wear], ['south_corner_east__'+wear]];
+  for (const [f] of seq){ const im=document.createElement('img');
+    im.style.width=im.style.height=(WALL_PX*ZOOM)+'px'; im.src=d+f+'.png';
+    im.onerror=()=>im.style.opacity=.12; strip.appendChild(im); }
+
+  // wear row
+  fill('#wear-row', WEARS.map(w => [d+`south_base__${w}.png`, WALL_PX, WALL_PX, w]));
+  // windows
+  fill('#windows', WINDOW_SHAPES.map(s => [d+`south_window__${s}.png`, WALL_PX, WALL_PX, s]));
+  // doors: closed, open, animated
+  const doors = $('#doors'); doors.innerHTML='';
+  for (const s of DOOR_SHAPES){
+    const g = document.createElement('div'); g.className='cell';
+    const row = document.createElement('div'); row.style.display='flex'; row.style.gap='4px';
+    row.appendChild(img(d+`south_door__${s}.png`, WALL_PX, WALL_PX, ''));
+    row.appendChild(img(d+`south_door__${s}__open.png`, WALL_PX, WALL_PX, ''));
+    const anim = img('', WALL_PX, WALL_PX, ''); row.appendChild(anim);
+    animate(anim.querySelector('img'), d+`anim/door_open/${s}/`, 9);
+    g.appendChild(row);
+    const c=document.createElement('div'); c.className='cap'; c.textContent=s; g.appendChild(c);
+    doors.appendChild(g);
+  }
+  // sides
+  fill('#sides', [
+    [d+`south_corner_west__${wear}.png`, WALL_PX, WALL_PX, 'corner W'],
+    [d+`south_corner_east__${wear}.png`, WALL_PX, WALL_PX, 'corner E'],
+    [d+`north_back__${wear}.png`, WALL_PX, WALL_PX, 'north back'],
+    [d+`edge_ew__${wear}.png`, WALL_PX, WALL_PX, 'E/W edge'],
+  ]);
+  // interior
+  fill('#interior', [
+    [d+`interior_base__${wear}.png`, WALL_PX, WALL_PX, 'interior base'],
+    [d+`interior_archway.png`, WALL_PX, WALL_PX, 'archway'],
+    [d+`interior_door__plank.png`, WALL_PX, WALL_PX, 'door (plank)'],
+    [d+`interior_door__arched.png`, WALL_PX, WALL_PX, 'door (arched)'],
+  ]);
+
+  // roof tiled 5×5 + variants
+  const rt = $('#roof-tile'); rt.innerHTML='';
+  const rg = document.createElement('div'); rg.className='tilegrid';
+  rg.style.gridTemplateColumns = `repeat(5, ${ROOF_PX*ZOOM}px)`;
+  for (let i=0;i<25;i++){ const im=document.createElement('img');
+    im.style.width=im.style.height=(ROOF_PX*ZOOM)+'px'; im.src=roofDir(b,rm)+`roof_top__v000.png`;
+    im.onerror=()=>im.style.opacity=.15; rg.appendChild(im); }
+  rt.appendChild(rg);
+  fill('#roof-variants', [0,1,2,3].map(v =>
+    [roofDir(b,rm)+`roof_top__v00${v}.png`, ROOF_PX, ROOF_PX, 'v'+v])
+    .concat([[roofDir(b,rm)+'roof_fascia.png', ROOF_PX, ROOF_PX, 'fascia']]));
+}
+
+function fill(sel, list){ const el=$(sel); el.innerHTML='';
+  for (const [src,w,h,cap] of list) el.appendChild(img(src,w,h,cap)); }
+
+function animate(imEl, dir, n){
+  let i=0; imEl.src = dir+'frame_000.png';
+  setInterval(()=>{ i=(i+1)%n; imEl.src = dir+`frame_${String(i).padStart(3,'0')}.png`;
+                    imEl.onerror=()=>{}; }, 140);
+}
+
+// ── init ──
+function initSelectors(){
+  const bsel=$('#biome'); BIOMES.forEach(b=>{ const o=document.createElement('option');
+    o.value=o.textContent=b; if(!MATS[b]) o.textContent=b+' (not generated)'; bsel.appendChild(o); });
+  bsel.value='grassland'; syncMats();
+}
+function syncMats(){
+  const b=$('#biome').value, conf=MATS[b]||{walls:[],roofs:[]};
+  const ms=$('#mat'); ms.innerHTML=''; conf.walls.forEach(m=>{ const o=document.createElement('option');o.value=o.textContent=m;ms.appendChild(o);});
+  const rs=$('#roof'); rs.innerHTML=''; conf.roofs.forEach(m=>{ const o=document.createElement('option');o.value=o.textContent=m;rs.appendChild(o);});
+}
+$('#biome').addEventListener('change', ()=>{ syncMats(); render(); });
+['#mat','#roof','#wear'].forEach(s=>$(s).addEventListener('change', render));
+$('#zoom').addEventListener('input', e=>{ ZOOM=+e.target.value; $('#zoomv').textContent=ZOOM+'×'; render(); });
+initSelectors(); render();
+</script>
+</body>
+</html>
