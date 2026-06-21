@@ -89,7 +89,25 @@ tc.putImageData(new ImageData(tp, TILE, TILE), 0, 0);
 fs.writeFileSync(tileOut, t.toBuffer('image/png'));
 
 // 5. ROWS-tall column strip — straight repeat (seamless edges already match, no mirror).
-const strip = createCanvas(TILE, TILE * ROWS); const stc = strip.getContext('2d'); stc.imageSmoothingEnabled = false;
-for (let i = 0; i < ROWS; i++) stc.drawImage(t, 0, TILE * i);
-fs.writeFileSync(stripOut, strip.toBuffer('image/png'));
+// horizontal roll dx (px): the renderer's south_base + rb1..rb3 variants want a per-column
+// mortar-joint SHIFT so a tiled wall doesn't read as a fixed 1-tile repeat. A seamless tile is
+// seamless under any horizontal roll, so roll the tile by dx (wrapping) before stacking.
+function buildStrip(dx) {
+  const strip = createCanvas(TILE, TILE * ROWS); const stc = strip.getContext('2d'); stc.imageSmoothingEnabled = false;
+  for (let i = 0; i < ROWS; i++) { stc.drawImage(t, dx, TILE * i); stc.drawImage(t, dx - TILE, TILE * i); }
+  return strip.toBuffer('image/png');
+}
+fs.writeFileSync(stripOut, buildStrip(0));
 console.log(`tile -> ${tileOut} (${TILE}x${TILE}), strip -> ${stripOut} (${TILE}x${TILE * ROWS}) band=${band} decon=${DECON}`);
+
+// RB_OUT=<prefix> → also emit the run-bond variant set: <prefix>__normal/rb1/rb2/rb3.png, rolled
+// 0/16/32/48 px so adjacent wall columns use shifted joints (drop straight into south_base__*).
+// Pass RB_ROLL=0 for IDENTICAL variants (e.g. timber: keep the beam lattice aligned across columns).
+const rbOut = process.env.RB_OUT;
+if (rbOut) {
+  const roll = process.env.RB_ROLL != null ? +process.env.RB_ROLL : 1;
+  const names = ['__normal', '__rb1', '__rb2', '__rb3'];
+  const offs = roll ? [0, 16, 32, 48].map((o) => Math.round(o * TILE / 64)) : [0, 0, 0, 0];
+  for (let i = 0; i < 4; i++) fs.writeFileSync(`${rbOut}${names[i]}.png`, buildStrip(offs[i]));
+  console.log(`rb set -> ${rbOut}{__normal,__rb1,__rb2,__rb3}.png roll=${roll ? offs.join('/') : 'identical'}`);
+}
