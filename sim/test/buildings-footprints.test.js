@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { generatePattern } from '../world/buildings/patterns.js';
-import { generateFootprint } from '../world/buildings/footprints.js';
+import { generateFootprint, FOOTPRINT_SCALE, FOOTPRINT_GROW_MAX, MIN_DIM } from '../world/buildings/footprints.js';
 import { BUILDING_TYPES, typeById } from '../world/buildings/taxonomy.js';
 
 // ── Task 2: pattern generators ────────────────────────────────────────
@@ -146,14 +146,19 @@ test('race-specific footprints include race field', () => {
   assert.equal(fp2.race, 'ignaar');
 });
 
-test('size within type range across 20 seeds', () => {
+test('size within type range across 20 seeds (taxonomy bounds × documented scale + grow)', () => {
+  // Footprints are drawn at FOOTPRINT_SCALE× the taxonomy bounds (visual presence) and may grow
+  // up to FOOTPRINT_GROW_MAX to fit required features, floored at MIN_DIM — so the ACTUAL bbox
+  // range is the scaled-and-grown range, not the raw catalog bounds.
+  const lo = (m) => Math.max(MIN_DIM, Math.floor(m * FOOTPRINT_SCALE));
+  const hi = (m) => Math.ceil(m * FOOTPRINT_SCALE) + FOOTPRINT_GROW_MAX;
   for (let seed = 1; seed <= 20; seed++) {
     const fp = generateFootprint(seed, 'house');
     const type = BUILDING_TYPES.house;
-    assert.ok(fp.boundingBox.w >= type.minW && fp.boundingBox.w <= type.maxW,
-      `seed ${seed}: w=${fp.boundingBox.w} outside [${type.minW},${type.maxW}]`);
-    assert.ok(fp.boundingBox.h >= type.minH && fp.boundingBox.h <= type.maxH,
-      `seed ${seed}: h=${fp.boundingBox.h} outside [${type.minH},${type.maxH}]`);
+    assert.ok(fp.boundingBox.w >= lo(type.minW) && fp.boundingBox.w <= hi(type.maxW),
+      `seed ${seed}: w=${fp.boundingBox.w} outside [${lo(type.minW)},${hi(type.maxW)}]`);
+    assert.ok(fp.boundingBox.h >= lo(type.minH) && fp.boundingBox.h <= hi(type.maxH),
+      `seed ${seed}: h=${fp.boundingBox.h} outside [${lo(type.minH)},${hi(type.maxH)}]`);
   }
 });
 

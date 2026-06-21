@@ -78,7 +78,14 @@ const DOOR_PER_TILES = 22;    // ~1 door per this many outer-perimeter tiles
 const MAX_DOORS = 4;
 // Minimum building dimension so even small buildings have a believable interior
 // (5 => at least a 3x3 interior after the 1-tile wall ring).
-const MIN_DIM = 5;
+export const MIN_DIM = 5;
+
+// Footprints are drawn at SCALE× their taxonomy bounds for visual presence on terrain, then GROWN
+// (up to FOOTPRINT_GROW_MAX) if the function's required features need more interior. So the actual
+// bbox lives in [round(minW*SCALE) .. round(maxW*SCALE)+GROW], floored at MIN_DIM — NOT the raw
+// taxonomy bounds. Exported so tests validate the real sizing model.
+export const FOOTPRINT_SCALE = 1.5;
+export const FOOTPRINT_GROW_MAX = 6;
 
 // A building must contain its REQUIRED features with room to move — derive a minimum floor-tile
 // count from them (each required feature needs ~3 tiles of clearance over a base interior). This
@@ -209,10 +216,10 @@ export function generateFootprint(seed, typeId, race, tier) {
   //      Wrapped in a GROW LOOP: sparse patterns (L, courtyard) can leave fewer interior
   //      tiles than the building's required features need.  We expand w/h by +1 per
   //      iteration (up to 6 steps) until floor count meets the function minimum.
-  const SCALE = 1.5;
+  const SCALE = FOOTPRINT_SCALE;
   const need = minFloorTilesFor(type);
   let w, h, patternName, sections, tileSet, walls, wallKeySet, floors, doors;
-  for (let grow = 0; grow <= 6; grow++) {
+  for (let grow = 0; grow <= FOOTPRINT_GROW_MAX; grow++) {
     w = Math.max(MIN_DIM, Math.round((type.minW + Math.floor(rand(seed, 0x5001) * (type.maxW - type.minW + 1))) * SCALE) + grow);
     h = Math.max(MIN_DIM, Math.round((type.minH + Math.floor(rand(seed, 0x5002) * (type.maxH - type.minH + 1))) * SCALE) + grow);
     const patIdx = Math.floor(rand(seed, 0x5003) * type.patterns.length);
