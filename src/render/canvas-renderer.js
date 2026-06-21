@@ -17,6 +17,7 @@ import { drawInteriorFloorWorld, drawInteriorWallsWorld, interiorLiftPx, updateI
 import { buildInteriorSceneBitmap } from './interior-gl.js';
 import { buildOccluderBitmap } from './building-occluder.js';
 import { buildDoorLeafBitmap } from './door-leaves.js';
+import { buildWindowOverlayBitmap } from './window-overlay.js';
 import { buildBuildingLayerBitmaps } from './building-layer.js';
 import { nearDepthBuildings, renderBuildingSilhouette, tileDepth, DEPTH_SCALE } from './building-depth.js';
 import { isInside } from './active-interior.js';
@@ -591,6 +592,12 @@ export class CanvasRenderer {
           { x: w / 2, y: _playerScreenY }, player);
         if (_occ) this.glc.drawSceneOverlayBitmap(_occ);
       }
+      // Window-as-object overlay: transparent-surround window OBJECTS drawn OVER the unmodified
+      // south_base tile (only window pixels override → no tone/pattern seam) + a procedural
+      // closed→shutters transform by player proximity, mirroring door-leaves.js. Composited into the
+      // SCENE FBO (everything-through-GL), BEFORE the door leaf so doors stay on top of windows.
+      const _wo = buildWindowOverlayBitmap(getCachedBuildings(), camX, camY, tilePx, w, h, player);
+      if (_wo) this.glc.drawSceneOverlayBitmap(_wo);
       // Decoupled-door pilot: door LEAVES over the baked doorway openings, swung on a hinge by
       // player proximity. Per-frame + GL-composited like the occluder (everything-through-GL).
       const _dl = buildDoorLeafBitmap(getCachedBuildings(), camX, camY, tilePx, w, h, player);
