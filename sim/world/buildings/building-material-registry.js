@@ -1027,6 +1027,11 @@ export function wallPieceFile(pieceKey, opts = {}) {
   const shape = opts.shape;
   switch (pieceKey) {
     case 'south_base':
+      // Run-bond variants are stored WITHOUT a wear suffix (south_base__rb{1,2,3}.png) so the
+      // renderer can shift the mortar joint per wall column to break the 32px repeat. The base
+      // (rbVariant 0 / absent) keeps the wear-stated south_base__{wear}.png.
+      if (opts.rbVariant) return `south_base__rb${opts.rbVariant}.png`;
+      return `south_base__${wear}.png`;
     case 'south_corner_west':
     case 'south_corner_east':
     case 'north_back':
@@ -1043,6 +1048,43 @@ export function wallPieceFile(pieceKey, opts = {}) {
     default:
       return `${pieceKey}.png`;
   }
+}
+
+// ── Doorway cut-out holes ──────────────────────────────────────────────────────────────────
+// The decoupled door LEAF (door-leaves.js) swings INTO this sub-rect of the 64x128 south_doorway
+// crop instead of the full 2t×4t tile. Fractions are of the 64-wide x 128-tall doorway canvas,
+// keyed by WALL MATERIAL (the true alpha cut-out differs per material; embedded from
+// assets/pixelab/buildings/walls/grassland/manifest/doorway_holes.json so it resolves in-browser
+// with no fetch). fieldstone is flagged `escalate` (door void clipped hard-right by the crop) —
+// usable as a fallback. shape is accepted for forward-compat (shape-specific holes) but the
+// authored metadata is per-material today.
+const DOORWAY_HOLE_DEFAULT = { x0: 0.1875, y0: 0.3594, w: 0.6875, h: 0.6406 }; // = cob (a clean opening)
+const DOORWAY_HOLES = {
+  cob:          { x0: 0.1875, y0: 0.3594, w: 0.6875, h: 0.6406 },
+  fieldstone:   { x0: 0.7031, y0: 0.3906, w: 0.2969, h: 0.6094, escalate: true },
+  wattle_daub:  { x0: 0.125,  y0: 0.125,  w: 0.75,   h: 0.875 },
+  timber_frame: { x0: 0.125,  y0: 0.1953, w: 0.75,   h: 0.8047 },
+};
+/** Doorway cut-out rect {x0,y0,w,h} (fractions of the 64x128 doorway canvas) for a wall material.
+ *  `shape` is accepted for forward-compat; today the hole is per-material. Unknown → safe default. */
+export function doorwayHole(material, shape) {
+  return DOORWAY_HOLES[material] || DOORWAY_HOLE_DEFAULT;
+}
+
+// ── Window overlay objects ─────────────────────────────────────────────────────────────────
+// Transparent-surround window OBJECTS drawn OVER the unmodified south_base tile (so the base tone
+// always shows — kills the window tone seam). 64x96 PNGs named south_window_obj__{oshape}__{state}.
+// On disk only 3 overlay shapes exist (arched/stone/balcony) with limited states — `arched` carries
+// BOTH closed + shutters, so it's the openable default. The 6 authored WINDOW_SHAPES map onto them.
+const WINDOW_OVERLAY_SHAPE = {
+  arched: 'arched', round: 'arched', shuttered: 'arched',
+  lattice: 'arched', bay: 'balcony', slit: 'stone',
+};
+/** Window overlay object file for an authored window shape + open state. `open` true → the shutters
+ *  (open) sprite, false → the closed pane. Returns the south_window_obj filename in the material dir. */
+export function windowOverlayFile(shape, open) {
+  const o = WINDOW_OVERLAY_SHAPE[shape] || 'arched';
+  return `south_window_obj__${o}__${open ? 'shutters' : 'closed'}.png`;
 }
 
 /** Door open/close animation frame path (frame index 0..8). */
