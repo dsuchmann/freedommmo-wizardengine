@@ -126,30 +126,74 @@ export function slopeUV(t) {
   return { v0, v1, dir: sa.dir || 'n' };
 }
 
-// Texture-map a facet quad with a CONTINUOUS slope-space UV: u along the ridge, v
-// eave->ridge (from slopeUV), sampling the FULL tex.width x tex.height so courses flow
-// unbroken across tile boundaries instead of restarting a fixed 32px crop per tile.
-function drawTexturedTile(ctx, q, tex, shade, t) {
+// PER-FACET texture frame (Problem B). A tile's quad is always [TL,TR,BR,BL] with
+// TL=(i,j); so the grid-+x edge is q[1]-q[0] and the grid-+y edge is q[3]-q[0]. The
+// texture must flow DOWN the facet's actual slope: courses run along that facet's eave
+// (the u axis) and the texture flows down-slope (the v axis, eave->ridge). For a N/S
+// facet down-slope is the grid-Y axis (v = grid-Y edge, u = grid-X edge); for an E/W
+// facet down-slope is the grid-X axis, so the frame ROTATES (v = grid-X edge, u =
+// grid-Y edge). Returns the projection-space origin + the u/v edge vectors so the
+// affine maps the texture onto the facet in its OWN orientation, not a single global one.
+export function slopeFrame(t, q) {
+  const ex = { x: q[1].x - q[0].x, y: q[1].y - q[0].y }; // grid-+x quad edge
+  const ey = { x: q[3].x - q[0].x, y: q[3].y - q[0].y }; // grid-+y quad edge
+  const dir = (t.dir && t.dir !== 'flat') ? t.dir : (t.slopeAxis && t.slopeAxis.dir) || 'n';
+  // down-slope (v: eave at v=0 near the LOW edge, ridge at v=1 near the HIGH edge).
+  // The eave (low) is on the DOWNHILL side; ridge (high) is uphill.
+  // We return the origin at the EAVE corner and vEdge pointing toward the ridge.
+  if (dir === 'e' || dir === 'w') {
+    // slope runs along grid-X. eave is on the downhill x side.
+    const vEdge = dir === 'e' ? { x: -ex.x, y: -ex.y } : { x: ex.x, y: ex.y }; // eave->ridge
+    const origin = dir === 'e' ? { x: q[1].x, y: q[1].y } : { x: q[0].x, y: q[0].y };
+    return { origin, uEdge: ey, vEdge };
+  }
+  // N/S facet: slope runs along grid-Y.
+  const vEdge = dir === 's' ? { x: -ey.x, y: -ey.y } : { x: ey.x, y: ey.y };
+  const origin = dir === 's' ? { x: q[3].x, y: q[3].y } : { x: q[0].x, y: q[0].y };
+  return { origin, uEdge: ex, vEdge };
+}
+
+// How many ROOF TILES one full texture height spans along the slope, and one full
+// texture width spans along the eave. Bigger => the authored course/brick pattern is
+// SUBTLE (a gentle texture), not graph-paper: fewer, larger courses per slope. This is
+// the main lever for Problem A "fewer lines, more structural". Tuned for the dense brick
+// roof_top swatches; overridable via grid.params.texCourseTiles / texEaveTiles.
+const TEX_COURSE_TILES = 3.0; // 1 texture height every ~3 roof tiles up the slope
+const TEX_EAVE_TILES = 3.0;   // 1 texture width every ~3 roof tiles along the eave
+
+// Texture-map a facet quad in the facet's OWN slope frame (Problem B): u runs along the
+// facet's eave, v runs eave->ridge DOWN that facet's slope (rotated per facet via
+// slopeFrame). Samples a COARSE window of the swatch (TEX_COURSE_TILES/TEX_EAVE_TILES)
+// so the authored brick/course pattern reads as a subtle texture, not a dense grid; the
+// window advances continuously by the tile's run/along index so courses flow unbroken
+// across tile boundaries (no per-tile restart, no 2-tile half-crop seam).
+function drawTexturedTile(ctx, q, tex, shade, t, opts) {
   const TW = tex.width || 32, TH = tex.height || 32;
-  const { v0, v1, dir } = slopeUV(t);
-  // source window: v selects the eave->ridge band; u uses the tile's along-ridge index
-  // (gx for n/s faces, gy for e/w) modulo the swatch so horizontal courses tile seamlessly.
+  const courseTiles = (opts && opts.courseTiles) || TEX_COURSE_TILES;
+  const eaveTiles = (opts && opts.eaveTiles) || TEX_EAVE_TILES;
+  const fr = slopeFrame(t, q);
+  const dir = (t.dir && t.dir !== 'flat') ? t.dir : (t.slopeAxis && t.slopeAxis.dir) || 'n';
+  // v: eave->ridge run, in texture-heights. run advances per tile up the slope; dividing
+  // by courseTiles stretches the swatch over several tiles so courses are sparse.
+  const run = (t.slopeAxis && t.slopeAxis.run) || 0;
+  const v0 = run / courseTiles, v1 = (run + 1) / courseTiles;
+  // u: along-eave index in texture-widths, continuous (no half-crop). Use the grid coord
+  // perpendicular to the slope so the swatch tiles seamlessly along the eave.
   const along = (dir === 'n' || dir === 's') ? (t.gx | 0) : (t.gy | 0);
-  const u0frac = (((along % 2) + 2) % 2) / 2;          // 2-tile horizontal repeat
-  const sx = u0frac * TW, sw = TW / 2;
-  // textures are authored eave-at-bottom: flip v so eave(v0) samples the bottom course.
-  const sy0 = (1 - v1) * TH, sy1 = (1 - v0) * TH;
-  const sy = Math.min(sy0, sy1), sh = Math.max(1, Math.abs(sy1 - sy0));
-  const TL = q[0], TR = q[1], BL = q[3];
+  const u0 = along / eaveTiles, u1 = (along + 1) / eaveTiles;
+  // source rect (wrap into the swatch; eave-at-bottom => flip v).
+  const sx = ((u0 % 1) + 1) % 1 * TW, sw = (u1 - u0) * TW;
+  const sy1 = (1 - ((v0 % 1) + 1) % 1) * TH; // bottom (eave)
+  const sh = (v1 - v0) * TH;                 // band height (signed up the swatch)
+  const sy = sy1 - sh;
+  // The frame's affine maps a unit (u,v) square -> the facet, oriented per facet.
+  // origin is the EAVE corner; uEdge along the eave; vEdge eave->ridge.
   ctx.save();
-  // NO per-cell clip: clipping anti-aliases each cell edge → sub-pixel transparent seams
-  // that read as see-through. The affine drawImage fills the (already-inflated) quad and
-  // overlaps neighbours, covering the seams.
   ctx.imageSmoothingEnabled = false;
-  // affine maps the chosen source window onto the quad — divide by the window size (sw,sh),
-  // not a fixed 32, so the slope band stretches over the facet correctly.
-  ctx.transform((TR.x - TL.x) / sw, (TR.y - TL.y) / sw, (BL.x - TL.x) / sh, (BL.y - TL.y) / sh, TL.x, TL.y);
-  try { ctx.drawImage(tex, sx, sy, sw, sh, 0, 0, sw, sh); } catch (e) { /* bad bitmap */ }
+  ctx.transform(fr.uEdge.x, fr.uEdge.y, fr.vEdge.x, fr.vEdge.y, fr.origin.x, fr.origin.y);
+  // we sample a sub-window [sx,sy,sw,sh] of the swatch but draw it into the unit square
+  // [0..1]x[0..1] of the frame; drawImage's dest is the unit square so divide nothing.
+  try { ctx.drawImage(tex, sx, sy, sw, sh, 0, 0, 1, 1); } catch (e) { /* bad bitmap */ }
   ctx.restore();
   ctx.beginPath(); ctx.moveTo(q[0].x, q[0].y); ctx.lineTo(q[1].x, q[1].y); ctx.lineTo(q[2].x, q[2].y); ctx.lineTo(q[3].x, q[3].y); ctx.closePath();
   ctx.fillStyle = shade < 1 ? `rgba(0,0,0,${Math.min(0.55, (1 - shade) * 0.7)})`
@@ -210,6 +254,12 @@ export function drawRoof(ctx, grid, material, features, cfg, view) {
     if (t.isOverhang || t.role === 'eave') drawSkirt(ctx, grid, view, t, material, cfg);
   }
 
+  // Texture sampling knobs (Problem A): how many roof tiles one swatch spans + how much
+  // base-colour wash mutes the dense brick/course pattern into a subtle texture. Pulled
+  // from cfg so the in-game bridge / preview can tune without touching the renderer.
+  const texOpts = { courseTiles: cfg.texCourseTiles, eaveTiles: cfg.texEaveTiles };
+  const texWash = cfg.texWash ?? 0.42;
+
   // overlap tiles slightly to kill inter-facet seams
   const infl = 1.4 / Math.max(8, view.tile);
   for (const t of order) {
@@ -228,7 +278,17 @@ export function drawRoof(ctx, grid, material, features, cfg, view) {
         for (let kk = 1; kk < 4; kk++) ctx.lineTo(quad[kk].x, quad[kk].y);
         ctx.closePath(); ctx.fill();
       }
-      drawTexturedTile(ctx, quad, cfg.texture, shade, t);
+      drawTexturedTile(ctx, quad, cfg.texture, shade, t, texOpts);
+      // CONTRAST WASH (Problem A): the authored roof_top swatches are dense brick/course
+      // patterns with hard dark mortar lines; tiled across a roof they read as graph paper.
+      // A semi-transparent base-colour wash mutes that hard grid into a subtle texture so
+      // the only PROMINENT lines left are true structure (ridge/hip/valley/eave accents).
+      if (base && texWash > 0) {
+        ctx.save(); ctx.globalAlpha = texWash; ctx.fillStyle = base;
+        ctx.beginPath(); ctx.moveTo(quad[0].x, quad[0].y);
+        for (let kk = 1; kk < 4; kk++) ctx.lineTo(quad[kk].x, quad[kk].y);
+        ctx.closePath(); ctx.fill(); ctx.restore();
+      }
     } else material.fillTile(ctx, quad, t, shade, view, grid);
   }
 
