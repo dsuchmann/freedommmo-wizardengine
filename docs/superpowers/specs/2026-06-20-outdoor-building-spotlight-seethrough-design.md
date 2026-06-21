@@ -5,6 +5,16 @@
 **Strata:** S3 Blueprints (building render) ↔ render pipeline
 **Builds on:** `2026-06-19-building-player-depth-occlusion-spec.md` (the GL depth buffer + `writeBuildingDepth` + geometry-z, shipped `098d4212c`).
 
+> **Implementation decision (2026-06-20):** during planning, the per-building **depth-buffer**
+> mechanism described below proved fiddly (player must draw last, two depth/color passes, LEQUAL/LESS
+> z-fighting). The implementation uses the simpler, equally-GL **Y-split** mechanism instead — author
+> buildings into two bitmaps (behind / in front of the player by south baseline), blit *behind*
+> before the sprite batch and *front* after, with the GPU spotlight on the front bitmap. Identical
+> visual (real terrain in a soft spotlight); player-vs-building order is the Y-split (matching the
+> sprite sort) instead of the depth buffer. See the plan:
+> `docs/superpowers/plans/2026-06-20-outdoor-building-seethrough.md`. The sections below are retained
+> as the design rationale; the Y-split is the as-built mechanism.
+
 ## Goal
 
 When the player walks **behind** a building outdoors, open a soft circular **spotlight** in the
