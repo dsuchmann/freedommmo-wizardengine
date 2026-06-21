@@ -124,16 +124,26 @@ function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
   for (const s of sections) for (let dy = 0; dy < s.h; dy++) for (let dx = 0; dx < s.w; dx++) floorSet.add((s.x0 + dx) + ',' + (s.y0 + dy));
   const doorSet = new Set((fp.doors || []).map(d => d.x + ',' + d.y));
 
-  // Source-rect schemes. Pilot pieces are raw 128² facades: a base column samples a 32-wide
-  // slice cycled by tile-x (so the 4-bay facade reconstructs AND tiles to any width); corners
-  // take the facade's left/right edge post; window/door take the centred 64. Legacy stone_brick
-  // pieces are pre-cut 32/64-wide strips with an 8px top inset (0,8,..,112).
+  // Pilot pieces are raw 128² facades (a 4-bay wall with the cap/foundation bands and, for
+  // window/door, a centred feature). To tile them to ANY building width WITHOUT fragmenting
+  // diagonal braces or seaming at non-32 zoom, each on-screen tile draws its slice of a
+  // UNIFORMLY-scaled 4-tile facade unit, clipped to the tile — so adjacent tiles reconstruct
+  // one continuous facade (zoom-robust), and a wide piece shows the facade's centred 2 tiles.
+  // Legacy stone_brick pieces are pre-cut 32/64-wide strips with an 8px top inset.
   const P = wi.isPilot;
-  const colRect = (lx) => P ? [((((lx) % 4) + 4) % 4) * 32, 0, 32, 128] : [0, 8, 32, 112];
-  const cwRect = P ? [0, 0, 32, 128] : [0, 8, 32, 112];
-  const ceRect = P ? [96, 0, 32, 128] : [0, 8, 32, 112];
-  const wideRect = P ? [32, 0, 64, 128] : [0, 8, 64, 112];
-  const di = (img, r, dx, dy, dw, dh) => ctx.drawImage(img, r[0], r[1], r[2], r[3], dx, dy, dw, dh);
+  // c = section-relative tile column (so each building's facade starts clean at its left edge).
+  const facadeTile = (img, c, dx, dy) => {
+    if (!P) { ctx.drawImage(img, 0, 8, 32, 112, dx, dy, t + wp, wH + wp); return; }
+    const ux = dx - ((((c) % 4) + 4) % 4) * t;
+    ctx.save(); ctx.beginPath(); ctx.rect(dx, dy, t + wp, wH + wp); ctx.clip();
+    ctx.drawImage(img, 0, 0, 128, 128, ux, dy, 4 * t, wH + wp); ctx.restore();
+  };
+  const facadeWide = (img, dx, dy) => {
+    if (!P) { ctx.drawImage(img, 0, 8, 64, 112, dx, dy, 2 * t + wp, wH + wp); return; }
+    const ux = dx - t; // the facade's centred 2 tiles (where the window/door sits) land at dx..dx+2t
+    ctx.save(); ctx.beginPath(); ctx.rect(dx, dy, 2 * t + wp, wH + wp); ctx.clip();
+    ctx.drawImage(img, 0, 0, 128, 128, ux, dy, 4 * t, wH + wp); ctx.restore();
+  };
 
   // NORTH walls — stacked
   for (const s of sections) {
@@ -146,9 +156,9 @@ function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
       for (let st = 0; st < stories; st++) {
         const sy = tsy(b.y + nr) - wH + Math.round(t * NY) - st * wH;
         if (sx + t < 0 || sx > w || sy + wH < 0 || sy > h) continue;
-        di(wi.south_base, colRect(lx), sx, sy, t + wp, wH + wp);
-        if (wo && wi.south_corner_west) di(wi.south_corner_west, cwRect, sx - t, sy, t + wp, wH + wp);
-        else if (eo && wi.south_corner_east) di(wi.south_corner_east, ceRect, sx + t, sy, t + wp, wH + wp);
+        facadeTile(wi.south_base, lx - s.x0, sx, sy);
+        if (wo && wi.south_corner_west) facadeTile(wi.south_corner_west, 0, sx - t, sy);
+        else if (eo && wi.south_corner_east) facadeTile(wi.south_corner_east, 3, sx + t, sy);
       }
     }
   }
@@ -157,7 +167,9 @@ function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
   if (wi.edge_ew) {
     const ewH = Math.round(t * EWH), ewX = Math.round(t * EWX);
     const iw = wi.edge_ew.naturalWidth || wi.edge_ew.width || 32, ih = wi.edge_ew.naturalHeight || wi.edge_ew.height || 32;
-    const ewRect = P ? [0, 0, 32, 128] : [0, 0, iw, ih];
+    // The E/W cap is a thin rotated strip; sample one facade column for pilot pieces.
+    const er = P ? [16, 0, 32, 128] : [0, 0, iw, ih];
+    const ew = (dx, dy) => ctx.drawImage(wi.edge_ew, er[0], er[1], er[2], er[3], dx, dy, t + wp, ewH + wp);
     for (const s of sections) {
       for (let dy = 0; dy < s.h; dy++) {
         const ely = s.y0 + dy;
@@ -166,7 +178,7 @@ function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
           const ex = tsx(b.x + elx) + ewX, ey = tsy(b.y + ely);
           if (ex + t > 0 && ex < w && ey + ewH > 0 && ey < h) {
             ctx.save(); ctx.translate(ex + t / 2, ey + ewH / 2); ctx.rotate(Math.PI / 2);
-            di(wi.edge_ew, ewRect, -t / 2, -ewH / 2, t + wp, ewH + wp); ctx.restore();
+            ew(-t / 2, -ewH / 2); ctx.restore();
           }
         }
         const wlx = s.x0 - 1;
@@ -174,7 +186,7 @@ function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
           const wx = tsx(b.x + wlx) - ewX, wy = tsy(b.y + ely);
           if (wx + t > 0 && wx < w && wy + ewH > 0 && wy < h) {
             ctx.save(); ctx.translate(wx + t / 2, wy + ewH / 2); ctx.rotate(Math.PI / 2); ctx.scale(-1, 1);
-            di(wi.edge_ew, ewRect, -t / 2, -ewH / 2, t + wp, ewH + wp); ctx.restore();
+            ew(-t / 2, -ewH / 2); ctx.restore();
           }
         }
       }
@@ -202,12 +214,12 @@ function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
         if (floorSet.has(lx + ',' + (ly + 1))) continue;
         const sx = tsx(b.x + lx), sy = tsy(fbY) - wH + Math.round(t * WY) - st * wH;
         if (sx + t < 0 || sx > w || sy + wH < 0 || sy > h) continue;
-        const k = lx + ',' + ly, wo = !floorSet.has((lx - 1) + ',' + ly), eo = !floorSet.has((lx + 1) + ',' + ly);
-        if (wo && wi.south_corner_west) { di(wi.south_base, colRect(lx), sx, sy, t + wp, wH + wp); di(wi.south_corner_west, cwRect, sx - t, sy, t + wp, wH + wp); }
-        else if (eo && wi.south_corner_east) { di(wi.south_base, colRect(lx), sx, sy, t + wp, wH + wp); di(wi.south_corner_east, ceRect, sx + t, sy, t + wp, wH + wp); }
-        else if (ground && doorSet.has(k) && dx >= 2 && dx < s.w - 2 && wi.south_door) { di(wi.south_door, wideRect, sx, sy, t * 2 + wp, wH + wp); skip.add(dx + 1); }
-        else if (win.has(k) && dx >= 2 && dx < s.w - 2 && wi.south_window) { di(wi.south_window, wideRect, sx, sy, t * 2 + wp, wH + wp); skip.add(dx + 1); }
-        else di(wi.south_base, colRect(lx), sx, sy, t + wp, wH + wp);
+        const k = lx + ',' + ly, c = lx - s.x0, wo = !floorSet.has((lx - 1) + ',' + ly), eo = !floorSet.has((lx + 1) + ',' + ly);
+        if (wo && wi.south_corner_west) { facadeTile(wi.south_base, c, sx, sy); facadeTile(wi.south_corner_west, 0, sx - t, sy); }
+        else if (eo && wi.south_corner_east) { facadeTile(wi.south_base, c, sx, sy); facadeTile(wi.south_corner_east, 3, sx + t, sy); }
+        else if (ground && doorSet.has(k) && dx >= 2 && dx < s.w - 2 && wi.south_door) { facadeWide(wi.south_door, sx, sy); skip.add(dx + 1); }
+        else if (win.has(k) && dx >= 2 && dx < s.w - 2 && wi.south_window) { facadeWide(wi.south_window, sx, sy); skip.add(dx + 1); }
+        else facadeTile(wi.south_base, c, sx, sy);
       }
     }
   }
