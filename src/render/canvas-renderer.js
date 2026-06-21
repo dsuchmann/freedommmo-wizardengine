@@ -16,6 +16,7 @@ import { updateFloorViewTransform } from './floor-view.js';
 import { drawInteriorFloorWorld, drawInteriorWallsWorld, interiorLiftPx, updateInteriorLift } from './interior-renderer.js';
 import { buildInteriorSceneBitmap } from './interior-gl.js';
 import { buildOccluderBitmap } from './building-occluder.js';
+import { buildBuildingLayerBitmaps } from './building-layer.js';
 import { nearDepthBuildings, renderBuildingSilhouette, tileDepth, DEPTH_SCALE } from './building-depth.js';
 import { isInside } from './active-interior.js';
 import { initWallTuner, drawWallTuner } from './wall-tuner.js';
@@ -445,13 +446,23 @@ export class CanvasRenderer {
       setField2PlayerGL(null);
     }
 
-    // BUILDING DEPTH PASS (GL-native player↔building occlusion, gated by window._depthOcclusion).
-    // Write near buildings' baseline depth into the scene FBO's depth buffer BEFORE the sprite
-    // batch, so the player sprite depth-tests against it — occluded at ANY distance, no rise-band,
-    // and building COLOUR stays baked (this never touches colour). window._depthOcclusionDebug
-    // dumps the depth as greyscale to verify alignment.
+    // Outdoor building layer (Y-split): when window._buildingLayer is on, buildings are NOT baked
+    // into the terrain — draw the BEHIND set here (under the player) and stash the FRONT set to
+    // blit (spotlit) after the sprite batch. Gated OFF by default until the worker bake change
+    // lands (Task 5). When OFF, fall back to the shipped depth-occlusion pass below.
+    const _useLayer = glScene && !_inside && typeof window !== 'undefined' && window._buildingLayer === true;
+    let _frontLayerBmp = null;
+    if (_useLayer) {
+      const _layer = buildBuildingLayerBitmaps(getCachedBuildings(), camX, camY, tilePx, w, h, player.y);
+      if (_layer) {
+        if (_layer.behind) this.glc.drawSceneOverlayBitmap(_layer.behind);
+        _frontLayerBmp = _layer.front;
+      }
+    }
+
+    // BUILDING DEPTH PASS (shipped occlusion — only when the new layer is OFF).
     let _depthActive = false;
-    if (glScene && typeof window !== 'undefined' && window._depthOcclusion !== false) {
+    if (!_useLayer && glScene && typeof window !== 'undefined' && window._depthOcclusion !== false) {
       const _refY = (camY + h / 2) / tilePx;
       const _blds = nearDepthBuildings(getCachedBuildings(), camX, camY, tilePx, w, h);
       const _dbg = !!window._depthOcclusionDebug;
@@ -459,13 +470,13 @@ export class CanvasRenderer {
       for (const _b of _blds) {
         const _sil = renderBuildingSilhouette(_b, camX, camY, tilePx, w, h);
         if (!_sil) continue;
-        const _z = tileDepth(_b.y + _b.footprint.boundingBox.h, _refY) * 2 - 1; // baseline → NDC z (geometry-z depth)
+        const _z = tileDepth(_b.y + _b.footprint.boundingBox.h, _refY) * 2 - 1;
         this.glc.writeBuildingDepth(_sil, _z, _dbg);
         _wrote = true;
       }
       if (_wrote) {
         const _see = (typeof window._depthSeeStrength === 'number') ? window._depthSeeStrength : 0.45;
-        this.glc.setSpriteDepth(_refY, DEPTH_SCALE, _see); // player depth-tests against the building depth + soft reveal
+        this.glc.setSpriteDepth(_refY, DEPTH_SCALE, _see);
         _depthActive = true;
       }
     }
@@ -566,9 +577,14 @@ export class CanvasRenderer {
         // player + S (front) wall still draw on the 2D ctx on top — follow-up migrates those.
         const _ib = buildInteriorSceneBitmap(camX, camY, tilePx, w, h);
         if (_ib) this.glc.drawSceneOverlayBitmap(_ib);
+      } else if (_useLayer) {
+        // Outdoor building layer ON: blit the FRONT buildings with the GPU spotlight hole around
+        // the player (torso-centred), revealing the player on the real terrain. radius 2.6 tiles,
+        // inner 45% — matches the interior see-through wall.
+        if (_frontLayerBmp) this.glc.drawBuildingSpotlightOverlay(_frontLayerBmp,
+          { x: w / 2, y: _playerScreenY - tilePx * 0.6 }, tilePx * 2.6 * 0.45, tilePx * 2.6);
       } else if (typeof window !== 'undefined' && window._depthOcclusion === false) {
-        // Outdoors with depth occlusion explicitly OFF → fall back to the heuristic overlay
-        // occluder (the depth pass above handles it by default; nothing to do here then).
+        // Outdoors with depth occlusion explicitly OFF → heuristic overlay occluder fallback.
         const _occ = buildOccluderBitmap(getCachedBuildings(), camX, camY, tilePx, w, h,
           { x: w / 2, y: _playerScreenY }, player);
         if (_occ) this.glc.drawSceneOverlayBitmap(_occ);
