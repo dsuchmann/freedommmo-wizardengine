@@ -65,50 +65,80 @@ export class OvermapController {
     this.player.y = targetCy * WORLD.chunkSize + WORLD.chunkSize / 2;
     this.redrawNeeded = true;
     this.chunkStore.streamAround(this.player.x, this.player.y);
+    // A teleport is a discontinuity: force the destination's biome + F2-F6 asset preload NOW.
+    // Without this the only preload is the throttled 128-frame initPreload tick (gated by a
+    // 15-chunk guard), so decoration sprites are missing — sometimes permanently — after a jump.
+    const provider = this.chunkStore.provider;
+    if (provider && provider.initPreload) provider.initPreload(this.player.x, this.player.y, true);
   }
 
   draw(force = false) {
     if (!this.visible) return;
     const ctx = this.element.getContext('2d', { alpha: false, willReadFrequently: false });
     const { pcx, pcy } = this.playerChunk();
-    const centerKey = `${pcx},${pcy}`;
-    if (!force && !this.redrawNeeded && centerKey === this.lastCenter) {
-      this.drawOverlay(ctx, pcx, pcy);
-      return;
-    }
-    // Full overmap redraws are expensive; defer/throttle them so crossing a
-    // chunk boundary never coincides with a costly 152x152 regional resample.
-    const now = performance.now();
-    if (!force && centerKey !== this.lastCenter && now - this.lastFullRedrawAt < 1200) {
-      this.drawOverlay(ctx, pcx, pcy);
-      return;
-    }
-    this.lastFullRedrawAt = now;
-    this.lastCenter = centerKey;
-    this.redrawNeeded = false;
-    const image = ctx.createImageData(this.size, this.size);
-    const half = Math.floor(this.size / 2);
+    const cs = this.chunkScale;
+    // Snap the base-map center to a chunkScale-aligned chunk grid. Then a recenter is
+    // always a whole-PIXEL shift (cs chunks == 1 base pixel), so we can SCROLL the cached
+    // image and resample only the newly-exposed strip instead of the whole 152x152 grid.
+    // (Without the snap, a 1-chunk recenter at chunkScale=2 is a half-pixel shift and the
+    // scrolled image would sample the wrong chunk parity.) A walk probe measured the old
+    // full resample at ~925-1075ms SYNCHRONOUS on the rAF thread per recenter — the 1200ms
+    // throttle only capped its frequency. The strip path is a few rows of work per recenter.
+    const bcx = Math.round(pcx / cs) * cs;
+    const bcy = Math.round(pcy / cs) * cs;
 
-    for (let py = 0; py < this.size; py++) {
-      for (let px = 0; px < this.size; px++) {
-        const cx = pcx + (px - half) * this.chunkScale;
-        const cy = pcy + (py - half) * this.chunkScale;
+    const noBase = this.baseCx === undefined || this.baseCy === undefined;
+    const dpx = noBase ? 0 : (this.baseCx - bcx) / cs;
+    const dpy = noBase ? 0 : (this.baseCy - bcy) / cs;
+    // A jump larger than the map can't be scrolled (no overlap) — full resample. This is
+    // the first build, an expand (force), and teleports; not the walking hot path.
+    const farJump = noBase || Math.abs(dpx) >= this.size || Math.abs(dpy) >= this.size;
+
+    if (force || this.redrawNeeded || farJump) {
+      this._resampleRect(bcx, bcy, 0, 0, this.size, this.size);
+      this.baseCx = bcx; this.baseCy = bcy;
+      this.redrawNeeded = false;
+    } else if (dpx !== 0 || dpy !== 0) {
+      // Scroll the cached base by the integer-pixel delta, then fill the exposed L-strip.
+      this.baseCtx.drawImage(this.baseCanvas, dpx, dpy);
+      this.baseCx = bcx; this.baseCy = bcy;
+      if (dpx > 0) this._resampleRect(bcx, bcy, 0, 0, dpx, this.size);
+      else if (dpx < 0) this._resampleRect(bcx, bcy, this.size + dpx, 0, -dpx, this.size);
+      if (dpy > 0) this._resampleRect(bcx, bcy, 0, 0, this.size, dpy);
+      else if (dpy < 0) this._resampleRect(bcx, bcy, 0, this.size + dpy, this.size, -dpy);
+    }
+    this.lastCenter = `${pcx},${pcy}`;
+    this.drawOverlay(ctx, pcx, pcy);
+  }
+
+  // Resample the [x0,x0+w) x [y0,y0+h) window of the base image, sampling regional chunks
+  // around the snapped center (bcx,bcy). Pulled out of draw() so a recenter can refill just
+  // the newly-exposed strip. Cost scales with w*h, so a 1-pixel scroll is ~one row of work.
+  _resampleRect(bcx, bcy, x0, y0, w, h) {
+    if (w <= 0 || h <= 0) return;
+    const cs = this.chunkScale;
+    const half = Math.floor(this.size / 2);
+    const image = this.baseCtx.createImageData(w, h);
+    const data = image.data;
+    for (let yy = 0; yy < h; yy++) {
+      const py = y0 + yy;
+      for (let xx = 0; xx < w; xx++) {
+        const px = x0 + xx;
+        const cx = bcx + (px - half) * cs;
+        const cy = bcy + (py - half) * cs;
         const sample = sampleRegionalMapChunk(cx, cy);
         const rgb = hexToRgb(sample.definition.color);
-        const east = sampleRegionalMapChunk(cx + this.chunkScale, cy).climate.elevation;
-        const south = sampleRegionalMapChunk(cx, cy + this.chunkScale).climate.elevation;
+        const east = sampleRegionalMapChunk(cx + cs, cy).climate.elevation;
+        const south = sampleRegionalMapChunk(cx, cy + cs).climate.elevation;
         const hill = Math.max(-35, Math.min(45, (sample.climate.elevation - 0.5) * 80 + (sample.climate.elevation - east) * 180 + (sample.climate.elevation - south) * 140));
-        const index = (py * this.size + px) * 4;
-        image.data[index] = clamp(rgb.r + hill);
-        image.data[index + 1] = clamp(rgb.g + hill);
-        image.data[index + 2] = clamp(rgb.b + hill);
-        image.data[index + 3] = 255;
+        const idx = (yy * w + xx) * 4;
+        data[idx] = clamp(rgb.r + hill);
+        data[idx + 1] = clamp(rgb.g + hill);
+        data[idx + 2] = clamp(rgb.b + hill);
+        data[idx + 3] = 255;
       }
     }
-
-    this.baseCtx.putImageData(image, 0, 0);
-    ctx.drawImage(this.baseCanvas, 0, 0);
-    this.drawOverlay(ctx, pcx, pcy);
+    this.baseCtx.putImageData(image, x0, y0);
   }
 
   playerChunk() {

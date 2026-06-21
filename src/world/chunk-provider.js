@@ -39,10 +39,14 @@ export class ChunkProvider {
   // Sample biomes in a radius around a world position and tell workers to preload those tiles.
   // Safe to call repeatedly (e.g. periodically as the player moves) — it
   // no-ops until the player has moved far enough from the last preload center.
-  initPreload(wx, wy) {
+  initPreload(wx, wy, force = false) {
     const pcx = Math.floor(wx / 64);
     const pcy = Math.floor(wy / 64);
-    if (this._lastPreload && Math.max(Math.abs(pcx - this._lastPreload.cx), Math.abs(pcy - this._lastPreload.cy)) < 15) return;
+    // The 15-chunk guard suppresses redundant preloads during incremental WALKING. A
+    // teleport/fast-travel is a DISCONTINUITY (force=true): it must preload the destination
+    // biomes + F2-F6 sprites immediately, or the flora stays absent until the next 128-frame
+    // tick happens to clear the guard — sometimes never, if the jump landed within 15 chunks.
+    if (!force && this._lastPreload && Math.max(Math.abs(pcx - this._lastPreload.cx), Math.abs(pcy - this._lastPreload.cy)) < 15) return;
     this._lastPreload = { cx: pcx, cy: pcy };
     const biomeSet = new Set();
     // Sample a grid around the player — sparse sampling is fine, just need biome variety

@@ -188,6 +188,7 @@ function update(dt) {
     player.z = 0;
     player.vz = 0;
     chunks.streamAround(player.x, player.y);
+    provider.initPreload(player.x, player.y, true); // discontinuity: force destination preload
   }
   if (input.wasPressed('p')) {
     var preset = weather.cyclePreset();

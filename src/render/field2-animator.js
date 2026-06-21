@@ -20,10 +20,16 @@ var REBUILD_MARGIN = 4; // hysteresis: the pool collects this many extra tiles p
                         // Turns the old per-tile (and per-zoom-step) 71ms rebuild storm
                         // into an occasional rebuild — walking/zooming no longer restitch
                         // the whole instance buffer every frame.
-var GPU_REBUILD_MARGIN = 6; // GPU flora: a SMALL bump over the CPU margin. With the CPU
-                            // resolve skipped, each rebuild is light, so keep the pool
-                            // small (less frame-loading + a sub-frame rebuild that won't
-                            // drop a frame) rather than big-and-rare.
+var GPU_REBUILD_MARGIN = 12; // GPU flora: bigger-and-rarer. A walk probe showed margin=6
+                            // fired a full-radius re-collect every 6 tiles (~0.67s at walk
+                            // speed), and because leading-edge chunks weren't ready yet each
+                            // rebuild kept FEWER sprites -> the pool drained 2527->132 while
+                            // walking (the visible "flora despawns as you walk"). GPU flora
+                            // has ZERO per-frame draw cost regardless of pool size, so collect
+                            // a wider margin and rebuild ~2x less often: 12 tiles (~1.3s) gives
+                            // chunk streaming time to make the leading edge ready before the
+                            // next rebuild, so each rebuild collects a FULL window. See the
+                            // despawn-guard in _amortStep for the transient-streaming case.
 var FADE_INNER = 34; // fully opaque inside this radius
 var FRAME_COUNT = 9;
 var FRAME_DURATION = 120; // ms per frame
@@ -659,7 +665,14 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
   for (var edy = -2; edy <= 2 && !isNearEdge; edy++) {
     for (var edx = -2; edx <= 2 && !isNearEdge; edx++) {
       if (edx === 0 && edy === 0) continue;
-      var nbTile = chunkStore.tileAt(wx + edx, wy + edy);
+      var nwx = wx + edx, nwy = wy + edy;
+      // chunkStore.tileAt() falls back to the OLD player chunk for a not-yet-ready destination
+      // chunk, returning a WRONG neighbour biome that reads as a false edge and gets cached as
+      // desc=null forever (flora never appears there after a teleport). Only trust a neighbour
+      // whose chunk is actually ready; if it isn't, skip it and mark the tile not-cacheable so
+      // it is re-evaluated once that chunk streams in.
+      if (!chunkStore.getIfReady(floorDiv(nwx, WORLD.chunkSize), floorDiv(nwy, WORLD.chunkSize))) { cacheable = false; continue; }
+      var nbTile = chunkStore.tileAt(nwx, nwy);
       if (!nbTile) { cacheable = false; continue; }
       if (nbTile.biome !== tile.biome) { isNearEdge = true; break; }
       var nbElev = nbTile.climate ? nbTile.climate.elevation : 0.5;
@@ -1463,7 +1476,7 @@ function _poolTick(timeMs, timeSec, glc, tilePxSnapped) {
 var _gb = null;          // active build state (null = idle)
 var AMORT_BUDGET_MS = 8; // build work per frame; leaves headroom in a 16ms frame for the draw
 
-function _startAmortBuild(chunkStore, player, glc, radiusX, radiusY) {
+function _startAmortBuild(chunkStore, player, glc, radiusX, radiusY, opts) {
   var px = Math.floor(player.x), py = Math.floor(player.y);
   var maxR = Math.max(radiusX, radiusY);
   _gb = {
@@ -1471,6 +1484,7 @@ function _startAmortBuild(chunkStore, player, glc, radiusX, radiusY) {
     maxR: maxR, fadeStart: maxR - 6, centerX: px, centerY: py,
     phase: 'collect', wy: py - radiusY, wx: px - radiusX, entries: [], tiles: [],
     n: 0, idx: 0, shCount: 0,
+    prevN: opts ? (opts.prevN || 0) : 0, bigJump: opts ? !!opts.bigJump : true,
     animMirror: null, animShadowMirror: null, mirror: null, meta: [], sortY: null, shadowOf: null, animPending: [],
   };
 }
@@ -1568,6 +1582,28 @@ function _amortStep(deadline) {
     if (g.idx >= g.n) g.phase = 'commit';
   }
   if (g.phase === 'commit') {
+    // DESPAWN GUARD: a fast walk made the pool drain 2527->132 ("flora despawns as you
+    // walk") because each rebuild re-collected the full window while leading-edge chunks
+    // weren't ready yet, so trailing ready tiles left the radius faster than leading tiles
+    // arrived. Skip a commit only when it would SHRINK the live pool (g.n < live count) AND
+    // the window still has not-ready chunks (so the shrink is streaming lag, NOT a genuinely
+    // sparser biome — those have all chunks ready and commit normally) AND the player is
+    // still well inside the live pool (drift bound; else a stale pool would trail behind).
+    // The shrink is GRADUAL (~75% per rebuild), so guard on ANY shrink, not a big single
+    // drop. NEVER on a big jump (teleport must replace the far-away pool). moved/newChunks
+    // re-collect once the chunks are ready.
+    if (!g.bigJump && g.n < (_pool.animN || 0) &&
+        Math.max(Math.abs(g.px - _pool.centerX), Math.abs(g.py - _pool.centerY)) < g.radiusX * 0.6) {
+      var _span = 2 * Math.ceil(g.radiusX / WORLD.chunkSize) + 1;
+      if (_poolReadyCount(g.chunkStore, g.px, g.py, g.radiusX) < _span * _span) {
+        _f2Stats.commitSkipped = (_f2Stats.commitSkipped || 0) + 1;
+        _gb = null;
+        var _dtSkip = performance.now() - _t0;
+        if (_dtSkip > (_f2Stats.amortStepMaxMs || 0)) _f2Stats.amortStepMaxMs = _dtSkip;
+        _f2Stats.amortStepMs = _dtSkip;
+        return;
+      }
+    }
     var glc = g.glc;
     if (glc.ensureAnimCapacity('sprite', g.n + 1) && glc.ensureAnimCapacity('shadow', g.shCount + 1)) {
       glc.ensurePoolCapacity('sprite', g.n + 1); // CPU VBO must hold the per-frame player slot at index n
@@ -1577,6 +1613,14 @@ function _amortStep(deadline) {
       _pool.mirror = g.mirror; _pool.meta = g.meta; _pool.sortY = g.sortY; _pool.shadowOf = g.shadowOf; _pool.tiles = g.tiles;
       _pool.animN = g.n; _pool.animShadowN = g.shCount; _pool.n = g.n; _pool.shadowN = g.shCount;
       _pool.animPending = g.animPending; _pool.animUploaded = true;
+      // Commit-time bookkeeping (moved here from build start): center/radius now reflect the
+      // pool we ACTUALLY swapped in, so a build we declined above leaves the live pool's
+      // bookkeeping intact and moved/grew/newChunks compare against reality. readyCount at
+      // COMMIT keeps the post-teleport re-fire (destination chunks arriving after a jump).
+      _pool.key = 'built';
+      _pool.centerX = g.px; _pool.centerY = g.py;
+      _pool.radiusX = g.radiusX; _pool.radiusY = g.radiusY;
+      _pool.readyCount = _poolReadyCount(g.chunkStore, g.px, g.py, g.radiusX);
       _f2Stats.rebuilds++; _f2Stats.lastRebuildMs = 0;
       if (typeof window !== 'undefined') window._f2PoolN = g.n;
     }
@@ -1653,7 +1697,11 @@ function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, we
               Math.abs(py - _pool.centerY) > rebuildMargin;
   var grew = needRX > _pool.radiusX || needRY > _pool.radiusY;
   var ready = _poolReadyCount(chunkStore, px, py, _pool.radiusX || needRX);
-  var newChunks = ready > _pool.readyCount && (timeMs - _pool.lastRebuildAt) > 250;
+  // newChunks catches streamed-in chunks (post-teleport / post-stop fill). SUPPRESS it
+  // while moving — a moved-rebuild already re-reads readiness, so honoring newChunks too
+  // turned steady walk-streaming into a 4Hz rebuild storm. Stationary only, debounced to
+  // 600ms (was 250) so post-stop convergence is a couple of rebuilds, not a cyclic thrash.
+  var newChunks = !moved && ready > _pool.readyCount && (timeMs - _pool.lastRebuildAt) > 600;
   var needRebuild = _pool.key === '' || !_pool.uploaded || moved || grew || newChunks;
 
   // GPU-FLORA fast path: the static buffer + a uTime uniform drive frame/sway/fade in
@@ -1662,10 +1710,14 @@ function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, we
   // keeps drawing the current one, then swap) so no single frame freezes.
   if (gpuFloraOn() && glc.animOk) {
     if ((!_pool.animUploaded || moved || grew || newChunks) && !_gb) {
-      _pool.key = 'built'; _pool.centerX = px; _pool.centerY = py;
-      _pool.radiusX = needRX; _pool.radiusY = needRY;
-      _pool.readyCount = ready; _pool.lastRebuildAt = timeMs;
-      _startAmortBuild(chunkStore, player, glc, needRX, needRY); // first paint AND warm: both spread
+      // State (center/radius/readyCount) now advances at COMMIT, not here, so a build the
+      // despawn-guard DECLINES to commit leaves the live pool's bookkeeping intact and
+      // moved/newChunks re-trigger correctly. lastRebuildAt gates newChunks, set at start.
+      var _prevN = _pool.animN || 0;
+      var _bigJump = !_pool.animUploaded ||
+        Math.max(Math.abs(px - _pool.centerX), Math.abs(py - _pool.centerY)) > (needRX + needRY);
+      _pool.lastRebuildAt = timeMs;
+      _startAmortBuild(chunkStore, player, glc, needRX, needRY, { prevN: _prevN, bigJump: _bigJump });
     }
     if (_gb) _amortStep(performance.now() + AMORT_BUDGET_MS);
     var tickRanG = false;
