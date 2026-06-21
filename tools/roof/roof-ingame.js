@@ -8,6 +8,7 @@
 import { buildRoofGrid } from './roof-geometry.js';
 import { makeMaterial } from './roof-materials.js';
 import { drawRoof, makeGameView } from './roof-renderer.js';
+import { makeFeatures as makeRoofFeatures } from './roof-features.js';
 import { resolveRoof } from './roof-rules.js';
 import { resolveConfig } from './roof-config.js';
 import { classifyBiome } from '../../src/world/biomes.js';
@@ -20,7 +21,8 @@ export const ROOF_TUNING = {
   heightScale: 0.8,     // px per roof-height-unit, as a fraction of tilePx (capped below)
   maxRoofTiles: 3.0,    // cap a roof's visual rise so steeples don't tower absurdly
   pitchCap: 1.3,        // clamp style pitch in-game
-  surfaceOnly: true,    // v1: draw the roof SURFACE only (no crude turret/spire primitives yet)
+  surfaceOnly: false,   // draw lightweight ridge/hip dressing + finial/dormer/chimney in-game
+  gameFeatures: ['finial', 'dormer', 'chimney'], // game-safe: NO crude turret/spire/buttress/deck primitives
   useBiomeTexture: true,// EXPERIMENT: skin the roof with the biome's ground/soil texture
 };
 
@@ -96,9 +98,10 @@ export function resolveForBuilding(b, biomeOverride) {
   // so the roof's back edge is flush with the north wall top, not floating above it.
   normalizeEaveToZero(grid);
   const material = makeMaterial(R.materialId, R.matOpts);
-  // background:false + noClear → overlay-safe; noShadow → game has its own; noAccents
-  // → kill the white ridge outlines.
-  const renderCfg = { ...R.renderCfg, background: false, noClear: true, noShadow: true, noAccents: true };
+  // background:false + noClear → overlay-safe; noShadow → game has its own building
+  // shadow. noAccents:false → re-enable ridge/hip/valley creases (drawAccents), the
+  // cheapest structural cue.
+  const renderCfg = { ...R.renderCfg, background: false, noClear: true, noShadow: true, noAccents: false };
   e = { grid, material, renderCfg, roof, biome };
   cache.set(key, e);
   return e;
@@ -118,6 +121,25 @@ function normalizeEaveToZero(grid) {
 }
 
 export function clearRoofCache() { cache.clear(); }
+
+// Build the GAME-SAFE feature pass for a resolved roof: filter the resolved feature
+// list (e.renderCfg.features) to the safe allowlist (finial/dormer/chimney), then make
+// the feature drawer. Cached on the resolve entry so it's built once, not per frame.
+// surfaceOnly:true or an empty allowed set → no features at all.
+function makeGameSafeFeatures(e) {
+  if (e._features !== undefined) return e._features;
+  let features = null;
+  if (!ROOF_TUNING.surfaceOnly) {
+    const safe = new Set(ROOF_TUNING.gameFeatures);
+    const allow = (e.renderCfg.features || []).filter((f) => safe.has(f));
+    if (allow.length) {
+      // draw only the safe subset; leave e.roof.features (the design intent) untouched.
+      features = makeRoofFeatures({ ...e.renderCfg, features: allow });
+    }
+  }
+  e._features = features;
+  return features;
+}
 
 // Draw one building's roof onto the game/preview canvas at the live camera.
 export function drawRoofForBuilding(ctx, b, camX, camY, tilePx, opts = {}) {
@@ -139,7 +161,11 @@ export function drawRoofForBuilding(ctx, b, camX, camY, tilePx, opts = {}) {
   const hScale = Math.min(tilePx * ROOF_TUNING.heightScale,
     (riseTiles * tilePx) / Math.max(1, e.grid.maxHeight));
   const view = makeGameView(b.x, b.y, camX, camY, tilePx, { wallLift, heightScale: hScale });
-  const features = ROOF_TUNING.surfaceOnly ? null : opts.features || null;
+  // GAME-SAFE feature set: keep finial/dormer/chimney/ridge dressing (cheap, reads
+  // already-classified roof roles), suppress crude turret/spire/buttress/walkdeck/
+  // crenellation primitives (flagged crude — a house must not sprout a castle turret).
+  // Built once per building and cached on the resolve entry (this draws per frame).
+  const features = makeGameSafeFeatures(e);
   // Skin the roof with the building's ASSIGNED roof-material texture (thatch/wood_shingle/...)
   // when provided — so a roof reads as a ROOF, not as soil. Falls back to the biome GROUND
   // texture (same pool as the soil) when no roof material is assigned/loaded, then to the
