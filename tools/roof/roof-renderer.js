@@ -101,6 +101,20 @@ function lightVec(angleDeg, elevDeg) {
   return [Math.cos(e) * Math.cos(a), Math.cos(e) * Math.sin(a), Math.sin(e)];
 }
 
+// SMOOTH shade: use the geometry's per-tile corner-averaged normal (t.normal) instead
+// of the raw 2-corner facetNormal, plus a tiny along-run gradient (slightly darker
+// toward the eave) so equal-distEdge hip rings stop reading as flat color terraces.
+export function smoothNormalShade(grid, t, light, ambient) {
+  const n = t.normal || facetNormal(grid, t);
+  const lambert = Math.max(0, n[0] * light[0] + n[1] * light[1] + n[2] * light[2]);
+  let shade = ambient + (1 - ambient) * lambert;
+  // along-run gradient: 0 at the eave, 1 at the ridge — lifts the ridge ~6% so the
+  // surface reads as a continuous slope, not stepped color rings.
+  const sa = t.slopeAxis;
+  if (sa && sa.runMax > 0) shade *= 0.94 + 0.06 * (sa.run / sa.runMax);
+  return shade;
+}
+
 // Continuous slope-space UV for one tile. v runs eave(0)->ridge(1) using the tile's
 // slopeAxis.run (a per-face course counter), so adjacent tiles on the same face share
 // the boundary v value and the texture courses flow UNBROKEN (no per-tile restart).
@@ -200,8 +214,7 @@ export function drawRoof(ctx, grid, material, features, cfg, view) {
   const infl = 1.4 / Math.max(8, view.tile);
   for (const t of order) {
     const quad = inflateQuad(tileQuad(grid, view, t), infl);
-    const nrm = facetNormal(grid, t);
-    let shade = ambient + (1 - ambient) * Math.max(0, nrm[0] * light[0] + nrm[1] * light[1] + nrm[2] * light[2]);
+    let shade = smoothNormalShade(grid, t, light, ambient);
     if (t.isOverhang) shade *= 0.82;
     // cfg.texture = a 32×32 ImageBitmap (e.g. the biome ground tile) → texture-map it
     // onto the facet + slope-shade; else fall back to the procedural material.
