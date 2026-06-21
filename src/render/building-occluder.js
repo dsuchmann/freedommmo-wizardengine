@@ -25,6 +25,16 @@ import { wallAssetDir, wallPieceFile, roofAssetDir, roofTextureFile } from '../.
 const NORTH_BAND_BASE = 8;
 const STORY = WALL_CONFIG.wallHeight; // 4
 
+// Pure isotropic crop+dest for a legacy 32/64-wide wall strip. Crops the FULL source height
+// (0..srcH) into the full dest (no 16-row top strip) so source aspect == dest aspect — kills the
+// old `(0,8,W,112)`->full-dest ~14% vertical stretch (112 source rows stretched into the 4-tile
+// dest gave ~2.24x vertical vs ~1.97x horizontal). The authored 8px top/bottom transparent margins
+// become the intended cap/foot inset instead. Matches building-renderer.js, which already draws the
+// stone_brick pieces with the full `(0,0,W,128)` source. Returns the 8 drawImage args.
+export function cropBox(srcW, srcH, dx, dy, dw, dh) {
+  return { sx: 0, sy: 0, sw: srcW, sh: srcH, dx, dy, dw, dh };
+}
+
 // Cutaway shape — radial by default (consistent with the interior). Live-tunable from the
 // console: window._occluderSpot.mode = 'band' | 'circle', radii, or .enabled = false.
 export const SPOT = { mode: 'circle', radiusTiles: 2.6, bandHalfTiles: 1.7, enabled: true, clipBelowFeetTiles: 0.4 };
@@ -108,9 +118,10 @@ function occludes(b, px, py) {
 }
 
 // Re-draw ONE building's walls EXACTLY as the worker bakes them (worker-chunk-renderer.js wall
-// post-pass): same `0,8,…,112` crop, same WALL_CONFIG offsets, STACKED `stories` tall, door on
-// the ground storey only. World→screen via camX/camY (CSS px, same space as drawChunk).
-function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
+// post-pass): legacy strips use the full `(0,0,W,128)` crop (isotropic — matches building-renderer.js;
+// no vertical stretch), same WALL_CONFIG offsets, STACKED `stories` tall, door on the ground storey
+// only. World→screen via camX/camY (CSS px, same space as drawChunk).
+export function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
   const wi = wallImgs(b);
   if (!wi.south_base) return;
   const t = Math.round(tilePx), wp = 1;
@@ -142,13 +153,13 @@ function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
   const vbandFor = (st) => stories === 1 ? 'full' : (st === 0 ? 'midfound' : (st === stories - 1 ? 'capmid' : 'mid'));
   // c = section-relative tile column (so each building's facade starts clean at its left edge).
   const facadeTile = (img, c, dx, dy, vb) => {
-    if (!P) { ctx.drawImage(img, 0, 8, 32, 112, dx, dy, t + wp, wH + wp); return; }
+    if (!P) { const cb = cropBox(img.naturalWidth || 32, img.naturalHeight || 128, dx, dy, t + wp, wH + wp); ctx.drawImage(img, cb.sx, cb.sy, cb.sw, cb.sh, cb.dx, cb.dy, cb.dw, cb.dh); return; }
     const ux = dx - ((((c) % 4) + 4) % 4) * t, s = SY(vb);
     ctx.save(); ctx.beginPath(); ctx.rect(dx, dy, t + wp, wH + wp); ctx.clip();
     ctx.drawImage(img, 0, s[0], 128, s[1] - s[0], ux, dy, 4 * t, wH + wp); ctx.restore();
   };
   const facadeWide = (img, dx, dy, vb) => {
-    if (!P) { ctx.drawImage(img, 0, 8, 64, 112, dx, dy, 2 * t + wp, wH + wp); return; }
+    if (!P) { const cb = cropBox(img.naturalWidth || 64, img.naturalHeight || 128, dx, dy, 2 * t + wp, wH + wp); ctx.drawImage(img, cb.sx, cb.sy, cb.sw, cb.sh, cb.dx, cb.dy, cb.dw, cb.dh); return; }
     const ux = dx - t, s = SY(vb); // the facade's centred 2 tiles (window/door) land at dx..dx+2t
     ctx.save(); ctx.beginPath(); ctx.rect(dx, dy, 2 * t + wp, wH + wp); ctx.clip();
     ctx.drawImage(img, 0, s[0], 128, s[1] - s[0], ux, dy, 4 * t, wH + wp); ctx.restore();
