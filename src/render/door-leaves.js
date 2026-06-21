@@ -20,6 +20,13 @@ const OPEN_NEAR = 0.12, OPEN_FAR = 1.0, R_FULL = 0.6, R_OPEN = 2.6; // tiles: fu
 export const DOOR_SWING = { enabled: true, rFull: R_FULL, rOpen: R_OPEN, openNear: OPEN_NEAR };
 if (typeof window !== 'undefined') window._doorSwing = DOOR_SWING;
 
+// Door-leaf FIT: the leaf is a ~1:3.5 plank in a 64x128 canvas. Drawing the whole canvas into the
+// full 4-tile wall height made the door ~3 tiles tall + narrow ("taller without proportionally
+// wider"). Instead draw it at a proper DOOR size — heightTiles tall, BOTTOM-aligned to the wall
+// base, centred in the 2-tile door cell. Live-tunable so the proportion can be dialled by eye.
+export const DOOR_FIT = { heightTiles: 2.6, widthScale: 1.0, yOff: 0.0 };
+if (typeof window !== 'undefined') window._doorFit = DOOR_FIT;
+
 const _img = new Map();
 function img(url) { let im = _img.get(url); if (!im) { im = new Image(); im.src = url; _img.set(url, im); } return (im.complete && im.naturalWidth) ? im : null; }
 function leafImg(shape) { return img(DOOR_BASE + (LEAF_FOR[shape] || 'plank') + '__norm.png'); }
@@ -55,10 +62,16 @@ export function buildDoorLeafBitmap(buildings, camX, camY, tilePx, w, h, player)
   }
   const o = _ox; o.setTransform(1, 0, 0, 1, 0, 0); o.clearRect(0, 0, w, h); o.imageSmoothingEnabled = false;
   draws.sort((a, b) => a.sortY - b.sortY);
+  const DF = DOOR_FIT;
   for (const dr of draws) {
-    const pw = 2 * t, hingeX = dr.sx + LEAF_HINGE_FRAC * pw;
-    o.save(); o.translate(hingeX, dr.sy); o.scale(dr.open, 1); o.translate(-hingeX, -dr.sy);
-    o.drawImage(dr.leaf, 0, 0, 64, 128, dr.sx, dr.sy, pw, wH);
+    const pw = 2 * t;
+    const doorW = pw * DF.widthScale;
+    const doorH = DF.heightTiles * t;
+    const dx = dr.sx + (pw - doorW) / 2;            // centred in the door cell
+    const dy = dr.sy + wH - doorH + DF.yOff * t;    // bottom-aligned to the wall base
+    const hingeX = dx + LEAF_HINGE_FRAC * doorW;
+    o.save(); o.translate(hingeX, dy); o.scale(dr.open, 1); o.translate(-hingeX, -dy);
+    o.drawImage(dr.leaf, 0, 0, 64, 128, dx, dy, doorW, doorH);
     o.restore();
   }
   return _cv;
