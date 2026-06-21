@@ -378,22 +378,68 @@ function drawGroundShadow(ctx, grid, view) {
   ctx.restore();
 }
 
-// ridge / hip / valley creases as subtle strokes
-function drawAccents(ctx, grid, view, cfg) {
-  ctx.save();
-  ctx.lineWidth = Math.max(1, view.tile * 0.06);
+// STRUCTURAL EDGES — the only lines that should read as PROMINENT on a roof (live
+// feedback A: "fewer lines, more structurally placed"). We walk adjacent roof-tile
+// pairs and emit the SHARED grid edge wherever the two tiles face DIFFERENT slope
+// directions — that boundary is a real ridge / hip / valley crease. Convex creases
+// (the shared edge sits at/above both tile heights: a ridge or hip) read as a bright
+// highlight line; concave ones (the edge dips below: a valley) read as a dark line.
+// Returns grid-corner segments [{ax,ay,bx,by,kind}] in GRID COORDS (testable without a
+// canvas); drawAccents projects + strokes them. This replaces the old per-ridge-tile
+// full-quad outline that produced graph paper.
+export function structuralEdges(grid) {
+  const W = grid.W, H = grid.H;
+  const out = [];
+  // index tiles for O(1) lookup
+  const byKey = new Map(grid.tiles.map(t => [t.i + ',' + t.j, t]));
+  const at = (i, j) => byKey.get(i + ',' + j) || null;
+  const hAt = (i, j) => { const t = at(i, j); return t ? t.h : null; };
+  // axis: 'x' = vertical edge between (i,j)&(i+1,j); 'y' = horizontal edge between (i,j)&(i,j+1).
+  const consider = (a, b, c1, c2, axis) => {
+    if (!a || !b || a.dir === 'flat' || b.dir === 'flat') return;
+    if (a.dir === b.dir) return;                 // same-facing tiles: no crease
+    if (a.isOverhang || b.isOverhang) return;    // creases live on the roof body, not the eave lip
+    // Convex (ridge/hip) vs concave (valley): probe the height profile across the edge.
+    // The edge line height ~= max(a.h,b.h) at the seam; compare to the OUTER neighbours
+    // one step further out on each side. If the seam tops both outer neighbours the
+    // surface bulges UP (ridge/hip); if it sits below them it dips DOWN (valley).
+    const seam = Math.max(a.h, b.h);
+    let outerA, outerB;
+    if (axis === 'x') { outerA = hAt(a.i - 1, a.j); outerB = hAt(b.i + 1, b.j); }
+    else { outerA = hAt(a.i, a.j - 1); outerB = hAt(b.i, b.j + 1); }
+    // missing outer neighbour (perimeter) => use the tile itself as the reference.
+    const oA = outerA == null ? a.h : outerA, oB = outerB == null ? b.h : outerB;
+    const convex = seam >= Math.max(oA, oB) - 1e-6;
+    out.push({ ax: c1[0], ay: c1[1], bx: c2[0], by: c2[1], kind: convex ? 'crease' : 'valley' });
+  };
   for (const t of grid.tiles) {
-    if (t.role === 'ridge' || t.role === 'peak') {
-      const q = tileQuad(grid, view, t);
-      ctx.strokeStyle = 'rgba(255,255,235,0.30)';
-      ctx.beginPath(); ctx.moveTo(q[0].x, q[0].y);
-      for (let k = 1; k < 4; k++) ctx.lineTo(q[k].x, q[k].y);
-      ctx.closePath(); ctx.stroke();
-    } else if (t.role === 'valley') {
-      const q = tileQuad(grid, view, t);
-      ctx.strokeStyle = 'rgba(0,0,0,0.30)';
-      ctx.beginPath(); ctx.moveTo(q[0].x, q[0].y); ctx.lineTo(q[2].x, q[2].y); ctx.stroke();
+    if (t.isOverhang) continue;
+    // EAST neighbour shares the vertical edge at x=i+1 (corners (i+1,j)-(i+1,j+1))
+    consider(t, at(t.i + 1, t.j), [t.i + 1, t.j], [t.i + 1, t.j + 1], 'x');
+    // SOUTH neighbour shares the horizontal edge at y=j+1 (corners (i,j+1)-(i+1,j+1))
+    consider(t, at(t.i, t.j + 1), [t.i, t.j + 1], [t.i + 1, t.j + 1], 'y');
+  }
+  return out;
+}
+
+// ridge / hip / valley creases as clean STRUCTURAL strokes (not per-tile outlines).
+function drawAccents(ctx, grid, view, cfg) {
+  const edges = structuralEdges(grid);
+  ctx.save();
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const lw = Math.max(1.2, view.tile * 0.12);
+  const proj = (cx, cy) => view.project(grid.gox + cx, grid.goy + cy, grid.cornerH[cy * grid.CW + cx]);
+  // valleys first (dark, recede), then creases (bright, advance)
+  for (const pass of ['valley', 'crease']) {
+    ctx.lineWidth = pass === 'crease' ? lw : lw * 0.8;
+    ctx.strokeStyle = pass === 'crease' ? 'rgba(255,250,232,0.42)' : 'rgba(0,0,0,0.34)';
+    ctx.beginPath();
+    for (const e of edges) {
+      if (e.kind !== pass) continue;
+      const a = proj(e.ax, e.ay), b = proj(e.bx, e.by);
+      ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
     }
+    ctx.stroke();
   }
   ctx.restore();
 }
