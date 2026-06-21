@@ -8,19 +8,7 @@
 // generated animation — the swing is a transform, so it can never hallucinate a figure.
 
 import { WALL_CONFIG } from './wall-config.js';
-import { wallAssetDir, doorwayHole } from '../../sim/world/buildings/building-material-registry.js';
-
-// Fallback doorway sub-rect (fractions of the 2t×4t south_doorway piece) when no per-material hole
-// is available — a centred opening that keeps the swung leaf off the masonry jambs.
-export const DEFAULT_HOLE = { x0: 0.1875, y0: 0.3594, w: 0.6875, h: 0.6406 };
-
-// Map a fractional doorway-hole rect to the screen sub-rect of the 2t-wide × wH piece anchored at
-// (sx,sy). The leaf is drawn + swung INSIDE this rect instead of the full piece, so the swung leaf
-// stays within the masonry opening.
-export function doorwayHoleScreenRect(hole, sx, sy, pw, wH) {
-  const r = hole || DEFAULT_HOLE;
-  return { dx: sx + r.x0 * pw, dy: sy + r.y0 * wH, dw: r.w * pw, dh: r.h * wH };
-}
+import { wallAssetDir } from '../../sim/world/buildings/building-material-registry.js';
 
 const DOOR_BASE = '/assets/pixelab/buildings/doors/';
 // the 6 generated door shapes map onto the 3 shared, material-agnostic leaves
@@ -55,10 +43,7 @@ export function buildDoorLeafBitmap(buildings, camX, camY, tilePx, w, h, player)
       const dxw = (b.x + d.x + 1) - player.x, dyw = (b.y + d.y) - player.y, dist = Math.hypot(dxw, dyw);
       const k = Math.max(0, Math.min(1, (dist - DOOR_SWING.rFull) / (DOOR_SWING.rOpen - DOOR_SWING.rFull)));
       const open = DOOR_SWING.openNear + k * (OPEN_FAR - DOOR_SWING.openNear);
-      // Per-material doorway cut-out hole (door void differs per material). fieldstone is escalate
-      // (clipped opening) but doorwayHole still returns a usable rect → graceful degrade.
-      const hole = doorwayHole(b.wallSlug, b.doorShape) || DEFAULT_HOLE;
-      draws.push({ leaf, sx, sy, open, hole, sortY: b.y + d.y });
+      draws.push({ leaf, sx, sy, open, sortY: b.y + d.y });
     }
   }
   if (!draws.length) return null;
@@ -71,13 +56,9 @@ export function buildDoorLeafBitmap(buildings, camX, camY, tilePx, w, h, player)
   const o = _ox; o.setTransform(1, 0, 0, 1, 0, 0); o.clearRect(0, 0, w, h); o.imageSmoothingEnabled = false;
   draws.sort((a, b) => a.sortY - b.sortY);
   for (const dr of draws) {
-    const pw = 2 * t;
-    // Fit + swing the leaf INSIDE the doorway-hole sub-rect (not the full 2t×4t piece) so the swung
-    // leaf stays within the masonry opening. Hinge on the hole's left jamb.
-    const r = doorwayHoleScreenRect(dr.hole, dr.sx, dr.sy, pw, wH);
-    const hingeX = r.dx + LEAF_HINGE_FRAC * r.dw;
-    o.save(); o.translate(hingeX, r.dy); o.scale(dr.open, 1); o.translate(-hingeX, -r.dy);
-    o.drawImage(dr.leaf, 0, 0, 64, 128, r.dx, r.dy, r.dw, r.dh);
+    const pw = 2 * t, hingeX = dr.sx + LEAF_HINGE_FRAC * pw;
+    o.save(); o.translate(hingeX, dr.sy); o.scale(dr.open, 1); o.translate(-hingeX, -dr.sy);
+    o.drawImage(dr.leaf, 0, 0, 64, 128, dr.sx, dr.sy, pw, wH);
     o.restore();
   }
   return _cv;
