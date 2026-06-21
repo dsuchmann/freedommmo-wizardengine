@@ -13,6 +13,11 @@ const PRIMARY_CATEGORIES = new Set([
   'entertainment', 'infrastructure',
 ]);
 
+// Single-family dwelling types: the WHOLE building is ONE household, regardless of how many
+// rooms/units the floor partition produced (a longhouse is one extended family, not 14 flats).
+// Multi-family types (apartment, manor, villa) keep per-unit households.
+const SINGLE_FAMILY = new Set(['hut', 'cottage', 'house', 'longhouse']);
+
 function kindForPrimary(category) {
   if (category === 'religious') return 'religious';
   if (category === 'civic' || category === 'military') return 'institution';
@@ -23,11 +28,14 @@ function unitTiles(units) { let n = 0; for (const u of units) n += u.tiles.lengt
 
 // Derive the building's tenancies from its floor stack + per-floor units. Pure.
 export function buildingTenancies(buildingNode) {
-  const category = buildingNode.ancestorContext?.category || 'residential';
+  const ctx = buildingNode.ancestorContext || {};
+  const category = ctx.category || 'residential';
   const [minF, maxF] = buildingNode.payload.floorRange;
   const primaryBuilding = PRIMARY_CATEGORIES.has(category);
+  const singleFamily = SINGLE_FAMILY.has(ctx.typeId);
   const tenancies = [];
   const primaryFloors = [], primaryUnitIds = []; let primaryUnits = [];
+  const famFloors = [], famUnitIds = []; let famUnits = [];
 
   for (let fi = minF; fi <= maxF; fi++) {
     const layout = resolveFloorLayout(buildingNode, fi);
@@ -35,6 +43,10 @@ export function buildingTenancies(buildingNode) {
     if (primaryBuilding && !isResidentialFloor) {
       primaryFloors.push(fi);
       for (const u of layout.units) { primaryUnitIds.push(u.id); primaryUnits.push(u); }
+    } else if (singleFamily) {
+      // one household across the whole dwelling (all its floors + units)
+      famFloors.push(fi);
+      for (const u of layout.units) { famUnitIds.push(u.id); famUnits.push(u); }
     } else {
       for (const u of layout.units) {
         tenancies.push({
@@ -44,6 +56,13 @@ export function buildingTenancies(buildingNode) {
         });
       }
     }
+  }
+  if (famFloors.length) {
+    tenancies.push({
+      id: `${buildingNode.id}/t/h`,
+      kind: 'household', floors: famFloors.slice(), unitIds: famUnitIds.slice(),
+      minTiles: unitTiles(famUnits), slots: { home: 1, work: 0 },
+    });
   }
   if (primaryFloors.length) {
     tenancies.unshift({

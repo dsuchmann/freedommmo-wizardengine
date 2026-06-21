@@ -4,7 +4,9 @@ import assert from 'node:assert/strict';
 import { buildingNode } from '../world/buildings/blueprint-node.js';
 import { resolveFloorLayout } from '../world/buildings/floor-layout.js';
 
-const TOWER = { bx: 0, by: 8, typeId: 'commercial', category: 'commercial', tier: 'town', centrality: 0.85 };
+// A genuinely tall building (apartments rise; lifts only appear above 3 floors). Since floor
+// count is now type-aware (2026-06-20), 'commercial' is a low shop — use 'apartment' to get a tower.
+const TOWER = { bx: 0, by: 8, typeId: 'apartment', category: 'residential', tier: 'city', centrality: 0.95 };
 
 test('resolveFloorLayout is deterministic and exposes walkable + units + stair/lift tiles', () => {
   const L1 = resolveFloorLayout(buildingNode(1337, TOWER), 1);

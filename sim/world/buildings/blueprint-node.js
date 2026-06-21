@@ -110,7 +110,7 @@ registerKind('building', {
           mix(node.seed, 0x5104),
         ).sections;
     const { floorRange, aboveGroundFloors } =
-      floorCount(node.worldSeed, ctx.bx | 0, ctx.by | 0, ctx.category, ctx.tier, ctx.centrality);
+      floorCount(node.worldSeed, ctx.bx | 0, ctx.by | 0, ctx.category, ctx.tier, ctx.centrality, ctx.typeId);
     const stackPlan = floorStackPlan(node.seed, floorRange, ctx.category);
     const stairCores = selectStairCores(sections);
     const lift = reserveLift(aboveGroundFloors, stairCores[0] || null, sections);
