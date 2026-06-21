@@ -1,0 +1,1334 @@
+{
+  "version": 1,
+  "spec": "docs/superpowers/specs/2026-06-20-building-asset-manifest-design.md",
+  "counts": {
+    "biomes": 21,
+    "wall_materials": 84,
+    "roof_materials": 84
+  },
+  "biomes": {
+    "ocean": {
+      "displayName": "Ocean",
+      "walls": [
+        {
+          "slug": "tarred_timber_stilt",
+          "name": "Tarred Timber Stilt",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, vertical tarred-timber stilt-house planks of an open-ocean fishing house, deep black-brown pitch-coated boards with sea-bleached silver-grey edges, knotholes and grain showing through worn tar, a pitched timber cap rail molding at top, vertical tarred plank field in the middle, mussel-flecked piling foundation course at bottom, seamless repeating horizontally and vertically, high fantasy, richly saturated, detailed shading, alpha-transparent background",
+          "palette": "black-brown pitch, sea-bleached silver-grey, mussel fleck",
+          "rationale": "Classic open-ocean stilt houses are clad in tarred timber that bleaches at the edges; the biome's signature wall."
+        },
+        {
+          "slug": "rope_lashed_log",
+          "name": "Rope-Lashed Log",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, horizontal round logs lashed together with thick tarred rope at regular intervals on a fishing-platform wall, golden-brown stripped logs darkened by spray, bold diagonal rope lashings forming a rhythmic pattern, a capped log rail molding at top, lashed-log field in the middle, heavy waterline-stained log foundation course at bottom, seamless repeating, high fantasy, richly saturated, detailed shading, alpha-transparent background",
+          "palette": "golden-brown log, tarred rope, waterline stain",
+          "rationale": "Rope-lashed log construction is the rope-lashed vernacular called for, distinct from sawn planking."
+        },
+        {
+          "slug": "net_draped_plank",
+          "name": "Net-Draped Plank",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, weathered grey fishing-shack planking partly draped in hung drying nets and cork floats, sea-bleached vertical boards behind a lattice of knotted net and round cork-and-glass floats, a plain board cap molding at top, net-over-plank field in the middle, salt-crusted sill foundation course at bottom, seamless repeating, high fantasy, richly saturated, detailed shading, alpha-transparent background",
+          "palette": "sea-bleached grey plank, tan net, cork-and-glass floats",
+          "rationale": "Ocean fishing shacks wear their gear; drying nets and floats give a lively, honestly working-sea wall."
+        },
+        {
+          "slug": "weathered_shiplap",
+          "name": "Weathered Shiplap",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, tight horizontal shiplap boards of a sea-bleached pier house, faded teal and driftwood-grey overlapping siding with peeling paint and rusty square nails, a crisp painted trim cap molding at top, shiplap field with weathered paint in the middle, tarred plinth foundation course at bottom, seamless repeating, high fantasy, richly saturated, detailed shading, alpha-transparent background",
+          "palette": "faded teal, driftwood grey, rust nail",
+          "rationale": "Painted-then-bleached shiplap captures the lived-in fishing-pier house and pairs with all the ocean roofs."
+        }
+      ],
+      "roofs": [
+        {
+          "slug": "weathered_cedar_shake",
+          "name": "Weathered Cedar Shake",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, overlapping hand-split cedar shakes on an ocean pier house, silver-grey weathered wood in clear staggered rows with warm amber undertones in fresher shakes, moss-green streaks in the shaded courses, unmistakably a wooden shake roof and not ocean water, high fantasy, richly saturated, tileable, no ground, no grass, no water",
+          "palette": "silver-grey shake, amber undertone, moss streak",
+          "rationale": "Split cedar shakes are the workhorse roof of ocean stilt houses; staggered courses read clearly from above."
+        },
+        {
+          "slug": "tarpaper_batten",
+          "name": "Tarpaper & Batten",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, black tarpaper roof held down by parallel wooden battens of an ocean fishing shack, matte dark asphalt-felt panels with overlapping horizontal laps and pale weathered batten strips running in straight rows, a few patch-tar smears, clearly a flat tarpaper roof and not the sea, high fantasy, richly saturated, tileable, no ground, no grass, no water",
+          "palette": "matte black tarpaper, pale batten, patch tar",
+          "rationale": "Cheap tarpaper-and-batten roofs are ubiquitous on working ocean shacks and visually pop against the water."
+        },
+        {
+          "slug": "overlapped_sheet_metal",
+          "name": "Overlapped Sheet Metal",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, corrugated sheet-metal roof on an ocean pier house, rippled grey-blue galvanized panels with strong rust-orange streaks and overlapping panel seams in straight rows, bright specular glints along the corrugation ridges, unmistakably a ribbed metal roof and not water, high fantasy, richly saturated, tileable, no ground, no grass, no water",
+          "palette": "galvanized grey-blue, rust orange, bright glint",
+          "rationale": "Salvaged corrugated metal roofs working ocean buildings; the rust-streaked ripples are clearly hard roofing."
+        },
+        {
+          "slug": "sail_canvas_awning",
+          "name": "Sail-Canvas Awning",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, repurposed striped sail-canvas roof over an ocean fishing platform, taut weathered cream-and-faded-blue striped sailcloth panels seamed with rope and patched, gentle billow shading and brass grommets along the seams, clearly a striped fabric roof and not ocean water, high fantasy, richly saturated, tileable, no ground, no grass, no water",
+          "palette": "cream-and-faded-blue stripe, rope seam, brass grommet",
+          "rationale": "Old sails become awnings over fishing platforms; the bold stripes read instantly as fabric, not sea."
+        }
+      ]
+    },
+    "deep_ocean": {
+      "displayName": "Deep Ocean",
+      "walls": [
+        {
+          "slug": "barnacled_piling",
+          "name": "Barnacled Piling",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, thick salt-blasted timber pilings lashed side by side into a stilt-platform wall, weathered grey-brown driftwood grain, crusted with clusters of white and ochre barnacles and dark mussel shells along the lower field, weathered iron strap cap with rivets at top forming a clean molding line, dense barnacle-and-kelp-streaked field in the middle, heavy waterlogged blackened foundation course of tar-soaked timber at bottom, seamless repeating horizontally and vertically, high fantasy, richly saturated, detailed shading, alpha-transparent background",
+          "palette": "weathered grey-brown timber, white-ochre barnacle crust, blackened tar base",
+          "rationale": "Open-sea stilt platforms stand in barnacle-thick deep water; salt-blasted pilings are the only honest structural skin out here."
+        },
+        {
+          "slug": "riveted_iron_plate",
+          "name": "Riveted Iron Plate",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, overlapping riveted wrought-iron hull plates bolted to a lighthouse tower, deep teal-grey metal streaked with orange rust runs and white salt bloom, bold rivet rows defining each plate seam, a flared cast-iron drip molding cap at top, riveted plate field with verdigris patina in the middle, barnacle-crusted iron footing course at bottom, seamless repeating, high fantasy, richly saturated, detailed shading, alpha-transparent background",
+          "palette": "teal-grey iron, orange rust, verdigris and salt bloom",
+          "rationale": "Deep-sea lighthouses are armored against constant spray; riveted iron plate survives where wood and stone cannot."
+        },
+        {
+          "slug": "tarred_clinker_hull",
+          "name": "Tarred Clinker Hull",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, overlapping clinker-built ship-plank wall in the boatbuilder tradition, each lapstrake board edged in glossy black pitch caulking, deep oiled umber and charcoal timber, brass nail heads catching light along the laps, a pitch-sealed timber gunwale cap molding at top, lapped plank field in the middle, tar-drenched keel-like foundation course at bottom, seamless repeating, high fantasy, richly saturated, detailed shading, alpha-transparent background",
+          "palette": "oiled umber plank, glossy black pitch, brass nails",
+          "rationale": "Deep-water dwellings are built like inverted ships; clinker hull planking and pitch caulk are proven against the open sea."
+        },
+        {
+          "slug": "whalebone_frame",
+          "name": "Whalebone Frame",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, fantastical wall framed by great pale whalebone ribs lashed with tarred rope, the gaps packed with grey weathered plank and stretched oiled hide, bone-white arched ribs bowing up the field, a carved scrimshaw bone cap molding at top, rib-and-hide field in the middle, lashed driftwood sill foundation course at bottom, seamless repeating, high fantasy, richly saturated, detailed shading, alpha-transparent background",
+          "palette": "bone white, tarred rope brown, oiled hide amber",
+          "rationale": "Far-water whalers build from their catch; whalebone framing is a vivid high-fantasy deep-sea vernacular."
+        }
+      ],
+      "roofs": [
+        {
+          "slug": "tarred_shingle",
+          "name": "Tarred Shingle",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, rows of heavily tarred black-brown timber shingles on a deep-sea platform shelter, glossy pitch-coated overlapping courses in clear horizontal rows, salt-white rime crusted along ridge lines, occasional bleached driftwood-grey shingle for variation, distinctly a dark layered shingle roof and not water, high fantasy, richly saturated, tileable, no ground, no grass, no water",
+          "palette": "pitch-black shingle, salt-white rime, driftwood grey",
+          "rationale": "Tarred shingles shed constant spray; the matte-black courses read instantly as roof against bright deep-ocean blue."
+        },
+        {
+          "slug": "copper_standing_seam",
+          "name": "Copper Standing Seam",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, copper standing-seam lighthouse cap, long raised vertical seams in oxidized verdigris green-blue with bright copper-orange highlights along the ridges, clean parallel metal panels, salt-streak weathering between seams, unmistakably a ribbed metal roof and not the sea, high fantasy, richly saturated, tileable, no ground, no grass, no water",
+          "palette": "verdigris green-blue, copper orange, salt streak",
+          "rationale": "Copper caps the iron lighthouses; its ribbed verdigris pattern is unmistakably architectural over open water."
+        },
+        {
+          "slug": "lashed_plank_deck",
+          "name": "Lashed Plank Deck",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, flat sea-platform roof of weathered grey boardwalk planks laid in tight parallel rows, dark tar-rope lashings crossing at regular plank joints, scattered barnacle specks and a coil of rope, clearly a decked plank roof and not ocean water, high fantasy, richly saturated, tileable, no ground, no grass, no water",
+          "palette": "weathered grey plank, dark tar rope, barnacle fleck",
+          "rationale": "Flat lashed-plank decks crown deep-sea platforms and pair with piling and clinker walls."
+        },
+        {
+          "slug": "oiled_canvas_tarp",
+          "name": "Oiled Canvas Tarp",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, stretched oiled-canvas sailcloth roof tied taut over a deep-sea shelter, billowing rectangular panels in dull ochre and storm-grey with rope-tensioned seams and brass grommets, sheen of waxed waterproofing, clearly a taut fabric roof and not water, high fantasy, richly saturated, tileable, no ground, no grass, no water",
+          "palette": "ochre sailcloth, storm grey, brass grommet",
+          "rationale": "Sailcloth tarps roof the lightest far-water structures; the rope-tensioned panels read as fabric, never as sea."
+        }
+      ]
+    },
+    "shallow_water": {
+      "displayName": "Shallow Water",
+      "walls": [
+        {
+          "slug": "driftwood_patchwork",
+          "name": "Driftwood Patchwork",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, mismatched driftwood boards nailed together into a coastal dock-shack wall, sun-silvered grey and warm honey-brown salvaged planks of varying widths fitted like a patchwork, knots and worn paint flecks, a crooked driftwood cap rail molding at top, patchwork plank field in the middle, barnacle-dotted sill foundation course at bottom, seamless repeating horizontally and vertically, high fantasy, richly saturated, detailed shading, alpha-transparent background",
+          "palette": "sun-silvered grey, honey-brown salvage, paint flecks",
+          "rationale": "Shallow-coast shacks are improvised from beach driftwood; the patchwork is the biome's defining texture."
+        },
+        {
+          "slug": "woven_reed_panel",
+          "name": "Woven Reed Panel",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, tightly woven golden reed and marsh-grass panels lashed to a slim timber frame of a stilt hut, warm straw-gold horizontal weave with darker tied bundle seams, a bundled-reed cap molding at top, woven reed field in the middle, mud-and-reed daub foundation course at bottom, seamless repeating, high fantasy, richly saturated, detailed shading, alpha-transparent background",
+          "palette": "straw-gold reed, tied-bundle brown, reed-daub base",
+          "rationale": "Coastal shallows grow abundant reed; woven reed panels are the lightest authentic stilt-hut wall."
+        },
+        {
+          "slug": "weathered_boardwalk_plank",
+          "name": "Weathered Boardwalk Plank",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, neat vertical weathered boardwalk planks of a dock shack, evenly milled grey-tan boards with thin dark gaps and rusty nail rows, a painted-trim cap molding at top, clean vertical plank field in the middle, tarred plinth foundation course at bottom, seamless repeating, high fantasy, richly saturated, detailed shading, alpha-transparent background",
+          "palette": "grey-tan plank, dark gap line, rust nail",
+          "rationale": "Boardwalk-grade milled planks build the tidier dock shacks and contrast the rough driftwood and reed walls."
+        },
+        {
+          "slug": "wattle_shell_daub",
+          "name": "Wattle & Shell Daub",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, woven willow-wattle wall packed with pale shell-lime daub of a shallows hut, basket-weave wattle showing at the edges, creamy off-white daub embedded with crushed pink and white seashells catching light, a timber cap molding at top, shell-flecked daub field in the middle, cobbled-shell foundation course at bottom, seamless repeating, high fantasy, richly saturated, detailed shading, alpha-transparent background",
+          "palette": "creamy shell-lime daub, willow wattle, pink-white shell",
+          "rationale": "Shore-burned shell lime makes a daub unique to the shallows; the shell flecks give a saturated coastal sparkle."
+        }
+      ],
+      "roofs": [
+        {
+          "slug": "reed_thatch",
+          "name": "Reed Thatch",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, thick golden reed thatch on a shallow-coast stilt hut, dense straw-gold combed bundles in clear overlapping courses with a darker tied ridge line and warm shadow between rows, a few stray reeds, unmistakably a thatched roof and not shallow water, high fantasy, richly saturated, tileable, no ground, no grass, no water",
+          "palette": "straw-gold thatch, tied-ridge brown, warm shadow",
+          "rationale": "Reed thatch is the natural roof of reed-walled stilt huts and reads warmly against pale shallow water."
+        },
+        {
+          "slug": "driftwood_shingle",
+          "name": "Driftwood Shingle",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, irregular driftwood shingles on a dock shack, sun-silvered grey and honey-brown salvaged wood pieces of mismatched sizes overlapping in loose staggered rows, occasional moss patch and rusty nail, clearly a patchy wooden shingle roof and not water, high fantasy, richly saturated, tileable, no ground, no grass, no water",
+          "palette": "silvered grey, honey-brown, moss patch",
+          "rationale": "Driftwood shingles match the patchwork walls; their irregular salvaged look is unmistakably a roof."
+        },
+        {
+          "slug": "palm_frond_thatch",
+          "name": "Palm-Frond Thatch",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, layered palm-frond thatch on a shallows boardwalk shelter, broad split green-and-tan fronds laid in fanned overlapping rows with visible central ribs, sun-faded tips and deeper shadow beneath each layer, unmistakably a leafy frond roof and not shallow water, high fantasy, richly saturated, tileable, no ground, no grass, no water",
+          "palette": "green-and-tan frond, sun-faded tip, deep underleaf shadow",
+          "rationale": "Warm coastal shallows favor palm-frond roofing; the fanned fronds are vivid and clearly architectural."
+        },
+        {
+          "slug": "kelp_shingle",
+          "name": "Pressed Kelp Shingle",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, pressed dried-kelp shingle roof of a fantastical shallows hut, glossy deep olive-and-amber kelp sheets layered like leathery tiles in clear rows, iridescent green-gold sheen and salt-crust speckles along the courses, clearly a dark layered shingle roof and not water, high fantasy, richly saturated, tileable, no ground, no grass, no water",
+          "palette": "deep olive kelp, amber sheen, salt-crust speckle",
+          "rationale": "Pressed seaweed shingling is a distinctive high-fantasy shallows roof, dark and glossy against the bright water."
+        }
+      ]
+    },
+    "beach": {
+      "displayName": "Beach",
+      "walls": [
+        {
+          "slug": "coral_block",
+          "name": "Coral-Block Masonry",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, tropical coral-stone house of porous cream coral blocks with pitted holes and shell flecks, sun-bleached carved coral molding cap at top, middle field of pale ivory and sandy-pink rough coral masonry blocks with subtle salt crystals and lime-wash, chunky coral-rubble foundation course at bottom, seamless repeating and vertically stackable, high fantasy, richly saturated warm cream and coral-pink, detailed shading, alpha transparent background",
+          "palette": "ivory-pink coral stone, salt-flecked lime",
+          "rationale": "Coral blocks cut from the reef are the durable tropical coastal masonry of beach houses."
+        },
+        {
+          "slug": "bleached_plank",
+          "name": "Bleached Driftwood Plank",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, beach-hut wall of sun-bleached driftwood planks in pale silvery grey and faded teal, simple weathered plank molding cap at top, middle field of horizontal cracked salt-greyed boards with knots, gaps and peeling pastel paint flecks, low sandy-stone foundation course at bottom dusted with golden sand, seamless repeating, high fantasy, saturated faded pastels over silver wood, detailed shading, alpha transparent background",
+          "palette": "silver-grey driftwood, faded teal paint flecks",
+          "rationale": "Salt-bleached driftwood planking is the lightweight beach-hut material weathered by sun and surf."
+        },
+        {
+          "slug": "palm_thatch_panel",
+          "name": "Woven Palm Panel",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, palm-structure wall of woven palm-frond panels lashed to a bamboo frame, slim bamboo top rail molding cap, middle field of tightly woven golden-tan palm-leaf matting with herringbone weave texture and lashing cord, low driftwood-and-shell sill foundation at bottom, seamless repeating, high fantasy, richly saturated warm tan and green, detailed shading, alpha transparent background",
+          "palette": "golden-tan woven palm, green bamboo frame",
+          "rationale": "Woven palm panels on a bamboo frame are the classic breezy tropical-coast wall, true to palm structures."
+        },
+        {
+          "slug": "shell_tabby",
+          "name": "Shell Tabby Stucco",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, coastal cottage wall of tabby stucco made from crushed shell and lime, smooth rolled stucco molding cap at top, middle field of warm white-cream plaster studded with embedded crushed seashell fragments catching light, pebble-and-shell foundation course at bottom with golden sand dusting, seamless repeating and vertically stackable, high fantasy, richly saturated warm cream with iridescent shell glints, detailed shading, alpha transparent background",
+          "palette": "warm cream tabby, iridescent shell glints",
+          "rationale": "Tabby (crushed-shell lime stucco) is the authentic warm coastal render and pairs over coral-block bases."
+        }
+      ],
+      "roofs": [
+        {
+          "slug": "palm_thatch",
+          "name": "Palm-Leaf Thatch",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, layered palm-leaf thatch in overlapping fanned courses, broad golden-green dried palm fronds with visible leaf ribs and frayed drooping tips, a thicker ridge bundle across the top, soft course shadows, high fantasy, richly saturated warm gold-green, tileable, reads unmistakably as a tropical palm roof and clearly different from pale golden beach sand, no ground, no sand",
+          "palette": "gold-green palm frond, amber rib shadows",
+          "rationale": "Palm-leaf thatch is the signature tropical beach roof; the gold-green keeps it distinct from golden_sand."
+        },
+        {
+          "slug": "coral_tile",
+          "name": "Coral-Lime Tile",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, curved coral-lime barrel tiles in regular overlapping rows, sun-bleached cream and coral-pink half-round tiles with chalky salt texture and rounded ridge highlights, deep channel shadows between courses, high fantasy, richly saturated warm cream-pink, tileable, reads clearly as a tiled roof unlike pale golden beach sand because of its pink ridges and shadow rows, no ground, no sand",
+          "palette": "cream-coral pink tile, chalky salt sheen",
+          "rationale": "Fired coral-lime barrel tiles pair with coral-block and tabby walls for the upscale beach house."
+        },
+        {
+          "slug": "driftwood_shingle",
+          "name": "Driftwood Shingle",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, sun-bleached driftwood shingles in staggered overlapping rows, silvery-grey and faded blue-teal split boards with cracked weathered grain and uneven edges, crisp row shadow lines, high fantasy, saturated cool silver with teal accents, tileable, reads unmistakably as a weathered wooden shingle roof clearly distinct from warm golden beach sand, no ground, no sand",
+          "palette": "silver-grey driftwood, faded teal accents",
+          "rationale": "Bleached driftwood shingles match the plank-wall huts and read cool-silver against warm sand."
+        },
+        {
+          "slug": "shell_scallop",
+          "name": "Scallop-Shell Scale",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, decorative roof of overlapping scallop seashells laid in fish-scale courses, pearly cream, peach and rose shells with fan-ribbed texture and iridescent sheen, rounded fanned edges catching light, deep shadows where shells overlap, high fantasy, richly saturated pearlescent pinks and creams, tileable, reads unmistakably as a shell-scale roof completely unlike flat golden beach sand, no ground, no sand",
+          "palette": "pearly cream-peach shells, rose iridescence",
+          "rationale": "A scalloped seashell roof is a fantastical coastal flourish, ornate and unmistakably non-sand against golden_sand."
+        }
+      ]
+    },
+    "river": {
+      "displayName": "River",
+      "walls": [
+        {
+          "slug": "river_stone_daub",
+          "name": "River-Stone & Daub",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, riverbank cottage wall of rounded river cobbles set in pale ochre lime daub, weathered carved stone molding cap at top, middle field of smooth water-worn grey-and-tan rounded stones embedded in cream daub mortar, heavy mossy fieldstone foundation course at bottom with damp waterline staining, seamless repeating left-right and stackable top-bottom, high fantasy, richly saturated, detailed shading, alpha transparent background",
+          "palette": "water-worn grey-tan cobble, cream lime daub, mossy base",
+          "rationale": "River cobbles are the most abundant local material on a bank; daub fills the gaps in true vernacular riverside cottages."
+        },
+        {
+          "slug": "tarred_plank",
+          "name": "Tarred Boardwall",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, vertical tarred timber plank wall of a riverside watermill, dark pitch-blackened oak boards with bright honey-toned batten strips covering the seams, carved timber molding cap at top, middle field of tall straight tar-sealed planks with subtle wood grain and iron nail-heads, thick water-resistant timber sill foundation at bottom with green algae waterline, seamless repeating, high fantasy, saturated colors, detailed shading, alpha transparent background",
+          "palette": "pitch-black tarred oak, honey batten, algae sill",
+          "rationale": "Watermills and jetties are pitch-tarred against constant splash; vertical battens are the working-river construction tradition."
+        },
+        {
+          "slug": "wattle_daub_frame",
+          "name": "Wattle & Daub Frame",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, half-timbered riverside cottage, warm cream daub panels framed by dark oak timber posts and diagonal braces, carved oak beam molding cap at top, middle field of woven-texture plaster infill between exposed chocolate-brown timbers, low river-pebble foundation course at bottom, seamless repeating and vertically stackable, high fantasy, richly saturated, detailed shading, alpha transparent background",
+          "palette": "warm cream daub, dark oak timber, pebble base",
+          "rationale": "Classic timber-framed wattle and daub is the iconic riverside cottage idiom and pairs with abundant river timber."
+        },
+        {
+          "slug": "mossy_millstone",
+          "name": "Mossy Millstone Block",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, mill-house wall of large squared damp grey ashlar blocks quarried from the river gorge, chiseled stone cornice molding cap at top, middle field of tightly fitted rectangular wet grey-green stone blocks with deep mortar shadow lines and clinging moss patches, oversized cut-stone foundation plinth at bottom with dark waterline tide-mark, seamless repeating, high fantasy, saturated colors, detailed shading, alpha transparent background",
+          "palette": "wet grey-green ashlar, dark mortar, mossy plinth",
+          "rationale": "Heavy millstone ashlar suits the load-bearing base of a working watermill and reads damp like the riverbank."
+        }
+      ],
+      "roofs": [
+        {
+          "slug": "thatch",
+          "name": "River-Reed Thatch",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, thick golden river-reed thatch in clear horizontal combed courses, warm straw-gold strands bundled into overlapping ridged rows with a darker ridge cap running across, fine fibrous texture and soft course shadows, high fantasy, richly saturated warm gold, tileable, reads unmistakably as a dry thatched roof and clearly different from blue river water, no ground, no grass",
+          "palette": "warm straw-gold reed, amber ridge shadows",
+          "rationale": "River reeds are harvested on the bank for thatch; warm gold contrasts strongly against blue river_water."
+        },
+        {
+          "slug": "wood_shingle",
+          "name": "Oak Shingle",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, hand-split oak wood shingles in neat overlapping staggered rows, warm reddish-brown and amber boards with visible grain and weathered grey edges, crisp course-to-course shadow lines, high fantasy, saturated woody tones, tileable, reads clearly as a wooden shingle roof distinct from blue river water, no ground, no grass",
+          "palette": "reddish-brown oak shingle, weathered grey edges",
+          "rationale": "Split oak shingles use the same riverside timber as the plank and frame walls and pair across the whole biome."
+        },
+        {
+          "slug": "slate",
+          "name": "Gorge Slate",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, overlapping river-gorge slate tiles in tight diminishing courses, cool blue-grey and slate-purple shingles with chipped angular edges and subtle mineral sheen, sharp row shadows, high fantasy, saturated cool greys with violet highlights, tileable, reads unmistakably as a hard slate roof and is darker and harder than blue river water, no ground, no grass",
+          "palette": "blue-grey slate, violet sheen highlights",
+          "rationale": "Quarried gorge slate pairs with the millstone ashlar wall and gives a prosperous mill its hard, durable roof."
+        },
+        {
+          "slug": "moss_clay_tile",
+          "name": "Mossed Clay Tile",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, curved terracotta clay barrel tiles in regular overlapping rows, warm rust-orange and burnt-sienna half-round tiles with green moss creeping along the damp valleys between courses, rounded ridge highlights and deep channel shadows, high fantasy, richly saturated terracotta with mossy green accents, tileable, reads clearly as a clay-tiled roof unlike blue river water, no ground, no grass",
+          "palette": "rust-orange terracotta, mossy green valleys",
+          "rationale": "Fired river-clay barrel tiles fit the humid bank; the moss in the valleys matches the damp daub and millstone walls."
+        }
+      ]
+    },
+    "lake": {
+      "displayName": "Lake",
+      "walls": [
+        {
+          "slug": "log_cabin",
+          "name": "Stacked Log",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, lakeside lodge of horizontally stacked debarked timber logs with pale chinking mortar between each round course, carved log-end molding cap at top, middle field of fat honey-brown rounded logs with knot details and soft cylindrical shading, broad stone-and-log foundation sill at bottom with damp lakewater stain, seamless repeating and vertically stackable, high fantasy, richly saturated warm wood, detailed shading, alpha transparent background",
+          "palette": "honey-brown logs, pale chinking, stone sill",
+          "rationale": "Stacked log construction is the defining idiom of forested lakeside lodges and fishing cabins."
+        },
+        {
+          "slug": "cedar_board_batten",
+          "name": "Cedar Board & Batten",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, fishing-cabin wall of vertical weathered cedar boards with raised batten strips over the seams, simple cedar molding cap at top, middle field of tall silvery-brown weathered cedar planks with vertical grain and warm reddish undertones, low lake-stone foundation course at bottom with green algae waterline, seamless repeating, high fantasy, saturated cedar tones, detailed shading, alpha transparent background",
+          "palette": "silvery-brown weathered cedar, reddish undertone",
+          "rationale": "Vertical cedar board-and-batten is the lightweight cabin cladding that pairs with cedar-shake roofs."
+        },
+        {
+          "slug": "lake_fieldstone",
+          "name": "Lake Fieldstone",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, boathouse wall of irregular glacial fieldstone in earthy greys, blues and rusty browns set in deep recessed mortar, rough stone slab molding cap at top, middle field of tightly packed angular multicolor lake stones with strong individual shading, massive boulder foundation course at bottom with dark waterline tide-mark, seamless repeating, high fantasy, richly saturated mixed stone hues, detailed shading, alpha transparent background",
+          "palette": "grey-blue-rust glacial fieldstone, dark mortar",
+          "rationale": "Glacial lakeshores are scattered with multicolored fieldstone, the natural sturdy material for a boathouse base."
+        },
+        {
+          "slug": "stilt_piling",
+          "name": "Stilt-Lodge Pilings",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, stilt-lodge facade showing thick weathered timber piling posts rising from the waterline supporting a planked sill above, dark plank molding cap at top, middle field of vertical greyed support pilings with cross-bracing and exposed cedar planking behind, no solid foundation but barnacle-green wet piling bases at bottom standing in implied lake water, seamless repeating, high fantasy, saturated weathered tones, detailed shading, alpha transparent background",
+          "palette": "greyed piling timber, algae-green wet bases",
+          "rationale": "Stilt lodges stand over the water on pilings; this honest over-water construction is specified for lake structures."
+        }
+      ],
+      "roofs": [
+        {
+          "slug": "cedar_shake",
+          "name": "Cedar Shake",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, thick hand-split cedar shakes in deep overlapping staggered courses, rich reddish-brown and weathered silver shingles with rough rived grain and uneven butt edges, strong shadow lines between rows, high fantasy, richly saturated warm cedar, tileable, reads unmistakably as a rugged shake roof and clearly distinct from blue-green lake water, no ground, no grass",
+          "palette": "reddish-brown cedar, weathered silver edges",
+          "rationale": "Cedar shake is the canonical lakeside-cabin roof and pairs directly with the cedar and log walls."
+        },
+        {
+          "slug": "birch_bark",
+          "name": "Birch-Bark Layer",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, layered birch-bark roofing in broad overlapping sheets, creamy white and pale tan bark panels with dark horizontal lenticel streaks and curling weathered edges, pinned with thin wooden battens running across the courses, high fantasy, saturated warm cream with charcoal markings, tileable, reads clearly as a bark roof unlike blue-green lake water, no ground, no grass",
+          "palette": "cream-tan birch bark, charcoal streaks",
+          "rationale": "Birch bark is a traditional northern lakeside roofing membrane and gives a distinct pale-cream alternative."
+        },
+        {
+          "slug": "sod_turf",
+          "name": "Turf Sod",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, thick living turf sod roof in level cut bands, deep green grass blades over a visible layered soil-and-bark edge, scattered tiny wildflowers and mossy clumps, gentle rolling highlights, high fantasy, richly saturated verdant green, tileable, reads as a planted living roof clearly different from blue-green lake water, no exposed ground terrain border, no surrounding grass",
+          "palette": "verdant green turf, dark soil edge",
+          "rationale": "Sod roofs over birch-bark waterproofing are authentic to cold lake lodges and read warm-green against cool water."
+        },
+        {
+          "slug": "log_pole",
+          "name": "Split-Log Pole",
+          "prompt": "seamless top-down pixel-art roof texture seen from directly above, roof of split timber poles laid in tight parallel half-round runs from ridge to eave, warm amber and honey-brown debarked logs with rounded tops and deep V-channel shadows between each pole, a heavier ridge log across the top, high fantasy, saturated warm wood, tileable, reads unmistakably as a pole-log roof distinct from blue-green lake water, no ground, no grass",
+          "palette": "amber-honey split logs, deep channel shadows",
+          "rationale": "Half-round pole roofing matches the stacked-log lodge wall and is the rough-and-ready cabin roof option."
+        }
+      ]
+    },
+    "grassland": {
+      "displayName": "Grassland",
+      "walls": [
+        {
+          "slug": "wattle_daub",
+          "name": "Wattle & Daub",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, wattle-and-daub cottage wall, weathered dark oak timber-frame studs and a diagonal brace dividing the panel, warm cream lime-plaster daub infill between the timbers with subtle hand-troweled texture and faint hairline cracks, a slim oak top plate molding capping the wall, a low fieldstone foundation course of rounded river cobbles at the bottom, seamless repeating horizontally and stackable vertically, high fantasy, richly saturated, detailed shading with soft ambient occlusion, alpha transparent background",
+          "palette": "warm cream plaster, dark oak timber, grey cobble base",
+          "rationale": "The archetypal temperate-village wall: cheap daub infill on a timber skeleton, exactly the medieval grassland vernacular."
+        },
+        {
+          "slug": "timber_frame",
+          "name": "Timber Frame",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, ornate half-timbered wall, dense lattice of dark stained oak posts, rails and decorative herringbone struts forming square and diamond panels, panels filled with pale ochre plaster, a carved timber bressummer beam as the top molding cap, a stout sandstone block foundation course at the bottom, seamless repeating horizontally and stackable vertically, high fantasy, richly saturated, detailed shading, crisp wood grain highlights, alpha transparent background",
+          "palette": "dark stained oak, pale ochre plaster, honey sandstone base",
+          "rationale": "Prosperous market-town construction; heavy decorative framing distinguishes it from plain wattle-and-daub."
+        },
+        {
+          "slug": "fieldstone",
+          "name": "Fieldstone",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, mortared fieldstone wall built from irregular rounded grey and tan glacial cobbles set in pale lime mortar, varied stone sizes packed tightly, a flat dressed-stone coping molding capping the top, an oversized boulder foundation course at the bottom, seamless repeating horizontally and stackable vertically, high fantasy, richly saturated, detailed shading with moss flecks in the mortar joints, alpha transparent background",
+          "palette": "grey-tan rounded stone, pale lime mortar",
+          "rationale": "Rolling grassland is littered with field-cleared glacial cobbles; the obvious durable stone wall for a wealthier dwelling."
+        },
+        {
+          "slug": "cob",
+          "name": "Cob",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, monolithic cob wall of earth-and-straw mixed with lime, thick rounded organic surface with gentle bulges and embedded straw flecks, soft sculpted corners, a thatch-eave timber molding cap at the top to throw off rain, a wide tarred fieldstone plinth foundation course at the bottom to keep the earth dry, seamless repeating horizontally and stackable vertically, high fantasy, richly saturated, warm earthen tones, detailed soft shading, alpha transparent background",
+          "palette": "warm straw-flecked earthen ochre, tarred stone plinth",
+          "rationale": "Cob is a classic cheap-of-earth grassland building method; its rounded monolithic look is unmistakably different from framed walls."
+        }
+      ],
+      "roofs": [
+        {
+          "slug": "thatch",
+          "name": "Thatch",
+          "prompt": "seamless top-down pixel-art roof texture, thick golden wheat-straw thatch viewed from directly above, dense overlapping horizontal courses of bundled reed with a combed brushed nap and a decorative ridge of crossed straw spars running along the peak, soft rounded rows, warm yellow-gold tones deepening to amber in the valleys, clearly reads as a thatched roof not grass, high fantasy, richly saturated, seamless tileable, no ground, no terrain",
+          "palette": "golden-amber straw, brushed nap",
+          "rationale": "Thatch is the default grassland roof, pairing naturally with wattle, cob and timber-frame cottages."
+        },
+        {
+          "slug": "wood_shingle",
+          "name": "Wood Shingle",
+          "prompt": "seamless top-down pixel-art roof texture, hand-split oak shingles seen from directly above, neat staggered rows of overlapping rectangular wooden shakes with visible split grain and weathered silver-brown edges, crisp horizontal courses and a capped timber ridge line, warm honey-to-grey wood tones, clearly reads as a shingled roof, high fantasy, richly saturated, seamless tileable, no ground, no grass",
+          "palette": "honey-to-silver weathered oak",
+          "rationale": "Split-shingle roofing for timber-frame towns where woodland is abundant; a tidy upgrade over thatch."
+        },
+        {
+          "slug": "clay_tile",
+          "name": "Clay Tile",
+          "prompt": "seamless top-down pixel-art roof texture, terracotta clay barrel tiles viewed from directly above, regular rows of curved interlocking S-shaped pantiles casting soft scalloped shadows, warm orange-red baked-clay color with subtle tonal variation per tile and a ridge line of capping tiles, clearly reads as a tiled roof, high fantasy, richly saturated, seamless tileable, no ground, no terrain",
+          "palette": "warm terracotta orange-red",
+          "rationale": "Fired clay pantiles suit prosperous fieldstone and timber-frame houses and add a saturated warm-red accent to the village."
+        },
+        {
+          "slug": "turf_sod",
+          "name": "Turf Sod",
+          "prompt": "seamless top-down pixel-art roof texture, living turf sod roof viewed from directly above laid as overlapping cut grass-mat strips with visible soil-and-root edges between rows and tiny wildflowers dotting the surface, distinct deliberate horizontal courses and a timber ridge log along the peak so it reads as a built roof rather than open meadow, deep emerald green with earthy brown seams, high fantasy, richly saturated, seamless tileable, no ground",
+          "palette": "deep emerald turf, brown root seams",
+          "rationale": "Sod-over-cob is humble and insulating; the visible courses and ridge log keep it distinct from the surrounding lush_grass terrain."
+        }
+      ]
+    },
+    "forest": {
+      "displayName": "Forest",
+      "walls": [
+        {
+          "slug": "log_cabin",
+          "name": "Round-Log Cabin",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, stacked horizontal round logs of golden pine with visible saddle-notch joints and chinked white daub between courses, hewn timber cap molding at top, full round-log middle field with warm bark-amber wood grain and soft highlight along each log crown, heavy mossy fieldstone foundation course at bottom, seamless repeating horizontally and vertically, high fantasy, richly saturated colors, detailed directional shading, alpha transparent background",
+          "palette": "golden pine logs, pale chinking, grey stone footing",
+          "rationale": "Round-log construction is the archetypal temperate deciduous forest dwelling — abundant straight trunks, simple notch joinery."
+        },
+        {
+          "slug": "hewn_plank",
+          "name": "Hewn Vertical Plank",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, vertical board-and-batten siding of hand-hewn oak planks in honey-brown with darker batten strips covering every seam, carved timber cornice cap at top, tall straight-grained plank middle field with subtle saw-marks and knot detail, mortared cobble base course at bottom, seamless repeating horizontally and vertically, high fantasy, richly saturated colors, detailed shading, alpha transparent background",
+          "palette": "honey oak planks, chestnut battens, cobble base",
+          "rationale": "Sawn-and-hewn vertical planking is the next vernacular step up from logs once a settlement has a sawpit."
+        },
+        {
+          "slug": "timber_frame_daub",
+          "name": "Timber Frame & Daub",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, half-timbered frame of dark stained oak posts braces and rails forming an X and box pattern with cream lime-plaster infill panels, carved beam cap rail at top, geometric timber-and-plaster middle field with crisp brown frame against bright daub, exposed grey stone plinth foundation course at bottom, seamless repeating horizontally and vertically, high fantasy, richly saturated colors, detailed shading, alpha transparent background",
+          "palette": "dark oak frame, cream plaster infill, stone plinth",
+          "rationale": "Half-timber with daub infill is the classic temperate-forest town house, using forest timber sparingly with clay and lime."
+        },
+        {
+          "slug": "bark_slab",
+          "name": "Bark-Slab Siding",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, rustic siding of overlapping rough bark slabs and slab-wood offcuts in russet and grey-brown with curling fibrous bark edges, slim peeled-pole cap rail at top, shaggy textured bark middle field with mottled lichen-green flecks and deep shadow grooves, packed earth-and-log sill foundation course at bottom, seamless repeating horizontally and vertically, high fantasy, richly saturated colors, detailed shading, alpha transparent background",
+          "palette": "russet bark, grey-brown slab wood, earthen sill",
+          "rationale": "Bark slabs are mill waste reused as cheap shaggy cladding on outbuildings and woodland huts."
+        }
+      ],
+      "roofs": [
+        {
+          "slug": "bark_shingle",
+          "name": "Bark Shingle",
+          "prompt": "seamless top-down pixel-art roof texture, overlapping curled bark shingles in russet and umber laid in clear staggered horizontal courses with a peeled ridge pole running across, distinct row shadows and lichen-flecked highlights, unmistakably a sloped roof seen from directly above, high fantasy, richly saturated, tileable, no ground, no grass, no soil",
+          "palette": "russet and umber bark, mossy flecks",
+          "rationale": "Bark shingles are the cheapest forest roofing, peeled from felled trunks and overlapped like scales."
+        },
+        {
+          "slug": "wood_shake",
+          "name": "Split Wood Shake",
+          "prompt": "seamless top-down pixel-art roof texture, hand-split cedar wood shakes in warm honey and amber laid in tidy overlapping rows with a carved timber ridge cap, crisp parallel course lines and grain striations catching light, unmistakably a pitched shingled roof viewed from above, high fantasy, richly saturated, tileable, no ground, no grass, no soil",
+          "palette": "honey cedar, amber shadows",
+          "rationale": "Split shakes are the refined upgrade from bark — durable riven wood roofing for established homes."
+        },
+        {
+          "slug": "forest_thatch",
+          "name": "Reed Thatch",
+          "prompt": "seamless top-down pixel-art roof texture, thick golden reed thatch combed into smooth tapering courses with a woven hazel-rod ridge spine, soft straw striations and warm honey-to-amber gradient between layers, unmistakably a steep thatched roof seen from above, high fantasy, richly saturated, tileable, no ground, no grass, no soil",
+          "palette": "golden straw, amber underlayers",
+          "rationale": "Reed and straw thatch from forest-edge meadows is a warm steep-pitched roof that sheds heavy rain."
+        },
+        {
+          "slug": "moss_sod",
+          "name": "Moss Sod Roof",
+          "prompt": "seamless top-down pixel-art roof texture, living green sod roof of dense moss and short turf over a visible birch-bark underlayer, with timber edge boards and ridge log, lush emerald-to-sage tufts and small fern sprigs in clear panels, unmistakably a flat-pitched living roof seen from above and clearly built not wild ground, high fantasy, richly saturated, tileable, no bare soil",
+          "palette": "emerald moss, sage turf, birch underlayer",
+          "rationale": "Turf-over-birch-bark roofs are a traditional cool-forest insulation, but framed by timber edges so they read as roof not ground."
+        }
+      ]
+    },
+    "dense_forest": {
+      "displayName": "Dense Forest",
+      "walls": [
+        {
+          "slug": "mossy_timber",
+          "name": "Mossy Timber",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, stacked dark weathered logs heavily blanketed in emerald and viridian moss with damp shadowed chinking and trailing lichen, gnarled mossy beam cap at top, deep-shadowed moss-cloaked log middle field with glistening damp highlights, dark wet boulder foundation course at bottom, seamless repeating horizontally and vertically, high fantasy, richly saturated colors, moody detailed shading, alpha transparent background",
+          "palette": "moss-green over dark wet logs, black boulders",
+          "rationale": "In sunless old-growth, every horizontal surface grows moss — walls read as living, damp, and ancient."
+        },
+        {
+          "slug": "dark_stained_log",
+          "name": "Dark-Stained Log",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, stacked logs of near-black tar-stained timber with deep glossy grain and dovetail corner joints picked out in cold blue highlights, blackened beam cap molding at top, dark espresso-toned log middle field with sharp specular sheen along each log, charred timber sill foundation course at bottom, seamless repeating horizontally and vertically, high fantasy, richly saturated colors, dramatic detailed shading, alpha transparent background",
+          "palette": "tar-black logs, cold blue highlights",
+          "rationale": "Pine-tar staining preserves timber against constant damp and gives old-growth halls their brooding black-log look."
+        },
+        {
+          "slug": "root_and_earth",
+          "name": "Root & Earth Wall",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, rammed dark earth wall reinforced with a lattice of exposed gnarled tree roots and woven branches, dripping with fern fronds, twisted root beam cap at top, rich umber rammed-earth middle field laced with snaking roots and small toadstools, mounded mossy stone foundation course at bottom, seamless repeating horizontally and vertically, high fantasy, richly saturated colors, moody detailed shading, alpha transparent background",
+          "palette": "dark umber earth, twisted roots, toadstool red",
+          "rationale": "Dwellings half-dug into root-bound forest soil — earth packed against the living root network of giant trees."
+        },
+        {
+          "slug": "deep_bark_plank",
+          "name": "Deep-Bark Plank",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, vertical planks of thick fissured old-growth bark in charcoal and deep brown with deep canyon-like grooves and clinging green lichen, slim dark batten cap at top, dramatically furrowed dark bark middle field with cold rim light in the crevices, dark mossy stone base course at bottom, seamless repeating horizontally and vertically, high fantasy, richly saturated colors, moody detailed shading, alpha transparent background",
+          "palette": "charcoal bark, deep brown furrows, lichen green",
+          "rationale": "Slabs of thick old-growth bark make a deeply textured, near-black cladding fitting the dark forest palette."
+        }
+      ],
+      "roofs": [
+        {
+          "slug": "moss_shingle",
+          "name": "Moss-Grown Shingle",
+          "prompt": "seamless top-down pixel-art roof texture, dark weathered wood shingles overgrown with thick emerald moss and patches of pale lichen laid in staggered courses, mossy ridge log across the top, damp glistening highlights and deep course shadows, unmistakably a sloped roof seen from directly above, high fantasy, richly saturated, tileable, no ground, no bare soil",
+          "palette": "moss green over dark shingles",
+          "rationale": "Shingles in perpetual shade are colonised by moss — distinct from clean forest shakes but still clearly a roof."
+        },
+        {
+          "slug": "dark_slate",
+          "name": "Dark Slate",
+          "prompt": "seamless top-down pixel-art roof texture, overlapping charcoal and slate-blue stone tiles laid in precise staggered rows with a cut-stone ridge cap, crisp beveled edges with cold steel highlights and deep seam shadows, unmistakably a pitched slate roof viewed from above, high fantasy, richly saturated, tileable, no ground, no soil",
+          "palette": "charcoal and steel-blue slate",
+          "rationale": "Quarried dark slate is the prestige roof of deep-forest halls — cold, hard, and reads instantly as built stone."
+        },
+        {
+          "slug": "fern_thatch",
+          "name": "Fern & Bracken Thatch",
+          "prompt": "seamless top-down pixel-art roof texture, dense thatch of bracken and fern fronds in deep olive and bronze-green combed into shadowed courses with a dark vine-bound ridge, layered frond striations and damp sheen, unmistakably a steep thatched roof seen from above, high fantasy, richly saturated, tileable, no ground, no grass on soil",
+          "palette": "olive and bronze-green fern fronds",
+          "rationale": "Where straw is scarce under the canopy, bracken and fern fronds are bundled into a dark green thatch."
+        },
+        {
+          "slug": "deep_moss_sod",
+          "name": "Deep Moss Sod",
+          "prompt": "seamless top-down pixel-art roof texture, thick living roof of deep cushiony moss and small ferns over dark timber edge boards and a heavy ridge log, with mushrooms and tiny saplings sprouting in clear framed panels, lush viridian-to-bottle-green tufts, unmistakably a built living roof seen from above and clearly framed not wild ground, high fantasy, richly saturated, tileable, no bare dirt",
+          "palette": "deep viridian moss, bottle-green ferns, dark timber edges",
+          "rationale": "Old-growth turf roofs grow nearly into the forest itself, framed by heavy dark timber so they still read as roof."
+        }
+      ]
+    },
+    "tropical_forest": {
+      "displayName": "Tropical Forest",
+      "walls": [
+        {
+          "slug": "bamboo",
+          "name": "Lashed Bamboo",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, wall of vertical golden-green bamboo poles lashed with dark rattan binding at regular intervals showing nodes and joints, split-bamboo top rail cap, glossy striped bamboo middle field with bright jade and straw highlights and crisp node rings, lashed bamboo sill foundation course at bottom, seamless repeating horizontally and vertically, high fantasy, richly saturated tropical colors, detailed shading, alpha transparent background",
+          "palette": "jade-and-straw bamboo, dark rattan lashing",
+          "rationale": "Bamboo is the fastest-growing, strongest, most ubiquitous rainforest building material."
+        },
+        {
+          "slug": "woven_palm",
+          "name": "Woven Palm Panel",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, wall of tightly woven palm-leaf and split-cane matting in a diagonal basket weave of green-gold and tan, slim bamboo frame cap at top, intricate woven palm middle field with crisp interlaced highlights and warm shadow valleys, woven cane skirt foundation course at bottom, seamless repeating horizontally and vertically, high fantasy, richly saturated tropical colors, detailed shading, alpha transparent background",
+          "palette": "green-gold and tan woven palm",
+          "rationale": "Woven palm and cane matting is the classic breathable rainforest wall panel set in a light frame."
+        },
+        {
+          "slug": "hardwood_plank",
+          "name": "Tropical Hardwood Plank",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, horizontal planks of rich reddish tropical hardwood like mahogany and teak with deep ribbon-figured grain and pegged joints, carved hardwood cornice cap at top, lustrous warm red-brown plank middle field with golden grain highlights, dark hardwood sill-beam foundation course at bottom, seamless repeating horizontally and vertically, high fantasy, richly saturated tropical colors, detailed shading, alpha transparent background",
+          "palette": "mahogany red-brown, golden grain",
+          "rationale": "Dense tropical hardwoods make the prestige planked walls of permanent rainforest longhouses."
+        },
+        {
+          "slug": "raised_stilt",
+          "name": "Stilt Plank & Lattice",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, raised stilt-house wall of pale weathered teak boards above an open lattice screen of crossed bamboo slats, carved fretwork eave cap at top, light golden plank middle field with a decorative pierced bamboo lattice band, thick round hardwood stilt-post foundation course at bottom showing the gap beneath, seamless repeating horizontally and vertically, high fantasy, richly saturated tropical colors, detailed shading, alpha transparent background",
+          "palette": "pale teak boards, golden bamboo lattice",
+          "rationale": "Stilt construction with ventilated lattice keeps rainforest dwellings above flood, damp, and pests."
+        }
+      ],
+      "roofs": [
+        {
+          "slug": "palm_thatch",
+          "name": "Palm Thatch",
+          "prompt": "seamless top-down pixel-art roof texture, dense overlapping palm-frond thatch in green-gold and straw laid in clear shaggy fanned courses with a split-bamboo ridge cap, layered leaf striations and bright sunlit highlights, unmistakably a steep tropical thatched roof seen from directly above, high fantasy, richly saturated tropical colors, tileable, no ground, no soil",
+          "palette": "green-gold palm fronds, straw",
+          "rationale": "Palm-frond thatch is the signature steep rainforest roof, shedding torrential rain fast."
+        },
+        {
+          "slug": "banana_leaf",
+          "name": "Banana-Leaf Thatch",
+          "prompt": "seamless top-down pixel-art roof texture, broad overlapping banana and heliconia leaves layered in glossy emerald courses with visible central leaf veins and a lashed bamboo ridge, vivid jade highlights and deep green shadow gaps, unmistakably a built leaf roof seen from above and distinct from forest floor, high fantasy, richly saturated tropical colors, tileable, no ground, no grass",
+          "palette": "glossy emerald and jade leaves",
+          "rationale": "Big broad-leaf roofing is a vivid, fast, temporary rainforest cover with bold leaf-vein texture."
+        },
+        {
+          "slug": "split_bamboo",
+          "name": "Split-Bamboo Tile",
+          "prompt": "seamless top-down pixel-art roof texture, interlocking halved bamboo culms laid in alternating up-and-down channel rows like terracotta pantiles, golden-tan bamboo with crisp node rings and a capped bamboo ridge, strong parallel ridges casting clean shadow lines, unmistakably a channeled tile roof seen from above, high fantasy, richly saturated tropical colors, tileable, no ground, no soil",
+          "palette": "golden-tan bamboo channels",
+          "rationale": "Split bamboo laid concave-and-convex makes a self-draining tiled roof — distinct ridged geometry."
+        },
+        {
+          "slug": "fired_clay_pantile",
+          "name": "Fired Clay Pantile",
+          "prompt": "seamless top-down pixel-art roof texture, S-curved fired terracotta pantiles in warm coral-red and burnt orange laid in clean wavy interlocking rows with a half-round ridge tile, glossy glazed highlights and crisp shadow troughs between each curved tile, unmistakably a clay-tiled roof seen from directly above, high fantasy, richly saturated tropical colors, tileable, no ground, no soil",
+          "palette": "coral-red and burnt-orange terracotta",
+          "rationale": "Fired clay pantiles are the permanent prestige roof of tropical towns with clay and kilns, vividly distinct from leaf thatch."
+        }
+      ]
+    },
+    "taiga": {
+      "displayName": "Taiga",
+      "walls": [
+        {
+          "slug": "stacked_log",
+          "name": "Stacked Log",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, horizontally stacked debarked pine logs with visible saddle-notched corners, weathered carved timber molding cap at top with snow-shed bevel, middle field of round honey-brown log courses with chinking moss packed in the seams and concentric end-grain growth rings, heavy dark river-cobble foundation course at bottom, seamless repeating horizontally and vertically, high fantasy, richly saturated golden-amber wood tones, detailed directional shading and rim light, alpha transparent background",
+          "palette": "honey-amber pine logs, mossy green chinking, grey cobble base",
+          "rationale": "Heavy log construction is the defining boreal-taiga vernacular for insulation against deep cold."
+        },
+        {
+          "slug": "pine_plank",
+          "name": "Vertical Pine Plank",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, vertical board-and-batten pine planking with tall narrow boards and raised batten strips, carved fascia molding cap at top, middle field of warm reddish-pine planks showing knots, sap streaks and fine vertical grain, sturdy horizontal sill-log foundation course at bottom, seamless repeating, high fantasy, saturated warm timber colors, crisp plank seam shadows and soft highlights, alpha transparent background",
+          "palette": "reddish-warm pine planks, dark knot accents, amber battens",
+          "rationale": "Sawn pine board-and-batten is the lighter sibling to log work, common where mills exist in pine country."
+        },
+        {
+          "slug": "pitch_sealed_timber",
+          "name": "Pitch-Sealed Timber",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, tarred timber planking coated in glossy black-brown pine pitch like a Nordic stave church, carved blackened molding cap at top, middle field of overlapping pitch-darkened boards with tar drip sheen and faint vertical grain catching light, thick tarred plinth foundation course at bottom, seamless repeating, high fantasy, deeply saturated near-black browns with warm specular highlights, dramatic glossy shading, alpha transparent background",
+          "palette": "glossy black-brown pitch, warm tar sheen, charcoal base",
+          "rationale": "Pitch-sealed (tarred) timber waterproofs wood against snowmelt — classic boreal pine-pitch preservation."
+        },
+        {
+          "slug": "log_and_daub",
+          "name": "Log Frame & Daub",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, half-timbered pine post-and-beam frame with infill panels of pale ochre clay daub, carved timber molding cap at top, middle field showing exposed amber log studs and braces framing rough cream-ochre daub panels with hand-troweled texture, low fieldstone foundation course at bottom, seamless repeating, high fantasy, saturated contrast of warm wood and pale clay, detailed plaster stippling and timber shadows, alpha transparent background",
+          "palette": "amber pine frame, pale ochre daub infill, grey stone base",
+          "rationale": "Timber frame with clay daub infill stretches scarce milled wood while sealing gaps in a cold forest economy."
+        }
+      ],
+      "roofs": [
+        {
+          "slug": "sod_turf",
+          "name": "Sod Turf Roof",
+          "prompt": "seamless top-down pixel-art roof texture viewed directly from above, living sod and turf roof in tight overlapping grass-mat courses laid in clear horizontal rows, dense saturated green grass blades with tufts and tiny wildflowers, dark peaty earth showing at the row seams and a visible timber eave board edge defining it as a roof not ground, high fantasy, richly saturated greens, tileable, no surrounding ground, no path",
+          "palette": "saturated grass green, dark peat seams, brown eave timber",
+          "rationale": "Sod-turf roofs are the iconic boreal insulating roof, distinct from needle-duff ground by their clear laid-course rows and eave edge."
+        },
+        {
+          "slug": "cedar_shake",
+          "name": "Cedar Shake",
+          "prompt": "seamless top-down pixel-art roof texture viewed directly from above, hand-split cedar shake shingles in clear overlapping staggered courses, warm reddish-brown split-wood shakes with rough grain and varied tones, crisp horizontal course lines and offset vertical seams casting tidy shadows, high fantasy, saturated warm cedar tones, tileable, no ground, no grass",
+          "palette": "warm reddish-brown cedar, amber highlights, deep seam shadows",
+          "rationale": "Split cedar/conifer shakes are the natural wood-roof of pine country and read instantly as a shingled roof."
+        },
+        {
+          "slug": "pine_plank_roof",
+          "name": "Pitched Plank Roof",
+          "prompt": "seamless top-down pixel-art roof texture viewed directly from above, long vertical pine roof planks running ridge-to-eave with raised batten cover strips over the seams, warm golden-pine boards with visible grain and knots, regular bright batten ridges casting parallel shadows, a ridge cap line across the top, high fantasy, saturated amber wood colors, tileable, no ground, no grass",
+          "palette": "golden pine planks, bright batten ridges, knot accents",
+          "rationale": "Board-and-batten plank roofing pairs with the plank and log walls and is unmistakably a roof via its ridge-to-eave runs."
+        },
+        {
+          "slug": "tarred_shingle",
+          "name": "Tarred Shingle",
+          "prompt": "seamless top-down pixel-art roof texture viewed directly from above, pine shingles coated in black-brown pine tar in clear overlapping courses, glossy near-black scalloped shingle rows with warm specular sheen and subtle tar drips, sharp staggered course shadows, high fantasy, deeply saturated dark browns with bright tar highlights, tileable, no ground, no grass",
+          "palette": "glossy black-brown tar, warm sheen highlights, charcoal shadow",
+          "rationale": "Tarred shingles waterproof the roof the same way pitch seals the walls, a cohesive boreal tar tradition."
+        }
+      ]
+    },
+    "savanna": {
+      "displayName": "Savanna",
+      "walls": [
+        {
+          "slug": "ochre_adobe",
+          "name": "Ochre Adobe",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, sun-dried ochre adobe plaster, smooth hand-troweled mud-clay surface with subtle finger-swept undulations and warm golden-orange tones, sun-cracked highlights, a rounded clay molding cap at the top, broad earthen ochre middle field with faint embedded straw flecks, heavy rammed-earth foundation course at the bottom in deeper terracotta, seamless repeating horizontally and stackable vertically, high fantasy, richly saturated colors, detailed warm sunlit shading, alpha-transparent background",
+          "palette": "warm ochre adobe, terracotta base, golden highlights",
+          "rationale": "Sun-dried ochre mud is the defining savanna vernacular for hot dry building skins."
+        },
+        {
+          "slug": "mud_brick_coursed",
+          "name": "Coursed Mud Brick",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, stacked sun-dried mud bricks in even staggered courses, each block a hand-formed tan-and-amber loaf with visible mortar of darker earth between, a flat baked-clay coping cap along the top, regular brick rows filling the middle field with subtle weathering and chipped corners, a wider darker plinth foundation course at the bottom, seamless repeating, high fantasy, richly saturated earthy colors, detailed shading, alpha-transparent background",
+          "palette": "tan and amber mudbrick, dark earth mortar",
+          "rationale": "Hand-formed sun-baked mud brick is the workhorse masonry of dry savanna settlements."
+        },
+        {
+          "slug": "thorn_wattle",
+          "name": "Thorn-Wood Wattle",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, woven thorn-wood wattle lattice of bent acacia branches packed with pale dried-mud daub showing through the gaps, a horizontal thornwood lintel beam capping the top, the middle field a basketwork of interlaced sun-bleached twigs over ochre daub, a row of thicker upright stakes forming the base course at the bottom, seamless repeating, high fantasy, saturated warm browns and bone-tan, detailed shading, alpha-transparent background",
+          "palette": "sun-bleached thornwood, pale mud daub",
+          "rationale": "Thorn-wood wattle-and-daub uses the savanna's spiny acacia scrub as building lattice."
+        },
+        {
+          "slug": "woven_grass_panel",
+          "name": "Woven Grass Panel",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, panels of tightly woven dry savanna grass and reed bundles lashed to a timber frame, a slim wooden top rail cap binding the panels, the middle field a vertical-running golden grass weave with visible cordage ties and gentle texture striations, a sturdy timber sill plate as the foundation course at the bottom, seamless repeating, high fantasy, richly saturated golden-straw colors, detailed soft shading, alpha-transparent background",
+          "palette": "golden woven grass, warm timber frame",
+          "rationale": "Woven dry-grass panels are a lightweight breathable wall typical of grassland huts."
+        }
+      ],
+      "roofs": [
+        {
+          "slug": "golden_thatch",
+          "name": "Golden Grass Thatch",
+          "prompt": "seamless top-down pixel-art roof texture, thick golden savanna-grass thatch laid in clear overlapping downward-fanning courses radiating from a ridge, distinct layered rows of bound dry-grass bundles with combed straw striations and warm amber-to-honey shading, deep shadow lines between courses to read clearly as a pitched thatched roof from above, high fantasy, richly saturated golden colors, seamless tileable, no ground, no grass field, no soil",
+          "palette": "honey-gold thatch, amber shadows",
+          "rationale": "Bundled dry-grass thatch is the iconic savanna roof and reads warmer/combed vs flat dry-grass ground."
+        },
+        {
+          "slug": "thorn_branch_lattice",
+          "name": "Thorn-Branch Lattice",
+          "prompt": "seamless top-down pixel-art roof texture, a flat roof of laid thorn-wood branches and acacia poles arranged in tight parallel rows lashed crosswise with cord, packed with thin mud infill between the sticks, clear directional timber courses and knotted bindings, sun-bleached brown poles over dark earth, reads unmistakably as a stick-and-mud roof from above, high fantasy, saturated warm browns, seamless tileable, no ground, no sand, no grass",
+          "palette": "bleached thornwood poles, dark mud infill",
+          "rationale": "Flat pole-and-mud roofs suit the dry savanna and pair with thorn-wattle/adobe walls."
+        },
+        {
+          "slug": "baked_clay_tile",
+          "name": "Baked Clay Tiles",
+          "prompt": "seamless top-down pixel-art roof texture, rows of half-round baked terracotta clay tiles in staggered interlocking courses, warm burnt-orange barrel tiles with rounded ridges and dark valley shadows between each curved row, sun-glazed highlights along the crests, clearly a tiled roof viewed from above, high fantasy, richly saturated terracotta colors, seamless tileable, no ground, no grass, no sand",
+          "palette": "burnt-orange terracotta tile, dark valleys",
+          "rationale": "Fired clay barrel tiles are a higher-status dry-climate roof that pairs with adobe and mudbrick."
+        },
+        {
+          "slug": "palm_frond_thatch",
+          "name": "Palm Frond Thatch",
+          "prompt": "seamless top-down pixel-art roof texture, overlapping fan-palm and dry frond leaves layered in broad downward-shingled rows, each split frond showing radiating leaflet veins in olive-green fading to dry tan, clear stepped courses with shadowed undersides, reads clearly as a leafy thatched roof from above, high fantasy, saturated warm green-and-straw colors, seamless tileable, no ground, no grass field, no soil",
+          "palette": "olive-to-tan palm fronds",
+          "rationale": "Layered palm/frond thatch is a distinct leafier savanna roof, visually separable from grass thatch."
+        }
+      ]
+    },
+    "steppe": {
+      "displayName": "Steppe",
+      "walls": [
+        {
+          "slug": "rammed_earth",
+          "name": "Rammed Earth",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, thick rammed-earth wall showing distinct horizontal compacted lifts separated by faint formwork lines, smooth dense surface with subtle tonal banding from layered soils in tan, ochre and dusty rose, a flat mud-capped molding with a small timber drip ledge at the top, a protective fired-brick foundation course at the bottom, seamless repeating horizontally and stackable vertically, high fantasy, richly saturated, warm earthen tones, detailed soft shading, alpha transparent background",
+          "palette": "layered tan-ochre-rose earth, brick base",
+          "rationale": "Rammed earth is the heavy, thermally-massive wall of windswept steppe settlements where stone and timber are scarce."
+        },
+        {
+          "slug": "felt_frame",
+          "name": "Felt over Frame",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, nomad felt-over-frame wall, panels of thick cream and rust-dyed wool felt lashed over a lattice of bent willow withies, the diagonal lattice grid faintly bulging beneath the taut felt, woven cord ties and a decorative tablet-woven band as the top molding, a course of stacked saddle-bags and a timber sill at the bottom as the base, seamless repeating horizontally and stackable vertically, high fantasy, richly saturated, warm cream and rust tones, detailed soft fabric shading, alpha transparent background",
+          "palette": "cream and rust wool felt, willow lattice",
+          "rationale": "Felt-over-lattice is the literal yurt wall, the defining nomad-influenced steppe construction."
+        },
+        {
+          "slug": "sod_brick",
+          "name": "Sod Brick",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, sod-block wall built of stacked cut prairie-turf bricks laid grass-side down in staggered courses, visible dark root-bound earth faces with dried golden grass fringes between blocks, a turf-and-timber capping molding at the top with a few sprigs of living grass, a flat stone footing foundation course at the bottom, seamless repeating horizontally and stackable vertically, high fantasy, richly saturated, earthy brown-green and straw tones, detailed shading, alpha transparent background",
+          "palette": "root-dark earth, dried straw fringe",
+          "rationale": "Sod-brick (soddy) building is the treeless-plains classic, cut straight from the steppe turf itself."
+        },
+        {
+          "slug": "dry_brick",
+          "name": "Dry Brick",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, sun-dried mud-brick (adobe) wall, regular courses of hand-molded straw-flecked clay bricks with thick uneven earthen mortar joints, warm dusty tan and ochre with sun-bleached highlights and rounded eroded edges, a flat mud-plaster coping molding with timber roof-beam ends poking through at the top, a wider stone-and-brick plinth foundation course at the bottom, seamless repeating horizontally and stackable vertically, high fantasy, richly saturated, warm arid tones, detailed shading, alpha transparent background",
+          "palette": "dusty tan-ochre adobe, straw flecks",
+          "rationale": "Unfired sun-dried brick is the durable sedentary steppe wall, distinct from monolithic rammed earth by its visible coursed bricks."
+        }
+      ],
+      "roofs": [
+        {
+          "slug": "felt",
+          "name": "Felt",
+          "prompt": "seamless top-down pixel-art roof texture, nomad wool-felt roof viewed from directly above, thick overlapping cream and rust felt panels lashed down with radiating woven cords, a central smoke-ring crown band and concentric tension ropes giving clear circular structure, soft padded surface with quilted shadow folds, clearly reads as a felt tent roof not ground, high fantasy, richly saturated, cream and rust tones, seamless tileable, no ground, no grass",
+          "palette": "cream-rust felt, woven cord",
+          "rationale": "The felt roof completes the yurt and pairs with felt-over-frame and sod walls for the nomad camp look."
+        },
+        {
+          "slug": "sod_roof",
+          "name": "Sod Roof",
+          "prompt": "seamless top-down pixel-art roof texture, packed earth-and-sod roof viewed from directly above, layered cut turf strips over a poled base with visible exposed timber poles at the eaves and earthy soil seams between strips, scattered dried steppe grass and a weighted ridge of stones along the peak so it reads as a built roof not open plain, dusty olive-green and brown tones, high fantasy, richly saturated, seamless tileable, no ground, no short grass",
+          "palette": "dusty olive turf, brown earth seams",
+          "rationale": "Heavy sod roofs insulate dry-brick and rammed-earth houses against extreme steppe temperatures; pole eaves and a stone ridge separate it from short_grass terrain."
+        },
+        {
+          "slug": "reed_thatch",
+          "name": "Reed Thatch",
+          "prompt": "seamless top-down pixel-art roof texture, coarse steppe-reed thatch viewed from directly above, tightly bundled dry tan and grey reed laid in overlapping horizontal courses with a windswept raked nap and a heavy roped ridge weighted with crossing poles against the wind, pale straw-tan with grey weathering, clearly reads as a thatched roof, high fantasy, richly saturated, seamless tileable, no ground, no grass",
+          "palette": "pale tan-grey windswept reed",
+          "rationale": "River-margin reed thatch, roped down against constant wind, roofs the more permanent dry-brick steppe dwellings."
+        },
+        {
+          "slug": "earth_mud",
+          "name": "Packed Mud",
+          "prompt": "seamless top-down pixel-art roof texture, flat packed-mud roof viewed from directly above, smooth rolled clay-and-straw surface over close-set timber beams showing faint parallel beam ridges beneath, fine drying cracks and a low mud parapet edge, warm dusty tan and ochre baked tones with a small clay roller resting on the surface, clearly reads as a flat earthen roof, high fantasy, richly saturated, seamless tileable, no ground, no short grass",
+          "palette": "baked tan-ochre packed clay",
+          "rationale": "Flat rolled-mud roofs are standard over adobe and rammed-earth walls in arid wind-scoured steppe where pitched roofs catch the wind."
+        }
+      ]
+    },
+    "desert": {
+      "displayName": "Desert",
+      "walls": [
+        {
+          "slug": "sandstone_block",
+          "name": "Sandstone Block",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, large cut sandstone ashlar blocks in tight staggered courses, warm honey-and-rose desert sandstone with fine horizontal sediment banding and wind-smoothed faces, a chamfered sandstone molding cap along the top, the middle field of precise stacked blocks with thin shadowed joints, a massive battered foundation course of darker rough-cut stone at the bottom, seamless repeating, high fantasy, richly saturated golden-rose colors, detailed sunbaked shading, alpha-transparent background",
+          "palette": "honey-rose sandstone, shadowed joints",
+          "rationale": "Quarried sandstone ashlar is the monumental desert masonry for temples and grand houses."
+        },
+        {
+          "slug": "smooth_adobe",
+          "name": "Smooth Adobe Render",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, smooth thick adobe render in pale sand-beige, softly rounded organic surface with gentle hand-sculpted bulges and protruding wooden viga beam stubs near the top, a rounded earthen parapet cap at the top, broad creamy stucco middle field with subtle sun-cracking, a slightly darker splashed mud base course at the bottom, seamless repeating, high fantasy, richly saturated warm sand tones, detailed soft desert shading, alpha-transparent background",
+          "palette": "pale sand-beige stucco, warm shadows",
+          "rationale": "Sculpted adobe render with viga beams is the classic flat-roofed desert pueblo wall."
+        },
+        {
+          "slug": "mudbrick_plaster",
+          "name": "Mudbrick & Plaster",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, sun-dried mudbrick wall with half its surface raw staggered tan bricks and half covered in flaking pale lime plaster revealing the brick beneath, a flat mud coping cap at the top, weathered mixed brick-and-plaster middle field with worn edges, a thick eroded mud foundation course at the bottom, seamless repeating, high fantasy, richly saturated dusty colors, detailed weathered shading, alpha-transparent background",
+          "palette": "tan mudbrick, flaking pale plaster",
+          "rationale": "Plaster-skinned mudbrick is the everyday desert town wall, weathered to show the brick core."
+        },
+        {
+          "slug": "carved_rock",
+          "name": "Carved Rock Face",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, a facade carved directly into living desert rock, dense rose-and-amber stone with chisel-tooled surface texture, a sculpted stepped cornice molding cap at the top, the middle field showing tooled flat-dressed rock with faint relief carving lines, an integral rough rock plinth as the foundation at the bottom, seamless repeating, high fantasy, richly saturated rose-stone colors, detailed crisp chisel shading, alpha-transparent background",
+          "palette": "rose-amber carved stone, chisel texture",
+          "rationale": "Rock-cut facades reflect desert cliff-carved architecture (Petra-like), distinct from laid masonry."
+        }
+      ],
+      "roofs": [
+        {
+          "slug": "flat_mud_roof",
+          "name": "Flat Mud Roof",
+          "prompt": "seamless top-down pixel-art roof texture, a flat packed-mud-and-clay desert rooftop with smooth troweled surface, a low parapet edge band, scattered drying sun-cracks and a few wooden roller logs and protruding beam ends, warm pale-tan clay with subtle shadowing, reads clearly as a flat earthen rooftop terrace from above and distinct from open sand, high fantasy, saturated warm tan colors, seamless tileable, no dunes, no sand field, no grass",
+          "palette": "pale-tan packed mud, parapet edge",
+          "rationale": "Flat packed-mud roofs are the dominant hot-arid roof; parapet/beams separate it from bare sand."
+        },
+        {
+          "slug": "clay_dome",
+          "name": "Clay Domes",
+          "prompt": "seamless top-down pixel-art roof texture, a cluster of small adobe-clay domes seen from directly above, each dome a concentric ringed bulge of smooth sand-colored plaster with a bright sunlit crown and curved shadow on one side, tight repeating grid of rounded domes, reads unmistakably as a domed desert roof from above, high fantasy, richly saturated warm beige colors, seamless tileable, no ground, no sand, no grass",
+          "palette": "sand-beige domes, sunlit crowns",
+          "rationale": "Mud domes are the signature hot-desert vault roof, instantly distinct from flat ground."
+        },
+        {
+          "slug": "sandstone_slab",
+          "name": "Sandstone Slabs",
+          "prompt": "seamless top-down pixel-art roof texture, large flat sandstone roof slabs laid in a grid with deep mortared joints, each slab honey-rose with fine sediment banding and wind-polished sheen, crisp shadow lines between slabs, reads clearly as a heavy stone slab roof from above, high fantasy, richly saturated golden-rose colors, seamless tileable, no ground, no sand, no grass",
+          "palette": "honey-rose stone slabs, deep joints",
+          "rationale": "Stone slab roofing pairs with sandstone-block and rock-cut walls for monumental desert builds."
+        },
+        {
+          "slug": "reed_mat_roof",
+          "name": "Reed Mat & Mud Roof",
+          "prompt": "seamless top-down pixel-art roof texture, a flat roof of tightly laid reed and palm-rib mats overlaid in parallel directional courses then partly sealed with thin pale mud, visible reed striations and cord lashings showing through the clay, warm straw-and-tan tones with shadowed grooves, reads clearly as a reed-and-mud roof from above, high fantasy, saturated warm tan colors, seamless tileable, no ground, no sand, no grass",
+          "palette": "straw reed mat, pale mud seal",
+          "rationale": "Reed-mat-over-mud roofs are the humble desert dwelling roof, pairing with mudbrick/adobe walls."
+        }
+      ]
+    },
+    "swamp": {
+      "displayName": "Swamp",
+      "walls": [
+        {
+          "slug": "weathered_plank",
+          "name": "Weathered Plank",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, vertical weathered swamp-timber planks with damp grey-brown grain, peeling moss-green patches and dark waterline staining along the lower boards, a slim wooden drip-cap rail at the top, the middle field of warped uneven planks with gaps and rusted nail heads, a thicker tarred bottom board as the foundation course raised on the base, seamless repeating, high fantasy, richly saturated mossy-grey-brown colors, detailed damp shading, alpha-transparent background",
+          "palette": "grey-brown weathered timber, moss patches",
+          "rationale": "Warped damp planks are the staple of swamp stilt shacks built from salvaged wet wood."
+        },
+        {
+          "slug": "mangrove_log",
+          "name": "Mangrove Log",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, stacked horizontal mangrove logs with knotty reddish-brown bark, chinked between with dark grey mud daub, clinging strands of moss and small fungal shelves, a knobbly log lintel cap at the top, the middle field of irregular debarked-and-barked logs, a half-sunken thicker root-log base course at the bottom, seamless repeating, high fantasy, richly saturated reddish-brown and bog-green colors, detailed wet shading, alpha-transparent background",
+          "palette": "reddish mangrove wood, grey mud chinking",
+          "rationale": "Mangrove logs are the swamp's most abundant sturdy timber for wall construction."
+        },
+        {
+          "slug": "mud_reed_daub",
+          "name": "Mud & Reed Daub",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, a wattle of swamp reeds packed with dark grey-brown bog mud daub, bristly reed ends and stalks poking through the smeared clay, damp glistening highlights and green algae bloom in patches, a bundled reed top cap, the middle field of muddy daub over visible reed lattice, a slumped wetter mud base course at the bottom, seamless repeating, high fantasy, richly saturated muddy-olive colors, detailed wet shading, alpha-transparent background",
+          "palette": "bog-brown mud daub, olive reeds",
+          "rationale": "Mud-and-reed daub matches the project's stated swamp vernacular and uses marsh reeds directly."
+        },
+        {
+          "slug": "mossy_stilt_frame",
+          "name": "Mossy Stilt Frame",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, an open swamp-house wall of a heavy dark timber post-and-beam frame infilled with woven cane and bark sheets, every surface furred with thick green moss and trailing lichen, a mossy crossbeam cap at the top, the middle field of bark-sheet infill between damp posts, a tarred timber sill base course at the bottom dripping with weed, seamless repeating, high fantasy, richly saturated deep-green and bark-brown colors, detailed damp shading, alpha-transparent background",
+          "palette": "dark timber, deep green moss, bark infill",
+          "rationale": "Moss-clad post-and-beam stilt framing reads as long-standing waterlogged swamp architecture."
+        }
+      ],
+      "roofs": [
+        {
+          "slug": "mossy_shingle",
+          "name": "Mossy Wood Shingle",
+          "prompt": "seamless top-down pixel-art roof texture, rows of overlapping split-wood shingles heavily overgrown with green moss, staggered courses of warped grey shingles with vivid moss creeping along the seams and dark damp valleys, clear stepped rows reading as a pitched shingle roof from above, glistening wet highlights, high fantasy, richly saturated mossy-green-and-grey colors, seamless tileable, no ground, no mud, no grass field",
+          "palette": "grey shingles, vivid green moss",
+          "rationale": "Moss-eaten wood shingles are the quintessential damp-swamp roof and clearly differ from wet mud."
+        },
+        {
+          "slug": "reed_thatch_wet",
+          "name": "Wet Reed Thatch",
+          "prompt": "seamless top-down pixel-art roof texture, dense swamp-reed thatch in downward-shingled courses, dark olive and grey-brown waterlogged reed bundles with sodden glistening tips and shadowed under-layers, clear horizontal rows reading as a thatched roof from above, patches of green algae bloom, high fantasy, richly saturated dark-olive colors, seamless tileable, no ground, no mud, no grass field",
+          "palette": "dark-olive reed thatch, algae patches",
+          "rationale": "Bundled marsh-reed thatch is the obvious roof for reed-daub and plank stilt shacks."
+        },
+        {
+          "slug": "bark_sheet_roof",
+          "name": "Bark Sheet Roof",
+          "prompt": "seamless top-down pixel-art roof texture, large overlapping sheets of peeled tree bark laid in directional courses and weighted with mossy poles, reddish-brown curling bark slabs with green moss between, deep shadowed laps reading clearly as a bark-shingle roof from above, damp sheen, high fantasy, richly saturated bark-brown and moss-green colors, seamless tileable, no ground, no mud, no grass",
+          "palette": "reddish bark sheets, weighting poles",
+          "rationale": "Overlapped bark sheets weighted with poles is a distinct rustic swamp roof for mangrove-log walls."
+        },
+        {
+          "slug": "tarred_plank_roof",
+          "name": "Tarred Plank Roof",
+          "prompt": "seamless top-down pixel-art roof texture, a low roof of dark tarred salvage planks laid in parallel rows with battens over the seams, glossy black-brown pitch coating with peeling patches showing grey wood, scattered moss in the cracks and pooled-water sheen, clear directional plank courses reading as a sealed plank roof from above, high fantasy, saturated dark-brown colors, seamless tileable, no ground, no mud, no grass",
+          "palette": "tarred dark planks, battens, moss cracks",
+          "rationale": "Pitch-sealed plank roofs shed swamp rain and pair with weathered-plank stilt-shack walls."
+        }
+      ]
+    },
+    "tundra": {
+      "displayName": "Tundra",
+      "walls": [
+        {
+          "slug": "turf_block",
+          "name": "Stacked Turf Block",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, thick stacked turf blocks laid in a herringbone klömbruhnús pattern, flat sod cap with short tundra grass molding at top, middle field of densely packed earthy turf bricks showing green grass faces, dark peaty soil and tufted edges between each block, broad earthen foundation course at bottom, seamless repeating, high fantasy, saturated mossy greens and rich brown peat, detailed clumpy turf shading, alpha transparent background",
+          "palette": "mossy green turf faces, dark brown peat, earthen base",
+          "rationale": "The Icelandic-style turf house is the canonical treeless-tundra dwelling, built from cut sod blocks."
+        },
+        {
+          "slug": "whalebone_hide",
+          "name": "Whalebone & Hide",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, frame of curved pale whalebone ribs and jaw arches lashed with sinew, stretched taut over them tanned caribou hide panels, bleached bone molding ridge cap at top, middle field of cream-and-tan stitched hide stretched between ivory bone struts with visible lacing seams, low boulder-and-bone foundation course at bottom, seamless repeating, high fantasy, saturated bone-ivory and warm hide tans, detailed taut-skin and bone shading, alpha transparent background",
+          "palette": "ivory whalebone, warm tan hide, grey boulder base",
+          "rationale": "Where no timber grows, whalebone frames clad in hide are an authentic far-north coastal-tundra build."
+        },
+        {
+          "slug": "stacked_stone",
+          "name": "Drystone Tundra Wall",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, drystone wall of flat stacked tundra fieldstones fitted without mortar, a heavy capstone molding course at top, middle field of irregular grey-and-rust lichen-spotted flat stones in tight horizontal courses with deep dark joints, extra-broad batter foundation course at bottom, seamless repeating, high fantasy, saturated cool greys with rust-orange lichen accents, crisp stacked-stone shadows, alpha transparent background",
+          "palette": "cool grey fieldstone, rust lichen, dark joints",
+          "rationale": "Stacked drystone uses the only abundant tundra material — frost-shattered rock — fitted without mortar that would freeze."
+        },
+        {
+          "slug": "peat_block",
+          "name": "Cut Peat Block",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, wall of cut peat blocks stacked in even courses, mounded sod-grass molding cap at top, middle field of dark chocolate-brown fibrous peat bricks with visible root strands, horizontal cut marks and a damp matte sheen, wide compacted peat foundation course at bottom, seamless repeating, high fantasy, saturated deep peat browns with reddish undertones, detailed fibrous block shading, alpha transparent background",
+          "palette": "deep chocolate peat, reddish fiber, grass-tuft cap",
+          "rationale": "Dried peat blocks are a treeless wetland-tundra building staple, both fuel and wall in one."
+        }
+      ],
+      "roofs": [
+        {
+          "slug": "turf_roof",
+          "name": "Grass Turf Roof",
+          "prompt": "seamless top-down pixel-art roof texture viewed directly from above, thick turf roof of overlapping sod strips in clear horizontal courses, short hardy tundra grass in saturated green with mossy patches and tiny arctic flowers, dark peat showing at the laid-strip seams and a timber eave edge framing it, high fantasy, saturated cool greens, tileable, no ground, no grass field",
+          "palette": "cool saturated green grass, dark peat seams, timber eave",
+          "rationale": "Turf tops the turf house; its laid-strip rows and eave distinguish it from open frozen-earth ground."
+        },
+        {
+          "slug": "hide_lashed",
+          "name": "Stretched Hide Roof",
+          "prompt": "seamless top-down pixel-art roof texture viewed directly from above, stretched tanned caribou hides lashed over a bone-and-driftwood frame, warm cream-and-tan skin panels stitched in clear rows with sinew lacing seams and visible rib struts beneath creating regular ridges, taut leathery sheen, high fantasy, saturated warm tans and ivory, tileable, no ground, no snow",
+          "palette": "warm tan hide, ivory struts, brown lacing",
+          "rationale": "Stretched hide roofing pairs with the whalebone-and-hide wall and reads as a taut paneled roof, not earth."
+        },
+        {
+          "slug": "stone_slab",
+          "name": "Stone Slab Roof",
+          "prompt": "seamless top-down pixel-art roof texture viewed directly from above, flat tundra stone slabs laid as overlapping roofing flags in clear staggered courses, grey-and-rust lichen-flecked stone tiles with deep shadowed joints and a heavier ridge slab line, high fantasy, saturated cool greys with rust-orange lichen, tileable, no ground, no gravel",
+          "palette": "cool grey slab, rust lichen, dark joint shadow",
+          "rationale": "Stone-slab roofing matches the drystone walls and its tidy flag courses clearly mark it as a built roof."
+        },
+        {
+          "slug": "peat_thatch",
+          "name": "Peat & Reed Thatch",
+          "prompt": "seamless top-down pixel-art roof texture viewed directly from above, layered roof of cut peat overlaid with bound reed thatch in clear combed courses, dark peaty base showing between thick golden-brown reed bundles laid in tidy overlapping rows with a bound ridge line, high fantasy, saturated warm straw-gold over deep peat brown, tileable, no ground, no field",
+          "palette": "golden reed thatch, deep peat brown, bound ridge",
+          "rationale": "Reed thatch over peat is a wetland-tundra roof; combed reed courses are unmistakably roofing."
+        }
+      ]
+    },
+    "arctic": {
+      "displayName": "Arctic",
+      "walls": [
+        {
+          "slug": "ice_block",
+          "name": "Quarried Ice Block",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, wall of quarried translucent ice blocks stacked in even courses like cut crystal masonry, a clean ice-bevel molding cap at top, middle field of glassy blue-white ice bricks with internal fracture glints, frosted edges and faint inner glow, frosted compacted-snow foundation course at bottom, seamless repeating, high fantasy, saturated cyan-and-white ice tones with bright specular sparkles, detailed translucent shading, alpha transparent background",
+          "palette": "translucent cyan-white ice, frosted edges, snow base",
+          "rationale": "Cut ice blocks are the literal arctic building stone where the ground itself is the quarry."
+        },
+        {
+          "slug": "packed_snow",
+          "name": "Packed Snow Block",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, igloo-style wall of carved packed-snow blocks in tight spiraling courses, smooth rounded snow molding cap at top, middle field of matte chalk-white compressed snow bricks with soft pale-blue shadow seams and subtle wind-grain texture, broad packed-snow foundation course at bottom, seamless repeating, high fantasy, saturated cool whites with periwinkle-blue shadows, soft sculpted shading, alpha transparent background",
+          "palette": "chalk white snow, periwinkle-blue shadow seams",
+          "rationale": "Packed-snow block (igloo) construction is the definitive arctic shelter built from compressed snow."
+        },
+        {
+          "slug": "driftwood_hide",
+          "name": "Driftwood & Hide",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, frame of silvery weathered driftwood poles lashed with rawhide, clad in stretched seal-hide panels, bleached driftwood molding ridge cap at top, middle field of taut grey-tan oiled hide stretched between pale silver-grey driftwood struts with visible sinew lacing and salt-bleached grain, low ice-and-stone foundation course at bottom, seamless repeating, high fantasy, saturated silvery greys and warm hide tans, detailed weathered-wood and taut-skin shading, alpha transparent background",
+          "palette": "silver driftwood, oiled grey-tan hide, ice-stone base",
+          "rationale": "Scarce driftwood framing clad in seal hide is how treeless arctic coasts build above the ice."
+        },
+        {
+          "slug": "frozen_timber",
+          "name": "Rimed Frozen Timber",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, horizontal frozen log timbers sheathed in white hoarfrost and rime ice, ice-crusted timber molding cap at top, middle field of dark frost-rimed logs with glittering frost crystals along the grain, icicles hanging from the seams and frozen chinking, snow-banked stone foundation course at bottom, seamless repeating, high fantasy, saturated cold blue-greys with sparkling white frost, detailed rime-crystal and icicle shading, alpha transparent background",
+          "palette": "frost-rimed dark timber, sparkling white rime, icy blue shadow",
+          "rationale": "Imported timber permanently sheathed in rime and frost is the look of any built wood structure in the deep arctic."
+        }
+      ],
+      "roofs": [
+        {
+          "slug": "ice_dome",
+          "name": "Ice Block Roof",
+          "prompt": "seamless top-down pixel-art roof texture viewed directly from above, roof of fitted translucent ice blocks in clear spiraling courses converging to a keystone, glassy blue-white ice tiles with internal glints, frosted joint lines and bright specular sparkles, a clear domed-roof course structure, high fantasy, saturated cyan-and-white with sparkling highlights, tileable, no ground, no flat ice field",
+          "palette": "translucent cyan-white ice, frosted joints, bright sparkle",
+          "rationale": "An ice-block roof's spiraling keystoned courses read as a built dome, clearly distinct from flat glacial-ice ground."
+        },
+        {
+          "slug": "snow_block_roof",
+          "name": "Snow Block Roof",
+          "prompt": "seamless top-down pixel-art roof texture viewed directly from above, igloo snow-block roof in tight spiraling courses converging to a capped crown, matte chalk-white packed-snow blocks with soft pale-blue seam shadows and gentle wind-grain, clear rounded course rings, high fantasy, saturated cool whites with periwinkle shadows, tileable, no ground, no snowfield",
+          "palette": "chalk white snow blocks, periwinkle seams, capped crown",
+          "rationale": "Spiraling snow-block courses with a crown unmistakably read as an igloo roof, not loose snow ground."
+        },
+        {
+          "slug": "hide_driftwood_roof",
+          "name": "Hide over Driftwood",
+          "prompt": "seamless top-down pixel-art roof texture viewed directly from above, stretched oiled seal hides lashed over a driftwood rafter frame, warm grey-tan skin panels stitched in clear rows with sinew lacing, silver driftwood ridge poles raising regular parallel ridges, taut weatherbeaten sheen, high fantasy, saturated warm tans against cool silver wood, tileable, no ground, no ice",
+          "palette": "grey-tan oiled hide, silver driftwood ridges, sinew lacing",
+          "rationale": "Hide stretched over driftwood rafters pairs with the driftwood-and-hide wall and shows clear rafter-ridge roofing."
+        },
+        {
+          "slug": "frosted_shingle",
+          "name": "Frosted Timber Shingle",
+          "prompt": "seamless top-down pixel-art roof texture viewed directly from above, wooden shingles encased in hoarfrost and snow in clear overlapping courses, dark frozen shingle rows dusted with sparkling white rime and small icicles along each course edge, crisp staggered frosted seams, high fantasy, saturated cold blue-greys with glittering white frost highlights, tileable, no ground, no snowdrift",
+          "palette": "frost-dark shingles, sparkling rime, icy blue shadow, icicle edge",
+          "rationale": "Frosted timber shingles cap the frozen-timber walls and their icicled overlapping courses read clearly as a shingled roof over glacial ice."
+        }
+      ]
+    },
+    "hills": {
+      "displayName": "Hills",
+      "walls": [
+        {
+          "slug": "drystone",
+          "name": "Drystone",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, mortarless drystone wall built of flat quarried hillstone laid in tight horizontal courses with deep dark gaps between stones and small chinking stones wedged in, cool grey and blue-grey slate-stone with rust-tan lichen patches, a row of flat capstones forming the top molding, a heavy oversized footing course of large blocks at the bottom, seamless repeating horizontally and stackable vertically, high fantasy, richly saturated, detailed shading with deep shadowed joints, alpha transparent background",
+          "palette": "cool grey-blue hillstone, rust lichen",
+          "rationale": "Drystone walling is the signature craft of stony pastoral hills, built straight from quarried local rock without mortar."
+        },
+        {
+          "slug": "limewashed_cottage",
+          "name": "Lime-washed Cottage",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, lime-washed rubble-stone cottage wall, thick whitewashed lime-render surface with a chalky uneven texture and faint stone bulges showing through, weathered streaks near the base, a slim slate string-course molding capping the top, exposed grey stone quoins and a stone plinth foundation course at the bottom, seamless repeating horizontally and stackable vertically, high fantasy, richly saturated, bright clean whites with cool shadow tones, detailed shading, alpha transparent background",
+          "palette": "bright lime-white render, grey slate trim",
+          "rationale": "Lime-washed cottages are the bright pastoral counterpoint to bare stone, classic upland whitewashed dwellings."
+        },
+        {
+          "slug": "hillstone_block",
+          "name": "Hillstone Block",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, mortared ashlar wall of squared quarried hillstone blocks in regular coursed rows with thin pale mortar joints, dressed faces showing chisel tooling marks, cool grey and warm-buff banded stone, a projecting dressed-stone cornice molding at the top, a chamfered plinth foundation course at the bottom, seamless repeating horizontally and stackable vertically, high fantasy, richly saturated, detailed crisp shading, alpha transparent background",
+          "palette": "banded grey-buff dressed stone",
+          "rationale": "Quarried squared blocks represent the higher-status hill build, distinct from rough drystone via its dressed coursed ashlar."
+        },
+        {
+          "slug": "slate_hung",
+          "name": "Slate-hung",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, slate-hung wall where the upper field is clad in overlapping rows of small grey-blue slate hanging tiles like fish-scales over a timber backing, cool steel-blue with purple and green slate iridescence, a slate ridge molding capping the top, a solid exposed stone foundation course at the bottom where the slate cladding ends, seamless repeating horizontally and stackable vertically, high fantasy, richly saturated, detailed shading with subtle sheen, alpha transparent background",
+          "palette": "iridescent steel-blue slate, grey stone base",
+          "rationale": "Slate-hanging weatherproofs exposed hill walls and reuses the same quarried slate as the roofs, a strong local-geology tie."
+        }
+      ],
+      "roofs": [
+        {
+          "slug": "slate",
+          "name": "Slate",
+          "prompt": "seamless top-down pixel-art roof texture, grey-blue slate roof viewed from directly above, neat staggered rows of thin rectangular slate tiles with crisp edges and faint purple-green iridescence, regular tight courses and a row of capping ridge slates along the peak, cool steel-blue tones with subtle per-tile variation, clearly reads as a slate roof, high fantasy, richly saturated, seamless tileable, no ground, no stony grass",
+          "palette": "cool steel-blue iridescent slate",
+          "rationale": "Riven slate is the definitive upland roof and pairs with every hill wall, especially the slate-hung cladding."
+        },
+        {
+          "slug": "stone_flag",
+          "name": "Stone Flag",
+          "prompt": "seamless top-down pixel-art roof texture, heavy stone-flag roof viewed from directly above, large irregular flat grey sandstone slabs laid in diminishing courses with thick dark gaps and lichen flecks, rugged uneven surface much chunkier than thin slate, capped by a row of stone ridge stones, warm-grey and buff tones, clearly reads as a stone roof, high fantasy, richly saturated, seamless tileable, no ground, no grass",
+          "palette": "warm-grey buff sandstone flags, lichen",
+          "rationale": "Thick stone-flag roofs are heavier and chunkier than slate, a rugged option for sturdy drystone and ashlar cottages."
+        },
+        {
+          "slug": "limewashed_slate",
+          "name": "Lime-washed Slate",
+          "prompt": "seamless top-down pixel-art roof texture, lime-washed slate roof viewed from directly above, staggered rows of slate tiles brushed over with chalky white lime so each tile reads pale grey-white with darker exposed edges and washed-out joints, clear horizontal courses and a white ridge line, bright and clean, clearly reads as a painted slate roof, high fantasy, richly saturated, seamless tileable, no ground, no stony grass",
+          "palette": "chalky white-washed slate",
+          "rationale": "Lime-washed slate matches the whitewashed cottage walls and brightens the hillside cluster with high-value white roofs."
+        },
+        {
+          "slug": "wood_shake",
+          "name": "Wood Shake",
+          "prompt": "seamless top-down pixel-art roof texture, weathered timber shake roof viewed from directly above, staggered rows of thick hand-split wooden shakes with rough silver-grey grain and dark moss in the shadowed laps, clear horizontal courses and a capped timber ridge, cool silver-brown wood tones, clearly reads as a wooden roof, high fantasy, richly saturated, seamless tileable, no ground, no grass",
+          "palette": "silver-grey mossy split wood",
+          "rationale": "Cheaper timber shakes serve poorer hill cottages and lower outbuildings where stone roofing is too costly."
+        }
+      ]
+    },
+    "mountains": {
+      "displayName": "Mountains",
+      "walls": [
+        {
+          "slug": "granite_ashlar",
+          "name": "Granite Ashlar",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, precisely cut grey granite ashlar blocks in tight regular courses, carved stone molding cap at top, speckled granite block field in the middle with fine quartz flecks and crisp mortar lines, heavy rusticated foundation course of larger boulders at bottom, seamless repeating horizontally and vertically, high fantasy, richly saturated cool greys with warm tan veining, detailed directional shading, alpha-transparent background",
+          "palette": "cool speckled grey granite, warm tan mortar",
+          "rationale": "Quarried granite is the bedrock of rocky mountains and the most prestigious mountain masonry."
+        },
+        {
+          "slug": "stacked_slate",
+          "name": "Dry-Stacked Slate",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, thin dry-stacked slate stones laid in dense horizontal laminations, flat slate coping cap at top, tightly packed flat blue-grey slate field in the middle showing many thin layered courses, broad flat slab foundation course at bottom, seamless repeating, high fantasy, saturated slate blues and steely greys, detailed shading with shadowed gaps between layers, alpha-transparent background",
+          "palette": "blue-grey laminated slate, steel shadows",
+          "rationale": "Mountain slate splits into flat plates ideal for mortarless dry-stack vernacular walls."
+        },
+        {
+          "slug": "timber_rubble",
+          "name": "Timber-Framed Rubble",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, dark oak timber frame with diagonal braces infilled by mortared grey rubble stone, carved timber lintel cap at top, panels of irregular rounded fieldstone set in pale lime mortar in the middle field, large squared stone foundation plinth at bottom, seamless repeating, high fantasy, saturated warm oak browns against cool grey stone, detailed shading, alpha-transparent background",
+          "palette": "dark oak timber, grey fieldstone, pale lime mortar",
+          "rationale": "Highland builders frame heavy timber and infill with the abundant loose mountain stone."
+        },
+        {
+          "slug": "dwarven_cut_stone",
+          "name": "Dwarven Cut-Stone",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, monumental dwarven cut-stone with deep chiseled geometric relief and inlaid bronze runic bands, ornate beveled stone cornice cap at top, massive interlocking grey ashlar megablocks with engraved angular patterns in the middle field, colossal stepped foundation course at bottom, seamless repeating, high fantasy, saturated cold greys with glowing warm bronze accents, dramatic detailed shading, alpha-transparent background",
+          "palette": "cold grey megastone, warm bronze runic inlay",
+          "rationale": "Dwarven cut-stone is the mountains' signature monumental tradition of carved precision masonry."
+        }
+      ],
+      "roofs": [
+        {
+          "slug": "slate_shingle",
+          "name": "Slate Shingle",
+          "prompt": "seamless top-down pixel-art roof texture viewed from directly above, overlapping slate shingle tiles in tidy staggered horizontal courses, clear straight rows of rectangular blue-grey slates with crisp ridge line, subtle weathering and lichen speckle, high fantasy, saturated slate blues and cool greys distinctly bluer than surrounding grey ground rock, tileable, reads clearly as a layered shingle roof, no ground, no grass",
+          "palette": "blue-grey slate shingles",
+          "rationale": "Classic mountain slate roof; its blue cast and ordered courses separate it from the grey ground rock."
+        },
+        {
+          "slug": "patina_copper",
+          "name": "Patina Copper",
+          "prompt": "seamless top-down pixel-art roof texture viewed from directly above, standing-seam copper sheet roofing in long vertical ribs aged to verdigris, clear raised seam lines running in even rows with bright copper highlights at ridges, high fantasy, vivid teal-green patina with warm orange copper glints, tileable, unmistakably a metal roof, distinct from grey ground rock, no ground, no grass",
+          "palette": "verdigris green copper, warm copper glints",
+          "rationale": "Prestige mountain halls cap stone walls with copper that weathers to vivid green, maximum contrast to grey terrain."
+        },
+        {
+          "slug": "cedar_shake",
+          "name": "Snow-Dusted Cedar Shake",
+          "prompt": "seamless top-down pixel-art roof texture viewed from directly above, hand-split cedar shake shingles in overlapping horizontal courses with a light dusting of snow caught in the grooves, clear rows of warm split-wood shakes with snow highlights along each course edge, high fantasy, saturated warm cedar browns with cool white snow, tileable, clearly a wooden shingle roof, distinct from grey ground rock, no ground, no grass",
+          "palette": "warm cedar brown, snow white highlights",
+          "rationale": "Timbered highland cabins use split cedar; the warm wood and snow read instantly as roof against cold grey ground."
+        },
+        {
+          "slug": "lead_seam",
+          "name": "Lead Seam",
+          "prompt": "seamless top-down pixel-art roof texture viewed from directly above, dull pewter lead sheet roofing folded into broad vertical rolled seams, clear evenly spaced raised seam ribs with soft satin sheen and faint hammer texture between them, high fantasy, saturated muted silver-grey with subtle bluish sheen and soft specular highlights, tileable, reads as a smooth metal sheet roof not rough stone, no ground, no grass",
+          "palette": "muted silver-grey lead, soft sheen",
+          "rationale": "Dwarven and grand mountain roofs use rolled lead sheet; its smooth seamed sheen distinguishes it from rubble stone."
+        }
+      ]
+    },
+    "volcanic": {
+      "displayName": "Volcanic",
+      "walls": [
+        {
+          "slug": "basalt_block",
+          "name": "Polished Basalt Block",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, polished black basalt blocks in tight courses with subtle hexagonal columnar jointing, smooth dark stone cornice cap at top, glossy near-black basalt block field in the middle with faint deep-blue reflective sheen and thin glowing-orange mortar seams, massive rough basalt foundation course at bottom, seamless repeating, high fantasy, saturated blacks with deep indigo highlights and ember-orange seam glow, dramatic detailed shading, alpha-transparent background",
+          "palette": "glossy black basalt, ember-orange seam glow",
+          "rationale": "Black basalt is the defining building stone of a volcanic land of cooled lava."
+        },
+        {
+          "slug": "obsidian_inlay",
+          "name": "Obsidian-Inlaid Stone",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, dark grey volcanic stone inset with mirror-sharp obsidian shard panels and thin gold dividing strips, carved dark cornice cap at top, middle field of matte grey stone framing glossy black obsidian inlays with sharp specular glints, heavy dark foundation course at bottom, seamless repeating, high fantasy, saturated charcoal greys with jet-black glassy obsidian and warm gold accents, detailed reflective shading, alpha-transparent background",
+          "palette": "charcoal stone, glassy black obsidian, gold strips",
+          "rationale": "Obsidian glass forms in lava and is set as prized decorative inlay in volcanic masonry."
+        },
+        {
+          "slug": "fire_glazed_brick",
+          "name": "Fire-Glazed Brick",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, kiln-fired bricks with a molten crimson-and-orange ceramic glaze, glossy glazed brick molding cap at top, running-bond field of deep red bricks streaked with fiery orange glaze drips and dark scorched mortar in the middle, scorched dark brick foundation course at bottom, seamless repeating, high fantasy, saturated crimson reds and molten oranges, glossy detailed shading, alpha-transparent background",
+          "palette": "crimson and molten-orange glazed brick",
+          "rationale": "Abundant geothermal heat lets volcanic kilns fire vividly glazed brick, a warm contrast to black stone."
+        },
+        {
+          "slug": "ashcrete",
+          "name": "Ashcrete",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, smooth pale grey ashcrete cast from volcanic ash and lime in broad poured panels, simple chamfered cap at top, middle field of light dove-grey ash render with faint trowel swirls, embedded dark basalt pebbles, and hairline form-board seams, sturdy pale foundation course at bottom, seamless repeating, high fantasy, saturated pale ash greys with warm undertone against dark pebble flecks, soft detailed shading, alpha-transparent background",
+          "palette": "pale dove-grey ash render, dark pebble flecks",
+          "rationale": "Volcanic ash makes excellent pozzolanic concrete; its pale tone is a deliberate light contrast to the black basalt ground."
+        }
+      ],
+      "roofs": [
+        {
+          "slug": "ember_clay_tile",
+          "name": "Ember Clay Tile",
+          "prompt": "seamless top-down pixel-art roof texture viewed from directly above, barrel clay roof tiles in clear curved overlapping rows glowing as if lit from within, fiery orange-red terracotta tiles with bright ember highlights along each ridge and dark cooled valleys, high fantasy, saturated molten orange and deep red, tileable, unmistakably a ridged tile roof, vividly distinct from dark basalt ground, no ground, no lava field",
+          "palette": "glowing orange-red terracotta tile",
+          "rationale": "Fired clay barrel tile glowing like embers reads instantly as a roof and pops against black basalt terrain."
+        },
+        {
+          "slug": "obsidian_shard_tile",
+          "name": "Obsidian Shard Tile",
+          "prompt": "seamless top-down pixel-art roof texture viewed from directly above, overlapping angular obsidian glass shingle tiles in staggered courses, clear rows of jet-black glassy shards with sharp white specular glints and thin gold ridge capping, high fantasy, saturated near-black with cold blue-white highlights and warm gold ridges, tileable, reads as a faceted glassy shingle roof not flat ground, distinct from matte basalt terrain, no ground",
+          "palette": "jet-black glassy obsidian, white glints, gold ridge",
+          "rationale": "Faceted obsidian tiles glint sharply in rows, distinguishing the roof from the matte basalt ground."
+        },
+        {
+          "slug": "blackened_iron_seam",
+          "name": "Blackened Iron Seam",
+          "prompt": "seamless top-down pixel-art roof texture viewed from directly above, hand-beaten blackened iron sheet roofing in long vertical riveted seams, clear raised seam ribs with rows of rivets, dark gunmetal panels with faint heat-blued oil-slick sheen between seams, high fantasy, saturated near-black gunmetal with iridescent blue-purple heat tint, tileable, clearly a riveted metal roof, distinct from rough basalt ground, no ground",
+          "palette": "blackened gunmetal iron, heat-blue sheen",
+          "rationale": "Volcanic smiths beat iron sheet for roofing; rivet rows and heat-tint sheen separate it from stone ground."
+        },
+        {
+          "slug": "sulfur_glaze_tile",
+          "name": "Sulfur-Glaze Tile",
+          "prompt": "seamless top-down pixel-art roof texture viewed from directly above, flat ceramic roof tiles in a vivid sulfur-yellow glaze laid in clean staggered courses, clear rows of glossy yellow tiles with greenish glaze pooling in the grooves and dark scorched edges, high fantasy, saturated sulfur yellow with acid-green and dark scorch accents, tileable, unmistakably a glazed tile roof, brightly distinct from dark basalt ground, no ground",
+          "palette": "sulfur-yellow glaze, acid-green pooling",
+          "rationale": "Sulfur-rich volcanic minerals yield bright yellow glaze; its acid color is maximum contrast to the black ground."
+        }
+      ]
+    },
+    "mystic": {
+      "displayName": "Mystic",
+      "walls": [
+        {
+          "slug": "luminous_crystal",
+          "name": "Luminous Crystal Block",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, translucent luminous crystal blocks glowing softly from within, faceted crystal cornice cap at top, middle field of stacked semi-transparent cyan-and-violet crystal blocks with internal light, sharp refractive facets, and glowing seam veins, dense darker crystal foundation course at bottom, seamless repeating, high fantasy, saturated glowing cyan and violet with bright inner light, luminous detailed shading, alpha-transparent background",
+          "palette": "glowing cyan-violet translucent crystal",
+          "rationale": "Luminous grown crystal is the signature building substance of an enchanted aether realm."
+        },
+        {
+          "slug": "living_moss_wood",
+          "name": "Living Moss-Wood",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, living grown timber with smooth bark planks veiled in luminous teal moss and faintly glowing sap veins, woven branch molding cap at top, middle field of vertical living-wood planks furred with glowing moss patches and tiny bioluminescent buds, gnarled root foundation course at bottom, seamless repeating, high fantasy, saturated warm wood browns with glowing teal-green moss accents, soft detailed shading, alpha-transparent background",
+          "palette": "warm living wood, glowing teal moss",
+          "rationale": "Druidic mystic builders shape living wood clad in the realm's luminous moss."
+        },
+        {
+          "slug": "runed_pale_stone",
+          "name": "Runed Pale-Stone",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, smooth pale ivory stone carved with glowing inlaid runes, elegant fluted stone cornice cap at top, middle field of cream-white ashlar engraved with softly glowing blue-white runic lines and arcane sigils, broad pale plinth foundation course at bottom, seamless repeating, high fantasy, saturated warm ivory and pearl whites with luminous blue-white rune glow, refined detailed shading, alpha-transparent background",
+          "palette": "ivory pale-stone, glowing blue-white runes",
+          "rationale": "Runed pale-stone is the high-magic temple masonry of the mystic realm."
+        },
+        {
+          "slug": "aether_glass",
+          "name": "Aether-Glass",
+          "prompt": "tileable front-elevation pixel-art exterior wall segment, iridescent aether-glass panels held in slender silver mullions, ornate silver capping rail at top, middle field of shimmering opalescent glass panes swirling with pink-gold-cyan aurora light behind thin silver frames, polished silver-bound foundation course at bottom, seamless repeating, high fantasy, saturated iridescent pastels with bright silver framing, glowing detailed shading, alpha-transparent background",
+          "palette": "iridescent opal aether-glass, silver mullions",
+          "rationale": "Aether-glass channels ambient magic into shimmering enchanted curtain walls unique to the mystic realm."
+        }
+      ],
+      "roofs": [
+        {
+          "slug": "crystal_shingle",
+          "name": "Crystal Shingle",
+          "prompt": "seamless top-down pixel-art roof texture viewed from directly above, overlapping faceted crystal shingles glowing softly in clear staggered courses, rows of translucent cyan-violet crystal tiles with sharp refractive facets, bright inner glow, and glinting ridge line, high fantasy, saturated luminous cyan and violet, tileable, unmistakably a faceted shingle roof, clearly distinct from soft glowing moss ground, no ground, no moss",
+          "palette": "glowing cyan-violet crystal shingles",
+          "rationale": "Faceted crystal shingles in ordered courses read as a roof, sharply distinct from the soft aether-moss ground."
+        },
+        {
+          "slug": "runed_slate",
+          "name": "Silver Runed Slate",
+          "prompt": "seamless top-down pixel-art roof texture viewed from directly above, pale silvery slate shingles in tidy staggered courses, each tile etched with a small glowing blue-white rune, clear rows with crisp ridge line and faint magical shimmer, high fantasy, saturated cool silver-grey with luminous blue-white rune glow, tileable, clearly a runed shingle roof, distinct from glowing moss ground, no ground, no moss",
+          "palette": "silver-grey slate, glowing blue-white runes",
+          "rationale": "Pale runed slate pairs with runed pale-stone walls and is unmistakably structured against the moss ground."
+        },
+        {
+          "slug": "aether_glass_pane",
+          "name": "Aether-Glass Pane",
+          "prompt": "seamless top-down pixel-art roof texture viewed from directly above, leaded skylight roof of iridescent aether-glass panes in a regular silver lattice grid, clear rows of opalescent panes swirling with pink-gold-cyan aurora light separated by bright silver cames, high fantasy, saturated iridescent pastels with sharp silver gridlines, tileable, reads as a glazed paneled roof not organic ground, distinct from glowing moss, no ground, no moss",
+          "palette": "iridescent opal panes, silver lattice",
+          "rationale": "An aether-glass paned roof crowns aether-glass walls; the silver grid clearly signals roof over moss terrain."
+        },
+        {
+          "slug": "luminous_thatch",
+          "name": "Luminous Thatch",
+          "prompt": "seamless top-down pixel-art roof texture viewed from directly above, neatly combed thatch roof of glowing silver-blue reed bundles in clear overlapping courses, distinct horizontal rows of tightly bound luminous reeds with a crisp combed ridge cap, faint bioluminescent glow tracing each course, high fantasy, saturated pale silver-blue with soft inner light, tileable, unmistakably a combed thatch roof with ridge, deliberately distinct from soft random moss ground, no ground, no moss",
+          "palette": "glowing silver-blue luminous reed thatch",
+          "rationale": "Enchanted luminous reed thatch suits living moss-wood cottages; combed rows and a ridge cap keep it reading as roof, not ground moss."
+        }
+      ]
+    }
+  }
+}
