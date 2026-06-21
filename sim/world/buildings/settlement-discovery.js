@@ -12,7 +12,7 @@ import { worldEpochs } from '../../chronicle/epochs.js';
 import { macroCellPeoples } from '../../chronicle/races.js';
 import { regionChronicle, settlementState, chronicleTier } from '../../chronicle/chronicle.js';
 import { generateSettlementName } from './specializations.js';
-import { classifyBiome } from '../../../src/world/biomes.js';
+import { classifyBiomeNoStream } from '../../../src/world/biomes.js';
 import { rand } from '../../kernel/rng.js';
 
 export const MACRO_TILES = MACRO * REGION; // 64
@@ -42,31 +42,55 @@ export function siteForMacro(seed, mx, my) {
   return { cx, cy, x: cx + ox, y: cy + oy };
 }
 
+// Per-macro-cell discovery is a pure f(seed, mx, my) — independent of the query range —
+// so memoize it. A boundary crossing re-scans ~90% of the same macro-cells (only one
+// row/column is new), and discovery's classify+chronicle pipeline is non-trivial, so a
+// session-lifetime cache turns a full re-scan into O(new cells). Seed-keyed: reset on
+// seed change (mirrors resolved-buildings.js's _layoutMemo). Stores null for wilderness/
+// water cells so they aren't re-derived either.
+let _discoveryMemo = new Map(); // 'mx,my' -> settlement | null
+let _discoveryMemoSeed = null;
+export function clearDiscoveryMemo() { _discoveryMemo = new Map(); _discoveryMemoSeed = null; }
+
+/** Derive the single settlement (or null) at macro-cell (mx,my). Pure f(seed,mx,my). */
+function deriveMacroCell(seed, mx, my, epochs) {
+  const mk = `${mx},${my}`;
+  const { cx, cy, x, y } = siteForMacro(seed, mx, my);
+  // Stream-free: settlement placement never needs the hydrology stream layer — SITE_WATER
+  // has no 'stream' and the chronicle reads only climate — so skip the cold streamAt trace.
+  const biome = classifyBiomeNoStream(cx, cy);
+  const peoples = macroCellPeoples(seed, mk, epochs, biome);
+  const chronicle = regionChronicle(seed, mk, peoples, biome.climate);
+  const state = settlementState(chronicle);
+  if (state === 'wilderness') return null;
+
+  const foundingEv = chronicle.find(e => e.type === 'ancient_founding' || e.type === 'founding');
+  const race = foundingEv?.raceId ?? peoples[0]?.raceId ?? 'human';
+  const chronicleAge = chronicle.length > 0 ? Math.max(...chronicle.map(e => e.age ?? 0)) : 0;
+  const tier = state === 'ruined' ? 'ruins' : chronicleTier(chronicle, seed, mk);
+
+  const siteBiome = classifyBiomeNoStream(x, y);
+  if (SITE_WATER.includes(siteBiome.id)) return null;
+
+  const name = generateSettlementName(seed, x, y);
+  return { mx, my, x, y, tier, race, state, chronicleAge, biome: siteBiome.id, name };
+}
+
 /** All non-wilderness settlements whose macro-cell lies in [mx0..mx1]×[my0..my1].
  *  Pure f(seed, range). Reproduces the overlay's discovery exactly (plus mx,my). */
 export function discoverSettlementsInMacroRange(seed, mx0, my0, mx1, my1) {
+  if (seed !== _discoveryMemoSeed) { _discoveryMemo = new Map(); _discoveryMemoSeed = seed; }
   const epochs = worldEpochs(seed);
   const settlements = [];
   for (let my = my0; my <= my1; my++) {
     for (let mx = mx0; mx <= mx1; mx++) {
       const mk = `${mx},${my}`;
-      const { cx, cy, x, y } = siteForMacro(seed, mx, my);
-      const biome = classifyBiome(cx, cy);
-      const peoples = macroCellPeoples(seed, mk, epochs, biome);
-      const chronicle = regionChronicle(seed, mk, peoples, biome.climate);
-      const state = settlementState(chronicle);
-      if (state === 'wilderness') continue;
-
-      const foundingEv = chronicle.find(e => e.type === 'ancient_founding' || e.type === 'founding');
-      const race = foundingEv?.raceId ?? peoples[0]?.raceId ?? 'human';
-      const chronicleAge = chronicle.length > 0 ? Math.max(...chronicle.map(e => e.age ?? 0)) : 0;
-      const tier = state === 'ruined' ? 'ruins' : chronicleTier(chronicle, seed, mk);
-
-      const siteBiome = classifyBiome(x, y);
-      if (SITE_WATER.includes(siteBiome.id)) continue;
-
-      const name = generateSettlementName(seed, x, y);
-      settlements.push({ mx, my, x, y, tier, race, state, chronicleAge, biome: siteBiome.id, name });
+      let s = _discoveryMemo.get(mk);
+      if (s === undefined) {
+        s = deriveMacroCell(seed, mx, my, epochs);
+        _discoveryMemo.set(mk, s); // may be null (wilderness/water) — cached so it isn't re-derived
+      }
+      if (s) settlements.push(s);
     }
   }
   return settlements;

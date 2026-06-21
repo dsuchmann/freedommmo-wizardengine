@@ -1,4 +1,5 @@
 import { fbm } from '../core/random.js';
+import { getWorldSeed } from '../core/world-seed.js';
 import { shapeTerrain } from './terrain-shaper.js';
 import { BIOMES, SPEC_BIOME_IDS } from './biome-definitions.js';
 import { sampleRegionalMapChunk } from './regional-map.js';
@@ -10,7 +11,33 @@ const BASIN_WATER = new Set(['deep_ocean', 'ocean', 'shallow_water', 'river', 'l
 
 export { BIOMES, SPEC_BIOME_IDS };
 
+// Per-integer-tile memo of the climate sample. sampleClimate is a pure
+// f(integer wx, wy, worldSeed) that runs ~47 noise evaluations per call, and BOTH
+// classifyBiome AND classifyTerrainForm (9x neighbour fan-out) request it on heavily
+// overlapping integer tiles — so a transparent tile cache collapses most of the work.
+// Idiomatic here: mirrors hydrology.js's purity-invisible {seed, cache} pattern.
+// Fractional callers bypass the cache; the map is seed-keyed and reset on seed change.
+let _climateCache = new Map();
+let _climateCacheSeed = null;
+const CLIMATE_CACHE_MAX = 300000;
+
+export function clearClimateCache() { _climateCache = new Map(); _climateCacheSeed = null; }
+
 export function sampleClimate(wx, wy) {
+  if (!Number.isInteger(wx) || !Number.isInteger(wy)) return _computeClimate(wx, wy);
+  const seed = getWorldSeed();
+  if (seed !== _climateCacheSeed) { _climateCache = new Map(); _climateCacheSeed = seed; }
+  const key = wx + ',' + wy;
+  let v = _climateCache.get(key);
+  if (v === undefined) {
+    v = _computeClimate(wx, wy);
+    if (_climateCache.size >= CLIMATE_CACHE_MAX) _climateCache.clear();
+    _climateCache.set(key, v);
+  }
+  return v;
+}
+
+function _computeClimate(wx, wy) {
   const showcase = topologyShowcaseClimate(wx, wy);
   if (showcase) return showcase;
   const continental = fbm(wx, wy, 10);
@@ -28,7 +55,9 @@ export function sampleClimate(wx, wy) {
     ridgeStrength: terrain.ridgeStrength, isPeak: terrain.isPeak, valleyDepth: terrain.valleyDepth };
 }
 
-export function classifyBiome(wx, wy) {
+// Shared head for classifyBiome / classifyBiomeNoStream — kept in one place so the two
+// cannot drift. Computes everything EXCEPT the (expensive, optional) stream resolution.
+function _classifyHead(wx, wy) {
   const climate = sampleClimate(wx, wy);
   // Sample regional biome at fractional chunk coordinates so per-tile biome
   // assignment is continuous. Using floored chunk coords makes the entire
@@ -42,14 +71,34 @@ export function classifyBiome(wx, wy) {
   // the continuous weighted regional field.
   const id = regionalCandidate;
   const localAllowed = localCandidate !== regionalCandidate && areBiomeNeighbors(regionalCandidate, localCandidate);
+  return { climate, regionalCandidate, localCandidate, id, localAllowed };
+}
 
-  let finalId = id, stream = null;
-  if (!BASIN_WATER.has(id)) {
+function _assembleBiome(h, finalId, stream) {
+  return { id: finalId, definition: BIOMES[finalId], climate: { ...h.climate, regionalBiome: h.regionalCandidate, localCandidate: h.localCandidate, ecotone: h.localAllowed ? 1 : 0, borderCandidate: h.localAllowed ? h.localCandidate : null, stream } };
+}
+
+export function classifyBiome(wx, wy) {
+  const h = _classifyHead(wx, wy);
+  let finalId = h.id, stream = null;
+  if (!BASIN_WATER.has(h.id)) {
     stream = streamAt(wx, wy);
     if (stream) finalId = 'stream';
   }
+  return _assembleBiome(h, finalId, stream);
+}
 
-  return { id: finalId, definition: BIOMES[finalId], climate: { ...climate, regionalBiome: regionalCandidate, localCandidate, ecotone: localAllowed ? 1 : 0, borderCandidate: localAllowed ? localCandidate : null, stream } };
+// Stream-free classification: identical to classifyBiome but NEVER runs the hydrology
+// streamAt() trace. Streams are an ADDITIVE layer over the land/water id (h.id); a tile
+// classifyBiome would tag 'stream' is, underneath, this land id. Callers that only need
+// the land/water classification — settlement placement (SITE_WATER has no 'stream') and
+// the chronicle (reads only climate) — get the SAME answer everywhere except a tile
+// literally on a stream channel. Using this in those hot paths deletes the ~1s cold
+// streamAt neighbourhood trace from the building resolve; streams still resolve honestly
+// via classifyBiome on the terrain/biome render path.
+export function classifyBiomeNoStream(wx, wy) {
+  const h = _classifyHead(wx, wy);
+  return _assembleBiome(h, h.id, null);
 }
 
 function classifyLocalCandidate(climate) {
