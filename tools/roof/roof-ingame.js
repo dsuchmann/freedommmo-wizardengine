@@ -83,13 +83,14 @@ export function resolveForBuilding(b, biomeOverride) {
   // past the north wall into the building behind).
   const R = resolveConfig(roof, { sections: fp.sections });
   R.geom.noNorthOverhang = true;
-  // GAME projection only: kill the overhang droop. In the oblique gallery a drooping
-  // overhang reads as a nice flared eave, but here (flat top-down + vertical lift) a
-  // negative-height overhang projects DOWN behind the wall — hidden — so the wall's
-  // corner columns (footprint ±1) poke up past the roof and it looks inset / "not
-  // reaching the edges". Flat overhang (h=0) sits at the wall-top plane and extends
-  // OUTWARD over the corners, so the roof reads as capping the full building.
-  R.geom.overhangDroop = 0;
+  // GAME projection: a SMALL downward droop on the E/W/S overhang ring so the eave
+  // reads as a real OVERHANG (a flared lip just below the wall-top plane), not an inset
+  // flat cut. Keep it small: too much droop projects the overhang DOWN behind the wall
+  // (flat top-down + vertical lift), hidden, and the wall's corner columns (footprint ±1)
+  // poke up past the roof and it looks inset. North is excluded by noNorthOverhang so it
+  // can't poke the neighbour. NOTE: 0.18 is a conservative VISUAL TUNING value — verify
+  // in tools/roof-ingame-preview.html and in-game and adjust to taste.
+  R.geom.overhangDroop = 0.18;
   const grid = buildRoofGrid(R.sections, R.geom);
   // shift the heightmap so the perimeter EAVE sits at h=0 (the lifted wall-top plane),
   // so the roof's back edge is flush with the north wall top, not floating above it.

@@ -268,10 +268,11 @@ function drawSkirt(ctx, grid, view, t, material, cfg) {
     const [oi, oj] = nb[d];
     if (!outside(t.i + oi, t.j + oj)) continue;
     const ch1 = grid.cornerH[c1[1] * grid.CW + c1[0]], ch2 = grid.cornerH[c2[1] * grid.CW + c2[0]];
-    // Only the SOUTH face bridges all the way down to the wall top (h=0) — that's the
-    // visible "roof→wall cliff" the user wants terminated. N/E/W keep a thin eave
-    // fascia so the overhang still curves/flares (no dark erased gable faces).
-    const toWall = view.game && d === 's';
+    // SOUTH + E/W rake ends bridge all the way down to the wall top (h=0) so the roof
+    // terminates as a gable/rake board on the wall, not a flat cut. NORTH is excluded
+    // by isGableRakeEdge (it would poke past the north wall). Where we don't bridge,
+    // a thin eave fascia remains so the overhang still flares.
+    const toWall = isGableRakeEdge(grid, t, d, view.game);
     const bH1 = toWall ? 0 : Math.max(0, ch1 - baseDrop);
     const bH2 = toWall ? 0 : Math.max(0, ch2 - baseDrop);
     if (ch1 - bH1 < 0.02 && ch2 - bH2 < 0.02) continue; // nothing to bridge
