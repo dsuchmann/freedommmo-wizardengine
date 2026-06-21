@@ -101,17 +101,41 @@ function lightVec(angleDeg, elevDeg) {
   return [Math.cos(e) * Math.cos(a), Math.cos(e) * Math.sin(a), Math.sin(e)];
 }
 
-// Texture-map a 32×32 tile (e.g. the biome ground texture) onto a projected facet
-// quad via an affine map (TL,TR,BL), clipped to the quad, then slope-shaded.
-function drawTexturedTile(ctx, q, tex, shade) {
+// Continuous slope-space UV for one tile. v runs eave(0)->ridge(1) using the tile's
+// slopeAxis.run (a per-face course counter), so adjacent tiles on the same face share
+// the boundary v value and the texture courses flow UNBROKEN (no per-tile restart).
+export function slopeUV(t) {
+  const sa = t.slopeAxis || { run: Math.max(0, (t.distEdge || 1) - 1), runMax: 1, dir: 'n' };
+  const runMax = sa.runMax > 0 ? sa.runMax : 1;
+  const v0 = sa.run / runMax;
+  const v1 = (sa.run + 1) / runMax;
+  return { v0, v1, dir: sa.dir || 'n' };
+}
+
+// Texture-map a facet quad with a CONTINUOUS slope-space UV: u along the ridge, v
+// eave->ridge (from slopeUV), sampling the FULL tex.width x tex.height so courses flow
+// unbroken across tile boundaries instead of restarting a fixed 32px crop per tile.
+function drawTexturedTile(ctx, q, tex, shade, t) {
+  const TW = tex.width || 32, TH = tex.height || 32;
+  const { v0, v1, dir } = slopeUV(t);
+  // source window: v selects the eave->ridge band; u uses the tile's along-ridge index
+  // (gx for n/s faces, gy for e/w) modulo the swatch so horizontal courses tile seamlessly.
+  const along = (dir === 'n' || dir === 's') ? (t.gx | 0) : (t.gy | 0);
+  const u0frac = (((along % 2) + 2) % 2) / 2;          // 2-tile horizontal repeat
+  const sx = u0frac * TW, sw = TW / 2;
+  // textures are authored eave-at-bottom: flip v so eave(v0) samples the bottom course.
+  const sy0 = (1 - v1) * TH, sy1 = (1 - v0) * TH;
+  const sy = Math.min(sy0, sy1), sh = Math.max(1, Math.abs(sy1 - sy0));
   const TL = q[0], TR = q[1], BL = q[3];
   ctx.save();
-  // NO per-cell clip: clipping anti-aliases each cell edge → sub-pixel transparent
-  // seams that line up along the pitch and read as see-through. The affine drawImage
-  // fills the (already-inflated) quad and overlaps neighbours, covering the seams.
+  // NO per-cell clip: clipping anti-aliases each cell edge → sub-pixel transparent seams
+  // that read as see-through. The affine drawImage fills the (already-inflated) quad and
+  // overlaps neighbours, covering the seams.
   ctx.imageSmoothingEnabled = false;
-  ctx.transform((TR.x - TL.x) / 32, (TR.y - TL.y) / 32, (BL.x - TL.x) / 32, (BL.y - TL.y) / 32, TL.x, TL.y);
-  try { ctx.drawImage(tex, 0, 0, 32, 32, 0, 0, 32, 32); } catch (e) { /* bad bitmap */ }
+  // affine maps the chosen source window onto the quad — divide by the window size (sw,sh),
+  // not a fixed 32, so the slope band stretches over the facet correctly.
+  ctx.transform((TR.x - TL.x) / sw, (TR.y - TL.y) / sw, (BL.x - TL.x) / sh, (BL.y - TL.y) / sh, TL.x, TL.y);
+  try { ctx.drawImage(tex, sx, sy, sw, sh, 0, 0, sw, sh); } catch (e) { /* bad bitmap */ }
   ctx.restore();
   ctx.beginPath(); ctx.moveTo(q[0].x, q[0].y); ctx.lineTo(q[1].x, q[1].y); ctx.lineTo(q[2].x, q[2].y); ctx.lineTo(q[3].x, q[3].y); ctx.closePath();
   ctx.fillStyle = shade < 1 ? `rgba(0,0,0,${Math.min(0.55, (1 - shade) * 0.7)})`
@@ -191,7 +215,7 @@ export function drawRoof(ctx, grid, material, features, cfg, view) {
         for (let kk = 1; kk < 4; kk++) ctx.lineTo(quad[kk].x, quad[kk].y);
         ctx.closePath(); ctx.fill();
       }
-      drawTexturedTile(ctx, quad, cfg.texture, shade);
+      drawTexturedTile(ctx, quad, cfg.texture, shade, t);
     } else material.fillTile(ctx, quad, t, shade, view, grid);
   }
 
