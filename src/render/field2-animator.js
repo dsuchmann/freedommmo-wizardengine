@@ -1617,7 +1617,7 @@ function _drawGpuFlora(player, w, h, chunkGrid, timeMs, sun, glc, tilePxSnapped)
     glc.uploadPoolRange('sprite', m, _pool.n, 1);
   }
   glc.drawAnimSprites(0, split, w, h, cam, timeMs);
-  if (pRect && _playerGL) { glc.drawPoolSprites(_pool.n, 1, w, h, cam); if (typeof window === 'undefined' || window._buildingLayer !== true) { glc.drawPoolSprites(_pool.n, 1, w, h, cam, true); } }
+  if (pRect && _playerGL) { glc.drawPoolSprites(_pool.n, 1, w, h, cam); if (typeof window !== 'undefined' && window._buildingLayer === false) { glc.drawPoolSprites(_pool.n, 1, w, h, cam, true); } }
   if (split < n) glc.drawAnimSprites(split, n - split, w, h, cam, timeMs);
 }
 
@@ -1867,7 +1867,7 @@ function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, we
     glc.uploadPoolRange('sprite', m, tail, 1);
   }
   glc.drawPoolSprites(0, split, w, h, cam);
-  if (pRect && _playerGL) { glc.drawPoolSprites(_pool.n, 1, w, h, cam); if (typeof window === 'undefined' || window._buildingLayer !== true) { glc.drawPoolSprites(_pool.n, 1, w, h, cam, true); } }
+  if (pRect && _playerGL) { glc.drawPoolSprites(_pool.n, 1, w, h, cam); if (typeof window !== 'undefined' && window._buildingLayer === false) { glc.drawPoolSprites(_pool.n, 1, w, h, cam, true); } }
   if (split < _pool.n) glc.drawPoolSprites(split, _pool.n - split, w, h, cam);
   return true;
 }

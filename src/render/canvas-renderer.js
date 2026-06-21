@@ -446,11 +446,12 @@ export class CanvasRenderer {
       setField2PlayerGL(null);
     }
 
-    // Outdoor building layer (Y-split): when window._buildingLayer is on, buildings are NOT baked
-    // into the terrain — draw the BEHIND set here (under the player) and stash the FRONT set to
-    // blit (spotlit) after the sprite batch. Gated OFF by default until the worker bake change
-    // lands (Task 5). When OFF, fall back to the shipped depth-occlusion pass below.
-    const _useLayer = glScene && !_inside && typeof window !== 'undefined' && window._buildingLayer === true;
+    // Outdoor building layer (Y-split): buildings are NOT baked into the terrain (worker drops the
+    // wall+roof bake) — draw the BEHIND set here (under the player) and stash the FRONT set to blit
+    // (spotlit) after the sprite batch, revealing the player on the real terrain. DEFAULT-ON; set
+    // window._buildingLayer=false to fall back to the depth-occlusion path (which now shows no walls
+    // since the bake dropped them — an honest "buildings not rendered" state for A/B only).
+    const _useLayer = glScene && !_inside && (typeof window === 'undefined' || window._buildingLayer !== false);
     let _frontLayerBmp = null;
     if (_useLayer) {
       const _layer = buildBuildingLayerBitmaps(getCachedBuildings(), camX, camY, tilePx, w, h, player.y);
