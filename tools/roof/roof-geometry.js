@@ -212,11 +212,17 @@ export function buildRoofGrid(sections, opts = {}) {
     if (Math.abs(dx) > 0.04 || Math.abs(dy) > 0.04) {
       dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'e' : 'w') : (dy > 0 ? 's' : 'n');
     }
+    // slopeAxis: the eave->ridge run for a CONTINUOUS texture UV in the renderer.
+    // uphill = opposite of the downhill `dir`; run = distance from the eave (distEdge-1,
+    // since eaves sit at distEdge<=1.2); runMax normalized below from the grid max.
+    const uphill = dir === 's' ? 'n' : dir === 'n' ? 's' : dir === 'e' ? 'w' : dir === 'w' ? 'e' : 'n';
+    const run = Math.max(0, (fp[k] ? distEdge[k] : 0) - 1);
     tiles.push({
       i, j, gx: gox + i, gy: goy + j, h, normal, dir,
       isOverhang: !!isOverhang[k], sectionId: sectionId[k],
       role: ROLE.SLOPE, // filled below
       distEdge: fp[k] ? distEdge[k] : 0,
+      slopeAxis: { dir: uphill, run, runMax: 1 }, // runMax normalized below
     });
   }
 
@@ -240,6 +246,12 @@ export function buildRoofGrid(sections, opts = {}) {
     else if ((ridgeNS || ridgeEW) && h > 0.4) t.role = ROLE.RIDGE;
     else t.role = ROLE.SLOPE;
   }
+
+  // Normalize slopeAxis.runMax to the largest run on the grid so the renderer's v
+  // (eave 0 -> ridge 1) maps continuously across tiles of the same face.
+  let runMaxAll = 1;
+  for (const t of tiles) if (t.slopeAxis.run > runMaxAll) runMaxAll = t.slopeAxis.run;
+  for (const t of tiles) t.slopeAxis.runMax = runMaxAll;
 
   const byRole = (r) => tiles.filter(t => t.role === r);
   return {
