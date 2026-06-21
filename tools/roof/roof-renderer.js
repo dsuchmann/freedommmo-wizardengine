@@ -237,10 +237,21 @@ export function drawRoof(ctx, grid, material, features, cfg, view) {
   if (features && features.draw) features.draw(ctx, grid, view, cfg, { light, ambient });
 }
 
+// Should this perimeter edge bridge down to the wall top as a gable/rake board?
+// SOUTH always bridges (the visible roof->wall cliff). E/W bridge as the gable/rake
+// ends so they terminate on the wall, not as flat cuts. NORTH never bridges in the
+// game view (it would poke past the north wall into the neighbour). Only the GAME
+// projection bridges; the oblique gallery keeps the thin eave fascia everywhere.
+export function isGableRakeEdge(grid, t, d, game) {
+  if (!game) return false;
+  if (d === 'n') return false;        // noNorthOverhang guard
+  return d === 's' || d === 'e' || d === 'w';
+}
+
 // The roof-wall transition piece. In the GAME projection (view.game) the perimeter
 // drops to h=0 = the wall top, so it reads as a gable end / rake board terminating
 // on the wall. In the oblique gallery it's just a thin eave fascia.
-function drawSkirt(ctx, grid, view, t, material) {
+function drawSkirt(ctx, grid, view, t, material, cfg) {
   const baseDrop = (grid.params && grid.params.fascia) || 0.5;
   const edges = [
     [[t.i, t.j], [t.i + 1, t.j], 'n'],
