@@ -31,7 +31,7 @@ export const ROOF_TUNING = {
   maxRoofTiles: 3.0,    // cap a roof's visual rise so steeples don't tower absurdly
   pitchCap: 1.3,        // clamp style pitch in-game
   surfaceOnly: false,   // draw lightweight ridge/hip dressing + finial/dormer/chimney in-game
-  gameFeatures: ['finial', 'dormer', 'chimney'], // game-safe: NO crude turret/spire/buttress/deck primitives
+  gameFeatures: [], // DISABLED — finial/dormer/chimney rendered as ugly placeholder squares in-game; revisit with real chimney/dormer art later
   useBiomeTexture: true,// EXPERIMENT: skin the roof with the biome's ground/soil texture
 };
 
