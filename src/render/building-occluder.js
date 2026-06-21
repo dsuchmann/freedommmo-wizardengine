@@ -131,18 +131,26 @@ function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
   // one continuous facade (zoom-robust), and a wide piece shows the facade's centred 2 tiles.
   // Legacy stone_brick pieces are pre-cut 32/64-wide strips with an 8px top inset.
   const P = wi.isPilot;
+  // A pilot facade has 3 vertical bands: a cap/beam (top ~18/128), a foundation course
+  // (bottom ~22/128), and the wall surface between. On a MULTI-STORY wall, drawing the full
+  // facade per story repeats the cap+foundation as a molding band at every floor. So per story
+  // we pick a vertical band: ground story keeps the foundation but drops the cap; the top story
+  // keeps the cap but drops the foundation; middle stories show only the surface. The cap then
+  // appears only at the roofline and the foundation only at the floor. Single story = full facade.
+  const SY = (vb) => vb === 'capmid' ? [0, 106] : vb === 'midfound' ? [18, 128] : vb === 'mid' ? [18, 106] : [0, 128];
+  const vbandFor = (st) => stories === 1 ? 'full' : (st === 0 ? 'midfound' : (st === stories - 1 ? 'capmid' : 'mid'));
   // c = section-relative tile column (so each building's facade starts clean at its left edge).
-  const facadeTile = (img, c, dx, dy) => {
+  const facadeTile = (img, c, dx, dy, vb) => {
     if (!P) { ctx.drawImage(img, 0, 8, 32, 112, dx, dy, t + wp, wH + wp); return; }
-    const ux = dx - ((((c) % 4) + 4) % 4) * t;
+    const ux = dx - ((((c) % 4) + 4) % 4) * t, s = SY(vb);
     ctx.save(); ctx.beginPath(); ctx.rect(dx, dy, t + wp, wH + wp); ctx.clip();
-    ctx.drawImage(img, 0, 0, 128, 128, ux, dy, 4 * t, wH + wp); ctx.restore();
+    ctx.drawImage(img, 0, s[0], 128, s[1] - s[0], ux, dy, 4 * t, wH + wp); ctx.restore();
   };
-  const facadeWide = (img, dx, dy) => {
+  const facadeWide = (img, dx, dy, vb) => {
     if (!P) { ctx.drawImage(img, 0, 8, 64, 112, dx, dy, 2 * t + wp, wH + wp); return; }
-    const ux = dx - t; // the facade's centred 2 tiles (where the window/door sits) land at dx..dx+2t
+    const ux = dx - t, s = SY(vb); // the facade's centred 2 tiles (window/door) land at dx..dx+2t
     ctx.save(); ctx.beginPath(); ctx.rect(dx, dy, 2 * t + wp, wH + wp); ctx.clip();
-    ctx.drawImage(img, 0, 0, 128, 128, ux, dy, 4 * t, wH + wp); ctx.restore();
+    ctx.drawImage(img, 0, s[0], 128, s[1] - s[0], ux, dy, 4 * t, wH + wp); ctx.restore();
   };
 
   // NORTH walls — stacked
@@ -156,9 +164,10 @@ function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
       for (let st = 0; st < stories; st++) {
         const sy = tsy(b.y + nr) - wH + Math.round(t * NY) - st * wH;
         if (sx + t < 0 || sx > w || sy + wH < 0 || sy > h) continue;
-        facadeTile(wi.south_base, lx - s.x0, sx, sy);
-        if (wo && wi.south_corner_west) facadeTile(wi.south_corner_west, 0, sx - t, sy);
-        else if (eo && wi.south_corner_east) facadeTile(wi.south_corner_east, 3, sx + t, sy);
+        const vb = vbandFor(st);
+        facadeTile(wi.south_base, lx - s.x0, sx, sy, vb);
+        if (wo && wi.south_corner_west) facadeTile(wi.south_corner_west, 0, sx - t, sy, vb);
+        else if (eo && wi.south_corner_east) facadeTile(wi.south_corner_east, 3, sx + t, sy, vb);
       }
     }
   }
@@ -214,12 +223,12 @@ function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
         if (floorSet.has(lx + ',' + (ly + 1))) continue;
         const sx = tsx(b.x + lx), sy = tsy(fbY) - wH + Math.round(t * WY) - st * wH;
         if (sx + t < 0 || sx > w || sy + wH < 0 || sy > h) continue;
-        const k = lx + ',' + ly, c = lx - s.x0, wo = !floorSet.has((lx - 1) + ',' + ly), eo = !floorSet.has((lx + 1) + ',' + ly);
-        if (wo && wi.south_corner_west) { facadeTile(wi.south_base, c, sx, sy); facadeTile(wi.south_corner_west, 0, sx - t, sy); }
-        else if (eo && wi.south_corner_east) { facadeTile(wi.south_base, c, sx, sy); facadeTile(wi.south_corner_east, 3, sx + t, sy); }
-        else if (ground && doorSet.has(k) && dx >= 2 && dx < s.w - 2 && wi.south_door) { facadeWide(wi.south_door, sx, sy); skip.add(dx + 1); }
-        else if (win.has(k) && dx >= 2 && dx < s.w - 2 && wi.south_window) { facadeWide(wi.south_window, sx, sy); skip.add(dx + 1); }
-        else facadeTile(wi.south_base, c, sx, sy);
+        const k = lx + ',' + ly, c = lx - s.x0, vb = vbandFor(st), wo = !floorSet.has((lx - 1) + ',' + ly), eo = !floorSet.has((lx + 1) + ',' + ly);
+        if (wo && wi.south_corner_west) { facadeTile(wi.south_base, c, sx, sy, vb); facadeTile(wi.south_corner_west, 0, sx - t, sy, vb); }
+        else if (eo && wi.south_corner_east) { facadeTile(wi.south_base, c, sx, sy, vb); facadeTile(wi.south_corner_east, 3, sx + t, sy, vb); }
+        else if (ground && doorSet.has(k) && dx >= 2 && dx < s.w - 2 && wi.south_door) { facadeWide(wi.south_door, sx, sy, vb); skip.add(dx + 1); }
+        else if (win.has(k) && dx >= 2 && dx < s.w - 2 && wi.south_window) { facadeWide(wi.south_window, sx, sy, vb); skip.add(dx + 1); }
+        else facadeTile(wi.south_base, c, sx, sy, vb);
       }
     }
   }
