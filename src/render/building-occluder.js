@@ -155,15 +155,24 @@ function pilotPiece(b, piece, opts) {
   if (!b || !b.biome || !b.wallSlug) return null;
   return _imageCache.get(wallAssetDir(b.biome, b.wallSlug) + wallPieceFile(piece, opts));
 }
-// True for the cob pilot — buildings whose grey-stone cob look gets the dedicated foundation /
-// cap / quoin / window-object pieces + procedural door+window frames. Gated by wallSlug so the
-// other grassland materials (fieldstone/wattle/timber) keep their existing facade look untouched.
-export function isCob(b) { return !!(b && b.wallSlug === 'cob'); }
-// Load a raw cob piece by bare filename (the foundation/cap/quoin/window-obj live outside the
-// wallPieceFile naming scheme). Null until loaded (one-frame lazy, same as every other piece).
+// The grassland "structured" wall materials — buildings that get the dedicated foundation /
+// cap / quoin / window-object pieces + procedural door+window frames + suppressed legacy facade
+// (continuous seamless body wall with seated apertures). Started as the cob pilot; now applies to
+// all four grassland materials. Gated by (biome,wallSlug) so other biomes keep their facade look.
+const STRUCTURED_WALLS = { grassland: new Set(['cob', 'fieldstone', 'wattle_daub', 'timber_frame']) };
+export function isStructured(b) {
+  return !!(b && b.biome && b.wallSlug && STRUCTURED_WALLS[b.biome] && STRUCTURED_WALLS[b.biome].has(b.wallSlug));
+}
+// Back-compat alias: the original cob predicate. Now true for any structured grassland material.
+export function isCob(b) { return isStructured(b); }
+// Load a structured trim piece (foundation/cap/quoin/window-obj) by bare filename. These live
+// outside the wallPieceFile naming scheme. Loads from the building's OWN material dir; if that
+// material doesn't ship its own trim piece (e.g. timber reusing the grey stone foundation/cap/
+// quoin), falls back to the cob pilot's grey-stone piece. Null until loaded (one-frame lazy).
+const COB_DIR = wallAssetDir('grassland', 'cob');
 function cobPiece(b, file) {
-  if (!isCob(b) || !b.biome) return null;
-  return _imageCache.get(wallAssetDir(b.biome, b.wallSlug) + file);
+  if (!isStructured(b) || !b.biome) return null;
+  return _imageCache.get(wallAssetDir(b.biome, b.wallSlug) + file) || _imageCache.get(COB_DIR + file);
 }
 function wallImgs(b) {
   const w = (piece, opts) => pilotPiece(b, piece, opts) || getWallImg(piece);
@@ -186,12 +195,13 @@ function wallImgs(b) {
     // True only when the per-(biome,wallSlug) pilot edge_ew loaded — a full-height structured quoin
     // strip whose left 16px is the corner post. The stone_brick fallback edge_ew is a flat trim.
     edgeIsQuoin: !!pilotPiece(b, 'edge_ew', wear),
-    // ── Cob pilot extras (null for every other material) ──────────────────────────────
-    cob: isCob(b),
-    cob_foundation: cobPiece(b, 'south_foundation__normal.png'), // 64×28 seamless ground band
-    cob_cap: cobPiece(b, 'south_cap__normal.png'),               // 64×10 seamless top coping
-    cob_quoin: cobPiece(b, 'south_quoin__normal.png'),           // 32×128 vertical corner post
-    cob_window: cobPiece(b, 'south_window_obj__normal.png'),     // ~48×56 window OBJECT (transparent surround)
+    // ── Structured-wall extras (grassland cob/fieldstone/wattle/timber; null elsewhere) ──
+    // Per-material trim if present, else the cob grey-stone piece (see cobPiece fallback).
+    cob: isStructured(b),
+    cob_foundation: cobPiece(b, 'south_foundation__normal.png'), // seamless ground band
+    cob_cap: cobPiece(b, 'south_cap__normal.png'),               // seamless top coping
+    cob_quoin: cobPiece(b, 'south_quoin__normal.png'),           // vertical corner post
+    cob_window: cobPiece(b, 'south_window_obj__normal.png'),     // window OBJECT (transparent surround)
   };
 }
 
@@ -370,19 +380,29 @@ export function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
         // provides the post) — but still let a door/window tile fall through to its own branch.
         else if (wi.cob && wo && !(ground && doorSet.has(k)) && !win.has(k)) { facadeTile(baseFor(lx), c, sx, sy, ex.dw); const exw = tileExtent(b.x + lx - 1, tilePx, camX, 1); facadeTile(baseFor(lx - 1), 0, exw.dx, sy, exw.dw); }
         else if (wi.cob && eo && !(ground && doorSet.has(k)) && !win.has(k)) { facadeTile(baseFor(lx), c, sx, sy, ex.dw); const exe = tileExtent(b.x + lx + 1, tilePx, camX, 1); facadeTile(baseFor(lx + 1), 3, exe.dx, sy, exe.dw); }
-        // ── COB door: clean body across the 2-tile cell + a procedural jamb/lintel frame around the
-        // opening (the door LEAF is drawn separately by door-leaves.js, swung on its hinge). NO baked
-        // south_doorway facade — the wall stays continuous grey stone with a framed opening. ───────
-        else if (wi.cob && ground && doorSet.has(k) && dx >= 2 && dx < s.w - 2) {
-          const ex2 = tileExtent(b.x + lx, tilePx, camX, 2);
-          facadeTile(baseFor(lx), c, sx, sy, ex.dw);
-          const ex2b = tileExtent(b.x + lx + 1, tilePx, camX, 1);
-          facadeTile(baseFor(lx + 1), c + 1, ex2b.dx, sy, ex2b.dw);
+        // ── STRUCTURED door: clean body across a 2-tile cell + a procedural jamb/lintel frame around
+        // the opening (the door LEAF is drawn separately by door-leaves.js, swung on its hinge). NO
+        // baked south_doorway facade — the wall stays a continuous body with a framed opening. Fires
+        // at ANY valid south-perimeter door position (incl. dx=0 / the east edge): the 2-tile door
+        // cell shifts INWARD when the door sits on a section edge so the frame + body never spill off
+        // the wall. door-leaves.js already swings the leaf at every fp.door, so it now seats in a
+        // real framed opening everywhere, not just mid-span. ─────────────────────────────────────
+        else if (wi.cob && ground && doorSet.has(k)) {
+          // pick the 2-tile cell: prefer (lx, lx+1); if lx is the east-most column, use (lx-1, lx).
+          const eastEdge = (dx >= s.w - 1) || floorSet.has((lx + 1) + ',' + ly);
+          const cellLx = eastEdge ? lx - 1 : lx;
+          const cellC = cellLx - s.x0;
+          const ex2 = tileExtent(b.x + cellLx, tilePx, camX, 2);
+          const cellSx = tileExtent(b.x + cellLx, tilePx, camX, 1).dx;
+          // clean body across both cell tiles
+          facadeTile(baseFor(cellLx), cellC, cellSx, sy, tileExtent(b.x + cellLx, tilePx, camX, 1).dw);
+          const exB = tileExtent(b.x + cellLx + 1, tilePx, camX, 1);
+          facadeTile(baseFor(cellLx + 1), cellC + 1, exB.dx, sy, exB.dw);
           const tone = wallTone(wi.south_base);
           const oW = Math.round(ex2.dw * 0.56), oH = Math.round(wH * 0.82);
-          const oX = sx + Math.round((ex2.dw - oW) / 2), oY = sy + wH - oH; // bottom-aligned doorway
+          const oX = cellSx + Math.round((ex2.dw - oW) / 2), oY = sy + wH - oH; // bottom-aligned doorway
           drawApertureFrame(ctx, oX, oY, oW, oH, tone.frame, tone.shadow, Math.max(2, Math.round(t * 0.07)));
-          skip.add(dx + 1);
+          if (!eastEdge) skip.add(dx + 1); // the forward cell partner is painted here; skip its own pass
         }
         // ── COB window: clean body + a small framed window OBJECT in the upper-middle of ONE tile. ─
         else if (wi.cob && win.has(k) && dx >= 1 && dx < s.w - 1) {
