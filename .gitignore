@@ -20,3 +20,18 @@ worlds/
 scripts/asset-corpus/out/batches/
 scripts/.bursts/
 scripts/.pixellab_inflight.json
+
+# Embedded reference repo (has its own .git — must not be nested) + local caches/dumps
+skeleton-viewer/
+.playwright-mcp/
+.superpowers/
+screenshots/
+__pycache__/
+*.pyc
+.claude/worktrees/
+# loose debug captures dropped at repo root (keep assets/**, only ignore root-level)
+/*.png
+/*.jpeg
+/*.jpg
+/gl-console.txt
+/fv-capture-*.txt
