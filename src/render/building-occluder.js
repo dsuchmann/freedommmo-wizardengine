@@ -65,10 +65,43 @@ export function tileExtent(wx, tilePx, camX, span) {
   return { dx, dw };
 }
 
+// Average opaque colour of a wall image, cached per-image — used to tint the procedural aperture
+// frame to a darker shade of the actual wall tone at runtime (so door/window frames seat into the
+// wall whatever the swatch tone is). Returns { frame, shadow } CSS colours or a safe grey default.
+const _toneCache = new WeakMap();
+let _toneCv = null, _toneCx = null;
+function wallTone(img) {
+  if (!img || !img.naturalWidth) return { frame: '#6b6b6b', shadow: '#3c3c3c' };
+  const hit = _toneCache.get(img);
+  if (hit) return hit;
+  try {
+    if (!_toneCv) { _toneCv = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(16, 16) : document.createElement('canvas'); _toneCv.width = 16; _toneCv.height = 16; _toneCx = _toneCv.getContext('2d', { willReadFrequently: true }); }
+    _toneCx.clearRect(0, 0, 16, 16);
+    _toneCx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, 0, 0, 16, 16);
+    const d = _toneCx.getImageData(0, 0, 16, 16).data;
+    let r = 0, g = 0, b = 0, n = 0;
+    for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 40) { r += d[i]; g += d[i + 1]; b += d[i + 2]; n++; }
+    if (!n) return { frame: '#6b6b6b', shadow: '#3c3c3c' };
+    r /= n; g /= n; b /= n;
+    const clamp = (v) => Math.max(0, Math.min(255, v | 0));
+    const frame = `rgb(${clamp(r * 0.62)},${clamp(g * 0.62)},${clamp(b * 0.62)})`;
+    const shadow = `rgb(${clamp(r * 0.34)},${clamp(g * 0.34)},${clamp(b * 0.34)})`;
+    const tone = { frame, shadow };
+    _toneCache.set(img, tone);
+    return tone;
+  } catch { return { frame: '#6b6b6b', shadow: '#3c3c3c' }; }
+}
+
 // Cutaway shape — radial by default (consistent with the interior). Live-tunable from the
 // console: window._occluderSpot.mode = 'band' | 'circle', radii, or .enabled = false.
 export const SPOT = { mode: 'circle', radiusTiles: 2.6, bandHalfTiles: 1.7, enabled: true, clipBelowFeetTiles: 0.4 };
 if (typeof window !== 'undefined') window._occluderSpot = SPOT;
+
+// Window-as-OBJECT fit: draw a proper window object (transparent surround) over a CLEAN wall tile at
+// proper proportion + position — replacing the old baked south_window facade (which read as a squished
+// oval) and the legacy cutout. Live-tunable from the console (window._windowFit).
+export const WINDOW_FIT = { wTiles: 1.3, hTiles: 1.5, yFrac: 0.32, enabled: true };
+if (typeof window !== 'undefined') window._windowFit = WINDOW_FIT;
 
 // Roof engine (the SAME module the worker bakes with) — lazy + guarded so a roof failure never
 // breaks the frame (mirrors roof-overlay.js).
@@ -122,6 +155,16 @@ function pilotPiece(b, piece, opts) {
   if (!b || !b.biome || !b.wallSlug) return null;
   return _imageCache.get(wallAssetDir(b.biome, b.wallSlug) + wallPieceFile(piece, opts));
 }
+// True for the cob pilot — buildings whose grey-stone cob look gets the dedicated foundation /
+// cap / quoin / window-object pieces + procedural door+window frames. Gated by wallSlug so the
+// other grassland materials (fieldstone/wattle/timber) keep their existing facade look untouched.
+export function isCob(b) { return !!(b && b.wallSlug === 'cob'); }
+// Load a raw cob piece by bare filename (the foundation/cap/quoin/window-obj live outside the
+// wallPieceFile naming scheme). Null until loaded (one-frame lazy, same as every other piece).
+function cobPiece(b, file) {
+  if (!isCob(b) || !b.biome) return null;
+  return _imageCache.get(wallAssetDir(b.biome, b.wallSlug) + file);
+}
 function wallImgs(b) {
   const w = (piece, opts) => pilotPiece(b, piece, opts) || getWallImg(piece);
   const wear = { wear: 'normal' };
@@ -143,7 +186,37 @@ function wallImgs(b) {
     // True only when the per-(biome,wallSlug) pilot edge_ew loaded — a full-height structured quoin
     // strip whose left 16px is the corner post. The stone_brick fallback edge_ew is a flat trim.
     edgeIsQuoin: !!pilotPiece(b, 'edge_ew', wear),
+    // ── Cob pilot extras (null for every other material) ──────────────────────────────
+    cob: isCob(b),
+    cob_foundation: cobPiece(b, 'south_foundation__normal.png'), // 64×28 seamless ground band
+    cob_cap: cobPiece(b, 'south_cap__normal.png'),               // 64×10 seamless top coping
+    cob_quoin: cobPiece(b, 'south_quoin__normal.png'),           // 32×128 vertical corner post
+    cob_window: cobPiece(b, 'south_window_obj__normal.png'),     // ~48×56 window OBJECT (transparent surround)
   };
+}
+
+// Procedural jamb+lintel frame around an aperture (door/window) so the opening seats into the wall
+// instead of floating. Draws ONLY a few-px border (never clears the centre — the wall must stay
+// opaque; the window object / door leaf fills the opening). `frameCol` is a darker shade of the
+// wall tone, `shadowCol` a deeper inner-reveal line. (x,y,w,h) is the OPENING rect in screen px;
+// `px` the frame thickness. Border is drawn OUTSIDE the opening (jambs left/right, lintel top,
+// sill bottom) so it overlaps the wall, not the glass.
+function drawApertureFrame(ctx, x, y, w, h, frameCol, shadowCol, px) {
+  ctx.save();
+  const f = Math.max(2, Math.round(px));
+  // jamb boards (left/right) + lintel (top) + sill (bottom) — frame colour
+  ctx.fillStyle = frameCol;
+  ctx.fillRect(x - f, y - f, w + 2 * f, f);          // lintel (top)
+  ctx.fillRect(x - f, y + h, w + 2 * f, f);          // sill (bottom)
+  ctx.fillRect(x - f, y, f, h);                      // left jamb
+  ctx.fillRect(x + w, y, f, h);                      // right jamb
+  // inner reveal line (1px, darker) hugging the opening so it reads recessed
+  ctx.fillStyle = shadowCol;
+  ctx.fillRect(x - 1, y - 1, w + 2, 1);
+  ctx.fillRect(x - 1, y + h, w + 2, 1);
+  ctx.fillRect(x - 1, y, 1, h);
+  ctx.fillRect(x + w, y, 1, h);
+  ctx.restore();
 }
 
 // Does building b occlude a player standing at world tile (px,py)? True when the player is within
@@ -187,6 +260,11 @@ export function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
     const vs = wi.south_base_variants;
     return (vs && vs.length > 1) ? vs[runBondVariant(col, vs.length)] : wi.south_base;
   };
+  // Cob uses the dedicated grey QUOIN on the E/W edges for its corners, so suppress the brown
+  // timber south_corner_west/east pieces (they clash with the grey stone) — back-fill the outboard
+  // tile with clean body instead. Other materials keep their authored corner pieces.
+  const scw = wi.cob ? null : wi.south_corner_west;
+  const sce = wi.cob ? null : wi.south_corner_east;
   const facadeTile = (img, c, dx, dy, dw) => {
     if (!img) return;
     const ew = dw || (t + wp);
@@ -214,8 +292,10 @@ export function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
         facadeTile(baseFor(lx), lx - s.x0, sx, sy, ex.dw);
         // Corner pieces sit one tile OUTSIDE the footprint; their buttress shoulder is transparent,
         // so back-fill a south_base under the outboard tile first (no see-through to terrain).
-        if (wo && wi.south_corner_west) { const exw = tileExtent(b.x + lx - 1, tilePx, camX, 1); facadeTile(baseFor(lx - 1), 0, exw.dx, sy, exw.dw); facadeTile(wi.south_corner_west, 0, exw.dx, sy, exw.dw); }
-        else if (eo && wi.south_corner_east) { const exe = tileExtent(b.x + lx + 1, tilePx, camX, 1); facadeTile(baseFor(lx + 1), 3, exe.dx, sy, exe.dw); facadeTile(wi.south_corner_east, 3, exe.dx, sy, exe.dw); }
+        if (wo && scw) { const exw = tileExtent(b.x + lx - 1, tilePx, camX, 1); facadeTile(baseFor(lx - 1), 0, exw.dx, sy, exw.dw); facadeTile(scw, 0, exw.dx, sy, exw.dw); }
+        else if (eo && sce) { const exe = tileExtent(b.x + lx + 1, tilePx, camX, 1); facadeTile(baseFor(lx + 1), 3, exe.dx, sy, exe.dw); facadeTile(sce, 3, exe.dx, sy, exe.dw); }
+        else if (wi.cob && wo) { const exw = tileExtent(b.x + lx - 1, tilePx, camX, 1); facadeTile(baseFor(lx - 1), 0, exw.dx, sy, exw.dw); }
+        else if (wi.cob && eo) { const exe = tileExtent(b.x + lx + 1, tilePx, camX, 1); facadeTile(baseFor(lx + 1), 3, exe.dx, sy, exe.dw); }
       }
     }
   }
@@ -224,10 +304,14 @@ export function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
   // 32x128 edge_ew is a vertical quoin/side-cap; we draw it like a wall (wH tall, stacked per
   // story) on the east + west columns just outside each section, sampling the x=0 quoin column so
   // it reads as a real corner post — killing the square-block look. The WEST edge is mirrored.
-  if (wi.edge_ew) {
+  // Cob uses the dedicated grey-stone QUOIN post (a clean full-height corner column) in place of the
+  // generic edge_ew strip; sample its whole width (it IS the post, no inner quoin column to crop).
+  const ewImg = (wi.cob && wi.cob_quoin) ? wi.cob_quoin : wi.edge_ew;
+  const ewIsQuoin = (wi.cob && wi.cob_quoin) ? false : wi.edgeIsQuoin;
+  if (ewImg) {
     const ewX = Math.round(t * EWX);
-    const iw = wi.edge_ew.naturalWidth || wi.edge_ew.width || 32, ih = wi.edge_ew.naturalHeight || wi.edge_ew.height || 128;
-    const er = ewQuoinRect(wi.edgeIsQuoin, iw, ih);
+    const iw = ewImg.naturalWidth || ewImg.width || 32, ih = ewImg.naturalHeight || ewImg.height || 128;
+    const er = ewQuoinRect(ewIsQuoin, iw, ih);
     for (const s of sections) {
       for (let dy = 0; dy < s.h; dy++) {
         const ely = s.y0 + dy;
@@ -240,7 +324,7 @@ export function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
             const exE = tileExtent(b.x + elxE, tilePx, camX, 1);
             const dxE = exE.dx + ewX;
             if (dxE + exE.dw > 0 && dxE < w && sy + wH > 0 && sy < h)
-              ctx.drawImage(wi.edge_ew, er[0], er[1], er[2], er[3], dxE, sy, exE.dw, wH + wp);
+              ctx.drawImage(ewImg, er[0], er[1], er[2], er[3], dxE, sy, exE.dw, wH + wp);
           }
           // West edge — mirrored quoin.
           if (wOpen) {
@@ -248,7 +332,7 @@ export function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
             const dxW = exW.dx - ewX;
             if (dxW + exW.dw > 0 && dxW < w && sy + wH > 0 && sy < h) {
               ctx.save(); ctx.translate(dxW + exW.dw, sy); ctx.scale(-1, 1);
-              ctx.drawImage(wi.edge_ew, er[0], er[1], er[2], er[3], 0, 0, exW.dw, wH + wp);
+              ctx.drawImage(ewImg, er[0], er[1], er[2], er[3], 0, 0, exW.dw, wH + wp);
               ctx.restore();
             }
           }
@@ -280,11 +364,80 @@ export function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
         const sy = tsy(fbY) - wH + Math.round(t * WY) - st * wH;
         if (sx + t < 0 || sx > w || sy + wH < 0 || sy > h) continue;
         const k = lx + ',' + ly, c = lx - s.x0, wo = !floorSet.has((lx - 1) + ',' + ly), eo = !floorSet.has((lx + 1) + ',' + ly);
-        if (wo && wi.south_corner_west) { facadeTile(baseFor(lx), c, sx, sy, ex.dw); const exw = tileExtent(b.x + lx - 1, tilePx, camX, 1); facadeTile(baseFor(lx - 1), 0, exw.dx, sy, exw.dw); facadeTile(wi.south_corner_west, 0, exw.dx, sy, exw.dw); }
-        else if (eo && wi.south_corner_east) { facadeTile(baseFor(lx), c, sx, sy, ex.dw); const exe = tileExtent(b.x + lx + 1, tilePx, camX, 1); facadeTile(baseFor(lx + 1), 3, exe.dx, sy, exe.dw); facadeTile(wi.south_corner_east, 3, exe.dx, sy, exe.dw); }
-        else if (ground && doorSet.has(k) && dx >= 2 && dx < s.w - 2 && (wi.south_doorway || wi.south_door)) { const ex2 = tileExtent(b.x + lx, tilePx, camX, 2); facadeWide(wi.south_doorway || wi.south_door, sx, sy, ex2.dw); skip.add(dx + 1); }
-        else if (win.has(k) && dx >= 2 && dx < s.w - 2 && wi.south_window) { const ex2 = tileExtent(b.x + lx, tilePx, camX, 2); facadeWide(wi.south_window, sx, sy, ex2.dw); skip.add(dx + 1); }
+        if (wo && scw) { facadeTile(baseFor(lx), c, sx, sy, ex.dw); const exw = tileExtent(b.x + lx - 1, tilePx, camX, 1); facadeTile(baseFor(lx - 1), 0, exw.dx, sy, exw.dw); facadeTile(scw, 0, exw.dx, sy, exw.dw); }
+        else if (eo && sce) { facadeTile(baseFor(lx), c, sx, sy, ex.dw); const exe = tileExtent(b.x + lx + 1, tilePx, camX, 1); facadeTile(baseFor(lx + 1), 3, exe.dx, sy, exe.dw); facadeTile(sce, 3, exe.dx, sy, exe.dw); }
+        // For cob, back-fill the outboard corner tile with clean body (grey quoin from the E/W pass
+        // provides the post) — but still let a door/window tile fall through to its own branch.
+        else if (wi.cob && wo && !(ground && doorSet.has(k)) && !win.has(k)) { facadeTile(baseFor(lx), c, sx, sy, ex.dw); const exw = tileExtent(b.x + lx - 1, tilePx, camX, 1); facadeTile(baseFor(lx - 1), 0, exw.dx, sy, exw.dw); }
+        else if (wi.cob && eo && !(ground && doorSet.has(k)) && !win.has(k)) { facadeTile(baseFor(lx), c, sx, sy, ex.dw); const exe = tileExtent(b.x + lx + 1, tilePx, camX, 1); facadeTile(baseFor(lx + 1), 3, exe.dx, sy, exe.dw); }
+        // ── COB door: clean body across the 2-tile cell + a procedural jamb/lintel frame around the
+        // opening (the door LEAF is drawn separately by door-leaves.js, swung on its hinge). NO baked
+        // south_doorway facade — the wall stays continuous grey stone with a framed opening. ───────
+        else if (wi.cob && ground && doorSet.has(k) && dx >= 2 && dx < s.w - 2) {
+          const ex2 = tileExtent(b.x + lx, tilePx, camX, 2);
+          facadeTile(baseFor(lx), c, sx, sy, ex.dw);
+          const ex2b = tileExtent(b.x + lx + 1, tilePx, camX, 1);
+          facadeTile(baseFor(lx + 1), c + 1, ex2b.dx, sy, ex2b.dw);
+          const tone = wallTone(wi.south_base);
+          const oW = Math.round(ex2.dw * 0.56), oH = Math.round(wH * 0.82);
+          const oX = sx + Math.round((ex2.dw - oW) / 2), oY = sy + wH - oH; // bottom-aligned doorway
+          drawApertureFrame(ctx, oX, oY, oW, oH, tone.frame, tone.shadow, Math.max(2, Math.round(t * 0.07)));
+          skip.add(dx + 1);
+        }
+        // ── COB window: clean body + a small framed window OBJECT in the upper-middle of ONE tile. ─
+        else if (wi.cob && win.has(k) && dx >= 1 && dx < s.w - 1) {
+          facadeTile(baseFor(lx), c, sx, sy, ex.dw);
+          const tone = wallTone(wi.south_base);
+          const oW = Math.round(ex.dw * 0.62), oH = Math.round(wH * 0.30);
+          const oX = sx + Math.round((ex.dw - oW) / 2), oY = sy + Math.round(wH * 0.26);
+          drawApertureFrame(ctx, oX, oY, oW, oH, tone.frame, tone.shadow, Math.max(2, Math.round(t * 0.06)));
+          if (wi.cob_window) ctx.drawImage(wi.cob_window, 0, 0, wi.cob_window.naturalWidth, wi.cob_window.naturalHeight, oX, oY, oW, oH);
+        }
+        else if (!wi.cob && ground && doorSet.has(k) && dx >= 2 && dx < s.w - 2 && (wi.south_doorway || wi.south_door)) { const ex2 = tileExtent(b.x + lx, tilePx, camX, 2); facadeWide(wi.south_doorway || wi.south_door, sx, sy, ex2.dw); skip.add(dx + 1); }
+        else if (!wi.cob && win.has(k) && dx >= 2 && dx < s.w - 2 && wi.south_window) { const ex2 = tileExtent(b.x + lx, tilePx, camX, 2); facadeWide(wi.south_window, sx, sy, ex2.dw); skip.add(dx + 1); }
         else facadeTile(baseFor(lx), c, sx, sy, ex.dw);
+      }
+    }
+  }
+
+  // ── COB foundation + cap trim (post-pass) ────────────────────────────────────────────────────
+  // Draw the heavy grey-stone FOUNDATION band across the bottom of the GROUND story and the coping
+  // CAP across the top of the TOP story, on every exposed south/north perimeter column. Drawn last
+  // so they sit cleanly over the body tiling. Tiled per-column so they span any building width.
+  if (wi.cob && (wi.cob_foundation || wi.cob_cap)) {
+    const fH = wi.cob_foundation ? Math.max(6, Math.round(t * 0.42)) : 0;  // foundation band height (px)
+    const cH = wi.cob_cap ? Math.max(5, Math.round(t * 0.26)) : 0;         // cap band height (px)
+    const drawCol = (wx, sy0base, dw) => {
+      const dx = Math.round(wx * tilePx - camX);
+      if (dx + dw < 0 || dx > w) return;
+      if (wi.cob_foundation) { const fy = sy0base + wH - fH; if (fy + fH > 0 && fy < h) ctx.drawImage(wi.cob_foundation, 0, 0, wi.cob_foundation.naturalWidth, wi.cob_foundation.naturalHeight, dx, fy, dw, fH); }
+    };
+    const drawCap = (wx, syTopBase, dw) => {
+      const dx = Math.round(wx * tilePx - camX);
+      if (dx + dw < 0 || dx > w) return;
+      if (wi.cob_cap) { const cy = syTopBase; if (cy + cH > 0 && cy < h) ctx.drawImage(wi.cob_cap, 0, 0, wi.cob_cap.naturalWidth, wi.cob_cap.naturalHeight, dx, cy, dw, cH); }
+    };
+    for (const s of sections) {
+      // SOUTH perimeter columns
+      const lr = s.y0 + s.h - 1, fbY = b.y + s.y0 + s.h;
+      for (let dx = 0; dx < s.w; dx++) {
+        const lx = s.x0 + dx;
+        if (floorSet.has(lx + ',' + (lr + 1))) continue;       // south neighbour is inside → not a south face
+        const ex = tileExtent(b.x + lx, tilePx, camX, 1);
+        const groundBase = tsy(fbY) - wH + Math.round(t * WY);                 // ground story top (st=0)
+        const topBase = tsy(fbY) - wH + Math.round(t * WY) - (stories - 1) * wH; // top story top
+        drawCol(b.x + lx, groundBase, ex.dw);
+        drawCap(b.x + lx, topBase, ex.dw);
+      }
+      // NORTH perimeter columns (cap only — foundation reads on the visible south face; the north
+      // ground band is hidden behind the building, so cap the top to finish the silhouette).
+      const nr = s.y0;
+      for (let dx = 0; dx < s.w; dx++) {
+        const lx = s.x0 + dx;
+        if (floorSet.has(lx + ',' + (nr - 1))) continue;
+        const ex = tileExtent(b.x + lx, tilePx, camX, 1);
+        const topBase = tsy(b.y + nr) - wH + Math.round(t * NY) - (stories - 1) * wH;
+        drawCap(b.x + lx, topBase, ex.dw);
       }
     }
   }
