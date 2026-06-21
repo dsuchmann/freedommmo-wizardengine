@@ -247,6 +247,7 @@ uniform float uTime;     // ms
 uniform float uFrameDur; // ms per anim frame
 out vec2 vUV;
 out float vAlpha;
+out vec2 vLocal; // must match SPRITE_FRAG_SRC (shared frag) or the anim program fails to link
 ${ANIM_FRAME_GLSL}
 void main() {
   float animBlend;
@@ -263,6 +264,7 @@ void main() {
   vUV = uv0 + aUnit * vec2(a1.w, a4.x);
   float fade = (a3.x > 0.0) ? clamp((uTime - a3.x) / 400.0, 0.0, 1.0) : 1.0;
   vAlpha = a3.w * fade;
+  vLocal = aUnit;
 }`;
 
 var ANIM_SHADOW_VERT_SRC = `#version 300 es
@@ -966,15 +968,33 @@ export class GLCompositor {
       entry.lastUsed = this.frame;        // it IS still on-screen — don't let it get evicted
       // (entry.bmp left unchanged so needsUpload stays true → re-uploaded a later frame)
     } else if (needsUpload) {
-      var tex = entry ? entry.tex : gl.createTexture();
-      gl.bindTexture(gl.TEXTURE_2D, tex);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      entry = { tex: tex, bmp: bitmap, lastUsed: this.frame };
-      this.textures.set(key, entry);
+      // Allocate each chunk's texture store ONCE, then upload pixels with texSubImage2D
+      // (an in-place DMA). The old code re-specced the whole store with the DOM-source
+      // texImage2D on EVERY upload (first stream-in AND every repaint); on ANGLE/D3D11 that
+      // recreates the GPU texture resource + re-stages the full ~16.8MB image (measured
+      // ~131ms/upload), and a burst of new chunks at a run-speed boundary crossing stacked
+      // these into a ~851ms draw hitch. texSubImage2D into a pre-allocated store skips the
+      // resource recreation. Visual result is identical (same pixelStorei state applies).
+      var bw = bitmap.width, bh = bitmap.height;
+      var tex;
+      if (entry && entry.tex && entry.w === bw && entry.h === bh) {
+        tex = entry.tex;
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
+        entry.bmp = bitmap; entry.lastUsed = this.frame;
+      } else {
+        if (entry && entry.tex) gl.deleteTexture(entry.tex); // size changed (rare) — realloc
+        tex = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, bw, bh, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); // allocate store ONCE (no staging)
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        entry = { tex: tex, bmp: bitmap, w: bw, h: bh, lastUsed: this.frame };
+        this.textures.set(key, entry);
+      }
       this._uploadsThisFrame++;
     } else {
       gl.bindTexture(gl.TEXTURE_2D, entry.tex);
