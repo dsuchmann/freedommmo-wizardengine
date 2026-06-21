@@ -207,7 +207,7 @@ export function drawRoof(ctx, grid, material, features, cfg, view) {
   // on the south wall / gable ends instead of floating above it. Drawn FIRST so the
   // roof surface sits cleanly on top.
   if (!cfg.noSkirt) for (const t of order) {
-    if (t.isOverhang || t.role === 'eave') drawSkirt(ctx, grid, view, t, material);
+    if (t.isOverhang || t.role === 'eave') drawSkirt(ctx, grid, view, t, material, cfg);
   }
 
   // overlap tiles slightly to kill inter-facet seams
@@ -283,8 +283,26 @@ function drawSkirt(ctx, grid, view, t, material, cfg) {
     ctx.moveTo(top1.x, top1.y); ctx.lineTo(top2.x, top2.y);
     ctx.lineTo(bot2.x, bot2.y); ctx.lineTo(bot1.x, bot1.y); ctx.closePath();
     const dShade = d === 's' ? 0.88 : d === 'n' ? 0.5 : 0.66; // sunlit south / shadowed north
-    ctx.fillStyle = material.fasciaColor ? material.fasciaColor(dShade) : 'rgba(30,24,18,0.9)';
-    ctx.fill();
+    const fasciaTex = cfg && cfg.roofFascia;
+    if (fasciaTex) {
+      // skin the eave/rake board with the authored roof_fascia.png, clipped to the skirt
+      // quad, then dShade-darkened. Degrades to the procedural fasciaColor below if absent.
+      ctx.save();
+      ctx.clip();
+      const minX = Math.min(top1.x, top2.x, bot1.x, bot2.x), maxX = Math.max(top1.x, top2.x, bot1.x, bot2.x);
+      const minY = Math.min(top1.y, top2.y), maxY = Math.max(bot1.y, bot2.y);
+      ctx.imageSmoothingEnabled = false;
+      try {
+        ctx.drawImage(fasciaTex, 0, 0, fasciaTex.width || 64, fasciaTex.height || 64,
+          minX, minY, Math.max(1, maxX - minX), Math.max(1, maxY - minY));
+      } catch (e) { /* bad bitmap */ }
+      ctx.fillStyle = `rgba(0,0,0,${Math.min(0.5, (1 - dShade) * 1.1)})`;
+      ctx.fill();
+      ctx.restore();
+    } else {
+      ctx.fillStyle = material.fasciaColor ? material.fasciaColor(dShade) : 'rgba(30,24,18,0.9)';
+      ctx.fill();
+    }
   }
 }
 

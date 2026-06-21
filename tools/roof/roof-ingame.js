@@ -172,6 +172,9 @@ export function drawRoofForBuilding(ctx, b, camX, camY, tilePx, opts = {}) {
   // procedural material (e.g. the browser preview with no cache).
   e.renderCfg.texture = opts.roofTexture
     || ((ROOF_TUNING.useBiomeTexture && opts.imageCache) ? getBiomeGroundTexture(e.biome, opts.imageCache) : null);
+  // eave trim: the authored roof_fascia.png bitmap (from the occluder via the FROZEN
+  // opts). Null in the preview (no fascia) → drawSkirt falls back to fasciaColor.
+  e.renderCfg.roofFascia = opts.roofFascia || null;
   drawRoof(ctx, e.grid, e.material, features, e.renderCfg, view);
   return e;
 }
