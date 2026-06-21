@@ -4,6 +4,15 @@
 // exact projection (flat top-down, lifted onto the wall band). Used by BOTH the
 // in-game overlay (src/render/roof-overlay.js) and the localhost preview page, so
 // they render identically. Roof grids/materials are cached per building.
+//
+// TWO SURFACE PATHS: in-game skins each facet with a 64x64 roof_top PNG via
+// opts.roofTexture (-> cfg.texture -> drawTexturedTile, continuous slope-space UV);
+// the localhost preview passes no texture -> the procedural material.fillTile. Both
+// must look right. opts is FROZEN by COORDINATION as
+// {stories, northGapTiles, imageCache, roofTexture, roofFascia}; roofFascia
+// (roof_fascia.png) skins the eave/rake board in drawSkirt, falling back to the
+// procedural fasciaColor when absent. Features run a GAME-SAFE allowlist
+// (finial/dormer/chimney) — no crude turret/spire/buttress in the game view.
 
 import { buildRoofGrid } from './roof-geometry.js';
 import { makeMaterial } from './roof-materials.js';
