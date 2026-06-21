@@ -35,6 +35,17 @@ export function cropBox(srcW, srcH, dx, dy, dw, dh) {
   return { sx: 0, sy: 0, sw: srcW, sh: srcH, dx, dy, dw, dh };
 }
 
+// Boundary-derived integer screen extent of `span` tiles starting at world tile wx. dx is the
+// rounded left boundary; dw bridges to the rounded right boundary so adjacent tiles share the
+// EXACT boundary pixel (tile N's dx+dw == tile N+1's dx). Replaces the old fixed `t+wp` / `2t+wp`
+// dest width whose +1 pad over a rounded origin alternately overlapped/gapped neighbours by ~1px at
+// non-integer tilePx (e.g. 62.4 at default zoom), double-painting a seam column.
+export function tileExtent(wx, tilePx, camX, span) {
+  const dx = Math.round(wx * tilePx - camX);
+  const dw = Math.round((wx + span) * tilePx - camX) - dx;
+  return { dx, dw };
+}
+
 // Cutaway shape — radial by default (consistent with the interior). Live-tunable from the
 // console: window._occluderSpot.mode = 'band' | 'circle', radii, or .enabled = false.
 export const SPOT = { mode: 'circle', radiusTiles: 2.6, bandHalfTiles: 1.7, enabled: true, clipBelowFeetTiles: 0.4 };
@@ -119,8 +130,8 @@ function occludes(b, px, py) {
 
 // Re-draw ONE building's walls EXACTLY as the worker bakes them (worker-chunk-renderer.js wall
 // post-pass): legacy strips use the full `(0,0,W,128)` crop (isotropic — matches building-renderer.js;
-// no vertical stretch), same WALL_CONFIG offsets, STACKED `stories` tall, door on the ground storey
-// only. World→screen via camX/camY (CSS px, same space as drawChunk).
+// no vertical stretch), boundary-derived tile extents (no seams), same WALL_CONFIG offsets, STACKED
+// `stories` tall, door on the ground storey only. World→screen via camX/camY (CSS px, same space as drawChunk).
 export function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
   const wi = wallImgs(b);
   if (!wi.south_base) return;
@@ -152,16 +163,20 @@ export function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
   const SY = (vb) => vb === 'capmid' ? [0, 106] : vb === 'midfound' ? [18, 128] : vb === 'mid' ? [18, 106] : [0, 128];
   const vbandFor = (st) => stories === 1 ? 'full' : (st === 0 ? 'midfound' : (st === stories - 1 ? 'capmid' : 'mid'));
   // c = section-relative tile column (so each building's facade starts clean at its left edge).
-  const facadeTile = (img, c, dx, dy, vb) => {
-    if (!P) { const cb = cropBox(img.naturalWidth || 32, img.naturalHeight || 128, dx, dy, t + wp, wH + wp); ctx.drawImage(img, cb.sx, cb.sy, cb.sw, cb.sh, cb.dx, cb.dy, cb.dw, cb.dh); return; }
+  // dw = boundary-derived screen width for this tile (from tileExtent); falls back to the old
+  // fixed pad only if a caller omits it (defensive — every live call now passes one).
+  const facadeTile = (img, c, dx, dy, vb, dw) => {
+    const ew = dw || (t + wp);
+    if (!P) { const cb = cropBox(img.naturalWidth || 32, img.naturalHeight || 128, dx, dy, ew, wH + wp); ctx.drawImage(img, cb.sx, cb.sy, cb.sw, cb.sh, cb.dx, cb.dy, cb.dw, cb.dh); return; }
     const ux = dx - ((((c) % 4) + 4) % 4) * t, s = SY(vb);
-    ctx.save(); ctx.beginPath(); ctx.rect(dx, dy, t + wp, wH + wp); ctx.clip();
+    ctx.save(); ctx.beginPath(); ctx.rect(dx, dy, ew, wH + wp); ctx.clip();
     ctx.drawImage(img, 0, s[0], 128, s[1] - s[0], ux, dy, 4 * t, wH + wp); ctx.restore();
   };
-  const facadeWide = (img, dx, dy, vb) => {
-    if (!P) { const cb = cropBox(img.naturalWidth || 64, img.naturalHeight || 128, dx, dy, 2 * t + wp, wH + wp); ctx.drawImage(img, cb.sx, cb.sy, cb.sw, cb.sh, cb.dx, cb.dy, cb.dw, cb.dh); return; }
+  const facadeWide = (img, dx, dy, vb, dw) => {
+    const ew = dw || (2 * t + wp);
+    if (!P) { const cb = cropBox(img.naturalWidth || 64, img.naturalHeight || 128, dx, dy, ew, wH + wp); ctx.drawImage(img, cb.sx, cb.sy, cb.sw, cb.sh, cb.dx, cb.dy, cb.dw, cb.dh); return; }
     const ux = dx - t, s = SY(vb); // the facade's centred 2 tiles (window/door) land at dx..dx+2t
-    ctx.save(); ctx.beginPath(); ctx.rect(dx, dy, 2 * t + wp, wH + wp); ctx.clip();
+    ctx.save(); ctx.beginPath(); ctx.rect(dx, dy, ew, wH + wp); ctx.clip();
     ctx.drawImage(img, 0, s[0], 128, s[1] - s[0], ux, dy, 4 * t, wH + wp); ctx.restore();
   };
 
@@ -171,15 +186,15 @@ export function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
     for (let dx = 0; dx < s.w; dx++) {
       const lx = s.x0 + dx;
       if (floorSet.has(lx + ',' + (nr - 1))) continue;
-      const sx = tsx(b.x + lx);
+      const ex = tileExtent(b.x + lx, tilePx, camX, 1); const sx = ex.dx;
       const wo = !floorSet.has((lx - 1) + ',' + nr), eo = !floorSet.has((lx + 1) + ',' + nr);
       for (let st = 0; st < stories; st++) {
         const sy = tsy(b.y + nr) - wH + Math.round(t * NY) - st * wH;
         if (sx + t < 0 || sx > w || sy + wH < 0 || sy > h) continue;
         const vb = vbandFor(st);
-        facadeTile(wi.south_base, lx - s.x0, sx, sy, vb);
-        if (wo && wi.south_corner_west) facadeTile(wi.south_corner_west, 0, sx - t, sy, vb);
-        else if (eo && wi.south_corner_east) facadeTile(wi.south_corner_east, 3, sx + t, sy, vb);
+        facadeTile(wi.south_base, lx - s.x0, sx, sy, vb, ex.dw);
+        if (wo && wi.south_corner_west) { const exw = tileExtent(b.x + lx - 1, tilePx, camX, 1); facadeTile(wi.south_corner_west, 0, exw.dx, sy, vb, exw.dw); }
+        else if (eo && wi.south_corner_east) { const exe = tileExtent(b.x + lx + 1, tilePx, camX, 1); facadeTile(wi.south_corner_east, 3, exe.dx, sy, vb, exe.dw); }
       }
     }
   }
@@ -233,14 +248,15 @@ export function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
         if (skip.has(dx)) continue;
         const lx = s.x0 + dx, ly = lr;
         if (floorSet.has(lx + ',' + (ly + 1))) continue;
-        const sx = tsx(b.x + lx), sy = tsy(fbY) - wH + Math.round(t * WY) - st * wH;
+        const ex = tileExtent(b.x + lx, tilePx, camX, 1); const sx = ex.dx;
+        const sy = tsy(fbY) - wH + Math.round(t * WY) - st * wH;
         if (sx + t < 0 || sx > w || sy + wH < 0 || sy > h) continue;
         const k = lx + ',' + ly, c = lx - s.x0, vb = vbandFor(st), wo = !floorSet.has((lx - 1) + ',' + ly), eo = !floorSet.has((lx + 1) + ',' + ly);
-        if (wo && wi.south_corner_west) { facadeTile(wi.south_base, c, sx, sy, vb); facadeTile(wi.south_corner_west, 0, sx - t, sy, vb); }
-        else if (eo && wi.south_corner_east) { facadeTile(wi.south_base, c, sx, sy, vb); facadeTile(wi.south_corner_east, 3, sx + t, sy, vb); }
-        else if (ground && doorSet.has(k) && dx >= 2 && dx < s.w - 2 && (wi.south_doorway || wi.south_door)) { facadeWide(wi.south_doorway || wi.south_door, sx, sy, vb); skip.add(dx + 1); }
-        else if (win.has(k) && dx >= 2 && dx < s.w - 2 && wi.south_window) { facadeWide(wi.south_window, sx, sy, vb); skip.add(dx + 1); }
-        else facadeTile(wi.south_base, c, sx, sy, vb);
+        if (wo && wi.south_corner_west) { facadeTile(wi.south_base, c, sx, sy, vb, ex.dw); const exw = tileExtent(b.x + lx - 1, tilePx, camX, 1); facadeTile(wi.south_corner_west, 0, exw.dx, sy, vb, exw.dw); }
+        else if (eo && wi.south_corner_east) { facadeTile(wi.south_base, c, sx, sy, vb, ex.dw); const exe = tileExtent(b.x + lx + 1, tilePx, camX, 1); facadeTile(wi.south_corner_east, 3, exe.dx, sy, vb, exe.dw); }
+        else if (ground && doorSet.has(k) && dx >= 2 && dx < s.w - 2 && (wi.south_doorway || wi.south_door)) { const ex2 = tileExtent(b.x + lx, tilePx, camX, 2); facadeWide(wi.south_doorway || wi.south_door, sx, sy, vb, ex2.dw); skip.add(dx + 1); }
+        else if (win.has(k) && dx >= 2 && dx < s.w - 2 && wi.south_window) { const ex2 = tileExtent(b.x + lx, tilePx, camX, 2); facadeWide(wi.south_window, sx, sy, vb, ex2.dw); skip.add(dx + 1); }
+        else facadeTile(wi.south_base, c, sx, sy, vb, ex.dw);
       }
     }
   }
