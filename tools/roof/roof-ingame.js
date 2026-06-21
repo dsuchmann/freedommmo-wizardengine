@@ -139,11 +139,12 @@ export function drawRoofForBuilding(ctx, b, camX, camY, tilePx, opts = {}) {
     (riseTiles * tilePx) / Math.max(1, e.grid.maxHeight));
   const view = makeGameView(b.x, b.y, camX, camY, tilePx, { wallLift, heightScale: hScale });
   const features = ROOF_TUNING.surfaceOnly ? null : opts.features || null;
-  // Skin the roof with the biome's GROUND texture (same pool as the soil) when the
-  // worker passes its imageCache; falls back to the procedural material if the tile
-  // isn't loaded yet or there's no cache (e.g. the browser preview).
-  e.renderCfg.texture = (ROOF_TUNING.useBiomeTexture && opts.imageCache)
-    ? getBiomeGroundTexture(e.biome, opts.imageCache) : null;
+  // Skin the roof with the building's ASSIGNED roof-material texture (thatch/wood_shingle/...)
+  // when provided — so a roof reads as a ROOF, not as soil. Falls back to the biome GROUND
+  // texture (same pool as the soil) when no roof material is assigned/loaded, then to the
+  // procedural material (e.g. the browser preview with no cache).
+  e.renderCfg.texture = opts.roofTexture
+    || ((ROOF_TUNING.useBiomeTexture && opts.imageCache) ? getBiomeGroundTexture(e.biome, opts.imageCache) : null);
   drawRoof(ctx, e.grid, e.material, features, e.renderCfg, view);
   return e;
 }

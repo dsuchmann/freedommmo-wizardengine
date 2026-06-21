@@ -18,6 +18,7 @@ import { WALL_CONFIG } from './wall-config.js';
 import { getWallImg } from './building-renderer.js';
 import { buildingFloors } from './building-shadow.js';
 import { queryBuildingTile } from './building-tile-query.js';
+import { wallAssetDir, wallPieceFile, roofAssetDir, roofTextureFile } from '../../sim/world/buildings/building-material-registry.js';
 
 // Tiles the wall+roof silhouette projects NORTH of the footprint (mirrors building-shadow.js
 // NORTH_SILHOUETTE_BASE / resolved-buildings NORTH_CLAIM: 8 for a 1-storey wall+roof, +4/storey).
@@ -51,6 +52,13 @@ const _imageCache = {
   },
 };
 
+// The building's assigned roof-material surface texture (thatch/wood_shingle/clay_tile/...),
+// loaded lazily; null until loaded or when the building has no roofSlug (→ roof-ingame falls
+// back to the biome ground texture). Lets a grassland roof read as a ROOF, not as soil.
+function roofTexFor(b) {
+  return (b && b.biome && b.roofSlug) ? _imageCache.get(roofAssetDir(b.biome, b.roofSlug) + roofTextureFile(0)) : null;
+}
+
 // Empty-tile gap to the building NORTH of us — mirrors the worker's roof clamp so the re-drawn
 // roof rises to the SAME height as the baked one and aligns exactly.
 function northGapTiles(b) {
@@ -61,11 +69,27 @@ function northGapTiles(b) {
   return 5;
 }
 
-function wallImgs() {
+// Resolve a building's wall sprite set. Per-(biome,wallSlug) pilot assets when assigned AND
+// loaded; otherwise the global stone_brick fallback (getWallImg) — so unassigned biomes and
+// not-yet-loaded tiles keep working (honest absence, one-frame fallback then textured, same
+// convention the roof texture uses). `isPilot` tells drawWalls which source-rect scheme to use
+// (pilot pieces are 128² facades; stone_brick are pre-cut 32/64-wide strips).
+function pilotPiece(b, piece, opts) {
+  if (!b || !b.biome || !b.wallSlug) return null;
+  return _imageCache.get(wallAssetDir(b.biome, b.wallSlug) + wallPieceFile(piece, opts));
+}
+function wallImgs(b) {
+  const w = (piece, opts) => pilotPiece(b, piece, opts) || getWallImg(piece);
+  const wear = { wear: 'normal' };
+  const base = w('south_base', wear);
   return {
-    south_base: getWallImg('south_base'), south_window: getWallImg('south_window'),
-    south_door: getWallImg('south_door'), south_corner_west: getWallImg('south_corner_west'),
-    south_corner_east: getWallImg('south_corner_east'), edge_ew: getWallImg('edge_ew'),
+    south_base: base,
+    south_window: w('south_window', { shape: (b && b.windowShape) || 'arched' }),
+    south_door: w('south_door', { shape: (b && b.doorShape) || 'plank' }),
+    south_corner_west: w('south_corner_west', wear),
+    south_corner_east: w('south_corner_east', wear),
+    edge_ew: w('edge_ew', wear),
+    isPilot: !!(base && (base.naturalWidth || 0) >= 96),
   };
 }
 
@@ -85,7 +109,8 @@ function occludes(b, px, py) {
 // Re-draw ONE building's walls EXACTLY as the worker bakes them (worker-chunk-renderer.js wall
 // post-pass): same `0,8,…,112` crop, same WALL_CONFIG offsets, STACKED `stories` tall, door on
 // the ground storey only. World→screen via camX/camY (CSS px, same space as drawChunk).
-function drawWalls(ctx, b, wi, camX, camY, tilePx, w, h) {
+function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
+  const wi = wallImgs(b);
   if (!wi.south_base) return;
   const t = Math.round(tilePx), wp = 1;
   const wH = Math.round(tilePx * WALL_CONFIG.wallHeight);
@@ -99,6 +124,17 @@ function drawWalls(ctx, b, wi, camX, camY, tilePx, w, h) {
   for (const s of sections) for (let dy = 0; dy < s.h; dy++) for (let dx = 0; dx < s.w; dx++) floorSet.add((s.x0 + dx) + ',' + (s.y0 + dy));
   const doorSet = new Set((fp.doors || []).map(d => d.x + ',' + d.y));
 
+  // Source-rect schemes. Pilot pieces are raw 128² facades: a base column samples a 32-wide
+  // slice cycled by tile-x (so the 4-bay facade reconstructs AND tiles to any width); corners
+  // take the facade's left/right edge post; window/door take the centred 64. Legacy stone_brick
+  // pieces are pre-cut 32/64-wide strips with an 8px top inset (0,8,..,112).
+  const P = wi.isPilot;
+  const colRect = (lx) => P ? [((((lx) % 4) + 4) % 4) * 32, 0, 32, 128] : [0, 8, 32, 112];
+  const cwRect = P ? [0, 0, 32, 128] : [0, 8, 32, 112];
+  const ceRect = P ? [96, 0, 32, 128] : [0, 8, 32, 112];
+  const wideRect = P ? [32, 0, 64, 128] : [0, 8, 64, 112];
+  const di = (img, r, dx, dy, dw, dh) => ctx.drawImage(img, r[0], r[1], r[2], r[3], dx, dy, dw, dh);
+
   // NORTH walls — stacked
   for (const s of sections) {
     const nr = s.y0;
@@ -110,9 +146,9 @@ function drawWalls(ctx, b, wi, camX, camY, tilePx, w, h) {
       for (let st = 0; st < stories; st++) {
         const sy = tsy(b.y + nr) - wH + Math.round(t * NY) - st * wH;
         if (sx + t < 0 || sx > w || sy + wH < 0 || sy > h) continue;
-        ctx.drawImage(wi.south_base, 0, 8, 32, 112, sx, sy, t + wp, wH + wp);
-        if (wo && wi.south_corner_west) ctx.drawImage(wi.south_corner_west, 0, 8, 32, 112, sx - t, sy, t + wp, wH + wp);
-        else if (eo && wi.south_corner_east) ctx.drawImage(wi.south_corner_east, 0, 8, 32, 112, sx + t, sy, t + wp, wH + wp);
+        di(wi.south_base, colRect(lx), sx, sy, t + wp, wH + wp);
+        if (wo && wi.south_corner_west) di(wi.south_corner_west, cwRect, sx - t, sy, t + wp, wH + wp);
+        else if (eo && wi.south_corner_east) di(wi.south_corner_east, ceRect, sx + t, sy, t + wp, wH + wp);
       }
     }
   }
@@ -121,6 +157,7 @@ function drawWalls(ctx, b, wi, camX, camY, tilePx, w, h) {
   if (wi.edge_ew) {
     const ewH = Math.round(t * EWH), ewX = Math.round(t * EWX);
     const iw = wi.edge_ew.naturalWidth || wi.edge_ew.width || 32, ih = wi.edge_ew.naturalHeight || wi.edge_ew.height || 32;
+    const ewRect = P ? [0, 0, 32, 128] : [0, 0, iw, ih];
     for (const s of sections) {
       for (let dy = 0; dy < s.h; dy++) {
         const ely = s.y0 + dy;
@@ -129,7 +166,7 @@ function drawWalls(ctx, b, wi, camX, camY, tilePx, w, h) {
           const ex = tsx(b.x + elx) + ewX, ey = tsy(b.y + ely);
           if (ex + t > 0 && ex < w && ey + ewH > 0 && ey < h) {
             ctx.save(); ctx.translate(ex + t / 2, ey + ewH / 2); ctx.rotate(Math.PI / 2);
-            ctx.drawImage(wi.edge_ew, 0, 0, iw, ih, -t / 2, -ewH / 2, t + wp, ewH + wp); ctx.restore();
+            di(wi.edge_ew, ewRect, -t / 2, -ewH / 2, t + wp, ewH + wp); ctx.restore();
           }
         }
         const wlx = s.x0 - 1;
@@ -137,7 +174,7 @@ function drawWalls(ctx, b, wi, camX, camY, tilePx, w, h) {
           const wx = tsx(b.x + wlx) - ewX, wy = tsy(b.y + ely);
           if (wx + t > 0 && wx < w && wy + ewH > 0 && wy < h) {
             ctx.save(); ctx.translate(wx + t / 2, wy + ewH / 2); ctx.rotate(Math.PI / 2); ctx.scale(-1, 1);
-            ctx.drawImage(wi.edge_ew, 0, 0, iw, ih, -t / 2, -ewH / 2, t + wp, ewH + wp); ctx.restore();
+            di(wi.edge_ew, ewRect, -t / 2, -ewH / 2, t + wp, ewH + wp); ctx.restore();
           }
         }
       }
@@ -166,11 +203,11 @@ function drawWalls(ctx, b, wi, camX, camY, tilePx, w, h) {
         const sx = tsx(b.x + lx), sy = tsy(fbY) - wH + Math.round(t * WY) - st * wH;
         if (sx + t < 0 || sx > w || sy + wH < 0 || sy > h) continue;
         const k = lx + ',' + ly, wo = !floorSet.has((lx - 1) + ',' + ly), eo = !floorSet.has((lx + 1) + ',' + ly);
-        if (wo && wi.south_corner_west) { ctx.drawImage(wi.south_base, 0, 8, 32, 112, sx, sy, t + wp, wH + wp); ctx.drawImage(wi.south_corner_west, 0, 8, 32, 112, sx - t, sy, t + wp, wH + wp); }
-        else if (eo && wi.south_corner_east) { ctx.drawImage(wi.south_base, 0, 8, 32, 112, sx, sy, t + wp, wH + wp); ctx.drawImage(wi.south_corner_east, 0, 8, 32, 112, sx + t, sy, t + wp, wH + wp); }
-        else if (ground && doorSet.has(k) && dx >= 2 && dx < s.w - 2 && wi.south_door) { ctx.drawImage(wi.south_door, 0, 8, 64, 112, sx, sy, t * 2 + wp, wH + wp); skip.add(dx + 1); }
-        else if (win.has(k) && dx >= 2 && dx < s.w - 2 && wi.south_window) { ctx.drawImage(wi.south_window, 0, 8, 64, 112, sx, sy, t * 2 + wp, wH + wp); skip.add(dx + 1); }
-        else ctx.drawImage(wi.south_base, 0, 8, 32, 112, sx, sy, t + wp, wH + wp);
+        if (wo && wi.south_corner_west) { di(wi.south_base, colRect(lx), sx, sy, t + wp, wH + wp); di(wi.south_corner_west, cwRect, sx - t, sy, t + wp, wH + wp); }
+        else if (eo && wi.south_corner_east) { di(wi.south_base, colRect(lx), sx, sy, t + wp, wH + wp); di(wi.south_corner_east, ceRect, sx + t, sy, t + wp, wH + wp); }
+        else if (ground && doorSet.has(k) && dx >= 2 && dx < s.w - 2 && wi.south_door) { di(wi.south_door, wideRect, sx, sy, t * 2 + wp, wH + wp); skip.add(dx + 1); }
+        else if (win.has(k) && dx >= 2 && dx < s.w - 2 && wi.south_window) { di(wi.south_window, wideRect, sx, sy, t * 2 + wp, wH + wp); skip.add(dx + 1); }
+        else di(wi.south_base, colRect(lx), sx, sy, t + wp, wH + wp);
       }
     }
   }
@@ -182,8 +219,7 @@ let _cv = null, _ox = null; // persistent offscreen authoring canvas
  *  blits it into the GL scene FBO via glc.drawSceneOverlayBitmap() before presentScene. */
 export function buildOccluderBitmap(buildings, camX, camY, tilePx, w, h, playerScreen, player) {
   if (!SPOT.enabled || !buildings || !buildings.length || !playerScreen || !player) return null;
-  const wi = wallImgs();
-  if (!wi.south_base) return null;
+  if (!getWallImg('south_base')) return null; // stone_brick fallback must be loaded
   const occ = buildings.filter(b => occludes(b, player.x, player.y));
   if (!occ.length) return null;
   ensureRoof();
@@ -203,8 +239,8 @@ export function buildOccluderBitmap(buildings, camX, camY, tilePx, w, h, playerS
   // More-south (closer) draws last so a nearer occluder sits over a farther one.
   occ.sort((a, b) => (a.y + a.footprint.boundingBox.h) - (b.y + b.footprint.boundingBox.h));
   for (const b of occ) {
-    drawWalls(o, b, wi, camX, camY, tilePx, w, h);
-    if (_roof) { try { _roof.drawRoofForBuilding(o, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache }); } catch { /* skip roof */ } }
+    drawWalls(o, b, camX, camY, tilePx, w, h);
+    if (_roof) { try { _roof.drawRoofForBuilding(o, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b) }); } catch { /* skip roof */ } }
   }
 
   // DEPTH GUARD: only the building ABOVE the player's feet occludes the player. The building's
@@ -240,10 +276,9 @@ export function buildOccluderBitmap(buildings, camX, camY, tilePx, w, h, playerS
  *  recolours this silhouette to a per-building depth value. Returns false if wall sprites aren't
  *  loaded yet. */
 export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
-  const wi = wallImgs();
-  if (!wi.south_base) return false;
+  if (!getWallImg('south_base')) return false; // stone_brick fallback must be loaded
   ensureRoof();
-  drawWalls(ctx, b, wi, camX, camY, tilePx, w, h);
-  if (_roof) { try { _roof.drawRoofForBuilding(ctx, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache }); } catch { /* skip roof */ } }
+  drawWalls(ctx, b, camX, camY, tilePx, w, h);
+  if (_roof) { try { _roof.drawRoofForBuilding(ctx, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b) }); } catch { /* skip roof */ } }
   return true;
 }

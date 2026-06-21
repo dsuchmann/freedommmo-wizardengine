@@ -10,6 +10,36 @@ import {
 } from './terrain-suitability.js';
 // Re-export the suitability predicates so existing consumers + tests keep importing them here.
 export { buildingTouchesWater, buildingSpansCliff } from './terrain-suitability.js';
+import { wallsForBiome, roofsForBiome, WINDOW_SHAPES, DOOR_SHAPES } from './building-material-registry.js';
+import { mix } from '../../kernel/rng.js';
+
+// ── Per-building material assignment ────────────────────────────────────────
+// Decoupled but deterministic: building generation stays untouched; we STAMP a wall +
+// roof slug (and render-time aperture shape defaults) drawn from the biome's authored
+// asset pool. Selection is RENDEZVOUS (highest-mix) hashing — stable per building, varied
+// across the settlement, and graceful under pool growth: adding a material later only moves
+// ~1/N buildings onto it, so existing villages gain variety without reshuffling. A biome
+// with no authored materials leaves the slugs undefined → renderer falls back to stone_brick.
+const WALL_SALT = 0x7741, ROOF_SALT = 0x524f, DOOR_SALT = 0x4452, WIN_SALT = 0x5749;
+function _slugInt(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (Math.imul(h, 131) + s.charCodeAt(i)) | 0; return h; }
+function _rendezvous(pool, seed, x, y, salt) {
+  let best = null, bw = -1;
+  for (let i = 0; i < pool.length; i++) {
+    const w = mix(seed, x, y, _slugInt(pool[i].slug), salt) >>> 0;
+    if (w > bw) { bw = w; best = pool[i]; }
+  }
+  return best ? best.slug : undefined;
+}
+function stampMaterials(b, s, seed) {
+  b.biome = s.biome;
+  b.wallSlug = _rendezvous(wallsForBiome(s.biome), seed, b.x, b.y, WALL_SALT);
+  b.roofSlug = _rendezvous(roofsForBiome(s.biome), seed, b.x, b.y, ROOF_SALT);
+  if (b.wallSlug) {
+    b.doorShape = DOOR_SHAPES[mix(seed, b.x, b.y, DOOR_SALT) % DOOR_SHAPES.length];
+    b.windowShape = WINDOW_SHAPES[mix(seed, b.x, b.y, WIN_SALT) % WINDOW_SHAPES.length];
+  }
+  return b;
+}
 
 // world_capital is TIER_SIZE 440 wide / TIER_RADIUS 220 — the worst-case half-footprint.
 export const MAX_SETTLEMENT_RADIUS = 220;
@@ -134,11 +164,11 @@ function settlementCandidates(seed, s) {
     // each other (mark each relocation so later ones avoid it). Drop only if truly boxed in.
     for (let bi = 0; bi < cap; bi++) {
       const b = layout.buildings[bi];
-      if (!bad[bi]) { out.push(b); continue; }
+      if (!bad[bi]) { out.push(stampMaterials(b, s, seed)); continue; }
       const at = relocateBuilding(b, localOccupied);
       if (at) {
         mark(at.x, at.y, b.footprint.boundingBox);
-        out.push({ ...b, x: at.x, y: at.y, relocatedFrom: { x: b.x, y: b.y } });
+        out.push(stampMaterials({ ...b, x: at.x, y: at.y, relocatedFrom: { x: b.x, y: b.y } }, s, seed));
       }
       // else: honest absence — no valid site within MAX_RELOCATE_RADIUS (stranded on water)
     }
