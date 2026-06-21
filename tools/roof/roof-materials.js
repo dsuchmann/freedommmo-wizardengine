@@ -242,5 +242,29 @@ export function makeMaterial(id, params = {}) {
       if (params.weathering) { poly(ctx, quad); ctx.fillStyle = `rgba(20,18,14,${0.22 * params.weathering})`; ctx.fill(); }
     },
     fasciaColor(shade) { return hsl(recipe.fascia[0], recipe.fascia[1], recipe.fascia[2] * (0.5 + 0.6 * shade)); },
+    // Round-3 (A): the accent crease/valley colour must be a DARK SHADE of THIS material's
+    // own tiles, not a bright cream line. Expose the material's base [h,s,l] as an {r,g,b}
+    // so drawAccents can derive a shadowed-fold colour from the roof's own colour.
+    baseColor() { return hslToRgb(base[0], base[1], base[2]); },
+    baseHSL() { return [base[0], base[1], base[2]]; },
   };
 }
+
+// hsl (0-360, 0-100, 0-100) -> {r,g,b} 0-255. Matches the CSS `hsl()` the recipes use, so
+// the accent colour derived from baseColor() is the same hue/sat the tiles are painted in.
+function hslToRgb(h, s, l) {
+  h = (((h % 360) + 360) % 360) / 360; s = clamp(s, 0, 100) / 100; l = clamp(l, 0, 100) / 100;
+  if (s === 0) { const v = Math.round(l * 255); return { r: v, g: v, b: v }; }
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  const hue = (t) => {
+    if (t < 0) t += 1; if (t > 1) t -= 1;
+    if (t < 1 / 6) return p + (q - p) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+    return p;
+  };
+  return { r: Math.round(hue(h + 1 / 3) * 255), g: Math.round(hue(h) * 255), b: Math.round(hue(h - 1 / 3) * 255) };
+}
+
+export { hslToRgb };

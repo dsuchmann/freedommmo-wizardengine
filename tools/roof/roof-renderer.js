@@ -258,7 +258,9 @@ export function drawRoof(ctx, grid, material, features, cfg, view) {
   // base-colour wash mutes the dense brick/course pattern into a subtle texture. Pulled
   // from cfg so the in-game bridge / preview can tune without touching the renderer.
   const texOpts = { courseTiles: cfg.texCourseTiles, eaveTiles: cfg.texEaveTiles };
-  const texWash = cfg.texWash ?? 0.42;
+  // _roofTexWash: live knob for surface texture contrast — higher = more base-colour wash =
+  // the dense authored brick/course pattern is muted into a subtler texture. Read defensively.
+  const texWash = roofKnob('_roofTexWash', cfg.texWash ?? 0.42);
 
   // overlap tiles slightly to kill inter-facet seams
   const infl = 1.4 / Math.max(8, view.tile);
@@ -292,7 +294,16 @@ export function drawRoof(ctx, grid, material, features, cfg, view) {
     } else material.fillTile(ctx, quad, t, shade, view, grid);
   }
 
-  if (!cfg.noAccents) drawAccents(ctx, grid, view, cfg);
+  if (!cfg.noAccents) {
+    // Round-3 (A): accents are DARK SHADES OF THE ROOF'S OWN COLOUR (a shadowed crease in
+    // the same-coloured tiles), not bright cream stripes. Derive that colour from whatever
+    // is actually skinning the roof: the texture's average colour on the in-game texture
+    // path, else this material's own base colour on the procedural (preview) path.
+    let accentBase = null;
+    if (cfg.texture) accentBase = parseRgb(sampledBaseColor(cfg.texture));
+    if (!accentBase && material && material.baseColor) accentBase = material.baseColor();
+    drawAccents(ctx, grid, view, cfg, accentBase);
+  }
   if (material.trim) material.trim(ctx, grid, view, cfg);
   if (features && features.draw) features.draw(ctx, grid, view, cfg, { light, ambient });
 }
@@ -422,17 +433,56 @@ export function structuralEdges(grid) {
   return out;
 }
 
+// parse 'rgb(r,g,b)' / '#rrggbb' -> {r,g,b}; null on failure.
+function parseRgb(str) {
+  if (!str) return null;
+  const m = /rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i.exec(str);
+  if (m) return { r: +m[1], g: +m[2], b: +m[3] };
+  const h = /^#?([0-9a-f]{6})$/i.exec(str.trim());
+  if (h) { const n = parseInt(h[1], 16); return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 }; }
+  return null;
+}
+// multiply an {r,g,b} toward black by `k` (0..1; 0.7 => 70% as bright = a shadow).
+function darkenRgb(c, k) {
+  return { r: Math.round(c.r * k), g: Math.round(c.g * k), b: Math.round(c.b * k) };
+}
+
+// Live console knobs (mirror window._foam*/_interior*). Read DEFENSIVELY each draw so the
+// user can fine-tune by eye with no code change; fall back to the documented defaults.
+// _roofAccentDark: how dark the crease (ridge/hip) is vs the roof colour (lower = darker).
+// _roofAccentAlpha: accent stroke opacity.
+const ROOF_ACCENT_DARK = 0.62;  // crease = 62% brightness of the roof colour (a soft fold)
+const ROOF_ACCENT_ALPHA = 0.5;  // crease opacity
+function roofKnob(name, fallback) {
+  try {
+    const g = (typeof window !== 'undefined') ? window
+      : (typeof globalThis !== 'undefined') ? globalThis : null;
+    if (g && typeof g[name] === 'number' && isFinite(g[name])) return g[name];
+  } catch (e) { /* no window */ }
+  return fallback;
+}
+
 // ridge / hip / valley creases as clean STRUCTURAL strokes (not per-tile outlines).
-function drawAccents(ctx, grid, view, cfg) {
+// Round-3 (A): the stroke is a DARK SHADE of `accentBase` (the roof's own colour), so a
+// hip reads as a shadowed crease in same-coloured tiles — NOT a bright cream stripe.
+// Convex (ridge/hip) = a subtle dark step; concave (valley) = darker still. Both dark.
+function drawAccents(ctx, grid, view, cfg, accentBase) {
   const edges = structuralEdges(grid);
   ctx.save();
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   const lw = Math.max(1.2, view.tile * 0.12);
   const proj = (cx, cy) => view.project(grid.gox + cx, grid.goy + cy, grid.cornerH[cy * grid.CW + cx]);
-  // valleys first (dark, recede), then creases (bright, advance)
+  // accent colour from the roof's own base, darkened into a shadow. Knobs override live.
+  const base = accentBase || { r: 60, g: 50, b: 40 }; // neutral dark fallback (never cream)
+  const dark = roofKnob('_roofAccentDark', cfg.accentDark ?? ROOF_ACCENT_DARK);
+  const alpha = roofKnob('_roofAccentAlpha', cfg.accentAlpha ?? ROOF_ACCENT_ALPHA);
+  const creaseCol = darkenRgb(base, dark);          // ridge/hip: subtle dark step
+  const valleyCol = darkenRgb(base, dark * 0.72);   // valley: a bit darker still
+  // valleys first (deepest), then creases — both dark shades of the same roof colour.
   for (const pass of ['valley', 'crease']) {
-    ctx.lineWidth = pass === 'crease' ? lw : lw * 0.8;
-    ctx.strokeStyle = pass === 'crease' ? 'rgba(255,250,232,0.42)' : 'rgba(0,0,0,0.34)';
+    const c = pass === 'crease' ? creaseCol : valleyCol;
+    ctx.lineWidth = pass === 'crease' ? lw : lw * 0.9;
+    ctx.strokeStyle = `rgba(${c.r},${c.g},${c.b},${pass === 'crease' ? alpha : Math.min(1, alpha * 1.15)})`;
     ctx.beginPath();
     for (const e of edges) {
       if (e.kind !== pass) continue;
@@ -445,4 +495,4 @@ function drawAccents(ctx, grid, view, cfg) {
 }
 
 // utilities shared with features/materials
-export { corner, tileQuad, facetNormal, lightVec };
+export { corner, tileQuad, facetNormal, lightVec, parseRgb, darkenRgb };
