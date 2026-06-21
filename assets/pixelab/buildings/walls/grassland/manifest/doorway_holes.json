@@ -1,0 +1,82 @@
+{
+  "_note": "Doorway alpha-hole bbox (true alpha cut-out) in the 64x128 south_doorway crop. Door VOID was dark PAINT in the source (not a cut-out) -> carved to transparent here. Fractions are of the 64-wide x 128-tall canvas. Use for registry doorwayHole(shape) + door-leaf fit.",
+  "materials": {
+    "cob": {
+      "cropX0_in128": 32,
+      "holePx": {
+        "x0": 12,
+        "y0": 46,
+        "w": 44,
+        "h": 82
+      },
+      "holeFrac": {
+        "x0": 0.1875,
+        "y0": 0.3594,
+        "w": 0.6875,
+        "h": 0.6406
+      },
+      "canvas": {
+        "w": 64,
+        "h": 128
+      }
+    },
+    "fieldstone": {
+      "cropX0_in128": 64,
+      "holePx": {
+        "x0": 45,
+        "y0": 50,
+        "w": 19,
+        "h": 78
+      },
+      "holeFrac": {
+        "x0": 0.7031,
+        "y0": 0.3906,
+        "w": 0.2969,
+        "h": 0.6094
+      },
+      "canvas": {
+        "w": 64,
+        "h": 128
+      },
+      "escalate": "door void sits hard-right in the source; crop clamps it to the canvas right edge -> narrow/clipped opening. Candidate for a re-centred doorway regen."
+    },
+    "wattle_daub": {
+      "cropX0_in128": 31,
+      "holePx": {
+        "x0": 8,
+        "y0": 16,
+        "w": 48,
+        "h": 112
+      },
+      "holeFrac": {
+        "x0": 0.125,
+        "y0": 0.125,
+        "w": 0.75,
+        "h": 0.875
+      },
+      "canvas": {
+        "w": 64,
+        "h": 128
+      }
+    },
+    "timber_frame": {
+      "cropX0_in128": 31,
+      "holePx": {
+        "x0": 8,
+        "y0": 25,
+        "w": 48,
+        "h": 103
+      },
+      "holeFrac": {
+        "x0": 0.125,
+        "y0": 0.1953,
+        "w": 0.75,
+        "h": 0.8047
+      },
+      "canvas": {
+        "w": 64,
+        "h": 128
+      }
+    }
+  }
+}
