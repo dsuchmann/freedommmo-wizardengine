@@ -272,18 +272,18 @@ var SF_BIOME_OBJECTS_LIST = {
   arctic: ['frost_flower', 'frozen_grass', 'ice_needle'],
   beach: ['beach_weed', 'dune_grass', 'sea_oat'],
   dense_forest: ['shade_fern', 'dark_herb', 'bracket_fungus'],
-  desert: ['sand_grass'],
+  desert: ['sand_grass', 'desert_thorn'],
   forest: ['grass_blade_cluster', 'small_fern', 'clover_bloom'],
   grassland: ['tall_grass_blade', 'dandelion_stem', 'wild_herb'],
-  hills: ['heather_sprig'],
-  mountains: ['alpine_tuft', 'hardy_lichen'],
+  hills: ['heather_sprig', 'hillside_grass', 'rock_flower_bud'],
+  mountains: ['alpine_tuft', 'hardy_lichen', 'rock_cress'],
   mystic: ['glow_grass_blade', 'aether_fern', 'crystal_sprout'],
   savanna: ['dry_grass_spike', 'thorn_sprout', 'acacia_seedling'],
-  steppe: ['sparse_weed', 'dry_tuft'],
-  swamp: ['swamp_herb'],
+  steppe: ['sparse_weed', 'dry_tuft', 'wind_grass'],
+  swamp: ['swamp_herb', 'bog_grass', 'cattail_base'],
   taiga: ['frost_grass', 'low_juniper', 'cold_moss_tuft'],
   tropical_forest: ['broad_fern', 'orchid_sprout', 'vine_tendril'],
-  tundra: ['tundra_grass', 'low_berry_bush'],
+  tundra: ['tundra_grass', 'low_berry_bush', 'ice_moss'],
   volcanic: ['heat_sprout', 'lava_fern'],
 };
 var SF_BASE_PATH = '/assets/pixelab/landscape_v2/micro/small_flora/';
@@ -333,6 +333,14 @@ var SF_ANIM_VARIANTS = {
   'tundra/low_berry_bush': [],
   'volcanic/heat_sprout': [0],
   'volcanic/lava_fern': [0],
+  // Newly-wired F2 flora (base sprites complete; wind_sway coverage from disk).
+  // FULL-coverage objects (all 64 variants animated) are intentionally omitted
+  // here: desert/desert_thorn, swamp/cattail_base, hills/rock_flower_bud.
+  'mountains/rock_cress': [0],
+  'steppe/wind_grass': [0],
+  'tundra/ice_moss': [0],
+  'swamp/bog_grass': [0],
+  'hills/hillside_grass': [0,1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63],
 };
 
 // Returns the Set-like array of variant indices that have wind_sway anims,
