@@ -18,6 +18,7 @@
 // SAME building set + sun vector and is layered on top later; this file is phase 1 (ground).
 
 import { WALL_CONFIG } from './wall-config.js';
+import { renderOn } from './building-render-flags.js';
 import { hasTileWall } from './building-tiles.js';
 
 // Per-story height in tiles — matches the exterior wall stack (WALL_CONFIG.wallHeight = 4).
@@ -343,6 +344,11 @@ export function drawBuildingShadows(ctx, buildings, camX, camY, tilePx, w, h, su
     _heightMask = buildHeightMask(buildings, camX, camY, tilePx, w, h);
     if (typeof window !== 'undefined') window._buildingHeightMask = _heightMask;
   }
+
+  // Building-assembly master switch: gate the shadow PIXELS but NOT the height mask above — F2/GL
+  // flora suppression reads that mask this same frame, so trees keep avoiding building footprints
+  // even while buildings are invisible. (The mask is metadata; the shadow is assembly.)
+  if (!renderOn('shadow')) return;
 
   const scale = resolveScale(typeof window !== 'undefined' ? window._buildingShadowScale : undefined);
   const drapeOn = !(typeof window !== 'undefined' && window._buildingShadowDrape === false);

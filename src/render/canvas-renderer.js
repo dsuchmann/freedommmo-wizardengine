@@ -23,6 +23,7 @@ import { isInside } from './active-interior.js';
 import { initWallTuner, drawWallTuner } from './wall-tuner.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations, buildWaveField } from './water-wave-overlay.js';
 import { drawRoofs } from './roof-overlay.js';
+import { renderOn, buildingsRenderDisabled } from './building-render-flags.js';
 import { drawLargeObjects, preloadLargeObjectSprites, setPlayerDrawFn } from './large-object-renderer.js';
 import { drawField2Animations, preloadField2Animations, drawWindWispOverlay, setField2PlayerDraw, setField2PlayerGL } from './field2-animator.js';
 import { findNearbyInteraction, objectReaction, performInteraction } from '../world/interactions.js';
@@ -359,7 +360,7 @@ export class CanvasRenderer {
     // weather, lighting & atmosphere) so it receives day-night tint + fog + CRT and the
     // player/F2 sprites draw ON TOP (correct z-order). Toggle 'k'. Guarded — can never
     // break the frame. Full lighting/shadow parity needs chunk-bake (TODO above).
-    try { drawRoofs(ctx, camX, camY, tilePx, w, h); } catch (e) { /* roofs best-effort */ }
+    if (renderOn('roof')) { try { drawRoofs(ctx, camX, camY, tilePx, w, h); } catch (e) { /* roofs best-effort */ } }
 
     // Building GROUND shadows — cast AWAY from the sun, length scaled by aboveGroundFloors and
     // how low the sun sits. Drawn AFTER terrain/water/roofs (so they darken those pixels — a tall
@@ -416,7 +417,11 @@ export class CanvasRenderer {
     // the floor), so suppress the world-layer player here to avoid a double-draw / the
     // floor-over-GL-player z-order clash.
     const _inside = isInside();
-    setField2PlayerDraw(_inside ? function(){} : function(drawCtx) {
+    // Suppress the world-layer player ONLY when the interior top-pass will actually draw them
+    // (interior layer enabled). With the interior assembly disabled, the interior never draws the
+    // player, so keep rendering them here — otherwise the player vanishes inside any building.
+    const _interiorDraws = _inside && renderOn('interior');
+    setField2PlayerDraw(_interiorDraws ? function(){} : function(drawCtx) {
       _self.drawPlayerAt(w / 2, _playerScreenY, camera.zoom, player);
     });
     // In GL mode, also composite the player into a small offscreen canvas so
@@ -452,7 +457,7 @@ export class CanvasRenderer {
     // (spotlit) after the sprite batch, revealing the player on the real terrain. DEFAULT-ON; set
     // window._buildingLayer=false to fall back to the depth-occlusion path (which now shows no walls
     // since the bake dropped them — an honest "buildings not rendered" state for A/B only).
-    const _useLayer = glScene && !_inside && (typeof window === 'undefined' || window._buildingLayer !== false);
+    const _useLayer = glScene && !_inside && (typeof window === 'undefined' || window._buildingLayer !== false) && renderOn('walls');
     let _frontLayerBmp = null;
     if (_useLayer) {
       const _layer = buildBuildingLayerBitmaps(getCachedBuildings(), camX, camY, tilePx, w, h, player.y);
@@ -464,7 +469,10 @@ export class CanvasRenderer {
 
     // BUILDING DEPTH PASS (shipped occlusion — only when the new layer is OFF).
     let _depthActive = false;
-    if (!_useLayer && glScene && typeof window !== 'undefined' && window._depthOcclusion !== false) {
+    // Master gate is REQUIRED here: this pass fires precisely when _useLayer is false, so gating the
+    // wall layer off (above) would otherwise WAKE this depth silhouette and occlude the player behind
+    // invisible walls. buildingsRenderDisabled() keeps it asleep under the master switch.
+    if (!_useLayer && glScene && !buildingsRenderDisabled() && typeof window !== 'undefined' && window._depthOcclusion !== false) {
       const _refY = (camY + h / 2) / tilePx;
       const _blds = nearDepthBuildings(getCachedBuildings(), camX, camY, tilePx, w, h);
       const _dbg = !!window._depthOcclusionDebug;
@@ -496,7 +504,7 @@ export class CanvasRenderer {
 
     // Building walls: rendered in chunk pipeline via shared wall-draw.js.
     // Separate-pass only when tuner is active (for live calibration).
-    if (window._wallTuner && window._simDebugOverlay?.isEnabled?.()) {
+    if (!buildingsRenderDisabled() && window._wallTuner && window._simDebugOverlay?.isEnabled?.()) {
       drawBuildingWalls(ctx, camX, camY, tilePx, w, h);
     }
 
@@ -577,15 +585,17 @@ export class CanvasRenderer {
         // Interior BACK layer (dim + floor + markers + N/E/W walls) blitted INTO the GL scene so
         // the present pass lights/CRTs it like terrain (CLAUDE.md: everything through GL). The
         // player + S (front) wall still draw on the 2D ctx on top — follow-up migrates those.
-        const _ib = buildInteriorSceneBitmap(camX, camY, tilePx, w, h);
-        if (_ib) this.glc.drawSceneOverlayBitmap(_ib);
+        if (renderOn('interior')) {
+          const _ib = buildInteriorSceneBitmap(camX, camY, tilePx, w, h);
+          if (_ib) this.glc.drawSceneOverlayBitmap(_ib);
+        }
       } else if (_useLayer) {
         // Outdoor building layer ON: blit the FRONT buildings with the GPU spotlight hole around
         // the player (torso-centred), revealing the player on the real terrain. radius 2.6 tiles,
         // inner 45% — matches the interior see-through wall.
-        if (_frontLayerBmp) this.glc.drawBuildingSpotlightOverlay(_frontLayerBmp,
+        if (_frontLayerBmp && !buildingsRenderDisabled()) this.glc.drawBuildingSpotlightOverlay(_frontLayerBmp,
           { x: w / 2, y: _playerScreenY - tilePx * 0.6 }, tilePx * 2.6 * 0.45, tilePx * 2.6);
-      } else if (typeof window !== 'undefined' && window._depthOcclusion === false) {
+      } else if (!buildingsRenderDisabled() && typeof window !== 'undefined' && window._depthOcclusion === false) {
         // Outdoors with depth occlusion explicitly OFF → heuristic overlay occluder fallback.
         const _occ = buildOccluderBitmap(getCachedBuildings(), camX, camY, tilePx, w, h,
           { x: w / 2, y: _playerScreenY }, player);
@@ -593,7 +603,8 @@ export class CanvasRenderer {
       }
       // Decoupled-door pilot: door LEAVES over the baked doorway openings, swung on a hinge by
       // player proximity. Per-frame + GL-composited like the occluder (everything-through-GL).
-      const _dl = buildDoorLeafBitmap(getCachedBuildings(), camX, camY, tilePx, w, h, player);
+      // Unconditional call site — must be explicitly gated by the master switch.
+      const _dl = renderOn('doors') ? buildDoorLeafBitmap(getCachedBuildings(), camX, camY, tilePx, w, h, player) : null;
       if (_dl) this.glc.drawSceneOverlayBitmap(_dl);
       this.glc.presentScene(w, h, camera.zoom, fracX, fracY);
     }
@@ -603,7 +614,9 @@ export class CanvasRenderer {
     // the dimmed world (the exterior roof/walls stay faded underneath). Floor first
     // (dim + per-floor north lift), then the player lifted by the SAME offset so they
     // rise together as you climb; the world-layer player was suppressed above.
-    if (_inside) {
+    // Gated by the interior flag: when interiors are disabled, this whole block is skipped and the
+    // player renders on the world layer instead (line ~419), so they never double-draw or vanish.
+    if (_inside && renderOn('interior')) {
       // GL path blits the interior back layer in-scene (above, lit by the present pass);
       // only the 2D-fallback path (GL scene unavailable) draws it here on the ctx.
       if (!glScene) drawInteriorFloorWorld(ctx, camX, camY, tilePx, w, h);  // dim + floor + back/side walls (N/E/W)

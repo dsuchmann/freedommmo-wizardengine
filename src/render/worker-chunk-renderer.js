@@ -1167,7 +1167,18 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
 
       // Building floor override: if this tile is inside a building section,
       // draw the floor tile image ON TOP of the terrain (same lighting/z-order).
-      var buildingHit = queryBuildingTile(wx, wy);
+      //
+      // OFF-THREAD building-assembly gate. This is the ONE building-pixel path the main-thread
+      // window._buildingRender switch cannot reach — it bakes the floor tile + dark foundation
+      // border straight into the terrain chunk bitmap, here in the chunk worker (no `window`).
+      // It is the "hidden competitor" that would otherwise still stamp a floor footprint into the
+      // ground with every other building layer disabled. Gated on `self._buildingFloors` (unset =>
+      // OFF) so buildings are fully absent. We deliberately also skip the `tile._buildingFloor`
+      // suppression marker below, so soil/decoration fills the empty ground (no ghost footprint).
+      // RE-ENABLE (when we add the floor layer back, layer-by-layer): thread renderOn('floors')
+      // from chunk-provider.js -> chunk-worker.js onmessage -> self._buildingFloors, and invalidate
+      // the chunk cache so already-baked chunks re-bake with floors.
+      var buildingHit = self._buildingFloors ? queryBuildingTile(wx, wy) : null;
       if (buildingHit) {
         var floorUrl = floorTileUrl(buildingHit.material);
         var floorBmp = imageCache.get(floorUrl);
