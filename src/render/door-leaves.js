@@ -9,6 +9,7 @@
 
 import { WALL_CONFIG } from './wall-config.js';
 import { wallAssetDir } from '../../sim/world/buildings/building-material-registry.js';
+import { hasFacade } from './building-facade.js';
 
 const DOOR_BASE = '/assets/pixelab/buildings/doors/';
 // the 6 generated door shapes map onto the 3 shared, material-agnostic leaves
@@ -24,7 +25,7 @@ if (typeof window !== 'undefined') window._doorSwing = DOOR_SWING;
 // full 4-tile wall height made the door ~3 tiles tall + narrow ("taller without proportionally
 // wider"). Instead draw it at a proper DOOR size — heightTiles tall, BOTTOM-aligned to the wall
 // base, centred in the 2-tile door cell. Live-tunable so the proportion can be dialled by eye.
-export const DOOR_FIT = { heightTiles: 2.6, widthScale: 1.0, yOff: 0.0 };
+export const DOOR_FIT = { heightTiles: 3.4, widthScale: 1.15, yOff: 0.0 };
 if (typeof window !== 'undefined') window._doorFit = DOOR_FIT;
 
 const _img = new Map();
@@ -41,6 +42,7 @@ export function buildDoorLeafBitmap(buildings, camX, camY, tilePx, w, h, player)
   const t = Math.round(tilePx), wH = Math.round(tilePx * WALL_CONFIG.wallHeight), WY = WALL_CONFIG.wallYOffset;
   const draws = [];
   for (const b of buildings) {
+    if (hasFacade(b)) continue;                 // façade-block buildings bake their own door
     if (!doorwayLoaded(b)) continue;            // only buildings whose opening was baked (pilot assets present)
     const leaf = leafImg(b.doorShape); if (!leaf) continue;
     const fp = b.footprint; if (!fp || !fp.doors) continue;

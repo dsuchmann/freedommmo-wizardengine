@@ -18,6 +18,7 @@
 // SAME building set + sun vector and is layered on top later; this file is phase 1 (ground).
 
 import { WALL_CONFIG } from './wall-config.js';
+import { isFacadeManaged } from './building-facade.js';
 
 // Per-story height in tiles — matches the exterior wall stack (WALL_CONFIG.wallHeight = 4).
 export const STORY_TILES = 4;
@@ -349,7 +350,13 @@ export function drawBuildingShadows(ctx, buildings, camX, camY, tilePx, w, h, su
   const alpha = BASE_ALPHA * dayNight;
   if (alpha < 0.01) return; // deep night — nothing to draw
 
-  const hulls = computeHulls(buildings, sun, tilePx, camX, camY, scale);
+  // Façade-block buildings carry their own baked grounding; the procedural footprint-projected hull
+  // doesn't match the sprite silhouette (reads as a stray grey blob). Keep them in the HEIGHT MASK
+  // above (flora-over-building suppression), but exclude them from the shadow projection here.
+  const shadowBuildings = buildings.filter((b) => !isFacadeManaged(b));
+  if (!shadowBuildings.length) return;
+
+  const hulls = computeHulls(shadowBuildings, sun, tilePx, camX, camY, scale);
   if (!hulls.length) return;
 
   const onScreen = (bb) => !(bb.maxX < 0 || bb.maxY < 0 || bb.minX > w || bb.minY > h);
@@ -357,7 +364,7 @@ export function drawBuildingShadows(ctx, buildings, camX, camY, tilePx, w, h, su
 
   // Occluder silhouettes (footprint + wall/roof band) of on-screen buildings, with their height.
   const sils = [];
-  for (const b of buildings) {
+  for (const b of shadowBuildings) {
     if (!b || !b.footprint || !b.footprint.boundingBox) continue;
     const s = buildingSilhouetteRect(b, tilePx, camX, camY);
     if (s.x + s.w < 0 || s.y + s.h < 0 || s.x > w || s.y > h) continue;

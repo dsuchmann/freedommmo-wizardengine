@@ -1,0 +1,156 @@
+{
+  "grassland": {
+    "apartment": [
+      {
+        "variant": 0,
+        "file": "assets/pixelab/buildings/facade/grassland/apartment/whole__v0.png",
+        "groundFrac": 1,
+        "doorXFrac": 0.419,
+        "contentW": 320,
+        "contentH": 400
+      }
+    ],
+    "barn": [
+      {
+        "variant": 0,
+        "file": "assets/pixelab/buildings/facade/grassland/barn/whole__v0.png",
+        "groundFrac": 1,
+        "doorXFrac": 0.479,
+        "contentW": 384,
+        "contentH": 360
+      }
+    ],
+    "chapel": [
+      {
+        "variant": 0,
+        "file": "assets/pixelab/buildings/facade/grassland/chapel/whole__v0.png",
+        "groundFrac": 1,
+        "doorXFrac": 0.331,
+        "contentW": 320,
+        "contentH": 384
+      }
+    ],
+    "civic_hall": [
+      {
+        "variant": 0,
+        "file": "assets/pixelab/buildings/facade/grassland/civic_hall/whole__v0.png",
+        "groundFrac": 1,
+        "doorXFrac": 0.448,
+        "contentW": 384,
+        "contentH": 384
+      }
+    ],
+    "cottage": [
+      {
+        "variant": 0,
+        "file": "assets/pixelab/buildings/facade/grassland/cottage/whole__v0.png",
+        "groundFrac": 1,
+        "doorXFrac": 0.474,
+        "contentW": 352,
+        "contentH": 320
+      },
+      {
+        "variant": 1,
+        "file": "assets/pixelab/buildings/facade/grassland/cottage/whole__v1.png",
+        "groundFrac": 1,
+        "doorXFrac": 0.5,
+        "contentW": 352,
+        "contentH": 320
+      }
+    ],
+    "house": [
+      {
+        "variant": 0,
+        "file": "assets/pixelab/buildings/facade/grassland/house/whole__v0.png",
+        "groundFrac": 1,
+        "doorXFrac": 0.474,
+        "contentW": 352,
+        "contentH": 384
+      },
+      {
+        "variant": 1,
+        "file": "assets/pixelab/buildings/facade/grassland/house/whole__v1.png",
+        "groundFrac": 1,
+        "doorXFrac": 0.483,
+        "contentW": 352,
+        "contentH": 384
+      }
+    ],
+    "manor": [
+      {
+        "variant": 0,
+        "file": "assets/pixelab/buildings/facade/grassland/manor/whole__v0.png",
+        "groundFrac": 1,
+        "doorXFrac": 0.557,
+        "contentW": 384,
+        "contentH": 384
+      }
+    ],
+    "market_stall": [
+      {
+        "variant": 0,
+        "file": "assets/pixelab/buildings/facade/grassland/market_stall/whole__v0.png",
+        "groundFrac": 1,
+        "doorXFrac": 0.259,
+        "contentW": 320,
+        "contentH": 260
+      }
+    ],
+    "round_tower": [
+      {
+        "variant": 0,
+        "file": "assets/pixelab/buildings/facade/grassland/round_tower/whole__v0.png",
+        "groundFrac": 1,
+        "doorXFrac": 0.433,
+        "contentW": 300,
+        "contentH": 400
+      }
+    ],
+    "shopfront": [
+      {
+        "variant": 0,
+        "file": "assets/pixelab/buildings/facade/grassland/shopfront/whole__v0.png",
+        "groundFrac": 1,
+        "doorXFrac": 0.79,
+        "contentW": 352,
+        "contentH": 360
+      },
+      {
+        "variant": 1,
+        "file": "assets/pixelab/buildings/facade/grassland/shopfront/whole__v1.png",
+        "groundFrac": 1,
+        "doorXFrac": 0.227,
+        "contentW": 352,
+        "contentH": 360
+      }
+    ],
+    "temple": [
+      {
+        "variant": 0,
+        "file": "assets/pixelab/buildings/facade/grassland/temple/whole__v0.png",
+        "groundFrac": 1,
+        "doorXFrac": 0.411,
+        "contentW": 360,
+        "contentH": 360
+      }
+    ],
+    "workshop": [
+      {
+        "variant": 0,
+        "file": "assets/pixelab/buildings/facade/grassland/workshop/whole__v0.png",
+        "groundFrac": 1,
+        "doorXFrac": 0.409,
+        "contentW": 340,
+        "contentH": 320
+      },
+      {
+        "variant": 1,
+        "file": "assets/pixelab/buildings/facade/grassland/workshop/whole__v1.png",
+        "groundFrac": 1,
+        "doorXFrac": 0.426,
+        "contentW": 352,
+        "contentH": 336
+      }
+    ]
+  }
+}

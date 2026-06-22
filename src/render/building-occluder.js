@@ -19,6 +19,7 @@ import { getWallImg } from './building-renderer.js';
 import { buildingFloors } from './building-shadow.js';
 import { queryBuildingTile } from './building-tile-query.js';
 import { wallAssetDir, wallPieceFile, roofAssetDir, roofTextureFile, ROOF_FASCIA_FILE } from '../../sim/world/buildings/building-material-registry.js';
+import { drawBuildingFacade, isFacadeManaged } from './building-facade.js';
 
 // Source rect of the E/W side-face cap. The grassland edge_ew strip is a 32x128 quoin/side-cap;
 // sample its LEFT quoin column (x=0..16) as the true vertical corner post (`isQuoinStrip`) — drawing
@@ -526,6 +527,14 @@ export function buildOccluderBitmap(buildings, camX, camY, tilePx, w, h, playerS
  *  recolours this silhouette to a per-building depth value. Returns false if wall sprites aren't
  *  loaded yet. */
 export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
+  // FAÇADE-BLOCK path (new system): draw the building as a single generated sprite block. When it
+  // draws (returns true), skip the old per-tile walls + procedural roof entirely. Falls through to
+  // the preserved tile path when there's no façade for this building (honest absence) or its sprite
+  // isn't loaded yet. Gated by window._facadeBlocks inside drawBuildingFacade.
+  if (drawBuildingFacade(ctx, b, camX, camY, tilePx, w, h)) return true;
+  // Façade-managed but not drawn (open/object type, or sprite still loading) → draw NOTHING rather
+  // than the old brown tile walls. Only types unknown to the façade map use the old fallback below.
+  if (isFacadeManaged(b)) return true;
   if (!getWallImg('south_base')) return false; // stone_brick fallback must be loaded
   ensureRoof();
   drawWalls(ctx, b, camX, camY, tilePx, w, h);
