@@ -18,7 +18,7 @@
 // SAME building set + sun vector and is layered on top later; this file is phase 1 (ground).
 
 import { WALL_CONFIG } from './wall-config.js';
-import { isFacadeManaged } from './building-facade.js';
+import { hasTileWall } from './building-tiles.js';
 
 // Per-story height in tiles — matches the exterior wall stack (WALL_CONFIG.wallHeight = 4).
 export const STORY_TILES = 4;
@@ -353,7 +353,7 @@ export function drawBuildingShadows(ctx, buildings, camX, camY, tilePx, w, h, su
   // Façade-block buildings carry their own baked grounding; the procedural footprint-projected hull
   // doesn't match the sprite silhouette (reads as a stray grey blob). Keep them in the HEIGHT MASK
   // above (flora-over-building suppression), but exclude them from the shadow projection here.
-  const shadowBuildings = buildings.filter((b) => !isFacadeManaged(b));
+  const shadowBuildings = buildings.filter((b) => !hasTileWall(b));
   if (!shadowBuildings.length) return;
 
   const hulls = computeHulls(shadowBuildings, sun, tilePx, camX, camY, scale);

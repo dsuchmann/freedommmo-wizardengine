@@ -9,7 +9,7 @@
 
 import { WALL_CONFIG } from './wall-config.js';
 import { wallAssetDir } from '../../sim/world/buildings/building-material-registry.js';
-import { hasFacade } from './building-facade.js';
+import { hasTileWall } from './building-tiles.js';
 
 const DOOR_BASE = '/assets/pixelab/buildings/doors/';
 // the 6 generated door shapes map onto the 3 shared, material-agnostic leaves
@@ -42,7 +42,7 @@ export function buildDoorLeafBitmap(buildings, camX, camY, tilePx, w, h, player)
   const t = Math.round(tilePx), wH = Math.round(tilePx * WALL_CONFIG.wallHeight), WY = WALL_CONFIG.wallYOffset;
   const draws = [];
   for (const b of buildings) {
-    if (hasFacade(b)) continue;                 // façade-block buildings bake their own door
+    if (hasTileWall(b)) continue;               // tile-wall buildings draw their own door overlay
     if (!doorwayLoaded(b)) continue;            // only buildings whose opening was baked (pilot assets present)
     const leaf = leafImg(b.doorShape); if (!leaf) continue;
     const fp = b.footprint; if (!fp || !fp.doors) continue;
