@@ -21,8 +21,11 @@ export const ARCHETYPES = [
 // visual size from the (generous, ×1.5) footprint width — the building sits in its lot with yard
 // around it, at realistic proportions. Tune live via window._facadeFit.heightScale.
 export const HEIGHT_TILES = {
-  cottage: 8, house: 12, shopfront: 10, workshop: 9, barn: 11, chapel: 15,
-  civic_hall: 13, manor: 14, temple: 13, round_tower: 17, apartment: 16, market_stall: 7,
+  // house/manor/civic_hall/market_stall verified in-game. The taller unverified archetypes use
+  // conservative values (better slightly small than grotesquely large) — tune live via
+  // window._facadeFit.heightScale, then bake the per-archetype values back here.
+  cottage: 8, house: 12, shopfront: 10, workshop: 9, barn: 11, chapel: 13,
+  civic_hall: 12, manor: 13, temple: 12, round_tower: 14, apartment: 14, market_stall: 7,
 };
 export function heightTilesFor(arch) { return HEIGHT_TILES[arch] || 10; }
 
