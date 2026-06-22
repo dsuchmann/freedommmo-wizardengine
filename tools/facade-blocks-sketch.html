@@ -1,0 +1,402 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Façade Lego-Block Model — sketch</title>
+<style>
+  html,body{margin:0;background:#3b4a3a;color:#eee;font:13px/1.4 system-ui,sans-serif}
+  .wrap{max-width:1320px;margin:0 auto;padding:16px}
+  h1{font-size:20px;margin:6px 0}
+  h2{font-size:15px;margin:18px 0 6px;color:#bfe3a6;border-bottom:1px solid #5a6e57;padding-bottom:3px}
+  .note{color:#cdddc4;margin:4px 0}
+  .key{color:#ffd98a}
+  canvas{background:#6f8f5e;border:1px solid #2c3a2b;border-radius:4px;display:block;margin:6px 0}
+  .row{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+  .cap{font-size:12px;color:#bcd3b0;margin:2px 0 0}
+  .flow{background:#33402f;border:1px solid #5a6e57;border-radius:6px;padding:14px;max-width:940px}
+  .box{background:#46583f;border:1px solid #7da866;border-radius:6px;padding:10px 14px;color:#eaf3e2}
+  .box.drive{background:#5a4a2e;border-color:#caa56a;text-align:center}
+  .box span{color:#bcd3b0;font-size:11px} .box small{color:#cdddc4}
+  .row2{display:flex;gap:18px;margin-top:8px}.row2 .box{flex:1}
+  .arrows{text-align:center;color:#ffd98a;margin:6px 0;letter-spacing:8px}
+  .note2{margin-top:10px;color:#ffd98a;font-size:12px;text-align:center}
+</style></head>
+<body><div class="wrap">
+<h1>Façade "Lego-Block" model — schematic sketch (no PixelLab yet)</h1>
+<p class="note"><span class="key">Quantum:</span> PixelLab max object = <b>400×400 px</b> = <b>12.5 tiles</b> @ 32 px/tile.
+One block = <b>ONE FLOOR of ONE building SECTION</b>, ≤ ~12×12 tiles, generated per
+<span class="key">biome × material × variant × shape</span>, in a <b>WITH-ROOF</b> (standalone small building) and
+<b>NO-ROOF</b> (assemblable piece) version. Background must be keyed transparent.</p>
+<p class="note"><span class="key">View:</span> all blocks are <b>¾ top-down, SOUTH-facing</b> — <b>never isometric by default</b>
+(iso reserved selectively, to give certain shapes more expression). You only ever see the <b>south wall outside</b>
+and the <b>north wall inside</b>. Every block ships <b>metadata</b> (door + window tile-rects, measured from the art) so the
+game knows where to walk in and where to hang the door-leaf. A <span class="key">library = a set of shapes</span> per biome × material × variant.</p>
+
+<h2>1 · One block, two versions</h2>
+<div class="row">
+  <div><canvas id="c1" width="300" height="260"></canvas><div class="cap">WITH roof → drop-in single-story building</div></div>
+  <div><canvas id="c2" width="300" height="260"></canvas><div class="cap">NO roof → a piece to tie to other pieces</div></div>
+  <div style="max-width:360px"><div class="cap" style="font-size:13px;line-height:1.6">
+  A block carries its <b>material</b> (stone/timber/…), its <b>apertures</b> (door + windows), and a <b>shape</b>.
+  The no-roof version exposes a clean <b>top edge</b> so a shared roof can flow over it, and clean
+  <b>side edges</b> so it abuts the next section. The with-roof version is the whole building when one
+  section is enough.</div></div>
+</div>
+
+<h2>2 · Block palette — shapes that abut (no-roof pieces)</h2>
+<div class="row">
+  <div><canvas id="p1" width="240" height="220"></canvas><div class="cap">front-entry (rect): 2 windows · door · window</div></div>
+  <div><canvas id="p2" width="200" height="220"></canvas><div class="cap">wing (rect)</div></div>
+  <div><canvas id="p3" width="240" height="220"></canvas><div class="cap">portico (curved / half-round)</div></div>
+</div>
+
+<h2>3 · Assembled building — NO-ROOF blocks + ONE unified roof flowing over all sections</h2>
+<p class="note">Sections placed by footprint (front south, wing east, portico north = "deeper inside"). The roof is a
+single continuous surface over the union — this is the <b>procedural roof engine</b> path (handles any section shape).</p>
+<canvas id="a1" width="640" height="420"></canvas>
+
+<h2>4 · Assembled building — WITH-ROOF blocks stamped together (matching roofs flow seam-to-seam)</h2>
+<p class="note">Same sections, each carrying its own roof of the <b>same family</b>; where they meet, ridges/eaves line up.
+This is the <b>generated-roof-block</b> path — to compare against #3.</p>
+<canvas id="a2" width="640" height="420"></canvas>
+
+<h2>5 · Stacking — floors are blocks too (up to 10+ stories)</h2>
+<p class="note">A multi-story building = NO-ROOF floor-blocks stacked vertically (walls + caps aligned); only the
+TOP gets a roof, the ground floor carries the door. Same block model, vertical axis.</p>
+<canvas id="st" width="340" height="400"></canvas>
+
+<h2>6 · Exterior = SOUTH wall · Interior = NORTH wall · the door</h2>
+<p class="note">Outside you only ever see the <b>south</b> wall; inside, the <b>north</b> wall + a perimeter (the existing
+floor-tile + interior-wall system), shaped to mirror the section. Each block's <b>metadata</b> records the door + window
+tile-rects (measured from the art) → the game knows where to walk in and where to hang the door-leaf overlay.</p>
+<div class="row">
+  <div><canvas id="ex" width="300" height="280"></canvas><div class="cap">EXTERIOR — south wall + door metadata anchor (red)</div></div>
+  <div><canvas id="in" width="300" height="280"></canvas><div class="cap">INTERIOR — north wall + perimeter + floor (existing system)</div></div>
+</div>
+
+<h2>7 · Foundations don't stack — generate COMPLETE, decompose into pieces</h2>
+<p class="note">Generate the COMPLETE building (roof + wall + foundation), then split it at measured lines into a
+<b>roof-cap</b> (top only), a <b>wall-slice</b> (the tileable floor — <span class="key">no roof, no foundation</span>), and a
+<b>foundation-course</b> (base only). Assemble per the placement metadata's floor count:
+<b>foundation @ base · wall-slices stacked · roof @ top</b>. The slice is cropped from the same art, so it tiles seam-clean
+and matches the material exactly.</p>
+<canvas id="dc" width="900" height="300"></canvas>
+
+<h2>8 · Unifying the three systems</h2>
+<div class="flow">
+  <div class="box drive">PLACEMENT &amp; OCCUPANCY <span>(already exists)</span><br><small>location · # stories · businesses · people · what's on each floor</small></div>
+  <div class="arrows">▼ drives ▼</div>
+  <div class="row2">
+    <div class="box">EXTERIOR ASSEMBLY <span>(new)</span><br><small>stack N wall-slices · foundation @ base · roof @ top · blocks chosen by type × material × shape</small></div>
+    <div class="box">INTERIOR <span>(already exists)</span><br><small>per floor: north wall + light perimeter · floor tiles · stairs / doorways · shape mirrors the section</small></div>
+  </div>
+  <div class="note2">both read the SAME footprint sections + floor count + material → exterior &amp; interior can't disagree</div>
+</div>
+
+<h2>9 · Depth — the front is a facade, the DEPTH is roof (rear walls never seen)</h2>
+<p class="note">A 10-wide × 100-deep building: outside you see ONLY the south facade + a long roof. The rear is interior
+(occluded); E/W + back walls are never seen outside. Depth is a <b>roof</b> problem — generate the south facade ONCE,
+cover the depth with roof (procedural handles any depth; or roof blocks tiled north). Never stamp a facade you can't see.</p>
+<div class="row">
+  <div><canvas id="dp1" width="210" height="320"></canvas><div class="cap">PLAN (top-down) — only the south edge is a facade</div></div>
+  <div><canvas id="dp2" width="360" height="320"></canvas><div class="cap">¾ VIEW — south facade + long roof; rear hidden</div></div>
+  <div style="max-width:300px"><div class="cap" style="font-size:13px;line-height:1.7">
+  <b>3 axes:</b><br>• <span class="key">WIDTH</span> (E-W) → facade blocks tiled across the south edge<br>
+  • <span class="key">DEPTH</span> (N-S) → roof (procedural, or roof blocks tiled north)<br>
+  • <span class="key">HEIGHT</span> (stories) → wall-slices stacked + roof on top<br><br>
+  Generate a facade at every <b>exposed</b> south edge; everything else is roof.</div></div>
+</div>
+
+<h2>10 · Door detection — detect-at-AUTHORING (beauty-first, deterministic at runtime)</h2>
+<p class="note">Generate freely for beauty (porches, jutting roofs, off-center doors). <b>Once per library asset</b>, a vision pass
+locates the door / windows / entry and writes them to metadata — cost is one-time per asset, NOT per placement. The game
+reads metadata; it never guesses. Blueprint feeds <i>prompt guidance</i> (door count, role, grandeur), not coordinates.</p>
+<div class="row">
+  <div><canvas id="dd" width="300" height="300"></canvas><div class="cap">detected: door (red) · windows (blue) · entry tile (green)</div></div>
+  <div class="flow" style="max-width:600px">
+    <div style="color:#ffd98a;font-size:12px;line-height:1.9">Blueprint <small>(door COUNT · role · grandeur · material)</small> ──▶ PixelLab <small>(beautiful facade, free placement)</small><br>
+    ──▶ Vision detect <small>(door / window / entry rects)</small> ──▶ Metadata ──▶ Game <small>(walk-in + door-leaf)</small></div>
+    <pre style="background:#20271d;color:#bfe3a6;padding:10px;border-radius:4px;font-size:11px;overflow:auto;margin-top:10px">{
+  "door":    { "leaf": [135,262,180,342], "entryTile": [4,9] },
+  "windows": [ [40,250,75,330], [240,250,275,330] ],
+  "wallBand":[0,200,316,360], "roofTop":0, "foundation":360
+}   // measured from the art, in px + tile coords</pre>
+  </div>
+</div>
+
+<h2>11 · Scaling up — a 2000×2000 castle is the SAME primitives, more sections</h2>
+<p class="note"><b>Yes, the renderer can paint it.</b> A castle is just ONE building with a very complex multi-section footprint:
+a keep + towers (tall slice-stacks), great hall + chapel (facade + roof), curtain walls (facade tiled E-W), a gatehouse
+(the main door), and open courtyards (no roof). Every <b>exposed south edge → facade</b>; everything else → <b>roof</b>;
+towers → tall stacks; courtyards → holes. The renderer iterates sections — it <b>never makes a 2000×2000 image</b>, so scale is
+free. <span class="key">The only new work is a BLUEPRINT generator for huge complex structures</span> — the current system makes
+cities as separate district buildings; a castle is "one building" with a sprawling footprint. The <i>painting</i> is already covered.</p>
+<canvas id="cas" width="900" height="470"></canvas>
+
+<h2>12 · How the seams hold (the contract)</h2>
+<p class="note">• <b>Vertical joins</b> (wall ↔ wall): identical material body + a strong top <b>cap/cornice</b> reads as a molding and hides the join.<br>
+• <b>Corners / E-W faces</b>: dedicated <b>edge pieces</b> (the face the building "turns into") — the real 3D edge, like the stone_160 8-direction set.<br>
+• <b>Roof</b>: option A one shared surface (procedural); option B matching roof blocks whose ridge+eave heights are authored to align.<br>
+• <b>Interior</b>: unchanged — it's already built from the same footprint sections, so it matches whatever we assemble.</p>
+</div>
+
+<script>
+const TILE=16, WALLH=4, EAVE=2.6;
+const MAT={ timber:{wall:'#e7dcc4', beam:'#6b4a2f', trim:'#caa56a'}, stone:{wall:'#cdbfa0', beam:'#7c7263', trim:'#9a8f78'} };
+const ROOF={ a:'#b6492f', b:'#8e351f', ridge:'#6f2817' };       // clay
+const ROOFG={ a:'#5f7b46', b:'#465c33', ridge:'#36471f' };      // green (alt family)
+
+// world->screen helper for a panel: south is +y(down); walls billboard UP.
+function px(o, wx, wy){ return { x:o.ox+wx*TILE, y:o.oy+wy*TILE }; }
+
+// draw a front WALL billboard for a rect section: footprint (sx,sy,w,h) local tiles, origin o.
+function wall(ctx,o,sx,sy,w,h,mat,opts={}){
+  const M=MAT[mat]||MAT.timber;
+  const base=px(o,sx,sy+h);                 // south edge ground point (left)
+  const X=base.x, gy=base.y, ww=w*TILE, wh=WALLH*TILE, top=gy-wh;
+  // body
+  ctx.fillStyle=M.wall; ctx.fillRect(X,top,ww,wh);
+  // material lines (timber frame / stone courses)
+  ctx.strokeStyle=M.beam; ctx.lineWidth=2;
+  if(mat==='timber'){ // posts + a mid rail
+    for(let i=0;i<=w;i++){ const xx=X+i*TILE; ctx.beginPath();ctx.moveTo(xx,top);ctx.lineTo(xx,gy);ctx.stroke(); }
+    ctx.beginPath();ctx.moveTo(X,top+wh*0.45);ctx.lineTo(X+ww,top+wh*0.45);ctx.stroke();
+  } else { ctx.strokeStyle=M.beam; ctx.lineWidth=1;
+    for(let r=1;r<WALLH;r++){const yy=top+r*TILE; ctx.beginPath();ctx.moveTo(X,yy);ctx.lineTo(X+ww,yy);ctx.stroke();}
+  }
+  // foundation
+  ctx.fillStyle='#8c8474'; ctx.fillRect(X,gy-TILE*0.5,ww,TILE*0.5);
+  // cap / cornice (the molding that hides vertical joins)
+  ctx.fillStyle=M.trim; ctx.fillRect(X-2,top-4,ww+4,6);
+  // windows
+  ctx.fillStyle='#2d3f57'; ctx.strokeStyle=M.beam; ctx.lineWidth=2;
+  for(const wx of (opts.windows||[])){ const wxp=X+wx*TILE, wyp=top+wh*0.32, swx=TILE*1.0, swy=TILE*1.1;
+    ctx.fillRect(wxp,wyp,swx,swy); ctx.strokeRect(wxp,wyp,swx,swy);
+    ctx.beginPath();ctx.moveTo(wxp+swx/2,wyp);ctx.lineTo(wxp+swx/2,wyp+swy);ctx.moveTo(wxp,wyp+swy/2);ctx.lineTo(wxp+swx,wyp+swy/2);ctx.stroke(); }
+  // door
+  if(opts.door!=null){ const dxp=X+opts.door*TILE, dw=TILE*1.1, dh=wh*0.55;
+    ctx.fillStyle='#5a3b22'; ctx.fillRect(dxp,gy-dh,dw,dh);
+    ctx.strokeStyle=M.trim; ctx.lineWidth=2; ctx.strokeRect(dxp,gy-dh,dw,dh); }
+  return {X, top, ww, gy};
+}
+
+// gable roof over a wall span [X,X+ww] sitting on wall-top `top`. rise upward.
+function gable(ctx,X,top,ww,col,rise=EAVE*TILE){
+  ctx.save();
+  const apexY=top-rise, midX=X+ww/2, over=TILE*0.6;
+  // left slope
+  ctx.fillStyle=col.a; ctx.beginPath();
+  ctx.moveTo(X-over,top); ctx.lineTo(midX,apexY); ctx.lineTo(midX,top); ctx.closePath(); ctx.fill();
+  // right slope (darker)
+  ctx.fillStyle=col.b; ctx.beginPath();
+  ctx.moveTo(midX,apexY); ctx.lineTo(X+ww+over,top); ctx.lineTo(midX,top); ctx.closePath(); ctx.fill();
+  // ridge + eave
+  ctx.strokeStyle=col.ridge; ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(X-over,top);ctx.lineTo(midX,apexY);ctx.lineTo(X+ww+over,top);ctx.stroke();
+  ctx.restore();
+}
+
+// hipped roof over a rect footprint union (used for the unified procedural look)
+function hipRoof(ctx,o,bx,by,bw,bh,col){
+  const a=px(o,bx,by+bh), b=px(o,bx+bw,by+bh), top=a.y-WALLH*TILE; // south eave line
+  const northY=px(o,bx,by).y-WALLH*TILE;                          // north eave (raised footprint)
+  const rise=Math.min(EAVE*TILE*1.4, (top-northY)*0.5+EAVE*TILE);
+  const ax=a.x-TILE*0.6, bxx=b.x+TILE*0.6, ridgeY=Math.min(top,northY)-rise, ridgeL=ax+(bxx-ax)*0.28, ridgeR=ax+(bxx-ax)*0.72;
+  ctx.fillStyle=col.a; ctx.beginPath(); ctx.moveTo(ax,top); ctx.lineTo(ridgeL,ridgeY); ctx.lineTo(ridgeR,ridgeY); ctx.lineTo(bxx,top); ctx.closePath(); ctx.fill();
+  // back/north pitch hint
+  ctx.fillStyle=col.b; ctx.beginPath(); ctx.moveTo(ax,top); ctx.lineTo(ridgeL,ridgeY); ctx.lineTo(ridgeL,northY-rise*0.2); ctx.lineTo(ax,northY); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle=col.ridge; ctx.lineWidth=2; ctx.beginPath();ctx.moveTo(ridgeL,ridgeY);ctx.lineTo(ridgeR,ridgeY);ctx.stroke();
+}
+
+function portico(ctx,o,sx,sy,w,h,mat,withRoof){
+  const M=MAT[mat]||MAT.stone, c=px(o,sx+w/2,sy+h), r=w*TILE/2, top=c.y-WALLH*TILE;
+  ctx.fillStyle=M.wall; ctx.beginPath(); ctx.moveTo(c.x-r,c.y); ctx.lineTo(c.x-r,top);
+  ctx.arc(c.x,top,r,Math.PI,0,false); ctx.lineTo(c.x+r,c.y); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle=M.beam; ctx.lineWidth=2; ctx.stroke();
+  // columns
+  ctx.fillStyle=M.trim; for(let i=-1;i<=1;i++){ ctx.fillRect(c.x+i*r*0.55-2,top,4,c.y-top); }
+  ctx.fillStyle=M.trim; ctx.fillRect(c.x-r-2,top-4,2*r+4,6);
+  if(withRoof){ // shallow dome/cone
+    ctx.fillStyle=ROOF.a; ctx.beginPath(); ctx.moveTo(c.x-r-TILE*0.4,top); ctx.quadraticCurveTo(c.x,top-EAVE*TILE*1.5,c.x+r+TILE*0.4,top); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=ROOF.ridge; ctx.stroke();
+  }
+}
+
+function panelBG(ctx,w,h){ ctx.clearRect(0,0,w,h); }
+function origin(ctx){ return {ctx, ox:0, oy:0}; }
+
+// ---- 1: one block, two versions ----
+(function(){
+  let o={ox:40,oy:170}; const c=document.getElementById('c1'),x=c.getContext('2d');
+  o.ctx=x; const wl=wall(x,{ox:40,oy:170},0,0,8,4,'timber',{windows:[1,5],door:3.4}); gable(x,wl.X,wl.top-2,wl.ww,ROOF);
+  const c2=document.getElementById('c2'),x2=c2.getContext('2d');
+  const wl2=wall(x2,{ox:40,oy:170},0,0,8,4,'timber',{windows:[1,5],door:3.4});
+  // no-roof: clean top edge marker
+  x2.strokeStyle='#ffd98a'; x2.setLineDash([5,4]); x2.lineWidth=2; x2.strokeRect(wl2.X-2,wl2.top-6,wl2.ww+4,8); x2.setLineDash([]);
+  x2.fillStyle='#ffd98a'; x2.font='11px system-ui'; x2.fillText('clean top edge → shared roof flows here', wl2.X-6, wl2.top-12);
+})();
+
+// ---- 2: palette ----
+(function(){
+  let x=document.getElementById('p1').getContext('2d'); let wl=wall(x,{ox:20,oy:150},0,0,7,4,'stone',{windows:[1,5],door:3.2});
+  x=document.getElementById('p2').getContext('2d'); wall(x,{ox:30,oy:150},0,0,5,4,'timber',{windows:[2]});
+  x=document.getElementById('p3').getContext('2d'); portico(x,{ox:30,oy:150},0,0,9,5,'stone',false);
+})();
+
+// ---- 3 & 4: assembled ----
+// footprint sections (local tiles): front(south), wing(east), portico(north)
+const SECTIONS=[
+  {kind:'rect', sx:2, sy:7, w:8, h:5, mat:'timber', windows:[1,6], door:3.4}, // front-entry (south)
+  {kind:'rect', sx:10,sy:8, w:5, h:4, mat:'timber', windows:[2]},            // east wing
+  {kind:'portico', sx:3, sy:2, w:7, h:5, mat:'stone'},                       // north portico (deeper)
+];
+function drawAssembly(canvasId, unifiedRoof){
+  const c=document.getElementById(canvasId), x=c.getContext('2d'); const o={ox:120,oy:150};
+  // y-sort: north (smaller sy) first so south draws in front
+  const order=[...SECTIONS].sort((a,b)=>a.sy-b.sy);
+  for(const s of order){
+    if(s.kind==='portico'){ portico(x,o,s.sx,s.sy,s.w,s.h,s.mat, !unifiedRoof); continue; }
+    const wl=wall(x,o,s.sx,s.sy,s.w,s.h,s.mat,{windows:s.windows,door:s.door});
+    if(!unifiedRoof) gable(x,wl.X,wl.top-2,wl.ww,ROOF);
+  }
+  if(unifiedRoof){
+    // one continuous roof over the rect union (front+wing); portico keeps its own dome (option shown faint)
+    let minx=99,maxx=-99,miny=99,maxy=-99;
+    for(const s of SECTIONS){ if(s.kind!=='rect')continue; minx=Math.min(minx,s.sx);maxx=Math.max(maxx,s.sx+s.w);miny=Math.min(miny,s.sy);maxy=Math.max(maxy,s.sy+s.h); }
+    hipRoof(x,o,minx,miny,maxx-minx,maxy-miny,ROOF);
+    portico(x,o,SECTIONS[2].sx,SECTIONS[2].sy,SECTIONS[2].w,SECTIONS[2].h,'stone',true);
+    x.fillStyle='#ffd98a';x.font='12px system-ui';x.fillText('◀ one roof surface flows over front + wing', 250, 40);
+  } else {
+    x.fillStyle='#ffd98a';x.font='12px system-ui';x.fillText('◀ each block carries a matching roof; ridges/eaves align at seams', 200, 28);
+  }
+  // player for scale
+  const p=px(o, 9.5, 13.2); x.fillStyle='#3a6ea5'; x.fillRect(p.x-4,p.y-12,8,12); x.fillStyle='#e8c9a0'; x.fillRect(p.x-4,p.y-16,8,5);
+}
+drawAssembly('a1', true);
+drawAssembly('a2', false);
+
+// ---- 6: stacking ----
+(function(){
+  const x=document.getElementById('st').getContext('2d'); const FL=4, baseOy=300, ox=90;
+  for(let i=0;i<FL;i++){ const oy=baseOy-i*WALLH*TILE;
+    const wl=wall(x,{ox,oy},0,0,7,4,'stone',{windows:[1,5],door:(i===0?3.0:null)});
+    if(i===FL-1) gable(x,wl.X,wl.top-2,wl.ww,ROOFG);
+    if(i>0){ x.strokeStyle='#ffd98a';x.setLineDash([4,3]);x.lineWidth=1; x.beginPath();x.moveTo(wl.X-6,wl.gy);x.lineTo(wl.X+wl.ww+6,wl.gy);x.stroke();x.setLineDash([]); }
+  }
+  x.fillStyle='#ffd98a';x.font='11px system-ui'; x.fillText('— each floor = 1 no-roof block —', ox-6, 384); x.fillText('roof caps the top · up to 10+ floors', ox-6, 396);
+})();
+
+// ---- 7: exterior + interior + door ----
+function drawInterior(x,o,w,h){
+  for(let ty=0;ty<h;ty++)for(let tx=0;tx<w;tx++){const p=px(o,tx,ty); x.fillStyle=((tx+ty)&1)?'#6b5942':'#5e4e39'; x.fillRect(p.x,p.y,TILE,TILE);}
+  x.fillStyle='#8a7657';
+  const n=px(o,0,0); x.fillRect(n.x-6,n.y-8,w*TILE+12,8);            // NORTH wall (seen inside)
+  const wv=px(o,0,0); x.fillRect(wv.x-6,wv.y,6,h*TILE);              // west
+  const ev=px(o,w,0); x.fillRect(ev.x,ev.y,6,h*TILE);               // east
+  const s=px(o,0,h); x.fillRect(s.x,s.y,3*TILE,6); x.fillRect(s.x+4*TILE,s.y,(w-4)*TILE,6); // south w/ door gap
+  x.fillStyle='#ffd98a';x.font='11px system-ui'; x.fillText('NORTH wall (visible inside)', n.x, n.y-12);
+  x.fillStyle='#ff8a8a'; const d=px(o,3,h); x.fillText('door (you entered)', d.x-8, d.y+16);
+}
+(function(){
+  const x=document.getElementById('ex').getContext('2d'); const o={ox:50,oy:200};
+  const wl=wall(x,o,0,0,7,4,'timber',{windows:[1,5],door:3.0}); gable(x,wl.X,wl.top-2,wl.ww,ROOF);
+  const dx=wl.X+3.0*TILE; x.strokeStyle='#ff5a5a';x.lineWidth=2;x.strokeRect(dx,wl.gy-WALLH*TILE*0.55,TILE*1.1,WALLH*TILE*0.55);
+  x.fillStyle='#ffb3b3';x.font='11px system-ui';x.fillText("door @ tile(3,w1) — metadata", dx-26, wl.gy+18); x.fillText('→ walk-in + door-leaf', dx-26, wl.gy+30);
+  const x2=document.getElementById('in').getContext('2d'); drawInterior(x2,{ox:60,oy:70},7,6);
+})();
+
+// ---- 7: decomposition (foundations don't stack) ----
+(function(){
+  const x=document.getElementById('dc').getContext('2d'); const ww=7*TILE;
+  function slice(X,top,opts){ const M=MAT.timber; x.fillStyle=M.wall;x.fillRect(X,top,ww,WALLH*TILE);
+    x.strokeStyle=M.beam;x.lineWidth=2; for(let i=0;i<=7;i++){x.beginPath();x.moveTo(X+i*TILE,top);x.lineTo(X+i*TILE,top+WALLH*TILE);x.stroke();}
+    x.beginPath();x.moveTo(X,top+WALLH*TILE*0.45);x.lineTo(X+ww,top+WALLH*TILE*0.45);x.stroke();
+    x.fillStyle='#2d3f57'; for(const wx of (opts.windows||[1,5])){x.fillRect(X+wx*TILE,top+WALLH*TILE*0.26,TILE,TILE);}
+    if(opts.door!=null){x.fillStyle='#5a3b22';x.fillRect(X+opts.door*TILE,top+WALLH*TILE*0.45,TILE*1.1,WALLH*TILE*0.55);} }
+  function found(X,gy){ x.fillStyle='#8c8474'; x.strokeStyle='#6d6557';x.lineWidth=1; for(let i=0;i<7;i++){x.fillRect(X+i*TILE,gy,TILE,TILE*0.7);x.strokeRect(X+i*TILE,gy,TILE,TILE*0.7);} }
+  function label(t,X,Y,col){ x.fillStyle=col||'#cdddc4';x.font='11px system-ui';x.fillText(t,X,Y); }
+
+  // LEFT: complete
+  let X=40, gy=150; found(X,gy); slice(X,gy-WALLH*TILE,{windows:[1,5],door:3}); gable(x,X,gy-WALLH*TILE-2,ww,ROOF);
+  label('COMPLETE (generated):',X-6,34); label('roof + wall + foundation',X-6,48,'#bcd3b0');
+
+  // MID: exploded into 3 pieces
+  let mx=310; label('decompose ▼',mx-2,34,'#ffd98a');
+  gable(x,mx,86,ww,ROOF); label('roof-cap → TOP only',mx+ww+14,70,'#ffd98a');
+  slice(mx,108,{windows:[1,5]}); x.strokeStyle='#ffd98a';x.setLineDash([4,3]);x.lineWidth=2;x.strokeRect(mx,108,ww,WALLH*TILE);x.setLineDash([]); label('wall-SLICE → TILEABLE (no roof/foundation)',mx+ww+14,135,'#ffd98a');
+  found(mx,196); label('foundation → BASE only',mx+ww+14,208,'#ffd98a');
+
+  // RIGHT: 4-storey assembled
+  let rx=650, rgy=250; found(rx,rgy);
+  for(let i=0;i<3;i++){ slice(rx,rgy-(i+1)*WALLH*TILE,{windows:[1,5],door:(i===0?3:null)}); }
+  gable(x,rx,rgy-3*WALLH*TILE-2,ww,ROOF);
+  label('ASSEMBLE per floor count:',rx-6,34); label('foundation@base · slices · roof@top',rx-6,48,'#bcd3b0');
+})();
+
+// ---- 9: depth ----
+(function(){
+  const x=document.getElementById('dp1').getContext('2d'); const T=13, W=10, D=20, ox=48, oy=28;
+  x.fillStyle='#9a4a32'; x.fillRect(ox,oy,W*T,D*T);
+  x.strokeStyle='#6f2817';x.lineWidth=2;x.beginPath();x.moveTo(ox+W*T/2,oy);x.lineTo(ox+W*T/2,oy+D*T);x.stroke();
+  x.fillStyle='#bfe3a6'; x.fillRect(ox,oy+D*T,W*T,5);
+  x.fillStyle='#cdddc4';x.font='10px system-ui'; x.fillText('roof (top-down)',ox+6,oy+D*T*0.5);
+  x.fillStyle='#bfe3a6';x.fillText('SOUTH facade = block',ox-10,oy+D*T+20);
+  x.fillStyle='#cdddc4';x.fillText('back wall: never seen',ox-4,oy-8);
+  x.fillStyle='#ffd98a';x.fillText('depth',ox+W*T+6,oy+D*T*0.5-6); x.fillText('×100',ox+W*T+6,oy+D*T*0.5+8);
+})();
+(function(){
+  const x=document.getElementById('dp2').getContext('2d'); const T=18, W=8, ox=80, gy=282, wh=4*T;
+  const X=ox, top=gy-wh, ww=W*T, ny=74, inset=0; // ORTHOGRAPHIC — no vanishing point (2D game)
+  x.fillStyle='#b6492f'; x.beginPath(); x.moveTo(X-8,top); x.lineTo(X+inset,ny); x.lineTo(X+ww/2,ny); x.lineTo(X+ww/2,top); x.closePath(); x.fill();
+  x.fillStyle='#8e351f'; x.beginPath(); x.moveTo(X+ww+8,top); x.lineTo(X+ww-inset,ny); x.lineTo(X+ww/2,ny); x.lineTo(X+ww/2,top); x.closePath(); x.fill();
+  x.strokeStyle='#6f2817';x.lineWidth=2;x.beginPath();x.moveTo(X+ww/2,top);x.lineTo(X+ww/2,ny);x.stroke();
+  const M=MAT.timber; x.fillStyle=M.wall; x.fillRect(X,top,ww,wh);
+  x.strokeStyle=M.beam;x.lineWidth=2; for(let i=0;i<=W;i++){x.beginPath();x.moveTo(X+i*T,top);x.lineTo(X+i*T,gy);x.stroke();}
+  x.fillStyle='#2d3f57'; x.fillRect(X+1.2*T,top+wh*0.3,T,T*1.1); x.fillRect(X+5*T,top+wh*0.3,T,T*1.1);
+  x.fillStyle='#5a3b22'; x.fillRect(X+3.2*T,gy-wh*0.55,T*1.1,wh*0.55);
+  x.fillStyle='#8c8474'; x.fillRect(X,gy-T*0.4,ww,T*0.4);
+  x.fillStyle='#ffd98a';x.font='11px system-ui';
+  x.fillText('south facade (1 block)',X-6,gy+18); x.fillText('↑ roof carries the depth north',X+ww+12,ny+54);
+})();
+
+// ---- 10: door detection ----
+(function(){
+  const x=document.getElementById('dd').getContext('2d'); const o={ox:40,oy:210};
+  const wl=wall(x,o,0,0,8,4,'stone',{windows:[1,6],door:3.4}); gable(x,wl.X,wl.top-2,wl.ww,ROOF);
+  const dx=wl.X+3.4*TILE, dyTop=wl.gy-WALLH*TILE*0.55;
+  x.lineWidth=2; x.strokeStyle='#ff4d4d'; x.strokeRect(dx,dyTop,TILE*1.1,WALLH*TILE*0.55);
+  x.strokeStyle='#4da6ff'; x.strokeRect(wl.X+1*TILE,wl.top+WALLH*TILE*0.3,TILE,TILE*1.1); x.strokeRect(wl.X+6*TILE,wl.top+WALLH*TILE*0.3,TILE,TILE*1.1);
+  x.strokeStyle='#5ee36a'; x.strokeRect(dx-4,wl.gy-3,TILE*1.1+8,9);
+  x.font='10px system-ui'; x.fillStyle='#ff9d9d';x.fillText('door',dx+TILE*1.3,dyTop+12);
+  x.fillStyle='#9dccff';x.fillText('window',wl.X+6*TILE-2,wl.top+WALLH*TILE*0.3-4); x.fillStyle='#9deea6';x.fillText('entry tile',dx-2,wl.gy+18);
+})();
+
+// ---- 11: castle ----
+(function(){
+  const x=document.getElementById('cas').getContext('2d'); const S=MAT.stone; const T=16;
+  function tower(cx,baseY,r,htiles,conic){ const top=baseY-htiles*T;
+    x.fillStyle=S.wall; x.fillRect(cx-r,top,2*r,baseY-top);
+    x.strokeStyle=S.beam;x.lineWidth=1; for(let yy=top+T;yy<baseY;yy+=T){x.beginPath();x.moveTo(cx-r,yy);x.lineTo(cx+r,yy);x.stroke();}
+    x.fillStyle='#1e2a18'; for(let yy=top+20;yy<baseY-18;yy+=32){x.fillRect(cx-2,yy,5,13);}
+    if(conic){ x.fillStyle='#6a3f6f'; x.beginPath();x.moveTo(cx-r-4,top);x.lineTo(cx,top-r*1.8);x.lineTo(cx+r+4,top);x.closePath();x.fill(); }
+    else { x.fillStyle=S.wall; for(let i=cx-r;i<cx+r-6;i+=14){x.fillRect(i,top-7,8,7);} }
+  }
+  function lab(t,X,Y){x.fillStyle='#ffd98a';x.font='12px system-ui';x.fillText(t,X,Y);}
+  // BACK (north): keep + back towers + great-hall roof — higher up, drawn first
+  tower(255,320,15,8,true); tower(645,320,15,8,true);
+  x.fillStyle='#7a5a3a'; x.beginPath();x.moveTo(540,300);x.lineTo(620,256);x.lineTo(700,300);x.closePath();x.fill(); x.fillStyle='#caa56a';x.fillRect(545,300,150,7);
+  tower(450,330,26,12,false); x.fillStyle='#7a5a3a'; x.beginPath();x.moveTo(424,138);x.lineTo(450,108);x.lineTo(476,138);x.closePath();x.fill();
+  // FRONT (south): curtain wall + gatehouse + front towers — lower, in front
+  const cwx=140,cww=620,cwt=350,cwh=52;
+  x.fillStyle=S.wall; x.fillRect(cwx,cwt,cww,cwh);
+  x.strokeStyle=S.beam;x.lineWidth=1; for(let i=cwx;i<cwx+cww;i+=T){x.strokeRect(i,cwt,T,cwh);}
+  x.fillStyle=S.wall; for(let i=cwx;i<cwx+cww-8;i+=24){x.fillRect(i,cwt-7,12,7);}
+  x.fillStyle='#8c8474'; x.fillRect(cwx,cwt+cwh-6,cww,6);
+  tower(415,402,15,7,false); tower(485,402,15,7,false);
+  x.fillStyle=S.wall; x.fillRect(415,300,70,102);
+  x.fillStyle='#3a2a18'; x.beginPath();x.moveTo(436,402);x.lineTo(436,346);x.arc(450,346,14,Math.PI,0);x.lineTo(464,402);x.closePath();x.fill();
+  tower(165,402,18,7,true); tower(735,402,18,7,true);
+  // labels
+  lab('keep — tall slice-stack',360,150); lab('corner tower',95,250); lab('great hall — facade + roof',556,242);
+  lab('curtain wall — facade tiled E-W',150,440); lab('gatehouse — MAIN DOOR (metadata)',355,430);
+  lab('courtyard behind = NO roof (open)',300,335);
+})();
+</script>
+</body></html>

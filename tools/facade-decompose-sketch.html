@@ -1,0 +1,91 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Decomposing a complex footprint</title>
+<style>
+  html,body{margin:0;background:#2b332a;color:#eee;font:13px/1.5 system-ui,sans-serif}
+  .wrap{max-width:1180px;margin:0 auto;padding:18px}
+  h1{font-size:20px}h2{font-size:15px;color:#bfe3a6;border-bottom:1px solid #5a6e57;padding-bottom:3px;margin-top:18px}
+  canvas{background:#39463494;border:1px solid #222;border-radius:5px;margin-top:8px}
+  .note{color:#cdddc4}.key{color:#ffd98a}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0;font-size:12px}
+  .sw{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:5px;border:1px solid #0006}
+  ol{margin:6px 0 6px 18px} li{margin:3px 0}
+</style></head><body><div class="wrap">
+<h1>Decomposing a complex footprint into component blocks</h1>
+<p class="note">The generation system already emits a building as <b>sections</b> (rects + shape archetypes — round, ell,
+courtyard…). We don't generate the whole blob; we <span class="key">quantize</span> oversized sections into ≤12-tile
+patches (the dashed red grid = PixelLab's 400px / 12.5-tile max), then <span class="key">classify</span> each patch by
+which sides are EXPOSED, pull the matching oriented block, and flow one roof over the union.</p>
+
+<canvas id="c" width="1120" height="560"></canvas>
+<div class="legend">
+  <span><span class="sw" style="background:#c89b6a"></span>interior → ROOF only (no walls — never seen)</span>
+  <span><span class="sw" style="background:#2e8b8b"></span>south edge → FACADE block</span>
+  <span><span class="sw" style="background:#d08a2e"></span>E/W edge → EDGE block (rotated)</span>
+  <span><span class="sw" style="background:#c0392b"></span>corner → CORNER block (rotated)</span>
+  <span><span class="sw" style="background:#8e6fb0"></span>curved → ROUND / portico block</span>
+  <span><span class="sw" style="background:#6b7280"></span>north back → not seen outside (interior)</span>
+</div>
+<div id="count" class="note"></div>
+
+<h2>The algorithm</h2>
+<ol>
+  <li><b>Sections in</b> — take the footprint's sections from the generation system (already rects + archetypes).</li>
+  <li><b>Quantize</b> — any section bigger than ~12 tiles is tiled into ≤12-tile patches (dashed grid).</li>
+  <li><b>Classify each patch</b> by exposed sides: 0 exposed → <b>roof-only</b>; south exposed → <b>facade</b>; E/W → <b>edge</b>; south+side → <b>corner</b>; curved boundary → <b>round/portico</b>.</li>
+  <li><b>Orient</b> — pull the block from the library in the needed direction (see rotations below).</li>
+  <li><b>Roof</b> — one surface (procedural) or roof-blocks flow over the whole union; foundation only on the south-exposed base; stories stack as slices.</li>
+</ol>
+
+<h2>Rotations — you're right, but cheaper than 8× everything</h2>
+<p class="note">We need a <b>directional set</b> (the stone_160 idea): 4 cardinal EDGES + 4 CORNERS. But it's not 8× every asset —
+• the big <b>interior is roof-only</b> (no walls), so most of a huge building is just roof;
+• the <b>south facade</b> is generated once;
+• <b>west = mirror(east)</b> and the <b>north back</b> is rarely seen → derived, not generated;
+• <b>round</b> pieces are near radially-symmetric.
+So per material we generate ~<b>south-facade + E-edge + SE-corner + round</b> and derive the rest — a handful, not 8×N.</p>
+</div>
+<script>
+const T=18, GW=34, GH=20, OX=40, OY=24, Q=7;
+const occ=Array.from({length:GH},()=>new Array(GW).fill(false));
+const rnd=Array.from({length:GH},()=>new Array(GW).fill(false));
+function rect(x0,y0,w,h){for(let y=y0;y<y0+h;y++)for(let x=x0;x<x0+w;x++)if(occ[y])occ[y][x]=true;}
+function circle(cx,cy,r,mark){for(let y=0;y<GH;y++)for(let x=0;x<GW;x++){const dx=x+0.5-cx,dy=y+0.5-cy;if(dx*dx+dy*dy<=r*r){occ[y][x]=true; if(mark)rnd[y][x]=true;}}}
+// a complex building ~ the sketch: big body + right wing + 2 round bumps + a small rect notch
+rect(3,2,13,11); rect(16,7,7,6); rect(15,5,3,3);
+circle(20,4.5,3.1,true);        // top-right round protrusion
+circle(4.2,13.4,2.6,true);      // bottom-left round protrusion
+const O=(x,y)=>(y>=0&&y<GH&&x>=0&&x<GW&&occ[y][x]);
+const cx=document.getElementById('c').getContext('2d');
+const COL={roof:'#c89b6a',facade:'#2e8b8b',edge:'#d08a2e',corner:'#c0392b',round:'#8e6fb0',back:'#6b7280'};
+const tally={roof:0,facade:0,edge:0,corner:0,round:0,back:0};
+function px(x,y){return [OX+x*T, OY+y*T];}
+for(let y=0;y<GH;y++)for(let x=0;x<GW;x++){ if(!occ[y][x])continue;
+  const s=!O(x,y+1),n=!O(x,y-1),e=!O(x+1,y),w=!O(x-1,y);
+  let role;
+  if(rnd[y][x] && (s||n||e||w)) role='round';
+  else if(!s&&!n&&!e&&!w) role='roof';
+  else if(s&&(e||w)) role='corner';
+  else if(s) role='facade';
+  else if(e||w) role='edge';
+  else role='back';
+  tally[role]++;
+  const [sx,sy]=px(x,y);
+  cx.fillStyle=COL[role]; cx.globalAlpha=0.9; cx.fillRect(sx,sy,T,T); cx.globalAlpha=1;
+  cx.strokeStyle='#0003'; cx.strokeRect(sx+0.5,sy+0.5,T,T);
+  // thick exposed edges (the building outline)
+  cx.strokeStyle='#15110c'; cx.lineWidth=3; cx.beginPath();
+  if(s){cx.moveTo(sx,sy+T);cx.lineTo(sx+T,sy+T);} if(n){cx.moveTo(sx,sy);cx.lineTo(sx+T,sy);}
+  if(e){cx.moveTo(sx+T,sy);cx.lineTo(sx+T,sy+T);} if(w){cx.moveTo(sx,sy);cx.lineTo(sx,sy+T);}
+  cx.stroke();
+}
+// quantum grid (dashed red) — PixelLab max patch
+cx.setLineDash([6,5]); cx.strokeStyle='#d9484b'; cx.lineWidth=1.5;
+for(let gx=0;gx<=GW;gx+=Q){const [x0]=px(gx,0);cx.beginPath();cx.moveTo(x0,OY-6);cx.lineTo(x0,OY+GH*T+6);cx.stroke();}
+for(let gy=0;gy<=GH;gy+=Q){const [,y0]=px(0,gy);cx.beginPath();cx.moveTo(OX-6,y0);cx.lineTo(OX+GW*T+6,y0);cx.stroke();}
+cx.setLineDash([]);
+cx.fillStyle='#d9c'; cx.font='11px system-ui'; cx.fillText('dashed = PixelLab max patch (≤12 tiles)', OX, OY+GH*T+22);
+document.getElementById('count').innerHTML =
+  `This footprint → <b>${tally.facade}</b> facade · <b>${tally.edge}</b> edge · <b>${tally.corner}</b> corner · `+
+  `<b>${tally.round}</b> round · <b>${tally.roof+tally.back}</b> interior(roof-only) patches. `+
+  `Most of the building is roof; only the perimeter needs facade/edge/corner art.`;
+</script></body></html>
