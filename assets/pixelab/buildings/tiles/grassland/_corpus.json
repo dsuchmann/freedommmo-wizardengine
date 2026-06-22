@@ -1,0 +1,22 @@
+{
+  "_comment": "Grassland tile corpus — PixelLab object IDs. Bases via create_1_direction_object; states via create_object_state of each base. holes = HOLES-in-content% (solidify.mjs forces 0).",
+  "tile_px": 64, "tile_canvas": 256, "tiles_per_side": 4,
+  "bases": {
+    "timber_frame__v0": { "id": "2d8b7dda-b92a-43cf-8e45-25a1efa2cfb3", "holes": 2, "ok": true },
+    "timber_frame__v1": { "id": "34e4b002-1666-492d-8705-dc7af03c3a93", "ok": "re-roll in flight (prev 40%); on-disk solidified" },
+    "fieldstone__v0": { "id": "fb980c2d-c92f-4963-b0f6-3abd23351c15", "holes": 2, "ok": true },
+    "fieldstone__v1": { "id": "44a6962c-ba81-4bcd-96f0-6715f33f90f2", "holes": 2, "ok": true },
+    "cob__v0": { "id": "bf62a299-e1b8-4951-863a-99637b0ee055", "holes": 2, "ok": true },
+    "cob__v1": { "id": "4817f2aa-52f1-43f0-bc15-cbf61018bc67", "ok": "re-roll in flight (prev 78%); on-disk solidified" },
+    "wattle_daub__v0": { "id": "c13907b2-44e2-475f-b636-89aee5d3c285", "holes": 0, "ok": true },
+    "wattle_daub__v1": { "id": "fb95fa7c-dbc6-4732-8067-b6dfa2f32e1a", "holes": 3, "ok": true }
+  },
+  "states_v0": {
+    "_states": ["ground_door", "ground_window", "left_corner", "right_corner", "upper_plain"],
+    "fieldstone": { "ground_door": "f16f7b62-c2f6-480e-a449-b9f55f831000", "ground_window": "cbb6b6d3-ac77-4e76-b82b-63f3e011e9ef", "left_corner": "a0e0701c-39ba-4b9d-ab4b-0df07b83d017", "right_corner": "f908d52d-2f1d-4940-9891-d4b069c85d87", "upper_plain": "220a0603-be9c-4d7a-b349-017c11561c7c", "status": "done" },
+    "cob": { "ground_door": "e7020f5d-0ee6-4c82-9469-c28d3081e530", "ground_window": "618bb6e7-e59d-4c18-b01a-05b98ad812d0", "left_corner": "bf6efbdb-1963-4c7e-89fc-bc3e50c38d42", "right_corner": "0439c94d-d70b-44fe-ada8-53f5808cdd34", "upper_plain": "582ac183-1bf0-45a8-a3a5-bef74ebf7ed9", "upper_plain_reroll": "6b2e34ba-f4f3-4eac-9295-9f65ff8aaa22", "status": "done", "note": "upper_plain state + re-roll both came back >75% transparent; upper DERIVED from ground base via derive-upper.mjs" },
+    "timber_frame": { "ground_door": "b2d74b90-760a-4b76-b357-daf610e22082", "ground_window": "46d63b63-cd22-4861-9943-6ba10ca53757", "left_corner": "d8ace955-fbbe-4fa5-8464-fa712e067721", "left_corner_reroll": "3ff1665c-d4e0-448b-96bf-6d0040f8ed50", "right_corner": "325ccaa1-1df6-447a-84a0-3e1a84033f0d", "upper_plain": "fe7d9088-a4ef-47c5-9f7b-f41e7e24dc62", "status": "done", "note": "left_corner re-rolled (3ff1665c) — first one muddied panels" },
+    "wattle_daub": { "ground_door": "09f8e4a8-d4b5-4b5c-b23d-049ddb86b506", "ground_window": "54728790-8390-416d-8c77-86731e16b7ce", "left_corner": "4bfdccdf-3e10-4889-afd8-f4f993b7936b", "right_corner": "6900cf10-a374-4930-9383-1f7edbf71b2e", "upper_plain": "344e4c42-a65a-4c10-a97d-6fbd1294cb7d", "status": "done" }
+  },
+  "assembly": "drawBuildingTiles: ground_plain mirror-tiled per material; left/right_corner at run ends; upper_plain for storeys>0; wood door/window overlay (material-agnostic) at footprint doors[]/windows[]. door/window per-material STATES exist in PixelLab but assembly uses the shared wood overlay since a door/window is material-agnostic."
+}

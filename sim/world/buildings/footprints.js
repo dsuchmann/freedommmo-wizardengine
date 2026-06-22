@@ -76,6 +76,11 @@ function boundingBox(sections) {
 const MIN_DOOR_SPACING = 5;   // min tile distance between two doors (no clustering)
 const DOOR_PER_TILES = 22;    // ~1 door per this many outer-perimeter tiles
 const MAX_DOORS = 4;
+// ── window placement (south-facing outer walls, clear of doors) ──
+const MIN_WINDOW_SPACING = 3; // min tile distance between two windows
+const WINDOW_DOOR_CLEAR = 2;  // keep windows ≥ this (Manhattan) from any door
+const WINDOW_PER_TILES = 3;   // ~1 window per this many south-facing outer wall tiles
+const MAX_WINDOWS = 8;
 // Minimum building dimension so even small buildings have a believable interior
 // (5 => at least a 3x3 interior after the 1-tile wall ring).
 export const MIN_DIM = 5;
@@ -170,6 +175,29 @@ function placeDoors(walls, wallSet, tileSet, seed, bbox) {
   return doors;
 }
 
+/**
+ * Place windows on the south-facing outer wall tiles, kept clear of doorways and spaced apart.
+ * Windows stay WALL tiles (unlike doors, which become openings/floor) — the renderer overlays a
+ * window sprite on the wall at these positions. Returns array of { x, y }.
+ */
+function placeWindows(walls, tileSet, seed, bbox, doors) {
+  const outside = computeOutside(tileSet, bbox);
+  const south = walls.filter(w => outside.has(`${w.x},${w.y + 1}`)); // south-facing outer walls
+  if (south.length === 0) return [];
+  const ordered = south
+    .filter(w => doors.every(d => Math.abs(d.x - w.x) + Math.abs(d.y - w.y) >= WINDOW_DOOR_CLEAR))
+    .map((w, i) => ({ w, k: rand(seed, 0xD003, w.x * 137 + w.y * 19 + i) }))
+    .sort((a, b) => a.k - b.k)
+    .map(o => o.w);
+  const maxWin = Math.max(0, Math.min(MAX_WINDOWS, Math.round(south.length / WINDOW_PER_TILES)));
+  const windows = [];
+  for (const w of ordered) {
+    if (windows.length >= maxWin) break;
+    if (windows.every(p => Math.abs(p.x - w.x) + Math.abs(p.y - w.y) >= MIN_WINDOW_SPACING)) windows.push({ x: w.x, y: w.y });
+  }
+  return windows;
+}
+
 // ── feature placement ─────────────────────────────────────────────────
 
 /**
@@ -218,7 +246,7 @@ export function generateFootprint(seed, typeId, race, tier) {
   //      iteration (up to 6 steps) until floor count meets the function minimum.
   const SCALE = FOOTPRINT_SCALE;
   const need = minFloorTilesFor(type);
-  let w, h, patternName, sections, tileSet, walls, wallKeySet, floors, doors;
+  let w, h, patternName, sections, tileSet, walls, wallKeySet, floors, doors, windows;
   for (let grow = 0; grow <= FOOTPRINT_GROW_MAX; grow++) {
     w = Math.max(MIN_DIM, Math.round((type.minW + Math.floor(rand(seed, 0x5001) * (type.maxW - type.minW + 1))) * SCALE) + grow);
     h = Math.max(MIN_DIM, Math.round((type.minH + Math.floor(rand(seed, 0x5002) * (type.maxH - type.minH + 1))) * SCALE) + grow);
@@ -232,6 +260,7 @@ export function generateFootprint(seed, typeId, race, tier) {
       const southEdge = floors.filter(f => !tileSet.has(`${f.x},${f.y + 1}`));
       const di = Math.floor(rand(seed, 0x5010) * Math.max(1, southEdge.length));
       doors = southEdge.length ? [{ x: southEdge[di].x, y: southEdge[di].y }] : [];
+      windows = [];   // open structures (stalls etc.) have no walls to hang windows on
     } else {
       walls = perimeterTiles(sections, tileSet);
       wallKeySet = new Set(walls.map(wl => `${wl.x},${wl.y}`));
@@ -240,6 +269,7 @@ export function generateFootprint(seed, typeId, race, tier) {
       const doorSet = new Set(doors.map(d => `${d.x},${d.y}`));
       walls = walls.filter(wl => !doorSet.has(`${wl.x},${wl.y}`));
       floors = [...floors, ...doors.map(d => ({ x: d.x, y: d.y }))];
+      windows = placeWindows(walls, tileSet, seed, boundingBox(sections), doors);
     }
     if (floors.length >= need) break; // coherent: enough interior for the function
   }
@@ -263,6 +293,7 @@ export function generateFootprint(seed, typeId, race, tier) {
     sections,
     walls,
     doors,
+    windows,
     floors,
     features,
     interior,

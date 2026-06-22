@@ -19,7 +19,7 @@ import { getWallImg } from './building-renderer.js';
 import { buildingFloors } from './building-shadow.js';
 import { queryBuildingTile } from './building-tile-query.js';
 import { wallAssetDir, wallPieceFile, roofAssetDir, roofTextureFile, ROOF_FASCIA_FILE } from '../../sim/world/buildings/building-material-registry.js';
-import { drawBuildingTiles } from './building-tiles.js';
+import { drawBuildingTiles, isTiledBuilding } from './building-tiles.js';
 
 // Source rect of the E/W side-face cap. The grassland edge_ew strip is a 32x128 quoin/side-cap;
 // sample its LEFT quoin column (x=0..16) as the true vertical corner post (`isQuoinStrip`) — drawing
@@ -531,8 +531,14 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   // procedural roof. When the tile set is loaded for this building, draw it + the roof and return.
   ensureRoof();
   const drawRoof = () => { if (_roof) { try { _roof.drawRoofForBuilding(ctx, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b), roofFascia: roofFasciaFor(b) }); } catch { /* skip roof */ } } };
-  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { drawRoof(); return true; }
-  if (!getWallImg('south_base')) return false; // legacy fallback (tiles not loaded yet)
+  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawRoof(); return true; }
+  // A grassland TILE-CORPUS building whose tiles aren't loaded yet must NOT fall to the legacy
+  // strip path — drawWalls would stamp a stone_brick 32px strip STRETCHED over the footprint (the
+  // melted/stretched single-building artifact). Stay invisible this frame; it flips to mirror-tiled
+  // walls the moment its own tiles finish loading. Only genuinely non-tiled biomes use drawWalls.
+  if (isTiledBuilding(b)) { if (b) b._wallPath = 'none'; return false; }
+  if (!getWallImg('south_base')) { if (b) b._wallPath = 'none'; return false; } // legacy fallback (assets not loaded yet)
+  if (b) b._wallPath = 'legacy';
   drawWalls(ctx, b, camX, camY, tilePx, w, h);
   drawRoof();
   return true;

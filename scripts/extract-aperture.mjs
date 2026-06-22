@@ -11,12 +11,27 @@ async function main() {
   const d = c.getContext('2d').getImageData(0, 0, W, H).data;
   const out = new Uint8ClampedArray(W * H * 4);
   const fx0 = +(A[4] ?? 0.28), fx1 = +(A[5] ?? 0.72), fy0 = +(A[6] ?? 0.18), fy1 = +(A[7] ?? 0.92);
-  const x0 = W * fx0, x1 = W * fx1, y0 = H * fy0, y1 = H * fy1;
+  const x0 = Math.floor(W * fx0), x1 = Math.ceil(W * fx1), y0 = Math.floor(H * fy0), y1 = Math.ceil(H * fy1);
   for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
     const i = (y * W + x) * 4; if (d[i + 3] <= ALPHA_MIN) continue;
     const r = d[i], g = d[i + 1], b = d[i + 2], mx = Math.max(r, g, b);
-    const dark = mx < 120, brown = r > 55 && r < 175 && r > g + 10 && g + 6 >= b, glass = b > r + 8 && b > 40 && mx < 150;
+    // wood (door/shutter/frame): r noticeably > g; true opening/threshold: near-black; glass: bluish.
+    // grey fieldstone wall (r≈g≈b, brightness ~75-99) is EXCLUDED by all three so only the aperture is kept.
+    const dark = mx < 55, brown = r > 55 && r < 185 && r > g + 12 && g + 5 >= b, glass = b > r + 10 && b > 50 && mx < 160;
     if (dark || brown || glass) { out[i] = r; out[i + 1] = g; out[i + 2] = b; out[i + 3] = d[i + 3]; }
+  }
+  // keep the LARGEST 8-connected component (drops the floating lintel/masonry fragments that the
+  // colour mask catches near the aperture) so only the connected door/window assembly survives.
+  {
+    const N = W * H, lab = new Int32Array(N), st = []; let next = 0, big = 0, bigArea = 0; const area = [];
+    const opx = (i) => out[i * 4 + 3] > ALPHA_MIN;
+    for (let s = 0; s < N; s++) {
+      if (lab[s] || !opx(s)) continue; const id = ++next; let a = 0; st.length = 0; st.push(s); lab[s] = id;
+      while (st.length) { const c = st.pop(), cy = (c / W) | 0, cx = c - cy * W; a++;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { if (!dx && !dy) continue; const nx = cx + dx, ny = cy + dy; if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue; const ni = ny * W + nx; if (!lab[ni] && opx(ni)) { lab[ni] = id; st.push(ni); } } }
+      area[id] = a; if (a > bigArea) { bigArea = a; big = id; }
+    }
+    for (let i = 0; i < N; i++) if (lab[i] !== big) out[i * 4 + 3] = 0;
   }
   // trim to content
   let bx0 = W, by0 = H, bx1 = -1, by1 = -1;

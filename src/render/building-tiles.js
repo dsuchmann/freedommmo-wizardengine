@@ -13,21 +13,24 @@ const DIR = '/assets/pixelab/buildings/tiles/grassland/';
 const _img = new Map();
 function img(url) { let im = _img.get(url); if (!im) { im = new Image(); im.src = url; _img.set(url, im); } return (im.complete && im.naturalWidth) ? im : null; }
 
+const MATERIALS = new Set(['timber_frame', 'fieldstone', 'cob', 'wattle_daub']);
 function materialOf(b) {
   if (typeof window !== 'undefined' && window._tileMaterial) return window._tileMaterial;
-  // PILOT: force fieldstone for the vertical slice (the only fully-clean material). Flip the line
-  // below to the per-material map once all four materials are clean.
-  return 'fieldstone';
-  /* const s = ((b && b.wallSlug) || '').toLowerCase();
-  if (s.includes('timber')) return 'timber_frame';
-  if (s.includes('cob')) return 'cob';
-  if (s.includes('wattle') || s.includes('daub')) return 'wattle_daub';
-  return 'fieldstone'; */
+  // wallSlug is already exactly one of the four grassland materials (assigned by the world gen),
+  // so it maps directly to the tile folder. Unknown/other-biome slugs fall back to fieldstone.
+  const s = ((b && b.wallSlug) || '').toLowerCase();
+  return MATERIALS.has(s) ? s : 'fieldstone';
+}
+// Tile walls are the grassland corpus only — gate by (biome, wallSlug) exactly like the occluder's
+// STRUCTURED_WALLS, so desert/snow/etc. buildings keep their own wall path instead of grassland walls.
+export function isTiledBuilding(b) {
+  if (typeof window !== 'undefined' && window._tileMaterial) return true; // console override forces it
+  return !!(b && b.biome === 'grassland' && MATERIALS.has(((b.wallSlug) || '').toLowerCase()));
 }
 export function tileMaterialReady(b) { return !!img(DIR + materialOf(b) + '/ground_plain__v0.png'); }
 export function hasTileWall(b) {
   if (typeof window !== 'undefined' && window._tileWalls === false) return false;
-  return tileMaterialReady(b);
+  return isTiledBuilding(b) && tileMaterialReady(b);
 }
 
 /** Draw the building's mirror-tiled south wall + aperture overlays. Returns true if drawn. */
@@ -36,8 +39,10 @@ export function drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h) {
   const bb = b.footprint && b.footprint.boundingBox; if (!bb) return false;
   const mat = materialOf(b);
   const base = img(DIR + mat + '/ground_plain__v0.png'); if (!base) return false;
-  const upper = img(DIR + mat + '/upper_plain__v0.png') || base;
-  const door = img(DIR + '_overlays/door__v0.png');
+  const upper = img(DIR + mat + '/upper_plain__v0.png') || base;   // stackable storey (no foundation)
+  const leftC = img(DIR + mat + '/left_corner__v0.png');           // 3D west edge (null → flat end)
+  const rightC = img(DIR + mat + '/right_corner__v0.png');         // 3D east edge
+  const door = img(DIR + '_overlays/door__v0.png');                // wood door — material-agnostic overlay
   const win = img(DIR + '_overlays/window__v0.png');
 
   const t = tilePx;
@@ -64,6 +69,14 @@ export function drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h) {
       else { ctx.drawImage(tile, 0, 0, tile.naturalWidth, tile.naturalHeight, x, top, segW, wH); }
       ctx.restore();
       seg++;
+    }
+    // 3D END CORNERS — drawn over the plain tiling at each end. The corner tile carries the foundation,
+    // so it's the GROUND storey only (upper storeys keep flat ends). Each corner shows its OUTER fraction
+    // (quoin + a little wall) so narrow buildings don't double-stamp; wide ones show the full corner tile.
+    if (st === 0 && (leftC || rightC)) {
+      const cw = Math.max(1, Math.min(segW, (right - left) / 2));
+      if (leftC) { const sw = leftC.naturalWidth * (cw / segW); ctx.drawImage(leftC, 0, 0, sw, leftC.naturalHeight, left, top, cw, wH); }
+      if (rightC) { const sw = rightC.naturalWidth * (cw / segW); ctx.drawImage(rightC, rightC.naturalWidth - sw, 0, sw, rightC.naturalHeight, right - cw, top, cw, wH); }
     }
   }
 

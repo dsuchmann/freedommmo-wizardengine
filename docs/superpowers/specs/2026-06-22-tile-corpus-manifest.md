@@ -33,16 +33,26 @@ each carrying **states** and **variants**, and assemble them through the revived
 64 `create_object_state`). Apertures (`*_window`, `*_door`) are objects → later `animate_object`
 (door open/close, shutter) for living buildings.
 
-## Deterministic prompt — BASE (`ground_plain`)
-> A seamless FRONT-FACING WALL SECTION of a {MATERIAL_PHRASE} grassland village house, drawn as a
-> FLAT ORTHOGRAPHIC ELEVATION — straight-on, parallel to the screen, NO perspective, NO vanishing
-> point, NOT isometric. The wall is exactly 4 tiles wide and 4 tiles tall (one storey, a square).
-> {MATERIAL_DETAIL}. A low grey fieldstone FOUNDATION course runs along the very bottom, about half a
-> tile high. A horizontal dark-oak WALL-PLATE beam runs along the very top edge. The wall texture is
-> UNIFORM and REPEATS horizontally so the left edge matches the right edge for seamless tiling. NO
-> door, NO windows, NO roof, NO chimney, NO grass, NO ground, NO smoke, NO shadow, NO people — just
-> the wall, edge-to-edge, on a FULLY TRANSPARENT background. Clean high-resolution pixel art, single
-> colour outline, detailed shading, warm cosy grassland palette.
+## Deterministic prompt — BASE (`ground_plain`) — ZONE-SPECIFIED + OPACITY-ENFORCED
+The wall must be specified as THREE opaque zones, and opacity must be enforced or stone/cob render with
+see-through mortar gaps (measured: fieldstone 40–56% holes, cob 69%; timber/wattle 0–3% = fine).
+> A seamless one-storey FRONT WALL of a {MATERIAL_PHRASE} grassland house, FLAT ORTHOGRAPHIC ELEVATION
+> (straight-on, NOT isometric), exactly 4 tiles wide and 4 tiles tall (a square). THREE fully-opaque
+> horizontal zones, NO transparent gaps anywhere inside the wall:
+> • TOP (cap) — a horizontal dark-oak wall-plate beam across the full width.
+> • MIDDLE (the wall face, most of the height) — {MATERIAL_FACE}.
+> • BOTTOM (footing) — a grey fieldstone foundation course about half a tile high.
+> CRITICAL: every pixel inside the wall's rectangle is SOLID OPAQUE wall (the render/mortar FILLS all
+> gaps); there are NO transparent or see-through areas within the wall outline — only the background
+> OUTSIDE the rectangle is transparent. The texture repeats horizontally (left edge ≡ right). NO door,
+> NO windows, NO roof, NO chimney, NO grass, NO ground, NO smoke, NO people. Clean high-resolution
+> pixel art, single colour outline, detailed shading.
+
+MATERIAL_FACE (the opacity-enforced middle zone):
+- fieldstone: "tightly-fitted grey fieldstone blocks set in PALE SOLID MORTAR that completely fills every joint and gap between the stones — NO holes, NO see-through gaps"
+- cob: "a smooth UNIFORM ochre cob render covering the whole zone as one solid plastered surface — NO holes"
+- timber_frame: "solid cream lime-plaster panels filling every bay between dark-oak studs — each panel a solid opaque surface"
+- wattle_daub: "solid whitewashed daub panels filling every bay between dark timber studs — opaque, no gaps"
 
 MATERIAL_PHRASE / MATERIAL_DETAIL:
 - timber_frame: "timber-frame" / "cream lime-plaster panels divided by a regular grid of dark oak timber studs and rails"
