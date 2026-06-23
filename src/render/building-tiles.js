@@ -49,7 +49,37 @@ export function hasTileWall(b) {
   return isTiledBuilding(b) && tileMaterialReady(b);
 }
 
-/** Draw the building's mirror-tiled south wall + aperture overlays. Returns true if drawn. */
+// Footprint tile set in LOCAL 0-based coords (matching the renderer's b.x+local / footprint.doors[].x
+// convention). The building's actual shape lives in footprint.sections (rect/L/T/courtyard/round/...).
+function footprintSet(fp) {
+  const set = new Set();
+  for (const s of (fp.sections || [])) for (let y = s.y0; y < s.y0 + s.h; y++) for (let x = s.x0; x < s.x0 + s.w; x++) set.add(x + ',' + y);
+  return set;
+}
+// SOUTH-FACING perimeter runs: contiguous spans of tiles whose south neighbour is OUTSIDE the footprint.
+// Each run is one visible front-wall segment, so the renderer draws the building's TRUE outline (an L/T/
+// round building's stepped front) instead of one bounding-box rectangle. Sorted north→south so nearer
+// (front) walls draw over farther ones.
+function southRuns(fp) {
+  const set = footprintSet(fp);
+  const byY = new Map();
+  for (const key of set) {
+    const c = key.indexOf(','); const x = +key.slice(0, c), y = +key.slice(c + 1);
+    if (set.has(x + ',' + (y + 1))) continue;          // tile to the south → interior edge, not a front wall
+    if (!byY.has(y)) byY.set(y, []); byY.get(y).push(x);
+  }
+  const runs = [];
+  for (const [y, xs] of byY) {
+    xs.sort((a, b) => a - b);
+    let s = xs[0], p = xs[0];
+    for (let i = 1; i < xs.length; i++) { if (xs[i] === p + 1) p = xs[i]; else { runs.push({ y, x0: s, x1: p + 1 }); s = p = xs[i]; } }
+    runs.push({ y, x0: s, x1: p + 1 });
+  }
+  runs.sort((a, b) => a.y - b.y);
+  return runs;
+}
+
+/** Draw the building's per-section south walls + aperture overlays. Returns true if drawn. */
 export function drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h) {
   if (typeof window !== 'undefined' && window._tileWalls === false) return false;
   const bb = b.footprint && b.footprint.boundingBox; if (!bb) return false;
@@ -70,46 +100,46 @@ export function drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h) {
   const wH = Math.round(t * WALL_CONFIG.wallHeight);                 // one storey = 4 tiles
   const WY = WALL_CONFIG.wallYOffset;
   const stories = Math.max(1, buildingFloors(b));
-  const left = Math.round(b.x * t - camX);
-  const right = Math.round((b.x + bb.w) * t - camX);
-  const groundY = Math.round((b.y + bb.h) * t - camY) + Math.round(t * WY);
   const segW = Math.round(4 * t);                                   // base tile spans 4 tiles
-  if (right < 0 || left > w) return true;                           // off-screen, handled
+  if (Math.round((b.x + bb.w) * t - camX) < 0 || Math.round(b.x * t - camX) > w) return true; // off-screen
+  const fp = b.footprint;
+  const runs = southRuns(fp);                                       // true outline → one wall per front run
+  if (!runs.length) return true;
+  const runGroundY = (y) => Math.round((b.y + y + 1) * t - camY) + Math.round(t * WY);
 
   ctx.imageSmoothingEnabled = false;
-  for (let st = 0; st < stories; st++) {
-    const tile = st === 0 ? base : upper;
-    const top = groundY - (st + 1) * wH;
-    if (top + wH < 0 || top > h) continue;
-    let seg = 0;
-    for (let x = left; x < right; x += segW) {
-      const drawW = Math.min(segW, right - x);
-      ctx.save();
-      ctx.beginPath(); ctx.rect(x, top, drawW, wH); ctx.clip();     // clip to wall bounds
-      if (seg % 2 === 1) { ctx.translate(x + segW, top); ctx.scale(-1, 1); ctx.drawImage(tile, 0, 0, tile.naturalWidth, tile.naturalHeight, 0, 0, segW, wH); }
-      else { ctx.drawImage(tile, 0, 0, tile.naturalWidth, tile.naturalHeight, x, top, segW, wH); }
-      ctx.restore();
-      seg++;
+  // One FRONT-WALL SEGMENT per south-facing run, so L/T/round/courtyard footprints draw their real stepped
+  // outline (mirror-tiled wall + finished end corners), not one bounding-box rectangle over empty notches.
+  const drawRun = (left, right, groundY) => {
+    for (let st = 0; st < stories; st++) {
+      const tile = st === 0 ? base : upper;
+      const top = groundY - (st + 1) * wH;
+      if (top + wH < 0 || top > h) continue;
+      let seg = 0;
+      for (let x = left; x < right; x += segW) {
+        const drawW = Math.min(segW, right - x);
+        ctx.save();
+        ctx.beginPath(); ctx.rect(x, top, drawW, wH); ctx.clip();
+        if (seg % 2 === 1) { ctx.translate(x + segW, top); ctx.scale(-1, 1); ctx.drawImage(tile, 0, 0, tile.naturalWidth, tile.naturalHeight, 0, 0, segW, wH); }
+        else { ctx.drawImage(tile, 0, 0, tile.naturalWidth, tile.naturalHeight, x, top, segW, wH); }
+        ctx.restore();
+        seg++;
+      }
+      // FINISHED END CORNERS at this run's ends (ground storey carries the foundation; upper storeys don't).
+      const lc = st === 0 ? leftC : upperLeftC;
+      const rc = st === 0 ? rightC : upperRightC;
+      if (lc || rc) {
+        const cw = Math.max(1, Math.min(segW, (right - left) / 2));
+        if (lc) { const sw = lc.naturalWidth * (cw / segW); ctx.drawImage(lc, 0, 0, sw, lc.naturalHeight, left, top, cw, wH); }
+        if (rc) { const sw = rc.naturalWidth * (cw / segW); ctx.drawImage(rc, rc.naturalWidth - sw, 0, sw, rc.naturalHeight, right - cw, top, cw, wH); }
+      }
     }
-    // FINISHED END CORNERS — the outermost strip is the material's finished wall-END (a quoin column),
-    // drawn over the plain tiling at each end. GROUND storey uses the foundation-carrying corner; UPPER
-    // storeys use the foundation-less upper corner so the quoin stacks without a floating footing. Each
-    // shows its OUTER fraction (quoin + a little wall) so narrow buildings don't double-stamp.
-    const lc = st === 0 ? leftC : upperLeftC;
-    const rc = st === 0 ? rightC : upperRightC;
-    if (lc || rc) {
-      const cw = Math.max(1, Math.min(segW, (right - left) / 2));
-      if (lc) { const sw = lc.naturalWidth * (cw / segW); ctx.drawImage(lc, 0, 0, sw, lc.naturalHeight, left, top, cw, wH); }
-      if (rc) { const sw = rc.naturalWidth * (cw / segW); ctx.drawImage(rc, rc.naturalWidth - sw, 0, sw, rc.naturalHeight, right - cw, top, cw, wH); }
-    }
-  }
+  };
+  for (const r of runs) drawRun(Math.round((b.x + r.x0) * t - camX), Math.round((b.x + r.x1) * t - camX), runGroundY(r.y));
 
-  // PER-MATERIAL APERTURES — draw the real generated state TILE (4-tile-wide wall with the aperture baked
-  // in) centred on the footprint aperture, clipped to its span so neighbours don't overlap, at the same
-  // scale as the wall segments (so it blends). The door tile reaches the ground (bottom at groundY); the
-  // window tile sits at the ground storey at its baked height. One storey tall (wH).
-  const fp = b.footprint;
-  const groundTop = groundY - wH;
+  // PER-MATERIAL APERTURES — drawn on the run at the aperture's row, at that run's ground line (so apertures
+  // sit on the correct stepped wall, not the bbox). Real generated state tiles, clipped to their span.
+  const runFor = (ax, ay) => runs.find(r => r.y === ay && ax >= r.x0 && ax < r.x1) || runs[runs.length - 1];
   const drawAperture = (tile, cx, top, spanTiles) => {
     const clipW = Math.round(spanTiles * t);
     ctx.save();
@@ -117,22 +147,19 @@ export function drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h) {
     ctx.drawImage(tile, 0, 0, tile.naturalWidth, tile.naturalHeight, cx - segW / 2, top, segW, wH);
     ctx.restore();
   };
-  // DOORS — ground storey only (you enter on the ground).
+  // DOORS — ground storey only. PROXIMITY DOOR ANIMATION: swing frame from player distance; fall back to
+  // the closed static tile until that frame loads (frame 0 == closed == static tile).
   if (doorTile) for (const d of (fp.doors || [])) {
-    // PROXIMITY DOOR ANIMATION: pick the swing frame from how close the player is; fall back to the
-    // closed static tile until that frame loads. (Frame 0 == closed == the static tile.)
+    const gY = runGroundY(runFor(d.x, d.y).y);
     const fi = Math.round(doorOpenAmount(b, d) * (ANIM_FRAMES - 1));
     const frame = (fi > 0 && animFrame(mat, 'door', fi)) || doorTile;
-    drawAperture(frame, Math.round((b.x + d.x + 0.5) * t - camX), groundTop, 2.6); // door span ~2.5 tiles
+    drawAperture(frame, Math.round((b.x + d.x + 0.5) * t - camX), gY - wH, 2.6); // door span ~2.5 tiles
   }
-  // WINDOWS — on EVERY storey (windows stack in vertical columns at each window x): ground tile on the
-  // ground storey, upper_window (no foundation) on the storeys above.
+  // WINDOWS — on EVERY storey (stacked in vertical columns at each window x).
   for (const wn of (fp.windows || [])) {
+    const gY = runGroundY(runFor(wn.x, wn.y).y);
     const cx = Math.round((b.x + wn.x + 0.5) * t - camX);
-    for (let st = 0; st < stories; st++) {
-      const wt = st === 0 ? winTile : upperWinTile;
-      if (wt) drawAperture(wt, cx, groundY - (st + 1) * wH, 2.0); // window span ~2 tiles
-    }
+    for (let st = 0; st < stories; st++) { const wt = st === 0 ? winTile : upperWinTile; if (wt) drawAperture(wt, cx, gY - (st + 1) * wH, 2.0); }
   }
   return true;
 }
