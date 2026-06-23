@@ -457,10 +457,11 @@ export class CanvasRenderer {
     // (spotlit) after the sprite batch, revealing the player on the real terrain. DEFAULT-ON; set
     // window._buildingLayer=false to fall back to the depth-occlusion path (which now shows no walls
     // since the bake dropped them — an honest "buildings not rendered" state for A/B only).
-    // The opt-in per-object colour+depth pass (window._buildingDepthColor=true) REPLACES this binary
-    // behind/front blit, so disable the old layer when it's on (no double-draw, _frontLayerBmp stays null
-    // → the front spotlight blit is skipped too).
-    const _useLayer = glScene && !_inside && (typeof window === 'undefined' || window._buildingLayer !== false) && renderOn('walls') && !(typeof window !== 'undefined' && window._buildingDepthColor === true);
+    // SHIPPED: the per-object colour+depth pass (below) is the DEFAULT and replaces this binary behind/
+    // front blit (which caused the draw-order pop). The old layer is kept reachable ONLY as an explicit
+    // A/B opt-out via window._buildingDepthColor=false; default/undefined → old layer OFF (_frontLayerBmp
+    // stays null so the front spotlight blit is skipped too).
+    const _useLayer = glScene && !_inside && (typeof window === 'undefined' || window._buildingLayer !== false) && renderOn('walls') && (typeof window !== 'undefined' && window._buildingDepthColor === false);
     let _frontLayerBmp = null;
     if (_useLayer) {
       const _layer = buildBuildingLayerBitmaps(getCachedBuildings(), camX, camY, tilePx, w, h, player.y);
@@ -476,7 +477,7 @@ export class CanvasRenderer {
     // wall layer off (above) would otherwise WAKE this depth silhouette and occlude the player behind
     // invisible walls. Gate on the OCCLUSION sub-flag (NOT master) so turning on a different layer
     // — e.g. interiors — does not silently re-awaken exterior player-occlusion behind hidden walls.
-    if (!_useLayer && glScene && renderOn('occlusion') && typeof window !== 'undefined' && window._depthOcclusion !== false) {
+    if (!_useLayer && glScene && renderOn('occlusion') && typeof window !== 'undefined' && window._depthOcclusion !== false && window._buildingDepthColor === false) {
       const _refY = (camY + h / 2) / tilePx;
       const _blds = nearDepthBuildings(getCachedBuildings(), camX, camY, tilePx, w, h);
       const _dbg = !!window._depthOcclusionDebug;
@@ -495,12 +496,13 @@ export class CanvasRenderer {
       }
     }
 
-    // UNIFIED PER-OBJECT BUILDING COLOUR+DEPTH (opt-in A/B: window._buildingDepthColor=true; #12 fix).
-    // Replaces the binary behind/front blit: draw each near building's TEXTURED silhouette into the scene
-    // FBO at its south-baseline depth, farthest-first, so the player sprite depth-tests per-pixel against
-    // each building independently — the player slides behind→in-front-of smoothly with NO whole-building
-    // flip (no pop), and the see-through ghost keys on the real depth test. Runs BEFORE the sprite batch.
-    if (!_inside && glScene && renderOn('walls') && typeof window !== 'undefined' && window._buildingDepthColor === true) {
+    // UNIFIED PER-OBJECT BUILDING COLOUR+DEPTH (#12 fix — DEFAULT; opt out with window._buildingDepthColor
+    // =false to use the legacy behind/front layer above). Replaces the binary behind/front blit: draw each
+    // near building's TEXTURED silhouette into the scene FBO at its south-baseline depth, farthest-first,
+    // so the player sprite depth-tests per-pixel against each building independently — the player slides
+    // behind→in-front-of smoothly with NO whole-building flip (no pop), and the see-through ghost keys on
+    // the real depth test. Runs BEFORE the sprite batch.
+    if (!_inside && glScene && renderOn('walls') && typeof window !== 'undefined' && window._buildingDepthColor !== false) {
       const _refY = (camY + h / 2) / tilePx;
       const _blds = nearDepthBuildings(getCachedBuildings(), camX, camY, tilePx, w, h)
         .slice().sort((a, b) => (a.y + a.footprint.boundingBox.h) - (b.y + b.footprint.boundingBox.h)); // farthest-first
