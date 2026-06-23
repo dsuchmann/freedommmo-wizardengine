@@ -1,0 +1,470 @@
+{
+  "field": "D4",
+  "fieldName": "Structural attachments",
+  "mechanism": "B · socket-prop (own depth + collision)",
+  "plane": "facade/ground",
+  "defaultProvenance": "pixellab",
+  "categories": [
+    {
+      "id": "d4_porches",
+      "label": "Porches & entry canopies",
+      "field": "D4",
+      "placement": {
+        "plane": "facade",
+        "anchor": "above_door",
+        "method": "socket_prop",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:grassland; socket:above_door on the entry face (south preferred); building_role any dwelling/inn/shop; settlement_tier hamlet+; honestly skips wealth-gating (no sim source) — applies by role not wealth",
+        "avoid": ["windows", "road", "stairs", "wall_corner", "between_windows"],
+        "chanceOrDensity": "0.35 of dwellings carry an entry porch; 0.7 for inn/tavern role (a porch is the social threshold)"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d4_grass_timber_porch",
+          "label": "Posted timber entry porch",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 192, "worldSizeW": 3, "worldSizeH": 2, "fit": "fixed" },
+          "variants": { "count": 5, "drivenBy": "material" },
+          "states": ["base", "weathered", "mossy_overgrown"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "collapsed_porch", "debris": ["broken_post", "plank_splinter", "shingle_shard"] },
+          "light": null,
+          "content": null,
+          "attach": { "holds": ["d3_hanging_signs", "d3_wall_lanterns_lighting", "d5_flower_beds", "d6_benches_stools"], "slots": ["porch_post_left", "porch_post_right", "porch_eave_center", "porch_floor"] },
+          "coverage": null,
+          "biomeSkins": "Material host follows the building wall material: timber_frame/wattle_daub host → oak-post porch; fieldstone host → stone-pier porch with timber roof; cob host → cob-pier porch under a deep thatch eave. Across biomes the posts re-skin to the biome's dominant wall vernacular (forest/dense_forest → round-log porch; tropical_forest → bamboo+palm-thatch verandah; beach/shallow_water → driftwood-plank porch; ocean/deep_ocean → tarred-timber stilt porch; lake/river → cedar/board porch; desert/savanna → adobe-pier ramada; steppe/hills/mountains → fieldstone+timber; tundra/taiga/arctic → heavy-log storm porch, climate-default state=snow_capped via content; volcanic → basalt-pier porch with ash-fade weathering; mystic → rune-carved post variant, faint emissive trim). Roof piece inherits the building's roof material where available.",
+          "notes": "A porch is a real built structure: it OWNS depth and a collision footprint (3x2 tiles projecting from the entry face) and packs into the F2 SPRITE_FLOATS pool with its own pivotY so the player and flora sort correctly under/around its eave. It anchors at above_door and the roof piece overhangs the doorway; the floor tile is walkable. Because it casts a real ground shadow (procedural shadow codeEffect) it must be excluded from the entry door_path claim. attach makes it a host for D3 signs/lanterns and D5/D6 ground props — composites resolve as separate lootable children. Destructible because timber structures collapse; the broken_state writes an object-permanence delta."
+        },
+        {
+          "id": "d4_grass_stone_pier_porch",
+          "label": "Stone-pier entry porch",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 192, "worldSizeW": 3, "worldSizeH": 2, "fit": "fixed" },
+          "variants": { "count": 4, "drivenBy": "material" },
+          "states": ["base", "weathered", "mossy_overgrown"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "rubble_porch", "debris": ["fallen_stone", "broken_lintel", "plank_splinter"] },
+          "light": null,
+          "content": null,
+          "attach": { "holds": ["d3_wall_lanterns_lighting", "d3_hanging_signs", "d5_flower_beds"], "slots": ["pier_left", "pier_right", "porch_eave_center"] },
+          "coverage": null,
+          "biomeSkins": "Bound to fieldstone wall host in grassland; reads as squared lime-mortared piers carrying a low timber-shingle roof. Other biomes swap the pier stone to the biome's masonry vernacular (river → millstone ashlar, lake → glacial fieldstone, mountains/hills → quarried block, desert → adobe, volcanic → basalt, beach → coral block). Cold biomes default state=mossy_overgrown→snow on the roof via the host roof material; mystic adds a faint emissive rune on the keystone.",
+          "notes": "Heavier masonry variant of the entry porch for fieldstone (wealthier) dwellings. Same own-depth + collision footprint as the timber porch; the stone piers are the load path so the broken_state is rubble rather than splintered planks. Sorts via pivotY in the SPRITE_FLOATS pool; excluded from door_path claim."
+        }
+      ]
+    },
+    {
+      "id": "d4_columns_posts",
+      "label": "Columns & support posts",
+      "field": "D4",
+      "placement": {
+        "plane": "facade",
+        "anchor": "wall_corner",
+        "method": "socket_prop",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:grassland; socket:wall_corner or between_windows on a load-bearing face; building_role inn/hall/wealthy-dwelling/shop with an overhang or upper jetty; settlement_tier village+",
+        "avoid": ["windows", "door_path", "road"],
+        "chanceOrDensity": "0.2 of buildings; near-1.0 where an upper storey jetties out over the ground floor (a post is then structurally honest, not decorative)"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d4_grass_oak_post",
+          "label": "Oak support post",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 192, "worldSizeW": 1, "worldSizeH": 2, "fit": "fixed" },
+          "variants": { "count": 5, "drivenBy": "material" },
+          "states": ["base", "weathered", "mossy_overgrown"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "snapped_post", "debris": ["broken_post", "wood_splinter"] },
+          "light": null,
+          "content": null,
+          "attach": { "holds": ["d3_wall_lanterns_lighting", "d3_hanging_signs"], "slots": ["post_top_bracket", "post_face"] },
+          "coverage": null,
+          "biomeSkins": "Material host = building wall: timber_frame/wattle_daub → carved dark-oak post; cob → squat earthen pier; fieldstone → dressed stone column. Per biome the post re-skins to the wall vernacular (forest → round-log post, tropical_forest → bamboo bundle, beach/ocean → driftwood/tarred-timber piling, desert/savanna → adobe column, mountains → stone column, volcanic → basalt column, mystic → carved rune-column with faint emissive seams). Cold biomes carry snow on the bracket via content=snow_capped.",
+          "notes": "A free-standing structural post carrying an upper-storey jetty or porch lintel. Slim 1x2 footprint but it DOES collide (you walk around it) and owns depth — packs into SPRITE_FLOATS with pivotY at its base. Anchored at wall_corner or between_windows; the post_top_bracket slot hosts a D3 lantern or sign so a porch corner becomes a lit threshold. Honest structure: appears where geometry actually overhangs."
+        },
+        {
+          "id": "d4_grass_stone_column",
+          "label": "Dressed stone column",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 192, "worldSizeW": 1, "worldSizeH": 3, "fit": "fixed" },
+          "variants": { "count": 4, "drivenBy": "style" },
+          "states": ["base", "weathered", "mossy_overgrown"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "toppled_column", "debris": ["column_drum", "fallen_stone"] },
+          "light": null,
+          "content": null,
+          "attach": { "holds": ["d3_wall_lanterns_lighting"], "slots": ["capital_top"] },
+          "coverage": null,
+          "biomeSkins": "Grassland fieldstone host → honey-sandstone column with a simple carved capital. Wealthier/civic re-skin across biomes (river → gorge-slate column, mountains → granite, desert → sandstone, volcanic → polished basalt, mystic → glowing crystal-veined column with emissive capital). Drops on biomes with no masonry tradition (drop: ocean, deep_ocean, shallow_water unless lighthouse/civic role).",
+          "notes": "Taller civic/wealthy column (3 tiles) for halls, shrines and prosperous houses. Same own-depth + collision discipline; the toppled_column broken_state leaves rollable column drums as debris (object-permanence delta). Anchored at wall_corner of a portico or hall facade."
+        }
+      ]
+    },
+    {
+      "id": "d4_balconies",
+      "label": "Balconies",
+      "field": "D4",
+      "placement": {
+        "plane": "facade",
+        "anchor": "window_sill",
+        "method": "socket_prop",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:grassland; socket:window_sill on floor>=1 (upper storeys only); building_role inn/townhouse/wealthy-dwelling; DEPENDENCY: requires the facade to render floor>=1 apertures — honestly absent on single-storey buildings and until upper-storey windows draw",
+        "avoid": ["road", "door_path", "ground_floor"],
+        "chanceOrDensity": "0.15 of multi-storey buildings; 0.4 for inn/townhouse role on the street face"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d4_grass_timber_balcony",
+          "label": "Projecting timber balcony",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 192, "worldSizeW": 2, "worldSizeH": 1, "fit": "span" },
+          "variants": { "count": 5, "drivenBy": "material" },
+          "states": ["base", "weathered", "mossy_overgrown"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "broken_balcony", "debris": ["broken_baluster", "plank_splinter", "snapped_bracket"] },
+          "light": null,
+          "content": null,
+          "attach": { "holds": ["d4_railings_balustrades", "d3_wall_lanterns_lighting", "d5_flower_beds", "d3_flower_boxes_planters"], "slots": ["balcony_floor", "balcony_rail_run", "balcony_corner_left", "balcony_corner_right"] },
+          "coverage": null,
+          "biomeSkins": "Material host = wall: timber_frame → carved-bracket oak balcony; cob/wattle_daub → simpler plank balcony on timber brackets; fieldstone → corbelled stone balcony with timber deck. Per biome re-skin to vernacular (forest → log-bracket balcony, tropical_forest → bamboo verandah balcony with deep eave, beach/ocean → driftwood/tarred-plank balcony, desert/savanna → adobe corbel balcony, mountains → stone corbel, mystic → rune-bracket balcony, faint emissive underglow). Cold biomes pile snow on the deck via content=snow_capped.",
+          "notes": "Projects out from an upper-storey window_sill: it OWNS depth, casts a shadow on the ground floor below, and creates an overhang the player passes under (its collision is the deck volume up at floor>=1, not at ground). Spans the window width (fit:span). Strong vertical-placement dependency — needs floor>=1 apertures to render; declared honestly absent until then. attach hosts a railing run (D4_railings), lanterns, flower boxes (D2) and potted plants (D5). Destructible: a broken balcony is a classic decay read and writes a delta."
+        }
+      ]
+    },
+    {
+      "id": "d4_railings_balustrades",
+      "label": "Railings & balustrades",
+      "field": "D4",
+      "placement": {
+        "plane": "facade",
+        "anchor": "roof_edge",
+        "method": "socket_prop",
+        "fitDefault": "tile-along"
+      },
+      "application": {
+        "when": "biome:grassland; socket:balcony_rail_run / porch_floor_edge / exterior_stair_run / roof_edge; gated on a host structure existing (balcony, porch, stair, parapet) — never floats free; settlement_tier hamlet+",
+        "avoid": ["door_path", "windows"],
+        "chanceOrDensity": "near-1.0 along any balcony/stair edge (a railing is a safety implication of the host); 0.5 along porch floor edges"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d4_grass_timber_railing",
+          "label": "Turned-baluster timber railing",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 128, "worldSizeW": 1, "worldSizeH": 1, "fit": "tile-along" },
+          "variants": { "count": 6, "drivenBy": "style" },
+          "states": ["base", "weathered", "mossy_overgrown", "broken"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "broken", "debris": ["broken_baluster", "wood_splinter"] },
+          "light": null,
+          "content": null,
+          "attach": { "holds": ["d3_wall_lanterns_lighting", "d5_flower_beds"], "slots": ["rail_post_top"] },
+          "coverage": null,
+          "biomeSkins": "Grassland timber_frame/wattle_daub/cob host → turned oak balusters; fieldstone host → carved stone balustrade variant. Per biome: forest → split-rail/log balusters, tropical_forest → bamboo lattice rail, beach/ocean → rope-and-driftwood rail, desert/savanna → adobe parapet with carved openings, mountains/hills → stone balustrade, lake/river → cedar rail, cold biomes → heavy timber rail (snow_capped via content), mystic → glowing-rune balusters, volcanic → wrought-basalt rail. Some hosts swap turned-wood to wrought-iron where the biome's metalwork vernacular exists (river/mountains).",
+          "notes": "A kit piece repeated along a run (fit:tile-along) — the run length is read from the host structure's edge slot (balcony_rail_run, exterior_stair_run, porch_floor_edge, roof parapet). It NEVER places free-floating; the category gates on a host. Each piece owns a thin collision strip and shares the host's depth/pivot. Promoted broken state lets a run show a gap where a baluster snapped (delta-written). rail_post_top hosts a lantern at run ends."
+        }
+      ]
+    },
+    {
+      "id": "d4_exterior_stairs",
+      "label": "Exterior stairs",
+      "field": "D4",
+      "placement": {
+        "plane": "facade",
+        "anchor": "above_door",
+        "method": "socket_prop",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:grassland; socket:above_door (entry on a raised plinth) or a wall face leading to an upper external door; building_role workshop/store/townhouse with an upper entrance or raised floor; settlement_tier hamlet+",
+        "avoid": ["road", "windows", "wall_corner"],
+        "chanceOrDensity": "0.25 of buildings on a plinth/slope; near-1.0 where an upper-storey external door exists"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d4_grass_timber_stair",
+          "label": "Timber entry stair",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 192, "worldSizeW": 2, "worldSizeH": 2, "fit": "fixed" },
+          "variants": { "count": 5, "drivenBy": "material" },
+          "states": ["base", "weathered", "mossy_overgrown"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "broken_stair", "debris": ["broken_tread", "wood_splinter"] },
+          "light": null,
+          "content": null,
+          "attach": { "holds": ["d4_railings_balustrades", "d3_wall_lanterns_lighting"], "slots": ["exterior_stair_run", "stair_newel_bottom", "stair_landing"] },
+          "coverage": null,
+          "biomeSkins": "Grassland timber host → oak-tread stair; cob/wattle_daub → timber stair on an earthen ramp; fieldstone → mortared stone steps. Per biome: forest → log-tread stair, tropical_forest → bamboo stair, beach/ocean → driftwood/dock stair over piling, lake/river → cedar dock-stair, desert/savanna → adobe steps, mountains/hills → cut-stone stair, cold biomes → heavy timber stair (snow_capped via content), volcanic → basalt steps, mystic → floating-rune steps with faint emissive risers.",
+          "notes": "A real walkable stair with own depth + a stepped collision footprint (2x2) projecting from the entry face; packs into SPRITE_FLOATS with pivotY at its base tread. Excluded from the door_path claim (it IS the door path). exterior_stair_run slot hands a railing run to D4_railings; stair_newel_bottom hosts a lantern. Destructible — a broken tread is a strong abandonment read and writes a delta. (Climbing the stair to an upper external door is an interior-walk-in seam, deferred per design.)"
+        },
+        {
+          "id": "d4_grass_stone_steps",
+          "label": "Stone entry steps",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 192, "worldSizeW": 2, "worldSizeH": 1, "fit": "fixed" },
+          "variants": { "count": 4, "drivenBy": "material" },
+          "states": ["base", "weathered", "mossy_overgrown"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "cracked_steps", "debris": ["fallen_stone", "stone_chip"] },
+          "light": null,
+          "content": null,
+          "attach": { "holds": ["d4_railings_balustrades", "d5_flower_beds"], "slots": ["exterior_stair_run", "step_flank_left", "step_flank_right"] },
+          "coverage": null,
+          "biomeSkins": "Grassland fieldstone host → lime-mortared stone steps. Re-skins to biome masonry (river → slate steps, mountains → granite, desert → sandstone, volcanic → basalt, beach → coral-block steps). Cold biomes default mossy_overgrown→snow via host; mystic adds emissive worn glyphs in the tread centres.",
+          "notes": "Low masonry steps (2x1) up to a raised threshold — the durable counterpart to the timber stair for fieldstone dwellings. Own depth + collision; the cracked_steps broken_state is a slow-decay read writing a delta. Excluded from door_path claim; flanks host potted plants (D5)."
+        }
+      ]
+    },
+    {
+      "id": "d4_trellises_pergolas",
+      "label": "Trellises & pergolas",
+      "field": "D4",
+      "placement": {
+        "plane": "facade",
+        "anchor": "above_door",
+        "method": "socket_prop",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:grassland; socket:above_door / between_windows / porch_eave on a sunny (south) face; building_role dwelling/inn/garden-house; settlement_tier hamlet+; reads warmer with D2 surface-growth vines climbing it",
+        "avoid": ["door_path", "windows", "road"],
+        "chanceOrDensity": "0.2 of dwellings on a south face; 0.5 for inn/tavern (a vine pergola is the beer-garden read)"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d4_grass_timber_pergola",
+          "label": "Timber pergola frame",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 192, "worldSizeW": 3, "worldSizeH": 2, "fit": "span" },
+          "variants": { "count": 5, "drivenBy": "style" },
+          "states": ["base", "weathered", "mossy_overgrown"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "collapsed_pergola", "debris": ["broken_post", "lattice_splinter"] },
+          "light": null,
+          "content": { "axis": "season", "states": ["base", "leafy", "blooming", "bare"] },
+          "attach": { "holds": ["d2_ivy_vines", "d3_wall_lanterns_lighting", "d5_flower_beds"], "slots": ["pergola_post_left", "pergola_post_right", "pergola_beam_run"] },
+          "coverage": null,
+          "biomeSkins": "Grassland timber host → oak pergola; per biome re-skin (forest → rustic log pergola, tropical_forest → bamboo pergola, beach/ocean → driftwood arbour, desert/savanna → adobe-post ramada with reed lattice, mountains → stone-post pergola, cold biomes → bare heavy-timber arbour, snow_capped via content). The CLIMBING FLORA on it reskins to the biome bloom catalog (grassland → wild_lavender/cornflower vine read; tropical_forest → passion_flower/heliconia; desert → desert_rose; mystic → moonpetal/aether_bloom with faint emissive). Volcanic → ash-bare frame. content season states drive leafy/blooming/bare with the biome's flora colour.",
+          "notes": "An open lattice frame over a path or seating area — own depth + light collision on its posts (you walk under the beams). It is the structural HOST that D2 surface-growth vines climb (attach holds D2_climbing_vine), so the affordance split is honest: D4 owns the frame + collision, D2 owns the grown vine spline. content uses the SEASON axis (not wear) for leafy/blooming/bare, orthogonal to the weathered wear states. Spans an entry/garden run (fit:span)."
+        },
+        {
+          "id": "d4_grass_wall_trellis",
+          "label": "Wall-mounted trellis panel",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 128, "worldSizeW": 1, "worldSizeH": 2, "fit": "fixed" },
+          "variants": { "count": 4, "drivenBy": "style" },
+          "states": ["base", "weathered", "mossy_overgrown"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "broken_trellis", "debris": ["lattice_splinter"] },
+          "light": null,
+          "content": { "axis": "season", "states": ["base", "leafy", "blooming", "bare"] },
+          "attach": { "holds": ["d2_ivy_vines"], "slots": ["trellis_face" ] },
+          "coverage": null,
+          "biomeSkins": "Grassland → oak lattice panel; per biome re-skin to vernacular lattice (tropical_forest → split-cane, beach → driftwood, desert → reed). Climbing flora reskins to the biome bloom catalog as the pergola; cold biomes default bare; mystic gives a faint emissive frame.",
+          "notes": "A flatter trellis fixed against a wall face between windows — minimal depth (sits close to the wall) but still a B socket-prop with a thin collision strip, distinct from the D2 vine that grows ON it. Hosts a D2_climbing_vine via attach. season content drives the leaf/bloom read with the biome flora colour; weathered states are the orthogonal wear axis."
+        }
+      ]
+    },
+    {
+      "id": "d4_lean_to_sheds",
+      "label": "Lean-to sheds & attached outbuildings",
+      "field": "D4",
+      "placement": {
+        "plane": "facade",
+        "anchor": "wall_corner",
+        "method": "socket_prop",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:grassland; socket:wall_corner / blank_wall_run on a side or rear face (never the street face); building_role farmstead/smith/workshop/dwelling-with-yard; settlement_tier hamlet+",
+        "avoid": ["door_path", "windows", "road", "facade_front"],
+        "chanceOrDensity": "0.3 of farmstead/workshop buildings; 0.6 for smith (a fuel/tool lean-to is a working-yard read)"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d4_grass_timber_leanto",
+          "label": "Timber lean-to shed",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 192, "worldSizeW": 3, "worldSizeH": 3, "fit": "fixed" },
+          "variants": { "count": 6, "drivenBy": "material" },
+          "states": ["base", "weathered", "mossy_overgrown", "dilapidated"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "collapsed_leanto", "debris": ["broken_post", "plank_splinter", "shingle_shard", "thatch_clump"] },
+          "light": null,
+          "content": { "axis": "load", "states": ["empty", "stacked_firewood", "loaded_tools", "stacked_hay"] },
+          "attach": { "holds": ["d6_woodpiles", "d6_barrels", "d6_tool_racks", "d3_wall_lanterns_lighting"], "slots": ["leanto_interior", "leanto_post_front", "leanto_eave" ] },
+          "coverage": null,
+          "biomeSkins": "Material host = wall: timber_frame/wattle_daub → plank lean-to under a thatch or shingle slope; cob → cob-and-thatch lean-to; fieldstone → low stone lean-to with timber roof. Roof piece inherits the building's roof material. Per biome re-skin (forest → log lean-to, tropical_forest → bamboo+palm-thatch, beach/ocean → driftwood/tarred-plank net-shed, lake/river → cedar shed, desert/savanna → adobe ramada-shed, mountains → stone byre, cold biomes → heavy-log storm-shed snow_capped via content, volcanic → basalt-and-tin shed, mystic → rune-marked shed faint emissive). content load reskins to the biome economy (hay/firewood/fish-net/peat).",
+          "notes": "A genuine attached outbuilding: a single sloped roof leaning on the main wall, with its OWN depth, a real 3x3 collision footprint and a walkable shelter under the eave. Packs into SPRITE_FLOATS with pivotY at its base. Placed only on side/rear faces (avoid facade_front) so it never blocks the street entry. content uses the LOAD axis (firewood/tools/hay) and is the host for D6 ground props (woodpile, barrels, tool rack). Destructible with a rich debris set; the dilapidated wear state plus collapsed broken_state make it the keystone of the 'abandoned' identity kit (D7). Writes an object-permanence delta on collapse."
+        }
+      ]
+    },
+    {
+      "id": "d4_buttresses",
+      "label": "Buttresses",
+      "field": "D4",
+      "placement": {
+        "plane": "facade",
+        "anchor": "wall_corner",
+        "method": "socket_prop",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:grassland; socket:wall_corner / between_windows on a tall masonry face; building_role hall/shrine/granary/wealthy-dwelling with a high stone wall; settlement_tier village+; honestly skips on light timber/cob buildings (a buttress is a masonry structural read)",
+        "avoid": ["windows", "door_path", "road"],
+        "chanceOrDensity": "0.15 of tall fieldstone buildings; near-1.0 on shrine/hall masonry corners"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d4_grass_stone_buttress",
+          "label": "Stepped stone buttress",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 192, "worldSizeW": 1, "worldSizeH": 3, "fit": "fixed" },
+          "variants": { "count": 4, "drivenBy": "material" },
+          "states": ["base", "weathered", "mossy_overgrown"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "crumbled_buttress", "debris": ["fallen_stone", "stone_chip"] },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Grassland fieldstone host → lime-mortared stepped buttress against a tall stone wall. Per biome masonry re-skin (river → gorge-slate buttress, mountains/hills → quarried-block buttress, desert → adobe buttress, volcanic → basalt buttress, mystic → rune-carved flying buttress with faint emissive seams). Drops on biomes/buildings with no masonry wall (drop: timber/cob/bamboo/reed hosts — honestly absent rather than faked).",
+          "notes": "A sloped masonry pier braced against a tall wall — own depth + a small collision footprint at its base where it projects from the wall, sorting via pivotY. Bound to masonry hosts only (a buttress on a cob cottage would be dishonest), so it drops where the wall is light timber/cob/bamboo. No attach/content (it is pure structure). The crumbled_buttress broken_state and the mossy_overgrown wear state are strong age reads; collapse writes a delta."
+        }
+      ]
+    },
+    {
+      "id": "d4_chimney_stacks",
+      "label": "Chimney stacks",
+      "field": "D4",
+      "placement": {
+        "plane": "roof",
+        "anchor": "roof_ridge",
+        "method": "socket_prop",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:grassland; socket:roof_ridge / roof_gable on a heated building; building_role dwelling/inn/smith/bakehouse (any hearth-bearing structure); settlement_tier hamlet+; smoke gated diurnally + by cold (lit hearth) — honestly off when no hearth use",
+        "avoid": ["roof_valley", "ridge_finial"],
+        "chanceOrDensity": "near-1.0 of dwellings (a hearth implies a flue); 1.0 for smith/bakehouse (multiple stacks)"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d4_grass_brick_chimney",
+          "label": "Brick chimney stack",
+          "source": "hybrid",
+          "codeEffect": ["particle", "shadow", "emissive"],
+          "scale": { "nativePx": 192, "worldSizeW": 1, "worldSizeH": 2, "fit": "fixed" },
+          "variants": { "count": 6, "drivenBy": "material" },
+          "states": ["base", "weathered", "mossy_overgrown", "sooty"],
+          "anim": ["static", "flicker_glow"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "crumbled_chimney", "debris": ["fallen_brick", "stone_chip", "soot_clump"] },
+          "light": { "color": "warm-ember-orange", "radius": 1.5, "intensity": 0.4, "diurnal": false, "flicker": "hearth-glow-low" },
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Grassland material host: fieldstone/cob → fieldstone chimney; timber_frame/wattle_daub → brick or clay-pot chimney. Per biome re-skin to the roof/wall masonry vernacular (river → slate-capped chimney, mountains → granite stack, desert/savanna → adobe flue, lake/forest → fieldstone-and-clay, beach → coral-block flue, ocean/deep_ocean → tarred-iron stovepipe, cold biomes → heavy stone stack with persistent smoke + snow cap via content, volcanic → basalt stack with ash-tinted smoke, mystic → rune-carved stack with coloured/glowing smoke particle). The SMOKE particle reskins per biome (cold → denser, volcanic → grey ash, mystic → tinted) and is gated on hearth use; lit-multiplier raises the ember glow in dark biomes.",
+          "notes": "A roof-plane structure rising from the ridge/gable: own depth + collision (it occludes and sorts above the roof). HYBRID source — the brick/stone BODY is a PixelLab sprite, while the SMOKE is a procedural particle codeEffect emitted into the GL weather/particle batch (NEVER a 2D overlay) and the faint hearth glow is procedural emissive in the GL lighting pass. Smoke is honestly gated: it rises only when the hearth is in use (diurnal + cold-driven), so a cold dead house shows a cold stack — no faked plume. The light is the ember reflection at the flue mouth, low-flicker, not a diurnal toggle. sooty wear and crumbled_chimney broken_state are decay reads; collapse writes a delta. The particle is the field's signature code effect."
+        }
+      ]
+    },
+    {
+      "id": "d4_mill_mechanism",
+      "label": "Mill mechanism (water-wheel & windmill sails)",
+      "field": "D4",
+      "placement": {
+        "plane": "facade",
+        "anchor": "water_facing_wall | roof_gable | upper_wall",
+        "method": "socket_prop",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:grassland; building_role mill (grain_mill/lumber_mill/fulling_mill); socket=a primary working face — a water_facing_wall adjacent to a watercourse for the wheel, or a roof_gable/upper_wall mount for the sails; settlement_tier hamlet+; the mechanism type is chosen from the sim-derived water-proximity (terrain-suitability wetness) — watercourse-adjacent mills get the wheel, exposed open sites get the sails",
+        "avoid": ["door_path", "windows", "road", "stairs"],
+        "chanceOrDensity": "near-1.0 on a building whose role is mill (a mill without its mechanism is not a mill); exactly one mechanism per mill, type selected by site (watercourse → wheel, open/windy → sails)"
+      },
+      "biomeApplicability": { "only": ["grassland", "forest", "dense_forest", "tropical_forest", "taiga", "savanna", "steppe", "hills", "mountains", "swamp", "lake", "river", "beach", "tundra", "arctic", "desert", "volcanic", "mystic"] },
+      "objects": [
+        {
+          "id": "d4_water_wheel",
+          "label": "Mill water-wheel",
+          "source": "hybrid",
+          "codeEffect": ["shadow", "shader-sway"],
+          "scale": { "nativePx": 192, "worldSizeW": 2, "worldSizeH": 3, "fit": "fixed" },
+          "variants": { "count": 4, "drivenBy": "material" },
+          "states": ["base", "weathered", "mossy_overgrown", "broken"],
+          "anim": ["rotate"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "broken_wheel", "debris": ["broken_paddle", "wood_splinter", "iron_axle"] },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Grassland timber host → oak-paddle wheel on an iron axle, mounted to a fieldstone/timber mill wall over the race. Per biome the paddles/rim re-skin to the wall vernacular (forest → rough-log wheel, lake/river → cedar wheel green with waterline algae mossy_overgrown default, beach/ocean → tarred-timber wheel, mountains → heavy stone-and-timber wheel, swamp → algae-darkened wheel, mystic → rune-banded wheel with faint emissive rim, volcanic → soot-darkened wheel). Cold biomes (tundra/arctic/taiga) ice-rime the lower paddles and may freeze the wheel (broken/static climate read). Drops where there is no watercourse — the sails variant is used instead at open/windy sites.",
+          "notes": "A real working wheel mounted to the mill's water_facing_wall over a race: it OWNS depth and a collision footprint (2x3 tiles projecting from the wall) and packs into the F2 SPRITE_FLOATS pool with its own pivotY so the player and flora sort around it. HYBRID source — the PixelLab body sprite + a code ROTATION (shader-sway codeEffect drives the spin) so anim:rotate is the turning of the wheel, gated on water flow (a dry/frozen race shows a stalled wheel, no faked motion). Requires an adjacent watercourse to render (the application gate); honestly absent on a dry site, where d4_windmill_sails is chosen instead. Destructible — a shattered wheel is a strong abandonment read and writes an object-permanence delta. No interact (the wheel is driven by the water, not operated by the player); no light/content/attach."
+        },
+        {
+          "id": "d4_windmill_sails",
+          "label": "Windmill sails",
+          "source": "pixellab",
+          "codeEffect": ["shadow", "shader-sway"],
+          "scale": { "nativePx": 192, "worldSizeW": 3, "worldSizeH": 3, "fit": "fixed" },
+          "variants": { "count": 4, "drivenBy": "material" },
+          "states": ["base", "weathered", "tattered", "broken"],
+          "anim": ["rotate"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "broken_sails", "debris": ["broken_stock", "cloth_scrap", "wood_splinter"] },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Grassland → lattice-timber stocks with canvas-clad sails mounted at the roof_gable/cap of the mill. Per biome the stock host swaps to the wall vernacular (forest → log-stock sails, desert/savanna/steppe → reed-mat sails, the native windmill default on open dry plains, beach/ocean → tarred-stock sails, mountains/hills → heavy timber stocks, mystic → rune-stitched glowing sails with faint emissive, volcanic → soot-scorched canvas). Cold biomes (tundra/arctic) default the canvas to a heavy oiled storm-sail and snow-rime the stocks. sun_faded/tattered canvas is the climate-default in harsh-sun biomes. Chosen at exposed/open/windy sites where a water-wheel has no race.",
+          "notes": "The wind-driven counterpart to the water-wheel: a roof/upper mount at the mill cap that OWNS depth and a collision footprint (3x3 tiles, the sail sweep) and packs into the F2 SPRITE_FLOATS pool with its own pivotY (it occludes and sorts above the upper wall). PixelLab lattice-and-canvas body + a code ROTATION (shader-sway codeEffect drives the slow turn) → anim:rotate, gated on wind (a still day shows stationary sails, no faked motion). Mounted at the roof_gable/upper_wall socket; selected over the water-wheel at open/windy sites with no watercourse (the application gate). Destructible — the canvas tatters then the stocks snap (broken_sails), writing an object-permanence delta. No interact/light/content/attach."
+        }
+      ]
+    }
+  ],
+  "crossBiomeNotes": "D4 structural attachments are the heaviest dressing layer: every object OWNS depth and a real collision footprint, so all props pack into the F2 SPRITE_FLOATS pool with their own pivotY (never painted flat into the silhouette bitmap like rigid D3 signs) and route through GL for lighting/CRT/depth-sort — the chimney smoke + ember glow especially go into the GL particle/lighting passes, never a 2D ctx overlay. Specialization across the other 20 biomes is by (1) MATERIAL HOST swap — each object binds to the biome's wall/roof material vernacular from building-materials.json (grassland hosts cob/fieldstone/timber_frame/wattle_daub; forest→log, tropical_forest→bamboo, beach→driftwood/coral, ocean/deep_ocean→tarred-timber stilt, desert/savanna→adobe, mountains/hills→quarried stone, lake/river→cedar/slate, cold biomes→heavy storm-timber, volcanic→basalt, mystic→rune-carved + faint emissive); (2) CLIMATE-DEFAULT STATE — cold biomes (tundra/taiga/arctic + mountains) default to snow_capped via the content axis and persistent chimney smoke, humid biomes (swamp/dense_forest/river/lake) lean mossy_overgrown, hot/dry biomes (desert/savanna/steppe) lean weathered/sun-faded; (3) FLORA-RESKIN — trellis/pergola climbing growth (the D2_climbing_vine host) re-skins to each biome's bloom catalog; (4) DROP CONDITIONS — masonry-only objects (stone columns, buttresses, stone steps) drop on light-construction biomes/hosts (bamboo/reed/driftwood/cob) as honest absence rather than faking a stone structure, and balconies stay honestly absent until upper-storey facade apertures render. Age/wealth gating named in application rules is honestly absent today (no sim source) and is read off building.specialization.id (role) only, per the design's no-mock semantic source. Mechanism B socket-prop with own-depth means every object is excluded from the door_path/road claims it would block, and structural collapses (porches, lean-tos, balconies, chimneys, buttresses) write object-permanence deltas."
+}

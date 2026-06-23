@@ -1,0 +1,2059 @@
+{
+  "field": "D6",
+  "fieldName": "Ground props",
+  "mechanism": "C · perimeter field-scatter (content/use/attach) — dedicated F7-style scatter field in decoration-claims.js, seeded per-tile (wx,wy), gated on the architecture-claim perimeter predicate, tight footprint ellipses so ambient flora still draws around it. Sprite bodies in the F2 SPRITE_FLOATS pool with pivotY depth; code effects (forge smoke, prop ground shadows, well-rope use) route through the GL particle/lighting passes.",
+  "plane": "ground",
+  "defaultProvenance": "pixellab + code (smoke/shadow)",
+  "categories": [
+    {
+      "id": "d6_barrels",
+      "label": "Barrels & casks",
+      "field": "D6",
+      "placement": {
+        "plane": "ground",
+        "anchor": "perimeter_ring_0",
+        "method": "scatter",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:any; perimeter tile adjacent to a wall face (esp. beside doors / under eaves); role bias inn/brewery/cellar/dock/farmhouse; settlement_tier any",
+        "avoid": [
+          "door_path",
+          "stairs",
+          "road",
+          "windows"
+        ],
+        "chanceOrDensity": "0.18 per eligible perimeter tile, clustered 1-3 (casks lean in pairs)"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d6_barrel_wood",
+          "label": "Wooden barrel",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 96,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 5,
+            "drivenBy": "material"
+          },
+          "states": [
+            "base",
+            "weathered",
+            "mossy"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "staved_in",
+            "debris": [
+              "barrel_stave",
+              "iron_hoop"
+            ]
+          },
+          "light": null,
+          "content": {
+            "axis": "fill",
+            "states": [
+              "full",
+              "empty",
+              "open_lidless"
+            ]
+          },
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "material host swap of the staves to the biome wall-host wood family (cob/wattle grassland = pale oak; forest/taiga = pine; desert/savanna = sun-faded grey staves with split hoops; tundra/arctic/taiga climate-default state=mossy→frost-rimed snow_dusting variant); swamp/river/ocean climate-default=mossy + waterline algae; volcanic = soot-darkened, scorch-flecked; mystic = faint rune-banded hoops, soft emissive variant; lit-multiplier n/a (no light). Content 'full' fill colour reskins to the biome trade-good (grassland=ale/cider amber).",
+          "notes": "Barrel is a vessel: content axis:fill (full/empty/open) is orthogonal to wear states. Fragile staved container → destructible writes a destruction delta + debris. No wind_sway (rests on ground, not suspended); no light. Ground shadow is the only code effect."
+        },
+        {
+          "id": "d6_cask_small",
+          "label": "Small cask / firkin",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "material"
+          },
+          "states": [
+            "base",
+            "weathered"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "staved_in",
+            "debris": [
+              "barrel_stave",
+              "iron_hoop"
+            ]
+          },
+          "light": null,
+          "content": {
+            "axis": "fill",
+            "states": [
+              "full",
+              "empty"
+            ]
+          },
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "same staves-to-host wood swap as the full barrel; smaller footprint so it nests on stall counters and beside benches. Climate-default mossy in wet/cold biomes, sun_faded in desert/savanna, soot in volcanic.",
+          "notes": "Smaller firkin variant for tighter clusters; same content/destructible rules as the barrel, no suspension so no sway, no light."
+        }
+      ]
+    },
+    {
+      "id": "d6_crates_boxes",
+      "label": "Crates & boxes",
+      "field": "D6",
+      "placement": {
+        "plane": "ground",
+        "anchor": "perimeter_ring_0",
+        "method": "scatter",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:any; perimeter tile near a door / loading face; role bias warehouse/merchant/dock/market; tier hamlet+",
+        "avoid": [
+          "door_path",
+          "stairs",
+          "road",
+          "windows"
+        ],
+        "chanceOrDensity": "0.16 per eligible perimeter tile, stack 1-3 (boxes pile)"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d6_crate_wood",
+          "label": "Wooden crate",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 96,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 6,
+            "drivenBy": "material"
+          },
+          "states": [
+            "base",
+            "weathered",
+            "mossy"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "smashed",
+            "debris": [
+              "plank_scrap",
+              "nail",
+              "straw_packing"
+            ]
+          },
+          "light": null,
+          "content": {
+            "axis": "load",
+            "states": [
+              "empty",
+              "loaded",
+              "loaded_open"
+            ]
+          },
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "slat wood reskins to the biome timber family; desert/savanna = bleached grey split slats; swamp/river = mossy + waterline; tundra/arctic/taiga climate-default = snow_dusting on the top face; volcanic = scorched corners; mystic = stamped glyph-crate emissive variant. Loaded contents reskin to the biome trade good (grassland loaded_open = turnips/wool/pottery).",
+          "notes": "A crate carries a LOAD (content axis:load: empty/loaded/loaded_open) not a fill level — discrete cargo, not a liquid. Wood slat container is fragile → destructible smashed + debris delta. Rests on ground: no sway, no light."
+        },
+        {
+          "id": "d6_box_crate_stack",
+          "label": "Stacked crates",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 128,
+            "worldSizeW": 1,
+            "worldSizeH": 2,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "random"
+          },
+          "states": [
+            "base",
+            "weathered"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "toppled",
+            "debris": [
+              "plank_scrap",
+              "nail",
+              "straw_packing"
+            ]
+          },
+          "light": null,
+          "content": {
+            "axis": "load",
+            "states": [
+              "loaded",
+              "loaded_open"
+            ]
+          },
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "same slat-wood host swap; the two-high stack reads as a loading dock pile near warehouse/merchant roles; climate-default snow_dusting on cap in cold biomes, soot in volcanic.",
+          "notes": "Pre-stacked composite drawn as one sprite (the stack is not an attach holder — the boxes are not independently lootable here; for a true holder use market_stall). Toppling is the destruction delta. Taller pivot so it sorts behind near flora correctly."
+        }
+      ]
+    },
+    {
+      "id": "d6_benches_stools",
+      "label": "Benches & stools",
+      "field": "D6",
+      "placement": {
+        "plane": "ground",
+        "anchor": "perimeter_ring_0",
+        "method": "scatter",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:any; perimeter tile beside a door or under a window (a sit-out spot); role bias inn/tavern/home/workshop; tier any",
+        "avoid": [
+          "door_path",
+          "stairs",
+          "road"
+        ],
+        "chanceOrDensity": "0.10 per eligible perimeter tile, usually 1 (a bench by the door)"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d6_bench_wood",
+          "label": "Wooden bench",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 96,
+            "worldSizeW": 2,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 5,
+            "drivenBy": "style"
+          },
+          "states": [
+            "base",
+            "weathered",
+            "mossy"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "broken",
+            "debris": [
+              "plank_scrap",
+              "nail"
+            ]
+          },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "plank/leg wood swaps to the biome timber host; desert/savanna = bleached split planks; swamp/river/ocean climate-default = mossy with damp stain; tundra/arctic/taiga = snow_dusting on the seat; forest = log-slab bench variant; volcanic = scorched; mystic = pale carved-rune bench. No content (a bench holds people, not goods) and no light.",
+          "notes": "Furniture, not a vessel → no content axis. No interact verb at the dressing layer (sitting is a character action against a future affordance socket, not a prop toggle). Fragile wood → destructible. Static, ground-rested: no sway, no light."
+        },
+        {
+          "id": "d6_stool",
+          "label": "Stool",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "style"
+          },
+          "states": [
+            "base",
+            "weathered"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "broken",
+            "debris": [
+              "plank_scrap"
+            ]
+          },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "three-leg stool, same timber-host swap; pairs beside the bench or a workshop door. Climate-default mossy in wet, snow_dusting in cold, scorched in volcanic.",
+          "notes": "Smaller seat companion to the bench; same furniture rules (no content, no light, no sway), destructible only."
+        }
+      ]
+    },
+    {
+      "id": "d6_fences_gates",
+      "label": "Fences & gates",
+      "field": "D6",
+      "placement": {
+        "plane": "ground",
+        "anchor": "perimeter_run",
+        "method": "scatter",
+        "fitDefault": "tile-along"
+      },
+      "application": {
+        "when": "biome:any; perimeter run / yard boundary on the outer claim ring; role bias farmhouse/cottage/pen/inn-yard; tier hamlet+ (fenced yards)",
+        "avoid": [
+          "door_path",
+          "stairs",
+          "road",
+          "windows"
+        ],
+        "chanceOrDensity": "0.40 along an eligible boundary run (fences run continuously once a yard exists), one gate per run at the path approach"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d6_fence_segment",
+          "label": "Fence segment",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "tile-along"
+          },
+          "variants": {
+            "count": 5,
+            "drivenBy": "material"
+          },
+          "states": [
+            "base",
+            "weathered",
+            "mossy",
+            "leaning"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "broken_rail",
+            "debris": [
+              "fence_rail",
+              "post_stump"
+            ]
+          },
+          "light": null,
+          "content": null,
+          "attach": {
+            "holds": [
+              "d6_gate_panel"
+            ],
+            "slots": [
+              "gate_opening"
+            ]
+          },
+          "coverage": null,
+          "biomeSkins": "rail/post wood swaps to the biome timber host (grassland = split-rail oak / wattle hurdle; forest = log-pole; savanna/steppe = thornbrush + post; desert = drystone + bleached post; swamp = leaning waterlogged; tundra/arctic = snow_dusting + frost; ocean/lake = driftwood; volcanic = blackened basalt post; mystic = pale carved post with faint glow). 'leaning' is the climate-default in swamp/abandoned contexts.",
+          "notes": "tile-along kit piece repeated along a boundary run (fit:tile-along). The fence is the ATTACH HOST: it holds a gate panel in its gate_opening slot — the gate is a SEPARATE object (own interact/destructible). Fence itself has no interact and no content. Fragile → destructible per segment so a single broken rail reads honestly."
+        },
+        {
+          "id": "d6_gate_panel",
+          "label": "Gate panel",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "material"
+          },
+          "states": [
+            "base",
+            "weathered",
+            "mossy"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": {
+            "verb": "open_close",
+            "motion": "swing on hinge (constrained arc), latch clack",
+            "emits": "creak sfx"
+          },
+          "destructible": {
+            "breakable": true,
+            "broken_state": "hanging_off_hinge",
+            "debris": [
+              "fence_rail",
+              "iron_hinge"
+            ]
+          },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "matches its host fence material; desert/savanna = bleached split planks; swamp = sagging hanging_off_hinge climate-default; cold biomes = snow_dusting; volcanic = scorched; mystic = rune-latched glow variant.",
+          "notes": "The gate is the CHILD of the fence attach. It carries interact.verb:open_close (a constrained hinge swing, NOT a free toggle) per the affordance rule. Hinged door-like prop → destructible to hanging_off_hinge. No content, no sway (rigid hinge, not suspended cloth), no light."
+        }
+      ]
+    },
+    {
+      "id": "d6_woodpiles",
+      "label": "Woodpiles & log stacks",
+      "field": "D6",
+      "placement": {
+        "plane": "ground",
+        "anchor": "perimeter_run",
+        "method": "scatter",
+        "fitDefault": "tile-along"
+      },
+      "application": {
+        "when": "biome:any with available timber; perimeter run against a wall (stacked under the eave); role bias home/smithy/bakery/woodcutter; tier any; bias up in cold biomes (more fuel stored)",
+        "avoid": [
+          "door_path",
+          "stairs",
+          "road",
+          "windows"
+        ],
+        "chanceOrDensity": "0.22 along an eligible wall run, tile-along 1-4 segments"
+      },
+      "biomeApplicability": {
+        "drop": [
+          "ocean",
+          "deep_ocean"
+        ]
+      },
+      "objects": [
+        {
+          "id": "d6_woodpile_split",
+          "label": "Split-log woodpile",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 96,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "tile-along"
+          },
+          "variants": {
+            "count": 5,
+            "drivenBy": "random"
+          },
+          "states": [
+            "base",
+            "weathered",
+            "mossy"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": {
+            "axis": "fill",
+            "states": [
+              "full",
+              "depleted",
+              "snow_capped"
+            ]
+          },
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "log species reskins to the biome timber (grassland = oak/ash rounds; forest/taiga = pine; savanna = acacia knots; swamp = damp dark wood, mossy climate-default; tundra/arctic/taiga = snow_capped climate-default state; volcanic = charred ends; mystic = faint-glow heartwood). Dropped entirely in ocean/deep_ocean (no land timber to stack).",
+          "notes": "A woodpile is a YIELD/stock vessel — content axis:fill drains full→depleted as fuel is drawn (orthogonal to wear). 'snow_capped' is a seasonal/climate content state per the design's example. NOT destructible (you take from it, you don't smash it). tile-along along a wall run. Rests on ground: no sway, no light."
+        }
+      ]
+    },
+    {
+      "id": "d6_wheelbarrows_carts",
+      "label": "Wheelbarrows & handcarts",
+      "field": "D6",
+      "placement": {
+        "plane": "ground",
+        "anchor": "perimeter_ring_0",
+        "method": "scatter",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:any land; perimeter tile near a yard / loading face; role bias farmhouse/market/warehouse/mill; tier hamlet+",
+        "avoid": [
+          "door_path",
+          "stairs",
+          "road",
+          "windows"
+        ],
+        "chanceOrDensity": "0.08 per eligible perimeter tile, usually 1 (a parked barrow)"
+      },
+      "biomeApplicability": {
+        "drop": [
+          "ocean",
+          "deep_ocean"
+        ]
+      },
+      "objects": [
+        {
+          "id": "d6_wheelbarrow",
+          "label": "Wheelbarrow",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 96,
+            "worldSizeW": 2,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "style"
+          },
+          "states": [
+            "base",
+            "weathered",
+            "mossy"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "broken_wheel",
+            "debris": [
+              "cart_wheel",
+              "plank_scrap"
+            ]
+          },
+          "light": null,
+          "content": {
+            "axis": "load",
+            "states": [
+              "empty",
+              "loaded"
+            ]
+          },
+          "attach": {
+            "holds": [
+              "d6_sacks_baskets",
+              "d6_woodpiles"
+            ],
+            "slots": [
+              "barrow_tray"
+            ]
+          },
+          "coverage": null,
+          "biomeSkins": "tray/wheel wood swaps to the biome timber host; desert/savanna = bleached frame; swamp = mossy waterlogged; cold biomes = snow_dusting; volcanic = soot; mystic = rune-spoked wheel. Loaded content reskins to the local good (grassland = soil/turnips/firewood). Dropped in ocean/deep_ocean (over-water platforms, no barrow).",
+          "notes": "A cart carries a LOAD (content axis:load empty/loaded) AND is an ATTACH HOST: its barrow_tray slot can hold a sacks/baskets or woodpile child object (a separately lootable load). Fragile spoked-wheel vehicle → destructible broken_wheel. Parked on ground: no sway, no light."
+        },
+        {
+          "id": "d6_handcart",
+          "label": "Two-wheel handcart",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 128,
+            "worldSizeW": 2,
+            "worldSizeH": 2,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "style"
+          },
+          "states": [
+            "base",
+            "weathered"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "broken_wheel",
+            "debris": [
+              "cart_wheel",
+              "plank_scrap",
+              "axle"
+            ]
+          },
+          "light": null,
+          "content": {
+            "axis": "load",
+            "states": [
+              "empty",
+              "loaded",
+              "loaded_covered"
+            ]
+          },
+          "attach": {
+            "holds": [
+              "d6_crates_boxes",
+              "d6_sacks_baskets",
+              "d6_barrels"
+            ],
+            "slots": [
+              "cart_bed"
+            ]
+          },
+          "coverage": null,
+          "biomeSkins": "larger merchant handcart; same timber-host swap; 'loaded_covered' uses a biome cloth tarp colour; cold biomes snow_dusting; volcanic soot; mystic rune-bed glow. Dropped in ocean/deep_ocean.",
+          "notes": "Bigger cart for market/warehouse roles; same load + attach-host rules as the barrow, with a deeper cart_bed that can hold crates/sacks/barrels children. Destructible vehicle. No sway, no light."
+        }
+      ]
+    },
+    {
+      "id": "d6_water_trough_well",
+      "label": "Water trough & well",
+      "field": "D6",
+      "placement": {
+        "plane": "ground",
+        "anchor": "perimeter_ring_1",
+        "method": "scatter",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:any land; outer perimeter / yard centre (a draw point); role bias farmhouse/inn/communal-yard/stable; tier hamlet+; one well per yard, troughs by stable/pen faces",
+        "avoid": [
+          "door_path",
+          "stairs",
+          "road",
+          "windows"
+        ],
+        "chanceOrDensity": "well: 0.05 per yard (rare, one focal draw point); trough: 0.10 per stable/pen-adjacent perimeter tile"
+      },
+      "biomeApplicability": {
+        "drop": [
+          "ocean",
+          "deep_ocean",
+          "shallow_water"
+        ]
+      },
+      "objects": [
+        {
+          "id": "d6_well_stone",
+          "label": "Stone well",
+          "source": "hybrid",
+          "codeEffect": [
+            "shadow",
+            "spline-assembly",
+            "particle"
+          ],
+          "scale": {
+            "nativePx": 128,
+            "worldSizeW": 2,
+            "worldSizeH": 2,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "material"
+          },
+          "states": [
+            "base",
+            "weathered",
+            "mossy"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": {
+            "verb": "use",
+            "motion": "windlass crank / rope-and-bucket draw stroke",
+            "emits": "water (fills a carried vessel); rope creak + splash sfx"
+          },
+          "destructible": null,
+          "light": null,
+          "content": {
+            "axis": "fill",
+            "states": [
+              "full",
+              "low",
+              "dry"
+            ]
+          },
+          "attach": {
+            "holds": [
+              "d6_well_bucket"
+            ],
+            "slots": [
+              "rope_hook"
+            ]
+          },
+          "coverage": null,
+          "biomeSkins": "stone curb reskins to the biome masonry host (grassland = fieldstone/cobble curb with timber-frame windlass roof; forest = log-cribbed well; desert = adobe/mudbrick rim, content climate-default 'low'; savanna/steppe = drystone; swamp/river = damp mossy; tundra/arctic = ice-rimmed curb, frozen content variant; volcanic = basalt curb; mystic = glowing rune-lined shaft, faint emissive water). Dropped in all water biomes (no need to dig a well over water).",
+          "notes": "A well is the canonical USE prop: interact.verb:use is a rope/windlass stroke that EMITS a resource (water) into a carried vessel — exactly the design's 'use = rope/pump stroke that emits a resource' rule. Content axis:fill (full/low/dry) is the draw level. NOT destructible (stone, permanent). ATTACH-holds its bucket child on the rope_hook. Spline-assembly = the rope; particle = the splash."
+        },
+        {
+          "id": "d6_well_bucket",
+          "label": "Well bucket",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 3,
+            "drivenBy": "material"
+          },
+          "states": [
+            "base",
+            "weathered"
+          ],
+          "anim": [
+            "wind_sway"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "broken",
+            "debris": [
+              "plank_scrap",
+              "iron_hoop"
+            ]
+          },
+          "light": null,
+          "content": {
+            "axis": "fill",
+            "states": [
+              "empty",
+              "full"
+            ]
+          },
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "small banded bucket matching the well's wood/iron; cold biomes = frost-rimed; volcanic = soot; mystic = faint glow. Hangs on the well rope_hook.",
+          "notes": "The bucket is the well's CHILD on the rope_hook. Because it hangs SUSPENDED from the rope it DOES carry anim:wind_sway (the affordance rule: sway iff suspended) — unlike every ground-rested prop in this field. Fill content (empty/full) tracks the draw. Fragile → destructible."
+        },
+        {
+          "id": "d6_water_trough",
+          "label": "Water trough",
+          "source": "hybrid",
+          "codeEffect": [
+            "shadow",
+            "tint"
+          ],
+          "scale": {
+            "nativePx": 96,
+            "worldSizeW": 2,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "material"
+          },
+          "states": [
+            "base",
+            "weathered",
+            "mossy"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": {
+            "verb": "use",
+            "motion": "scoop / dip stroke at the trough lip",
+            "emits": "water (fills a carried vessel); slosh sfx"
+          },
+          "destructible": null,
+          "light": null,
+          "content": {
+            "axis": "fill",
+            "states": [
+              "full",
+              "low",
+              "empty",
+              "frozen"
+            ]
+          },
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "hewn-log or stone trough reskins to the biome host (grassland = hollowed oak / fieldstone; desert = adobe, content climate-default 'low'; tundra/arctic = content climate-default 'frozen' surface tint; swamp/river = algae-greened mossy; volcanic = basalt; mystic = rune-etched, faint glow water). Dropped in all water biomes.",
+          "notes": "A trough is a USE prop (dip/scoop emits water) AND a fill vessel (full/low/empty/frozen content — 'frozen' is the cold-biome dress on the water surface, done as a procedural tint over the sprite, hence codeEffect:tint). Permanent → not destructible. Open water surface, no suspension → no sway, no light."
+        }
+      ]
+    },
+    {
+      "id": "d6_sacks_baskets",
+      "label": "Sacks & baskets",
+      "field": "D6",
+      "placement": {
+        "plane": "ground",
+        "anchor": "perimeter_ring_0",
+        "method": "scatter",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:any; perimeter tile near a door / stall / store face; role bias market/granary/bakery/home; tier any",
+        "avoid": [
+          "door_path",
+          "stairs",
+          "road",
+          "windows"
+        ],
+        "chanceOrDensity": "0.20 per eligible perimeter tile, clustered 1-4 (sacks slump in groups)"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d6_sack_grain",
+          "label": "Grain sack",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 5,
+            "drivenBy": "material"
+          },
+          "states": [
+            "base",
+            "weathered",
+            "patched"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "split_spilled",
+            "debris": [
+              "burlap_scrap",
+              "spilled_grain"
+            ]
+          },
+          "light": null,
+          "content": {
+            "axis": "fill",
+            "states": [
+              "full",
+              "slumped_empty"
+            ]
+          },
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "burlap/cloth reskins to a biome-appropriate weave (grassland = jute/wool; desert = pale linen; tundra/arctic = hide sack; swamp/river = mildew-stained mossy; volcanic = ash-greyed; mystic = rune-stamped sack). Full content reskins to the local grain/good. Climate-default 'slumped_empty' where stores are depleted.",
+          "notes": "A sack is a fill vessel: content axis:fill (full vs slumped_empty) — a full sack stands plump, an empty one slumps flat. Fragile cloth container → destructible split_spilled writes a spill delta + grain debris. Ground-rested: no sway, no light."
+        },
+        {
+          "id": "d6_basket_woven",
+          "label": "Woven basket",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 5,
+            "drivenBy": "style"
+          },
+          "states": [
+            "base",
+            "weathered"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "crushed",
+            "debris": [
+              "wicker_scrap"
+            ]
+          },
+          "light": null,
+          "content": {
+            "axis": "load",
+            "states": [
+              "empty",
+              "loaded",
+              "loaded_heaped"
+            ]
+          },
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "wicker reskins to the biome weaving fibre (grassland = willow/hazel; tropical = palm/rattan; desert = split-reed; tundra/arctic = bone-rib basket; swamp = bulrush; mystic = luminous-fibre). Loaded content reskins to the local produce (grassland loaded_heaped = apples/eggs/wool).",
+          "notes": "A basket carries a discrete LOAD (content axis:load empty/loaded/heaped) of produce, distinct from the sack's pourable fill. Wicker is crushable → destructible crushed. Ground-rested: no sway, no light."
+        }
+      ]
+    },
+    {
+      "id": "d6_market_stall",
+      "label": "Market stall",
+      "field": "D6",
+      "placement": {
+        "plane": "ground",
+        "anchor": "perimeter_ring_1",
+        "method": "scatter",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:any land; outer perimeter facing a road/plaza; role bias market/merchant/inn frontage; settlement_tier village+ (a market needs custom)",
+        "avoid": [
+          "door_path",
+          "stairs",
+          "windows"
+        ],
+        "chanceOrDensity": "0.06 per eligible road-facing perimeter tile (stalls front the street, not the back yard)"
+      },
+      "biomeApplicability": {
+        "drop": [
+          "ocean",
+          "deep_ocean"
+        ]
+      },
+      "objects": [
+        {
+          "id": "d6_market_stall_frame",
+          "label": "Market stall frame",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 192,
+            "worldSizeW": 3,
+            "worldSizeH": 2,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "style"
+          },
+          "states": [
+            "base",
+            "weathered"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "collapsed",
+            "debris": [
+              "plank_scrap",
+              "post_stump",
+              "torn_cloth"
+            ]
+          },
+          "light": null,
+          "content": null,
+          "attach": {
+            "holds": [
+              "d6_market_stall_awning",
+              "d6_sacks_baskets",
+              "d6_crates_boxes",
+              "d6_barrels"
+            ],
+            "slots": [
+              "awning_rail",
+              "counter_top",
+              "under_counter"
+            ]
+          },
+          "coverage": null,
+          "biomeSkins": "post-and-counter timber reskins to the biome host; desert/savanna = light cane frame; tropical = bamboo stall; tundra/arctic = hide-and-pole stall with snow_dusting; volcanic = soot; mystic = carved-rune posts, faint glow. Goods on the counter reskin to the local trade. Dropped in ocean/deep_ocean.",
+          "notes": "The stall is the principal ATTACH HOST of this field: it holds an awning (on awning_rail), goods baskets/crates on its counter_top, and barrels under_counter — each a SEPARATE object (the awning sways, the goods are lootable/destructible independently). The frame itself has no content/interact; it composes the others. Fragile → destructible collapsed."
+        },
+        {
+          "id": "d6_market_stall_awning",
+          "label": "Stall awning (cloth)",
+          "source": "hybrid",
+          "codeEffect": [
+            "shader-sway",
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 192,
+            "worldSizeW": 3,
+            "worldSizeH": 1,
+            "fit": "span"
+          },
+          "variants": {
+            "count": 5,
+            "drivenBy": "style"
+          },
+          "states": [
+            "base",
+            "weathered",
+            "faded"
+          ],
+          "anim": [
+            "wind_sway"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "torn",
+            "debris": [
+              "torn_cloth"
+            ]
+          },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "striped cloth reskins to a biome dye palette (grassland = red/cream stripe; desert = ochre/indigo; tropical = bright multi-stripe; tundra/arctic = hide canopy, sun_faded climate-default in steppe/savanna; mystic = shimmer-weave faint glow). Spans the stall awning_rail width.",
+          "notes": "The awning is CLOTH and SUSPENDED on the stall's awning_rail → it carries anim:wind_sway (shader-sway) per the rule that sway is a property of suspension/cloth, NOT of the category. fit:span stretches it to the rail width. Tearable cloth → destructible torn. No content, no light. It is the stall's child, not a host itself."
+        }
+      ]
+    },
+    {
+      "id": "d6_hay_bales",
+      "label": "Hay bales & straw",
+      "field": "D6",
+      "placement": {
+        "plane": "ground",
+        "anchor": "perimeter_ring_0",
+        "method": "scatter",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:agrarian land (grass/farm); perimeter tile near a barn/stable/pen face; role bias farmhouse/stable/barn; tier any; bias up at harvest season",
+        "avoid": [
+          "door_path",
+          "stairs",
+          "road"
+        ],
+        "chanceOrDensity": "0.18 per eligible barn/stable-adjacent perimeter tile, clustered 1-3"
+      },
+      "biomeApplicability": {
+        "only": [
+          "grassland",
+          "savanna",
+          "steppe",
+          "hills",
+          "river",
+          "lake",
+          "forest"
+        ]
+      },
+      "objects": [
+        {
+          "id": "d6_hay_bale",
+          "label": "Hay bale",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 96,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 5,
+            "drivenBy": "random"
+          },
+          "states": [
+            "base",
+            "weathered",
+            "mossy"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": {
+            "axis": "season",
+            "states": [
+              "fresh_gold",
+              "weathered_grey",
+              "snow_capped",
+              "scattered_loose"
+            ]
+          },
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "straw colour reskins to the biome crop (grassland/hills = golden wheat-straw; savanna/steppe = pale tawny dry-grass; forest/river/lake = greener meadow hay, mossy in damp; cold-fringe = snow_capped climate-default). Restricted to agrarian biomes — absent in ocean/desert/tundra/arctic/volcanic/mystic/swamp/dense_forest/tropical_forest.",
+          "notes": "A hay bale is a SEASONAL content prop — content axis:season (fresh_gold at harvest → weathered_grey over time → snow_capped in winter → scattered_loose when broken into), exactly the design's seasonal content example. NOT destructible (you scatter/consume it, modelled as the scattered_loose content state, not a smash delta). Ground-rested: no sway, no light."
+        }
+      ]
+    },
+    {
+      "id": "d6_tool_racks",
+      "label": "Tool racks & forge gear",
+      "field": "D6",
+      "placement": {
+        "plane": "ground",
+        "anchor": "perimeter_ring_0",
+        "method": "scatter",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:any land; perimeter tile against a workshop wall; role bias smithy/carpenter/farmhouse/woodcutter/workshop; tier any",
+        "avoid": [
+          "door_path",
+          "stairs",
+          "road",
+          "windows"
+        ],
+        "chanceOrDensity": "0.12 per eligible workshop-wall perimeter tile, role-gated (rack appears chiefly on craft buildings)"
+      },
+      "biomeApplicability": {
+        "drop": [
+          "ocean",
+          "deep_ocean"
+        ]
+      },
+      "objects": [
+        {
+          "id": "d6_tool_rack",
+          "label": "Tool rack",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 96,
+            "worldSizeW": 1,
+            "worldSizeH": 2,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 5,
+            "drivenBy": "role-glyph"
+          },
+          "states": [
+            "base",
+            "weathered",
+            "mossy"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "broken",
+            "debris": [
+              "plank_scrap",
+              "fallen_tool"
+            ]
+          },
+          "light": null,
+          "content": null,
+          "attach": {
+            "holds": [
+              "d6_tool_item"
+            ],
+            "slots": [
+              "peg_1",
+              "peg_2",
+              "peg_3",
+              "peg_4"
+            ]
+          },
+          "coverage": null,
+          "biomeSkins": "rack timber reskins to the biome host; tools on the pegs reskin by ROLE (role-glyph: smithy = hammer/tongs; carpenter = saw/axe/plane; farm = scythe/sickle/rake). Cold biomes = snow_dusting; swamp = mossy; volcanic = soot; mystic = rune-marked rack. Dropped in ocean/deep_ocean.",
+          "notes": "The rack is an ATTACH HOST whose pegs hold tool children selected by building role (role-glyph variant) — the tools are separate lootable objects. The rack frame has no content/interact; the role glyph drives which tools hang. Wall-leaning rack: no sway (rigid against wall), no light. Fragile → destructible."
+        },
+        {
+          "id": "d6_tool_item",
+          "label": "Hung tool",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 8,
+            "drivenBy": "role-glyph"
+          },
+          "states": [
+            "base",
+            "rusted"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "snapped",
+            "debris": [
+              "metal_scrap",
+              "haft_scrap"
+            ]
+          },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "the 8 variants are role tools (hammer, tongs, saw, axe, plane, scythe, sickle, rake) chosen by host building role; cold/wet biomes = 'rusted' climate-default state; volcanic = soot-blackened; mystic = faint rune-glow tool.",
+          "notes": "Tool is the rack's CHILD on a peg. Hung flat against the rack board (not free-swinging on a hook) so no wind_sway. A metal/haft tool can snap → destructible. No content, no light. role-glyph variant ties the visible tool to the building's specialization."
+        },
+        {
+          "id": "d6_forge_anvil",
+          "label": "Forge & anvil",
+          "source": "hybrid",
+          "codeEffect": [
+            "shadow",
+            "particle",
+            "emissive"
+          ],
+          "scale": {
+            "nativePx": 96,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 3,
+            "drivenBy": "role-glyph"
+          },
+          "states": [
+            "base",
+            "weathered"
+          ],
+          "anim": [
+            "flicker_glow"
+          ],
+          "interact": null,
+          "destructible": null,
+          "light": {
+            "color": "ember-orange",
+            "radius": "1.5 tiles",
+            "intensity": "warm, mid",
+            "diurnal": false,
+            "flicker": "forge-coals (slow random ember pulse, brighter when worked)"
+          },
+          "content": {
+            "axis": "fill",
+            "states": [
+              "lit_coals",
+              "banked",
+              "cold"
+            ]
+          },
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "stone-and-iron forge with anvil; reskins curb to the biome masonry host; volcanic = basalt forge with stronger ember glow (lit-multiplier up); tundra/arctic/taiga = the warm forge glow is a welcome focal light (lit-multiplier up for dark biomes); mystic = blue-white arcane forge flame (magical emissive variant); 'cold' content is the climate-default on abandoned/non-smithy placements. Dropped in ocean/deep_ocean (smithy is a land role).",
+          "notes": "Smithy signature prop (role-gated to smithy/forge). It IS a real light source → light component (ember-orange glow as procedural EMISSIVE into the GL lighting pass, NOT lit:bool) with a forge-coals flicker profile; anim:flicker_glow is that emissive loop. codeEffect:particle = the forge SMOKE (D6's named code effect) rising into the GL particle pass. content axis:fill (lit_coals/banked/cold) is the fire level; the light + smoke gate on it (cold = no glow/smoke). Stone/iron → not destructible. Not suspended → no wind_sway."
+        }
+      ]
+    },
+    {
+      "id": "d6_braziers_fire",
+      "label": "Braziers & fire baskets",
+      "field": "D6",
+      "placement": {
+        "plane": "ground",
+        "anchor": "perimeter_ring_0",
+        "method": "scatter",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:any land; perimeter tile flanking a door / gate / yard; role bias guard_post/barracks/inn/shrine/smithy; tier hamlet+; lit through the night (a watch light / warmth source)",
+        "avoid": [
+          "door_path",
+          "stairs",
+          "road",
+          "windows"
+        ],
+        "chanceOrDensity": "0.08 per eligible perimeter tile, often paired flanking an entrance/gate"
+      },
+      "biomeApplicability": {
+        "drop": [
+          "ocean",
+          "deep_ocean"
+        ]
+      },
+      "objects": [
+        {
+          "id": "d6_iron_brazier",
+          "label": "Iron brazier",
+          "source": "hybrid",
+          "codeEffect": [
+            "shadow",
+            "emissive",
+            "particle"
+          ],
+          "scale": {
+            "nativePx": 96,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "material"
+          },
+          "states": [
+            "base",
+            "weathered",
+            "rusted"
+          ],
+          "anim": [
+            "flicker_glow"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "toppled_cold",
+            "debris": [
+              "iron_scrap",
+              "scattered_coals"
+            ]
+          },
+          "light": {
+            "color": "warm-ember-orange",
+            "radius": "2 tiles",
+            "intensity": "warm, mid",
+            "diurnal": true,
+            "flicker": "fire-basket (medium random flame pulse, brighter when freshly fed)"
+          },
+          "content": {
+            "axis": "fill",
+            "states": [
+              "lit",
+              "embers",
+              "cold"
+            ]
+          },
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "wrought-iron fire basket on a tripod; bowl/legs reskin to the biome metalwork host; cold biomes (tundra/arctic/taiga) bias the flame larger and lit-multiplier up (a welcome warmth light, often lit by day); desert/savanna = pale ash content default; swamp/river = rusted climate-default + damp coals; volcanic = ember-red roaring variant; mystic = blue-white arcane flame (magical emissive variant). The fuel content 'cold' is the climate-default on abandoned/unmanned placements. Dropped in ocean/deep_ocean (no land yard).",
+          "notes": "A real light source → light component (warm-ember glow as procedural EMISSIVE into the GL lighting pass, NOT lit:bool) with a fire-basket flicker profile; anim:flicker_glow is that emissive loop. codeEffect:particle = the fire's smoke/ember sparks into the GL particle pass (never a 2D overlay). content axis:fill (lit/embers/cold) is the fuel/fire level; the light + particle gate on it (cold = no glow/smoke — honest, an unlit brazier is dark). diurnal:true because a watch brazier is lit at dusk and banked at dawn. Fragile iron basket → destructible to a toppled_cold scatter of coals (object-permanence delta). Ground-rested, not suspended → no wind_sway."
+        }
+      ]
+    },
+    {
+      "id": "d6_arms_storage",
+      "label": "Arms storage & weapon racks",
+      "field": "D6",
+      "placement": {
+        "plane": "ground",
+        "anchor": "perimeter_ring_0",
+        "method": "scatter",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:any land; perimeter tile against a guard-post / barracks / armory wall; role bias guard_post/barracks/garrison/armory; tier hamlet+; role-gated (a weapon rack reads as a manned military post)",
+        "avoid": [
+          "door_path",
+          "stairs",
+          "road",
+          "windows"
+        ],
+        "chanceOrDensity": "0.12 per eligible military-wall perimeter tile, role-gated (appears chiefly on guard/garrison buildings)"
+      },
+      "biomeApplicability": {
+        "drop": [
+          "ocean",
+          "deep_ocean"
+        ]
+      },
+      "objects": [
+        {
+          "id": "d6_weapon_rack",
+          "label": "Weapon rack",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 96,
+            "worldSizeW": 1,
+            "worldSizeH": 2,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "role-glyph"
+          },
+          "states": [
+            "base",
+            "weathered",
+            "mossy"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "broken",
+            "debris": [
+              "plank_scrap",
+              "fallen_weapon"
+            ]
+          },
+          "light": null,
+          "content": null,
+          "attach": {
+            "holds": [
+              "d6_arms_item"
+            ],
+            "slots": [
+              "spear_slot_1",
+              "spear_slot_2",
+              "spear_slot_3",
+              "shield_pegs"
+            ]
+          },
+          "coverage": null,
+          "biomeSkins": "rack timber reskins to the biome host; the arms on it reskin by role-glyph (settlement militia → spears + round shields; garrison → halberds + tower shields; hunters' post → bows + quivers). Cold biomes = snow_dusting; swamp/river = mossy climate-default; volcanic = soot; mystic = rune-marked rack with faint-glow arms. Dropped in ocean/deep_ocean.",
+          "notes": "The rack is an ATTACH HOST whose slots hold spear/shield child items (d6_arms_item) selected by the post's role-glyph — the arms are separate lootable/destructible objects. The rack frame has no content/interact; it composes the others. Wall-leaning rack: no sway (rigid against the wall), no light. Fragile wood frame → destructible. Role-gated so a weapon rack only reads on a manned military post (specialization-derived)."
+        },
+        {
+          "id": "d6_arms_item",
+          "label": "Racked arm (spear / shield)",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 1,
+            "worldSizeH": 2,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 6,
+            "drivenBy": "role-glyph"
+          },
+          "states": [
+            "base",
+            "rusted"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "snapped",
+            "debris": [
+              "metal_scrap",
+              "haft_scrap"
+            ]
+          },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "the 6 variants are racked arms (spear, halberd, round shield, tower shield, bow, quiver) chosen by the post's role-glyph; cold/wet biomes = 'rusted' climate-default state; volcanic = soot-blackened; mystic = faint rune-glow arm. Dropped wherever its host rack drops.",
+          "notes": "An arm is the weapon rack's CHILD slotted on the rack (spear in a slot, shield on the pegs). Held rigid against the rack → no wind_sway. A metal/haft arm can snap → destructible. No content, no light. role-glyph variant ties the visible arms to the post's specialization."
+        }
+      ]
+    },
+    {
+      "id": "d6_posts_tethers",
+      "label": "Posts & tethers",
+      "field": "D6",
+      "placement": {
+        "plane": "ground",
+        "anchor": "perimeter_ring_0",
+        "method": "scatter",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:any land; perimeter tile by a door / stable / yard where mounts are tied; role bias inn/stable/guard_post/farmhouse/trading_post; tier hamlet+",
+        "avoid": [
+          "door_path",
+          "stairs",
+          "road",
+          "windows"
+        ],
+        "chanceOrDensity": "0.07 per eligible perimeter tile, usually 1-2 by a door or stable face"
+      },
+      "biomeApplicability": {
+        "drop": [
+          "ocean",
+          "deep_ocean"
+        ]
+      },
+      "objects": [
+        {
+          "id": "d6_hitching_post",
+          "label": "Hitching post",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "material"
+          },
+          "states": [
+            "base",
+            "weathered",
+            "mossy"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "broken",
+            "debris": [
+              "post_stump",
+              "iron_ring"
+            ]
+          },
+          "light": null,
+          "content": null,
+          "attach": {
+            "holds": [
+              "d6_tether_rope"
+            ],
+            "slots": [
+              "tether_ring"
+            ]
+          },
+          "coverage": null,
+          "biomeSkins": "post timber reskins to the biome host (grassland = oak post with iron ring; forest = log post; desert/savanna = bleached split post; swamp = leaning waterlogged; tundra/arctic = frost-rimed snow_dusting; volcanic = blackened basalt post; mystic = rune-carved post with faint glow). Dropped in ocean/deep_ocean.",
+          "notes": "A fixed ground post for tying mounts: fit:fixed, single anchor. It is an ATTACH HOST holding a tether rope/lead in its tether_ring slot — the tether is a SEPARATE object. The post itself has no interact (you tie to it, modelled as the held tether child) and no content. Rigid ground-driven post → no wind_sway, no light. Fragile timber → destructible to a post stump (object-permanence delta)."
+        },
+        {
+          "id": "d6_tether_rope",
+          "label": "Tether rope / lead",
+          "source": "hybrid",
+          "codeEffect": [
+            "shadow",
+            "spline-assembly"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 3,
+            "drivenBy": "material"
+          },
+          "states": [
+            "base",
+            "frayed"
+          ],
+          "anim": [
+            "wind_sway"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "snapped",
+            "debris": [
+              "rope_scrap"
+            ]
+          },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "looped rope/leather lead hanging from the post ring; reskins to the biome cordage (grassland = hemp rope; tropical = woven-fibre lead; desert = rawhide; tundra/arctic = sinew lead; mystic = faint-glow cord). Climate-default 'frayed' in wet/abandoned contexts.",
+          "notes": "The tether is the hitching post's CHILD on the tether_ring. Because it hangs SUSPENDED from the ring it DOES carry anim:wind_sway (the affordance rule: sway iff suspended) — realised as a small spline-assembly catenary with a shader flutter, NOT a full bake. Fraying cord → destructible to a snapped scrap. No content, no light."
+        }
+      ]
+    },
+    {
+      "id": "d6_shrine_furnishings",
+      "label": "Shrine furnishings",
+      "field": "D6",
+      "placement": {
+        "plane": "ground",
+        "anchor": "perimeter_ring_0",
+        "method": "scatter",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:any land; perimeter tile / door-step of a shrine, chapel or temple; role bias shrine/chapel/temple/monastery; tier any; placed at the sacred approach (offerings at the step, candles along the foundation edge)",
+        "avoid": [
+          "door_path",
+          "stairs",
+          "road"
+        ],
+        "chanceOrDensity": "0.15 per eligible shrine-adjacent perimeter tile, clustered at the door-step and along the foundation edge"
+      },
+      "biomeApplicability": {
+        "drop": [
+          "ocean",
+          "deep_ocean"
+        ]
+      },
+      "objects": [
+        {
+          "id": "d6_votive_candle",
+          "label": "Votive candle",
+          "source": "hybrid",
+          "codeEffect": [
+            "shadow",
+            "emissive",
+            "particle"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "style"
+          },
+          "states": [
+            "base",
+            "guttered"
+          ],
+          "anim": [
+            "flicker_glow"
+          ],
+          "interact": null,
+          "destructible": null,
+          "light": {
+            "color": "soft warm candle-amber",
+            "radius": "1 tile",
+            "intensity": "low, gentle",
+            "diurnal": false,
+            "flicker": "votive (low-amplitude warm candle flicker)"
+          },
+          "content": {
+            "axis": "fill",
+            "states": [
+              "tall_lit",
+              "low_lit",
+              "spent"
+            ]
+          },
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "a small votive candle (or cluster on a stone ledge) at the shrine; wax/holder reskins to the biome host; cold biomes shelter it in a glass cup; mystic = arcane blue-white flame (magical emissive variant), volcanic = ember-tinged; the sacred candle is kept lit day AND night (diurnal:false, lit-day) so the lit-multiplier raises it as the shrine's focal light in dark biomes. 'spent' content is the climate-default on abandoned/unmaintained shrines. Dropped in ocean/deep_ocean.",
+          "notes": "A small religious light source → light component (gentle candle-amber as procedural EMISSIVE into the GL lighting pass, NOT lit:bool) with a votive flicker profile; anim:flicker_glow is the emissive loop. diurnal:false because a sacred votive burns day and night (kept lit, unlike a diurnal street lantern). codeEffect:particle = the thin smoke wisp into the GL particle pass. content axis:fill (tall_lit/low_lit/spent) is the wax/burn level; the glow gates on it (spent = dark). Small wax body → NOT destructible (it simply burns down to 'spent', not a smash delta). Ground/ledge-rested, not suspended → no wind_sway."
+        },
+        {
+          "id": "d6_offering_bowl",
+          "label": "Offering bowl",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "material"
+          },
+          "states": [
+            "base",
+            "weathered",
+            "mossy"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "shattered",
+            "debris": [
+              "potsherd",
+              "spilled_offering"
+            ]
+          },
+          "light": null,
+          "content": {
+            "axis": "fill",
+            "states": [
+              "empty",
+              "offerings",
+              "heaped_offerings"
+            ]
+          },
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "a clay/stone/bronze bowl at the shrine step; bowl host reskins to the biome material (grassland = fired clay; desert = carved sandstone; mountains = bronze; mystic = rune-etched stone with faint glow; volcanic = basalt). The offering content reskins to local votive goods (grain, fruit, coins, flowers). Cold biomes default 'empty'/snow-dusted. Dropped in ocean/deep_ocean.",
+          "notes": "A fill vessel: content axis:fill (empty/offerings/heaped_offerings) is the gift level, orthogonal to wear. Fragile fired clay/stone → destructible to a shattered potsherd scatter (object-permanence delta). Ground-rested, not suspended → no wind_sway, no light (a bowl is not a light source — the glow is the votive candle's)."
+        },
+        {
+          "id": "d6_incense_burner",
+          "label": "Incense burner",
+          "source": "hybrid",
+          "codeEffect": [
+            "shadow",
+            "emissive",
+            "particle"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 3,
+            "drivenBy": "material"
+          },
+          "states": [
+            "base",
+            "weathered"
+          ],
+          "anim": [
+            "flicker_glow"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "toppled",
+            "debris": [
+              "metal_scrap",
+              "scattered_ash"
+            ]
+          },
+          "light": {
+            "color": "faint warm coal-glow",
+            "radius": "0.75 tiles",
+            "intensity": "very low",
+            "diurnal": false,
+            "flicker": "censer (faint slow coal pulse)"
+          },
+          "content": {
+            "axis": "fill",
+            "states": [
+              "lit",
+              "smouldering",
+              "cold"
+            ]
+          },
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "a standing censer / brazier-bowl on a tripod at the shrine; metal host reskins to the biome metalwork (grassland = bronze censer; mountains = iron; mystic = rune-etched glowing censer with coloured smoke; volcanic = basalt-and-iron). Cold biomes keep it lit as a warmth/scent focus. 'cold' content is the climate-default on abandoned shrines. Dropped in ocean/deep_ocean.",
+          "notes": "A scent prop with a faint glow + a SMOKE plume: light component (a very low coal-glow as procedural EMISSIVE into the GL lighting pass) with a censer flicker, anim:flicker_glow the emissive loop; codeEffect:particle = the rising incense SMOKE into the GL particle pass (never a 2D overlay). content axis:fill (lit/smouldering/cold) is the coal level; both glow and smoke gate on it (cold = no glow/smoke). Fragile metal censer → destructible to a toppled ash scatter (delta). Ground-rested, not suspended → no wind_sway."
+        }
+      ]
+    },
+    {
+      "id": "d6_decorative_vessels",
+      "label": "Decorative vessels",
+      "field": "D6",
+      "placement": {
+        "plane": "ground",
+        "anchor": "perimeter_ring_0",
+        "method": "scatter",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:any land; perimeter tile flanking a door / along a wall of a maintained dwelling; role bias wealthy_dwelling/manor/villa/inn/shrine; tier village+; ornamental (skipped on poor/abandoned)",
+        "avoid": [
+          "door_path",
+          "stairs",
+          "road",
+          "windows"
+        ],
+        "chanceOrDensity": "0.06 per eligible perimeter tile, often paired flanking a formal entrance"
+      },
+      "biomeApplicability": {
+        "drop": [
+          "ocean",
+          "deep_ocean"
+        ]
+      },
+      "objects": [
+        {
+          "id": "d6_ornamental_urn",
+          "label": "Ornamental urn",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 96,
+            "worldSizeW": 1,
+            "worldSizeH": 2,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 5,
+            "drivenBy": "style"
+          },
+          "states": [
+            "base",
+            "weathered",
+            "cracked",
+            "mossy"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "shattered",
+            "debris": [
+              "potsherd",
+              "soil_spill"
+            ]
+          },
+          "light": null,
+          "content": {
+            "axis": "season",
+            "states": [
+              "empty",
+              "planted",
+              "flowering",
+              "snow_capped"
+            ]
+          },
+          "attach": {
+            "holds": [
+              "d5_flower_beds"
+            ],
+            "slots": [
+              "urn_mouth"
+            ]
+          },
+          "coverage": null,
+          "biomeSkins": "a tall fired-clay or carved-stone ornamental urn flanking a formal door; urn host reskins to the biome material (grassland = glazed terracotta or carved fieldstone; desert = sandstone; mountains = carved granite; volcanic = basalt; mystic = rune-glazed with faint glow). The planted flora child reskins to the biome bloom catalog. Cold biomes default content=snow_capped/empty in winter; the cracked state is a frost-default in freeze-thaw biomes. Dropped in ocean/deep_ocean.",
+          "notes": "An ornamental vessel that CAN hold a plant: it is an ATTACH HOST whose urn_mouth slot holds a flower-bed child (d5_flower_beds), which carries its OWN wind_sway — the urn body itself is rigid masonry, static, no sway. content axis:season (empty/planted/flowering/snow_capped) tracks what is planted, orthogonal to the urn's wear states. Fragile fired clay/stone → destructible to a shattered potsherd + soil spill (object-permanence delta). No light. Ornamental, so role-gated to maintained/wealthy buildings."
+        }
+      ]
+    },
+    {
+      "id": "d6_mill_props",
+      "label": "Mill props",
+      "field": "D6",
+      "placement": {
+        "plane": "ground",
+        "anchor": "perimeter_ring_0",
+        "method": "scatter",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:any land; perimeter tile against a mill wall / yard; role bias mill (grain_mill/lumber_mill/fulling_mill); tier hamlet+; a spare/old millstone leans by the working face",
+        "avoid": [
+          "door_path",
+          "stairs",
+          "road",
+          "windows"
+        ],
+        "chanceOrDensity": "0.10 per eligible mill-adjacent perimeter tile, usually 1 (a spare millstone leaning by the door)"
+      },
+      "biomeApplicability": {
+        "drop": [
+          "ocean",
+          "deep_ocean"
+        ]
+      },
+      "objects": [
+        {
+          "id": "d6_millstone",
+          "label": "Millstone",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 96,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "material"
+          },
+          "states": [
+            "base",
+            "weathered",
+            "mossy"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "a heavy circular dressed grindstone leaning or laid by the mill; stone host reskins to the biome masonry (grassland = grey-tan gritstone; mountains = granite; desert = sandstone; volcanic = basalt; mystic = rune-grooved stone with faint glow). Damp biomes (swamp/river/lake) default mossy; cold biomes get a snow-dusted edge. Dropped in ocean/deep_ocean.",
+          "notes": "A heavy stone prop (a spare or retired grindstone) — MATTER, like the D5 rocks: it is dressed but inert. static (a leaning millstone does not sway), and NOT destructible (an immovable dressed stone has no meaningful broken delta worth writing — honestly inert, destructible:null). mossy/weathered are dress states only. No interact, no content, no light. Ground-rested, role-anchored to the mill."
+        }
+      ]
+    },
+    {
+      "id": "d6_freestanding_signage",
+      "label": "Freestanding signage",
+      "field": "D6",
+      "placement": {
+        "plane": "ground",
+        "anchor": "perimeter_ring_1",
+        "method": "scatter",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:any land; outer perimeter tile facing the road/approach, beside (not on) the door_path; role bias shop/market_stall/inn/trading_post/mill; settlement_tier village+ (a sign needs passing custom)",
+        "avoid": [
+          "door_path",
+          "stairs",
+          "road",
+          "windows"
+        ],
+        "chanceOrDensity": "0.07 per eligible road-facing perimeter tile (a board set out front of a trading frontage)"
+      },
+      "biomeApplicability": {
+        "drop": [
+          "ocean",
+          "deep_ocean"
+        ]
+      },
+      "objects": [
+        {
+          "id": "d6_aframe_board",
+          "label": "A-frame display board",
+          "source": "pixellab",
+          "codeEffect": [
+            "shadow"
+          ],
+          "scale": {
+            "nativePx": 96,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 5,
+            "drivenBy": "role-glyph"
+          },
+          "states": [
+            "base",
+            "weathered",
+            "paint_faded"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "broken",
+            "debris": [
+              "wood_plank",
+              "iron_hinge"
+            ]
+          },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "a hinged ground-standing A-frame chalk/paint board set out front of a shop; board timber reskins to the biome host; role-glyph drives the painted device (bakery = loaf, tavern = tankard, market = wares list, mill = sheaf). Wet biomes = paint_faded/mossy default; desert = sun-bleached; volcanic = scorched; mystic = glowing-glyph board (faint emissive). Dropped in ocean/deep_ocean.",
+          "notes": "A freestanding ground-standing sandwich board (its own A-frame legs rest ON the ground), distinct from the wall-mounted D3 hanging signs. variants drivenBy role-glyph carry the trade device (feeds the D7 market_shop identity). NO wind_sway — it rests on the ground on its own legs, it is NOT suspended/hung (the suspension rule: a ground-rested board does not sway, unlike a hanging sign). Static body; fragile hinged frame → destructible to a broken board (object-permanence delta). No light, no content, no attach."
+        }
+      ]
+    }
+  ],
+  "crossBiomeNotes": "D6 ground props are overwhelmingly UNIVERSAL human-settlement objects, so grassland is the reference and the other 20 biomes specialize by (1) MATERIAL HOST SWAP — the wood/stone/cloth family follows the biome's building-material host (timber family per biome, masonry per biome, cloth dye per biome); (2) CLIMATE-DEFAULT STATE — cold biomes (tundra/arctic/taiga) default props to snow_dusting / snow_capped / frost, wet biomes (swamp/river/lake/ocean) default to mossy + waterline algae, arid biomes (desert/savanna/steppe) default to sun_faded / bleached and bias water content to 'low'/'dry', volcanic defaults to soot/scorched, mystic adds faint rune-glow magical variants and lit-multiplier-up emissive; (3) DROP CONDITIONS — over-water biomes (ocean/deep_ocean, and shallow_water for wells/troughs) drop land-bound props (woodpiles, carts, wells, troughs, stalls, hay, forge) since there is no ground yard, keeping only the dock-appropriate barrels/crates/sacks/baskets/benches; hay_bales restrict to agrarian biomes only. Affordance components (content/use/attach/destructible/light) are biome-INVARIANT — a barrel fills, a gate opens, a well draws water, an awning sways, a forge glows, in every biome; only the SKIN changes. The single suspended objects in the field (well bucket on its rope, stall awning on its rail) are the only wind_sway carriers — every ground-rested prop is static — honouring the rule that sway is a property of suspension, not category. Forge smoke + prop ground shadows are the field's code effects and route through the GL particle/lighting passes in all biomes."
+}

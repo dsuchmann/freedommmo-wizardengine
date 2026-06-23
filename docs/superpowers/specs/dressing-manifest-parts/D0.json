@@ -1,0 +1,588 @@
+{
+  "field": "D0",
+  "fieldName": "Weathering",
+  "mechanism": "A · decal-into-bitmap (coverage)",
+  "plane": "facade/roof/foundation",
+  "defaultProvenance": "procedural",
+  "biome": "grassland",
+  "categories": [
+    {
+      "id": "d0_dirt_grime",
+      "label": "Dirt & Grime",
+      "field": "D0",
+      "placement": {
+        "plane": "facade",
+        "anchor": "wall_surface",
+        "method": "decal",
+        "fitDefault": "cover"
+      },
+      "application": {
+        "when": "surface=facade wall pixels on any grassland building; intensifies with min_age (honestly absent until chronicle wires age) and proximity-to-ground (always available); biased to splash-height band near the foundation and around the door_path approach",
+        "avoid": [
+          "windows",
+          "door_path",
+          "roof_edge"
+        ],
+        "chanceOrDensity": "always-on at low scalar (~0.15 baseline grime); scalar scales 0.15->0.8 with age; ground-band falloff means upper wall stays cleaner"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d0_dirt_grime__wall_grime",
+          "label": "Wall Grime",
+          "source": "procedural",
+          "codeEffect": [
+            "tint",
+            "coverage"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": null,
+            "worldSizeH": null,
+            "fit": "cover"
+          },
+          "variants": {
+            "count": 3,
+            "drivenBy": "random"
+          },
+          "states": [
+            "base"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": {
+            "scalar": "driven by age|exposure 0-1 (handled-edge + ground-splash grime; honest-absent age contributes 0 until chronicle wires it, exposure/ground-proximity always available)",
+            "mask": {
+              "direction": "up",
+              "falloff": "bottom",
+              "facing": "any"
+            },
+            "textureVariants": 3,
+            "blend": "multiply"
+          },
+          "biomeSkins": "Universal on every biome's host wall material (grassland cob/fieldstone/timber_frame/wattle_daub; swaps to each biome's wall hosts elsewhere). Climate-default scalar bias: swamp/river/lake/shallow_water start higher (damp earth clings); desert/savanna/steppe shift the grime hue toward pale dust-tan; arctic/tundra/taiga suppress toward 0 (snow scours, frozen ground rarely splashes). Lit-multiplier raised in dark biomes (dense_forest, volcanic) so the multiply tint does not crush already-dim walls. No flora reskin. Drops on no biome.",
+          "notes": "Pure surface intensity, not a discrete object: a multiply tint riding the wall pixels with a gravity-up mask concentrating handled/splash grime near the base. No interact/destructible/light/content/attach because grime is a passive stain with no body, no yield, no hinge. wind_sway is absent (mechanism A decals never sway — anim is a property of suspension, which a painted-in tint lacks)."
+        },
+        {
+          "id": "d0_dirt_grime__handprint_smudge",
+          "label": "Handprint & Wear Smudge",
+          "source": "procedural",
+          "codeEffect": [
+            "tint",
+            "coverage"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": null,
+            "worldSizeH": null,
+            "fit": "cover"
+          },
+          "variants": {
+            "count": 3,
+            "drivenBy": "random"
+          },
+          "states": [
+            "base"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": {
+            "scalar": "driven by age 0-1 localised to the door/threshold socket band (touch-wear); honest-absent age contributes 0 until chronicle wires it",
+            "mask": {
+              "direction": "none",
+              "falloff": "patchy",
+              "facing": "any"
+            },
+            "textureVariants": 3,
+            "blend": "multiply"
+          },
+          "biomeSkins": "Universal; the touch-wear band sits around the doorway on every biome's wall host. Wetter biomes (swamp/river) darken it; dry dusty biomes (desert/savanna/steppe) lighten and warm it. Suppressed near 0 on frozen biomes (arctic/tundra). Magical biomes (mystic) tint it faintly luminous-grey rather than recolouring it. No flora reskin, drops on no biome.",
+          "notes": "A patchy concentration of grime at hand-height around the threshold — still a coverage tint, not a sprite. All affordance components null for the same reason as wall_grime: it is a passive stain. Patchy falloff (no gravity direction) distinguishes it from the ground-rising wall_grime."
+        }
+      ]
+    },
+    {
+      "id": "d0_soot_smoke_stain",
+      "label": "Soot & Smoke Stain",
+      "field": "D0",
+      "placement": {
+        "plane": "facade",
+        "anchor": "chimney_above|window_above|roof_eave",
+        "method": "decal",
+        "fitDefault": "cover"
+      },
+      "application": {
+        "when": "surface=facade/roof above a heat/smoke source — chimney flue, forge vent, or window of a hearth room; gated on building_role having an interior fire (smith strongest; inn/cottage moderate; granary/barn none) and on the chimney/vent socket existing",
+        "avoid": [
+          "windows",
+          "door_path"
+        ],
+        "chanceOrDensity": "present only where a smoke source exists; scalar 0.2->0.9 by role heat-intensity, plume-shaped rising from the source"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d0_soot_smoke_stain__chimney_plume_stain",
+          "label": "Chimney Plume Stain",
+          "source": "procedural",
+          "codeEffect": [
+            "tint",
+            "coverage"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": null,
+            "worldSizeH": null,
+            "fit": "cover"
+          },
+          "variants": {
+            "count": 3,
+            "drivenBy": "random"
+          },
+          "states": [
+            "base"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": {
+            "scalar": "driven by exposure (smoke-source heat-intensity, role-derived) 0-1; age contributes additively once a chronicle source exists (honest-absent for now)",
+            "mask": {
+              "direction": "up",
+              "falloff": "top",
+              "facing": "any"
+            },
+            "textureVariants": 3,
+            "blend": "multiply"
+          },
+          "biomeSkins": "Universal wherever a building has an interior fire; the dark plume tint rides each biome's chimney/eave host. Cold biomes (arctic/tundra/taiga/mountains) bias the scalar UP — fires burn constantly, plumes are heavier. Hot biomes (desert/savanna) bias DOWN. Volcanic tints the soot a warmer ember-grey; mystic faintly desaturates it toward ash-violet. No flora reskin, drops on no biome (the gate is the smoke source, not the biome).",
+          "notes": "A dark multiply plume rising from the flue/vent socket, fanning upward and thinning at the top (gravity-up, top falloff — the inverse of ground grime). source=procedural tint, not a sprite; the actual smoke PARTICLE belongs to D6 ground/air props, this is only the permanent stain it leaves. All affordances null: a stain has no hinge, no light of its own, no contents. light is null specifically because the GLOW belongs to the hearth/forge object, not to its soot mark."
+        },
+        {
+          "id": "d0_soot_smoke_stain__forge_scorch",
+          "label": "Forge Vent Scorch",
+          "source": "procedural",
+          "codeEffect": [
+            "tint",
+            "coverage"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": null,
+            "worldSizeH": null,
+            "fit": "cover"
+          },
+          "variants": {
+            "count": 3,
+            "drivenBy": "role-glyph"
+          },
+          "states": [
+            "base"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": {
+            "scalar": "driven by exposure (forge intensity, role=smith) 0-1; heavy near 1 by default on a working smithy",
+            "mask": {
+              "direction": "up",
+              "falloff": "top",
+              "facing": "any"
+            },
+            "textureVariants": 3,
+            "blend": "multiply"
+          },
+          "biomeSkins": "Universal but role-gated to smith/forge buildings; rides each biome's wall host above the forge vent. Heavier and warmer (ember-tinged) in volcanic; standard charcoal-black everywhere temperate. Cold biomes do not change it (a forge is a forge). No flora reskin, drops on no biome.",
+          "notes": "Role-glyph driven (only a smith building places it, biased dense by the forge glyph) — heavier and more localised than the household chimney plume. Same passive-stain rationale: every affordance null, no sway, multiply blend so it darkens rather than lights the wall."
+        }
+      ]
+    },
+    {
+      "id": "d0_water_stains_streaks",
+      "label": "Water Stains & Streaks",
+      "field": "D0",
+      "placement": {
+        "plane": "facade",
+        "anchor": "roof_eave|window_sill|wall_top",
+        "method": "decal",
+        "fitDefault": "cover"
+      },
+      "application": {
+        "when": "surface=facade below a runoff edge (eave drip-line, sill underside, parapet); gated on min_wetness (biome+water-proximity, available 0-1 via terrain-suitability) and on a runoff edge existing above the streak",
+        "avoid": [
+          "windows",
+          "door_path"
+        ],
+        "chanceOrDensity": "scalar by wetness 0-1; vertical streaks seeded from eave/sill drip points, denser the wetter the biome"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d0_water_stains_streaks__eave_drip_streak",
+          "label": "Eave Drip Streak",
+          "source": "procedural",
+          "codeEffect": [
+            "tint",
+            "coverage"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": null,
+            "worldSizeH": null,
+            "fit": "cover"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "random"
+          },
+          "states": [
+            "base"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": {
+            "scalar": "driven by wetness 0-1 (biome + water-proximity, terrain-suitability derived — fully available, NOT honestly-absent)",
+            "mask": {
+              "direction": "down",
+              "falloff": "top",
+              "facing": "any"
+            },
+            "textureVariants": 4,
+            "blend": "soft-light"
+          },
+          "biomeSkins": "Universal; rides each biome's wall host below the runoff edge. Wetness scalar is genuinely biome-driven: swamp/river/lake/shallow_water/ocean/deep_ocean/tropical_forest near max (constant runoff streaking); desert/savanna/steppe near 0 (drops on these in practice via the wetness gate, though the rule stays universal); arctic/tundra render it as frozen-pale icicle-stain rather than dark wet streak (climate-default state shift). Mystic faintly iridescent. No flora reskin.",
+          "notes": "Vertical gravity-DOWN streaks seeded at eave drip points and thinning downward (down direction, top falloff — strongest at the source). soft-light blend (darken-and-sheen, not flat multiply) reads as wet residue. This is the one D0 object whose scalar has a real sim source today (wetness), so it is not honestly-absent. All affordances null — a stain, not a vessel or light."
+        },
+        {
+          "id": "d0_water_stains_streaks__sill_rundown",
+          "label": "Window-Sill Rundown",
+          "source": "procedural",
+          "codeEffect": [
+            "tint",
+            "coverage"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": null,
+            "worldSizeH": null,
+            "fit": "cover"
+          },
+          "variants": {
+            "count": 3,
+            "drivenBy": "random"
+          },
+          "states": [
+            "base"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": {
+            "scalar": "driven by wetness 0-1 (biome + water-proximity, terrain-suitability derived)",
+            "mask": {
+              "direction": "down",
+              "falloff": "top",
+              "facing": "any"
+            },
+            "textureVariants": 3,
+            "blend": "soft-light"
+          },
+          "biomeSkins": "Universal, anchored under window sills on each biome's wall host. Same wetness biome bias as eave_drip_streak (high in wet biomes, near-0 dry). Frozen biomes render a pale rime-rundown. Mystic faintly luminous. No flora reskin, no hard drop (gated by wetness scalar).",
+          "notes": "A narrower twin of the eave streak, seeded at sill corners where rain sheds off the ledge. Same down/top/soft-light coverage shape, lower default scalar. All affordances null for the standard passive-stain reason."
+        }
+      ]
+    },
+    {
+      "id": "d0_sun_fade_bleach",
+      "label": "Sun Fade & Bleach",
+      "field": "D0",
+      "placement": {
+        "plane": "facade",
+        "anchor": "wall_surface",
+        "method": "decal",
+        "fitDefault": "cover"
+      },
+      "application": {
+        "when": "surface=facade on the sun-exposed faces (south/west on a northern-hemisphere world); gated on exposure.sun from the surface descriptor and on min_age (paint/timber bleaches over years — honestly absent until chronicle age exists, so suppressed for now)",
+        "avoid": [
+          "windows",
+          "door_path"
+        ],
+        "chanceOrDensity": "scalar by sun-exposure x age; uniform desaturating wash on lit faces, none on shaded (north/east) faces"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d0_sun_fade_bleach__facade_sun_fade",
+          "label": "Sun-Faced Fade",
+          "source": "procedural",
+          "codeEffect": [
+            "tint",
+            "coverage"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": null,
+            "worldSizeH": null,
+            "fit": "cover"
+          },
+          "variants": {
+            "count": 3,
+            "drivenBy": "random"
+          },
+          "states": [
+            "base"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": {
+            "scalar": "driven by exposure.sun x age 0-1; age component honestly-absent (0) until chronicle wires building age, exposure.sun fully available from the surface descriptor",
+            "mask": {
+              "direction": "none",
+              "falloff": "patchy",
+              "facing": "south"
+            },
+            "textureVariants": 3,
+            "blend": "soft-light"
+          },
+          "biomeSkins": "Universal but the climate-default scalar is sun-driven: desert/savanna/steppe/volcanic bias HIGH (harsh sun bleaches hard, default sun_faded look even at low age); arctic/tundra/dense_forest/swamp bias LOW (weak or filtered sun). Facing-mask flips with no hemisphere data so it keys off the surface descriptor's exposure.sun rather than a literal compass face. Mystic adds a faint colour-shift instead of pure desaturation. No flora reskin, no hard drop.",
+          "notes": "The only facing-keyed D0 object: a desaturating soft-light wash applied uniformly to sun-exposed faces (facing:south via exposure.sun), absent on shaded faces. direction:none because UV bleaching is even across the lit face, not gravity-driven. Honestly-absent age means it is dialled to 0 today except where a biome's climate-default sun bias raises it. All affordances null — bleaching is a passive colour loss."
+        }
+      ]
+    },
+    {
+      "id": "d0_discoloration_patina",
+      "label": "Discoloration & Patina",
+      "field": "D0",
+      "placement": {
+        "plane": "facade",
+        "anchor": "wall_surface|metal_fitting",
+        "method": "decal",
+        "fitDefault": "cover"
+      },
+      "application": {
+        "when": "surface=facade with weatherable material (oxidising metal trim, greying timber, aging plaster); gated on material having a patina path and on min_age (oxidation is time — honestly absent until chronicle age, biased by wetness which IS available to accelerate it)",
+        "avoid": [
+          "windows",
+          "door_path"
+        ],
+        "chanceOrDensity": "scalar by age x wetness; broad patchy tone-shift across the field, concentrated on metal fittings and damp-held zones"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d0_discoloration_patina__weathered_patina",
+          "label": "Weathered Patina",
+          "source": "procedural",
+          "codeEffect": [
+            "tint",
+            "coverage"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": null,
+            "worldSizeH": null,
+            "fit": "cover"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "material"
+          },
+          "states": [
+            "base"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": {
+            "scalar": "driven by age x wetness 0-1; age component honestly-absent (0) until chronicle, wetness component fully available so damp biomes still show patina",
+            "mask": {
+              "direction": "none",
+              "falloff": "patchy",
+              "facing": "any"
+            },
+            "textureVariants": 4,
+            "blend": "soft-light"
+          },
+          "biomeSkins": "material-driven variant means the tint hue follows the host wall: grassland fieldstone greys, timber_frame oaks silver, cob earth-darkens, wattle_daub yellows. Across biomes the patina hue swaps with the wall host (rusty-brown on iron-fitted ocean/deep_ocean, verdigris green on copper-trimmed lake/river, salt-pale on coastal). Wet biomes (swamp/river/lake/shallow_water) bias the scalar UP (oxidation accelerates in damp). Frozen biomes bias DOWN. Volcanic tints toward sulphur-yellow; mystic toward an arcane blue-green patina. No flora reskin, no hard drop.",
+          "notes": "Variants driven by MATERIAL (not random) because the patina hue is a property of what the wall is made of — verdigris on copper, silver-grey on timber, etc. A broad patchy soft-light tone-shift, not a localised stain. age honestly-absent but wetness keeps it alive in damp biomes. All affordances null: patina is the material slowly recolouring itself, no body/light/yield/hinge."
+        }
+      ]
+    },
+    {
+      "id": "d0_mineral_salt_efflorescence",
+      "label": "Mineral Salt Efflorescence",
+      "field": "D0",
+      "placement": {
+        "plane": "foundation",
+        "anchor": "foundation_course|wall_base",
+        "method": "decal",
+        "fitDefault": "cover"
+      },
+      "application": {
+        "when": "surface=masonry/plaster/cob foundation and lower wall (salt blooms where damp wicks up through stone/earth); gated on material being porous-mineral (fieldstone/cob/wattle_daub plinth — NOT bare timber) and on min_wetness (rising damp, available 0-1)",
+        "avoid": [
+          "windows",
+          "door_path",
+          "roof_edge"
+        ],
+        "chanceOrDensity": "scalar by wetness 0-1; pale crystalline bloom rising a short way up from the damp-course, capped low on the wall"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d0_mineral_salt_efflorescence__rising_damp_bloom",
+          "label": "Rising-Damp Salt Bloom",
+          "source": "procedural",
+          "codeEffect": [
+            "tint",
+            "coverage"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": null,
+            "worldSizeH": null,
+            "fit": "cover"
+          },
+          "variants": {
+            "count": 3,
+            "drivenBy": "material"
+          },
+          "states": [
+            "base"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": {
+            "scalar": "driven by wetness 0-1 (rising-damp, biome + water-proximity, terrain-suitability derived — available, not honestly-absent)",
+            "mask": {
+              "direction": "up",
+              "falloff": "bottom",
+              "facing": "any"
+            },
+            "textureVariants": 3,
+            "blend": "soft-light"
+          },
+          "biomeSkins": "Universal on porous-mineral hosts; grassland applies it to fieldstone/cob/wattle_daub bases (NOT pure timber_frame, which lacks the wicking mineral plinth — the material gate handles that). Coastal/marine biomes (ocean/deep_ocean/shallow_water/beach) bias HIGH and warm the bloom toward salt-white sea-crust; swamp/river/lake also high. Desert renders an alkali/efflorescent crust that is genuinely strong (mineral ground) even though dry — a notable exception where the climate-default RAISES it. Arctic/tundra render it as pale frost-rime. Mystic gives it a faint crystalline shimmer. No flora reskin.",
+          "notes": "A pale ADDITIVE-feeling crystalline bloom (soft-light lightens the surface, the only D0 object that brightens rather than darkens) rising a capped distance up from the damp-course. up/bottom mask = strongest at the base, fading upward — the salt-deposit inverse of the gravity-down water streak. Material-driven variants and a porous-mineral material gate (no timber). Wetness has a real source so it is not honestly-absent. All affordances null."
+        }
+      ]
+    },
+    {
+      "id": "d0_mud_splash_base",
+      "label": "Mud Splash Base",
+      "field": "D0",
+      "placement": {
+        "plane": "foundation",
+        "anchor": "wall_base|foundation_course",
+        "method": "decal",
+        "fitDefault": "cover"
+      },
+      "application": {
+        "when": "surface=lowest facade/foundation band; gated on min_wetness (rain-splash needs wet ground, available 0-1) and proximity to the door_path/traffic approach where churned mud splashes highest; ground-band only",
+        "avoid": [
+          "windows",
+          "roof_edge",
+          "wall_top"
+        ],
+        "chanceOrDensity": "scalar by wetness x ground-traffic; dense earthy splatter in the bottom ~tile band, tapering sharply upward"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d0_mud_splash_base__rain_splash_mud",
+          "label": "Rain-Splash Mud",
+          "source": "procedural",
+          "codeEffect": [
+            "tint",
+            "coverage"
+          ],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": null,
+            "worldSizeH": null,
+            "fit": "cover"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "random"
+          },
+          "states": [
+            "base"
+          ],
+          "anim": [
+            "static"
+          ],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": {
+            "scalar": "driven by wetness 0-1 (biome + water-proximity, terrain-suitability derived); ground-traffic near the door raises it where available",
+            "mask": {
+              "direction": "up",
+              "falloff": "bottom",
+              "facing": "any"
+            },
+            "textureVariants": 4,
+            "blend": "multiply"
+          },
+          "biomeSkins": "Universal; the splatter hue follows each biome's ground colour — grassland earth-brown, beach/coastal sandy-tan, volcanic ash-grey, swamp peat-black, desert dust-ochre. Wetness gate makes it heavy in swamp/river/lake/tropical_forest and near-0 in desert/savanna/steppe and on frozen arctic/tundra (mud freezes — climate-default near 0, effectively dropped via the gate). Mystic shifts the splatter faintly luminescent. No flora reskin.",
+          "notes": "The hardest-edged, lowest D0 band: dense multiply splatter in the bottom tile that taper sharply (up direction, bottom falloff — strongest at ground, gone by knee height). Distinct from wall_grime (broader, softer, higher) by its tight ground confinement and traffic-near-door bias. Wetness is a real sim source. All affordances null — a splash mark is a passive stain with no body, light, contents, or hinge."
+        }
+      ]
+    }
+  ],
+  "crossBiomeNotes": "D0 weathering is the cheapest, most universal dressing field: every object is a procedural coverage tint riding the existing wall/roof/foundation pixels (mechanism A) with zero new PixelLab assets, so it specializes across all 21 biomes purely by (a) climate-default SCALAR bias per object (wet biomes raise water/efflorescence/mud/grime; dry hot biomes raise sun-fade and suppress mud; frozen biomes suppress most stains and re-skin water/salt as pale rime/frost; volcanic warms soot/patina; mystic adds faint luminance/iridescence), (b) HOST-material hue follow (patina and salt blooms swap their tint to whatever the biome wall material is — verdigris copper, silver timber, salt-white coastal, sulphur volcanic), and (c) GROUND-colour follow (mud splatter takes the local soil/sand/ash colour). Only two real semantic sources exist today: wetness (terrain-suitability, fully available — drives water streaks, efflorescence, mud) and exposure.sun + heat-source role (drive sun-fade and soot). age/wealth/maintenance are HONESTLY ABSENT: every age-gated scalar (grime accrual, sun-fade, patina, handprint wear) is dialled to 0 from age and contributes only via its available co-driver (wetness, sun, or biome climate-default) until the settlement chronicle wires building age into dressingContext. No object carries interact/destructible/light/content/attach because weathering is passive surface intensity, and none carries wind_sway because painted-in decals never suspend. Per-biome multiplicative size has no meaning for cover-fit objects; the per-biome tuner instead scales each object's default coverage scalar (reusing field-tuning.js)."
+}

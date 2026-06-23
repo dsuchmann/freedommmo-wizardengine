@@ -1,0 +1,583 @@
+{
+  "field": "D1",
+  "fieldName": "Damage",
+  "mechanism": "A · decal-into-bitmap (coverage + sprite chips)",
+  "plane": "facade/roof",
+  "defaultProvenance": "procedural (cracks/wear/rot/rust coverage) + sprite chips (missing tiles / patches)",
+  "categories": [
+    {
+      "id": "d1_cracks",
+      "label": "Cracks & Fractures",
+      "field": "D1",
+      "placement": {
+        "plane": "facade",
+        "anchor": "surface_field",
+        "method": "decal",
+        "fitDefault": "cover"
+      },
+      "application": {
+        "when": "biome:any · surface_type:any solid wall (plaster/daub/cob/stone/timber-frame infill) · min_age present in dressingContext · settlement_tier:any · scalar rises with age and (for cob/daub) with wetness",
+        "avoid": ["windows", "door_path", "doorframe", "wall_corner_quoins"],
+        "chanceOrDensity": "coverage-driven: cracks begin appearing above age ~0.35, density scales 0..1 with age; gated OFF entirely while age is honestly-absent (no faked aging)"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d1_hairline_cracks",
+          "label": "Hairline Plaster Cracks",
+          "source": "procedural",
+          "codeEffect": ["coverage", "tint"],
+          "scale": {
+            "nativePx": null,
+            "worldSizeW": null,
+            "worldSizeH": null,
+            "fit": "cover"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "random"
+          },
+          "states": ["base"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": {
+            "scalar": "driven by age 0-1 (begins ~0.35)",
+            "mask": {
+              "direction": "none",
+              "falloff": "patchy",
+              "facing": "any"
+            },
+            "textureVariants": 4,
+            "blend": "multiply"
+          },
+          "biomeSkins": "Material host swap selects the crack palette: warm-cream lime daub (wattle_daub/timber_frame infill), earthen ochre (cob), grey lime mortar (fieldstone joint cracks). Cold biomes (taiga/tundra/arctic/mountains) add freeze-thaw widening → scalar multiplier ×1.4 from wetness. Mystic/volcanic re-skin the crack line to a faint emissive seam handled by the lit-multiplier on D0, not here. Dry biomes (desert/steppe/savanna) bias to fine sun-shrinkage crazing rather than structural cracks (textureVariant index biased low).",
+          "notes": "Pure intensity surface decal — no discrete art, no states beyond base. A coverage scalar + patchy mask painted into the wall bitmap via soft-light/multiply (drawWallDecals). No wind_sway (nothing suspended), no interact, no light. Honestly absent until a sim age source exists; the rule engine skips it when dressingContext.age is null."
+        },
+        {
+          "id": "d1_structural_crack",
+          "label": "Structural Settlement Crack",
+          "source": "procedural",
+          "codeEffect": ["coverage", "shadow"],
+          "scale": {
+            "nativePx": null,
+            "worldSizeW": null,
+            "worldSizeH": null,
+            "fit": "cover"
+          },
+          "variants": {
+            "count": 3,
+            "drivenBy": "random"
+          },
+          "states": ["base"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": {
+            "scalar": "driven by age 0-1 (begins ~0.6, sparse)",
+            "mask": {
+              "direction": "up",
+              "falloff": "bottom",
+              "facing": "any"
+            },
+            "textureVariants": 3,
+            "blend": "multiply"
+          },
+          "biomeSkins": "Stone biomes (fieldstone host, hills, mountains) widen the crack into a mortar-joint step-crack following the courses; cob/daub biomes show a single tapering vertical fissure rising from the plinth. Wet biomes (swamp/river/lake/ocean) accelerate via subsidence → scalar starts earlier (~0.45). Magical biomes do not specialize this object (no enchanted fractures).",
+          "notes": "Heavier, sparse single-fracture coverage seeded to rise from the foundation course (mask direction up, falloff bottom) where settlement stress concentrates. Adds a faint cast-shadow lip for depth. Still a coverage surface (no sprite), age-gated, no other affordances."
+        }
+      ]
+    },
+    {
+      "id": "d1_chips_spalling",
+      "label": "Chips & Spalling",
+      "field": "D1",
+      "placement": {
+        "plane": "facade",
+        "anchor": "surface_field",
+        "method": "decal",
+        "fitDefault": "cover"
+      },
+      "application": {
+        "when": "biome:any · surface_type:plaster/render/painted/fired-tile faces · min_age present · exposure:high (sun+wet faces spall first) · scalar rises with age and wetness",
+        "avoid": ["windows", "door_path"],
+        "chanceOrDensity": "coverage-driven: flaked patches accumulate 0..1 with age, biased onto sun/wet-exposed faces"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d1_paint_flaking",
+          "label": "Flaking Lime-Wash / Paint",
+          "source": "procedural",
+          "codeEffect": ["coverage", "tint"],
+          "scale": {
+            "nativePx": null,
+            "worldSizeW": null,
+            "worldSizeH": null,
+            "fit": "cover"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "random"
+          },
+          "states": ["base"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": {
+            "scalar": "driven by age 0-1",
+            "mask": {
+              "direction": "none",
+              "falloff": "patchy",
+              "facing": "south"
+            },
+            "textureVariants": 4,
+            "blend": "soft-light"
+          },
+          "biomeSkins": "Reveals the substrate beneath the wash: warm earthen ochre under cob, grey daub under wattle_daub/timber_frame infill. Sun-faded biomes (desert/steppe/savanna/beach) bias the flaking heavily onto the south/sun face (facing south) and raise the scalar (×1.3). Cold/wet biomes (taiga/tundra/swamp) drive frost-spall instead — same coverage, mask falloff bottom where moisture wicks. Magical biomes do not specialize.",
+          "notes": "Coverage decal that lightens/reveals substrate where the surface coat has flaked. Soft-light blend so it reads as removed coating, not added dirt (that is D0). Sun-facing bias (facing south). No discrete states, no interact/light; age+exposure driven, honestly absent without age."
+        },
+        {
+          "id": "d1_tile_spalling",
+          "label": "Spalled Brick / Fired-Tile Face",
+          "source": "procedural",
+          "codeEffect": ["coverage", "shadow"],
+          "scale": {
+            "nativePx": null,
+            "worldSizeW": null,
+            "worldSizeH": null,
+            "fit": "cover"
+          },
+          "variants": {
+            "count": 3,
+            "drivenBy": "material"
+          },
+          "states": ["base"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": {
+            "scalar": "driven by wetness 0-1 (freeze-thaw)",
+            "mask": {
+              "direction": "none",
+              "falloff": "patchy",
+              "facing": "any"
+            },
+            "textureVariants": 3,
+            "blend": "multiply"
+          },
+          "biomeSkins": "Applies where a building has a fired clay_tile roof skirt or brick course; in grassland that is the fieldstone+clay_tile pairing. Frost biomes (taiga/tundra/arctic/mountains) drive the scalar hard via wetness freeze-thaw. Dry/warm biomes mostly skip it (scalar floors near 0). Volcanic adds a heat-crazed variant via material-driven textureVariant.",
+          "notes": "Pocked spalling of a hard fired face, wetness/freeze-thaw driven rather than age. Material-driven variant (which fired surface). Coverage only; pairs with stone wear. No suspension/interact/light."
+        }
+      ]
+    },
+    {
+      "id": "d1_stone_wear_erosion",
+      "label": "Stone Wear & Erosion",
+      "field": "D1",
+      "placement": {
+        "plane": "facade",
+        "anchor": "surface_field",
+        "method": "decal",
+        "fitDefault": "cover"
+      },
+      "application": {
+        "when": "biome:any · surface_type:stone (fieldstone host, dressed quoins, foundation plinth) · min_age present · exposure:wet/sun · scalar rises with age and wetness",
+        "avoid": ["windows", "door_path"],
+        "chanceOrDensity": "coverage-driven: rounding/pitting/runnels accumulate 0..1, concentrated on the foundation course and weather faces"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d1_weathered_pitting",
+          "label": "Weather-Pitted Stone",
+          "source": "procedural",
+          "codeEffect": ["coverage", "shadow"],
+          "scale": {
+            "nativePx": null,
+            "worldSizeW": null,
+            "worldSizeH": null,
+            "fit": "cover"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "material"
+          },
+          "states": ["base"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": {
+            "scalar": "driven by age 0-1",
+            "mask": {
+              "direction": "none",
+              "falloff": "patchy",
+              "facing": "any"
+            },
+            "textureVariants": 4,
+            "blend": "multiply"
+          },
+          "biomeSkins": "Material host selects the stone palette (grey-tan glacial fieldstone in grassland; harder slate in hills/mountains erodes slower → scalar ×0.6; soft coral/tabby in beach erodes faster → ×1.4). Wet biomes (ocean/river/lake/swamp) deepen the pitting via salt/spray. Mystic/volcanic do not specialize this object.",
+          "notes": "Surface micro-pitting and rounding of dressed/field stone — a slow age-driven coverage with a depth shadow so edges read softened. Material-driven texture. No discrete states (erosion is continuous), no interact/light/suspension."
+        },
+        {
+          "id": "d1_water_runnel_erosion",
+          "label": "Eroded Drip Runnels",
+          "source": "procedural",
+          "codeEffect": ["coverage", "shadow"],
+          "scale": {
+            "nativePx": null,
+            "worldSizeW": null,
+            "worldSizeH": null,
+            "fit": "cover"
+          },
+          "variants": {
+            "count": 3,
+            "drivenBy": "random"
+          },
+          "states": ["base"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": {
+            "scalar": "driven by wetness 0-1",
+            "mask": {
+              "direction": "down",
+              "falloff": "bottom",
+              "facing": "any"
+            },
+            "textureVariants": 3,
+            "blend": "multiply"
+          },
+          "biomeSkins": "Strongest in wet biomes (river/lake/ocean/swamp/shallow_water → scalar ×1.5) below roof eaves and sills where runoff concentrates; nearly absent in desert/steppe/savanna (scalar floors). Cold biomes add an ice-glaze variant only via D0 wetness sheen, not here.",
+          "notes": "Vertical eroded channels carved by roof/sill runoff — gravity-directed coverage (direction down, falloff bottom). Distinct from D0 water-stain (which is a tint, not removed stone): this erodes the substrate. Wetness driven, no age dependence, so it can render even while age is absent. No suspension/interact/light."
+        }
+      ]
+    },
+    {
+      "id": "d1_wood_rot",
+      "label": "Wood Rot & Decay",
+      "field": "D1",
+      "placement": {
+        "plane": "facade",
+        "anchor": "surface_field",
+        "method": "decal",
+        "fitDefault": "cover"
+      },
+      "application": {
+        "when": "biome:any · surface_type:exposed timber (timber_frame studs/braces, plank cladding, sills, eaves boards) · min_age present · exposure:wet · scalar rises with age and wetness",
+        "avoid": ["windows", "door_path"],
+        "chanceOrDensity": "coverage-driven: softening/greying/punky rot accumulates 0..1, concentrated low (ground-contact) and on wet faces"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d1_timber_greying_rot",
+          "label": "Greyed & Punky Timber",
+          "source": "procedural",
+          "codeEffect": ["coverage", "tint"],
+          "scale": {
+            "nativePx": null,
+            "worldSizeW": null,
+            "worldSizeH": null,
+            "fit": "cover"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "random"
+          },
+          "states": ["base"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": {
+            "scalar": "driven by age 0-1, amplified by wetness",
+            "mask": {
+              "direction": "up",
+              "falloff": "bottom",
+              "facing": "north"
+            },
+            "textureVariants": 4,
+            "blend": "soft-light"
+          },
+          "biomeSkins": "Applies to any host with exposed wood: timber_frame studs and the cob/daub eave cap in grassland. Wet biomes (swamp/river/lake/ocean/shallow_water/tropical_forest/dense_forest) drive the scalar hard (×1.6) and bias the shaded north face. Dry biomes (desert/steppe/savanna/arctic/tundra) show sun-checking/silvering instead of wet rot — same coverage, facing south, drier palette via textureVariant. Mystic adds no special rot.",
+          "notes": "Ground-up wet rot: timber greys and goes punky from the foundation contact upward (mask direction up, falloff bottom) and on the shaded damp north face. Soft-light tint that desaturates and darkens the wood. Age+wetness driven, honestly absent without age. No suspension/interact/light; if rot fully consumes a board that becomes a missing_tiles gap object, not a state here."
+        },
+        {
+          "id": "d1_dry_rot_crumble",
+          "label": "Dry-Rot Crumble Patch",
+          "source": "procedural",
+          "codeEffect": ["coverage", "shadow"],
+          "scale": {
+            "nativePx": null,
+            "worldSizeW": null,
+            "worldSizeH": null,
+            "fit": "cover"
+          },
+          "variants": {
+            "count": 3,
+            "drivenBy": "random"
+          },
+          "states": ["base"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": {
+            "scalar": "driven by age 0-1",
+            "mask": {
+              "direction": "none",
+              "falloff": "patchy",
+              "facing": "any"
+            },
+            "textureVariants": 3,
+            "blend": "multiply"
+          },
+          "biomeSkins": "Localized crumbling cube-rot patches in older timber, strongest in humid temperate biomes (forest/grassland/river). Arid biomes show this as insect-bored sun-checking instead (textureVariant biased). Magical biomes do not specialize.",
+          "notes": "Cubical dry-rot patches that crumble the timber surface — patchy coverage with a depth shadow so the patch reads recessed. Age driven. A late-stage patch that has eaten through becomes a missing_tiles gap. No suspension/interact/light."
+        }
+      ]
+    },
+    {
+      "id": "d1_rust_metal_corrosion",
+      "label": "Rust & Metal Corrosion",
+      "field": "D1",
+      "placement": {
+        "plane": "facade",
+        "anchor": "metal_fixture",
+        "method": "decal",
+        "fitDefault": "cover"
+      },
+      "application": {
+        "when": "biome:any · surface_type:exposed ironwork (nail rows, strap hinges, brackets, ties, banding) · min_age present · exposure:wet · scalar rises with age and wetness",
+        "avoid": ["windows", "door_path"],
+        "chanceOrDensity": "coverage-driven: rust bloom + drip-streaks accumulate 0..1 around metal fixtures, strongest in wet/salt biomes"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d1_iron_rust_streak",
+          "label": "Iron Rust Bloom & Streak",
+          "source": "procedural",
+          "codeEffect": ["coverage", "tint"],
+          "scale": {
+            "nativePx": null,
+            "worldSizeW": null,
+            "worldSizeH": null,
+            "fit": "cover"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "random"
+          },
+          "states": ["base"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": {
+            "scalar": "driven by wetness 0-1, amplified by age",
+            "mask": {
+              "direction": "down",
+              "falloff": "bottom",
+              "facing": "any"
+            },
+            "textureVariants": 4,
+            "blend": "multiply"
+          },
+          "biomeSkins": "Anchored to wherever the base building exposes ironwork (nailed plank/timber_frame in grassland). Salt-spray biomes (ocean/deep_ocean/shallow_water/beach) drive the scalar hardest (×1.8) with deep orange bleed; dry biomes (desert/steppe/savanna) barely rust (×0.4, paler bloom). Volcanic adds a sulfur-stained variant via textureVariant; mystic may swap iron for a verdigris bronze patina palette (still a coverage tint, lit-multiplier handled by D0).",
+          "notes": "Rust bloom centered on metal fixtures with downward drip-streaks bleeding onto the wall below (direction down, falloff bottom). Wetness driven primarily so it can render without age. Multiply blend keeps the orange staining the substrate. No suspension/interact/light — the metal body itself (hinge/bracket) is a D3 prop; this is only its corrosion."
+        }
+      ]
+    },
+    {
+      "id": "d1_missing_tiles_gaps",
+      "label": "Missing Tiles & Gaps",
+      "field": "D1",
+      "placement": {
+        "plane": "roof",
+        "anchor": "edge",
+        "method": "socket_prop",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:any · surface_type:roof courses, eaves boards, plank gaps · min_age present (advanced age/neglect) OR post-destruction delta · settlement_tier:any (poorer/abandoned skew higher)",
+        "avoid": ["ridge_cap", "chimney_base"],
+        "chanceOrDensity": "sparse discrete chips: 0-6 missing/displaced pieces per roof, density rising with age; each is a small sprite hole placed on a roof-course or eave socket"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d1_missing_roof_tile",
+          "label": "Missing / Slipped Roof Course Piece",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 5,
+            "drivenBy": "material"
+          },
+          "states": ["base", "cracked", "destroyed"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "destroyed",
+            "debris": ["d1_tile_shard_ground"]
+          },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Material-driven variant matches the roof material catalog: thatch (a torn dark gap + loose straw), wood_shingle (a missing shake showing batten), clay_tile (a slipped/absent pantile showing dark underlay), turf_sod (a bare soil scar). Each biome's roof set maps to its own variant — e.g. ocean cedar_shake, river slate, lake birch_bark. Poor/abandoned settlement tier raises density. Snow biomes (arctic/tundra/taiga) partly hide gaps under snow cap (content axis on the roof base, not here).",
+          "notes": "A small PixelLab sprite painted into the roof bitmap at a course/eave socket — a real hole that darkens to underlay (shadow code effect for the recessed cavity). DESTRUCTIBLE because it represents structural loss and can be widened: a destruction interaction writes an object-permanence delta (broken_state=destroyed, dropping a tile shard on the ground below). No light/interact/content/suspension. wind_sway never applies (a hole is not suspended cloth)."
+        },
+        {
+          "id": "d1_plank_gap",
+          "label": "Sprung / Missing Wall Plank",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 1,
+            "worldSizeH": 2,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "material"
+          },
+          "states": ["base", "destroyed"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "destroyed",
+            "debris": ["d1_plank_splinter_ground"]
+          },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Applies to plank/board-clad and timber_frame walls (the grassland timber_frame and any board host). Variant matches the wall material: a sprung honey-oak board (forest/grassland), a tar-blackened plank (river/ocean), a bleached driftwood board (beach/shallow_water). Wet biomes raise density (rot-driven). Stone-only hosts (fieldstone, cob, coral) drop this object — a monolithic wall does not lose planks (see biomeApplicability note in code via host check).",
+          "notes": "A vertical 1x2 sprite of a missing or hanging wall board showing the dark interior gap behind (shadow). DESTRUCTIBLE: can be torn fully away, writing a delta and dropping a splinter on the ground. Host-gated to board/timber walls at resolve time. No light/interact/content; no suspension so no wind_sway."
+        }
+      ]
+    },
+    {
+      "id": "d1_patched_repairs",
+      "label": "Patched Repairs",
+      "field": "D1",
+      "placement": {
+        "plane": "facade",
+        "anchor": "edge",
+        "method": "socket_prop",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:any · co-located with prior damage (a missing-tile/gap/crack socket) · min_age present (a repair implies a prior fault) · settlement_tier:any (occupied/maintained skew higher — patches mean someone still tends the building)",
+        "avoid": ["windows", "door_path"],
+        "chanceOrDensity": "sparse discrete chips placed ON or beside a damage socket: 0-4 patches per building; presence signals an inhabited, mended structure rather than an abandoned one"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "d1_board_patch",
+          "label": "Nailed Board Patch",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 5,
+            "drivenBy": "material"
+          },
+          "states": ["base", "weathered"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": {
+            "breakable": true,
+            "broken_state": "destroyed",
+            "debris": ["d1_plank_splinter_ground"]
+          },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "A mismatched salvaged board nailed over a gap; variant picks a fresh-vs-aged contrast against the host (raw light board over weathered wall, or tarred board over a plank wall). `weathered` state lets an old patch grey out and itself become damage. Every biome reuses its local salvage timber palette (driftwood in beach/ocean, bamboo offcut in tropical_forest, dark-stained board in dense_forest). Stone biomes use a mortar-smear patch variant instead (textureVariant) since boards do not patch ashlar.",
+          "notes": "A small PixelLab sprite of a crude nailed-on repair board, sitting slightly proud (drop shadow). A 'weathered' wear state — orthogonal to the patch identity — lets it age into its own damage. DESTRUCTIBLE (can be pried off, dropping a splinter + writing a delta). No light/interact/content; rigid, not suspended, so no wind_sway. Placement is co-gated to an existing damage socket so a patch always reads as a repair of a real fault, never decoration on a pristine wall."
+        },
+        {
+          "id": "d1_daub_fill_patch",
+          "label": "Fresh Daub / Mortar Fill",
+          "source": "hybrid",
+          "codeEffect": ["coverage", "tint"],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "material"
+          },
+          "states": ["base", "weathered"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": {
+            "scalar": "driven by age 0-1 (fresh=light contrast, weathered=blends in)",
+            "mask": {
+              "direction": "none",
+              "falloff": "patchy",
+              "facing": "any"
+            },
+            "textureVariants": 4,
+            "blend": "soft-light"
+          },
+          "biomeSkins": "A smeared infill of fresh lime daub / mortar over a crack or spall, lighter and smoother than the aged wall around it. Host-matched: cream lime (wattle_daub/timber_frame infill), earthen mud (cob), grey mortar (fieldstone joints). Wet biomes weather the patch faster (scalar climbs quicker). Desert/steppe sun-bleach it pale. Mystic/volcanic do not specialize. Hybrid = a small patch decal mask blended over the wall (no separate sprite chip needed), so it rides the bitmap like the other surface decals.",
+          "notes": "A repair smear that is brighter/smoother than the surrounding aged surface, fading toward the wall tone as it weathers (age-driven contrast). Hybrid: implemented as a localized coverage patch (soft-light) rather than a hard sprite, since fill conforms to the wall. NOT destructible (it is the same material as the wall — destroying it just reverts to the underlying crack/spall). No light/interact/content/suspension. Co-gated to a damage socket like the board patch."
+        }
+      ]
+    }
+  ],
+  "crossBiomeNotes": "D1 specializes across the 21 biomes almost entirely by (a) MATERIAL HOST swap — each coverage decal recolours to the wall/roof material catalog already defined in building-materials.json (cob earthen ochre, wattle_daub/timber_frame cream lime, fieldstone grey mortar/grey-tan stone), and each sprite chip variant maps to that biome's roof/wall material set — and (b) CLIMATE multipliers on the coverage scalar: wet biomes (ocean/deep_ocean/shallow_water/beach/river/lake/swamp/tropical_forest) amplify wood_rot, rust, water-runnel erosion and spalling; cold/freeze-thaw biomes (taiga/tundra/arctic/mountains) amplify cracks, tile-spalling and stone pitting; arid biomes (desert/steppe/savanna) suppress rot/rust/erosion but raise sun-checking and paint-flaking on the sun face. Two cross-cutting RULES the design doc mandates: (1) every age-driven object is HONESTLY ABSENT until a sim age/maintenance source exists in dressingContext — the rule engine skips it rather than faking aging; wetness-driven objects (water-runnel erosion, rust, spall) CAN render now because wetness is derivable from biome+water-proximity. (2) damage is presentation but the two destructible sprite-chip objects (missing tiles, plank gaps, board patches) write real object-permanence deltas when widened/removed, never a faked break. No D1 object is suspended/cloth, so wind_sway never applies to this entire field (all anim=static); none are light sources (no light component); none are vessels (no content); none compose children (no attach). Magical biomes (mystic/volcanic) do NOT invent enchanted damage — they reuse the same coverage with a palette/lit-multiplier handled in D0, keeping D1 honest structural decay everywhere."
+}

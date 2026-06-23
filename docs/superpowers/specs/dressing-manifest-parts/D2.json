@@ -1,0 +1,428 @@
+{
+  "field": "D2",
+  "fieldName": "Surface growth",
+  "mechanism": "A · decal/spline-into-bitmap (hybrid)",
+  "plane": "facade",
+  "defaultProvenance": "hybrid",
+  "categories": [
+    {
+      "id": "d2_moss",
+      "label": "Moss",
+      "field": "D2",
+      "placement": {
+        "plane": "facade",
+        "anchor": "wall_field",
+        "method": "decal",
+        "fitDefault": "cover"
+      },
+      "application": {
+        "when": "biome=grassland on any wall surface (D0/D1 host) where exposure.wet>=0.35 OR exposure.shade>=0.5; biased to the north (shaded) face and to the wall-base band where ground damp wicks up; intensity = a wetness scalar (water-proximity + biome humidity, from terrain-suitability 0-1). min_age would deepen coverage but age is honestly absent (no sim source) so coverage is driven by wetness+shade alone today.",
+        "avoid": ["windows", "door_path", "above_door_sign_zone"],
+        "chanceOrDensity": "coverage scalar 0-1 per wall surface; present (>0) on ~55% of north-facing grassland wall surfaces, ~15% of south-facing, scaling with wetness"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "moss_film",
+          "label": "Moss film (coverage growth)",
+          "source": "hybrid",
+          "codeEffect": ["coverage", "tint"],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "cover"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "material"
+          },
+          "states": ["base"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": {
+            "scalar": "driven by wetness 0-1 (water-proximity + humidity); age would deepen it but is honestly absent",
+            "mask": {
+              "direction": "up",
+              "falloff": "bottom",
+              "facing": "north"
+            },
+            "textureVariants": 4,
+            "blend": "soft-light"
+          },
+          "biomeSkins": "Surface field — specializes by the host wall MATERIAL it rides (grassland: cob/fieldstone/timber_frame/wattle_daub) plus per-biome climate default for the wetness scalar: dense_forest/swamp/tropical_forest = wetness clamped HIGH (lush emerald moss is the climate-default, near-full coverage even south-facing); forest/lake/river = moderate; grassland/hills/steppe/savanna = moderate-low, north-face only; desert/volcanic/beach/arctic/tundra = dropped (no moss skin, replaced by lichen/sand-crust). Flora-reskin: tropical biomes use a deeper viridian textureVariant set; mystic uses a faint emissive moonmoss tint (lit-multiplier handled in D2_lichen's mystic skin rather than here). Drop condition: humidity<0.2 OR permafrost biome.",
+          "notes": "A SURFACE field, not a discrete object: per the design's surface rule it is intensity-driven (a coverage scalar + gravity/facing mask) painted soft-light INTO the wall bitmap, never a placed sprite with wear states. Mask direction=up + falloff=bottom because moss creeps upward from the damp ground band; facing=north because shade keeps it from drying. wind_sway is absent — moss is fused to the surface, not suspended, so per the calibration rule it gets no sway. No interact/light/content — it is inert living film."
+        },
+        {
+          "id": "moss_cushion_patch",
+          "label": "Moss cushion patch (raised sprite tufts)",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 0.5,
+            "worldSizeH": 0.5,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 5,
+            "drivenBy": "random"
+          },
+          "states": ["base"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Sprite half of the moss hybrid — placed only where the coverage film already exceeds ~0.6, so it never appears on a dry wall. dense_forest/swamp: larger cushions, deeper viridian, +1 variant of mushroom-studded cushion; grassland/forest: standard green; mystic: faint glow rim shares D2_lichen's lit-multiplier; dropped wherever moss_film is dropped.",
+          "notes": "The 3D-reading cushions that sit ON TOP of the flat coverage film to give the moss volume and a small ground-shadow at its lower edge. It is a sprite (the patch + shadow), but it is GATED by the coverage scalar of moss_film in the same category — the hybrid pattern named in the design (patch + coverage-scatter). Discrete sprite, so it carries a single base state, not the coverage sub-grain; it is removed (claim freed) rather than damaged. No sway (clings to wall), no light, no interact."
+        }
+      ]
+    },
+    {
+      "id": "d2_lichen",
+      "label": "Lichen",
+      "field": "D2",
+      "placement": {
+        "plane": "facade",
+        "anchor": "wall_field",
+        "method": "decal",
+        "fitDefault": "cover"
+      },
+      "application": {
+        "when": "biome=grassland on bare stone/earthen wall surfaces (fieldstone, cob) — lichen prefers mineral/lime hosts over painted plaster or timber; tolerates LOW wetness (exposure.wet>=0.1) so it colonizes drier, sunnier walls where moss cannot; intensity = a slow age scalar in principle, but age is honestly absent → driven by a stable per-surface random + a mild wetness term. No facing preference (grows sun or shade).",
+        "avoid": ["windows", "door_path"],
+        "chanceOrDensity": "coverage scalar 0-1; faint presence (0.1-0.4) on ~70% of grassland fieldstone/cob surfaces, sparse on timber/plaster"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "crustose_lichen",
+          "label": "Crustose lichen mottle (coverage)",
+          "source": "procedural",
+          "codeEffect": ["coverage", "tint"],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 1,
+            "worldSizeH": 1,
+            "fit": "cover"
+          },
+          "variants": {
+            "count": 5,
+            "drivenBy": "material"
+          },
+          "states": ["base"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": {
+            "scalar": "driven by age 0-1 (slow colonization); age honestly absent → stable per-surface random + mild wetness term substitutes",
+            "mask": {
+              "direction": "none",
+              "falloff": "patchy",
+              "facing": "any"
+            },
+            "textureVariants": 5,
+            "blend": "soft-light"
+          },
+          "biomeSkins": "Pure-procedural coverage mottle (no asset) tinted to the host stone. Climate-default tint shifts per biome: grassland/hills = grey-green + ochre rosettes; arctic/tundra/mountains = pale grey-white map-lichen (the climate DEFAULT here — replaces moss, which is dropped in cold-dry biomes); desert/volcanic/steppe = rust-orange and black desert-varnish crust at low coverage; swamp/tropical = mostly suppressed (moss out-competes it). mystic: a faint luminescent cyan lichen with a small lit-multiplier feeding the GL lighting pass. Universal because crust lichen colonizes nearly any stone in any climate, only the palette changes.",
+          "notes": "A SURFACE field rendered as a flat soft-light tint mottle into the wall bitmap — the cheapest D2 effect, zero assets, proves the coverage/mask path with no PixelLab cost. mask.direction=none (lichen ignores gravity, unlike moss) and falloff=patchy with facing=any (grows sun or shade). Intensity-driven coverage, never discrete states. No sway/light/interact/content — inert mineral crust. Its honest age-absence is the canonical example of a surface whose true driver (slow age) has no sim source yet."
+        }
+      ]
+    },
+    {
+      "id": "d2_ivy_vines",
+      "label": "Ivy & climbing vines",
+      "field": "D2",
+      "placement": {
+        "plane": "facade",
+        "anchor": "wall_base_to_eave",
+        "method": "spline",
+        "fitDefault": "grow"
+      },
+      "application": {
+        "when": "biome=grassland; one or more vine roots seeded at the wall-base (foundation course) of a wall surface, growing upward; favored on shaded/damp faces (exposure.shade>=0.4 OR exposure.wet>=0.3) and strongly biased on by the 'abandoned'/'overgrown' building role (identity kit D7 turns this category up). Maturity of the climb would be an age scalar; age honestly absent → climb height = min(rule_cap, wall_top) with a per-root random fraction, NOT a faked age.",
+        "avoid": ["windows", "door_path", "above_door", "chimney"],
+        "chanceOrDensity": "0-3 vine roots per qualifying wall surface; ~20% of ordinary grassland walls carry at least one vine, ~85% of abandoned-role walls"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "ivy_segment",
+          "label": "Ivy stem segment (spline piece)",
+          "source": "hybrid",
+          "codeEffect": ["spline-assembly"],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 0.25,
+            "worldSizeH": 0.5,
+            "fit": "grow"
+          },
+          "variants": {
+            "count": 6,
+            "drivenBy": "random"
+          },
+          "states": ["base"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "torn_stub", "debris": ["ivy_leaf_litter"] },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "The spine piece of the vine spline. Flora-reskin per biome to the biome's climbing plant: grassland/forest = green ivy; tropical_forest/swamp = thick liana with aerial roots (+1 fork density); dense_forest = dark mossy creeper; mystic = faint glowing tendril (shares a lit-multiplier with ivy_leaf_cluster); desert/volcanic/arctic/tundra = DROPPED (replaced by climbing_roots or nothing — no leafy vine in arid/frozen biomes); savanna/steppe = sparse dry creeper, fewer leaf clusters. Material host is irrelevant (vine rides over any wall).",
+          "notes": "A GROW-fit spline piece: the placement engine generates a path up the wall from the foundation root, then tiles segment pieces along it, branching at forks and stopping at min(rule_cap, wall_top), routing AROUND aperture blocked-zones. wind_sway is ABSENT despite being foliage — the design's rule is that sway is a property of SUSPENSION; ivy is gripped to the wall surface, not hanging, so it does not sway (its leaf_cluster tips get a tiny shader flutter via the leaf object, not full wind_sway). Destructible because a vine can be torn down (writes an object-permanence delta + leaf-litter debris). Built from pieces (segment/fork/leaf_cluster/root_base) per the design's vine recipe."
+        },
+        {
+          "id": "ivy_fork",
+          "label": "Ivy branch fork (spline junction)",
+          "source": "hybrid",
+          "codeEffect": ["spline-assembly"],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 0.4,
+            "worldSizeH": 0.4,
+            "fit": "grow"
+          },
+          "variants": {
+            "count": 4,
+            "drivenBy": "random"
+          },
+          "states": ["base"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "torn_stub", "debris": ["ivy_leaf_litter"] },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Junction piece placed by the spline assembler wherever the generated path branches; same flora-reskin + drop rules as ivy_segment. tropical/swamp lianas fork more often (denser canopy on the wall); dry biomes fork rarely.",
+          "notes": "A kit piece, not an independent placement — the spline assembler inserts a fork sprite at branch nodes so the vine reads as one organism rather than parallel stems. grow-fit. No sway (clings), no light. Shares the vine's destructible behavior (part of the same torn-down delta)."
+        },
+        {
+          "id": "ivy_leaf_cluster",
+          "label": "Ivy leaf cluster (spline tip foliage)",
+          "source": "hybrid",
+          "codeEffect": ["spline-assembly", "shader-sway"],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 0.6,
+            "worldSizeH": 0.6,
+            "fit": "grow"
+          },
+          "variants": {
+            "count": 6,
+            "drivenBy": "random"
+          },
+          "states": ["base"],
+          "anim": ["wind_sway"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "bare_stem", "debris": ["ivy_leaf_litter"] },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Leafy mass clustered along the stem and at growth tips; the most visible part of the vine. Flora-reskin to biome bloom/leaf catalog: grassland green ivy; tropical broad glossy liana leaves; dense_forest dark serrated leaves; mystic faintly luminous foliage (lit-multiplier into the lighting pass); flowering variant (+1) in spring-coded grassland/forest. Dropped wherever ivy_segment is dropped.",
+          "notes": "The ONE vine piece that animates: its loose leaf tips are effectively suspended at the edge of the clinging stem, so per the suspension rule it carries a gentle wind_sway (realized as a small shader-sway perturbation of the leaf edges, NOT a full bake — frame budget per the motion taxonomy's wind_sway). The stem pieces (segment/fork) stay static because they grip the wall. Destructible (stripping leaves leaves a bare_stem). Built as part of the grow spline."
+        },
+        {
+          "id": "ivy_root_base",
+          "label": "Ivy root base (spline anchor)",
+          "source": "hybrid",
+          "codeEffect": ["spline-assembly", "shadow"],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 0.8,
+            "worldSizeH": 0.5,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 3,
+            "drivenBy": "random"
+          },
+          "states": ["base"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "cut_stump", "debris": ["ivy_leaf_litter", "woody_stem"] },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "The woody base mass where the vine emerges from the ground at the foundation course; one per vine root. Thicker/gnarled in tropical (liana boles) and dense_forest; thin in dry-biome creepers; dropped with the rest of the vine in arid/frozen biomes.",
+          "notes": "The spline's start anchor, fixed at the wall-base — the assembler grows the segment/fork/leaf chain UP from here. fit=fixed (it does not stretch). It carries the ground-contact shadow so the vine reads as rooted. Cutting the root base destroys the whole vine (the spline above it is removed) — the heaviest destructible of the group, emitting woody-stem debris."
+        }
+      ]
+    },
+    {
+      "id": "d2_climbing_roots",
+      "label": "Climbing roots",
+      "field": "D2",
+      "placement": {
+        "plane": "facade",
+        "anchor": "wall_base_to_mid",
+        "method": "spline",
+        "fitDefault": "grow"
+      },
+      "application": {
+        "when": "biome=grassland on earthen/stone walls (cob, fieldstone) adjacent to large trees or on the damp/shaded lower wall; stronger on the abandoned-role building (roots reclaim the structure). Driven by wetness (exposure.wet>=0.3) and proximity-to-tree; would deepen with age (honestly absent). Distinct from ivy: woody, leafless, hugging crevices and mortar joints from the base upward, rarely above mid-wall.",
+        "avoid": ["windows", "door_path"],
+        "chanceOrDensity": "0-2 root systems per qualifying lower wall surface; ~10% of ordinary grassland walls, ~50% of abandoned-role walls near trees"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "root_tendril",
+          "label": "Climbing root tendril (spline piece)",
+          "source": "hybrid",
+          "codeEffect": ["spline-assembly"],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 0.3,
+            "worldSizeH": 0.5,
+            "fit": "grow"
+          },
+          "variants": {
+            "count": 5,
+            "drivenBy": "random"
+          },
+          "states": ["base"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "snapped_root", "debris": ["root_splinters"] },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Woody leafless tendril following mortar joints. Climate-reskin: grassland/forest pale woody roots; dense_forest/swamp dark wet roots with rootlets (+fork density); volcanic charred crawling roots; mystic pulsing glow-veined roots (lit-multiplier); desert/steppe dry cracked roots, sparse; arctic/tundra DROPPED (no woody climbers in permafrost). Hosts on stone/earth walls only (will not appear over fresh plaster).",
+          "notes": "A spline field like ivy but with NO leaf pieces — pure woody tendrils that branch and hug the wall, so the whole assembly is static (no suspended foliage → no wind_sway at all, the cleanest application of the suspension rule). grow-fit, assembled from tendril + fork pieces rooted at the base, capped at mid-wall. Destructible (snapping a root writes a delta + splinter debris). Reuses the same spline-assembly engine as ivy, validating it for a leafless climber."
+        },
+        {
+          "id": "root_fork",
+          "label": "Climbing root fork (spline junction)",
+          "source": "hybrid",
+          "codeEffect": ["spline-assembly"],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 0.4,
+            "worldSizeH": 0.4,
+            "fit": "grow"
+          },
+          "variants": {
+            "count": 3,
+            "drivenBy": "random"
+          },
+          "states": ["base"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "snapped_root", "debris": ["root_splinters"] },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Branch junction for the root spline; same reskin/drop rules as root_tendril. Wetter biomes fork more (denser root mat).",
+          "notes": "Kit junction piece inserted at spline branch nodes; not independently placed. grow-fit, static, shares the root system's destructible delta. Keeps the climber reading as one organism."
+        }
+      ]
+    },
+    {
+      "id": "d2_wall_weeds_tufts",
+      "label": "Wall weeds & tufts",
+      "field": "D2",
+      "placement": {
+        "plane": "facade",
+        "anchor": "ledge_crack_socket",
+        "method": "socket_prop",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome=grassland; small weeds/grass tufts rooting in cracks, mortar gaps, and on window-sill and string-course ledges where wind-blown soil collects; favored on damp/neglected walls (exposure.wet>=0.25) and turned up by the abandoned role. Lifecycle would track season/age (partly absent) → uses the F2-flora visual vocabulary (seedling/normal/wilting/dead) where a season cue exists, else normal only.",
+        "avoid": ["door_path", "window_glass"],
+        "chanceOrDensity": "per-ledge/crack socket; ~30% of grassland sill/ledge sockets carry a tuft, ~70% on abandoned-role walls"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "crack_grass_tuft",
+          "label": "Crack grass tuft",
+          "source": "pixellab",
+          "codeEffect": ["shader-sway", "shadow"],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 0.5,
+            "worldSizeH": 0.5,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 6,
+            "drivenBy": "random"
+          },
+          "states": ["normal", "seedling", "wilting", "dead"],
+          "anim": ["wind_sway"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "dead", "debris": [] },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "A small living tuft rooting in wall cracks. Flora-reskin to the biome's small-flora catalog (the F2 archetypes): grassland = grass + cornflower/daisy sprig; desert = dry tuft / sand_verbena; tundra/arctic = moss_campion cushion (reduced wind_sway); swamp = rush sprig; mystic = faintly glowing tuft (lit-multiplier); savanna/steppe = dry bunchgrass. Climate-default state: arid biomes default to 'wilting', cold biomes shorter/sparser, lush biomes 'normal'. Universal (some weed colonizes cracked walls in every biome) but the species swaps wholesale.",
+          "notes": "A small SPRITE rooted in a crack/ledge socket — unlike moss/lichen this is a discrete plant, so it DOES take the F2 flora lifecycle states (seedling/normal/wilting/dead, per the asset-state taxonomy default map) rather than a coverage scalar. It carries wind_sway because the loose blades ARE suspended/free at the tip (suspension rule satisfied) — a shader-sway flutter, frame count per the wind_sway motion-taxonomy entry. Ground-contact shadow at the root. Destructible = simply transitions to dead / is removed (claim freed); no debris. No light/content/interact."
+        }
+      ]
+    },
+    {
+      "id": "d2_fungal_shelf",
+      "label": "Fungal shelf",
+      "field": "D2",
+      "placement": {
+        "plane": "facade",
+        "anchor": "damp_timber_socket",
+        "method": "socket_prop",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome=grassland on DAMP TIMBER wall hosts only (timber_frame, wattle_daub timbers, plank sills) where exposure.wet>=0.5 — bracket fungi need rotting wood, so this is gated to wet timber, not stone/cob; strongly favored on the abandoned/decayed building role (the design's abandoned identity = boards+heavy vines+moss+rot). Decay-stage would drive it (age/maintenance absent) → gated on wetness + timber host + abandoned-role bias only.",
+        "avoid": ["windows", "door_path", "stone_surface", "plaster_surface"],
+        "chanceOrDensity": "per damp-timber socket; ~8% of wet grassland timber sockets, ~45% on abandoned-role wet timber walls"
+      },
+      "biomeApplicability": "only:[grassland, forest, dense_forest, tropical_forest, taiga, swamp, lake, river, beach, hills, mountains, mystic]",
+      "objects": [
+        {
+          "id": "bracket_fungus",
+          "label": "Bracket / shelf fungus",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": {
+            "nativePx": 64,
+            "worldSizeW": 0.6,
+            "worldSizeH": 0.4,
+            "fit": "fixed"
+          },
+          "variants": {
+            "count": 5,
+            "drivenBy": "random"
+          },
+          "states": ["base", "mossy_overgrown", "dead"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "dead", "debris": ["fungus_fragments"] },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "A stacked shelf of bracket fungus clinging to rotting timber. Flora-reskin to biome fungus: grassland/forest tan-brown turkeytail brackets; dense_forest/swamp larger darker shelves (+1 variant); tropical bright orange shelf; taiga pale birch-polypore; mystic GLOWING bioluminescent shelf — here the lit-multiplier flips this object's light component ON in the mystic skin (a soft green glow, color/radius small, diurnal off i.e. always-on, no flicker) feeding the GL lighting pass, the one biome where the otherwise-dark fungus emits. Volcanic/desert/arctic/tundra/savanna/steppe = DROPPED (the category is only:[...] — no rotting-timber fungus in arid, frozen, or treeless-host biomes).",
+          "notes": "A discrete SPRITE shelf fungus on damp rotting wood — MATTER-with-decay-tail per the taxonomy (no full life spine), so its states are base / mossy_overgrown (the decay progression) / dead, NOT the flora seedling ramp and NOT a coverage scalar. No wind_sway: a rigid shelf fused to the timber is the textbook NON-suspended case (contrast the awning rule). Destructible (knocking it off emits fungus fragments + delta). light is null in all biomes EXCEPT the mystic skin, where the biomeSkins lit-multiplier turns on a bioluminescent glow — the design's 'magical variant for mystic' rule. No interact/content."
+        }
+      ]
+    }
+  ],
+  "crossBiomeNotes": "D2 is the LIVING-SURFACE field: it specializes across the 20 non-grassland biomes along three levers from the design. (1) Material host: every object rides whatever wall material that biome supplies (building-materials.json hosts) — moss/lichen tint to the stone, vines/roots/fungus ignore the host but gate on stone-vs-timber-vs-earth. (2) Climate-default coverage/state: the wetness and shade scalars are clamped per biome so the climate default is honest — dense_forest/swamp/tropical = lush near-full moss + frequent vines/fungus; forest/lake/river = moderate; grassland/hills/savanna/steppe = light, north-face-biased; desert/volcanic/beach = moss DROPPED and replaced by rust/varnish LICHEN crust + dry creepers; arctic/tundra/mountains = pale map-lichen is the default (moss and leafy vines dropped); mystic = faint emissive variants (glow-moss, luminous lichen, glowing liana tips, bioluminescent bracket fungus) via the lit-multiplier feeding the GL lighting pass; volcanic = charred roots, ash-crust, no foliage. (3) Flora-reskin: vines/weeds/fungus swap species wholesale to the biome's F2-flora / bloom catalog while keeping the same spline/socket machinery. Two render mechanisms coexist in this field: surfaces (moss_film, lichen) are COVERAGE sub-grain decals (no discrete states, intensity-driven, soft-light into the wall bitmap); placed growth (ivy, roots, weeds, fungus) are spline-assembled or socket-placed sprites with real states. The suspension rule is applied precisely: nothing here sways EXCEPT the loose leaf tips (ivy_leaf_cluster) and free grass blades (crack_grass_tuft), because everything else is fused/gripped to the surface. Age/maintenance/decay-stage are the TRUE drivers of most of this growth and have NO sim source yet — they are honestly absent everywhere, substituted by wetness + shade + facing + the abandoned building-role bias, never faked."
+}

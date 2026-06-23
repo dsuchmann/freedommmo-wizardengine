@@ -1,0 +1,577 @@
+{
+  "field": "D3",
+  "fieldName": "Wall attachments",
+  "mechanism": "B · socket-prop (façade plane)",
+  "plane": "facade",
+  "defaultProvenance": "pixellab (sprite); hybrid where a prop is lit, swaying, or strung",
+  "categories": [
+    {
+      "id": "d3_awnings_canopies",
+      "label": "Awnings & Canopies",
+      "field": "D3",
+      "placement": {
+        "plane": "facade",
+        "anchor": "above_door | above_window | shopfront_band",
+        "method": "socket_prop",
+        "fitDefault": "span"
+      },
+      "application": {
+        "when": "biome:grassland; building_role in {inn, tavern, shop, market_stall, bakery, butcher, general_store}; socket=above_door or shopfront window run on the ground floor (floor=0); commercial/hospitality frontage only",
+        "avoid": ["door_path", "stairs", "road", "roof_edge", "above upper-floor apertures until vertical sockets render"],
+        "chanceOrDensity": "0.7 on commercial frontage sockets, else 0; one awning per shopfront span"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "cloth_market_awning",
+          "label": "Striped Cloth Awning",
+          "source": "pixellab",
+          "codeEffect": ["shader-sway", "shadow"],
+          "scale": { "nativePx": 128, "worldSizeW": 2, "worldSizeH": 1, "fit": "span" },
+          "variants": { "count": 6, "drivenBy": "style" },
+          "states": ["base", "sun_faded", "tattered", "rolled"],
+          "anim": ["wind_sway"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "tattered", "debris": ["cloth_scrap", "broken_pole"] },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Cloth host swaps weave/palette per biome: desert/savanna → sun-bleached ochre canvas (climate-default state sun_faded), swamp/tropical_forest → mildew-stained linen, arctic/tundra/taiga → oiled heavy canvas + climate-default snow dusting on the upper fold, volcanic → ash-grey scorched edges, mystic → shimmering enchanted weave (subtle emissive added). Lit-multiplier n/a (no light). Drops on biomes with no cloth-trade settlements (deep_ocean platforms keep only oiled_canvas variant).",
+          "notes": "wind_sway applies because it is suspended cloth (the calibration rule: anim is a property of SUSPENSION, not the category). 'rolled' is the stowed content-less state, not a wear state. Destructible because fabric is fragile; broken_state degrades to 'tattered' and writes an object-permanence delta."
+        },
+        {
+          "id": "wood_slat_awning",
+          "label": "Wooden Slat Pent-Roof Awning",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 128, "worldSizeW": 2, "worldSizeH": 1, "fit": "span" },
+          "variants": { "count": 5, "drivenBy": "material" },
+          "states": ["base", "weathered", "mossy", "broken"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "broken", "debris": ["wood_plank", "iron_bracket"] },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Timber host matches the biome wall-material wood family: grassland=oak, forest/taiga=pine/cedar, dense_forest=dark-stained mossy slat (climate-default mossy), desert=sun-cracked split timber, volcanic=charred slat, mystic=carved rune slat. Drops in treeless biomes (steppe, tundra, arctic) in favour of cloth_market_awning.",
+          "notes": "NO wind_sway: a rigid wood pent-roof is NOT suspended cloth, so per the calibration rule it stays static even though it shares the awning category. Same physical role (rain hood over door/window) but the suspension property is absent."
+        },
+        {
+          "id": "fringed_shop_canopy",
+          "label": "Fringed Shop Canopy",
+          "source": "pixellab",
+          "codeEffect": ["shader-sway", "shadow"],
+          "scale": { "nativePx": 128, "worldSizeW": 3, "worldSizeH": 1, "fit": "span" },
+          "variants": { "count": 5, "drivenBy": "role-glyph" },
+          "states": ["base", "sun_faded", "tattered"],
+          "anim": ["wind_sway"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "tattered", "debris": ["cloth_scrap"] },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "role-glyph variants carry the trade colour (baker=cream, butcher=red-white, dyer=multi); per biome the palette desaturates in harsh-sun biomes (sun_faded default) and gains snow_cap fold in cold biomes. mystic=enchanted shimmer fringe (light emissive added).",
+          "notes": "Suspended cloth with a hanging fringe → wind_sway. Wider 3-tile span suits a full shopfront; fit=span stretches the kit to the resolved window/door run width."
+        }
+      ]
+    },
+    {
+      "id": "d3_hanging_signs",
+      "label": "Hanging Signs",
+      "field": "D3",
+      "placement": {
+        "plane": "facade",
+        "anchor": "above_door | sign_bracket | between_windows",
+        "method": "socket_prop",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:grassland; building_role in {inn, tavern, shop, smith, bakery, apothecary, general_store, guildhall}; socket=above_door or a wall_bracket slot; one trade sign per public-facing entrance",
+        "avoid": ["door_path", "windows", "stairs"],
+        "chanceOrDensity": "0.9 on commercial/civic frontage; 1 per entrance"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "swinging_trade_sign",
+          "label": "Swinging Trade Sign",
+          "source": "hybrid",
+          "codeEffect": ["shader-sway", "shadow"],
+          "scale": { "nativePx": 96, "worldSizeW": 1, "worldSizeH": 1, "fit": "fixed" },
+          "variants": { "count": 8, "drivenBy": "role-glyph" },
+          "states": ["base", "weathered", "paint_faded", "cracked"],
+          "anim": ["wind_sway"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "cracked", "debris": ["wood_plank", "iron_hook"] },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "role-glyph drives the painted device (boot=cobbler, anvil=smith, sheaf=baker, tankard=tavern, mortar=apothecary). Per biome the board host changes: forest=carved pine, fieldstone-heavy biomes=slate plaque, desert=bleached driftwood-grey, volcanic=iron-faced, mystic=glowing glyph board (emissive added, becomes light-bearing). Cold biomes get climate-default snow_cap on the top edge. Drops only in unsettled wilderness with no trades.",
+          "notes": "Hybrid: PixelLab board sprite + code shader-sway because it hangs from a bracket/hook → SUSPENDED → wind_sway applies. NO interact verb — a sign is read, not operated. The bracket it hangs from is a separate D3_wall_brackets object (see attach there)."
+        },
+        {
+          "id": "projecting_board_sign",
+          "label": "Projecting Board Sign",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 96, "worldSizeW": 1, "worldSizeH": 1, "fit": "fixed" },
+          "variants": { "count": 6, "drivenBy": "role-glyph" },
+          "states": ["base", "weathered", "paint_faded"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "weathered", "debris": ["wood_plank"] },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Same role-glyph trade devices as the swinging sign; board host follows biome wood/stone family. Rigidly bolted variant for windier biomes (steppe, mountains, ocean) where a swinging sign would be impractical.",
+          "notes": "NO wind_sway: this board is rigidly fixed flat against / projecting from the wall, bolted not hung — suspension property absent, so it stays static. Distinguishes the rigid mount from swinging_trade_sign purely by suspension."
+        },
+        {
+          "id": "wrought_iron_silhouette_sign",
+          "label": "Wrought-Iron Silhouette Sign",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 96, "worldSizeW": 1, "worldSizeH": 1, "fit": "fixed" },
+          "variants": { "count": 5, "drivenBy": "role-glyph" },
+          "states": ["base", "rusted"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Iron silhouette of the trade emblem; rust climate-default in wet biomes (swamp, river, ocean=rusted default), pristine in arid biomes, verdigris-copper variant in coastal salt air, mystic=etched-rune iron (emissive). Universal because iron-working exists everywhere a smith does.",
+          "notes": "Static: a rigid forged silhouette mounted to the wall. NOT destructible (wrought iron does not casually break and there is no honest broken_state — honest absence of the component). No light unless the mystic skin promotes it to emissive."
+        }
+      ]
+    },
+    {
+      "id": "d3_wall_lanterns_lighting",
+      "label": "Wall Lanterns & Lighting",
+      "field": "D3",
+      "placement": {
+        "plane": "facade",
+        "anchor": "beside_door | wall_bracket | between_windows",
+        "method": "socket_prop",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:grassland; building_role in {inn, tavern, guildhall, shrine, watch_post, wealthy_dwelling, shop}; socket=beside_door or wall_bracket; civic/hospitality/wealthy frontage; flanks entrances",
+        "avoid": ["door_path", "stairs", "thatch_directly_above (fire risk read)"],
+        "chanceOrDensity": "0.6 per entrance-flank socket; typically paired either side of a door"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "iron_candle_lantern",
+          "label": "Iron-and-Glass Candle Lantern",
+          "source": "hybrid",
+          "codeEffect": ["emissive", "particle", "shadow"],
+          "scale": { "nativePx": 64, "worldSizeW": 1, "worldSizeH": 1, "fit": "fixed" },
+          "variants": { "count": 5, "drivenBy": "material" },
+          "states": ["base", "rusted", "soot_grimed", "broken_glass"],
+          "anim": ["flicker_glow"],
+          "interact": { "verb": "toggle", "motion": null, "emits": "diurnal on/off — lit at dusk, extinguished at dawn; toggling switches the emissive light + flame particle on/off" },
+          "destructible": { "breakable": true, "broken_state": "broken_glass", "debris": ["glass_shard", "iron_frame", "candle_stub"] },
+          "light": { "color": "#ffcf8a warm candle-amber", "radius": "2.5 tiles", "intensity": "0.7", "diurnal": true, "flicker": "candle: low-amplitude warm flicker, ~6Hz noise, dims when broken_glass" },
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Lit-multiplier raises intensity/radius in dark biomes (dense_forest, swamp, volcanic night, mystic) where lanterns are the dominant light. Cold biomes frost the glass (climate-default state adds frost overlay, slight cool tint). desert=brass-and-horn variant; mystic=cold-blue magical flame (#8ad0ff, no soot_grimed state); volcanic=ember-red flame. Frame rusts in wet biomes (rusted climate-default).",
+          "notes": "LIGHT component, not a lit:bool — body is the PixelLab sprite, the GLOW is procedural emissive routed into the GL lighting pass + a flame particle (never a 2D overlay). flicker_glow is the emissive loop on the light source. interact.verb=toggle because the on/off is diurnal. broken_glass kills the light (intensity→0) and writes a destruction delta."
+        },
+        {
+          "id": "wall_oil_lamp",
+          "label": "Bracket Oil Lamp",
+          "source": "hybrid",
+          "codeEffect": ["emissive", "particle", "shadow"],
+          "scale": { "nativePx": 64, "worldSizeW": 1, "worldSizeH": 1, "fit": "fixed" },
+          "variants": { "count": 4, "drivenBy": "material" },
+          "states": ["base", "soot_grimed", "unlit_dry"],
+          "anim": ["flicker_glow"],
+          "interact": { "verb": "toggle", "motion": null, "emits": "diurnal on/off; toggling lights/extinguishes the wick flame + glow" },
+          "destructible": { "breakable": true, "broken_state": "broken_glass", "debris": ["glass_shard", "brass_font", "oil_stain_decal"] },
+          "light": { "color": "#ffba66 warm oil-amber", "radius": "3 tiles", "intensity": "0.8", "diurnal": true, "flicker": "oil: steadier than candle, slow swell, soot-darkens when soot_grimed" },
+          "content": { "axis": "fill", "states": ["full", "empty"] },
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Brighter, steadier light than candle — lit-multiplier strongest in dark biomes. desert/savanna=oil readily available (full default); arctic/tundra=fish/whale-oil variant; volcanic=naphtha brighter flame; mystic=everbright oil (never empties, no diurnal off). Wet biomes rust the bracket.",
+          "notes": "Hybrid light source (body sprite + emissive glow + flame particle through GL). content.fill axis (full/empty) is ORTHOGONAL to wear: an empty lamp cannot be lit even at dusk, so the toggle is gated on content. unlit_dry is the run-dry visual. interact.verb=toggle (diurnal)."
+        },
+        {
+          "id": "strung_festival_lights",
+          "label": "Strung Festival Lanterns",
+          "source": "hybrid",
+          "codeEffect": ["emissive", "spline-assembly", "shader-sway", "shadow"],
+          "scale": { "nativePx": 64, "worldSizeW": 3, "worldSizeH": 1, "fit": "tile-along" },
+          "variants": { "count": 4, "drivenBy": "style" },
+          "states": ["base", "weathered"],
+          "anim": ["flicker_glow", "wind_sway"],
+          "interact": { "verb": "toggle", "motion": null, "emits": "diurnal/festival on/off; toggling lights the row of paper lanterns" },
+          "destructible": null,
+          "light": { "color": "#ffd9a0 warm multi-lantern wash", "radius": "1.5 tiles per node", "intensity": "0.5", "diurnal": true, "flicker": "soft per-node flicker, phase-offset along the string" },
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Festival/celebration dressing — D7 identity-kit gated (festive/wealthy settlements). Paper-lantern palette varies by biome culture; mystic=floating witchlight orbs (no string), volcanic=ember-jars. Drops in austere/abandoned roles.",
+          "notes": "Strung between two sockets → spline-assembly lays the line of lantern nodes (tile-along, repeating the kit along the run); SUSPENDED → wind_sway AND each node is a light → flicker_glow. Both anims apply because both the suspension and the emissive properties are present. Not individually destructible (a festoon, not a fragile vessel)."
+        }
+      ]
+    },
+    {
+      "id": "d3_window_shutters",
+      "label": "Window Shutters",
+      "field": "D3",
+      "placement": {
+        "plane": "facade",
+        "anchor": "window_jamb",
+        "method": "socket_prop",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:grassland; any residential or civic building with windows; socket=window_jamb (paired left+right leaf per window); ground floor first, upper floors once vertical apertures render",
+        "avoid": ["doorways", "windowless wall_corner sockets"],
+        "chanceOrDensity": "0.5 of windows get shutters (poorer dwellings none); paired leaves per shuttered window"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "board_batten_shutter",
+          "label": "Board-and-Batten Shutter",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 64, "worldSizeW": 1, "worldSizeH": 1, "fit": "fixed" },
+          "variants": { "count": 6, "drivenBy": "material" },
+          "states": ["base", "weathered", "paint_faded", "broken", "hanging_loose"],
+          "anim": ["static"],
+          "interact": { "verb": "open_close", "motion": "hinge swing about the jamb edge (constrained, ~95°)", "emits": null },
+          "destructible": { "breakable": true, "broken_state": "broken", "debris": ["wood_plank", "iron_hinge"] },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Painted-shutter colour by regional culture; timber host follows biome wood family. Wet biomes → paint_faded/mossy default; arctic/tundra → heavy storm-shutter variant (snow_cap on sill); desert → sun-bleached cracked; volcanic → charred; mystic → rune-carved. hanging_loose climate-default in abandoned/storm-prone roles.",
+          "notes": "interact.verb=open_close — a CONSTRAINED HINGE (the calibration rule for open_close vs toggle). NO wind_sway: a shutter is rigid and hinge-constrained, not freely suspended. broken/hanging_loose are damage states; open_close still possible while weathered but blocked when broken."
+        },
+        {
+          "id": "louvred_shutter",
+          "label": "Louvred Shutter",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 64, "worldSizeW": 1, "worldSizeH": 1, "fit": "fixed" },
+          "variants": { "count": 5, "drivenBy": "material" },
+          "states": ["base", "weathered", "paint_faded", "broken"],
+          "anim": ["static"],
+          "interact": { "verb": "open_close", "motion": "hinge swing about the jamb edge (constrained, ~95°)", "emits": null },
+          "destructible": { "breakable": true, "broken_state": "broken", "debris": ["wood_slat", "iron_hinge"] },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Slatted louvre for ventilation — favoured in hot biomes (savanna, tropical_forest, desert, swamp) as the climate-appropriate default; cold biomes prefer the solid board_batten_shutter (louvred drops or rarefies there). mystic=carved filigree louvre.",
+          "notes": "Same open_close constrained-hinge affordance as the board shutter; differs only in art (ventilating slats) and biome bias. Static — rigid hinge, not suspended."
+        }
+      ]
+    },
+    {
+      "id": "d3_flower_boxes_planters",
+      "label": "Flower Boxes & Wall Planters",
+      "field": "D3",
+      "placement": {
+        "plane": "facade",
+        "anchor": "under_window | window_sill",
+        "method": "socket_prop",
+        "fitDefault": "span"
+      },
+      "application": {
+        "when": "biome:grassland; building_role in {dwelling, inn, cottage, wealthy_dwelling}; socket=window_sill / under_window; maintained/inhabited dwellings (skipped on abandoned); ground-floor windows first",
+        "avoid": ["door_path", "windowless walls", "abandoned-role buildings"],
+        "chanceOrDensity": "0.4 of sills on inhabited dwellings; 1 box per shuttered/open window"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "timber_flower_box",
+          "label": "Timber Window Flower Box",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 64, "worldSizeW": 1, "worldSizeH": 1, "fit": "span" },
+          "variants": { "count": 6, "drivenBy": "style" },
+          "states": ["base", "weathered", "broken"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "broken", "debris": ["wood_plank", "soil_spill", "potsherd"] },
+          "light": null,
+          "content": { "axis": "season", "states": ["blooming", "full_green", "empty", "withered", "snow_capped"] },
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "content season states reskin the planted flora to the biome's bloom catalog (grassland=wildflowers, savanna=dry grasses, tropical_forest=orchids, desert=succulents, arctic/tundra=snow_capped or empty default, mystic=glowing blossoms with faint emissive, volcanic=ash-tolerant red blooms, swamp=mossy/fern). Box timber host follows biome wood family. snow_capped is the climate-default winter/cold-biome content state.",
+          "notes": "content.axis=season (the seasonal/yield axis, orthogonal to box wear): blooming/full_green/empty/withered/snow_capped track season + maintenance, NOT damage. NO interact (you don't operate a flower box). NO wind_sway on the box itself — it is a rigid sill-mounted vessel; any flora-sway is the planted flora's own anim, not the box's."
+        },
+        {
+          "id": "terracotta_wall_planter",
+          "label": "Terracotta Wall Planter",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 64, "worldSizeW": 1, "worldSizeH": 1, "fit": "fixed" },
+          "variants": { "count": 5, "drivenBy": "style" },
+          "states": ["base", "weathered", "cracked", "broken"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "broken", "debris": ["potsherd", "soil_spill"] },
+          "light": null,
+          "content": { "axis": "season", "states": ["blooming", "full_green", "empty", "withered", "snow_capped"] },
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Fired-clay half-pot bracketed to the wall between windows; biome bloom reskin as above. Cold biomes frost-crack the terracotta (cracked default); desert=glazed-tile pot variant; mystic=rune-glazed.",
+          "notes": "Same season-content vessel rule as the timber box, but fired clay so it gains a 'cracked' intermediate damage state before 'broken'. Rigid → static, no interact."
+        }
+      ]
+    },
+    {
+      "id": "d3_wall_brackets",
+      "label": "Wall Brackets",
+      "field": "D3",
+      "placement": {
+        "plane": "facade",
+        "anchor": "above_door | between_windows | wall_corner",
+        "method": "socket_prop",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:grassland; any building that hosts a hanging sign or wall lantern; a bracket is placed as the MOUNT whenever a swinging_trade_sign or hanging lantern socket is chosen (composition support)",
+        "avoid": ["windows", "door_path (swing arc clearance)"],
+        "chanceOrDensity": "1 per hanging-sign or hanging-lantern socket (paired with the child object)"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "wrought_iron_bracket",
+          "label": "Wrought-Iron Mounting Bracket",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 64, "worldSizeW": 1, "worldSizeH": 1, "fit": "fixed" },
+          "variants": { "count": 5, "drivenBy": "style" },
+          "states": ["base", "rusted"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": { "holds": ["d3_hanging_signs", "d3_wall_lanterns_lighting"], "slots": ["hook_eye"] },
+          "coverage": null,
+          "biomeSkins": "Iron scrollwork; rusted climate-default in wet biomes (swamp, river, ocean), pristine in arid, verdigris-copper in salt-coastal, mystic=etched-rune iron (faint emissive), volcanic=blackened forged. Universal — brackets exist anywhere smithing does.",
+          "notes": "attach component: this bracket is a COMPOSITE host — holds a swinging_trade_sign or a hanging lantern in its hook_eye slot. The child (sign/lantern) is a SEPARATE object with its own destructible/light; the bracket itself is rigid wrought iron (static, not destructible — honest absence of a fragile broken_state). This realises the design-doc bracket→lantern composition example."
+        },
+        {
+          "id": "carved_timber_bracket",
+          "label": "Carved Timber Corbel Bracket",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 64, "worldSizeW": 1, "worldSizeH": 1, "fit": "fixed" },
+          "variants": { "count": 4, "drivenBy": "style" },
+          "states": ["base", "weathered", "broken"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "broken", "debris": ["wood_chunk", "iron_pin"] },
+          "light": null,
+          "content": null,
+          "attach": { "holds": ["d3_hanging_signs"], "slots": ["hook_eye"] },
+          "coverage": null,
+          "biomeSkins": "Carved corbel matching the biome wood family; dense_forest=mossy default, desert=sun-cracked, mystic=rune-carved. Lighter-duty than iron — holds signs but not heavy lanterns (slots omit lantern).",
+          "notes": "attach.holds is narrower than the iron bracket (signs only — a wooden corbel won't carry a heavy lit lantern safely). Unlike the iron bracket this timber one IS destructible (wood splits), so it carries broken_state + debris."
+        }
+      ]
+    },
+    {
+      "id": "d3_door_furniture",
+      "label": "Door Furniture",
+      "field": "D3",
+      "placement": {
+        "plane": "facade",
+        "anchor": "on_door | door_jamb",
+        "method": "socket_prop",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:grassland; any building with a door; socket=on_door (knocker/handle centred) or door_jamb (nameplate); knockers/nameplates skew to civic, guild, inn, wealthy roles; handles universal",
+        "avoid": ["door_path travel (mounted ON the leaf, moves with it)"],
+        "chanceOrDensity": "handle ~0.8 of doors; knocker ~0.3 (formal frontages); nameplate ~0.2 (named establishments)"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "door_knocker",
+          "label": "Iron Door Knocker",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 64, "worldSizeW": 1, "worldSizeH": 1, "fit": "fixed" },
+          "variants": { "count": 6, "drivenBy": "style" },
+          "states": ["base", "rusted", "polished"],
+          "anim": ["static"],
+          "interact": { "verb": "momentary", "motion": "lift_and_drop ring (one-shot)", "emits": "knock_sound event (audible knock; no resource)" },
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Knocker device shape varies by culture (ring, lion-head, hand-of-fatima); rusted in wet biomes, polished on wealthy frontages, mystic=glyph knocker (faint emissive), volcanic=obsidian-faced. Universal.",
+          "notes": "interact.verb=momentary — a ONE-SHOT action (the calibration rule: momentary = knocker/bell-pull), emits a knock_sound event and returns to rest, unlike toggle (persistent state) or open_close (constrained travel). NOT destructible (solid iron, no honest broken_state). Static body — only the momentary action animates."
+        },
+        {
+          "id": "door_handle_latch",
+          "label": "Door Handle & Latch",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 64, "worldSizeW": 1, "worldSizeH": 1, "fit": "fixed" },
+          "variants": { "count": 5, "drivenBy": "material" },
+          "states": ["base", "rusted", "polished"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Iron/brass/bronze handle by settlement wealth; rusted in wet biomes, polished on wealthy frontages. mystic=rune-etched, volcanic=blackened iron. Universal.",
+          "notes": "NO interact verb of its OWN: the latch is the visual affordance of the building's door (the door's own open_close lives on the base building, not on this dressing prop). It is decorative/identifying dressing only. Static, not destructible (solid hardware)."
+        },
+        {
+          "id": "door_nameplate",
+          "label": "Engraved Nameplate",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 64, "worldSizeW": 1, "worldSizeH": 1, "fit": "fixed" },
+          "variants": { "count": 5, "drivenBy": "role-glyph" },
+          "states": ["base", "weathered", "tarnished"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Brass/slate/carved-wood plate by biome material family; role-glyph engraves the establishment glyph (guild crest, family sigil). mystic=glowing engraved runes (emissive). Skews to named establishments — drops on anonymous huts.",
+          "notes": "Identifying plaque beside/on the door; read, not operated → no interact. role-glyph variant carries the establishment identity (feeds D7 identity-kit). Static, non-destructible (small fixed plate, honest absence of break/light)."
+        }
+      ]
+    },
+    {
+      "id": "d3_banners_bunting",
+      "label": "Banners & Bunting",
+      "field": "D3",
+      "placement": {
+        "plane": "facade",
+        "anchor": "above_door | between_windows | wall_corner_to_corner",
+        "method": "socket_prop",
+        "fitDefault": "span"
+      },
+      "application": {
+        "when": "biome:grassland; building_role in {guildhall, inn, shrine, market_stall, town_hall} OR festival/celebration settlement state; socket=facade-wide hang or above_door; civic/festive frontage",
+        "avoid": ["door_path", "windows (drape over wall fields only)"],
+        "chanceOrDensity": "0.5 on civic/guild frontage; festival D7 raises across a whole street"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "heraldic_banner",
+          "label": "Hanging Heraldic Banner",
+          "source": "hybrid",
+          "codeEffect": ["shader-sway", "shadow"],
+          "scale": { "nativePx": 128, "worldSizeW": 1, "worldSizeH": 2, "fit": "fixed" },
+          "variants": { "count": 6, "drivenBy": "role-glyph" },
+          "states": ["base", "sun_faded", "tattered"],
+          "anim": ["wind_sway"],
+          "interact": null,
+          "destructible": { "breakable": true, "broken_state": "tattered", "debris": ["cloth_scrap"] },
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "role-glyph carries the guild/house/shrine device and tincture; per biome the cloth host shifts (felt in cold biomes with snow_cap fold, light silk in tropical, oiled canvas coastal). sun_faded climate-default in harsh-sun biomes; mystic=enchanted shimmer banner (emissive). Drops in roleless wilderness huts.",
+          "notes": "Long vertical hanging cloth → SUSPENDED → wind_sway (the suspension rule). Hybrid: PixelLab cloth sprite + code shader-sway. Destructible (fabric) → tatters. role-glyph makes it a primary identity carrier for D7."
+        },
+        {
+          "id": "triangle_bunting",
+          "label": "Triangle Pennant Bunting",
+          "source": "hybrid",
+          "codeEffect": ["spline-assembly", "shader-sway", "shadow"],
+          "scale": { "nativePx": 64, "worldSizeW": 3, "worldSizeH": 1, "fit": "tile-along" },
+          "variants": { "count": 5, "drivenBy": "style" },
+          "states": ["base", "sun_faded", "tattered"],
+          "anim": ["wind_sway"],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": null,
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Festive triangle pennants strung along the facade; colour palette per culture; cold biomes get heavier felt pennants, mystic=glowing pennants (emissive). Festival/celebration D7-gated; drops on austere/abandoned roles.",
+          "notes": "Strung between sockets → spline-assembly lays the catenary line (tile-along, repeating the pennant kit along the run); SUSPENDED cloth → wind_sway. Not individually destructible (a strung festoon, degrades as a whole via the sun_faded/tattered states)."
+        }
+      ]
+    },
+    {
+      "id": "d3_wreaths_garlands",
+      "label": "Wreaths & Garlands",
+      "field": "D3",
+      "placement": {
+        "plane": "facade",
+        "anchor": "on_door | above_door | between_windows | wall_corner_to_corner",
+        "method": "socket_prop",
+        "fitDefault": "fixed"
+      },
+      "application": {
+        "when": "biome:grassland; building_role in {dwelling, inn, shrine, cottage} AND (inhabited/maintained OR festival/seasonal celebration); socket=on_door (wreath) or facade-wide hang (garland)",
+        "avoid": ["abandoned-role buildings", "windows (garland drapes wall/lintel only)"],
+        "chanceOrDensity": "0.3 of inhabited dwelling doors; festival/season D7 raises garlands across frontages"
+      },
+      "biomeApplicability": "universal",
+      "objects": [
+        {
+          "id": "door_wreath",
+          "label": "Foliage Door Wreath",
+          "source": "pixellab",
+          "codeEffect": ["shadow"],
+          "scale": { "nativePx": 64, "worldSizeW": 1, "worldSizeH": 1, "fit": "fixed" },
+          "variants": { "count": 6, "drivenBy": "style" },
+          "states": ["base", "withered", "dried"],
+          "anim": ["static"],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": { "axis": "season", "states": ["fresh", "blooming", "dried", "snow_frosted"] },
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Foliage reskins to the biome bloom/flora catalog (grassland=wheat-and-wildflower, forest=evergreen, desert=dried-grass-and-succulent, tropical=palm-and-orchid, arctic/tundra=snow_frosted default, mystic=glowing-bloom wreath with faint emissive, volcanic=ash-resilient red). snow_frosted is the cold-biome climate-default content state.",
+          "notes": "content.axis=season (fresh/blooming/dried/snow_frosted) — a seasonal living-foliage axis, orthogonal to nothing else here. Mounted FLAT on the door leaf (not suspended/dangling) → static, NO wind_sway. Not destructible (foliage withers via content states, not a break delta)."
+        },
+        {
+          "id": "festoon_garland",
+          "label": "Draped Festoon Garland",
+          "source": "hybrid",
+          "codeEffect": ["spline-assembly", "shader-sway", "shadow"],
+          "scale": { "nativePx": 64, "worldSizeW": 3, "worldSizeH": 1, "fit": "tile-along" },
+          "variants": { "count": 5, "drivenBy": "style" },
+          "states": ["base", "withered", "dried"],
+          "anim": ["wind_sway"],
+          "interact": null,
+          "destructible": null,
+          "light": null,
+          "content": { "axis": "season", "states": ["fresh", "blooming", "dried", "snow_frosted"] },
+          "attach": null,
+          "coverage": null,
+          "biomeSkins": "Draped foliage swag strung between sockets; biome bloom reskin as the wreath; festival/season D7-gated; mystic=glowing garland (emissive), cold biomes snow_frosted default. Drops in austere/abandoned roles.",
+          "notes": "Draped/strung between two sockets → spline-assembly lays the catenary swag (tile-along), and being SUSPENDED → wind_sway (unlike the flat door_wreath which is mounted rigid). content.season axis tracks the living foliage. Not break-destructible (degrades via content states)."
+        }
+      ]
+    }
+  ],
+  "crossBiomeNotes": "D3 wall attachments are socket-anchored props that paint into the building silhouette at the flat baseline depth (mechanism B) and inherit GL lighting/CRT/day-night for free; lit and strung pieces add emissive/particle into the GL lighting pass (never a 2D overlay). The grassland section is authored concrete; the other 20 biomes are reached by biomeSkins, NOT new categories: (1) MATERIAL-HOST SWAP — timber/iron/cloth hosts follow each biome's wall-material wood/stone/metal family (the building-materials.json hosts), so a swinging sign becomes carved-pine in forest, slate in fieldstone biomes, driftwood-grey on the coast. (2) CLIMATE-DEFAULT STATE — cold biomes (arctic, tundra, taiga, mountains) default cloth/foliage to snow_capped/snow_frosted and frost glass; wet biomes (swamp, river, ocean, deep_ocean) default iron to rusted and cloth to mildew/paint_faded; arid biomes (desert, savanna, steppe) default cloth/paint to sun_faded and bias louvred shutters over solid. (3) FLORA-RESKIN — flower boxes, wreaths and garlands repaint their planted content to each biome's bloom catalog. (4) LIT-MULTIPLIER — dark biomes (dense_forest, swamp, volcanic-night, mystic) raise wall-lantern intensity/radius because lanterns dominate their light budget. (5) MAGICAL VARIANTS — mystic (and volcanic) promote certain static props to emissive (rune signs, glowing wreaths, witchlight festoons, cold-blue flames). (6) DROP CONDITIONS — commercial/festive categories (awnings, bunting, festival lights, garlands) drop on roleless wilderness and abandoned buildings; treeless biomes drop wood-slat awnings/timber brackets in favour of cloth/iron. Affordance rule discipline held throughout: wind_sway ONLY on suspended cloth/strung/hanging pieces (cloth awnings, hanging signs, banners, bunting, garlands) and NOT on rigid mounts (wood-slat awnings, projecting/iron signs, shutters, brackets, flower boxes, door furniture, flat door wreaths); light is a full component (color/radius/intensity/diurnal/flicker, body-sprite + GL emissive) only on actual light sources, never a lit:bool; interact verbs are precise — open_close for the constrained shutter hinge, toggle for the diurnal lantern on/off, momentary for the one-shot knocker, and null where a prop is merely read or where the verb belongs to the base building (door handle); content uses the season/fill axis for vessels and living foliage orthogonal to wear; attach makes the wall brackets composite hosts holding signs/lanterns; no coverage component appears because D3 props are discrete sockets, not D0–D2 surfaces."
+}
