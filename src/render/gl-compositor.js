@@ -79,6 +79,20 @@ void main() {
   outColor = vec4(0.6, 0.3, 0.3, 1.0);      // reaches colour only when colourMask is on (debug)
 }`;
 
+// Building COLOUR+DEPTH pass: same geometry-z depth as DEPTHWRITE, but writes the building's real
+// premultiplied texel colour (colorMask on, blend on). One draw per near building, BEFORE the sprite
+// batch → the player sprite depth-tests against each building per-pixel (no behind/front flip, no pop).
+var COLORDEPTH_FRAG_SRC = `#version 300 es
+precision highp float;
+in vec2 vUV;
+uniform sampler2D uTex;
+out vec4 outColor;
+void main() {
+  vec4 texel = texture(uTex, vUV);
+  if (texel.a < 0.5) discard;   // outside the building silhouette → leave depth far
+  outColor = texel;             // premultiplied colour (uploaded with UNPACK_PREMULTIPLY_ALPHA)
+}`;
+
 // --- Stage 2: instanced sprite pipeline (F2 small flora) ---
 // Sprites live in a runtime shelf-packed atlas. Each instance replicates the
 // 2D path's pivot math: translate(sx, sy + halfDraw); rotate(a); drawImage at
@@ -1147,6 +1161,65 @@ export class GLCompositor {
     gl.colorMask(true, true, true, true);
     gl.depthFunc(gl.LEQUAL);
     gl.disable(gl.DEPTH_TEST);
+    gl.bindVertexArray(null);
+  }
+
+  // Draw one building's TEXTURED silhouette into the scene FBO with BOTH colour AND per-object depth at
+  // its south-baseline z (uDepthZ). Like writeBuildingDepth but colorMask ON + premultiplied blend, so the
+  // building's real pixels paint (inheriting the present pass's lighting/day-night/CRT) AND sit at a real
+  // depth the player sprite tests against per-pixel. Call AFTER the chunk blit, BEFORE the sprite batch,
+  // farthest-first (depthFunc LESS so the nearer building wins where silhouettes overlap).
+  drawBuildingColorDepth(bitmap, depthZ) {
+    if (!this.ok || !this.sceneActive || !bitmap || this.colorDepthOk === false) return;
+    var gl = this.gl;
+    if (!this.colorDepthProgram) {
+      var prog = this._buildProgram(DEPTHWRITE_VERT_SRC, COLORDEPTH_FRAG_SRC);
+      if (!prog) { this.colorDepthOk = false; return; }
+      this.colorDepthProgram = prog;
+      this.cdUViewport = gl.getUniformLocation(prog, 'uViewport');
+      this.cdUPos = gl.getUniformLocation(prog, 'uPos');
+      this.cdUSize = gl.getUniformLocation(prog, 'uSize');
+      this.cdUTex = gl.getUniformLocation(prog, 'uTex');
+      this.cdUDepthZ = gl.getUniformLocation(prog, 'uDepthZ');
+      this.colorDepthVao = gl.createVertexArray();
+      gl.bindVertexArray(this.colorDepthVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.unitVbo);
+      var cloc = gl.getAttribLocation(prog, 'aUnit');
+      gl.enableVertexAttribArray(cloc);
+      gl.vertexAttribPointer(cloc, 2, gl.FLOAT, false, 0, 0);
+      gl.bindVertexArray(null);
+      this._colorDepthTex = gl.createTexture();
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.sceneFbo);
+    gl.viewport(0, 0, this._artW, this._artH);
+    gl.useProgram(this.colorDepthProgram);
+    gl.bindVertexArray(this.colorDepthVao);
+    gl.uniform2f(this.cdUViewport, this._artW, this._artH);
+    gl.uniform2f(this.cdUPos, 0, 0);
+    gl.uniform2f(this.cdUSize, this._artW, this._artH);
+    gl.uniform1f(this.cdUDepthZ, depthZ);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this._colorDepthTex);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);  // premultiplied for ONE/ONE_MINUS_SRC_ALPHA
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.uniform1i(this.cdUTex, 0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LESS);       // nearer building (smaller z) wins where silhouettes overlap
+    gl.depthMask(true);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.colorMask(true, true, true, true);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    // Restore defaults (present is 2D; the sprite batch manages its own depth test).
+    gl.disable(gl.BLEND);
+    gl.depthFunc(gl.LEQUAL);
+    gl.disable(gl.DEPTH_TEST);
+    gl.depthMask(true);
     gl.bindVertexArray(null);
   }
 
