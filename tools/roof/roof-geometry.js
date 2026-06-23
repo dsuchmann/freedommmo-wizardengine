@@ -159,13 +159,13 @@ export function buildRoofGrid(sections, opts = {}) {
     for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
       const k = idx(i, j); if (fp[k]) continue;
       // nearest footprint tile (small search within overhang ring)
-      let best = null, bestD = 1e9, bestJ = -1;
+      let best = null, bestD = 1e9, bestJ = -1, bestI = -1;
       for (let dj = -ovh; dj <= ovh; dj++) for (let di = -ovh; di <= ovh; di++) {
         const ni = i + di, nj = j + dj;
         if (ni < 0 || nj < 0 || ni >= W || nj >= H) continue;
         if (!fp[idx(ni, nj)]) continue;
         const dd = Math.hypot(di, dj);
-        if (dd < bestD) { bestD = dd; best = idx(ni, nj); bestJ = nj; }
+        if (dd < bestD) { bestD = dd; best = idx(ni, nj); bestJ = nj; bestI = ni; }
       }
       if (best != null && bestD <= ovh + 0.5) {
         // Skip NORTH-side overhang (nearest footprint tile is to the SOUTH): a north
@@ -173,10 +173,13 @@ export function buildRoofGrid(sections, opts = {}) {
         if (opts.noNorthOverhang && bestJ > j) continue;
         // Skip SOUTH-side overhang (nearest footprint tile is to the NORTH): in the flat
         // top-down game projection a south overhang ring drapes ~1 tile DOWN over the
-        // visible south wall, hiding the foundation/door/window. Suppressing it lets the
-        // south eave terminate AT the footprint edge (= the wall top), so the full south
-        // wall stays visible below the roof. E/W overhang is kept for the flared look.
+        // visible south wall. A SMALL south overhang reads as a real front eave; suppress
+        // only when noSouthOverhang is set.
         if (opts.noSouthOverhang && bestJ < j) continue;
+        // Skip E/W-side overhang (nearest footprint tile is to the E or W): the flared side
+        // overhang made the roof ~1 tile wider than the walls ("cardboard" sides). Suppress it
+        // so the E/W eaves terminate at the wall edge while the south front eave stays.
+        if (opts.noEastWestOverhang && bestI !== i) continue;
         isOverhang[k] = 1;
         height[k] = height[best] - droop * bestD;
       }

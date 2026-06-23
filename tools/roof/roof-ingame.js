@@ -93,19 +93,15 @@ export function resolveForBuilding(b, biomeOverride) {
   // keep the rules' overhang (E/W/S eave flare), but NO north overhang (it would poke
   // past the north wall into the building behind).
   const R = resolveConfig(roof, { sections: fp.sections });
-  R.geom.noNorthOverhang = true;
-  // ROOF-REVEAL (user's #1): the roof must NOT hide the south wall. In the flat top-down
-  // game projection the SOUTH overhang ring drapes ~1.1 tiles DOWN over the visible south
-  // wall — covering the foundation/door/window. Suppress the south overhang so the south
-  // eave terminates AT the footprint edge (= the wall top), revealing the full 4-tile
-  // south wall + cap below the roof. The E/W overhang is KEPT (flared lip), so the roof
-  // still reads as a real overhang from the sides, not an inset flat cut. North is already
-  // excluded (noNorthOverhang) so it can't poke into the neighbour behind.
-  R.geom.noSouthOverhang = true;
-  // SMALL downward droop on the remaining (E/W) overhang ring so its eave reads as a real
-  // flared lip just below the wall-top plane. Kept small (0.18): too much droop projects
-  // the overhang DOWN behind the wall and the corner columns poke up past it (inset look).
-  R.geom.overhangDroop = 0.18;
+  R.geom.noNorthOverhang = true;   // a north eave would poke past the north wall into the neighbour behind.
+  // ROOF SIDES vs FRONT (user 2026-06-23): the kept E/W flare made the roof ~1 tile wider than the walls
+  // ("cardboard sides"), and the front had no eave. Invert it: SUPPRESS the E/W overhang so the roof
+  // terminates at the wall edge on the sides, and ALLOW a small SOUTH (front) overhang so the roof reads
+  // as a real eave hanging over the front. Kept small via overhangDroop so it laps the wall-plate without
+  // hiding the door/window below.
+  R.geom.noSouthOverhang = false;       // small front eave over the south wall top
+  R.geom.noEastWestOverhang = true;     // flush E/W eaves (no extra-tile flare on the sides)
+  R.geom.overhangDroop = 0.30;          // a touch more droop so the small front eave reads as an overhang
   const grid = buildRoofGrid(R.sections, R.geom);
   // shift the heightmap so the perimeter EAVE sits at h=0 (the lifted wall-top plane),
   // so the roof's back edge is flush with the north wall top, not floating above it.
