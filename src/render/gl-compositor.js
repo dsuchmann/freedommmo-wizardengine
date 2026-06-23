@@ -193,6 +193,10 @@ in float vDiff;
 uniform sampler2D uAtlas;
 uniform float uShadowAlpha; // global strength (sun-height driven)
 uniform float uAtlasTexel;  // 1 / atlas size
+uniform sampler2D uBuildingHeightMask;
+uniform vec2 uHMViewport;   // the draw's viewport in px (FBO _artW/_artH if sceneActive, else css)
+uniform vec2 uHMDims;       // mask.w, mask.h (CSS px the grid covers)
+uniform vec4 uHMGrid;       // x=cell(8) y=cols z=rows w=on(>0.5)
 out vec4 outColor;
 void main() {
   // 3-tap diagonal blur of atlas alpha (was 5-tap) — radius scaled by per-instance
@@ -205,6 +209,13 @@ void main() {
   // crisp large silhouettes keep a mild edge; diffuse flora stays soft
   float crisp = smoothstep(0.25, 0.75, sa);
   sa = mix(crisp, sa, clamp(vDiff * 2.0, 0.0, 1.0));
+  if (uHMGrid.w > 0.5) {
+    vec2 fragScreen = vec2(gl_FragCoord.x, uHMViewport.y - gl_FragCoord.y);  // bottom-left -> top-left
+    vec2 screenPx   = fragScreen * (uHMDims / uHMViewport);                  // FBO texels -> CSS screen px
+    vec2 cell       = floor(screenPx / uHMGrid.x);
+    vec2 uv         = (cell + 0.5) / vec2(uHMGrid.y, uHMGrid.z);
+    if (texture(uBuildingHeightMask, uv).r * 255.0 > 0.5) discard;          // any building (>=1 storey) beats ground-level grass
+  }
   float a = sa * vAlpha * uShadowAlpha * (1.0 - vH * 0.55);
   outColor = vec4(vec3(0.035, 0.045, 0.085) * a, a); // premultiplied dark blue-black
 }`;
@@ -784,6 +795,13 @@ export class GLCompositor {
       this._waveOn = false;
       this._waveTW = 0;
       this._waveTH = 0;
+      this.heightMaskTex = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, this.heightMaskTex);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);  // discrete 8px cells, binary occlusion — never blur storeys
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      this._hmOn = false; this._hmTW = 0; this._hmTH = 0;
       this.presentVao = gl.createVertexArray();
       gl.bindVertexArray(this.presentVao);
       gl.bindBuffer(gl.ARRAY_BUFFER, this.unitVbo);
@@ -855,6 +873,25 @@ export class GLCompositor {
   clearWaveField() {
     this._waveOn = false;
   }
+
+  setHeightMask(mask) {
+    if (!this.ok || !this.heightMaskTex || !mask || !mask.data) { this._hmOn = false; return; }
+    var gl = this.gl;
+    gl.activeTexture(gl.TEXTURE5);
+    gl.bindTexture(gl.TEXTURE_2D, this.heightMaskTex);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);  // R8 rows are cols bytes wide
+    if (mask.cols !== this._hmTW || mask.rows !== this._hmTH) {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, mask.cols, mask.rows, 0, gl.RED, gl.UNSIGNED_BYTE, mask.data);
+      this._hmTW = mask.cols; this._hmTH = mask.rows;
+    } else {
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, mask.cols, mask.rows, gl.RED, gl.UNSIGNED_BYTE, mask.data);
+    }
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
+    gl.activeTexture(gl.TEXTURE0);
+    this._hmOn = true;
+    this._hmW = mask.w; this._hmH = mask.h; this._hmCols = mask.cols; this._hmRows = mask.rows; this._hmCell = mask.cell;
+  }
+  clearHeightMask() { this._hmOn = false; }
 
   // Atmosphere field: three per-tile RGBA layers (see atmosphere-pass.js).
   // Same origin convention as setWaveField.
@@ -1297,6 +1334,10 @@ export class GLCompositor {
       this.shUShadowVec = gl.getUniformLocation(sprog, 'uShadowVec');
       this.shUShadowAlpha = gl.getUniformLocation(sprog, 'uShadowAlpha');
       this.shUAtlasTexel = gl.getUniformLocation(sprog, 'uAtlasTexel');
+      this.shUHM = gl.getUniformLocation(sprog, 'uBuildingHeightMask');
+      this.shUHMViewport = gl.getUniformLocation(sprog, 'uHMViewport');
+      this.shUHMDims = gl.getUniformLocation(sprog, 'uHMDims');
+      this.shUHMGrid = gl.getUniformLocation(sprog, 'uHMGrid');
       this.shadowVao = gl.createVertexArray();
       gl.bindVertexArray(this.shadowVao);
       gl.bindBuffer(gl.ARRAY_BUFFER, this.unitVbo);
@@ -1379,6 +1420,10 @@ export class GLCompositor {
     this.asUShadowVec = gl.getUniformLocation(sprog, 'uShadowVec');
     this.asUShadowAlpha = gl.getUniformLocation(sprog, 'uShadowAlpha');
     this.asUAtlasTexel = gl.getUniformLocation(sprog, 'uAtlasTexel');
+    this.asUHM = gl.getUniformLocation(sprog, 'uBuildingHeightMask');
+    this.asUHMViewport = gl.getUniformLocation(sprog, 'uHMViewport');
+    this.asUHMDims = gl.getUniformLocation(sprog, 'uHMDims');
+    this.asUHMGrid = gl.getUniformLocation(sprog, 'uHMGrid');
     this.animShadowVbo = gl.createBuffer();
     this._animShadowCapBytes = 0;
     var sh = this._buildAnimVao(sprog, this.animShadowVbo);
@@ -1477,6 +1522,15 @@ export class GLCompositor {
     gl.disable(gl.BLEND);
   }
 
+  _bindHeightMaskUniforms(uHM, uViewport, uDims, uGrid, vpx, vpy) {
+    var gl = this.gl;
+    if (this._hmOn) {
+      gl.activeTexture(gl.TEXTURE5); gl.bindTexture(gl.TEXTURE_2D, this.heightMaskTex); gl.uniform1i(uHM, 5);
+      gl.uniform2f(uViewport, vpx, vpy); gl.uniform2f(uDims, this._hmW, this._hmH);
+      gl.uniform4f(uGrid, this._hmCell, this._hmCols, this._hmRows, 1.0); gl.activeTexture(gl.TEXTURE0);
+    } else { gl.uniform4f(uGrid, 8.0, 1.0, 1.0, 0.0); }
+  }
+
   drawAnimShadows(start, count, cssW, cssH, cam, shadowVec, strength, timeMs) {
     if (!this.animOk || count === 0) return;
     var gl = this.gl;
@@ -1493,6 +1547,8 @@ export class GLCompositor {
     gl.uniform2f(this.asUShadowVec, shadowVec.x, shadowVec.y);
     gl.uniform1f(this.asUShadowAlpha, strength);
     gl.uniform1f(this.asUAtlasTexel, 1 / (this.atlasSize || 1));
+    this._bindHeightMaskUniforms(this.asUHM, this.asUHMViewport, this.asUHMDims, this.asUHMGrid,
+      this.sceneActive ? this._artW : cssW, this.sceneActive ? this._artH : cssH);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     try {
@@ -1642,6 +1698,8 @@ export class GLCompositor {
     gl.uniform2f(this.shUShadowVec, shadowVec.x, shadowVec.y);
     gl.uniform1f(this.shUShadowAlpha, strength);
     gl.uniform1f(this.shUAtlasTexel, 1 / (this.atlasSize || 1));
+    this._bindHeightMaskUniforms(this.shUHM, this.shUHMViewport, this.shUHMDims, this.shUHMGrid,
+      this.sceneActive ? this._artW : cssW, this.sceneActive ? this._artH : cssH);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.shadowVbo);
     var bytes = count * SPRITE_STRIDE;
     if (bytes > this._shadowCapacityBytes) {
@@ -1776,6 +1834,8 @@ export class GLCompositor {
     gl.uniform2f(this.shUShadowVec, shadowVec.x, shadowVec.y);
     gl.uniform1f(this.shUShadowAlpha, strength);
     gl.uniform1f(this.shUAtlasTexel, 1 / (this.atlasSize || 1));
+    this._bindHeightMaskUniforms(this.shUHM, this.shUHMViewport, this.shUHMDims, this.shUHMGrid,
+      this.sceneActive ? this._artW : cssW, this.sceneActive ? this._artH : cssH);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     try {

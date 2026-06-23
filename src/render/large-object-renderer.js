@@ -6,6 +6,7 @@ import { WORLD } from '../core/constants.js';
 import { rand2 } from '../core/random.js';
 import { LG_BIOME_OBJECTS_LIST, LG_BASE_PATH, LG_VARIANT_COUNT } from './wang-image-list.js';
 import { floorDiv } from '../world/chunk.js';
+import { getBuildingHeightMask, sampleHeight } from './building-shadow.js';
 
 // Water biomes don't get large objects
 var WATER_BIOMES = { ocean: 1, deep_ocean: 1, shallow_water: 1, river: 1, lake: 1, stream: 1 };
@@ -309,6 +310,7 @@ export function drawLargeObjects(ctx, chunkStore, player, camera, w, h, chunkGri
   // Pixel art must stay crisp — no smoothing
   ctx.imageSmoothingEnabled = false;
 
+  var _hmask = getBuildingHeightMask();
   for (var i = 0; i < drawables.length; i++) {
     var d = drawables[i];
 
@@ -321,12 +323,14 @@ export function drawLargeObjects(ctx, chunkStore, player, camera, w, h, chunkGri
     var dy = Math.round(d.sy);
     var ds = Math.round(d.drawSize);
 
-    // Shadow
-    ctx.globalAlpha = 0.18;
-    ctx.fillStyle = '#2a2e2b';
-    ctx.beginPath();
-    ctx.ellipse(dx, dy, ds * 0.30, ds * 0.08, 0, 0, Math.PI * 2);
-    ctx.fill();
+    // Shadow — suppressed where a taller building silhouette covers this ground point (grass/tree = ground-level).
+    if (!(sampleHeight(_hmask, dx, dy) > 0)) {
+      ctx.globalAlpha = 0.18;
+      ctx.fillStyle = '#2a2e2b';
+      ctx.beginPath();
+      ctx.ellipse(dx, dy, ds * 0.30, ds * 0.08, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     // Sprite (square, anchored at bottom-center)
     ctx.globalAlpha = 1.0;

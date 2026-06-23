@@ -11,7 +11,7 @@ import { biomeVariantFrameId } from '../assets/variant-selector.js';
 import { drawElevationOverlay } from './elevation-overlay.js';
 import { drawSimDebugOverlay } from './sim-debug-overlay.js';
 import { updateBuildingClaims, drawBuildingFloors, drawBuildingWalls, getCachedBuildings } from './building-renderer.js';
-import { drawBuildingShadows, buildBuildingShadowBitmap, updateBuildingHeightMask } from './building-shadow.js';
+import { drawBuildingShadows, buildBuildingShadowBitmap, updateBuildingHeightMask, getBuildingHeightMask } from './building-shadow.js';
 import { updateFloorViewTransform } from './floor-view.js';
 import { drawInteriorFloorWorld, drawInteriorWallsWorld, interiorLiftPx, updateInteriorLift } from './interior-renderer.js';
 import { buildInteriorSceneBitmap } from './interior-gl.js';
@@ -346,6 +346,7 @@ export class CanvasRenderer {
     // F2/GL flora suppression reads the SAME grid every frame — the shadow PIXELS are gated below,
     // but the mask is metadata and must always exist. Best-effort: never breaks the frame.
     try { updateBuildingHeightMask(getCachedBuildings(), camX, camY, tilePx, w, h); } catch (e) { /* mask best-effort */ }
+    if (glScene && this.glc) { try { this.glc.setHeightMask(getBuildingHeightMask()); } catch (e) {} }
 
     drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, h, performance.now() / 1000, weather ? weather.wind() : null, glOn, glScene ? sun : null);
     // Stash the world transform for the floor-view enter-click (screen → world tile).
