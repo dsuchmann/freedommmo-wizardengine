@@ -11,7 +11,7 @@ import { biomeVariantFrameId } from '../assets/variant-selector.js';
 import { drawElevationOverlay } from './elevation-overlay.js';
 import { drawSimDebugOverlay } from './sim-debug-overlay.js';
 import { updateBuildingClaims, drawBuildingFloors, drawBuildingWalls, getCachedBuildings } from './building-renderer.js';
-import { drawBuildingShadows } from './building-shadow.js';
+import { drawBuildingShadows, buildBuildingShadowBitmap, updateBuildingHeightMask } from './building-shadow.js';
 import { updateFloorViewTransform } from './floor-view.js';
 import { drawInteriorFloorWorld, drawInteriorWallsWorld, interiorLiftPx, updateInteriorLift } from './interior-renderer.js';
 import { buildInteriorSceneBitmap } from './interior-gl.js';
@@ -342,6 +342,11 @@ export class CanvasRenderer {
     // seaweed over the tiles a tall roof rises across (else water shimmers over the roof).
     updateBuildingClaims(camX, camY, tilePx, w, h);
 
+    // Build + publish the per-frame building HEIGHT MASK UNCONDITIONALLY (both GL and 2D paths) so
+    // F2/GL flora suppression reads the SAME grid every frame — the shadow PIXELS are gated below,
+    // but the mask is metadata and must always exist. Best-effort: never breaks the frame.
+    try { updateBuildingHeightMask(getCachedBuildings(), camX, camY, tilePx, w, h); } catch (e) { /* mask best-effort */ }
+
     drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, h, performance.now() / 1000, weather ? weather.wind() : null, glOn, glScene ? sun : null);
     // Stash the world transform for the floor-view enter-click (screen → world tile).
     updateFloorViewTransform(camX, camY, tilePx, w, h);
@@ -367,12 +372,16 @@ export class CanvasRenderer {
     // building shades a shorter neighbour's roof) and BEFORE the player/F2 sprites (so the player
     // stands ON the shadow). Reads the building set updateBuildingClaims() refreshed at :331 —
     // never re-resolves. Best-effort: never breaks the frame. Toggle: window._buildingShadows.
-    try {
-      const _bShadows = getCachedBuildings();
-      if (_bShadows && _bShadows.length && sun.isDaytime) {
-        drawBuildingShadows(ctx, _bShadows, camX, camY, tilePx, w, h, sun);
-      }
-    } catch (e) { /* shadows best-effort */ }
+    // 2D FALLBACK ONLY: in GL-scene mode the shadow is blitted INTO the scene FBO (under the wall
+    // pass below) so buildings occlude their own shadow — see the GL shadow blit before the wall pass.
+    if (!glScene) {
+      try {
+        const _bShadows = getCachedBuildings();
+        if (_bShadows && _bShadows.length && sun.isDaytime) {
+          drawBuildingShadows(ctx, _bShadows, camX, camY, tilePx, w, h, sun);
+        }
+      } catch (e) { /* shadows best-effort */ }
+    }
 
     // Wang debug overlay (toggle with D key)
     if (this.debugWang) {
@@ -494,6 +503,16 @@ export class CanvasRenderer {
         this.glc.setSpriteDepth(_refY, DEPTH_SCALE, _see);
         _depthActive = true;
       }
+    }
+
+    // Building GROUND SHADOWS into the GL scene FBO, UNDER the wall pass below — so each building's wall
+    // billboard composites OVER (and occludes) its own shadow. Blits COLOR only (no depth); the next pass
+    // (drawBuildingColorDepth) draws the opaque walls over it. The 2D drawBuildingShadows path is the !glScene fallback.
+    if (glScene && !_inside && renderOn('shadow') && (typeof window === 'undefined' || window._buildingShadows !== false) && sun && sun.isDaytime) {
+      try {
+        const _shadowBmp = buildBuildingShadowBitmap(nearDepthBuildings(getCachedBuildings(), camX, camY, tilePx, w, h), camX, camY, tilePx, w, h, sun);
+        if (_shadowBmp) this.glc.drawSceneOverlayBitmap(_shadowBmp);
+      } catch (e) { /* best-effort */ }
     }
 
     // UNIFIED PER-OBJECT BUILDING COLOUR+DEPTH (#12 fix — DEFAULT; opt out with window._buildingDepthColor

@@ -209,12 +209,18 @@ function update(dt) {
         _entryCellX = mx; _entryCellY = my;
       }
       const byTile = _entryByTile;
-      // SLICE 1 (doors unsolved — PixelLab door sprite + walk-in/out animation comes later):
-      // forgiving entry — stepping onto the building footprint puts you inside, so it's
-      // easy to get in. Door-gated entry + the walk-in animation are a future pass.
+      // DOOR-GATED ENTRY: you go inside only by stepping onto a building's DOOR tile (walking
+      // through the doorway) — brushing a side/edge footprint tile no longer activates the interior.
+      // This kills the "dark strip" at the west/east edge: that strip is the interior DIM layer
+      // showing in the thin uncovered perimeter band, which the old forgiving entry lit up the
+      // instant you touched the building's edge. Entering via the south doorway means the interior
+      // never activates while you're standing on an E/W edge, so the roof can stay flush (no E/W
+      // overhang needed to mask it). (Walk-in/out animation is still a future pass.)
       const b = byTile.get(ptx + ',' + pty);
       if (b && b.footprint && b.footprint.node) {
-        AI.enterAt(b);
+        const lx = ptx - b.x, ly = pty - b.y;
+        const onDoor = (b.footprint.doors || []).some(d => d.x === lx && d.y === ly);
+        if (onDoor) AI.enterAt(b);
       }
     } else {
       const ai = AI.getActiveInterior();

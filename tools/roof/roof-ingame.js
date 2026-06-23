@@ -33,6 +33,8 @@ export const ROOF_TUNING = {
   surfaceOnly: false,   // draw lightweight ridge/hip dressing + finial/dormer/chimney in-game
   gameFeatures: [], // DISABLED — finial/dormer/chimney rendered as ugly placeholder squares in-game; revisit with real chimney/dormer art later
   useBiomeTexture: true,// EXPERIMENT: skin the roof with the biome's ground/soil texture
+  overhangTiles: 0.2,   // SMALL UNIFORM eave overhang on every side, in TILES (~1/5 tile). Console-tunable
+                        // live via window._roofOverhang (e.g. 0.125 = 1/8 tile, 0.25 = 1/4 tile, 0 = flush).
 };
 
 const cache = new Map(); // `${b.x},${b.y}` -> { grid, material, renderCfg, roof }
@@ -93,15 +95,12 @@ export function resolveForBuilding(b, biomeOverride) {
   // keep the rules' overhang (E/W/S eave flare), but NO north overhang (it would poke
   // past the north wall into the building behind).
   const R = resolveConfig(roof, { sections: fp.sections });
-  R.geom.noNorthOverhang = true;   // a north eave would poke past the north wall into the neighbour behind.
-  // ROOF SIDES vs FRONT (user 2026-06-23): the kept E/W flare made the roof ~1 tile wider than the walls
-  // ("cardboard sides"), and the front had no eave. Invert it: SUPPRESS the E/W overhang so the roof
-  // terminates at the wall edge on the sides, and ALLOW a small SOUTH (front) overhang so the roof reads
-  // as a real eave hanging over the front. Kept small via overhangDroop so it laps the wall-plate without
-  // hiding the door/window below.
-  R.geom.noSouthOverhang = false;       // small front eave over the south wall top
-  R.geom.noEastWestOverhang = true;     // flush E/W eaves (no extra-tile flare on the sides)
-  R.geom.overhangDroop = 0.30;          // a touch more droop so the small front eave reads as an overhang
+  // OVERHANG (user 2026-06-23): generate the full 1-tile DROOPING eave ring on all sides (this drooped eave is
+  // what gives the roof its 3-D edge / dimension), then COMPRESS it in view-space to a small fraction of a tile
+  // (drawRoofForBuilding → ROOF_TUNING.overhangTiles). Keeps the drooped-eave dimension AND the true pitch (the
+  // footprint is never widened) while reading as just a slight overhang — no full-tile "cardboard" flare.
+  R.geom.overhang = 1;
+  R.geom.overhangDroop = 0.35;
   const grid = buildRoofGrid(R.sections, R.geom);
   // shift the heightmap so the perimeter EAVE sits at h=0 (the lifted wall-top plane),
   // so the roof's back edge is flush with the north wall top, not floating above it.
@@ -169,7 +168,10 @@ export function drawRoofForBuilding(ctx, b, camX, camY, tilePx, opts = {}) {
   const riseTiles = Math.min(ROOF_TUNING.maxRoofTiles, depthCapTiles);
   const hScale = Math.min(tilePx * ROOF_TUNING.heightScale,
     (riseTiles * tilePx) / Math.max(1, e.grid.maxHeight));
-  const view = makeGameView(b.x, b.y, camX, camY, tilePx, { wallLift, heightScale: hScale });
+  const bb = e.grid.bbox;
+  const ohTiles = (typeof window !== 'undefined' && typeof window._roofOverhang === 'number') ? window._roofOverhang : ROOF_TUNING.overhangTiles;
+  const view = makeGameView(b.x, b.y, camX, camY, tilePx, { wallLift, heightScale: hScale,
+    overhangTiles: ohTiles, fpX0: bb.x0, fpX1: bb.x0 + bb.w, fpY0: bb.y0, fpY1: bb.y0 + bb.h });
   // GAME-SAFE feature set: keep finial/dormer/chimney/ridge dressing (cheap, reads
   // already-classified roof roles), suppress crude turret/spire/buttress/walkdeck/
   // crenellation primitives (flagged crude — a house must not sprout a castle turret).

@@ -19,7 +19,6 @@
 
 import { WALL_CONFIG } from './wall-config.js';
 import { renderOn } from './building-render-flags.js';
-import { hasTileWall } from './building-tiles.js';
 
 // Per-story height in tiles — matches the exterior wall stack (WALL_CONFIG.wallHeight = 4).
 export const STORY_TILES = 4;
@@ -316,54 +315,45 @@ function drawHeightMaskDebug(ctx, mask) {
 }
 
 /**
- * Draw building shadows. Call AFTER terrain/water/roofs and BEFORE the player/F2 sprites
- * (canvas-renderer.js, just after drawRoofs). Best-effort: never throws.
- *
- * Also builds + publishes the per-frame HEIGHT MASK (getBuildingHeightMask() /
- * window._buildingHeightMask) — the shared primitive grass/GL shadows clip against so a short
- * object's shadow never draws over a taller building. See the shadow-height contract doc.
- *
- * Phase 1 = ground shadows: each building's footprint swept away from the sun. Only the WAKE
- * shows — the fill is clipped to EXCLUDE every footprint AND every TALLER building's silhouette,
- * so no shadow lies under a building nor paints across a taller neighbour's roof.
- * Phase 2 = drape: where a shadow reaches a neighbour, it climbs that neighbour's south façade,
- * but only as high as the CASTER is tall (a short building can't scale a tall wall).
- *
- * Debug toggles: window._buildingShadows=false hides all; window._buildingShadowDrape=false
- * disables the drape; window._buildingShadowScale tunes ground length;
- * window._buildingHeightMaskOn=false stops building the mask; window._buildingHeightMaskDebug
- * paints the mask as a heat overlay.
+ * Build + publish the per-frame HEIGHT MASK (getBuildingHeightMask() / window._buildingHeightMask)
+ * — the shared primitive grass/GL shadows clip against so a short object's shadow never draws over
+ * a taller building. See the shadow-height contract doc. Called UNCONDITIONALLY by canvas-renderer
+ * (both GL and 2D paths) before F2, so trees keep avoiding building footprints even when buildings
+ * are invisible. window._buildingHeightMaskOn=false stops building the mask.
  */
-export function drawBuildingShadows(ctx, buildings, camX, camY, tilePx, w, h, sun) {
-  if (!sun || !sun.isDaytime || !buildings || !buildings.length) return;
-  if (typeof window !== 'undefined' && window._buildingShadows === false) return;
+export function updateBuildingHeightMask(buildings, camX, camY, tilePx, w, h) {
+  if (typeof window !== 'undefined' && window._buildingHeightMaskOn === false) return;
+  _heightMask = buildHeightMask(buildings || [], camX, camY, tilePx, w, h);
+  if (typeof window !== 'undefined') window._buildingHeightMask = _heightMask;
+}
 
-  // Build + publish the height mask FIRST — F2/GL read it this same frame (canvas-renderer calls
-  // us before F2). It carries its transform; a stale/null mask means "no suppression" downstream.
-  if (!(typeof window !== 'undefined' && window._buildingHeightMaskOn === false)) {
-    _heightMask = buildHeightMask(buildings, camX, camY, tilePx, w, h);
-    if (typeof window !== 'undefined') window._buildingHeightMask = _heightMask;
-  }
-
-  // Building-assembly master switch: gate the shadow PIXELS but NOT the height mask above — F2/GL
-  // flora suppression reads that mask this same frame, so trees keep avoiding building footprints
-  // even while buildings are invisible. (The mask is metadata; the shadow is assembly.)
-  if (!renderOn('shadow')) return;
-
+/**
+ * The shared shadow PAINT pipeline (phase-1 ground + phase-2 drape). Renders into any 2D context
+ * (the live `ctx` in the 2D fallback, or an offscreen ctx for the GL blit). Returns true if it
+ * painted anything. Does NOT build the height mask and does NOT draw the mask-debug overlay — those
+ * are owned by updateBuildingHeightMask / the caller.
+ *
+ * Phase 1 = ground shadows: each building's footprint swept away from the sun. Only the WAKE shows —
+ * the fill is clipped to EXCLUDE every footprint AND every TALLER building's silhouette, so no shadow
+ * lies under a building nor paints across a taller neighbour's roof. Phase 2 = drape: where a shadow
+ * reaches a neighbour, it climbs that neighbour's south façade, but only as high as the CASTER is
+ * tall (a short building can't scale a tall wall).
+ */
+function _paintShadows(ctx, buildings, camX, camY, tilePx, w, h, sun) {
   const scale = resolveScale(typeof window !== 'undefined' ? window._buildingShadowScale : undefined);
   const drapeOn = !(typeof window !== 'undefined' && window._buildingShadowDrape === false);
   const dayNight = sun.ambient != null ? sun.ambient : 1;
   const alpha = BASE_ALPHA * dayNight;
-  if (alpha < 0.01) return; // deep night — nothing to draw
+  if (alpha < 0.01) return false; // deep night — nothing to draw
 
-  // Façade-block buildings carry their own baked grounding; the procedural footprint-projected hull
-  // doesn't match the sprite silhouette (reads as a stray grey blob). Keep them in the HEIGHT MASK
-  // above (flora-over-building suppression), but exclude them from the shadow projection here.
-  const shadowBuildings = buildings.filter((b) => !hasTileWall(b));
-  if (!shadowBuildings.length) return;
+  // ALL buildings with a real footprint cast a ground shadow — including tile-corpus grassland
+  // buildings (their projected footprint hull is correct). The old exclusion here was for the
+  // retired whole-building façade SPRITES, whose baked silhouette didn't match the procedural hull.
+  const shadowBuildings = buildings.filter((b) => b && b.footprint && b.footprint.boundingBox);
+  if (!shadowBuildings.length) return false;
 
   const hulls = computeHulls(shadowBuildings, sun, tilePx, camX, camY, scale);
-  if (!hulls.length) return;
+  if (!hulls.length) return false;
 
   const onScreen = (bb) => !(bb.maxX < 0 || bb.maxY < 0 || bb.minX > w || bb.minY > h);
   const visible = hulls.filter((c) => onScreen(c.bbox));
@@ -396,10 +386,7 @@ export function drawBuildingShadows(ctx, buildings, camX, camY, tilePx, w, h, su
       ]));
     }
   }
-  if (!merged.length && !capped.length && !drapePolys.length) {
-    if (typeof window !== 'undefined' && window._buildingHeightMaskDebug) drawHeightMaskDebug(ctx, _heightMask);
-    return;
-  }
+  if (!merged.length && !capped.length && !drapePolys.length) return false;
 
   ctx.save();
   ctx.imageSmoothingEnabled = false;
@@ -430,5 +417,58 @@ export function drawBuildingShadows(ctx, buildings, camX, camY, tilePx, w, h, su
   if (drapePolys.length) fillPolys(ctx, drapePolys);
 
   ctx.restore();
+  return true;
+}
+
+// Module-level cached offscreen canvas for the GL shadow bitmap — reallocated only when w/h change.
+let _shadowCanvas = null, _shadowCtx = null;
+
+/**
+ * Build a full-viewport offscreen canvas with the building ground shadows painted (STRAIGHT,
+ * non-premultiplied alpha — drawSceneOverlayBitmap re-premultiplies on upload, so do NOT
+ * pre-multiply here). Returns the canvas, or null when there is nothing to draw. The GL path blits
+ * this into the scene FBO BEFORE the wall pass, so each building's wall composites OVER its shadow.
+ */
+export function buildBuildingShadowBitmap(buildings, camX, camY, tilePx, w, h, sun) {
+  if (!sun || !sun.isDaytime || !buildings || !buildings.length) return null;
+  if (typeof window !== 'undefined' && window._buildingShadows === false) return null;
+  if (!renderOn('shadow')) return null;
+
+  if (!_shadowCanvas || _shadowCanvas.width !== w || _shadowCanvas.height !== h) {
+    if (typeof OffscreenCanvas !== 'undefined') {
+      _shadowCanvas = new OffscreenCanvas(w, h);
+    } else {
+      _shadowCanvas = document.createElement('canvas');
+      _shadowCanvas.width = w;
+      _shadowCanvas.height = h;
+    }
+    _shadowCtx = _shadowCanvas.getContext('2d');
+  }
+  _shadowCtx.clearRect(0, 0, w, h);
+  return _paintShadows(_shadowCtx, buildings, camX, camY, tilePx, w, h, sun) ? _shadowCanvas : null;
+}
+
+/**
+ * 2D FALLBACK ground-shadow draw (only when the GL scene is NOT active — canvas-renderer gates this
+ * on !glScene). Call AFTER terrain/water/roofs and BEFORE the player/F2 sprites. Best-effort: never
+ * throws. The height mask is built UNCONDITIONALLY by canvas-renderer via updateBuildingHeightMask —
+ * this no longer builds it.
+ *
+ * Debug toggles: window._buildingShadows=false hides all; window._buildingShadowDrape=false
+ * disables the drape; window._buildingShadowScale tunes ground length; window._buildingHeightMaskDebug
+ * paints the mask as a heat overlay.
+ */
+export function drawBuildingShadows(ctx, buildings, camX, camY, tilePx, w, h, sun) {
+  if (!sun || !sun.isDaytime || !buildings || !buildings.length) return;
+  if (typeof window !== 'undefined' && window._buildingShadows === false) return;
+
+  // Building-assembly master switch: gate the shadow PIXELS but NOT the height mask (built separately
+  // by updateBuildingHeightMask). Still paint the mask-debug overlay when toggled.
+  if (!renderOn('shadow')) {
+    if (typeof window !== 'undefined' && window._buildingHeightMaskDebug) drawHeightMaskDebug(ctx, _heightMask);
+    return;
+  }
+
+  _paintShadows(ctx, buildings, camX, camY, tilePx, w, h, sun);
   if (typeof window !== 'undefined' && window._buildingHeightMaskDebug) drawHeightMaskDebug(ctx, _heightMask);
 }
