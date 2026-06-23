@@ -10,7 +10,7 @@ import { loadImage, createCanvas, ImageData } from '@napi-rs/canvas';
 import fs from 'node:fs';
 
 const ALPHA_MIN = 24;
-const FOUND_TILES = +(process.env.FOUND_TILES || 0.7);  // foundation course height kept below the door base, in tiles
+const FOUND_TILES = +(process.env.FOUND_TILES || 0.4);  // foundation course height kept below the door base, in tiles
 
 const isGrass = (r, g, b) => g > 44 && g > r * 1.10 && g > b * 1.12 && (g - Math.max(r, b)) > 14;
 const op = (p, i) => p[i * 4 + 3] > ALPHA_MIN;
@@ -70,9 +70,10 @@ async function main() {
   // 3. foundation crop — door base = largest BROWN component in the center-lower region
   bb = bbox(p, W, H); if (!bb) { console.log('empty after clean ' + inp); return; }
   const brown = new Uint8Array(W * H);
-  for (let y = Math.round(bb.y0 + bb.h * 0.35); y <= bb.y1; y++) for (let x = Math.round(bb.x0 + bb.w * 0.30); x <= Math.round(bb.x0 + bb.w * 0.70); x++) {
+  const dyMax = Math.round(bb.y0 + bb.h * 0.80); // exclude the bottom ~20% (platform/grass) from door search
+  for (let y = Math.round(bb.y0 + bb.h * 0.35); y <= dyMax; y++) for (let x = Math.round(bb.x0 + bb.w * 0.32); x <= Math.round(bb.x0 + bb.w * 0.68); x++) {
     const i = y * W + x; if (!op(p, i)) continue; const r = p[i * 4], g = p[i * 4 + 1], b = p[i * 4 + 2];
-    if (r > 45 && r < 160 && r > g + 8 && g + 6 >= b) brown[i] = 1;
+    if (r > 55 && r < 150 && r > g + 14 && g + 4 >= b) brown[i] = 1; // saturated wood only
   }
   const bc = components(p, W, H, brown); let door = 0; for (let k = 1; k <= bc.next; k++) if (bc.comps[k].area && (!door || bc.comps[k].area > bc.comps[door].area)) door = k;
   if (door && bc.comps[door].area > tilePx) {

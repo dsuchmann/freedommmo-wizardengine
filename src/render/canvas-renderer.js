@@ -23,7 +23,7 @@ import { isInside } from './active-interior.js';
 import { initWallTuner, drawWallTuner } from './wall-tuner.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations, buildWaveField } from './water-wave-overlay.js';
 import { drawRoofs } from './roof-overlay.js';
-import { renderOn, buildingsRenderDisabled } from './building-render-flags.js';
+import { renderOn } from './building-render-flags.js';
 import { drawLargeObjects, preloadLargeObjectSprites, setPlayerDrawFn } from './large-object-renderer.js';
 import { drawField2Animations, preloadField2Animations, drawWindWispOverlay, setField2PlayerDraw, setField2PlayerGL } from './field2-animator.js';
 import { findNearbyInteraction, objectReaction, performInteraction } from '../world/interactions.js';
@@ -471,8 +471,9 @@ export class CanvasRenderer {
     let _depthActive = false;
     // Master gate is REQUIRED here: this pass fires precisely when _useLayer is false, so gating the
     // wall layer off (above) would otherwise WAKE this depth silhouette and occlude the player behind
-    // invisible walls. buildingsRenderDisabled() keeps it asleep under the master switch.
-    if (!_useLayer && glScene && !buildingsRenderDisabled() && typeof window !== 'undefined' && window._depthOcclusion !== false) {
+    // invisible walls. Gate on the OCCLUSION sub-flag (NOT master) so turning on a different layer
+    // — e.g. interiors — does not silently re-awaken exterior player-occlusion behind hidden walls.
+    if (!_useLayer && glScene && renderOn('occlusion') && typeof window !== 'undefined' && window._depthOcclusion !== false) {
       const _refY = (camY + h / 2) / tilePx;
       const _blds = nearDepthBuildings(getCachedBuildings(), camX, camY, tilePx, w, h);
       const _dbg = !!window._depthOcclusionDebug;
@@ -504,7 +505,7 @@ export class CanvasRenderer {
 
     // Building walls: rendered in chunk pipeline via shared wall-draw.js.
     // Separate-pass only when tuner is active (for live calibration).
-    if (!buildingsRenderDisabled() && window._wallTuner && window._simDebugOverlay?.isEnabled?.()) {
+    if (renderOn('walls') && window._wallTuner && window._simDebugOverlay?.isEnabled?.()) {
       drawBuildingWalls(ctx, camX, camY, tilePx, w, h);
     }
 
@@ -593,9 +594,9 @@ export class CanvasRenderer {
         // Outdoor building layer ON: blit the FRONT buildings with the GPU spotlight hole around
         // the player (torso-centred), revealing the player on the real terrain. radius 2.6 tiles,
         // inner 45% — matches the interior see-through wall.
-        if (_frontLayerBmp && !buildingsRenderDisabled()) this.glc.drawBuildingSpotlightOverlay(_frontLayerBmp,
+        if (_frontLayerBmp && renderOn('walls')) this.glc.drawBuildingSpotlightOverlay(_frontLayerBmp,
           { x: w / 2, y: _playerScreenY - tilePx * 0.6 }, tilePx * 2.6 * 0.45, tilePx * 2.6);
-      } else if (!buildingsRenderDisabled() && typeof window !== 'undefined' && window._depthOcclusion === false) {
+      } else if (renderOn('occlusion') && typeof window !== 'undefined' && window._depthOcclusion === false) {
         // Outdoors with depth occlusion explicitly OFF → heuristic overlay occluder fallback.
         const _occ = buildOccluderBitmap(getCachedBuildings(), camX, camY, tilePx, w, h,
           { x: w / 2, y: _playerScreenY }, player);

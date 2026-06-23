@@ -15,14 +15,18 @@
 // renderOn(layer) is the single authority every pixel-producer checks at its top, so NO caller —
 // known or hidden — can draw a building while the switch is off.
 
+// LAYER-BY-LAYER REBUILD STATE: master is ON, and we turn layers back one at a time.
+// Currently re-enabled: interior (diegetic walk-in + stairs/floors). Everything else stays OFF,
+// so the outdoor world is still clean — buildings are invisible from outside, but stepping onto a
+// building footprint takes you into the rendered interior (dim world + floor + walls + stair markers).
 export const BUILDING_RENDER = {
-  master: false,    // false => NOTHING about a building draws in the world
-  walls: false,     // exterior mirror-tiled / legacy walls (building-layer + drawBuildingTextured)
+  master: true,     // master ON — sub-flags below pick which layers actually draw
+  walls: true,      // ON — exterior mirror-tiled tile-corpus walls (fieldstone pilot is round-2 complete)
   roof: false,      // procedural roof overlay (drawRoofs) + per-building roof cap
   shadow: false,    // ground shadows (building-shadow) — the MASK still builds, only pixels gated
   occlusion: false, // depth-occlusion A/B pass (building-depth) — player see-through
   doors: false,     // swinging door-leaf overlay (door-leaves)
-  interior: false,  // diegetic walk-in interior floor + walls (interior-renderer / interior-gl)
+  interior: true,   // ON — diegetic walk-in interior floor + walls + stairs (interior-renderer / interior-gl)
   // NOTE: the building FLOOR + foundation-border bake lives OFF-THREAD in the chunk worker
   // (worker-chunk-renderer.js), which cannot read window. It is gated there on `self._buildingFloors`
   // (unset => off). Re-enabling that layer means threading this flag through the chunk job.

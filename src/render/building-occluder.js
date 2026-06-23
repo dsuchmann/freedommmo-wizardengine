@@ -20,6 +20,7 @@ import { buildingFloors } from './building-shadow.js';
 import { queryBuildingTile } from './building-tile-query.js';
 import { wallAssetDir, wallPieceFile, roofAssetDir, roofTextureFile, ROOF_FASCIA_FILE } from '../../sim/world/buildings/building-material-registry.js';
 import { drawBuildingTiles, isTiledBuilding } from './building-tiles.js';
+import { renderOn } from './building-render-flags.js';
 
 // Source rect of the E/W side-face cap. The grassland edge_ew strip is a 32x128 quoin/side-cap;
 // sample its LEFT quoin column (x=0..16) as the true vertical corner post (`isQuoinStrip`) — drawing
@@ -491,7 +492,7 @@ export function buildOccluderBitmap(buildings, camX, camY, tilePx, w, h, playerS
   occ.sort((a, b) => (a.y + a.footprint.boundingBox.h) - (b.y + b.footprint.boundingBox.h));
   for (const b of occ) {
     drawWalls(o, b, camX, camY, tilePx, w, h);
-    if (_roof) { try { _roof.drawRoofForBuilding(o, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b), roofFascia: roofFasciaFor(b) }); } catch { /* skip roof */ } }
+    if (_roof && renderOn('roof')) { try { _roof.drawRoofForBuilding(o, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b), roofFascia: roofFasciaFor(b) }); } catch { /* skip roof */ } }
   }
 
   // DEPTH GUARD: only the building ABOVE the player's feet occludes the player. The building's
@@ -530,7 +531,10 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   // TILE-CORPUS path: mirror-tiled wall tile per material + aperture overlays, capped by the
   // procedural roof. When the tile set is loaded for this building, draw it + the roof and return.
   ensureRoof();
-  const drawRoof = () => { if (_roof) { try { _roof.drawRoofForBuilding(ctx, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b), roofFascia: roofFasciaFor(b) }); } catch { /* skip roof */ } } };
+  // Roof respects its OWN layer flag — the procedural roof rides along with the wall path, so without this
+  // gate it would draw even when the roof layer is off (leaking an un-tuned, wall-misaligned roof over the
+  // walls). With roof off, walls show clean; we align the roof eaves to the walls when the roof layer is on.
+  const drawRoof = () => { if (_roof && renderOn('roof')) { try { _roof.drawRoofForBuilding(ctx, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b), roofFascia: roofFasciaFor(b) }); } catch { /* skip roof */ } } };
   if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawRoof(); return true; }
   // A grassland TILE-CORPUS building whose tiles aren't loaded yet must NOT fall to the legacy
   // strip path — drawWalls would stamp a stone_brick 32px strip STRETCHED over the footprint (the

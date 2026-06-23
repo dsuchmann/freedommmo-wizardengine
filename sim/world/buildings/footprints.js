@@ -73,14 +73,17 @@ function boundingBox(sections) {
 
 // ── door placement ────────────────────────────────────────────────────
 
-const MIN_DOOR_SPACING = 5;   // min tile distance between two doors (no clustering)
-const DOOR_PER_TILES = 22;    // ~1 door per this many outer-perimeter tiles
-const MAX_DOORS = 4;
+const MIN_DOOR_SPACING = 8;   // min tile distance between two doors (no clustering)
+const DOOR_PER_TILES = 50;    // ~1 door per this many outer-perimeter tiles (most houses → just 1 front door)
+const MAX_DOORS = 2;          // a building rarely needs more than 2 doors
 // ── window placement (south-facing outer walls, clear of doors) ──
-const MIN_WINDOW_SPACING = 3; // min tile distance between two windows
-const WINDOW_DOOR_CLEAR = 2;  // keep windows ≥ this (Manhattan) from any door
+const MIN_WINDOW_SPACING = 4; // min tile distance between two windows (padding so they don't crowd)
+const WINDOW_DOOR_CLEAR = 3;  // keep windows ≥ this (Manhattan) from any door (visual breathing room)
 const WINDOW_PER_TILES = 3;   // ~1 window per this many south-facing outer wall tiles
 const MAX_WINDOWS = 8;
+// Apertures (windows now; doors below) stay this many tiles clear of the building's E/W edges so they
+// never crowd the corner/quoin columns the renderer draws there. Deterministic → scales to every building.
+const CORNER_CLEAR = 2;
 // Minimum building dimension so even small buildings have a believable interior
 // (5 => at least a 3x3 interior after the 1-tile wall ring).
 export const MIN_DIM = 5;
@@ -159,8 +162,14 @@ function placeDoors(walls, wallSet, tileSet, seed, bbox) {
 
   // Additional doors: seeded order, south-preferred, each spaced ≥ MIN_DOOR_SPACING from every
   // already-placed door (incl. the guaranteed front door) — so no clusters of adjacent doors.
+  // Additional SOUTH doors also stay CORNER_CLEAR tiles off the building's E/W edges so they never
+  // land on the edge column the renderer caps with a corner tile (the edge is always capped, doors inside).
   const pref = south.length ? south : outerWalls;
+  let sMinX = Infinity, sMaxX = -Infinity;
+  for (const w of south) { if (w.x < sMinX) sMinX = w.x; if (w.x > sMaxX) sMaxX = w.x; }
+  const doorClearOfCorner = (w) => !south.length || (w.x >= sMinX + CORNER_CLEAR && w.x <= sMaxX - CORNER_CLEAR);
   const ordered = pref
+    .filter(doorClearOfCorner)
     .map((w, i) => ({ w, k: rand(seed, 0xD001, w.x * 131 + w.y * 17 + i) }))
     .sort((a, b) => a.k - b.k)
     .map(o => o.w);
@@ -184,8 +193,13 @@ function placeWindows(walls, tileSet, seed, bbox, doors) {
   const outside = computeOutside(tileSet, bbox);
   const south = walls.filter(w => outside.has(`${w.x},${w.y + 1}`)); // south-facing outer walls
   if (south.length === 0) return [];
+  // The building's E/W edges on the south row carry the corner/quoin columns — reserve them by keeping
+  // windows ≥ CORNER_CLEAR tiles inboard of the leftmost/rightmost south-wall tile.
+  let minX = Infinity, maxX = -Infinity;
+  for (const w of south) { if (w.x < minX) minX = w.x; if (w.x > maxX) maxX = w.x; }
+  const clearOfCorners = (w) => w.x >= minX + CORNER_CLEAR && w.x <= maxX - CORNER_CLEAR;
   const ordered = south
-    .filter(w => doors.every(d => Math.abs(d.x - w.x) + Math.abs(d.y - w.y) >= WINDOW_DOOR_CLEAR))
+    .filter(w => clearOfCorners(w) && doors.every(d => Math.abs(d.x - w.x) + Math.abs(d.y - w.y) >= WINDOW_DOOR_CLEAR))
     .map((w, i) => ({ w, k: rand(seed, 0xD003, w.x * 137 + w.y * 19 + i) }))
     .sort((a, b) => a.k - b.k)
     .map(o => o.w);
