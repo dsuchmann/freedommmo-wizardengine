@@ -1,0 +1,4854 @@
+{
+  "version": 1,
+  "generated_from": "building-materials.json + tile-corpus model + per-biome _pixellab_ids.json",
+  "token_framework": "docs/superpowers/specs/2026-06-22-tile-corpus-manifest.md (+ desert override)",
+  "biomes": {
+    "ocean": {
+      "displayName": "Ocean",
+      "tokens_authored": false,
+      "materials": {
+        "tarred_timber_stilt": {
+          "name": "Tarred Timber Stilt",
+          "palette": "black-brown pitch, sea-bleached silver-grey, mussel fleck",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "rope_lashed_log": {
+          "name": "Rope-Lashed Log",
+          "palette": "golden-brown log, tarred rope, waterline stain",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "net_draped_plank": {
+          "name": "Net-Draped Plank",
+          "palette": "sea-bleached grey plank, tan net, cork-and-glass floats",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "weathered_shiplap": {
+          "name": "Weathered Shiplap",
+          "palette": "faded teal, driftwood grey, rust nail",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        }
+      }
+    },
+    "deep_ocean": {
+      "displayName": "Deep Ocean",
+      "tokens_authored": false,
+      "materials": {
+        "barnacled_piling": {
+          "name": "Barnacled Piling",
+          "palette": "weathered grey-brown timber, white-ochre barnacle crust, blackened tar base",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "riveted_iron_plate": {
+          "name": "Riveted Iron Plate",
+          "palette": "teal-grey iron, orange rust, verdigris and salt bloom",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "tarred_clinker_hull": {
+          "name": "Tarred Clinker Hull",
+          "palette": "oiled umber plank, glossy black pitch, brass nails",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "whalebone_frame": {
+          "name": "Whalebone Frame",
+          "palette": "bone white, tarred rope brown, oiled hide amber",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        }
+      }
+    },
+    "shallow_water": {
+      "displayName": "Shallow Water",
+      "tokens_authored": false,
+      "materials": {
+        "driftwood_patchwork": {
+          "name": "Driftwood Patchwork",
+          "palette": "sun-silvered grey, honey-brown salvage, paint flecks",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "woven_reed_panel": {
+          "name": "Woven Reed Panel",
+          "palette": "straw-gold reed, tied-bundle brown, reed-daub base",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "weathered_boardwalk_plank": {
+          "name": "Weathered Boardwalk Plank",
+          "palette": "grey-tan plank, dark gap line, rust nail",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "wattle_shell_daub": {
+          "name": "Wattle & Shell Daub",
+          "palette": "creamy shell-lime daub, willow wattle, pink-white shell",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        }
+      }
+    },
+    "beach": {
+      "displayName": "Beach",
+      "tokens_authored": false,
+      "materials": {
+        "coral_block": {
+          "name": "Coral-Block Masonry",
+          "palette": "ivory-pink coral stone, salt-flecked lime",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "bleached_plank": {
+          "name": "Bleached Driftwood Plank",
+          "palette": "silver-grey driftwood, faded teal paint flecks",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "palm_thatch_panel": {
+          "name": "Woven Palm Panel",
+          "palette": "golden-tan woven palm, green bamboo frame",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "shell_tabby": {
+          "name": "Shell Tabby Stucco",
+          "palette": "warm cream tabby, iridescent shell glints",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        }
+      }
+    },
+    "river": {
+      "displayName": "River",
+      "tokens_authored": false,
+      "materials": {
+        "river_stone_daub": {
+          "name": "River-Stone & Daub",
+          "palette": "water-worn grey-tan cobble, cream lime daub, mossy base",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "tarred_plank": {
+          "name": "Tarred Boardwall",
+          "palette": "pitch-black tarred oak, honey batten, algae sill",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "wattle_daub_frame": {
+          "name": "Wattle & Daub Frame",
+          "palette": "warm cream daub, dark oak timber, pebble base",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "mossy_millstone": {
+          "name": "Mossy Millstone Block",
+          "palette": "wet grey-green ashlar, dark mortar, mossy plinth",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        }
+      }
+    },
+    "lake": {
+      "displayName": "Lake",
+      "tokens_authored": false,
+      "materials": {
+        "log_cabin": {
+          "name": "Stacked Log",
+          "palette": "honey-brown logs, pale chinking, stone sill",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "cedar_board_batten": {
+          "name": "Cedar Board & Batten",
+          "palette": "silvery-brown weathered cedar, reddish undertone",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "lake_fieldstone": {
+          "name": "Lake Fieldstone",
+          "palette": "grey-blue-rust glacial fieldstone, dark mortar",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "stilt_piling": {
+          "name": "Stilt-Lodge Pilings",
+          "palette": "greyed piling timber, algae-green wet bases",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        }
+      }
+    },
+    "grassland": {
+      "displayName": "Grassland",
+      "tokens_authored": true,
+      "materials": {
+        "cob": {
+          "name": "Cob",
+          "palette": "warm straw-flecked earthen ochre, tarred stone plinth",
+          "source": "tile-corpus",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "done",
+              "id": null
+            },
+            "ground_window": {
+              "status": "done",
+              "id": null
+            },
+            "ground_door": {
+              "status": "done",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "done",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "done",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "done",
+              "id": null
+            },
+            "upper_window": {
+              "status": "done",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "done",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "done",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "done"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "fieldstone": {
+          "name": "Fieldstone",
+          "palette": "grey-tan rounded stone, pale lime mortar",
+          "source": "tile-corpus",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "done",
+              "id": null
+            },
+            "ground_window": {
+              "status": "done",
+              "id": null
+            },
+            "ground_door": {
+              "status": "done",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "done",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "done",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "done",
+              "id": null
+            },
+            "upper_window": {
+              "status": "done",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "done",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "done",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "done"
+            },
+            "window": {
+              "status": "done"
+            }
+          }
+        },
+        "timber_frame": {
+          "name": "Timber Frame",
+          "palette": "dark stained oak, pale ochre plaster, honey sandstone base",
+          "source": "tile-corpus",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "done",
+              "id": null
+            },
+            "ground_window": {
+              "status": "done",
+              "id": null
+            },
+            "ground_door": {
+              "status": "done",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "done",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "done",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "done",
+              "id": null
+            },
+            "upper_window": {
+              "status": "done",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "done",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "done",
+              "id": null
+            },
+            "gable": {
+              "status": "done",
+              "id": "4f680de3-12c8-45ec-a2bb-86edce2106d3"
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "done"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "wattle_daub": {
+          "name": "Wattle & Daub",
+          "palette": "warm cream plaster, dark oak timber, grey cobble base",
+          "source": "tile-corpus",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "done",
+              "id": null
+            },
+            "ground_window": {
+              "status": "done",
+              "id": null
+            },
+            "ground_door": {
+              "status": "done",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "done",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "done",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "done",
+              "id": null
+            },
+            "upper_window": {
+              "status": "done",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "done",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "done",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "done"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        }
+      }
+    },
+    "forest": {
+      "displayName": "Forest",
+      "tokens_authored": false,
+      "materials": {
+        "log_cabin": {
+          "name": "Round-Log Cabin",
+          "palette": "golden pine logs, pale chinking, grey stone footing",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "hewn_plank": {
+          "name": "Hewn Vertical Plank",
+          "palette": "honey oak planks, chestnut battens, cobble base",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "timber_frame_daub": {
+          "name": "Timber Frame & Daub",
+          "palette": "dark oak frame, cream plaster infill, stone plinth",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "bark_slab": {
+          "name": "Bark-Slab Siding",
+          "palette": "russet bark, grey-brown slab wood, earthen sill",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        }
+      }
+    },
+    "dense_forest": {
+      "displayName": "Dense Forest",
+      "tokens_authored": false,
+      "materials": {
+        "mossy_timber": {
+          "name": "Mossy Timber",
+          "palette": "moss-green over dark wet logs, black boulders",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "dark_stained_log": {
+          "name": "Dark-Stained Log",
+          "palette": "tar-black logs, cold blue highlights",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "root_and_earth": {
+          "name": "Root & Earth Wall",
+          "palette": "dark umber earth, twisted roots, toadstool red",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "deep_bark_plank": {
+          "name": "Deep-Bark Plank",
+          "palette": "charcoal bark, deep brown furrows, lichen green",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        }
+      }
+    },
+    "tropical_forest": {
+      "displayName": "Tropical Forest",
+      "tokens_authored": false,
+      "materials": {
+        "bamboo": {
+          "name": "Lashed Bamboo",
+          "palette": "jade-and-straw bamboo, dark rattan lashing",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "woven_palm": {
+          "name": "Woven Palm Panel",
+          "palette": "green-gold and tan woven palm",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "hardwood_plank": {
+          "name": "Tropical Hardwood Plank",
+          "palette": "mahogany red-brown, golden grain",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "raised_stilt": {
+          "name": "Stilt Plank & Lattice",
+          "palette": "pale teak boards, golden bamboo lattice",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        }
+      }
+    },
+    "taiga": {
+      "displayName": "Taiga",
+      "tokens_authored": false,
+      "materials": {
+        "stacked_log": {
+          "name": "Stacked Log",
+          "palette": "honey-amber pine logs, mossy green chinking, grey cobble base",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "pine_plank": {
+          "name": "Vertical Pine Plank",
+          "palette": "reddish-warm pine planks, dark knot accents, amber battens",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "pitch_sealed_timber": {
+          "name": "Pitch-Sealed Timber",
+          "palette": "glossy black-brown pitch, warm tar sheen, charcoal base",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "log_and_daub": {
+          "name": "Log Frame & Daub",
+          "palette": "amber pine frame, pale ochre daub infill, grey stone base",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        }
+      }
+    },
+    "savanna": {
+      "displayName": "Savanna",
+      "tokens_authored": false,
+      "materials": {
+        "ochre_adobe": {
+          "name": "Ochre Adobe",
+          "palette": "warm ochre adobe, terracotta base, golden highlights",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "mud_brick_coursed": {
+          "name": "Coursed Mud Brick",
+          "palette": "tan and amber mudbrick, dark earth mortar",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "thorn_wattle": {
+          "name": "Thorn-Wood Wattle",
+          "palette": "sun-bleached thornwood, pale mud daub",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "woven_grass_panel": {
+          "name": "Woven Grass Panel",
+          "palette": "golden woven grass, warm timber frame",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        }
+      }
+    },
+    "steppe": {
+      "displayName": "Steppe",
+      "tokens_authored": false,
+      "materials": {
+        "rammed_earth": {
+          "name": "Rammed Earth",
+          "palette": "layered tan-ochre-rose earth, brick base",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "felt_frame": {
+          "name": "Felt over Frame",
+          "palette": "cream and rust wool felt, willow lattice",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "sod_brick": {
+          "name": "Sod Brick",
+          "palette": "root-dark earth, dried straw fringe",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "dry_brick": {
+          "name": "Dry Brick",
+          "palette": "dusty tan-ochre adobe, straw flecks",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        }
+      }
+    },
+    "desert": {
+      "displayName": "Desert",
+      "tokens_authored": true,
+      "materials": {
+        "adobe": {
+          "name": "adobe",
+          "palette": null,
+          "source": "tile-corpus",
+          "base_id": "8d50134f-7d60-4c6e-9978-6ab5b9c5fb2c",
+          "tiles": {
+            "ground_plain": {
+              "status": "done",
+              "id": null
+            },
+            "ground_window": {
+              "status": "done",
+              "id": "8dcbf440-b2e8-4712-bee8-1f31c6535896"
+            },
+            "ground_door": {
+              "status": "done",
+              "id": "731220b2-8fdd-4cd5-9949-f7cb171c3915"
+            },
+            "ground_left_corner": {
+              "status": "done",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "done",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "done",
+              "id": null
+            },
+            "upper_window": {
+              "status": "done",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "done",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "done",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "done"
+            },
+            "window": {
+              "status": "done"
+            }
+          }
+        },
+        "mudbrick": {
+          "name": "mudbrick",
+          "palette": null,
+          "source": "tile-corpus",
+          "base_id": "f504b6f9-e175-4601-9f77-69c5b4b5d8e5",
+          "tiles": {
+            "ground_plain": {
+              "status": "done",
+              "id": null
+            },
+            "ground_window": {
+              "status": "done",
+              "id": "9937e290-41c2-4234-8f9c-741cc4bbe808"
+            },
+            "ground_door": {
+              "status": "done",
+              "id": "91e34bb5-3db4-459d-8aca-a65b80892af3"
+            },
+            "ground_left_corner": {
+              "status": "done",
+              "id": "ba28be40-dcd9-498e-b4d6-bb6689b08c3a"
+            },
+            "ground_right_corner": {
+              "status": "done",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "done",
+              "id": null
+            },
+            "upper_window": {
+              "status": "done",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "done",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "done",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "done"
+            },
+            "window": {
+              "status": "done"
+            }
+          }
+        },
+        "reed_palm": {
+          "name": "reed_palm",
+          "palette": null,
+          "source": "tile-corpus",
+          "base_id": "360ef782-f169-48c1-966d-2cb15ab4fea7",
+          "tiles": {
+            "ground_plain": {
+              "status": "done",
+              "id": null
+            },
+            "ground_window": {
+              "status": "done",
+              "id": "52685ec7-3f0d-4678-8bc8-a6879d94f752"
+            },
+            "ground_door": {
+              "status": "done",
+              "id": "506246d2-5371-4b95-90f8-fe2a9faf495d"
+            },
+            "ground_left_corner": {
+              "status": "done",
+              "id": "a078a5d2-eabe-4afd-a4d6-20851445a944"
+            },
+            "ground_right_corner": {
+              "status": "done",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "done",
+              "id": null
+            },
+            "upper_window": {
+              "status": "done",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "done",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "done",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "done"
+            },
+            "window": {
+              "status": "done"
+            }
+          }
+        },
+        "sandstone": {
+          "name": "sandstone",
+          "palette": null,
+          "source": "tile-corpus",
+          "base_id": "15644a2e-9a64-4581-9e95-1a1d40f355cc",
+          "tiles": {
+            "ground_plain": {
+              "status": "done",
+              "id": null
+            },
+            "ground_window": {
+              "status": "done",
+              "id": "49b16fe2-f6c8-4547-a585-5ca60463858b"
+            },
+            "ground_door": {
+              "status": "done",
+              "id": "e0b40037-3b5b-4086-8fff-b09f456d366a"
+            },
+            "ground_left_corner": {
+              "status": "done",
+              "id": "9ef65d2b-2772-4acd-ac04-2e9b0d661e30"
+            },
+            "ground_right_corner": {
+              "status": "done",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "done",
+              "id": null
+            },
+            "upper_window": {
+              "status": "done",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "done",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "done",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "done"
+            },
+            "window": {
+              "status": "done"
+            }
+          }
+        }
+      }
+    },
+    "swamp": {
+      "displayName": "Swamp",
+      "tokens_authored": false,
+      "materials": {
+        "weathered_plank": {
+          "name": "Weathered Plank",
+          "palette": "grey-brown weathered timber, moss patches",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "mangrove_log": {
+          "name": "Mangrove Log",
+          "palette": "reddish mangrove wood, grey mud chinking",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "mud_reed_daub": {
+          "name": "Mud & Reed Daub",
+          "palette": "bog-brown mud daub, olive reeds",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "mossy_stilt_frame": {
+          "name": "Mossy Stilt Frame",
+          "palette": "dark timber, deep green moss, bark infill",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        }
+      }
+    },
+    "tundra": {
+      "displayName": "Tundra",
+      "tokens_authored": false,
+      "materials": {
+        "turf_block": {
+          "name": "Stacked Turf Block",
+          "palette": "mossy green turf faces, dark brown peat, earthen base",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "whalebone_hide": {
+          "name": "Whalebone & Hide",
+          "palette": "ivory whalebone, warm tan hide, grey boulder base",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "stacked_stone": {
+          "name": "Drystone Tundra Wall",
+          "palette": "cool grey fieldstone, rust lichen, dark joints",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "peat_block": {
+          "name": "Cut Peat Block",
+          "palette": "deep chocolate peat, reddish fiber, grass-tuft cap",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        }
+      }
+    },
+    "arctic": {
+      "displayName": "Arctic",
+      "tokens_authored": false,
+      "materials": {
+        "ice_block": {
+          "name": "Quarried Ice Block",
+          "palette": "translucent cyan-white ice, frosted edges, snow base",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "packed_snow": {
+          "name": "Packed Snow Block",
+          "palette": "chalk white snow, periwinkle-blue shadow seams",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "driftwood_hide": {
+          "name": "Driftwood & Hide",
+          "palette": "silver driftwood, oiled grey-tan hide, ice-stone base",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "frozen_timber": {
+          "name": "Rimed Frozen Timber",
+          "palette": "frost-rimed dark timber, sparkling white rime, icy blue shadow",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        }
+      }
+    },
+    "hills": {
+      "displayName": "Hills",
+      "tokens_authored": false,
+      "materials": {
+        "drystone": {
+          "name": "Drystone",
+          "palette": "cool grey-blue hillstone, rust lichen",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "limewashed_cottage": {
+          "name": "Lime-washed Cottage",
+          "palette": "bright lime-white render, grey slate trim",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "hillstone_block": {
+          "name": "Hillstone Block",
+          "palette": "banded grey-buff dressed stone",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "slate_hung": {
+          "name": "Slate-hung",
+          "palette": "iridescent steel-blue slate, grey stone base",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        }
+      }
+    },
+    "mountains": {
+      "displayName": "Mountains",
+      "tokens_authored": false,
+      "materials": {
+        "granite_ashlar": {
+          "name": "Granite Ashlar",
+          "palette": "cool speckled grey granite, warm tan mortar",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "stacked_slate": {
+          "name": "Dry-Stacked Slate",
+          "palette": "blue-grey laminated slate, steel shadows",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "timber_rubble": {
+          "name": "Timber-Framed Rubble",
+          "palette": "dark oak timber, grey fieldstone, pale lime mortar",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "dwarven_cut_stone": {
+          "name": "Dwarven Cut-Stone",
+          "palette": "cold grey megastone, warm bronze runic inlay",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        }
+      }
+    },
+    "volcanic": {
+      "displayName": "Volcanic",
+      "tokens_authored": false,
+      "materials": {
+        "basalt_block": {
+          "name": "Polished Basalt Block",
+          "palette": "glossy black basalt, ember-orange seam glow",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "obsidian_inlay": {
+          "name": "Obsidian-Inlaid Stone",
+          "palette": "charcoal stone, glassy black obsidian, gold strips",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "fire_glazed_brick": {
+          "name": "Fire-Glazed Brick",
+          "palette": "crimson and molten-orange glazed brick",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "ashcrete": {
+          "name": "Ashcrete",
+          "palette": "pale dove-grey ash render, dark pebble flecks",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        }
+      }
+    },
+    "mystic": {
+      "displayName": "Mystic",
+      "tokens_authored": false,
+      "materials": {
+        "luminous_crystal": {
+          "name": "Luminous Crystal Block",
+          "palette": "glowing cyan-violet translucent crystal",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "living_moss_wood": {
+          "name": "Living Moss-Wood",
+          "palette": "warm living wood, glowing teal moss",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "runed_pale_stone": {
+          "name": "Runed Pale-Stone",
+          "palette": "ivory pale-stone, glowing blue-white runes",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        },
+        "aether_glass": {
+          "name": "Aether-Glass",
+          "palette": "iridescent opal aether-glass, silver mullions",
+          "source": "plan",
+          "base_id": null,
+          "tiles": {
+            "ground_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_window": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_door": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "ground_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_plain": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_window": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_left_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "upper_right_corner": {
+              "status": "pending",
+              "id": null
+            },
+            "gable": {
+              "status": "pending",
+              "id": null
+            }
+          },
+          "anims": {
+            "door": {
+              "status": "pending"
+            },
+            "window": {
+              "status": "pending"
+            }
+          }
+        }
+      }
+    }
+  },
+  "props": {
+    "source": "docs/superpowers/specs/2026-06-23-dressing-manifest.json",
+    "objects": 0,
+    "status": "design_only_not_generated"
+  },
+  "summary": {
+    "biomes": 21,
+    "building_assets": 1008,
+    "done": 86,
+    "pending": 922,
+    "pct": 9,
+    "biomes_token_authored": [
+      "grassland",
+      "desert"
+    ],
+    "prop_objects": 0
+  }
+}
