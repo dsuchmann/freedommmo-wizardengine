@@ -15,42 +15,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -71,42 +81,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -127,42 +147,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -183,42 +213,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -230,6 +270,64 @@
               "status": "pending"
             }
           }
+        }
+      },
+      "roofs": {
+        "weathered_cedar_shake": {
+          "name": "Weathered Cedar Shake",
+          "palette": "silver-grey shake, amber undertone, moss streak",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "tarpaper_batten": {
+          "name": "Tarpaper & Batten",
+          "palette": "matte black tarpaper, pale batten, patch tar",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "overlapped_sheet_metal": {
+          "name": "Overlapped Sheet Metal",
+          "palette": "galvanized grey-blue, rust orange, bright glint",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "sail_canvas_awning": {
+          "name": "Sail-Canvas Awning",
+          "palette": "cream-and-faded-blue stripe, rope seam, brass grommet",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
         }
       }
     },
@@ -245,42 +343,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -301,42 +409,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -357,42 +475,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -413,42 +541,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -460,6 +598,64 @@
               "status": "pending"
             }
           }
+        }
+      },
+      "roofs": {
+        "tarred_shingle": {
+          "name": "Tarred Shingle",
+          "palette": "pitch-black shingle, salt-white rime, driftwood grey",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "copper_standing_seam": {
+          "name": "Copper Standing Seam",
+          "palette": "verdigris green-blue, copper orange, salt streak",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "lashed_plank_deck": {
+          "name": "Lashed Plank Deck",
+          "palette": "weathered grey plank, dark tar rope, barnacle fleck",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "oiled_canvas_tarp": {
+          "name": "Oiled Canvas Tarp",
+          "palette": "ochre sailcloth, storm grey, brass grommet",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
         }
       }
     },
@@ -475,42 +671,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -531,42 +737,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -587,42 +803,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -643,42 +869,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -690,6 +926,64 @@
               "status": "pending"
             }
           }
+        }
+      },
+      "roofs": {
+        "reed_thatch": {
+          "name": "Reed Thatch",
+          "palette": "straw-gold thatch, tied-ridge brown, warm shadow",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "driftwood_shingle": {
+          "name": "Driftwood Shingle",
+          "palette": "silvered grey, honey-brown, moss patch",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "palm_frond_thatch": {
+          "name": "Palm-Frond Thatch",
+          "palette": "green-and-tan frond, sun-faded tip, deep underleaf shadow",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "kelp_shingle": {
+          "name": "Pressed Kelp Shingle",
+          "palette": "deep olive kelp, amber sheen, salt-crust speckle",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
         }
       }
     },
@@ -705,42 +999,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -761,42 +1065,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -817,42 +1131,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -873,42 +1197,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -920,6 +1254,64 @@
               "status": "pending"
             }
           }
+        }
+      },
+      "roofs": {
+        "palm_thatch": {
+          "name": "Palm-Leaf Thatch",
+          "palette": "gold-green palm frond, amber rib shadows",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "coral_tile": {
+          "name": "Coral-Lime Tile",
+          "palette": "cream-coral pink tile, chalky salt sheen",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "driftwood_shingle": {
+          "name": "Driftwood Shingle",
+          "palette": "silver-grey driftwood, faded teal accents",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "shell_scallop": {
+          "name": "Scallop-Shell Scale",
+          "palette": "pearly cream-peach shells, rose iridescence",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
         }
       }
     },
@@ -935,42 +1327,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -991,42 +1393,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -1047,42 +1459,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -1103,42 +1525,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -1150,6 +1582,64 @@
               "status": "pending"
             }
           }
+        }
+      },
+      "roofs": {
+        "thatch": {
+          "name": "River-Reed Thatch",
+          "palette": "warm straw-gold reed, amber ridge shadows",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "wood_shingle": {
+          "name": "Oak Shingle",
+          "palette": "reddish-brown oak shingle, weathered grey edges",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "slate": {
+          "name": "Gorge Slate",
+          "palette": "blue-grey slate, violet sheen highlights",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "moss_clay_tile": {
+          "name": "Mossed Clay Tile",
+          "palette": "rust-orange terracotta, mossy green valleys",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
         }
       }
     },
@@ -1165,42 +1655,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -1221,42 +1721,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -1277,42 +1787,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -1333,42 +1853,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -1380,6 +1910,64 @@
               "status": "pending"
             }
           }
+        }
+      },
+      "roofs": {
+        "cedar_shake": {
+          "name": "Cedar Shake",
+          "palette": "reddish-brown cedar, weathered silver edges",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "birch_bark": {
+          "name": "Birch-Bark Layer",
+          "palette": "cream-tan birch bark, charcoal streaks",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "sod_turf": {
+          "name": "Turf Sod",
+          "palette": "verdant green turf, dark soil edge",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "log_pole": {
+          "name": "Split-Log Pole",
+          "palette": "amber-honey split logs, deep channel shadows",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
         }
       }
     },
@@ -1395,42 +1983,52 @@
           "tiles": {
             "ground_plain": {
               "status": "done",
+              "v1": "done",
               "id": null
             },
             "ground_window": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "done",
+              "v1": "done",
               "id": "d49dc653-1031-4644-9bb7-081cafb49c59"
             }
           },
@@ -1451,42 +2049,52 @@
           "tiles": {
             "ground_plain": {
               "status": "done",
+              "v1": "done",
               "id": null
             },
             "ground_window": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "done",
+              "v1": "done",
               "id": "dd538a7d-af62-40bb-bf56-80430cd3b46c"
             }
           },
@@ -1507,42 +2115,52 @@
           "tiles": {
             "ground_plain": {
               "status": "done",
+              "v1": "done",
               "id": null
             },
             "ground_window": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "done",
+              "v1": "done",
               "id": "4f680de3-12c8-45ec-a2bb-86edce2106d3"
             }
           },
@@ -1563,42 +2181,52 @@
           "tiles": {
             "ground_plain": {
               "status": "done",
+              "v1": "done",
               "id": null
             },
             "ground_window": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "done",
+              "v1": "done",
               "id": "43c139f5-7682-484a-a38e-85ccb17cf06d"
             }
           },
@@ -1610,6 +2238,64 @@
               "status": "pending"
             }
           }
+        }
+      },
+      "roofs": {
+        "thatch": {
+          "name": "Thatch",
+          "palette": "golden-amber straw, brushed nap",
+          "variants": {
+            "v000": "done",
+            "v001": "done",
+            "v002": "done",
+            "v003": "done"
+          },
+          "present": 4,
+          "complete": true,
+          "fascia": true,
+          "ids": null
+        },
+        "wood_shingle": {
+          "name": "Wood Shingle",
+          "palette": "honey-to-silver weathered oak",
+          "variants": {
+            "v000": "done",
+            "v001": "done",
+            "v002": "done",
+            "v003": "done"
+          },
+          "present": 4,
+          "complete": true,
+          "fascia": true,
+          "ids": null
+        },
+        "clay_tile": {
+          "name": "Clay Tile",
+          "palette": "warm terracotta orange-red",
+          "variants": {
+            "v000": "done",
+            "v001": "done",
+            "v002": "done",
+            "v003": "done"
+          },
+          "present": 4,
+          "complete": true,
+          "fascia": true,
+          "ids": null
+        },
+        "turf_sod": {
+          "name": "Turf Sod",
+          "palette": "deep emerald turf, brown root seams",
+          "variants": {
+            "v000": "done",
+            "v001": "done",
+            "v002": "done",
+            "v003": "done"
+          },
+          "present": 4,
+          "complete": true,
+          "fascia": true,
+          "ids": null
         }
       }
     },
@@ -1625,42 +2311,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -1681,42 +2377,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -1737,42 +2443,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -1793,42 +2509,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -1840,6 +2566,64 @@
               "status": "pending"
             }
           }
+        }
+      },
+      "roofs": {
+        "bark_shingle": {
+          "name": "Bark Shingle",
+          "palette": "russet and umber bark, mossy flecks",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "wood_shake": {
+          "name": "Split Wood Shake",
+          "palette": "honey cedar, amber shadows",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "forest_thatch": {
+          "name": "Reed Thatch",
+          "palette": "golden straw, amber underlayers",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "moss_sod": {
+          "name": "Moss Sod Roof",
+          "palette": "emerald moss, sage turf, birch underlayer",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
         }
       }
     },
@@ -1855,42 +2639,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -1911,42 +2705,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -1967,42 +2771,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -2023,42 +2837,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -2070,6 +2894,64 @@
               "status": "pending"
             }
           }
+        }
+      },
+      "roofs": {
+        "moss_shingle": {
+          "name": "Moss-Grown Shingle",
+          "palette": "moss green over dark shingles",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "dark_slate": {
+          "name": "Dark Slate",
+          "palette": "charcoal and steel-blue slate",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "fern_thatch": {
+          "name": "Fern & Bracken Thatch",
+          "palette": "olive and bronze-green fern fronds",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "deep_moss_sod": {
+          "name": "Deep Moss Sod",
+          "palette": "deep viridian moss, bottle-green ferns, dark timber edges",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
         }
       }
     },
@@ -2085,42 +2967,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -2141,42 +3033,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -2197,42 +3099,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -2253,42 +3165,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -2300,6 +3222,64 @@
               "status": "pending"
             }
           }
+        }
+      },
+      "roofs": {
+        "palm_thatch": {
+          "name": "Palm Thatch",
+          "palette": "green-gold palm fronds, straw",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "banana_leaf": {
+          "name": "Banana-Leaf Thatch",
+          "palette": "glossy emerald and jade leaves",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "split_bamboo": {
+          "name": "Split-Bamboo Tile",
+          "palette": "golden-tan bamboo channels",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "fired_clay_pantile": {
+          "name": "Fired Clay Pantile",
+          "palette": "coral-red and burnt-orange terracotta",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
         }
       }
     },
@@ -2315,42 +3295,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -2371,42 +3361,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -2427,42 +3427,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -2483,42 +3493,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -2530,6 +3550,64 @@
               "status": "pending"
             }
           }
+        }
+      },
+      "roofs": {
+        "sod_turf": {
+          "name": "Sod Turf Roof",
+          "palette": "saturated grass green, dark peat seams, brown eave timber",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "cedar_shake": {
+          "name": "Cedar Shake",
+          "palette": "warm reddish-brown cedar, amber highlights, deep seam shadows",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "pine_plank_roof": {
+          "name": "Pitched Plank Roof",
+          "palette": "golden pine planks, bright batten ridges, knot accents",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "tarred_shingle": {
+          "name": "Tarred Shingle",
+          "palette": "glossy black-brown tar, warm sheen highlights, charcoal shadow",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
         }
       }
     },
@@ -2545,42 +3623,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -2601,42 +3689,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -2657,42 +3755,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -2713,42 +3821,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -2760,6 +3878,64 @@
               "status": "pending"
             }
           }
+        }
+      },
+      "roofs": {
+        "golden_thatch": {
+          "name": "Golden Grass Thatch",
+          "palette": "honey-gold thatch, amber shadows",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "thorn_branch_lattice": {
+          "name": "Thorn-Branch Lattice",
+          "palette": "bleached thornwood poles, dark mud infill",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "baked_clay_tile": {
+          "name": "Baked Clay Tiles",
+          "palette": "burnt-orange terracotta tile, dark valleys",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "palm_frond_thatch": {
+          "name": "Palm Frond Thatch",
+          "palette": "olive-to-tan palm fronds",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
         }
       }
     },
@@ -2775,42 +3951,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -2831,42 +4017,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -2887,42 +4083,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -2943,42 +4149,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -2990,6 +4206,64 @@
               "status": "pending"
             }
           }
+        }
+      },
+      "roofs": {
+        "felt": {
+          "name": "Felt",
+          "palette": "cream-rust felt, woven cord",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "sod_roof": {
+          "name": "Sod Roof",
+          "palette": "dusty olive turf, brown earth seams",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "reed_thatch": {
+          "name": "Reed Thatch",
+          "palette": "pale tan-grey windswept reed",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "earth_mud": {
+          "name": "Packed Mud",
+          "palette": "baked tan-ochre packed clay",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
         }
       }
     },
@@ -3005,42 +4279,52 @@
           "tiles": {
             "ground_plain": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "done",
+              "v1": "pending",
               "id": "8dcbf440-b2e8-4712-bee8-1f31c6535896"
             },
             "ground_door": {
               "status": "done",
+              "v1": "pending",
               "id": "731220b2-8fdd-4cd5-9949-f7cb171c3915"
             },
             "ground_left_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "gable": {
-              "status": "pending",
+              "status": "done",
+              "v1": "done",
               "id": null
             }
           },
@@ -3061,42 +4345,52 @@
           "tiles": {
             "ground_plain": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "done",
+              "v1": "pending",
               "id": "9937e290-41c2-4234-8f9c-741cc4bbe808"
             },
             "ground_door": {
               "status": "done",
+              "v1": "pending",
               "id": "91e34bb5-3db4-459d-8aca-a65b80892af3"
             },
             "ground_left_corner": {
               "status": "done",
+              "v1": "pending",
               "id": "ba28be40-dcd9-498e-b4d6-bb6689b08c3a"
             },
             "ground_right_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "gable": {
-              "status": "pending",
+              "status": "done",
+              "v1": "done",
               "id": null
             }
           },
@@ -3117,42 +4411,52 @@
           "tiles": {
             "ground_plain": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "done",
+              "v1": "pending",
               "id": "52685ec7-3f0d-4678-8bc8-a6879d94f752"
             },
             "ground_door": {
               "status": "done",
+              "v1": "pending",
               "id": "506246d2-5371-4b95-90f8-fe2a9faf495d"
             },
             "ground_left_corner": {
               "status": "done",
+              "v1": "pending",
               "id": "a078a5d2-eabe-4afd-a4d6-20851445a944"
             },
             "ground_right_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "gable": {
-              "status": "pending",
+              "status": "done",
+              "v1": "done",
               "id": null
             }
           },
@@ -3173,42 +4477,52 @@
           "tiles": {
             "ground_plain": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "done",
+              "v1": "pending",
               "id": "49b16fe2-f6c8-4547-a585-5ca60463858b"
             },
             "ground_door": {
               "status": "done",
+              "v1": "pending",
               "id": "e0b40037-3b5b-4086-8fff-b09f456d366a"
             },
             "ground_left_corner": {
               "status": "done",
+              "v1": "pending",
               "id": "9ef65d2b-2772-4acd-ac04-2e9b0d661e30"
             },
             "ground_right_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "done",
+              "v1": "pending",
               "id": null
             },
             "gable": {
-              "status": "pending",
+              "status": "done",
+              "v1": "done",
               "id": null
             }
           },
@@ -3220,6 +4534,64 @@
               "status": "done"
             }
           }
+        }
+      },
+      "roofs": {
+        "flat_mud_roof": {
+          "name": "Flat Mud Roof",
+          "palette": "pale-tan packed mud, parapet edge",
+          "variants": {
+            "v000": "done",
+            "v001": "done",
+            "v002": "done",
+            "v003": "done"
+          },
+          "present": 4,
+          "complete": true,
+          "fascia": false,
+          "ids": null
+        },
+        "clay_dome": {
+          "name": "Clay Domes",
+          "palette": "sand-beige domes, sunlit crowns",
+          "variants": {
+            "v000": "done",
+            "v001": "done",
+            "v002": "done",
+            "v003": "done"
+          },
+          "present": 4,
+          "complete": true,
+          "fascia": false,
+          "ids": null
+        },
+        "sandstone_slab": {
+          "name": "Sandstone Slabs",
+          "palette": "honey-rose stone slabs, deep joints",
+          "variants": {
+            "v000": "done",
+            "v001": "done",
+            "v002": "done",
+            "v003": "done"
+          },
+          "present": 4,
+          "complete": true,
+          "fascia": false,
+          "ids": null
+        },
+        "reed_mat_roof": {
+          "name": "Reed Mat & Mud Roof",
+          "palette": "straw reed mat, pale mud seal",
+          "variants": {
+            "v000": "done",
+            "v001": "done",
+            "v002": "done",
+            "v003": "done"
+          },
+          "present": 4,
+          "complete": true,
+          "fascia": false,
+          "ids": null
         }
       }
     },
@@ -3235,42 +4607,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -3291,42 +4673,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -3347,42 +4739,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -3403,42 +4805,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -3450,6 +4862,64 @@
               "status": "pending"
             }
           }
+        }
+      },
+      "roofs": {
+        "mossy_shingle": {
+          "name": "Mossy Wood Shingle",
+          "palette": "grey shingles, vivid green moss",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "reed_thatch_wet": {
+          "name": "Wet Reed Thatch",
+          "palette": "dark-olive reed thatch, algae patches",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "bark_sheet_roof": {
+          "name": "Bark Sheet Roof",
+          "palette": "reddish bark sheets, weighting poles",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "tarred_plank_roof": {
+          "name": "Tarred Plank Roof",
+          "palette": "tarred dark planks, battens, moss cracks",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
         }
       }
     },
@@ -3465,42 +4935,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -3521,42 +5001,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -3577,42 +5067,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -3633,42 +5133,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -3680,6 +5190,64 @@
               "status": "pending"
             }
           }
+        }
+      },
+      "roofs": {
+        "turf_roof": {
+          "name": "Grass Turf Roof",
+          "palette": "cool saturated green grass, dark peat seams, timber eave",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "hide_lashed": {
+          "name": "Stretched Hide Roof",
+          "palette": "warm tan hide, ivory struts, brown lacing",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "stone_slab": {
+          "name": "Stone Slab Roof",
+          "palette": "cool grey slab, rust lichen, dark joint shadow",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "peat_thatch": {
+          "name": "Peat & Reed Thatch",
+          "palette": "golden reed thatch, deep peat brown, bound ridge",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
         }
       }
     },
@@ -3695,42 +5263,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -3751,42 +5329,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -3807,42 +5395,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -3863,42 +5461,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -3910,6 +5518,64 @@
               "status": "pending"
             }
           }
+        }
+      },
+      "roofs": {
+        "ice_dome": {
+          "name": "Ice Block Roof",
+          "palette": "translucent cyan-white ice, frosted joints, bright sparkle",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "snow_block_roof": {
+          "name": "Snow Block Roof",
+          "palette": "chalk white snow blocks, periwinkle seams, capped crown",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "hide_driftwood_roof": {
+          "name": "Hide over Driftwood",
+          "palette": "grey-tan oiled hide, silver driftwood ridges, sinew lacing",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "frosted_shingle": {
+          "name": "Frosted Timber Shingle",
+          "palette": "frost-dark shingles, sparkling rime, icy blue shadow, icicle edge",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
         }
       }
     },
@@ -3925,42 +5591,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -3981,42 +5657,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -4037,42 +5723,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -4093,42 +5789,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -4140,6 +5846,64 @@
               "status": "pending"
             }
           }
+        }
+      },
+      "roofs": {
+        "slate": {
+          "name": "Slate",
+          "palette": "cool steel-blue iridescent slate",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "stone_flag": {
+          "name": "Stone Flag",
+          "palette": "warm-grey buff sandstone flags, lichen",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "limewashed_slate": {
+          "name": "Lime-washed Slate",
+          "palette": "chalky white-washed slate",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "wood_shake": {
+          "name": "Wood Shake",
+          "palette": "silver-grey mossy split wood",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
         }
       }
     },
@@ -4155,42 +5919,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -4211,42 +5985,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -4267,42 +6051,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -4323,42 +6117,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -4370,6 +6174,64 @@
               "status": "pending"
             }
           }
+        }
+      },
+      "roofs": {
+        "slate_shingle": {
+          "name": "Slate Shingle",
+          "palette": "blue-grey slate shingles",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "patina_copper": {
+          "name": "Patina Copper",
+          "palette": "verdigris green copper, warm copper glints",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "cedar_shake": {
+          "name": "Snow-Dusted Cedar Shake",
+          "palette": "warm cedar brown, snow white highlights",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "lead_seam": {
+          "name": "Lead Seam",
+          "palette": "muted silver-grey lead, soft sheen",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
         }
       }
     },
@@ -4385,42 +6247,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -4441,42 +6313,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -4497,42 +6379,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -4553,42 +6445,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -4600,6 +6502,64 @@
               "status": "pending"
             }
           }
+        }
+      },
+      "roofs": {
+        "ember_clay_tile": {
+          "name": "Ember Clay Tile",
+          "palette": "glowing orange-red terracotta tile",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "obsidian_shard_tile": {
+          "name": "Obsidian Shard Tile",
+          "palette": "jet-black glassy obsidian, white glints, gold ridge",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "blackened_iron_seam": {
+          "name": "Blackened Iron Seam",
+          "palette": "blackened gunmetal iron, heat-blue sheen",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "sulfur_glaze_tile": {
+          "name": "Sulfur-Glaze Tile",
+          "palette": "sulfur-yellow glaze, acid-green pooling",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
         }
       }
     },
@@ -4615,42 +6575,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -4671,42 +6641,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -4727,42 +6707,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -4783,42 +6773,52 @@
           "tiles": {
             "ground_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_door": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "ground_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_plain": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_window": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             },
             "gable": {
               "status": "pending",
+              "v1": "pending",
               "id": null
             }
           },
@@ -4831,6 +6831,64 @@
             }
           }
         }
+      },
+      "roofs": {
+        "crystal_shingle": {
+          "name": "Crystal Shingle",
+          "palette": "glowing cyan-violet crystal shingles",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "runed_slate": {
+          "name": "Silver Runed Slate",
+          "palette": "silver-grey slate, glowing blue-white runes",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "aether_glass_pane": {
+          "name": "Aether-Glass Pane",
+          "palette": "iridescent opal panes, silver lattice",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        },
+        "luminous_thatch": {
+          "name": "Luminous Thatch",
+          "palette": "glowing silver-blue luminous reed thatch",
+          "variants": {
+            "v000": "pending",
+            "v001": "pending",
+            "v002": "pending",
+            "v003": "pending"
+          },
+          "present": 0,
+          "complete": false,
+          "fascia": false,
+          "ids": null
+        }
       }
     }
   },
@@ -4842,9 +6900,15 @@
   "summary": {
     "biomes": 21,
     "building_assets": 1008,
-    "done": 89,
-    "pending": 919,
+    "done": 93,
+    "pending": 915,
     "pct": 9,
+    "roof_assets": 336,
+    "roof_done": 32,
+    "roof_pct": 10,
+    "v1_variants": 840,
+    "v1_done": 12,
+    "v1_pct": 1,
     "biomes_token_authored": [
       "grassland",
       "desert"

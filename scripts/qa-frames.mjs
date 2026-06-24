@@ -75,7 +75,9 @@ for (const seq of seqs) {
     imgs.forEach((im, i) => { if (im && `${im.width}x${im.height}` !== sz0) flags[i] = true; });
     reasons.push(`SIZE_DRIFT (frames not all ${sz0}) — AUTO-FIX: node scripts/normalize-anim-frames.mjs <dir>`);
   }
-  for (let i = 1; i < imgs.length; i++) {
+  // FROZEN only applies to NON-final frames (a door that stalls mid-open). A FINAL frame identical to its
+  // predecessor is a correctly SETTLED end pose (see settle-final-frame.mjs), not a bug — so exempt it.
+  for (let i = 1; i < imgs.length - 1; i++) {
     if (diffs[i - 1] < 1) { flags[i] = true; reasons.push(`f${i}: FROZEN (identical to f${i - 1})`); }
   }
   const last = diffs.length - 1;

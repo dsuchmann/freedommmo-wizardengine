@@ -571,9 +571,12 @@ def finalize_state(state, key, t, job):
         else:
             log.warning(f"{key}: v{v:03d} output rejected by validation")
     log.info(f"state {key}: saved {n}/{len(sent)}")
-    if n < len(sent):
-        # retry only the still-missing variants
-        t["vs"] = [v for v in sent if not state_path(t["biome"], t["obj"], t["state"], v).exists()]
+    # Remove all saved variants from the original vs list (not just sent).
+    # With 1-image-per-call, each finalize saves one variant; re-queue the
+    # task until every variant in the original pool is on disk.
+    remaining = [v for v in t["vs"] if not state_path(t["biome"], t["obj"], t["state"], v).exists()]
+    if remaining:
+        t["vs"] = remaining
         return False
     return True
 

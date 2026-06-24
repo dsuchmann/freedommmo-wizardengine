@@ -9,7 +9,17 @@
 import { WALL_CONFIG } from './wall-config.js';
 import { buildingFloors } from './building-shadow.js';
 
-const DIR = '/assets/pixelab/buildings/tiles/grassland/';
+const TILE_ROOT = '/assets/pixelab/buildings/tiles/';
+const getDIR = (biome) => TILE_ROOT + (biome || 'grassland') + '/';
+// Per-biome tile-material map: a building's world-gen wallSlug → tile-corpus FOLDER name. Desert's world-gen
+// slugs differ from the folder names, so this also reconciles them (smooth_adobe→adobe, sandstone_block→
+// sandstone, mudbrick_plaster→mudbrick, carved_rock→reed_palm). A biome ABSENT here is not tiled — its
+// buildings keep the legacy procedural wall path.
+const TILE_MATERIALS = {
+  grassland: { timber_frame: 'timber_frame', fieldstone: 'fieldstone', cob: 'cob', wattle_daub: 'wattle_daub' },
+  desert: { sandstone_block: 'sandstone', smooth_adobe: 'adobe', mudbrick_plaster: 'mudbrick', carved_rock: 'reed_palm' },
+};
+const BIOME_FALLBACK = { grassland: 'fieldstone', desert: 'adobe' };
 const _img = new Map();
 function img(url) { let im = _img.get(url); if (!im) { im = new Image(); im.src = url; _img.set(url, im); } return (im.complete && im.naturalWidth) ? im : null; }
 
@@ -17,8 +27,8 @@ function img(url) { let im = _img.get(url); if (!im) { im = new Image(); im.src 
 // stored at <material>/anim/<kind>/frame_NNN.png. The door PLAYS on player proximity: far = frame 0
 // (closed), near = last frame (open). Returns the frame image (or null until that frame loads).
 const ANIM_FRAMES = 9;
-function animFrame(mat, kind, idx) {
-  return img(DIR + mat + '/anim/' + kind + '/frame_' + String(idx).padStart(3, '0') + '.png');
+function animFrame(biome, mat, kind, idx) {
+  return img(getDIR(biome) + mat + '/anim/' + kind + '/frame_' + String(idx).padStart(3, '0') + '.png');
 }
 // 0 (closed, player far) → 1 (open, player at the door). World-tile distance ramp.
 function doorOpenAmount(b, d) {
@@ -29,21 +39,21 @@ function doorOpenAmount(b, d) {
   return Math.max(0, Math.min(1, (R_OPEN - dist) / (R_OPEN - R_FULL)));
 }
 
-const MATERIALS = new Set(['timber_frame', 'fieldstone', 'cob', 'wattle_daub']);
+// Resolve a building to its tile-corpus FOLDER name, or null if its biome isn't tiled (→ legacy wall path).
 function materialOf(b) {
   if (typeof window !== 'undefined' && window._tileMaterial) return window._tileMaterial;
-  // wallSlug is already exactly one of the four grassland materials (assigned by the world gen),
-  // so it maps directly to the tile folder. Unknown/other-biome slugs fall back to fieldstone.
+  const map = TILE_MATERIALS[b && b.biome];
+  if (!map) return null;
   const s = ((b && b.wallSlug) || '').toLowerCase();
-  return MATERIALS.has(s) ? s : 'fieldstone';
+  return map[s] || BIOME_FALLBACK[b.biome] || null;
 }
-// Tile walls are the grassland corpus only — gate by (biome, wallSlug) exactly like the occluder's
-// STRUCTURED_WALLS, so desert/snow/etc. buildings keep their own wall path instead of grassland walls.
+// Tile walls cover the biomes present in TILE_MATERIALS (grassland + desert). Gated by (biome, wallSlug) so
+// every other biome keeps its own legacy wall path instead of inheriting grassland tiles.
 export function isTiledBuilding(b) {
   if (typeof window !== 'undefined' && window._tileMaterial) return true; // console override forces it
-  return !!(b && b.biome === 'grassland' && MATERIALS.has(((b.wallSlug) || '').toLowerCase()));
+  return !!materialOf(b);
 }
-export function tileMaterialReady(b) { return !!img(DIR + materialOf(b) + '/ground_plain__v0.png'); }
+export function tileMaterialReady(b) { const m = materialOf(b); return !!(m && img(getDIR(b && b.biome) + m + '/ground_plain__v0.png')); }
 export function hasTileWall(b) {
   if (typeof window !== 'undefined' && window._tileWalls === false) return false;
   return isTiledBuilding(b) && tileMaterialReady(b);
@@ -83,20 +93,21 @@ function southRuns(fp) {
 export function drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h) {
   if (typeof window !== 'undefined' && window._tileWalls === false) return false;
   const bb = b.footprint && b.footprint.boundingBox; if (!bb) return false;
-  const mat = materialOf(b);
-  const base = img(DIR + mat + '/ground_plain__v0.png'); if (!base) return false;
-  const upper = img(DIR + mat + '/upper_plain__v0.png') || base;   // stackable storey (no foundation)
-  const leftC = img(DIR + mat + '/ground_left_corner__v0.png') || img(DIR + mat + '/left_corner__v0.png');     // flat finished west end (+foundation)
-  const rightC = img(DIR + mat + '/ground_right_corner__v0.png') || img(DIR + mat + '/right_corner__v0.png');  // flat finished east end (+foundation)
-  const upperLeftC = img(DIR + mat + '/upper_left_corner__v0.png') || leftC;   // upper-storey end (no foundation)
-  const upperRightC = img(DIR + mat + '/upper_right_corner__v0.png') || rightC;
+  const mat = materialOf(b); if (!mat) return false;
+  const D = getDIR(b.biome);
+  const base = img(D + mat + '/ground_plain__v0.png'); if (!base) return false;
+  const upper = img(D + mat + '/upper_plain__v0.png') || base;   // stackable storey (no foundation)
+  const leftC = img(D + mat + '/ground_left_corner__v0.png') || img(D + mat + '/left_corner__v0.png');     // flat finished west end (+foundation)
+  const rightC = img(D + mat + '/ground_right_corner__v0.png') || img(D + mat + '/right_corner__v0.png');  // flat finished east end (+foundation)
+  const upperLeftC = img(D + mat + '/upper_left_corner__v0.png') || leftC;   // upper-storey end (no foundation)
+  const upperRightC = img(D + mat + '/upper_right_corner__v0.png') || rightC;
   // PER-MATERIAL apertures: the real generated state tiles (4-tile-wide wall with the aperture baked in),
   // NOT a shared overlay or composited leaf. Door reaches the ground; window sits at its baked height.
-  const doorTile = img(DIR + mat + '/ground_door__v0.png');
-  const winTile = img(DIR + mat + '/ground_window__v0.png');
+  const doorTile = img(D + mat + '/ground_door__v0.png');
+  const winTile = img(D + mat + '/ground_window__v0.png');
   // NO fallback to the GROUND window: it carries the foundation stone course, which would flash on the
   // upper floor while the upper tile async-loads (and the aperture is simply skipped until it's ready).
-  const upperWinTile = img(DIR + mat + '/upper_window__v0.png');
+  const upperWinTile = img(D + mat + '/upper_window__v0.png');
 
   const t = tilePx;
   const wH = Math.round(t * WALL_CONFIG.wallHeight);                 // one storey = 4 tiles
@@ -154,26 +165,38 @@ export function drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h) {
   // PER-MATERIAL APERTURES — drawn on the run at the aperture's row, at that run's ground line (so apertures
   // sit on the correct stepped wall, not the bbox). Real generated state tiles, clipped to their span.
   const runFor = (ax, ay) => runs.find(r => r.y === ay && ax >= r.x0 && ax < r.x1) || runs[runs.length - 1];
-  const drawAperture = (tile, cx, top, spanTiles) => {
+  // CLAMP the aperture clip to the run's [left,right] pixel bounds so a door/window on the run's EDGE
+  // tile (e.g. a guaranteed front door that lands on the easternmost south tile) draws ONLY within the
+  // building frame instead of spilling ~0.8 tile past it and colliding with the corner tile.
+  const drawAperture = (tile, cx, top, spanTiles, left, right) => {
     const clipW = Math.round(spanTiles * t);
+    let cl = cx - clipW / 2, cr = cx + clipW / 2;
+    if (left != null && cl < left) cl = left;
+    if (right != null && cr > right) cr = right;
+    if (cr <= cl) return;
     ctx.save();
-    ctx.beginPath(); ctx.rect(cx - clipW / 2, top, clipW, wH); ctx.clip();
+    ctx.beginPath(); ctx.rect(cl, top, cr - cl, wH); ctx.clip();
     ctx.drawImage(tile, 0, 0, tile.naturalWidth, tile.naturalHeight, cx - segW / 2, top, segW, wH);
     ctx.restore();
   };
+  const runEdges = (r) => ({ left: Math.round((b.x + r.x0) * t - camX), right: Math.round((b.x + r.x1) * t - camX) });
   // DOORS — ground storey only. PROXIMITY DOOR ANIMATION: swing frame from player distance; fall back to
   // the closed static tile until that frame loads (frame 0 == closed == static tile).
   if (doorTile) for (const d of (fp.doors || [])) {
-    const gY = runGroundY(runFor(d.x, d.y).y);
+    const r = runFor(d.x, d.y);
+    const gY = runGroundY(r.y);
+    const { left, right } = runEdges(r);
     const fi = Math.round(doorOpenAmount(b, d) * (ANIM_FRAMES - 1));
-    const frame = (fi > 0 && animFrame(mat, 'door', fi)) || doorTile;
-    drawAperture(frame, Math.round((b.x + d.x + 0.5) * t - camX), gY - wH, 2.6); // door span ~2.5 tiles
+    const frame = (fi > 0 && animFrame(b.biome, mat, 'door', fi)) || doorTile;
+    drawAperture(frame, Math.round((b.x + d.x + 0.5) * t - camX), gY - wH, 2.6, left, right); // door span ~2.5 tiles, clamped to the run
   }
   // WINDOWS — on EVERY storey (stacked in vertical columns at each window x).
   for (const wn of (fp.windows || [])) {
-    const gY = runGroundY(runFor(wn.x, wn.y).y);
+    const r = runFor(wn.x, wn.y);
+    const gY = runGroundY(r.y);
+    const { left, right } = runEdges(r);
     const cx = Math.round((b.x + wn.x + 0.5) * t - camX);
-    for (let st = 0; st < stories; st++) { const wt = st === 0 ? winTile : upperWinTile; if (wt) drawAperture(wt, cx, gY - (st + 1) * wH, 2.0); }
+    for (let st = 0; st < stories; st++) { const wt = st === 0 ? winTile : upperWinTile; if (wt) drawAperture(wt, cx, gY - (st + 1) * wH, 2.0, left, right); }
   }
   return true;
 }

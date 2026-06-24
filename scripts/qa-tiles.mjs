@@ -5,6 +5,9 @@
 //              "window removed the wall" class of bug). Flagged above a small area fraction.
 //   • EMPTY  — < 35% opaque pixels: a near-blank / failed-generation tile.
 //   • TINY   — far smaller than its siblings in the same material (a truncated/partial generation).
+//              EXCLUDES the gable: it's a 64px create_tiles_pro TILE, intentionally a different KIND/size than
+//              the ~225px wall OBJECTS it sits beside, so it neither contributes to the wall-size median nor
+//              gets a TINY flag (it still gets HOLE + EMPTY — a holey gable shows grass through).
 // A SCREEN, not a hard gate: writes red-boxed montages of flagged tiles to tools/_qa_tiles/.
 // Usage: node scripts/qa-tiles.mjs [rootDir]
 import { loadImage, createCanvas } from '@napi-rs/canvas';
@@ -58,10 +61,13 @@ async function montage(name, items) {
 }
 
 const tiles = findTiles(ROOT);
-// sibling median size per material dir, for the TINY check
+// A gable is a create_tiles_pro TILE (64px), a different KIND than the wall OBJECTS — exclude it from the
+// wall-size median + the TINY check (it still gets HOLE/EMPTY). Match the `gable__vN.png` filename.
+const isGable = (p) => /(^|[\\/])gable__v\d+\.png$/.test(p);
+// sibling median size per material dir, for the TINY check (wall objects only)
 const byDir = {};
 const stats = [];
-for (const p of tiles) { try { const img = await loadImage(p); const a = analyze(img); stats.push({ p, ...a }); (byDir[path.dirname(p)] ||= []).push(a.W * a.H); } catch { stats.push({ p, bad: true }); } }
+for (const p of tiles) { try { const img = await loadImage(p); const a = analyze(img); stats.push({ p, ...a }); if (!isGable(p)) (byDir[path.dirname(p)] ||= []).push(a.W * a.H); } catch { stats.push({ p, bad: true }); } }
 const medArea = {}; for (const dir in byDir) { const s = byDir[dir].slice().sort((a, b) => a - b); medArea[dir] = s[s.length >> 1]; }
 
 const flagged = []; let n = 0;
@@ -72,8 +78,8 @@ for (const s of stats) {
   else {
     if (s.holeFrac > 0.004) reasons.push(`HOLE (interior transparency ${(s.holeFrac * 100).toFixed(2)}%)`);
     if (s.opaqueFrac < 0.35) reasons.push(`EMPTY (only ${(s.opaqueFrac * 100).toFixed(0)}% opaque)`);
-    const med = medArea[path.dirname(s.p)] || (s.W * s.H);
-    if (s.W * s.H < 0.4 * med) reasons.push(`TINY (${s.W}x${s.H} vs material median area ${med})`);
+    const med = medArea[path.dirname(s.p)];
+    if (med && !isGable(s.p) && s.W * s.H < 0.4 * med) reasons.push(`TINY (${s.W}x${s.H} vs material median area ${med})`);
   }
   if (reasons.length) { flagged.push({ path: s.p, label: rel, reasons }); console.log(`✗ ${rel}\n    ${reasons.join('; ')}`); }
   n++;

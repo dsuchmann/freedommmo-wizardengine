@@ -132,7 +132,15 @@ const _imageCache = {
 // loaded lazily; null until loaded or when the building has no roofSlug (→ roof-ingame falls
 // back to the biome ground texture). Lets a grassland roof read as a ROOF, not as soil.
 function roofTexFor(b) {
-  return (b && b.biome && b.roofSlug) ? _imageCache.get(roofAssetDir(b.biome, b.roofSlug) + roofTextureFile(0)) : null;
+  if (!(b && b.biome && b.roofSlug)) return null;
+  const dir = roofAssetDir(b.biome, b.roofSlug);
+  // Rotate roof_top variants per building (deterministic by footprint position) so a town shows VARIETY instead
+  // of one repeated tile. .get lazy-loads each variant; try the hashed one first, then fall through to whatever
+  // variants exist (v000 base) so a slug with fewer variants still renders.
+  const NV = 8; // roof_top__v000..v007 — desert uses a biome-wide curated pool (mud + sandstone-slabs), all slugs share it
+  const h = Math.abs((((b.x | 0) * 73856093) ^ ((b.y | 0) * 19349663)) >>> 0) % NV;
+  for (let k = 0; k < NV; k++) { const img = _imageCache.get(dir + roofTextureFile((h + k) % NV)); if (img) return img; }
+  return null;
 }
 // Per-material eave/rake trim board (ROOF lane draws it on the skirt; degrades to procedural fasciaColor if absent).
 function roofFasciaFor(b) {
