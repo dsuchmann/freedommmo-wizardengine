@@ -1430,8 +1430,8 @@
               "id": null
             },
             "gable": {
-              "status": "pending",
-              "id": null
+              "status": "done",
+              "id": "d49dc653-1031-4644-9bb7-081cafb49c59"
             }
           },
           "anims": {
@@ -1486,8 +1486,8 @@
               "id": null
             },
             "gable": {
-              "status": "pending",
-              "id": null
+              "status": "done",
+              "id": "dd538a7d-af62-40bb-bf56-80430cd3b46c"
             }
           },
           "anims": {
@@ -1598,8 +1598,8 @@
               "id": null
             },
             "gable": {
-              "status": "pending",
-              "id": null
+              "status": "done",
+              "id": "43c139f5-7682-484a-a38e-85ccb17cf06d"
             }
           },
           "anims": {
@@ -4842,8 +4842,8 @@
   "summary": {
     "biomes": 21,
     "building_assets": 1008,
-    "done": 86,
-    "pending": 922,
+    "done": 89,
+    "pending": 919,
     "pct": 9,
     "biomes_token_authored": [
       "grassland",

@@ -24,9 +24,10 @@ is the wall carried up — each building's gable must match its own wall. Record
 
 ## Generation method — `create_tiles_pro` (NOT `create_1_direction_object`)
 
-This piece uses a DIFFERENT PixelLab endpoint than the wall base (`create_1_direction_object`) and the roof
-slab (`create_1_direction_object` top-down). The gable wants a small **tileset** of flat square gable
-surfaces that the roof engine skins per-facet, so:
+Per the skill's OBJECTS-vs-TILES rule (user, 2026-06-24): **roof surface textures AND gables are TILES**
+(`create_tiles_pro`), NEVER objects (`create_1_direction_object`) and NEVER Wang tilesets — only
+walls/windows/doors/ends are objects. The wall base is an object; the gable is a small **tileset** of flat
+square gable surfaces the roof engine skins per-facet, so:
 
 ```
 create_tiles_pro({

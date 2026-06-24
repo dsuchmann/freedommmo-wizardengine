@@ -2,6 +2,15 @@
   "materials": {
     "timber_frame": {
       "gable": "4f680de3-12c8-45ec-a2bb-86edce2106d3"
+    },
+    "fieldstone": {
+      "gable": "dd538a7d-af62-40bb-bf56-80430cd3b46c"
+    },
+    "cob": {
+      "gable": "d49dc653-1031-4644-9bb7-081cafb49c59"
+    },
+    "wattle_daub": {
+      "gable": "43c139f5-7682-484a-a38e-85ccb17cf06d"
     }
   }
 }
