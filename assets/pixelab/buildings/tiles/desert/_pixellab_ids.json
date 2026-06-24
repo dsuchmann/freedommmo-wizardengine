@@ -1,0 +1,31 @@
+{
+  "_doc": "Durable ledger of PixelLab object IDs for the desert tile-corpus pilot. The base PixelLab project prefix is 0f1031f5-9eee-4df4-996f-0a4114148eba. Every state is a create_object_state of its material's `base`. NEVER rely on memory/summaries for these IDs — read them here. When you generate a new state/anim, record its id here in the SAME call-batch you generate it. Animations live under the state object they were generated on (door anim on ground_door, window anim on ground_window).",
+  "base_project": "0f1031f5-9eee-4df4-996f-0a4114148eba",
+  "materials": {
+    "adobe": {
+      "base": "8d50134f-7d60-4c6e-9978-6ab5b9c5fb2c",
+      "ground_window": "8dcbf440-b2e8-4712-bee8-1f31c6535896",
+      "ground_door": "731220b2-8fdd-4cd5-9949-f7cb171c3915"
+    },
+    "sandstone": {
+      "base": "15644a2e-9a64-4581-9e95-1a1d40f355cc",
+      "ground_door": "e0b40037-3b5b-4086-8fff-b09f456d366a",
+      "ground_window": "49b16fe2-f6c8-4547-a585-5ca60463858b",
+      "ground_left_corner": "9ef65d2b-2772-4acd-ac04-2e9b0d661e30"
+    },
+    "mudbrick": {
+      "base": "f504b6f9-e175-4601-9f77-69c5b4b5d8e5",
+      "ground_door": "91e34bb5-3db4-459d-8aca-a65b80892af3",
+      "ground_window": "9937e290-41c2-4234-8f9c-741cc4bbe808",
+      "ground_left_corner": "ba28be40-dcd9-498e-b4d6-bb6689b08c3a",
+      "_base_rejected_grid": "2b03a243-823d-4de3-b280-883f7d2aed76"
+    },
+    "reed_palm": {
+      "base": "360ef782-f169-48c1-966d-2cb15ab4fea7",
+      "ground_door": "506246d2-5371-4b95-90f8-fe2a9faf495d",
+      "ground_window": "52685ec7-3f0d-4678-8bc8-a6879d94f752",
+      "ground_left_corner": "a078a5d2-eabe-4afd-a4d6-20851445a944",
+      "_base_rejected_panels": ["fe386588-33c9-4451-b51c-385db8d36dab", "c04c6723-ce01-4130-8e38-0d3f8eda6ab3"]
+    }
+  }
+}
