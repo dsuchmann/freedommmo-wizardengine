@@ -67,6 +67,14 @@ for (const seq of seqs) {
   const diffs = []; for (let i = 1; i < stats.length; i++) diffs.push(stats[i] && stats[i - 1] ? mse(stats[i], stats[i - 1]) : Infinity);
   const med = median(diffs.filter((v) => isFinite(v) && v > 0));
   const flags = new Array(imgs.length).fill(false); const reasons = [];
+  // SIZE_DRIFT: v3 grows the canvas as the moving leaf extends the bbox, so frames end up different sizes; the
+  // renderer stretches every frame to the same wH, so the (static) wall+foundation then drift/lift. This is
+  // deterministic and AUTO-FIXABLE (no regen) — normalize every frame to the idle frame's size.
+  const sz0 = imgs[0] && `${imgs[0].width}x${imgs[0].height}`;
+  if (sz0 && imgs.some((im) => im && `${im.width}x${im.height}` !== sz0)) {
+    imgs.forEach((im, i) => { if (im && `${im.width}x${im.height}` !== sz0) flags[i] = true; });
+    reasons.push(`SIZE_DRIFT (frames not all ${sz0}) — AUTO-FIX: node scripts/normalize-anim-frames.mjs <dir>`);
+  }
   for (let i = 1; i < imgs.length; i++) {
     if (diffs[i - 1] < 1) { flags[i] = true; reasons.push(`f${i}: FROZEN (identical to f${i - 1})`); }
   }
