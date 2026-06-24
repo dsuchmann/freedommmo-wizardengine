@@ -21,6 +21,7 @@ import { queryBuildingTile } from './building-tile-query.js';
 import { wallAssetDir, wallPieceFile, roofAssetDir, roofTextureFile, ROOF_FASCIA_FILE } from '../../sim/world/buildings/building-material-registry.js';
 import { drawBuildingTiles, isTiledBuilding } from './building-tiles.js';
 import { renderOn } from './building-render-flags.js';
+import { paintWeatheredColumn } from './dressing/d0-weathering.js';
 
 // Source rect of the E/W side-face cap. The grassland edge_ew strip is a 32x128 quoin/side-cap;
 // sample its LEFT quoin column (x=0..16) as the true vertical corner post (`isQuoinStrip`) — drawing
@@ -465,6 +466,35 @@ export function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
   }
 }
 
+// D0 WEATHERING post-pass — tint each exposed SOUTH perimeter wall COLUMN with procedural ground grime +
+// tonal variation. Mechanism A: painted into the silhouette ctx, so it rides the GL present pass (lighting/
+// CRT/day-night) — never a 2D overlay. Walks the same south-perimeter columns as the cob-foundation pass.
+function drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h) {
+  if (!renderOn('weathering')) return;
+  const fp = b && b.footprint, sections = (fp && fp.sections) || [];
+  if (!sections.length) return;
+  const t = Math.round(tilePx);
+  const wH = Math.round(tilePx * WALL_CONFIG.wallHeight);
+  const WY = WALL_CONFIG.wallYOffset;
+  const stories = buildingFloors(b);
+  const tsy = (wy) => Math.round(wy * tilePx - camY);
+  const floorSet = new Set();
+  for (const s of sections) for (let dy = 0; dy < s.h; dy++) for (let dx = 0; dx < s.w; dx++) floorSet.add((s.x0 + dx) + ',' + (s.y0 + dy));
+  for (const s of sections) {
+    const lr = s.y0 + s.h - 1, fbY = b.y + s.y0 + s.h;
+    for (let dx = 0; dx < s.w; dx++) {
+      const lx = s.x0 + dx;
+      if (floorSet.has(lx + ',' + (lr + 1))) continue; // south neighbour inside → not a south face
+      const ex = tileExtent(b.x + lx, tilePx, camX, 1);
+      const groundTop = tsy(fbY) - wH + Math.round(t * WY);
+      const colTop = groundTop - (stories - 1) * wH;
+      const colH = stories * wH;
+      if (ex.dx + ex.dw < 0 || ex.dx > w || colTop + colH < 0 || colTop > h) continue;
+      paintWeatheredColumn(ctx, { dx: ex.dx, top: colTop, dw: ex.dw, colH }, { wx: b.x + lx, wy: fbY });
+    }
+  }
+}
+
 let _cv = null, _ox = null; // persistent offscreen authoring canvas
 
 /** Build the occlusion overlay bitmap (or null if nothing in front of the player). The caller
@@ -535,7 +565,7 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   // gate it would draw even when the roof layer is off (leaking an un-tuned, wall-misaligned roof over the
   // walls). With roof off, walls show clean; we align the roof eaves to the walls when the roof layer is on.
   const drawRoof = () => { if (_roof && renderOn('roof')) { try { _roof.drawRoofForBuilding(ctx, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b), roofFascia: roofFasciaFor(b) }); } catch { /* skip roof */ } } };
-  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawRoof(); return true; }
+  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h); drawRoof(); return true; }
   // A grassland TILE-CORPUS building whose tiles aren't loaded yet must NOT fall to the legacy
   // strip path — drawWalls would stamp a stone_brick 32px strip STRETCHED over the footprint (the
   // melted/stretched single-building artifact). Stay invisible this frame; it flips to mirror-tiled
@@ -544,6 +574,7 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   if (!getWallImg('south_base')) { if (b) b._wallPath = 'none'; return false; } // legacy fallback (assets not loaded yet)
   if (b) b._wallPath = 'legacy';
   drawWalls(ctx, b, camX, camY, tilePx, w, h);
+  drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h);
   drawRoof();
   return true;
 }

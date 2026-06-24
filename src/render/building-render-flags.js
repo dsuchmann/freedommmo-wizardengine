@@ -23,6 +23,7 @@ export const BUILDING_RENDER = {
   master: true,     // master ON — sub-flags below pick which layers actually draw
   walls: true,      // ON — exterior mirror-tiled tile-corpus walls (fieldstone pilot is round-2 complete)
   roof: true,       // ON — procedural roof, flows through the per-object depth pass (renderBuildingSilhouette)
+  weathering: true, // ON — D0 dressing: procedural ground-grime + tonal weathering on south wall columns
   shadow: true,     // ground shadows (building-shadow) — the MASK still builds, only pixels gated
   occlusion: false, // depth-occlusion A/B pass (building-depth) — player see-through
   doors: false,     // swinging door-leaf overlay (door-leaves)
