@@ -248,7 +248,27 @@ There is **no GL debug-quad/heatmap API yet** — building one is part of the ov
   PRIMARY implementation track. The G-stack is a PARALLEL DESIGN-ONLY lane right now (spec, no code/assets).
   Build order UNCHANGED: overlay → D0 pilot → (only after proven) grounds engine on the shared seams. Any
   reorder (e.g. grounds before D0) would be a deliberate change to §4 and must be flagged + logged here.
-- **NEXT:** finish the G-stack spec (path types + claim providers + asset-pipeline naming), write it to its
+- **2026-06-23 — D0 WEATHERING PILOT SHIPPED + VERIFIED IN-GAME (build-order step 3).** Implemented per
+  `docs/superpowers/plans/2026-06-23-d0-weathering-pilot.md`. New `src/render/dressing/d0-weathering.js`
+  (pure `weatheringCoverage` fbm+rand2 scalar, `grimeAlpha` bottom-weighted gravity mask, `paintWeatheredColumn`
+  soft-light tonal wash + multiply ground-grime bands) — 5/5 unit tests (`test/d0-weathering.test.mjs`). Wired
+  via a `weathering` sub-flag (`building-render-flags.js`) + `drawWeatheringPass()` in `building-occluder.js`
+  `drawBuildingTextured()` (after walls, before roof, BOTH tile + legacy branches) → paints into the silhouette
+  bitmap = GL-routed (inherits lighting/CRT/day-night, never a 2D overlay). Live tuner `window._weathering`.
+  **Verified in-game:** teleported to a grassland township (seed 42, ~1046,-32 via `discoverSettlementsInMacroRange`
+  + `chunkStore.streamAround` + `provider.initPreload(x,y,true)`), froze lighting at noon, A/B with the flag —
+  the lower third of the stone wall darkens with grime aligned to the wall columns, top stays clean, receives
+  the same lighting as the wall. Screenshots: `tools/d0-weathering-OFF.png` / `tools/d0-weathering-ON-4x.png`.
+  Commits: ee761120f (module+tests), fc786bf69 (integration). **Skipped vs the field's full scope (documented
+  follow-ups, not pilot):** full `surfacesIndex` (pilot rides the south-perimeter walk), the field-registry
+  slider UI (pilot uses the console knob), water-stain streaks + `min_wetness` gating (needs the wetness scalar,
+  honestly absent). Day-night clock is FAST — freeze `window._lighting.paused=true; .time=0.5` for any visual A/B.
+- **2026-06-23 — Grounds surface catalog authored (maximal/complete, per user).** 6 classes / 76 manmade
+  surface types (streets, civic/ceremonial, paths, yards, water-edge, managed-green), each tagged formality/
+  edgeStyle/fill/claimSource/available/biomeSkins/affordances/assetCorpus → `docs/superpowers/specs/2026-06-23-grounds-surface-catalog.json`.
+  Still DESIGN-ONLY (G-stack), no code/tiles; feeds the G-stack spec. Build order unchanged.
+- **NEXT:** D-stack continues — D3 wall attachments (sockets; first PixelLab field, gate a pilot batch) OR
+  optionally the host-agnostic GL overlay first. G-stack stays parallel design: finish its spec (path types +
   own design doc, then RETURN to the dressing track: (b) host-agnostic in-game GL overlay + per-field toggle,
   scoped by §6 (highlight claim-ring / wall-faces / role through `glc.drawSceneOverlayBitmap`; flag the missing
   surface/socket index + wetness), then (c) the D0 weathering pilot (`drawWallDecals` + field-registry entry +
