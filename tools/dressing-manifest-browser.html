@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dressing Manifest Browser — D0–D7 review</title>
+<style>
+  :root { --bg:#0c0e13; --panel:#14171f; --panel2:#1b1f29; --line:#262b37; --ink:#e8eaf0; --dim:#9aa3b4; --accent:#7cc4ff;
+          --A:#5fd0a0; --B:#7cc4ff; --C:#e0b15a; --D:#c89bf0; --warn:#f0a35a; --absent:#e06b6b; --avail:#5fd0a0; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:13px/1.45 ui-sans-serif,system-ui,Segoe UI,Roboto,sans-serif; }
+  header { position:sticky; top:0; z-index:10; background:#0c0e13f2; border-bottom:1px solid var(--line); padding:9px 16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  header h1 { font-size:14px; margin:0; font-weight:650; }
+  header .spacer { flex:1; }
+  header .stat { color:var(--dim); font-size:12px; }
+  header .stat b { color:var(--ink); }
+  input.search { background:var(--panel2); color:var(--ink); border:1px solid var(--line); border-radius:7px; padding:6px 10px; width:240px; font-size:12px; }
+  .layout { display:grid; grid-template-columns:230px 1fr 430px; gap:0; height:calc(100vh - 51px); }
+  /* field rail */
+  .rail { border-right:1px solid var(--line); background:var(--panel); overflow-y:auto; padding:8px; }
+  .fieldbtn { display:block; width:100%; text-align:left; background:var(--panel2); color:var(--ink); border:1px solid var(--line); border-left-width:4px; border-radius:8px; padding:8px 10px; margin-bottom:6px; cursor:pointer; }
+  .fieldbtn:hover { border-color:#3a4150; }
+  .fieldbtn.on { background:#1d2533; }
+  .fieldbtn .fid { font-weight:700; font-size:13px; }
+  .fieldbtn .fname { font-size:11.5px; color:var(--dim); }
+  .fieldbtn .fmeta { font-size:10.5px; color:var(--dim); margin-top:3px; }
+  .mechA { border-left-color:var(--A);} .mechB { border-left-color:var(--B);} .mechC { border-left-color:var(--C);} .mechD { border-left-color:var(--D);}
+  /* mid column: categories + objects */
+  .mid { overflow-y:auto; padding:14px; }
+  .fieldhead { margin:0 0 4px; font-size:16px; }
+  .fieldsub { color:var(--dim); font-size:12px; margin:0 0 12px; }
+  .crossnote { background:#10131a; border:1px solid var(--line); border-radius:8px; padding:9px 11px; color:#c3c9d6; font-size:11.5px; margin:0 0 14px; }
+  .cat { background:var(--panel); border:1px solid var(--line); border-radius:10px; margin-bottom:12px; overflow:hidden; }
+  .cathead { padding:9px 11px; cursor:pointer; display:flex; gap:8px; align-items:baseline; }
+  .cathead:hover { background:#171b24; }
+  .cathead .cid { font-weight:650; font-size:12.5px; }
+  .cathead .clbl { color:var(--dim); font-size:12px; }
+  .cathead .cnt { margin-left:auto; color:var(--dim); font-size:11px; }
+  .catbody { border-top:1px solid var(--line); padding:8px 11px; display:none; }
+  .cat.open .catbody { display:block; }
+  .pill { display:inline-block; font-size:10px; padding:1px 7px; border-radius:20px; border:1px solid #2a3140; background:#1a1f29; color:#9aa3b4; margin:0 3px 3px 0; }
+  .pill.method { background:#16242e; border-color:#244; color:#8fd9c4; }
+  .pill.plane { background:#1a2230; border-color:#2c3a52; color:#9cc2ff; }
+  .appwhen { font-size:11px; color:#b9c0cd; margin:6px 0; }
+  .applist { font-size:11px; color:var(--dim); }
+  .obj { background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:7px 9px; margin:7px 0; cursor:pointer; }
+  .obj:hover { border-color:#3a4150; }
+  .obj.sel { border-color:var(--accent); background:#16202c; }
+  .obj .ohead { display:flex; gap:8px; align-items:baseline; }
+  .obj .oid { font-weight:600; font-size:12px; }
+  .obj .olbl { color:var(--dim); font-size:11px; }
+  .obj .src { margin-left:auto; font-size:10px; }
+  .src.pixellab { color:#9cc2ff; } .src.procedural { color:#8fd9c4; } .src.hybrid { color:#c89bf0; }
+  .chips { margin-top:5px; }
+  .chip { display:inline-block; font-size:10px; padding:1px 6px; border-radius:5px; margin:0 3px 3px 0; border:1px solid #2a3140; }
+  .chip.comp { background:#21181f; border-color:#5a3450; color:#e0a8d0; }
+  .chip.anim { background:#1d2417; border-color:#3a5a34; color:#bfe0a8; }
+  .chip.cov { background:#241f17; border-color:#5a4a34; color:#e0cba8; }
+  /* inspector */
+  .inspector { border-left:1px solid var(--line); background:var(--panel); overflow-y:auto; padding:14px; }
+  .inspector .empty { color:var(--dim); font-size:12px; margin-top:30px; text-align:center; }
+  .inspector h2 { font-size:15px; margin:0 0 1px; }
+  .inspector .isub { color:var(--dim); font-size:11.5px; margin-bottom:10px; }
+  .grp { margin-top:13px; }
+  .grp h3 { font-size:10.5px; text-transform:uppercase; letter-spacing:.6px; color:var(--dim); margin:0 0 6px; border-bottom:1px solid var(--line); padding-bottom:4px; }
+  .kv { display:grid; grid-template-columns:92px 1fr; gap:4px 8px; font-size:11.5px; }
+  .kv .k { color:var(--dim); }
+  .kv .v { color:#dfe3ec; }
+  .comprow { font-size:11.5px; margin:4px 0; padding:5px 7px; background:#10131a; border:1px solid var(--line); border-radius:6px; }
+  .comprow .cn { color:var(--accent); font-weight:600; }
+  .comprow.null { color:#5e6675; }
+  .skins { font-size:11px; color:#c3c9d6; background:#10131a; border:1px solid var(--line); border-radius:6px; padding:8px; white-space:pre-wrap; }
+  .notes { font-size:11.5px; color:#cdd3df; background:#11131a; border:1px solid var(--line); border-radius:6px; padding:8px; }
+  .firelist .pill { background:#162030; border-color:#2c4a6a; color:#9cc2ff; cursor:pointer; }
+  .legend { font-size:10.5px; color:var(--dim); padding:8px; border-top:1px solid var(--line); }
+  .legend b { color:var(--ink); }
+  .tagAbsent { color:var(--absent); font-weight:600; }
+  .tagAvail { color:var(--avail); font-weight:600; }
+  code { color:#9fd; }
+  a.jump { color:var(--accent); cursor:pointer; text-decoration:underline; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Dressing Manifest Browser</h1>
+  <span class="stat" id="stat">loading…</span>
+  <span class="spacer"></span>
+  <input class="search" id="search" placeholder="filter objects / ids…" />
+  <button id="expandAll" style="background:#1b1f29;color:#e8eaf0;border:1px solid #262b37;border-radius:7px;padding:6px 10px;cursor:pointer;font-size:12px;">Expand all</button>
+</header>
+<div class="layout">
+  <div class="rail" id="rail"></div>
+  <div class="mid" id="mid"><p class="fieldsub">Select a field…</p></div>
+  <div class="inspector" id="inspector"><p class="empty">Click an object to inspect its affordances, coverage, biomeSkins and notes.</p>
+    <div class="legend">
+      <b>Mechanism:</b> <span style="color:var(--A)">A</span> decal-into-bitmap ·
+      <span style="color:var(--B)">B</span> socket-prop ·
+      <span style="color:var(--C)">C</span> perimeter-scatter ·
+      <span style="color:var(--D)">D</span> meta-composition.<br/>
+      <b>Gating:</b> <span class="tagAvail">available now</span> (biome/role/wetness/exposure/tier/season) vs
+      <span class="tagAbsent">honestly absent</span> (age/wealth/maintenance/condition — skipped, never faked).
+    </div>
+  </div>
+</div>
+
+<script>
+const MANIFEST_URL = '../docs/superpowers/specs/2026-06-23-dressing-manifest.json?ts=' + Date.now();
+// honest-absence + availability vocabulary for highlighting gating signals
+const ABSENT = ['age', 'wealth', 'maintenance', 'condition', 'abandoned', 'min_age'];
+const AVAIL  = ['biome', 'role', 'wetness', 'min_wetness', 'exposure', 'sun', 'shade', 'tier', 'settlement_tier', 'season', 'socket', 'surface', 'perimeter', 'claim', 'specialization', 'district'];
+let DATA = null, curField = null, curObj = null;
+
+function el(tag, cls, txt) { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+function mechClass(m) { const c = (m||'').trim().charAt(0).toUpperCase(); return 'mech' + (['A','B','C','D'].includes(c) ? c : ''); }
+function mechLetter(m) { const c = (m||'').trim().charAt(0).toUpperCase(); return ['A','B','C','D'].includes(c) ? c : '?'; }
+function countObjs(field) { return (field.categories||[]).reduce((a,c)=>a+(c.objects||[]).length,0); }
+
+// highlight available (green) / absent (red) gating tokens inside an application.when string
+function annotateWhen(text) {
+  if (!text) return '';
+  let html = text.replace(/[&<>]/g, s=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[s]));
+  // mark honest-absence terms first (more specific), then available
+  ABSENT.forEach(t => { html = html.replace(new RegExp('\\b('+t+'\\w*)\\b','gi'), '<span class="tagAbsent">$1</span>'); });
+  AVAIL.forEach(t => { html = html.replace(new RegExp('\\b('+t+'\\w*)\\b','gi'), m => /tagAbsent/.test(m) ? m : '<span class="tagAvail">'+m+'</span>'); });
+  return html;
+}
+
+function renderRail() {
+  const rail = document.getElementById('rail'); rail.innerHTML = '';
+  DATA.fields.forEach(f => {
+    const b = el('button', 'fieldbtn ' + mechClass(f.mechanism));
+    if (curField === f) b.classList.add('on');
+    b.innerHTML = `<span class="fid">${f.field}</span> <span class="fname">${f.fieldName}</span>`
+      + `<div class="fmeta">mech ${mechLetter(f.mechanism)} · ${f.plane} · ${(f.categories||[]).length} cats / ${countObjs(f)} objs<br/>${f.defaultProvenance}</div>`;
+    b.onclick = () => { curField = f; curObj = null; renderRail(); renderMid(); clearInspector(); };
+    rail.appendChild(b);
+  });
+}
+
+function renderMid() {
+  const mid = document.getElementById('mid'); mid.innerHTML = '';
+  if (!curField) { mid.appendChild(el('p','fieldsub','Select a field…')); return; }
+  const f = curField;
+  mid.appendChild(Object.assign(el('h2','fieldhead'), { textContent: `${f.field} · ${f.fieldName}` }));
+  mid.appendChild(el('p','fieldsub', `Mechanism ${f.mechanism} — plane: ${f.plane} — default provenance: ${f.defaultProvenance}`));
+  if (f.crossBiomeNotes) { const cn = el('div','crossnote'); cn.innerHTML = '<b>crossBiomeNotes:</b> ' + f.crossBiomeNotes.replace(/[<>]/g,''); mid.appendChild(cn); }
+
+  const filter = (document.getElementById('search').value||'').toLowerCase();
+  (f.categories||[]).forEach(c => {
+    const objs = (c.objects||[]).filter(o => !filter || (o.id+o.label).toLowerCase().includes(filter) || c.id.toLowerCase().includes(filter));
+    if (filter && objs.length === 0 && !c.id.toLowerCase().includes(filter)) return;
+    const cat = el('div','cat'); if (filter) cat.classList.add('open');
+    const head = el('div','cathead');
+    head.innerHTML = `<span class="cid">${c.id}</span><span class="clbl">${c.label}</span><span class="cnt">${(c.objects||[]).length} obj</span>`;
+    head.onclick = () => cat.classList.toggle('open');
+    cat.appendChild(head);
+    const body = el('div','catbody');
+    // placement + biomeApplicability
+    const p = c.placement||{};
+    const planePill = el('span','pill plane', 'plane: '+(p.plane||'?'));
+    const methodPill = el('span','pill method', 'method: '+(p.method||'?'));
+    const fitPill = el('span','pill', 'fit: '+(p.fitDefault||'?'));
+    body.appendChild(planePill); body.appendChild(methodPill); body.appendChild(fitPill);
+    body.appendChild(el('span','pill', 'anchor: '+(p.anchor||'?')));
+    const ba = c.biomeApplicability;
+    if (ba && ba !== 'universal') {
+      const baTxt = typeof ba === 'string' ? ba : (ba.only ? 'only:['+ba.only.join(',')+']' : ba.drop ? 'drop:['+ba.drop.join(',')+']' : JSON.stringify(ba));
+      const bp = el('span','pill'); bp.style.borderColor='#5a4a34'; bp.style.color='#e0cba8'; bp.textContent = baTxt; body.appendChild(bp);
+    }
+    // application.when — annotated for available/absent gating
+    const app = c.application||{};
+    if (app.when) { const w = el('div','appwhen'); w.innerHTML = '<b>when:</b> ' + annotateWhen(typeof app.when==='string'?app.when:JSON.stringify(app.when)); body.appendChild(w); }
+    if (app.avoid) body.appendChild(Object.assign(el('div','applist'), { textContent: 'avoid: ' + (Array.isArray(app.avoid)?app.avoid.join(', '):app.avoid) }));
+    if (app.chanceOrDensity) body.appendChild(Object.assign(el('div','applist'), { textContent: 'density: ' + app.chanceOrDensity }));
+
+    // objects
+    objs.forEach(o => {
+      const ob = el('div','obj'); ob.dataset.oid = o.id;
+      if (curObj === o) ob.classList.add('sel');
+      const comps = ['interact','destructible','light','content','attach'].filter(k => o[k]);
+      ob.innerHTML = `<div class="ohead"><span class="oid">${o.id}</span><span class="olbl">${o.label}</span><span class="src ${o.source}">${o.source}</span></div>`;
+      const chips = el('div','chips');
+      (o.anim||[]).forEach(a => chips.appendChild(Object.assign(el('span','chip anim'), {textContent:a})));
+      comps.forEach(k => chips.appendChild(Object.assign(el('span','chip comp'), {textContent:k})));
+      if (o.coverage) chips.appendChild(Object.assign(el('span','chip cov'), {textContent:'coverage'}));
+      ob.appendChild(chips);
+      ob.onclick = () => { curObj = o; document.querySelectorAll('.obj.sel').forEach(x=>x.classList.remove('sel')); ob.classList.add('sel'); renderInspector(o, c, f); };
+      body.appendChild(ob);
+    });
+    cat.appendChild(body);
+    mid.appendChild(cat);
+  });
+}
+
+function clearInspector(){ document.getElementById('inspector').querySelector('.empty')?.style.removeProperty('display'); curObj=null; }
+
+function compRow(name, val) {
+  const r = el('div','comprow');
+  if (val == null) { r.classList.add('null'); r.innerHTML = `<span class="cn">${name}</span> — null`; return r; }
+  r.innerHTML = `<span class="cn">${name}</span> ${JSON.stringify(val)}`;
+  return r;
+}
+
+function renderInspector(o, c, f) {
+  const ins = document.getElementById('inspector'); ins.innerHTML = '';
+  ins.appendChild(Object.assign(el('h2'), {textContent:o.label}));
+  ins.appendChild(Object.assign(el('p','isub'), {textContent:`${o.id}  ·  ${f.field}/${c.id}  ·  source: ${o.source}`}));
+
+  // scale/variants/states/anim
+  const g1 = el('div','grp'); g1.appendChild(Object.assign(el('h3'), {textContent:'shape'}));
+  const kv = el('div','kv');
+  const sc = o.scale||{};
+  const scTxt = `nativePx ${sc.nativePx ?? '—'} · world ${sc.worldSizeW ?? '—'}×${sc.worldSizeH ?? '—'} · fit ${sc.fit ?? '—'}`;
+  [['codeEffect',(o.codeEffect||[]).join(', ')||'—'],['scale',scTxt],['variants',`${o.variants?.count ?? '—'} (${o.variants?.drivenBy ?? '—'})`],['states',(o.states||[]).join(', ')],['anim',(o.anim||[]).join(', ')]].forEach(([k,v])=>{
+    kv.appendChild(Object.assign(el('div','k'),{textContent:k})); kv.appendChild(Object.assign(el('div','v'),{textContent:v}));
+  });
+  g1.appendChild(kv); ins.appendChild(g1);
+
+  // affordance components
+  const g2 = el('div','grp'); g2.appendChild(Object.assign(el('h3'),{textContent:'affordance components'}));
+  ['interact','destructible','light','content','attach'].forEach(k => g2.appendChild(compRow(k, o[k])));
+  ins.appendChild(g2);
+
+  // coverage (surface fields)
+  if (o.coverage) {
+    const g3 = el('div','grp'); g3.appendChild(Object.assign(el('h3'),{textContent:'coverage (surface sub-grain)'}));
+    g3.appendChild(compRow('coverage', o.coverage)); ins.appendChild(g3);
+  }
+
+  // attach.holds — make clickable jumps
+  if (o.attach && Array.isArray(o.attach.holds) && o.attach.holds.length) {
+    const g = el('div','grp'); g.appendChild(Object.assign(el('h3'),{textContent:'attach.holds → '}));
+    const list = el('div','firelist');
+    o.attach.holds.forEach(h => { const p = el('span','pill'); p.textContent = h; p.onclick = ()=>jumpToId(h); list.appendChild(p); });
+    g.appendChild(list); ins.appendChild(g);
+  }
+
+  // D7 fires
+  if (Array.isArray(o.fires) && o.fires.length) {
+    const g = el('div','grp'); g.appendChild(Object.assign(el('h3'),{textContent:`fires → composes ${o.fires.length} ids`}));
+    const list = el('div','firelist');
+    o.fires.forEach(h => { const p = el('span','pill'); p.textContent = h; p.onclick = ()=>jumpToId(h); list.appendChild(p); });
+    g.appendChild(list); ins.appendChild(g);
+  }
+
+  // biomeSkins
+  if (o.biomeSkins) { const g = el('div','grp'); g.appendChild(Object.assign(el('h3'),{textContent:'biomeSkins'})); g.appendChild(Object.assign(el('div','skins'),{textContent: typeof o.biomeSkins==='string'?o.biomeSkins:JSON.stringify(o.biomeSkins,null,2)})); ins.appendChild(g); }
+  // notes
+  if (o.notes) { const g = el('div','grp'); g.appendChild(Object.assign(el('h3'),{textContent:'notes (why these affordances apply)'})); g.appendChild(Object.assign(el('div','notes'),{textContent:o.notes})); ins.appendChild(g); }
+}
+
+// find an id (category or object) anywhere, select its field + scroll to it
+function jumpToId(id) {
+  for (const f of DATA.fields) {
+    for (const c of (f.categories||[])) {
+      if (c.id === id) { curField=f; renderRail(); renderMid(); setTimeout(()=>{ const cat=[...document.querySelectorAll('.cat')].find(x=>x.querySelector('.cid')?.textContent===id); if(cat){cat.classList.add('open'); cat.scrollIntoView({block:'center'}); cat.style.outline='1px solid var(--accent)'; setTimeout(()=>cat.style.outline='',1200);} },30); return; }
+      for (const o of (c.objects||[])) if (o.id === id) { curField=f; renderRail(); renderMid(); setTimeout(()=>{ const cat=[...document.querySelectorAll('.cat')].find(x=>x.querySelector('.cid')?.textContent===c.id); cat?.classList.add('open'); const ob=document.querySelector(`.obj[data-oid="${CSS.escape(id)}"]`); if(ob){curObj=o; ob.classList.add('sel'); ob.scrollIntoView({block:'center'}); renderInspector(o,c,f);} },30); return; }
+    }
+  }
+  alert('id not found in manifest: ' + id);
+}
+
+document.getElementById('search').addEventListener('input', renderMid);
+document.getElementById('expandAll').addEventListener('click', ()=>document.querySelectorAll('.cat').forEach(c=>c.classList.toggle('open')));
+
+fetch(MANIFEST_URL).then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); }).then(j => {
+  DATA = j;
+  const cats = j.fields.reduce((a,f)=>a+(f.categories||[]).length,0);
+  const objs = j.fields.reduce((a,f)=>a+f.categories.reduce((b,c)=>b+(c.objects||[]).length,0),0);
+  document.getElementById('stat').innerHTML = `<b>${j.fields.length}</b> fields · <b>${cats}</b> categories · <b>${objs}</b> objects · pilot=<b>${j.biomePilot}</b> · v${j.version}`;
+  curField = j.fields[0];
+  renderRail(); renderMid();
+}).catch(e => {
+  document.getElementById('stat').textContent = 'failed to load manifest: ' + e.message;
+  document.getElementById('mid').innerHTML = `<p style="color:#f99">Could not load <code>${MANIFEST_URL}</code> — ${e.message}.<br/>Run the dev server from the project root so the relative path resolves, or re-run <code>node scripts/merge-dressing-manifest.mjs</code> to regenerate the assembled JSON.</p>`;
+});
+</script>
+</body>
+</html>
