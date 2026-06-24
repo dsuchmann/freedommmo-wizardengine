@@ -46,19 +46,6 @@ export function computeView(grid, cw, ch, margin = 0.86) {
 export function makeGameView(originWx, originWy, camX, camY, tilePx, opts = {}) {
   const wallLift = opts.wallLift ?? 3.75 * tilePx; // wall top: (wallHeight - yOffset)*tilePx
   const hScale = opts.heightScale ?? tilePx * 0.55;
-  // FRACTIONAL EAVE OVERHANG: the geometry generates a full 1-tile DROOPING overhang ring (the eave tiles hang
-  // BELOW the wall-top plane — that droop is what gives the roof its 3-D eave edge). Here we COMPRESS that
-  // ring's outward reach to `overhangTiles` of a tile, leaving the FOOTPRINT untouched. So the eave keeps its
-  // drooped dimension but only juts out a fraction of a tile, and the pitch is preserved (widening the
-  // footprint would flatten the roof). Only vertices OUTSIDE the footprint bbox move; interior ones don't.
-  const oh = opts.overhangTiles ?? 0;
-  const fpX0 = opts.fpX0, fpX1 = opts.fpX1, fpY0 = opts.fpY0, fpY1 = opts.fpY1;
-  const squeeze = (v, lo, hi) => {
-    if (!(oh > 0) || lo == null) return v;
-    if (v < lo) return lo - (lo - v) * oh;   // overhang beyond the low edge → pulled in to `oh` of its reach
-    if (v > hi) return hi + (v - hi) * oh;    // overhang beyond the high edge
-    return v;                                  // inside the footprint → unchanged (true pitch preserved)
-  };
   // UNIFORM lift: every eave sits on its wall top (north AND south walls are both the
   // tall 4-tile sprite), so the roof never terminates short of the north wall. The
   // roof not extending past the north edge is handled by CAPPING the roof height to
@@ -66,11 +53,9 @@ export function makeGameView(originWx, originWy, camX, camY, tilePx, opts = {}) 
   return {
     tile: tilePx, yScale: 1, hScale, game: true,
     project(gx, gy, hh) {
-      const ex = squeeze(gx, fpX0, fpX1);
-      const ey = squeeze(gy, fpY0, fpY1);
       return {
-        x: (originWx + ex) * tilePx - camX,
-        y: (originWy + ey) * tilePx - camY - wallLift - hh * hScale,
+        x: (originWx + gx) * tilePx - camX,
+        y: (originWy + gy) * tilePx - camY - wallLift - hh * hScale,
       };
     },
   };
@@ -370,11 +355,23 @@ function drawSkirt(ctx, grid, view, t, material, cfg) {
     ctx.lineTo(bot2.x, bot2.y); ctx.lineTo(bot1.x, bot1.y); ctx.closePath();
     const dShade = d === 's' ? 0.88 : d === 'n' ? 0.5 : 0.66; // sunlit south / shadowed north
     const fasciaTex = cfg && cfg.roofFascia;
-    if (fasciaTex) {
-      // skin the eave/rake board with the authored roof_fascia.png, clipped to the skirt
-      // quad, then dShade-darkened. Degrades to the procedural fasciaColor below if absent.
+    if (toWall) {
+      // GAP-FILL bridge (south gable + E/W rake dropping to the wall top): fill the triangular gap SOLID
+      // with the ROOF's own colour, darkened by the face shade, so it reads as the roof carried cleanly
+      // down to the wall. OPAQUE → no grass through the gap (the actual bug: the fascia texture has
+      // PixelLab transparency). NOT the stretched fascia texture, which over a tall gable reads as a busy,
+      // repeated band competing with the roof surface.
+      ctx.fillStyle = sampledBaseColor(cfg.texture) || sampledBaseColor(fasciaTex)
+        || (material.baseColor && material.baseColor()) || 'rgb(120,72,42)';
+      ctx.fill();
+      ctx.fillStyle = `rgba(0,0,0,${Math.min(0.42, (1 - dShade) * 0.95)})`;
+      ctx.fill();
+    } else if (fasciaTex) {
+      // thin eave fascia lip (a non-bridging overhang edge): skin the small board with the fascia texture.
       ctx.save();
       ctx.clip();
+      ctx.fillStyle = sampledBaseColor(fasciaTex) || 'rgb(40,32,24)';   // opaque base under the (holey) texture
+      ctx.fill();
       const minX = Math.min(top1.x, top2.x, bot1.x, bot2.x), maxX = Math.max(top1.x, top2.x, bot1.x, bot2.x);
       const minY = Math.min(top1.y, top2.y), maxY = Math.max(bot1.y, bot2.y);
       ctx.imageSmoothingEnabled = false;
@@ -386,7 +383,7 @@ function drawSkirt(ctx, grid, view, t, material, cfg) {
       ctx.fill();
       ctx.restore();
     } else {
-      ctx.fillStyle = material.fasciaColor ? material.fasciaColor(dShade) : 'rgba(30,24,18,0.9)';
+      ctx.fillStyle = material.fasciaColor ? material.fasciaColor(dShade) : 'rgb(30,24,18)';
       ctx.fill();
     }
   }
