@@ -176,10 +176,15 @@ if (fs.existsSync(LARGE)) {
       const bases = fs.readdirSync(odir).filter(f => /^v\d{3}\.png$/.test(f)).sort();
       if (!bases.length) continue;
       // Curation: drop omitted variants from the in-game pool (non-destructive — files stay on disk).
+      // survBases[i] and vmap[i] are derived in one pass so they always correspond (the parallel-array
+      // contract that trims/sil also align to).
       const omit = F6_OMIT.get(biome + '/' + obj) || new Set();
-      const survBases = bases.filter(f => !omit.has(parseInt(f.match(/^v(\d{3})\.png$/)[1], 10)));
-      if (!survBases.length) continue;
-      const vmap = survBases.map(f => parseInt(f.match(/^v(\d{3})\.png$/)[1], 10));
+      const survEntries = bases
+        .map(f => ({ f, idx: parseInt(f.match(/^v(\d{3})\.png$/)[1], 10) }))
+        .filter(({ idx }) => !omit.has(idx));
+      if (!survEntries.length) continue;
+      const survBases = survEntries.map(e => e.f);
+      const vmap = survEntries.map(e => e.idx);
       const size = pngWidth(path.join(odir, survBases[0]));
       // states/anims keep ORIGINAL filename indices (membership tested vs realV at runtime; omitted indices
       // can never be selected because vmap excludes them).
@@ -189,6 +194,7 @@ if (fs.existsSync(LARGE)) {
         for (const st of fs.readdirSync(sroot).sort()) {
           const sdir = path.join(sroot, st);
           if (!fs.statSync(sdir).isDirectory()) continue;
+          // F6 states also use plain v###.png — no lg__ prefix (unlike F5's mo__…__v###.png).
           const vs = fs.readdirSync(sdir)
             .map(f => f.match(/^v(\d{3})\.png$/)).filter(Boolean)
             .map(m => parseInt(m[1], 10)).sort((a, b) => a - b);
