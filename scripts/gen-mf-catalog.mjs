@@ -6,6 +6,7 @@ import path from 'path';
 import url from 'url';
 import { alphaBBoxFromBuffer, decodeAlpha } from './lib/png-alpha-bbox.mjs';
 import { measureSilhouette } from './lib/silhouette-measure.mjs';
+import { loadCuration, omitSetMap } from './lib/field-curation.mjs';
 
 const ROOT = path.join(path.dirname(url.fileURLToPath(import.meta.url)), '..');
 const FLORA = path.join(ROOT, 'assets/pixelab/landscape_v2/micro/medium_flora');
@@ -162,6 +163,7 @@ console.log(`wrote ${MO_OUT}: ${moTypes} types, ${moStates} state sets`);
 const LARGE = path.join(ROOT, 'assets/pixelab/landscape_v2/micro/large_flora');
 const LG_OUT = path.join(ROOT, 'src/world/lg-catalog.js');
 
+const F6_OMIT = omitSetMap(loadCuration('f6')); // "biome/species" -> Set(omitted variant indices)
 const lgCatalog = {};
 if (fs.existsSync(LARGE)) {
   for (const biome of fs.readdirSync(LARGE).sort()) {
@@ -173,7 +175,14 @@ if (fs.existsSync(LARGE)) {
       // W2 burst naming: plain v###.png (no lg__ prefix)
       const bases = fs.readdirSync(odir).filter(f => /^v\d{3}\.png$/.test(f)).sort();
       if (!bases.length) continue;
-      const size = pngWidth(path.join(odir, bases[0]));
+      // Curation: drop omitted variants from the in-game pool (non-destructive — files stay on disk).
+      const omit = F6_OMIT.get(biome + '/' + obj) || new Set();
+      const survBases = bases.filter(f => !omit.has(parseInt(f.match(/^v(\d{3})\.png$/)[1], 10)));
+      if (!survBases.length) continue;
+      const vmap = survBases.map(f => parseInt(f.match(/^v(\d{3})\.png$/)[1], 10));
+      const size = pngWidth(path.join(odir, survBases[0]));
+      // states/anims keep ORIGINAL filename indices (membership tested vs realV at runtime; omitted indices
+      // can never be selected because vmap excludes them).
       const states = {};
       const sroot = path.join(odir, '_states');
       if (fs.existsSync(sroot)) {
@@ -193,15 +202,16 @@ if (fs.existsSync(LARGE)) {
           const m = vd.match(/^v(\d{3})$/);
           if (!m) continue;
           const frames = fs.readdirSync(path.join(adir, vd)).filter(f => /^frame_\d{3}\.png$/.test(f));
-          if (frames.length >= 8) anims.push(parseInt(m[1], 10)); // W2 generates 8 frames
+          if (frames.length >= 8) anims.push(parseInt(m[1], 10));
         }
       }
-      const trims = trimsFor(odir, bases);
+      const trims = trimsFor(odir, survBases);
       (lgCatalog[biome] = lgCatalog[biome] || []).push({
         name: obj, size,
-        variants: bases.length,
+        variants: survBases.length,
+        vmap,
         trims,
-        sil: silsFor(odir, bases, trims),
+        sil: silsFor(odir, survBases, trims),
         states,
         anims: anims.sort((a, b) => a - b),
       });

@@ -6,6 +6,32 @@ export var LG_CATALOG = {
    "name": "frozen_birch",
    "size": 192,
    "variants": 24,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+   ],
    "trims": [
     [
      7,
@@ -753,6 +779,32 @@ export var LG_CATALOG = {
    "name": "ice_pine",
    "size": 192,
    "variants": 24,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+   ],
    "trims": [
     [
      23,
@@ -1505,6 +1557,32 @@ export var LG_CATALOG = {
    "name": "driftwood_tree",
    "size": 192,
    "variants": 24,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+   ],
    "trims": [
     [
      0,
@@ -2255,6 +2333,32 @@ export var LG_CATALOG = {
    "name": "palm_tree",
    "size": 192,
    "variants": 24,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+   ],
    "trims": [
     [
      21,
@@ -3007,6 +3111,72 @@ export var LG_CATALOG = {
    "name": "ancient_oak",
    "size": 192,
    "variants": 64,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63
+   ],
    "trims": [
     [
      2,
@@ -4931,27 +5101,14 @@ export var LG_CATALOG = {
      "visH": 184
     }
    ],
-   "states": {
-    "burned": [
-     0
-    ],
-    "dead": [
-     0
-    ],
-    "enchanted": [
-     0
-    ],
-    "frozen": [
-     0
-    ],
-    "seedling": [
-     0
-    ],
-    "wilting": [
-     0
-    ]
-   },
-   "anims": [
+   "states": {},
+   "anims": []
+  },
+  {
+   "name": "hollow_elm",
+   "size": 192,
+   "variants": 62,
+   "vmap": [
     0,
     1,
     2,
@@ -5013,15 +5170,8 @@ export var LG_CATALOG = {
     58,
     59,
     60,
-    61,
-    62,
-    63
-   ]
-  },
-  {
-   "name": "hollow_elm",
-   "size": 192,
-   "variants": 62,
+    61
+   ],
    "trims": [
     [
      6,
@@ -6886,27 +7036,14 @@ export var LG_CATALOG = {
      "visH": 158
     }
    ],
-   "states": {
-    "burned": [
-     0
-    ],
-    "dead": [
-     0
-    ],
-    "enchanted": [
-     0
-    ],
-    "frozen": [
-     0
-    ],
-    "seedling": [
-     0
-    ],
-    "wilting": [
-     0
-    ]
-   },
-   "anims": [
+   "states": {},
+   "anims": []
+  },
+  {
+   "name": "yew",
+   "size": 192,
+   "variants": 63,
+   "vmap": [
     0,
     1,
     2,
@@ -6968,13 +7105,9 @@ export var LG_CATALOG = {
     58,
     59,
     60,
-    61
-   ]
-  },
-  {
-   "name": "yew",
-   "size": 192,
-   "variants": 63,
+    61,
+    62
+   ],
    "trims": [
     [
      0,
@@ -8869,27 +9002,16 @@ export var LG_CATALOG = {
      "visH": 174
     }
    ],
-   "states": {
-    "burned": [
-     0
-    ],
-    "dead": [
-     0
-    ],
-    "enchanted": [
-     0
-    ],
-    "frozen": [
-     0
-    ],
-    "seedling": [
-     0
-    ],
-    "wilting": [
-     0
-    ]
-   },
-   "anims": [
+   "states": {},
+   "anims": []
+  }
+ ],
+ "desert": [
+  {
+   "name": "date_palm",
+   "size": 192,
+   "variants": 24,
+   "vmap": [
     0,
     1,
     2,
@@ -8913,54 +9035,8 @@ export var LG_CATALOG = {
     20,
     21,
     22,
-    23,
-    24,
-    25,
-    26,
-    27,
-    28,
-    29,
-    30,
-    31,
-    32,
-    33,
-    34,
-    35,
-    36,
-    37,
-    38,
-    39,
-    40,
-    41,
-    42,
-    43,
-    44,
-    45,
-    46,
-    47,
-    48,
-    49,
-    50,
-    51,
-    52,
-    53,
-    54,
-    55,
-    56,
-    57,
-    58,
-    59,
-    60,
-    61,
-    62
-   ]
-  }
- ],
- "desert": [
-  {
-   "name": "date_palm",
-   "size": 192,
-   "variants": 24,
+    23
+   ],
    "trims": [
     [
      8,
@@ -9711,6 +9787,31 @@ export var LG_CATALOG = {
    "name": "joshua_tree",
    "size": 192,
    "variants": 23,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22
+   ],
    "trims": [
     [
      34,
@@ -10431,6 +10532,31 @@ export var LG_CATALOG = {
    "name": "saguaro_cactus",
    "size": 192,
    "variants": 23,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22
+   ],
    "trims": [
     [
      13,
@@ -11153,6 +11279,71 @@ export var LG_CATALOG = {
    "name": "apple",
    "size": 192,
    "variants": 63,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62
+   ],
    "trims": [
     [
      11,
@@ -13047,27 +13238,14 @@ export var LG_CATALOG = {
      "visH": 177
     }
    ],
-   "states": {
-    "burned": [
-     0
-    ],
-    "dead": [
-     0
-    ],
-    "enchanted": [
-     0
-    ],
-    "frozen": [
-     0
-    ],
-    "seedling": [
-     0
-    ],
-    "wilting": [
-     0
-    ]
-   },
-   "anims": [
+   "states": {},
+   "anims": []
+  },
+  {
+   "name": "beech",
+   "size": 192,
+   "variants": 63,
+   "vmap": [
     0,
     1,
     2,
@@ -13131,12 +13309,7 @@ export var LG_CATALOG = {
     60,
     61,
     62
-   ]
-  },
-  {
-   "name": "beech",
-   "size": 192,
-   "variants": 63,
+   ],
    "trims": [
     [
      16,
@@ -15031,27 +15204,14 @@ export var LG_CATALOG = {
      "visH": 176
     }
    ],
-   "states": {
-    "burned": [
-     0
-    ],
-    "dead": [
-     0
-    ],
-    "enchanted": [
-     0
-    ],
-    "frozen": [
-     0
-    ],
-    "seedling": [
-     0
-    ],
-    "wilting": [
-     0
-    ]
-   },
-   "anims": [
+   "states": {},
+   "anims": []
+  },
+  {
+   "name": "birch",
+   "size": 192,
+   "variants": 64,
+   "vmap": [
     0,
     1,
     2,
@@ -15114,13 +15274,9 @@ export var LG_CATALOG = {
     59,
     60,
     61,
-    62
-   ]
-  },
-  {
-   "name": "birch",
-   "size": 192,
-   "variants": 64,
+    62,
+    63
+   ],
    "trims": [
     [
      13,
@@ -17045,27 +17201,14 @@ export var LG_CATALOG = {
      "visH": 180
     }
    ],
-   "states": {
-    "burned": [
-     0
-    ],
-    "dead": [
-     0
-    ],
-    "enchanted": [
-     0
-    ],
-    "frozen": [
-     0
-    ],
-    "seedling": [
-     0
-    ],
-    "wilting": [
-     0
-    ]
-   },
-   "anims": [
+   "states": {},
+   "anims": []
+  },
+  {
+   "name": "oak",
+   "size": 192,
+   "variants": 64,
+   "vmap": [
     0,
     1,
     2,
@@ -17130,12 +17273,7 @@ export var LG_CATALOG = {
     61,
     62,
     63
-   ]
-  },
-  {
-   "name": "oak",
-   "size": 192,
-   "variants": 64,
+   ],
    "trims": [
     [
      4,
@@ -19060,27 +19198,16 @@ export var LG_CATALOG = {
      "visH": 171
     }
    ],
-   "states": {
-    "burned": [
-     0
-    ],
-    "dead": [
-     0
-    ],
-    "enchanted": [
-     0
-    ],
-    "frozen": [
-     0
-    ],
-    "seedling": [
-     0
-    ],
-    "wilting": [
-     0
-    ]
-   },
-   "anims": [
+   "states": {},
+   "anims": []
+  }
+ ],
+ "grassland": [
+  {
+   "name": "apple",
+   "size": 192,
+   "variants": 64,
+   "vmap": [
     0,
     1,
     2,
@@ -19145,14 +19272,7 @@ export var LG_CATALOG = {
     61,
     62,
     63
-   ]
-  }
- ],
- "grassland": [
-  {
-   "name": "apple",
-   "size": 192,
-   "variants": 64,
+   ],
    "trims": [
     [
      8,
@@ -21077,32 +21197,76 @@ export var LG_CATALOG = {
      "visH": 174
     }
    ],
-   "states": {
-    "burned": [
-     0
-    ],
-    "dead": [
-     0
-    ],
-    "enchanted": [
-     0
-    ],
-    "frozen": [
-     0
-    ],
-    "seedling": [
-     0
-    ],
-    "wilting": [
-     0
-    ]
-   },
+   "states": {},
    "anims": []
   },
   {
    "name": "cherry",
    "size": 192,
    "variants": 61,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60
+   ],
    "trims": [
     [
      7,
@@ -22937,27 +23101,14 @@ export var LG_CATALOG = {
      "visH": 169
     }
    ],
-   "states": {
-    "burned": [
-     0
-    ],
-    "dead": [
-     0
-    ],
-    "enchanted": [
-     0
-    ],
-    "frozen": [
-     0
-    ],
-    "seedling": [
-     0
-    ],
-    "wilting": [
-     0
-    ]
-   },
-   "anims": [
+   "states": {},
+   "anims": []
+  },
+  {
+   "name": "oak",
+   "size": 192,
+   "variants": 64,
+   "vmap": [
     0,
     1,
     2,
@@ -23008,13 +23159,21 @@ export var LG_CATALOG = {
     47,
     48,
     49,
-    50
-   ]
-  },
-  {
-   "name": "oak",
-   "size": 192,
-   "variants": 64,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63
+   ],
    "trims": [
     [
      3,
@@ -24939,27 +25098,14 @@ export var LG_CATALOG = {
      "visH": 178
     }
    ],
-   "states": {
-    "burned": [
-     0
-    ],
-    "dead": [
-     0
-    ],
-    "enchanted": [
-     0
-    ],
-    "frozen": [
-     0
-    ],
-    "seedling": [
-     0
-    ],
-    "wilting": [
-     0
-    ]
-   },
-   "anims": [
+   "states": {},
+   "anims": []
+  },
+  {
+   "name": "willow",
+   "size": 192,
+   "variants": 64,
+   "vmap": [
     0,
     1,
     2,
@@ -25024,12 +25170,7 @@ export var LG_CATALOG = {
     61,
     62,
     63
-   ]
-  },
-  {
-   "name": "willow",
-   "size": 192,
-   "variants": 64,
+   ],
    "trims": [
     [
      8,
@@ -26954,27 +27095,16 @@ export var LG_CATALOG = {
      "visH": 181
     }
    ],
-   "states": {
-    "burned": [
-     0
-    ],
-    "dead": [
-     0
-    ],
-    "enchanted": [
-     0
-    ],
-    "frozen": [
-     0
-    ],
-    "seedling": [
-     0
-    ],
-    "wilting": [
-     0
-    ]
-   },
-   "anims": [
+   "states": {},
+   "anims": []
+  }
+ ],
+ "hills": [
+  {
+   "name": "field_oak",
+   "size": 192,
+   "variants": 24,
+   "vmap": [
     0,
     1,
     2,
@@ -26998,55 +27128,8 @@ export var LG_CATALOG = {
     20,
     21,
     22,
-    23,
-    24,
-    25,
-    26,
-    27,
-    28,
-    29,
-    30,
-    31,
-    32,
-    33,
-    34,
-    35,
-    36,
-    37,
-    38,
-    39,
-    40,
-    41,
-    42,
-    43,
-    44,
-    45,
-    46,
-    47,
-    48,
-    49,
-    50,
-    51,
-    52,
-    53,
-    54,
-    55,
-    56,
-    57,
-    58,
-    59,
-    60,
-    61,
-    62,
-    63
-   ]
-  }
- ],
- "hills": [
-  {
-   "name": "field_oak",
-   "size": 192,
-   "variants": 24,
+    23
+   ],
    "trims": [
     [
      4,
@@ -27794,6 +27877,31 @@ export var LG_CATALOG = {
    "name": "hawthorn",
    "size": 192,
    "variants": 23,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22
+   ],
    "trims": [
     [
      0,
@@ -28516,6 +28624,68 @@ export var LG_CATALOG = {
    "name": "pine",
    "size": 192,
    "variants": 60,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59
+   ],
    "trims": [
     [
      4,
@@ -30320,26 +30490,7 @@ export var LG_CATALOG = {
      "visH": 186
     }
    ],
-   "states": {
-    "burned": [
-     0
-    ],
-    "dead": [
-     0
-    ],
-    "enchanted": [
-     0
-    ],
-    "frozen": [
-     0
-    ],
-    "seedling": [
-     0
-    ],
-    "wilting": [
-     0
-    ]
-   },
+   "states": {},
    "anims": []
   }
  ],
@@ -30348,6 +30499,32 @@ export var LG_CATALOG = {
    "name": "crystal_tree",
    "size": 192,
    "variants": 24,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+   ],
    "trims": [
     [
      17,
@@ -31098,6 +31275,31 @@ export var LG_CATALOG = {
    "name": "glowing_ancient",
    "size": 192,
    "variants": 23,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22
+   ],
    "trims": [
     [
      6,
@@ -31820,6 +32022,24 @@ export var LG_CATALOG = {
    "name": "acacia",
    "size": 192,
    "variants": 16,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+   ],
    "trims": [
     [
      12,
@@ -32304,32 +32524,31 @@ export var LG_CATALOG = {
      "visH": 178
     }
    ],
-   "states": {
-    "burned": [
-     0
-    ],
-    "dead": [
-     0
-    ],
-    "enchanted": [
-     0
-    ],
-    "frozen": [
-     0
-    ],
-    "seedling": [
-     0
-    ],
-    "wilting": [
-     0
-    ]
-   },
+   "states": {},
    "anims": []
   },
   {
    "name": "baobab",
    "size": 192,
    "variants": 16,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+   ],
    "trims": [
     [
      5,
@@ -32814,26 +33033,7 @@ export var LG_CATALOG = {
      "visH": 174
     }
    ],
-   "states": {
-    "burned": [
-     0
-    ],
-    "dead": [
-     0
-    ],
-    "enchanted": [
-     0
-    ],
-    "frozen": [
-     0
-    ],
-    "seedling": [
-     0
-    ],
-    "wilting": [
-     0
-    ]
-   },
+   "states": {},
    "anims": []
   }
  ],
@@ -32842,6 +33042,32 @@ export var LG_CATALOG = {
    "name": "lone_elm",
    "size": 192,
    "variants": 24,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+   ],
    "trims": [
     [
      27,
@@ -33592,6 +33818,32 @@ export var LG_CATALOG = {
    "name": "wind_oak",
    "size": 192,
    "variants": 24,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+   ],
    "trims": [
     [
      24,
@@ -34344,6 +34596,12 @@ export var LG_CATALOG = {
    "name": "bald_cypress",
    "size": 192,
    "variants": 4,
+   "vmap": [
+    0,
+    1,
+    2,
+    3
+   ],
    "trims": [
     [
      8,
@@ -34468,32 +34726,29 @@ export var LG_CATALOG = {
      "visH": 184
     }
    ],
-   "states": {
-    "burned": [
-     0
-    ],
-    "dead": [
-     0
-    ],
-    "enchanted": [
-     0
-    ],
-    "frozen": [
-     0
-    ],
-    "seedling": [
-     0
-    ],
-    "wilting": [
-     0
-    ]
-   },
+   "states": {},
    "anims": []
   },
   {
    "name": "willow",
    "size": 192,
    "variants": 14,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13
+   ],
    "trims": [
     [
      10,
@@ -34918,26 +35173,7 @@ export var LG_CATALOG = {
      "visH": 181
     }
    ],
-   "states": {
-    "burned": [
-     0
-    ],
-    "dead": [
-     0
-    ],
-    "enchanted": [
-     0
-    ],
-    "frozen": [
-     0
-    ],
-    "seedling": [
-     0
-    ],
-    "wilting": [
-     0
-    ]
-   },
+   "states": {},
    "anims": []
   }
  ],
@@ -34946,6 +35182,23 @@ export var LG_CATALOG = {
    "name": "birch",
    "size": 192,
    "variants": 15,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+   ],
    "trims": [
     [
      2,
@@ -35400,32 +35653,31 @@ export var LG_CATALOG = {
      "visH": 189
     }
    ],
-   "states": {
-    "burned": [
-     0
-    ],
-    "dead": [
-     0
-    ],
-    "enchanted": [
-     0
-    ],
-    "frozen": [
-     0
-    ],
-    "seedling": [
-     0
-    ],
-    "wilting": [
-     0
-    ]
-   },
+   "states": {},
    "anims": []
   },
   {
    "name": "larch",
    "size": 192,
    "variants": 16,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+   ],
    "trims": [
     [
      0,
@@ -35910,32 +36162,31 @@ export var LG_CATALOG = {
      "visH": 184
     }
    ],
-   "states": {
-    "burned": [
-     0
-    ],
-    "dead": [
-     0
-    ],
-    "enchanted": [
-     0
-    ],
-    "frozen": [
-     0
-    ],
-    "seedling": [
-     0
-    ],
-    "wilting": [
-     0
-    ]
-   },
+   "states": {},
    "anims": []
   },
   {
    "name": "pine",
    "size": 192,
    "variants": 16,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+   ],
    "trims": [
     [
      46,
@@ -36420,32 +36671,31 @@ export var LG_CATALOG = {
      "visH": 177
     }
    ],
-   "states": {
-    "burned": [
-     0
-    ],
-    "dead": [
-     0
-    ],
-    "enchanted": [
-     0
-    ],
-    "frozen": [
-     0
-    ],
-    "seedling": [
-     0
-    ],
-    "wilting": [
-     0
-    ]
-   },
+   "states": {},
    "anims": []
   },
   {
    "name": "spruce",
    "size": 192,
    "variants": 16,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+   ],
    "trims": [
     [
      4,
@@ -36930,26 +37180,7 @@ export var LG_CATALOG = {
      "visH": 175
     }
    ],
-   "states": {
-    "burned": [
-     0
-    ],
-    "dead": [
-     0
-    ],
-    "enchanted": [
-     0
-    ],
-    "frozen": [
-     0
-    ],
-    "seedling": [
-     0
-    ],
-    "wilting": [
-     0
-    ]
-   },
+   "states": {},
    "anims": []
   }
  ],
@@ -36958,6 +37189,24 @@ export var LG_CATALOG = {
    "name": "banana_palm",
    "size": 192,
    "variants": 16,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+   ],
    "trims": [
     [
      6,
@@ -37442,27 +37691,14 @@ export var LG_CATALOG = {
      "visH": 164
     }
    ],
-   "states": {
-    "burned": [
-     0
-    ],
-    "dead": [
-     0
-    ],
-    "enchanted": [
-     0
-    ],
-    "frozen": [
-     0
-    ],
-    "seedling": [
-     0
-    ],
-    "wilting": [
-     0
-    ]
-   },
-   "anims": [
+   "states": {},
+   "anims": []
+  },
+  {
+   "name": "kapok",
+   "size": 192,
+   "variants": 16,
+   "vmap": [
     0,
     1,
     2,
@@ -37479,12 +37715,7 @@ export var LG_CATALOG = {
     13,
     14,
     15
-   ]
-  },
-  {
-   "name": "kapok",
-   "size": 192,
-   "variants": 16,
+   ],
    "trims": [
     [
      3,
@@ -37969,27 +38200,14 @@ export var LG_CATALOG = {
      "visH": 181
     }
    ],
-   "states": {
-    "burned": [
-     0
-    ],
-    "dead": [
-     0
-    ],
-    "enchanted": [
-     0
-    ],
-    "frozen": [
-     0
-    ],
-    "seedling": [
-     0
-    ],
-    "wilting": [
-     0
-    ]
-   },
-   "anims": [
+   "states": {},
+   "anims": []
+  },
+  {
+   "name": "mangrove",
+   "size": 192,
+   "variants": 16,
+   "vmap": [
     0,
     1,
     2,
@@ -38006,12 +38224,7 @@ export var LG_CATALOG = {
     13,
     14,
     15
-   ]
-  },
-  {
-   "name": "mangrove",
-   "size": 192,
-   "variants": 16,
+   ],
    "trims": [
     [
      4,
@@ -38496,27 +38709,16 @@ export var LG_CATALOG = {
      "visH": 173
     }
    ],
-   "states": {
-    "burned": [
-     0
-    ],
-    "dead": [
-     0
-    ],
-    "enchanted": [
-     0
-    ],
-    "frozen": [
-     0
-    ],
-    "seedling": [
-     0
-    ],
-    "wilting": [
-     0
-    ]
-   },
-   "anims": [
+   "states": {},
+   "anims": []
+  }
+ ],
+ "tundra": [
+  {
+   "name": "dwarf_willow",
+   "size": 192,
+   "variants": 24,
+   "vmap": [
     0,
     1,
     2,
@@ -38532,15 +38734,16 @@ export var LG_CATALOG = {
     12,
     13,
     14,
-    15
-   ]
-  }
- ],
- "tundra": [
-  {
-   "name": "dwarf_willow",
-   "size": 192,
-   "variants": 24,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+   ],
    "trims": [
     [
      21,
@@ -39288,6 +39491,32 @@ export var LG_CATALOG = {
    "name": "krummholz_pine",
    "size": 192,
    "variants": 24,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+   ],
    "trims": [
     [
      12,
@@ -40040,6 +40269,32 @@ export var LG_CATALOG = {
    "name": "charred_trunk",
    "size": 192,
    "variants": 24,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+   ],
    "trims": [
     [
      20,
@@ -40790,6 +41045,31 @@ export var LG_CATALOG = {
    "name": "lava_palm",
    "size": 192,
    "variants": 23,
+   "vmap": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22
+   ],
    "trims": [
     [
      39,
