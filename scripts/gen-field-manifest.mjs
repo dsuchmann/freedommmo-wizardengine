@@ -49,9 +49,11 @@ for (const biome of fs.readdirSync(ABS).sort()) {
     if (!files.length) continue;
     const omitSet = omit.get(biome + '/' + species) || new Set();
     const variants = [];
+    let size = 0;
     for (const f of files) {
       const v = parseInt(f.match(/^v(\d{3})\.png$/)[1], 10);
       const m = await measure(path.join(odir, f));
+      size = m.size;
       variants.push({ v, file: `/${rel}/${biome}/${species}/${f}`, bbox: m.bbox, fill: m.fill,
         area: m.area, magenta: m.magenta, omit: omitSet.has(v) });
       count++;
@@ -59,7 +61,7 @@ for (const biome of fs.readdirSync(ABS).sort()) {
     const areas = variants.map(x => x.area).filter(a => a > 0).sort((a, b) => a - b);
     const median = areas.length ? areas[areas.length >> 1] : 1;
     for (const x of variants) x.scaleVsMedian = +(x.area / median).toFixed(2);
-    (biomes[biome] = biomes[biome] || {})[species] = { size: variants[0].size, variants };
+    (biomes[biome] = biomes[biome] || {})[species] = { size, variants };
     process.stdout.write(`\r${biome}/${species} (${count})        `);
   }
 }
