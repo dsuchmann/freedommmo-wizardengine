@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { f6Placements, f5Placements, f4Placements, clearClaimCaches,
-  F6_BIOME_SCALE } from '../src/world/decoration-claims.js';
+  F6_BIOME_SCALE, pickF6Variant } from '../src/world/decoration-claims.js';
 import { LG_CATALOG } from '../src/world/lg-catalog.js';
 
 // tileInfo stub: everything is forest, no transitions (forest has oak on disk).
@@ -65,4 +65,27 @@ test('f5/f6 placements carry sil when catalog has it', () => {
     assert.equal(p.sil.bands.length, 16);
     assert.equal(p.sil.visH, p.trim[3]);
   }
+});
+
+test('pickF6Variant maps pool position through vmap and never returns an omitted index', () => {
+  const obj = { variants: 4, vmap: [0, 1, 3, 4] }; // v2 omitted from the pool
+  const seen = new Set();
+  for (let i = 0; i < 1000; i++) seen.add(pickF6Variant(obj, i / 1000).variant);
+  assert.ok(!seen.has(2), 'omitted variant 2 must never be selected');
+  for (const v of seen) assert.ok([0, 1, 3, 4].includes(v), `unexpected variant ${v}`);
+});
+
+test('pickF6Variant is identity when no vmap (back-compat)', () => {
+  const obj = { variants: 3 };
+  assert.equal(pickF6Variant(obj, 0).variant, 0);
+  assert.equal(pickF6Variant(obj, 0).pos, 0);
+  assert.equal(pickF6Variant(obj, 0.999).variant, 2);
+});
+
+test('f6 placement variant resolves to a real on-disk vmap entry', () => {
+  clearClaimCaches();
+  const at = findTreeTile();
+  const o = LG_CATALOG.forest.find(x => x.name === (f6Placements(at[0], at[1], forest)[0].name));
+  const p = f6Placements(at[0], at[1], forest)[0];
+  assert.ok((o.vmap || []).includes(p.variant) || !o.vmap, 'p.variant must be a vmap member');
 });
