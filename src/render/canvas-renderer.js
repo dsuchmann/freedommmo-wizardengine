@@ -19,6 +19,7 @@ import { buildOccluderBitmap } from './building-occluder.js';
 import { buildDoorLeafBitmap } from './door-leaves.js';
 import { buildBuildingLayerBitmaps } from './building-layer.js';
 import { nearDepthBuildings, renderBuildingSilhouette, tileDepth, DEPTH_SCALE } from './building-depth.js';
+import { buildSocketOverlayBitmap } from './dressing/socket-overlay.js';
 import { isInside } from './active-interior.js';
 import { initWallTuner, drawWallTuner } from './wall-tuner.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations, buildWaveField } from './water-wave-overlay.js';
@@ -539,6 +540,16 @@ export class CanvasRenderer {
         this.glc.setSpriteDepth(_refY, DEPTH_SCALE, _see);
         _depthActive = true;
       }
+    }
+
+    // D-STACK PLACEMENT OVERLAY (debug, off by default): highlight every façade socket where a wall
+    // attachment would anchor, routed through GL (drawSceneOverlayBitmap) so the markers composite WITH
+    // the scene like the walls — proves the addressing before any D3 art. Toggle window._socketOverlay.enabled.
+    if (glScene && !_inside && typeof window !== 'undefined' && window._socketOverlay && window._socketOverlay.enabled) {
+      try {
+        const _sock = buildSocketOverlayBitmap(nearDepthBuildings(getCachedBuildings(), camX, camY, tilePx, w, h), camX, camY, tilePx, w, h);
+        if (_sock) this.glc.drawSceneOverlayBitmap(_sock);
+      } catch (e) { /* best-effort */ }
     }
 
     // === FIELD 2: ANIMATED WIND SWAY ===

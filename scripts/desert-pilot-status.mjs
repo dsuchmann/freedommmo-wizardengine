@@ -10,7 +10,14 @@ import { execSync } from 'node:child_process';
 
 const BIOME = process.argv[2] || 'desert';
 const ROOT = `assets/pixelab/buildings/tiles/${BIOME}`;
-const MATERIALS = (process.argv[3] || 'adobe,mudbrick,sandstone,reed_palm').split(',');
+// Material list — DISK-FIRST, then the building-materials.json plan (like build-asset-manifest.mjs), so the tracker
+// self-guides for ANY biome with zero hardcoding. Order of precedence: explicit argv[3] override → tile dirs already
+// on disk → the plan's wall slugs for this biome. (Was hardcoded to the desert slugs, which mislabelled other biomes.)
+const planWalls = (() => {
+  try { return (((JSON.parse(fs.readFileSync('assets/pixelab/buildings/manifest/building-materials.json', 'utf8')).biomes[BIOME] || {}).walls) || []).map((w) => w.slug); } catch { return []; }
+})();
+const diskMats = fs.existsSync(ROOT) ? fs.readdirSync(ROOT, { withFileTypes: true }).filter((e) => e.isDirectory() && !e.name.startsWith('_')).map((e) => e.name) : [];
+const MATERIALS = process.argv[3] ? process.argv[3].split(',') : (diskMats.length ? diskMats : (planWalls.length ? planWalls : ['adobe', 'mudbrick', 'sandstone', 'reed_palm']));
 // Manifest required set (per material): 9 wall tile states + the gable + 2 animations.
 const GROUND = ['ground_plain', 'ground_window', 'ground_door', 'ground_left_corner', 'ground_right_corner'];
 const UPPER = ['upper_plain', 'upper_window', 'upper_left_corner', 'upper_right_corner'];

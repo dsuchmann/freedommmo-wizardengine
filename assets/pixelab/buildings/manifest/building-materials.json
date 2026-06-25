@@ -1271,62 +1271,54 @@
       "displayName": "Mystic",
       "walls": [
         {
-          "slug": "luminous_crystal",
-          "name": "Luminous Crystal Block",
-          "prompt": "tileable front-elevation pixel-art exterior wall segment, translucent luminous crystal blocks glowing softly from within, faceted crystal cornice cap at top, middle field of stacked semi-transparent cyan-and-violet crystal blocks with internal light, sharp refractive facets, and glowing seam veins, dense darker crystal foundation course at bottom, seamless repeating, high fantasy, saturated glowing cyan and violet with bright inner light, luminous detailed shading, alpha-transparent background",
-          "palette": "glowing cyan-violet translucent crystal",
-          "rationale": "Luminous grown crystal is the signature building substance of an enchanted aether realm."
+          "slug": "moonstone",
+          "name": "Moonstone Render",
+          "palette": "pearl white, soft lilac-grey, faint cool-cyan opalescent sheen, silver hairline flecks",
+          "prompt": "smooth UNIFORM pearl-white moonstone render as one solid plastered surface with a soft opalescent lilac-and-cyan sheen and faint silver flecks; fully opaque, no holes. Tokenised wall prompt: docs/superpowers/specs/2026-06-24-mystic-tile-corpus-manifest.md"
         },
         {
-          "slug": "living_moss_wood",
-          "name": "Living Moss-Wood",
-          "prompt": "tileable front-elevation pixel-art exterior wall segment, living grown timber with smooth bark planks veiled in luminous teal moss and faintly glowing sap veins, woven branch molding cap at top, middle field of vertical living-wood planks furred with glowing moss patches and tiny bioluminescent buds, gnarled root foundation course at bottom, seamless repeating, high fantasy, saturated warm wood browns with glowing teal-green moss accents, soft detailed shading, alpha-transparent background",
-          "palette": "warm living wood, glowing teal moss",
-          "rationale": "Druidic mystic builders shape living wood clad in the realm's luminous moss."
+          "slug": "starlit_marble",
+          "name": "Starlit Marble",
+          "palette": "cool white-and-pale-grey marble courses, thin silver constellation inlays, pale-silver mortar",
+          "prompt": "tightly-coursed cool white-grey marble blocks in solid pale-silver mortar with thin engraved silver constellation inlay-lines and tiny star-glints; opaque coursed masonry. See mystic manifest."
         },
         {
-          "slug": "runed_pale_stone",
-          "name": "Runed Pale-Stone",
-          "prompt": "tileable front-elevation pixel-art exterior wall segment, smooth pale ivory stone carved with glowing inlaid runes, elegant fluted stone cornice cap at top, middle field of cream-white ashlar engraved with softly glowing blue-white runic lines and arcane sigils, broad pale plinth foundation course at bottom, seamless repeating, high fantasy, saturated warm ivory and pearl whites with luminous blue-white rune glow, refined detailed shading, alpha-transparent background",
-          "palette": "ivory pale-stone, glowing blue-white runes",
-          "rationale": "Runed pale-stone is the high-magic temple masonry of the mystic realm."
+          "slug": "amethyst_ashlar",
+          "name": "Faceted Amethyst Ashlar",
+          "palette": "deep amethyst-violet cut blocks, crisp facet highlights, faint cool inner glow, thin silver joints",
+          "prompt": "large CUT faceted amethyst ashlar blocks in deep violet, flat polished facets with a crisp edge-highlight + faint inner glow, thin solid silver joints; opaque cut-crystal masonry. See mystic manifest."
         },
         {
-          "slug": "aether_glass",
-          "name": "Aether-Glass",
-          "prompt": "tileable front-elevation pixel-art exterior wall segment, iridescent aether-glass panels held in slender silver mullions, ornate silver capping rail at top, middle field of shimmering opalescent glass panes swirling with pink-gold-cyan aurora light behind thin silver frames, polished silver-bound foundation course at bottom, seamless repeating, high fantasy, saturated iridescent pastels with bright silver framing, glowing detailed shading, alpha-transparent background",
-          "palette": "iridescent opal aether-glass, silver mullions",
-          "rationale": "Aether-glass channels ambient magic into shimmering enchanted curtain walls unique to the mystic realm."
+          "slug": "wardweave_lattice",
+          "name": "Ward-Weave Lattice",
+          "palette": "dark slate-grey daub, woven black-iron rune-chain, dim cyan rune-glow at crossings",
+          "prompt": "solid dark slate-grey daub packed flush, overlaid by a woven black-iron rune-chain basket weave with faint cyan glow at the crossings; fully opaque warded wall, no see-through. See mystic manifest."
         }
       ],
       "roofs": [
         {
-          "slug": "crystal_shingle",
-          "name": "Crystal Shingle",
-          "prompt": "seamless top-down pixel-art roof texture viewed from directly above, overlapping faceted crystal shingles glowing softly in clear staggered courses, rows of translucent cyan-violet crystal tiles with sharp refractive facets, bright inner glow, and glinting ridge line, high fantasy, saturated luminous cyan and violet, tileable, unmistakably a faceted shingle roof, clearly distinct from soft glowing moss ground, no ground, no moss",
-          "palette": "glowing cyan-violet crystal shingles",
-          "rationale": "Faceted crystal shingles in ordered courses read as a roof, sharply distinct from the soft aether-moss ground."
+          "slug": "moonstone_slate",
+          "name": "Moonstone Slate",
+          "palette": "blue-grey moonstone slate, pale silver lit edges, faint cool opalescent sheen",
+          "prompt": "A seamless top-down pixel-art roof surface of overlapping rectangular blue-grey MOONSTONE SLATE roof-slates in tidy staggered offset courses, viewed from DIRECTLY ABOVE, full-bleed, no border. Each slate a flat rectangle with a thin pale-silver lit edge, crisp shadow joints, faint cool opalescent sheen; capped ridge across the peak. Uniform repeating rows, tiles seamlessly on all four edges. Cool greys, detailed pixel shading, fully opaque. NO walls/sky/ground/moss/border. Render NO text."
         },
         {
-          "slug": "runed_slate",
-          "name": "Silver Runed Slate",
-          "prompt": "seamless top-down pixel-art roof texture viewed from directly above, pale silvery slate shingles in tidy staggered courses, each tile etched with a small glowing blue-white rune, clear rows with crisp ridge line and faint magical shimmer, high fantasy, saturated cool silver-grey with luminous blue-white rune glow, tileable, clearly a runed shingle roof, distinct from glowing moss ground, no ground, no moss",
-          "palette": "silver-grey slate, glowing blue-white runes",
-          "rationale": "Pale runed slate pairs with runed pale-stone walls and is unmistakably structured against the moss ground."
+          "slug": "geode_scale",
+          "name": "Geode Scale Tile",
+          "palette": "banded agate roundels in smoky grey-lilac and soft rose, tiny druzy centres, thin pale luminous joints",
+          "prompt": "A seamless top-down pixel-art roof surface of GEODE SCALE TILES, from DIRECTLY ABOVE, full-bleed, no border. Rounded fish-scale tiles in overlapping fanned rows, each a banded agate roundel in smoky grey-lilac and soft rose with a tiny sparkling druzy centre, thin pale luminous joints, each row lapping the one below. Regular scale rhythm, tiles seamlessly on all edges. Cool lilac+rose, detailed pixel shading, fully opaque. NO walls/sky/ground/moss/border. Render NO text."
         },
         {
-          "slug": "aether_glass_pane",
-          "name": "Aether-Glass Pane",
-          "prompt": "seamless top-down pixel-art roof texture viewed from directly above, leaded skylight roof of iridescent aether-glass panes in a regular silver lattice grid, clear rows of opalescent panes swirling with pink-gold-cyan aurora light separated by bright silver cames, high fantasy, saturated iridescent pastels with sharp silver gridlines, tileable, reads as a glazed paneled roof not organic ground, distinct from glowing moss, no ground, no moss",
-          "palette": "iridescent opal panes, silver lattice",
-          "rationale": "An aether-glass paned roof crowns aether-glass walls; the silver grid clearly signals roof over moss terrain."
+          "slug": "amethyst_facet_slab",
+          "name": "Amethyst Facet Slab",
+          "palette": "deep amethyst violet angular slabs, crisp facet highlights, thin glowing cool seams",
+          "prompt": "A seamless top-down pixel-art roof surface of FACETED AMETHYST SLABS, from DIRECTLY ABOVE, full-bleed, no border. Large angular polygonal crystal slabs in deep amethyst violet fitted like a cracked-facet mosaic, each a flat polished facet with one crisp highlight edge + faint cool inner glow, thin glowing cool seams. Even balanced polygon tessellation, tiles seamlessly on all edges, opaque stone NOT transparent. Deep violet + luminous highlights, detailed pixel shading. NO walls/sky/ground/moss/border. Render NO text."
         },
         {
-          "slug": "luminous_thatch",
-          "name": "Luminous Thatch",
-          "prompt": "seamless top-down pixel-art roof texture viewed from directly above, neatly combed thatch roof of glowing silver-blue reed bundles in clear overlapping courses, distinct horizontal rows of tightly bound luminous reeds with a crisp combed ridge cap, faint bioluminescent glow tracing each course, high fantasy, saturated pale silver-blue with soft inner light, tileable, unmistakably a combed thatch roof with ridge, deliberately distinct from soft random moss ground, no ground, no moss",
-          "palette": "glowing silver-blue luminous reed thatch",
-          "rationale": "Enchanted luminous reed thatch suits living moss-wood cottages; combed rows and a ridge cap keep it reading as roof, not ground moss."
+          "slug": "silver_thatch",
+          "name": "Astral Silver Thatch",
+          "palette": "pale silver-grey moon-bleached straw, soft moonlit highlights, faint inlaid star-flecks",
+          "prompt": "A seamless top-down pixel-art roof surface of pale silver-grey ASTRAL THATCH, from DIRECTLY ABOVE, full-bleed, no border. Combed bundles of moon-bleached straw in tight overlapping horizontal courses with a darker tied ridge across the peak, soft moonlit highlights along each comb, warm valley shadow, a few faint inlaid star-flecks. Dense opaque, structured repeating rows, tiles seamlessly on all edges. Pale silver-grey, detailed pixel shading. NO walls/sky/ground/moss/border. Render NO text."
         }
       ]
     }

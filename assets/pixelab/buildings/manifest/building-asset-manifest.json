@@ -6565,63 +6565,63 @@
     },
     "mystic": {
       "displayName": "Mystic",
-      "tokens_authored": false,
+      "tokens_authored": true,
       "materials": {
-        "luminous_crystal": {
-          "name": "Luminous Crystal Block",
-          "palette": "glowing cyan-violet translucent crystal",
-          "source": "plan",
-          "base_id": null,
+        "amethyst_ashlar": {
+          "name": "Faceted Amethyst Ashlar",
+          "palette": "deep amethyst-violet cut blocks, crisp facet highlights, faint cool inner glow, thin silver joints",
+          "source": "tile-corpus",
+          "base_id": "d1f45f76-6ac1-4608-bfbd-34cc3f9cba19",
           "tiles": {
             "ground_plain": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "ground_window": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
-              "id": null
+              "id": "3e499aab-66d6-426e-b7f4-915f7b61bf6f"
             },
             "ground_door": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
-              "id": null
+              "id": "806bb731-10f8-404f-b223-e717dc4a77a2"
             },
             "ground_left_corner": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
-              "id": null
+              "id": "7aaa1f6c-4092-4936-9c83-b7a763efe43d"
             },
             "ground_right_corner": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "upper_plain": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "upper_window": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "gable": {
-              "status": "pending",
-              "v1": "pending",
-              "id": null
+              "status": "done",
+              "v1": "done",
+              "id": "dc932dba-ea99-479f-8d83-0e5bf37c8bd3"
             }
           },
           "anims": {
@@ -6629,131 +6629,131 @@
               "status": "pending"
             },
             "window": {
-              "status": "pending"
+              "status": "done"
             }
           }
         },
-        "living_moss_wood": {
-          "name": "Living Moss-Wood",
-          "palette": "warm living wood, glowing teal moss",
-          "source": "plan",
-          "base_id": null,
+        "moonstone": {
+          "name": "Moonstone Render",
+          "palette": "pearl white, soft lilac-grey, faint cool-cyan opalescent sheen, silver hairline flecks",
+          "source": "tile-corpus",
+          "base_id": "49e4cc23-626f-4277-88cd-d931adbe46b1",
           "tiles": {
             "ground_plain": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "ground_window": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
-              "id": null
+              "id": "b4d8a8c4-8ece-42a8-aecc-00bbaed3ccb8"
             },
             "ground_door": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
-              "id": null
+              "id": "8824f46d-de20-4461-a087-e483d646f360"
             },
             "ground_left_corner": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
-              "id": null
+              "id": "ae3cd87e-a36a-428e-aa44-695808a2d8ef"
             },
             "ground_right_corner": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "upper_plain": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "upper_window": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "gable": {
-              "status": "pending",
-              "v1": "pending",
-              "id": null
+              "status": "done",
+              "v1": "done",
+              "id": "2bc2811f-b1e7-44d9-ab4a-0764520e8704"
             }
           },
           "anims": {
             "door": {
-              "status": "pending"
+              "status": "done"
             },
             "window": {
-              "status": "pending"
+              "status": "done"
             }
           }
         },
-        "runed_pale_stone": {
-          "name": "Runed Pale-Stone",
-          "palette": "ivory pale-stone, glowing blue-white runes",
-          "source": "plan",
-          "base_id": null,
+        "starlit_marble": {
+          "name": "Starlit Marble",
+          "palette": "cool white-and-pale-grey marble courses, thin silver constellation inlays, pale-silver mortar",
+          "source": "tile-corpus",
+          "base_id": "ddb251e7-878a-4636-bb71-b48fe7432182",
           "tiles": {
             "ground_plain": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "ground_window": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
-              "id": null
+              "id": "a4f3e08b-55da-4e6e-8f77-2d0b44d49d70"
             },
             "ground_door": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
-              "id": null
+              "id": "bbd92f83-4c2b-452c-925a-92cdb363418f"
             },
             "ground_left_corner": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
-              "id": null
+              "id": "f4c82764-5490-409a-a37a-328c1b307855"
             },
             "ground_right_corner": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "upper_plain": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "upper_window": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "gable": {
-              "status": "pending",
-              "v1": "pending",
-              "id": null
+              "status": "done",
+              "v1": "done",
+              "id": "cfbacfee-09ad-4ca5-8fed-13bf524f3206"
             }
           },
           "anims": {
@@ -6761,65 +6761,65 @@
               "status": "pending"
             },
             "window": {
-              "status": "pending"
+              "status": "done"
             }
           }
         },
-        "aether_glass": {
-          "name": "Aether-Glass",
-          "palette": "iridescent opal aether-glass, silver mullions",
-          "source": "plan",
-          "base_id": null,
+        "wardweave_lattice": {
+          "name": "Ward-Weave Lattice",
+          "palette": "dark slate-grey daub, woven black-iron rune-chain, dim cyan rune-glow at crossings",
+          "source": "tile-corpus",
+          "base_id": "ae393d3d-2ed9-4a03-88e2-cbe428653566",
           "tiles": {
             "ground_plain": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "ground_window": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
-              "id": null
+              "id": "9be5e866-5220-445c-94c2-5b3657640f6e"
             },
             "ground_door": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
-              "id": null
+              "id": "c11d15fa-ac13-41c8-8eec-bea44d9fb8ac"
             },
             "ground_left_corner": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
-              "id": null
+              "id": "7ecb3f86-95e1-4f9d-bbe8-1d679b0df2b2"
             },
             "ground_right_corner": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "upper_plain": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "upper_window": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "upper_left_corner": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "upper_right_corner": {
-              "status": "pending",
+              "status": "done",
               "v1": "pending",
               "id": null
             },
             "gable": {
-              "status": "pending",
-              "v1": "pending",
-              "id": null
+              "status": "done",
+              "v1": "done",
+              "id": "2d77354b-397c-4440-a4fc-69d7efd5fb59"
             }
           },
           "anims": {
@@ -6827,67 +6827,91 @@
               "status": "pending"
             },
             "window": {
-              "status": "pending"
+              "status": "done"
             }
           }
         }
       },
       "roofs": {
-        "crystal_shingle": {
-          "name": "Crystal Shingle",
-          "palette": "glowing cyan-violet crystal shingles",
+        "moonstone_slate": {
+          "name": "Moonstone Slate",
+          "palette": "blue-grey moonstone slate, pale silver lit edges, faint cool opalescent sheen",
           "variants": {
-            "v000": "pending",
-            "v001": "pending",
-            "v002": "pending",
-            "v003": "pending"
+            "v000": "done",
+            "v001": "done",
+            "v002": "done",
+            "v003": "done"
           },
-          "present": 0,
-          "complete": false,
+          "present": 4,
+          "complete": true,
           "fascia": false,
-          "ids": null
+          "ids": {
+            "v000": "",
+            "v001": "",
+            "v002": "",
+            "v003": "",
+            "fascia": ""
+          }
         },
-        "runed_slate": {
-          "name": "Silver Runed Slate",
-          "palette": "silver-grey slate, glowing blue-white runes",
+        "geode_scale": {
+          "name": "Geode Scale Tile",
+          "palette": "banded agate roundels in smoky grey-lilac and soft rose, tiny druzy centres, thin pale luminous joints",
           "variants": {
-            "v000": "pending",
-            "v001": "pending",
-            "v002": "pending",
-            "v003": "pending"
+            "v000": "done",
+            "v001": "done",
+            "v002": "done",
+            "v003": "done"
           },
-          "present": 0,
-          "complete": false,
+          "present": 4,
+          "complete": true,
           "fascia": false,
-          "ids": null
+          "ids": {
+            "v000": "",
+            "v001": "",
+            "v002": "",
+            "v003": "",
+            "fascia": ""
+          }
         },
-        "aether_glass_pane": {
-          "name": "Aether-Glass Pane",
-          "palette": "iridescent opal panes, silver lattice",
+        "amethyst_facet_slab": {
+          "name": "Amethyst Facet Slab",
+          "palette": "deep amethyst violet angular slabs, crisp facet highlights, thin glowing cool seams",
           "variants": {
-            "v000": "pending",
-            "v001": "pending",
-            "v002": "pending",
-            "v003": "pending"
+            "v000": "done",
+            "v001": "done",
+            "v002": "done",
+            "v003": "done"
           },
-          "present": 0,
-          "complete": false,
+          "present": 4,
+          "complete": true,
           "fascia": false,
-          "ids": null
+          "ids": {
+            "v000": "",
+            "v001": "",
+            "v002": "",
+            "v003": "",
+            "fascia": ""
+          }
         },
-        "luminous_thatch": {
-          "name": "Luminous Thatch",
-          "palette": "glowing silver-blue luminous reed thatch",
+        "silver_thatch": {
+          "name": "Astral Silver Thatch",
+          "palette": "pale silver-grey moon-bleached straw, soft moonlit highlights, faint inlaid star-flecks",
           "variants": {
-            "v000": "pending",
-            "v001": "pending",
-            "v002": "pending",
-            "v003": "pending"
+            "v000": "done",
+            "v001": "done",
+            "v002": "done",
+            "v003": "done"
           },
-          "present": 0,
-          "complete": false,
+          "present": 4,
+          "complete": true,
           "fascia": false,
-          "ids": null
+          "ids": {
+            "v000": "",
+            "v001": "",
+            "v002": "",
+            "v003": "",
+            "fascia": ""
+          }
         }
       }
     }
@@ -6900,18 +6924,19 @@
   "summary": {
     "biomes": 21,
     "building_assets": 1008,
-    "done": 93,
-    "pending": 915,
-    "pct": 9,
+    "done": 138,
+    "pending": 870,
+    "pct": 14,
     "roof_assets": 336,
-    "roof_done": 32,
-    "roof_pct": 10,
+    "roof_done": 48,
+    "roof_pct": 14,
     "v1_variants": 840,
-    "v1_done": 12,
-    "v1_pct": 1,
+    "v1_done": 16,
+    "v1_pct": 2,
     "biomes_token_authored": [
       "grassland",
-      "desert"
+      "desert",
+      "mystic"
     ],
     "prop_objects": 0
   }

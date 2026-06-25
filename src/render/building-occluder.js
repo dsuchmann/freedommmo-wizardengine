@@ -19,9 +19,10 @@ import { getWallImg } from './building-renderer.js';
 import { buildingFloors } from './building-shadow.js';
 import { queryBuildingTile } from './building-tile-query.js';
 import { wallAssetDir, wallPieceFile, roofAssetDir, roofTextureFile, ROOF_FASCIA_FILE } from '../../sim/world/buildings/building-material-registry.js';
-import { drawBuildingTiles, isTiledBuilding } from './building-tiles.js';
+import { drawBuildingTiles, isTiledBuilding, materialOf } from './building-tiles.js';
 import { renderOn } from './building-render-flags.js';
 import { paintWeatheredColumn } from './dressing/d0-weathering.js';
+import { drawD3Props } from './dressing/d3-props.js';
 
 // Source rect of the E/W side-face cap. The grassland edge_ew strip is a 32x128 quoin/side-cap;
 // sample its LEFT quoin column (x=0..16) as the true vertical corner post (`isQuoinStrip`) — drawing
@@ -137,7 +138,11 @@ function roofTexFor(b) {
   // Rotate roof_top variants per building (deterministic by footprint position) so a town shows VARIETY instead
   // of one repeated tile. .get lazy-loads each variant; try the hashed one first, then fall through to whatever
   // variants exist (v000 base) so a slug with fewer variants still renders.
-  const NV = 8; // roof_top__v000..v007 — desert uses a biome-wide curated pool (mud + sandstone-slabs), all slugs share it
+  // Biome-wide curated roof-pool size (every roofSlug shares the same pool; rotate this many per building for town
+  // variety). desert = 8 (mud + sandstone-slabs); mystic = 48 (geode + amethyst + silver-thatch, slate excluded —
+  // user-curated 2026-06-24). Default 8. The fall-through loop still renders slugs with fewer variants on disk.
+  const ROOF_NV = { desert: 8, mystic: 48 };
+  const NV = ROOF_NV[b.biome] || 8; // roof_top__v000..v0(NV-1)
   const h = Math.abs((((b.x | 0) * 73856093) ^ ((b.y | 0) * 19349663)) >>> 0) % NV;
   for (let k = 0; k < NV; k++) { const img = _imageCache.get(dir + roofTextureFile((h + k) % NV)); if (img) return img; }
   return null;
@@ -145,6 +150,15 @@ function roofTexFor(b) {
 // Per-material eave/rake trim board (ROOF lane draws it on the skirt; degrades to procedural fasciaColor if absent).
 function roofFasciaFor(b) {
   return (b && b.biome && b.roofSlug) ? _imageCache.get(roofAssetDir(b.biome, b.roofSlug) + ROOF_FASCIA_FILE) : null;
+}
+// Per-WALL-MATERIAL gable tile (the wall carried up into the south roof→wall triangle). Keyed on the building's
+// WALL material (materialOf) from the tiles corpus — NOT the roof material. Null until the image lazy-loads or for
+// non-tiled biomes → drawSkirt falls back to the procedural solid fill. Shares the one-frame-lazy _imageCache.
+const TILE_GABLE_ROOT = '/assets/pixelab/buildings/tiles/';
+function gableTexFor(b) {
+  if (!(b && b.biome)) return null;
+  const mat = materialOf(b);
+  return mat ? _imageCache.get(TILE_GABLE_ROOT + b.biome + '/' + mat + '/gable__v0.png') : null;
 }
 
 // Empty-tile gap to the building NORTH of us — mirrors the worker's roof clamp so the re-drawn
@@ -485,6 +499,7 @@ function drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h) {
   const wH = Math.round(tilePx * WALL_CONFIG.wallHeight);
   const WY = WALL_CONFIG.wallYOffset;
   const stories = buildingFloors(b);
+  const material = materialOf(b); // pass to the weathering pass so pale woven/thatch walls get gentler grime
   const tsy = (wy) => Math.round(wy * tilePx - camY);
   const floorSet = new Set();
   for (const s of sections) for (let dy = 0; dy < s.h; dy++) for (let dx = 0; dx < s.w; dx++) floorSet.add((s.x0 + dx) + ',' + (s.y0 + dy));
@@ -498,7 +513,7 @@ function drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h) {
       const colTop = groundTop - (stories - 1) * wH;
       const colH = stories * wH;
       if (ex.dx + ex.dw < 0 || ex.dx > w || colTop + colH < 0 || colTop > h) continue;
-      paintWeatheredColumn(ctx, { dx: ex.dx, top: colTop, dw: ex.dw, colH }, { wx: b.x + lx, wy: fbY });
+      paintWeatheredColumn(ctx, { dx: ex.dx, top: colTop, dw: ex.dw, colH, tilePx }, { wx: b.x + lx, wy: fbY }, { material });
     }
   }
 }
@@ -530,7 +545,7 @@ export function buildOccluderBitmap(buildings, camX, camY, tilePx, w, h, playerS
   occ.sort((a, b) => (a.y + a.footprint.boundingBox.h) - (b.y + b.footprint.boundingBox.h));
   for (const b of occ) {
     drawWalls(o, b, camX, camY, tilePx, w, h);
-    if (_roof && renderOn('roof')) { try { _roof.drawRoofForBuilding(o, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b), roofFascia: roofFasciaFor(b) }); } catch { /* skip roof */ } }
+    if (_roof && renderOn('roof')) { try { _roof.drawRoofForBuilding(o, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b), roofFascia: roofFasciaFor(b), gableTex: gableTexFor(b) }); } catch { /* skip roof */ } }
   }
 
   // DEPTH GUARD: only the building ABOVE the player's feet occludes the player. The building's
@@ -572,8 +587,12 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   // Roof respects its OWN layer flag — the procedural roof rides along with the wall path, so without this
   // gate it would draw even when the roof layer is off (leaking an un-tuned, wall-misaligned roof over the
   // walls). With roof off, walls show clean; we align the roof eaves to the walls when the roof layer is on.
-  const drawRoof = () => { if (_roof && renderOn('roof')) { try { _roof.drawRoofForBuilding(ctx, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b), roofFascia: roofFasciaFor(b) }); } catch { /* skip roof */ } } };
-  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h); drawRoof(); return true; }
+  const drawRoof = () => { if (_roof && renderOn('roof')) { try { _roof.drawRoofForBuilding(ctx, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b), roofFascia: roofFasciaFor(b), gableTex: gableTexFor(b) }); } catch { /* skip roof */ } } };
+  // D3 wall attachments paint BEFORE the roof so the roof correctly OCCLUDES anything behind/above it (user
+  // 2026-06-25: drawing props OVER the roof is wrong draw-order). Identity stays readable by PLACING props LOW
+  // (signs/festoons at mid-wall, awnings at the door head — below the eave overhang), not by drawing over the roof.
+  const drawProps = () => { if (renderOn('attachments')) { try { drawD3Props(ctx, b, camX, camY, tilePx, w, h, 'all'); } catch { /* skip props */ } } };
+  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h); drawProps(); drawRoof(); return true; }
   // A grassland TILE-CORPUS building whose tiles aren't loaded yet must NOT fall to the legacy
   // strip path — drawWalls would stamp a stone_brick 32px strip STRETCHED over the footprint (the
   // melted/stretched single-building artifact). Stay invisible this frame; it flips to mirror-tiled
@@ -583,6 +602,7 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   if (b) b._wallPath = 'legacy';
   drawWalls(ctx, b, camX, camY, tilePx, w, h);
   drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h);
+  drawProps();
   drawRoof();
   return true;
 }

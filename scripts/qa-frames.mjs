@@ -46,6 +46,14 @@ function frameStats(img) {
 function mse(a, b) { if (a.W !== b.W || a.H !== b.H) return Infinity; let s = 0; const A = a.data, B = b.data, n = A.length / 4;
   for (let k = 0; k < A.length; k += 4) { const r = A[k] - B[k], g = A[k + 1] - B[k + 1], bl = A[k + 2] - B[k + 2]; s += r * r + g * g + bl * bl; } return s / n; }
 const median = (arr) => { const s = arr.slice().sort((a, b) => a - b); return s.length ? s[s.length >> 1] : 0; };
+// Opaque content bbox (alpha>24) — used by the FIT check to see whether a frame's content fills the image or is
+// inset inside a transparent margin (the raw-256-canvas case that makes an animated aperture render smaller).
+function bboxOf(img) {
+  const W = img.width, H = img.height; const c = createCanvas(W, H); const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+  const d = x.getImageData(0, 0, W, H).data; let x0 = W, y0 = H, x1 = -1, y1 = -1;
+  for (let y = 0; y < H; y++) for (let xp = 0; xp < W; xp++) if (d[(y * W + xp) * 4 + 3] > 24) { if (xp < x0) x0 = xp; if (xp > x1) x1 = xp; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  return { x0, y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+}
 
 async function montage(name, imgs, flags) {
   const TS = 110, pad = 6;
@@ -74,6 +82,26 @@ for (const seq of seqs) {
   if (sz0 && imgs.some((im) => im && `${im.width}x${im.height}` !== sz0)) {
     imgs.forEach((im, i) => { if (im && `${im.width}x${im.height}` !== sz0) flags[i] = true; });
     reasons.push(`SIZE_DRIFT (frames not all ${sz0}) — AUTO-FIX: node scripts/normalize-anim-frames.mjs <dir>`);
+  }
+  // FIT: the anim frames must render at the SAME size AND fill the image edge-to-edge like the material's STATIC
+  // tile (ground_<kind>__v0.png). The renderer (drawAperture) maps the WHOLE frame into a fixed door/window box,
+  // so a raw 256² frame whose wall is inset inside a transparent margin draws SMALLER + lower than the solidify-
+  // cropped static tile — the aperture visibly resizes when the animation triggers. Deterministic + AUTO-FIXABLE.
+  {
+    const kind = path.basename(seq.dir);                       // door | window
+    const matDir = path.dirname(path.dirname(seq.dir));        // .../<biome>/<material>
+    const staticP = path.join(matDir, `ground_${kind}__v0.png`);
+    if (fs.existsSync(staticP) && imgs[0]) {
+      const st = await loadImage(staticP);
+      const bb0 = bboxOf(imgs[0]);
+      const dimBad = imgs.some((im) => im && (im.width !== st.width || im.height !== st.height));
+      const insetBad = bb0.w < imgs[0].width - 2 || bb0.h < imgs[0].height - 2; // content doesn't fill (transparent margin)
+      if (dimBad || insetBad) {
+        imgs.forEach((im, i) => { if (im) flags[i] = true; });
+        const fix = `node scripts/fit-anim-frames.mjs ${path.relative(process.cwd(), matDir).replace(/\\/g, '/')} ${kind}`;
+        reasons.push(`FIT-FAIL: frames ${imgs[0].width}x${imgs[0].height}${insetBad ? ` (content only ${bb0.w}x${bb0.h}@${bb0.x0},${bb0.y0})` : ''} ≠ static ${st.width}x${st.height} edge-to-edge — aperture will RESIZE on trigger. AUTO-FIX: ${fix}`);
+      }
+    }
   }
   // FROZEN only applies to NON-final frames (a door that stalls mid-open). A FINAL frame identical to its
   // predecessor is a correctly SETTLED end pose (see settle-final-frame.mjs), not a bug — so exempt it.

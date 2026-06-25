@@ -30,7 +30,9 @@ const ROOF_ROOT = path.join(ROOT, 'roof');
 // Biomes whose tile-corpus prompt tokens ({FOUNDATION}/{DOOR}/{WINDOW}/{WALLPLATE} + per-material FACE/EDGE) are
 // AUTHORED (a tile-corpus manifest exists). The other 19 are enumerated here but token-pending (the framework
 // gap to fill before they can be generated).
-const TOKENS_AUTHORED = new Set(['grassland', 'desert']);
+const TOKENS_AUTHORED = new Set(['grassland', 'desert', 'mystic', 'forest', 'volcanic',
+  'mountains', 'hills', 'taiga', 'dense_forest', 'savanna', 'steppe', 'swamp', 'tundra',
+  'arctic', 'tropical_forest', 'beach', 'river', 'lake', 'shallow_water', 'ocean', 'deep_ocean']);
 
 const ledgerFor = (biome) => {
   const p = path.join(TILES_ROOT, biome, '_pixellab_ids.json');

@@ -1,0 +1,76 @@
+{
+  "_doc": "savanna tile-corpus ledger. Slugs from building-materials.json (identity TILE_MATERIALS, no registry edit). Vocab: docs/superpowers/specs/2026-06-24-savanna-tile-corpus-manifest.md.",
+  "base_project": "0f1031f5-9eee-4df4-996f-0a4114148eba",
+  "materials": {
+    "ochre_adobe": {
+      "base": "78d86dba-b31d-4fa9-8b85-41b6bcf20d55",
+      "ground_window": "a185f5e8-ac7d-4222-9ff0-ce3fa821c8c6",
+      "ground_door": "aa826851-5e50-4f01-ac71-aa9ce7f0b526",
+      "ground_left_corner": "f01b5108-043b-4ea9-aa5b-1d70acb30fa2",
+      "gable": "6e975744-6ab8-4a8a-a5fb-153c08218349",
+      "window_anim": "5a168e70-763f-433a-88bf-9b9abffc640d"
+    },
+    "mud_brick_coursed": {
+      "base": "cc172cbd-7c6b-485c-9b49-8cfa7c8f361a",
+      "ground_window": "4855039b-e83d-4d30-bba9-7fc070c29640",
+      "ground_door": "155e6e38-e67a-4e53-9d2b-a616e2f6c00d",
+      "ground_left_corner": "f5b077b5-92e9-43ee-8685-117544a66802",
+      "gable": "8b5ad34a-5bd9-4e1c-a736-b816912d8139",
+      "window_anim": "a1c3704b-bd36-4910-aeec-0068274ce9a3"
+    },
+    "thorn_wattle": {
+      "base": "4e24273b-4614-4fd9-8acb-a18b0e823450",
+      "ground_window": "bebf722b-4ab5-46c2-a6d7-358ea01c4280",
+      "ground_door": "ba92de67-e200-4412-8d96-81b547ae44cd",
+      "ground_left_corner": "7d7c54f1-89c7-4fe7-8881-260536daef25",
+      "gable": "4c39e282-6929-4075-8326-7e2f3fad5ab5",
+      "window_anim": "64948032-34bd-4ed7-835f-a9a858d8a403"
+    },
+    "woven_grass_panel": {
+      "base": "23f88e27-ae30-424e-89b8-8e0bc1372393",
+      "ground_window": "7ecd6612-7ba8-4de4-8231-9adb55abbed3",
+      "ground_door": "b43d3c9f-6805-4c8e-9d66-080981c6d1c7",
+      "ground_left_corner": "cc7c8900-82a3-4a30-9083-f817d4572fa3",
+      "gable": "7ad72cad-1e20-41fc-8e25-8264aaa3e04d",
+      "window_anim": "54b43ba6-655a-425e-8142-ef960950f731"
+    }
+  },
+  "roofs": {
+    "golden_thatch": {
+      "tileset": "068d48c8-52c6-416b-b0e1-9fd03cfa6c45",
+      "seed": 71010,
+      "source": "tiles_pro tile_0..tile_3, segmentation, square_topdown 64, de-magenta+solidify 100% opaque",
+      "v000": "068d48c8-52c6-416b-b0e1-9fd03cfa6c45#tile_0",
+      "v001": "068d48c8-52c6-416b-b0e1-9fd03cfa6c45#tile_1",
+      "v002": "068d48c8-52c6-416b-b0e1-9fd03cfa6c45#tile_2",
+      "v003": "068d48c8-52c6-416b-b0e1-9fd03cfa6c45#tile_3"
+    },
+    "thorn_branch_lattice": {
+      "tileset": "e0dfeca1-2631-4f1c-b713-f6d3facaa858",
+      "seed": 71020,
+      "source": "tiles_pro tile_0..tile_3, segmentation, square_topdown 64, de-magenta+solidify 100% opaque (packed-field framing avoided seam-rib strips)",
+      "v000": "e0dfeca1-2631-4f1c-b713-f6d3facaa858#tile_0",
+      "v001": "e0dfeca1-2631-4f1c-b713-f6d3facaa858#tile_1",
+      "v002": "e0dfeca1-2631-4f1c-b713-f6d3facaa858#tile_2",
+      "v003": "e0dfeca1-2631-4f1c-b713-f6d3facaa858#tile_3"
+    },
+    "baked_clay_tile": {
+      "tileset": "69ee3982-032d-4a4f-8f1a-6fba4d767451",
+      "seed": 71030,
+      "source": "tiles_pro tile_0..tile_3, segmentation, square_topdown 64, de-magenta+solidify 100% opaque",
+      "v000": "69ee3982-032d-4a4f-8f1a-6fba4d767451#tile_0",
+      "v001": "69ee3982-032d-4a4f-8f1a-6fba4d767451#tile_1",
+      "v002": "69ee3982-032d-4a4f-8f1a-6fba4d767451#tile_2",
+      "v003": "69ee3982-032d-4a4f-8f1a-6fba4d767451#tile_3"
+    },
+    "palm_frond_thatch": {
+      "tileset": "a41aa9f0-e926-4f39-ba58-6838b966a013",
+      "seed": 71040,
+      "source": "tiles_pro tile_0..tile_3, segmentation, square_topdown 64, de-magenta+solidify",
+      "v000": "a41aa9f0-e926-4f39-ba58-6838b966a013#tile_0",
+      "v001": "a41aa9f0-e926-4f39-ba58-6838b966a013#tile_1",
+      "v002": "a41aa9f0-e926-4f39-ba58-6838b966a013#tile_2",
+      "v003": "a41aa9f0-e926-4f39-ba58-6838b966a013#tile_3"
+    }
+  }
+}

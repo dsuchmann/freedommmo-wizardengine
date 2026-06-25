@@ -1,0 +1,32 @@
+import { chromium } from 'playwright-core';
+import { writeFileSync } from 'fs';
+const exe = process.env.LOCALAPPDATA + '/ms-playwright/chromium-1217/chrome-win64/chrome.exe';
+const PORT = process.env.PROBE_PORT || 8130;
+const OUT = 'C:/Users/daves/AppData/Roaming/wizardgenie/projects/perf-opt/screenshots/';
+const browser = await chromium.launch({ executablePath: exe, headless: true, args: ['--use-angle=swiftshader'] });
+const ctx = await browser.newContext({ viewport: { width: 1382, height: 900 } });
+await ctx.addInitScript(() => { window._gpuFlora = true; });
+const page = await ctx.newPage();
+const cdp = await page.context().newCDPSession(page);
+let atlasResets = 0, errs = 0;
+page.on('console', m => { const t=m.text(); if (t.includes('atlas full')) atlasResets++; if (m.type()==='error' && /shader|GL_|WebGL/i.test(t)) errs++; });
+await page.goto(`http://127.0.0.1:${PORT}/index.html?x=-16672&y=14816`, { waitUntil: 'domcontentloaded' });
+await page.waitForFunction(() => window._dbgRenderer?.glc?.animOk, null, { timeout: 240000 });
+const wait = ms => page.evaluate(m => new Promise(r => setTimeout(r, m)), ms);
+for (let i=0;i<30 && !(await page.evaluate(()=>window._f2PoolN));i++) await wait(1000);
+await wait(15000);
+const r0 = atlasResets;
+// walk back and forth to trigger several rebuilds
+for (let k=0;k<6;k++){ await page.evaluate((d)=>{window._player.x += d;}, k%2?-14:14); await wait(4000); }
+const res = await page.evaluate(async () => {
+  const glc = window._dbgRenderer.glc;
+  let calls=0; const o=glc.atlasRect.bind(glc); glc.atlasRect=(...a)=>{calls++;return o(...a);};
+  let frames=0,go=1; const tk=()=>{if(!go)return;frames++;requestAnimationFrame(tk);}; requestAnimationFrame(tk);
+  await new Promise(r=>setTimeout(r,3000)); go=0; glc.atlasRect=o;
+  return { poolN: window._f2PoolN, gpuGusting: window._f2Stats.gpuGusting,
+    lastRebuildMs: +window._f2Stats.lastRebuildMs.toFixed(1), frames, atlasRectPerFrame: frames?+(calls/frames).toFixed(1):0 };
+});
+console.log(JSON.stringify({ ...res, atlasResetsDuringWalk: atlasResets - r0, atlasResetsTotal: atlasResets, glErrors: errs }, null, 2));
+const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' });
+writeFileSync(OUT + 'gpuflora-noskip.png', Buffer.from(data, 'base64'));
+await browser.close();

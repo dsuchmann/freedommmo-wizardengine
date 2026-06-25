@@ -184,6 +184,9 @@ export function drawRoofForBuilding(ctx, b, camX, camY, tilePx, opts = {}) {
   // eave trim: the authored roof_fascia.png bitmap (from the occluder via the FROZEN
   // opts). Null in the preview (no fascia) → drawSkirt falls back to fasciaColor.
   e.renderCfg.roofFascia = opts.roofFascia || null;
+  // Per-wall-material GABLE tile — skins the south gable / E/W rake bridge in drawSkirt (the wall carried up
+  // into the roof→wall triangle). Null in the preview / before load → drawSkirt's solid-fill fallback.
+  e.renderCfg.gableTex = opts.gableTex || null;
   drawRoof(ctx, e.grid, e.material, features, e.renderCfg, view);
   return e;
 }

@@ -948,46 +948,46 @@ export const BUILDING_MATERIALS = {
     "displayName": "Mystic",
     "walls": [
       {
-        "slug": "luminous_crystal",
-        "name": "Luminous Crystal Block",
-        "palette": "glowing cyan-violet translucent crystal"
+        "slug": "moonstone",
+        "name": "Moonstone Render",
+        "palette": "pearl white, soft lilac-grey, faint cool-cyan opalescent sheen, silver hairline flecks"
       },
       {
-        "slug": "living_moss_wood",
-        "name": "Living Moss-Wood",
-        "palette": "warm living wood, glowing teal moss"
+        "slug": "starlit_marble",
+        "name": "Starlit Marble",
+        "palette": "cool white-and-pale-grey marble courses, thin silver constellation inlays, pale-silver mortar"
       },
       {
-        "slug": "runed_pale_stone",
-        "name": "Runed Pale-Stone",
-        "palette": "ivory pale-stone, glowing blue-white runes"
+        "slug": "amethyst_ashlar",
+        "name": "Faceted Amethyst Ashlar",
+        "palette": "deep amethyst-violet cut blocks, crisp facet highlights, faint cool inner glow, thin silver joints"
       },
       {
-        "slug": "aether_glass",
-        "name": "Aether-Glass",
-        "palette": "iridescent opal aether-glass, silver mullions"
+        "slug": "wardweave_lattice",
+        "name": "Ward-Weave Lattice",
+        "palette": "dark slate-grey daub, woven black-iron rune-chain, dim cyan rune-glow at crossings"
       }
     ],
     "roofs": [
       {
-        "slug": "crystal_shingle",
-        "name": "Crystal Shingle",
-        "palette": "glowing cyan-violet crystal shingles"
+        "slug": "moonstone_slate",
+        "name": "Moonstone Slate",
+        "palette": "blue-grey moonstone slate, pale silver lit edges, faint cool opalescent sheen"
       },
       {
-        "slug": "runed_slate",
-        "name": "Silver Runed Slate",
-        "palette": "silver-grey slate, glowing blue-white runes"
+        "slug": "geode_scale",
+        "name": "Geode Scale Tile",
+        "palette": "banded agate roundels in smoky grey-lilac and soft rose, tiny druzy centres, thin pale luminous joints"
       },
       {
-        "slug": "aether_glass_pane",
-        "name": "Aether-Glass Pane",
-        "palette": "iridescent opal panes, silver lattice"
+        "slug": "amethyst_facet_slab",
+        "name": "Amethyst Facet Slab",
+        "palette": "deep amethyst violet angular slabs, crisp facet highlights, thin glowing cool seams"
       },
       {
-        "slug": "luminous_thatch",
-        "name": "Luminous Thatch",
-        "palette": "glowing silver-blue luminous reed thatch"
+        "slug": "silver_thatch",
+        "name": "Astral Silver Thatch",
+        "palette": "pale silver-grey moon-bleached straw, soft moonlit highlights, faint inlaid star-flecks"
       }
     ]
   }

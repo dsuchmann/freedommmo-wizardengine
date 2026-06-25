@@ -18,8 +18,36 @@ const getDIR = (biome) => TILE_ROOT + (biome || 'grassland') + '/';
 const TILE_MATERIALS = {
   grassland: { timber_frame: 'timber_frame', fieldstone: 'fieldstone', cob: 'cob', wattle_daub: 'wattle_daub' },
   desert: { sandstone_block: 'sandstone', smooth_adobe: 'adobe', mudbrick_plaster: 'mudbrick', carved_rock: 'reed_palm' },
+  // Mystic (3rd biome) — world-gen wallSlugs already equal the tile-corpus folder names, so this is an identity map.
+  mystic: { moonstone: 'moonstone', starlit_marble: 'starlit_marble', amethyst_ashlar: 'amethyst_ashlar', wardweave_lattice: 'wardweave_lattice' },
+  // forest + volcanic (4th/5th) — slugs already match the building-materials.json plan, so identity maps.
+  forest: { log_cabin: 'log_cabin', hewn_plank: 'hewn_plank', timber_frame_daub: 'timber_frame_daub', bark_slab: 'bark_slab' },
+  volcanic: { basalt_block: 'basalt_block', obsidian_inlay: 'obsidian_inlay', fire_glazed_brick: 'fire_glazed_brick', ashcrete: 'ashcrete' },
+  // biomes 6+ (2026-06-24 full sweep) — slugs already match the building-materials.json plan, identity maps.
+  mountains: { granite_ashlar: 'granite_ashlar', stacked_slate: 'stacked_slate', timber_rubble: 'timber_rubble', dwarven_cut_stone: 'dwarven_cut_stone' },
+  hills: { drystone: 'drystone', limewashed_cottage: 'limewashed_cottage', hillstone_block: 'hillstone_block', slate_hung: 'slate_hung' },
+  taiga: { stacked_log: 'stacked_log', pine_plank: 'pine_plank', pitch_sealed_timber: 'pitch_sealed_timber', log_and_daub: 'log_and_daub' },
+  dense_forest: { mossy_timber: 'mossy_timber', dark_stained_log: 'dark_stained_log', root_and_earth: 'root_and_earth', deep_bark_plank: 'deep_bark_plank' },
+  savanna: { ochre_adobe: 'ochre_adobe', mud_brick_coursed: 'mud_brick_coursed', thorn_wattle: 'thorn_wattle', woven_grass_panel: 'woven_grass_panel' },
+  steppe: { rammed_earth: 'rammed_earth', felt_frame: 'felt_frame', sod_brick: 'sod_brick', dry_brick: 'dry_brick' },
+  swamp: { weathered_plank: 'weathered_plank', mangrove_log: 'mangrove_log', mud_reed_daub: 'mud_reed_daub', mossy_stilt_frame: 'mossy_stilt_frame' },
+  tundra: { turf_block: 'turf_block', whalebone_hide: 'whalebone_hide', stacked_stone: 'stacked_stone', peat_block: 'peat_block' },
+  arctic: { ice_block: 'ice_block', packed_snow: 'packed_snow', driftwood_hide: 'driftwood_hide', frozen_timber: 'frozen_timber' },
+  tropical_forest: { bamboo: 'bamboo', woven_palm: 'woven_palm', hardwood_plank: 'hardwood_plank', raised_stilt: 'raised_stilt' },
+  beach: { coral_block: 'coral_block', bleached_plank: 'bleached_plank', palm_thatch_panel: 'palm_thatch_panel', shell_tabby: 'shell_tabby' },
+  river: { river_stone_daub: 'river_stone_daub', tarred_plank: 'tarred_plank', wattle_daub_frame: 'wattle_daub_frame', mossy_millstone: 'mossy_millstone' },
+  lake: { log_cabin: 'log_cabin', cedar_board_batten: 'cedar_board_batten', lake_fieldstone: 'lake_fieldstone', stilt_piling: 'stilt_piling' },
+  shallow_water: { driftwood_patchwork: 'driftwood_patchwork', woven_reed_panel: 'woven_reed_panel', weathered_boardwalk_plank: 'weathered_boardwalk_plank', wattle_shell_daub: 'wattle_shell_daub' },
+  ocean: { tarred_timber_stilt: 'tarred_timber_stilt', rope_lashed_log: 'rope_lashed_log', net_draped_plank: 'net_draped_plank', weathered_shiplap: 'weathered_shiplap' },
+  deep_ocean: { barnacled_piling: 'barnacled_piling', riveted_iron_plate: 'riveted_iron_plate', tarred_clinker_hull: 'tarred_clinker_hull', whalebone_frame: 'whalebone_frame' },
 };
-const BIOME_FALLBACK = { grassland: 'fieldstone', desert: 'adobe' };
+const BIOME_FALLBACK = {
+  grassland: 'fieldstone', desert: 'adobe', mystic: 'moonstone', forest: 'log_cabin', volcanic: 'basalt_block',
+  mountains: 'granite_ashlar', hills: 'drystone', taiga: 'stacked_log', dense_forest: 'mossy_timber',
+  savanna: 'ochre_adobe', steppe: 'rammed_earth', swamp: 'weathered_plank', tundra: 'turf_block',
+  arctic: 'ice_block', tropical_forest: 'bamboo', beach: 'coral_block', river: 'river_stone_daub',
+  lake: 'log_cabin', shallow_water: 'driftwood_patchwork', ocean: 'tarred_timber_stilt', deep_ocean: 'barnacled_piling',
+};
 const _img = new Map();
 function img(url) { let im = _img.get(url); if (!im) { im = new Image(); im.src = url; _img.set(url, im); } return (im.complete && im.naturalWidth) ? im : null; }
 
@@ -40,7 +68,7 @@ function doorOpenAmount(b, d) {
 }
 
 // Resolve a building to its tile-corpus FOLDER name, or null if its biome isn't tiled (→ legacy wall path).
-function materialOf(b) {
+export function materialOf(b) {
   if (typeof window !== 'undefined' && window._tileMaterial) return window._tileMaterial;
   const map = TILE_MATERIALS[b && b.biome];
   if (!map) return null;
@@ -54,6 +82,13 @@ export function isTiledBuilding(b) {
   return !!materialOf(b);
 }
 export function tileMaterialReady(b) { const m = materialOf(b); return !!(m && img(getDIR(b && b.biome) + m + '/ground_plain__v0.png')); }
+// The plain-wall + window tiles for this building's material, or null if its biome isn't tiled. The
+// dressing socket-index diffs these two (the window is a state OF the plain wall) to measure the opening.
+export function windowTilePaths(b) {
+  const mat = materialOf(b); if (!mat) return null;
+  const D = getDIR(b.biome);
+  return { plain: D + mat + '/ground_plain__v0.png', window: D + mat + '/ground_window__v0.png' };
+}
 export function hasTileWall(b) {
   if (typeof window !== 'undefined' && window._tileWalls === false) return false;
   return isTiledBuilding(b) && tileMaterialReady(b);
@@ -70,7 +105,7 @@ function footprintSet(fp) {
 // Each run is one visible front-wall segment, so the renderer draws the building's TRUE outline (an L/T/
 // round building's stepped front) instead of one bounding-box rectangle. Sorted north→south so nearer
 // (front) walls draw over farther ones.
-function southRuns(fp) {
+export function southRuns(fp) {
   const set = footprintSet(fp);
   const byY = new Map();
   for (const key of set) {
@@ -165,12 +200,19 @@ export function drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h) {
   // PER-MATERIAL APERTURES — drawn on the run at the aperture's row, at that run's ground line (so apertures
   // sit on the correct stepped wall, not the bbox). Real generated state tiles, clipped to their span.
   const runFor = (ax, ay) => runs.find(r => r.y === ay && ax >= r.x0 && ax < r.x1) || runs[runs.length - 1];
-  // CLAMP the aperture clip to the run's [left,right] pixel bounds so a door/window on the run's EDGE
-  // tile (e.g. a guaranteed front door that lands on the easternmost south tile) draws ONLY within the
-  // building frame instead of spilling ~0.8 tile past it and colliding with the corner tile.
+  // Keep an aperture's FULL span inside its run so a door/window on the run's EDGE tile is never CUT OFF
+  // (all biomes). When there is room, SHIFT the aperture inward so its whole width fits — entry is forgiving
+  // (step onto the footprint), so the small visual shift doesn't affect walking in. Only if the run is too
+  // narrow for the full span do we fall back to clamping the clip (tiny buildings). This replaces the old
+  // clip-clamp that cut the door off when it landed near the wall end.
   const drawAperture = (tile, cx, top, spanTiles, left, right) => {
     const clipW = Math.round(spanTiles * t);
-    let cl = cx - clipW / 2, cr = cx + clipW / 2;
+    const half = clipW / 2;
+    if (left != null && right != null && right - left >= clipW) {
+      if (cx - half < left) cx = left + half;          // door near the WEST end → nudge east so it fits
+      else if (cx + half > right) cx = right - half;   // door near the EAST end → nudge west so it fits
+    }
+    let cl = cx - half, cr = cx + half;
     if (left != null && cl < left) cl = left;
     if (right != null && cr > right) cr = right;
     if (cr <= cl) return;

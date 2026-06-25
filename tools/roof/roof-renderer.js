@@ -356,16 +356,32 @@ function drawSkirt(ctx, grid, view, t, material, cfg) {
     const dShade = d === 's' ? 0.88 : d === 'n' ? 0.5 : 0.66; // sunlit south / shadowed north
     const fasciaTex = cfg && cfg.roofFascia;
     if (toWall) {
-      // GAP-FILL bridge (south gable + E/W rake dropping to the wall top): fill the triangular gap SOLID
-      // with the ROOF's own colour, darkened by the face shade, so it reads as the roof carried cleanly
-      // down to the wall. OPAQUE → no grass through the gap (the actual bug: the fascia texture has
-      // PixelLab transparency). NOT the stretched fascia texture, which over a tall gable reads as a busy,
-      // repeated band competing with the roof surface.
+      // GAP-FILL bridge (south gable + E/W rake dropping to the wall top). Paint an OPAQUE base coat first
+      // (the roof colour) so a holey gable PNG can NEVER show grass through the gap, then — when the per-WALL-
+      // material gable tile is loaded — skin the bridge with it (the wall carried up into the roof→wall
+      // triangle), keeping the face-shade so it lights like the roof. Falls back to the solid fill in the
+      // preview / for non-tiled biomes / for the one frame before the gable image lazy-loads.
       ctx.fillStyle = sampledBaseColor(cfg.texture) || sampledBaseColor(fasciaTex)
         || (material.baseColor && material.baseColor()) || 'rgb(120,72,42)';
       ctx.fill();
-      ctx.fillStyle = `rgba(0,0,0,${Math.min(0.42, (1 - dShade) * 0.95)})`;
-      ctx.fill();
+      const gableTex = cfg && cfg.gableTex;
+      if (gableTex && (gableTex.naturalWidth || gableTex.width)) {
+        ctx.save();
+        ctx.clip(); // to the bridge-quad path already open above
+        ctx.imageSmoothingEnabled = false;
+        const minX = Math.min(top1.x, top2.x, bot1.x, bot2.x), maxX = Math.max(top1.x, top2.x, bot1.x, bot2.x);
+        const minY = Math.min(top1.y, top2.y), maxY = Math.max(bot1.y, bot2.y); // peak side → image top, wall top → image bottom
+        try {
+          ctx.drawImage(gableTex, 0, 0, gableTex.naturalWidth || gableTex.width || 64, gableTex.naturalHeight || gableTex.height || 64,
+            minX, minY, Math.max(1, maxX - minX), Math.max(1, maxY - minY));
+        } catch (e) { /* bad bitmap */ }
+        ctx.fillStyle = `rgba(0,0,0,${Math.min(0.42, (1 - dShade) * 0.95)})`;
+        ctx.fill();
+        ctx.restore();
+      } else {
+        ctx.fillStyle = `rgba(0,0,0,${Math.min(0.42, (1 - dShade) * 0.95)})`;
+        ctx.fill();
+      }
     } else if (fasciaTex) {
       // thin eave fascia lip (a non-bridging overhang edge): skin the small board with the fascia texture.
       ctx.save();

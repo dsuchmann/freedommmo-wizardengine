@@ -1,0 +1,77 @@
+{
+  "_doc": "taiga tile-corpus ledger. Slugs from building-materials.json (identity TILE_MATERIALS, no registry edit). Vocab: docs/superpowers/specs/2026-06-24-taiga-tile-corpus-manifest.md.",
+  "base_project": "0f1031f5-9eee-4df4-996f-0a4114148eba",
+  "materials": {
+    "stacked_log": {
+      "base": "f341dfeb-b261-4bf3-8d77-a80d05760aeb",
+      "ground_window": "d843424c-39b3-4f3e-b184-5ec14c89ee82",
+      "ground_door": "7a7b57f2-9aa4-4bfa-8809-38ff1d14e329",
+      "ground_left_corner": "373dfb98-29f9-4e9d-8ac6-97d8226fe6c0",
+      "gable": "c446cd7f-a275-420a-9ab7-3328e47b8de6",
+      "door_anim_group": "9dc202f3-8e34-4530-8713-c6a1ba1d00f2",
+      "door_anim_inner": "afd93c1e-44bd-4baf-b33b-395978958b2f",
+      "window_anim_group": "6b74cfce-95e0-4e1d-881f-7815a5b9b910",
+      "window_anim_inner": "218802c4-725c-4435-9f36-5bb9d88512ce"
+    },
+    "pine_plank": {
+      "base": "75afd09b-fbde-4789-8038-af7067aab2c5",
+      "ground_window": "150f136b-031f-4693-af1c-dba4c3ca8d49",
+      "ground_door": "58a6778d-2c87-4cde-92d8-e0d3f895bb0c",
+      "ground_left_corner": "f6a4d7e8-5983-4574-a202-3f3b1859ff1f",
+      "gable": "90cf1eb0-f10b-4195-b88a-1b3b2153c2f8",
+      "door_anim_group": "4127144f-b42a-4b70-8ee4-a0773d180ede",
+      "door_anim_inner": "bc440cf6-8004-4896-a4b1-214e5db00c91",
+      "window_anim_group": "2e61cdd0-fbf6-4989-bb7d-969ff28c9956",
+      "window_anim_inner": "69612269-49cd-4cc3-bdb5-43d2e699e5a2"
+    },
+    "pitch_sealed_timber": {
+      "_rebuilt": "2026-06-24 proportion-defect fix: re-rolled base with LOW thin cobble footing (~13%); door now cuts through footing to ground. Old ids superseded.",
+      "base": "384569cd-69a5-4f2e-a149-08f8bf9610fa",
+      "ground_window": "463d1b27-a545-4c81-8882-099a761c7211",
+      "ground_door": "ca825c07-2eca-403d-ba9f-7be2811ac8c2",
+      "ground_left_corner": "ff054d77-9f29-43a3-a2cd-6344e2f01da1",
+      "gable": "c673c8e5-866b-4e53-b962-47c8f2714186",
+      "door_anim_group": "code-synth",
+      "door_anim_inner": "code-synth (scripts/door-swing-anim.mjs, warm-wood fallback)",
+      "window_anim_group": "d34c7024-d248-4be2-8e86-fc2ab2554d36",
+      "window_anim_inner": ""
+    },
+    "log_and_daub": {
+      "base": "035ea44b-bb06-4f36-b490-ecb542c25b3b",
+      "ground_window": "33d75e1c-ef1d-4911-8c7c-96cd1dafd7f4",
+      "ground_door": "16124d4d-91cf-490c-9e56-6edc10abac19",
+      "ground_left_corner": "e5f2162a-4cdc-4052-9392-90fc7fcfd1c2",
+      "gable": "9dd9a1b9-c9c7-491b-8d36-62b1ccfd31bb",
+      "door_anim_group": "029f491e-bb5d-4a74-a627-7be016533ce0",
+      "door_anim_inner": "0f18c824-6650-4d70-b22a-e5ad692f0ad8",
+      "window_anim_group": "a100b4ed-9dec-46a9-bb30-27d26f515d54",
+      "window_anim_inner": "ff52b537-3ecb-429b-bb5c-24075e7ba0f9"
+    }
+  },
+  "roofs": {
+    "sod_turf": {
+      "v000": "",
+      "v001": "",
+      "v002": "",
+      "v003": ""
+    },
+    "cedar_shake": {
+      "v000": "",
+      "v001": "",
+      "v002": "",
+      "v003": ""
+    },
+    "pine_plank_roof": {
+      "v000": "",
+      "v001": "",
+      "v002": "",
+      "v003": ""
+    },
+    "tarred_shingle": {
+      "v000": "",
+      "v001": "",
+      "v002": "",
+      "v003": ""
+    }
+  }
+}

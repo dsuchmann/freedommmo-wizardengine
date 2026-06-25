@@ -1,0 +1,75 @@
+{
+  "_doc": "Durable ledger of PixelLab object IDs for the volcanic tile-corpus (5th/6th biome). Slugs are the EXISTING building-materials.json slugs (already wired) — no registry edit. Vocab in docs/superpowers/specs/2026-06-24-volcanic-tile-corpus-manifest.md. de-magenta+solidify every tile; record ids in the SAME batch.",
+  "base_project": "0f1031f5-9eee-4df4-996f-0a4114148eba",
+  "materials": {
+    "basalt_block": {
+      "base": "8dfa1b6f-f80b-4252-a5ad-467996699452",
+      "ground_window": "9115a8c0-6cf3-4976-a4e7-1baedf206345",
+      "ground_door": "965d19ac-b407-458f-bc8c-106a645ab4b0",
+      "ground_left_corner": "13eddb70-0ed8-4134-9f2e-12e20d413bde",
+      "gable": "b1db51ff-ccc3-4e04-8738-4531a2d76a42",
+      "door_anim_group": "5139700a-3bbd-4e17-a7a6-d45ae32dcb52",
+      "door_anim": "26c86cb8-02e1-4a0e-84d5-cf017feac2ec"
+    },
+    "obsidian_inlay": {
+      "base": "046a66d1-f45f-4ad4-9321-a69bb23a8425",
+      "ground_window": "09ea8e09-10a6-4806-a0a7-4fa9371f9060",
+      "ground_door": "ca44498a-4c5a-4511-95f7-07097b6c4b06",
+      "ground_left_corner": "40b43f67-e1c1-4005-85ba-d156c3341739",
+      "gable": "3ae9b4f0-24ee-4a8f-a595-34906e48495e",
+      "door_anim": "098824f5-b9c2-4dfd-8b16-effa0e53938b",
+      "_base_rerolled_windowgrid": true
+    },
+    "fire_glazed_brick": {
+      "base": "5810f9c9-29e2-48b0-a02f-c8f6937d6d75",
+      "ground_window": "5c416998-f21f-4fa8-b0f9-bb220ae00951",
+      "ground_door": "ecd9a5f9-a8f2-4614-8cbb-ca4521337683",
+      "ground_left_corner": "5113f93e-5192-44d8-a690-e1d9b733f2e1",
+      "gable": "013a2621-0a87-4e32-b2d4-caf8ecba92c2",
+      "door_anim_group": "1f80f502-4008-4044-a413-a8db79d7c5fe",
+      "door_anim": "4ae58424-03d4-4089-8706-c3ec8b23092d"
+    },
+    "ashcrete": {
+      "base": "3f69af46-da7c-4c6e-ac2c-6cca9ccaccf8",
+      "ground_window": "0459575b-d5fa-4929-9061-8d0843698ddc",
+      "ground_door": "719195d2-e555-4fcd-a550-f9c42dfa99fe",
+      "ground_left_corner": "342e189b-bea9-4270-bc34-d4ef36d81503",
+      "gable": "21de2522-df98-46ef-a741-4feacdd5c845",
+      "door_anim_group": "33b50e47-93a5-4b83-8cae-951ae54540dd"
+    }
+  },
+  "roofs": {
+    "ember_clay_tile": {
+      "v000": "35bd6986-4991-42d5-89e0-6ed0699969a4",
+      "v001": "35bd6986-4991-42d5-89e0-6ed0699969a4",
+      "v002": "35bd6986-4991-42d5-89e0-6ed0699969a4",
+      "v003": "35bd6986-4991-42d5-89e0-6ed0699969a4",
+      "fascia": "",
+      "tileset": "35bd6986-4991-42d5-89e0-6ed0699969a4"
+    },
+    "obsidian_shard_tile": {
+      "v000": "5ae25794-0db8-40e5-ba43-769a376eaa71",
+      "v001": "5ae25794-0db8-40e5-ba43-769a376eaa71",
+      "v002": "5ae25794-0db8-40e5-ba43-769a376eaa71",
+      "v003": "5ae25794-0db8-40e5-ba43-769a376eaa71",
+      "fascia": "",
+      "tileset": "5ae25794-0db8-40e5-ba43-769a376eaa71"
+    },
+    "blackened_iron_seam": {
+      "v000": "d0e4c6ec-12c2-4c6b-9a6d-b6f20a952fa9",
+      "v001": "d0e4c6ec-12c2-4c6b-9a6d-b6f20a952fa9",
+      "v002": "d0e4c6ec-12c2-4c6b-9a6d-b6f20a952fa9",
+      "v003": "d0e4c6ec-12c2-4c6b-9a6d-b6f20a952fa9",
+      "fascia": "",
+      "tileset": "d0e4c6ec-12c2-4c6b-9a6d-b6f20a952fa9"
+    },
+    "sulfur_glaze_tile": {
+      "v000": "fd314484-645e-42cb-aaa5-f00adac40445",
+      "v001": "fd314484-645e-42cb-aaa5-f00adac40445",
+      "v002": "fd314484-645e-42cb-aaa5-f00adac40445",
+      "v003": "fd314484-645e-42cb-aaa5-f00adac40445",
+      "fascia": "",
+      "tileset": "fd314484-645e-42cb-aaa5-f00adac40445"
+    }
+  }
+}

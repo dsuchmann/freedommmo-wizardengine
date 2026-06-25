@@ -1,0 +1,80 @@
+{
+  "_doc": "mountains tile-corpus ledger. Slugs from building-materials.json (identity TILE_MATERIALS, no registry edit). Vocab: docs/superpowers/specs/2026-06-24-mountains-tile-corpus-manifest.md.",
+  "base_project": "0f1031f5-9eee-4df4-996f-0a4114148eba",
+  "materials": {
+    "granite_ashlar": {
+      "base": "079bf03a-6b5b-4e4c-a2ea-0d6b4ecc3c05",
+      "ground_window": "420d84a9-2ff8-4c4d-8edf-ce4022f74f34",
+      "ground_door": "1e749aa4-0f3c-4075-a61b-8ae020b56510",
+      "ground_left_corner": "75ef41f5-7088-4024-9141-93257349a033",
+      "gable": "6b5aea2a-5ad9-4b7f-b8aa-0ef8fc62ecc8",
+      "anim_door_group": "808b5029-e327-4073-994d-765c72b1d7f0",
+      "anim_window_group": "27d7b931-8952-4b1c-b53a-3bc641fecddc"
+    },
+    "stacked_slate": {
+      "base": "690eb7f5-d428-409b-9b56-83015f29d5cb",
+      "ground_window": "f7df1e04-9181-4c9c-b77f-315dbbf26d2a",
+      "ground_door": "7b13e367-f13a-4815-9bcb-5017dcbee5e5",
+      "ground_left_corner": "0e3d7733-d212-489c-8214-49ed84b039fd",
+      "gable": "b86db106-befc-4d90-ad49-582b54eaca50",
+      "anim_door_group": "72b322bf-ace1-4ce0-9adc-eed9c5da6080",
+      "anim_window_group": "06290bc0-47a2-48c4-8683-585f2c05ced0"
+    },
+    "timber_rubble": {
+      "base": "4571a5aa-531a-4be1-a202-251af6cfecb1",
+      "ground_window": "1804418d-6dc6-403a-8b87-e0f7f822973b",
+      "ground_door": "860419df-a132-4a46-82a3-0373ef136e9e",
+      "ground_left_corner": "2936f7a7-3534-49dc-ac6e-214f2bf89b73",
+      "gable": "bb8e41c4-d7ed-4d5c-b05b-9b73b18f3781",
+      "anim_door_group": "8a6b96ec-03b1-4d21-b3eb-98c7e255f65d",
+      "anim_door_inner": "1469805b-1b8b-44cd-a397-22b041ff9e7f",
+      "anim_window_group": "eb8be917-bc9b-462d-9e94-a2c880805592",
+      "anim_window_inner": "de26165d-26cc-49e9-b183-fa89f94703c1"
+    },
+    "dwarven_cut_stone": {
+      "base": "4fed6b13-f69d-4a3c-a0fc-2eac8003af85",
+      "ground_window": "cf181e42-cea9-44f8-a1a7-807c9976ec48",
+      "ground_door": "d87a1ff2-efba-4a1b-a2ec-1592ea055705",
+      "ground_left_corner": "fe8d3d78-d9a8-4e6b-926c-d41e1a1d81ef",
+      "gable": "7ea7087f-f913-4edd-b2df-4fddc9bf7c87",
+      "anim_door_group": "09bb3a3d-804d-4e26-a152-93c2cb6d5fe2",
+      "anim_door_inner": "bc6681a8-1ca9-456a-ab49-85685008067b",
+      "anim_window_group": "181152de-d7b9-4068-98b9-8542eeee2472",
+      "anim_window_inner": "70098083-74b6-4baf-a673-74a51d4fffc0"
+    }
+  },
+  "roofs": {
+    "slate_shingle": {
+      "tileset": "95869fb4-5010-4ee0-afd5-d0c976e5cdc2",
+      "seed": 71001,
+      "v000": "95869fb4-5010-4ee0-afd5-d0c976e5cdc2#tile_0",
+      "v001": "95869fb4-5010-4ee0-afd5-d0c976e5cdc2#tile_1",
+      "v002": "95869fb4-5010-4ee0-afd5-d0c976e5cdc2#tile_2",
+      "v003": "95869fb4-5010-4ee0-afd5-d0c976e5cdc2#tile_3"
+    },
+    "patina_copper": {
+      "tileset": "55401aa5-219a-45f0-8f70-8dd4b173554c",
+      "seed": 71002,
+      "v000": "55401aa5-219a-45f0-8f70-8dd4b173554c#tile_0",
+      "v001": "55401aa5-219a-45f0-8f70-8dd4b173554c#tile_1",
+      "v002": "55401aa5-219a-45f0-8f70-8dd4b173554c#tile_2",
+      "v003": "55401aa5-219a-45f0-8f70-8dd4b173554c#tile_3"
+    },
+    "cedar_shake": {
+      "tileset": "f4119442-fdaa-46cc-8c52-62a24ea7b4f0",
+      "seed": 71003,
+      "v000": "f4119442-fdaa-46cc-8c52-62a24ea7b4f0#tile_0",
+      "v001": "f4119442-fdaa-46cc-8c52-62a24ea7b4f0#tile_1",
+      "v002": "f4119442-fdaa-46cc-8c52-62a24ea7b4f0#tile_2",
+      "v003": "f4119442-fdaa-46cc-8c52-62a24ea7b4f0#tile_3"
+    },
+    "lead_seam": {
+      "tileset": "d65878d6-e34d-459c-9914-4e0a5198a1b6",
+      "seed": 5153,
+      "v000": "d65878d6-e34d-459c-9914-4e0a5198a1b6#tile_0",
+      "v001": "d65878d6-e34d-459c-9914-4e0a5198a1b6#tile_1",
+      "v002": "d65878d6-e34d-459c-9914-4e0a5198a1b6#tile_2",
+      "v003": "d65878d6-e34d-459c-9914-4e0a5198a1b6#tile_3"
+    }
+  }
+}

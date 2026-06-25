@@ -1,0 +1,60 @@
+{
+  "_doc": "swamp tile-corpus ledger. Slugs from building-materials.json (identity TILE_MATERIALS, no registry edit). Vocab: docs/superpowers/specs/2026-06-24-swamp-tile-corpus-manifest.md.",
+  "base_project": "0f1031f5-9eee-4df4-996f-0a4114148eba",
+  "materials": {
+    "weathered_plank": {
+      "base": "",
+      "ground_window": "",
+      "ground_door": "",
+      "ground_left_corner": "",
+      "gable": ""
+    },
+    "mangrove_log": {
+      "base": "",
+      "ground_window": "",
+      "ground_door": "",
+      "ground_left_corner": "",
+      "gable": ""
+    },
+    "mud_reed_daub": {
+      "base": "",
+      "ground_window": "",
+      "ground_door": "",
+      "ground_left_corner": "",
+      "gable": ""
+    },
+    "mossy_stilt_frame": {
+      "base": "",
+      "ground_window": "",
+      "ground_door": "",
+      "ground_left_corner": "",
+      "gable": ""
+    }
+  },
+  "roofs": {
+    "mossy_shingle": {
+      "v000": "",
+      "v001": "",
+      "v002": "",
+      "v003": ""
+    },
+    "reed_thatch_wet": {
+      "v000": "",
+      "v001": "",
+      "v002": "",
+      "v003": ""
+    },
+    "bark_sheet_roof": {
+      "v000": "",
+      "v001": "",
+      "v002": "",
+      "v003": ""
+    },
+    "tarred_plank_roof": {
+      "v000": "",
+      "v001": "",
+      "v002": "",
+      "v003": ""
+    }
+  }
+}
