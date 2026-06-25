@@ -42,11 +42,13 @@
 
 <script type="module">
 const REASONS = ['perspective','painted','cropped','scale','halo','other'];
-const field = 'f6';
-const manifest = await (await fetch(`field-manifest.${field}.json`)).json();
-const LSKEY = `field-studio:${field}`;
+// Active source state (mutated by selectSource). `dec` is per-source decisions.
+let field, manifest, LSKEY, dec;
+let cursor = null;       // {key, v}
+const cells = new Map(); // `${key}#${v}` -> element
+const order = [];        // flat [{key,v}] in DOM order
+
 // decisions: { "biome/species": { omit:Set, tags:{v:tag}, notes:{v:str} } }
-const dec = load();
 function load(){
   const seed = {};
   for (const [b,sp] of Object.entries(manifest.biomes)) for (const [s,o] of Object.entries(sp)){
@@ -67,9 +69,6 @@ function save(){
 function status(t){ document.getElementById('status').textContent=t; }
 function countOmit(){ let n=0; for (const d of Object.values(dec)) n+=d.omit.size; return n; }
 function rec(key){ return dec[key] || (dec[key]={omit:new Set(),tags:{},notes:{}}); }
-
-let cursor = null; // {key, v}
-const cells = new Map(); // `${key}#${v}` -> element
 
 function render(){
   const body=document.getElementById('body'); body.innerHTML=''; cells.clear();
@@ -111,7 +110,6 @@ function applyOutliers(){ const on=document.getElementById('outliers').checked;
   for (const c of cells.values()) c.classList.toggle('out', on && c.classList.contains('outlierCand')); }
 
 // ---- keyboard ----
-const order=[]; // flat [{key,v}] in DOM order, filled on render
 function rebuildOrder(){ order.length=0; for (const k of cells.keys()){ const [key,v]=k.split('#'); order.push({key,v:+v}); } }
 addEventListener('keydown',(e)=>{
   if (document.getElementById('notebox').style.display==='block') return;
@@ -161,9 +159,28 @@ document.getElementById('impFile').onchange=async(e)=>{
   save(); paintAll();
 };
 
-// ---- tabs (F6 only today; structured for more) ----
+// ---- sources / tabs ----
+// Loaded from field-sources.json (written by gen-field-manifest.mjs --all). Falls back to F6-only.
 const tabs=document.getElementById('tabs');
-for (const f of ['f6']){ const b=document.createElement('button'); b.className='tab'+(f===field?' on':''); b.textContent=f.toUpperCase(); tabs.appendChild(b); }
+let SOURCES=[{id:'f6',label:'F6'}];
+try{ const s=await(await fetch('field-sources.json')).json(); if(Array.isArray(s)&&s.length) SOURCES=s; }catch(e){}
 
-render(); rebuildOrder(); save();
+async function selectSource(id){
+  // load manifest + per-source state, then rebuild grid
+  field=id; LSKEY=`field-studio:${field}`;
+  cursor=null; cells.clear(); order.length=0;
+  manifest=await(await fetch(`field-manifest.${field}.json`)).json();
+  dec=load();
+  render(); rebuildOrder(); save();
+  for (const b of tabs.children) b.classList.toggle('on', b.dataset.id===id);
+}
+
+for (const s of SOURCES){
+  const b=document.createElement('button'); b.className='tab'; b.dataset.id=s.id;
+  b.textContent=(s.label||s.id).toUpperCase();
+  b.onclick=()=>selectSource(s.id);
+  tabs.appendChild(b);
+}
+
+await selectSource(SOURCES[0].id);
 </script></body></html>
