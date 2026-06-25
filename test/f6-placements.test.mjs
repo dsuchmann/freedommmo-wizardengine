@@ -70,7 +70,11 @@ test('f5/f6 placements carry sil when catalog has it', () => {
 test('pickF6Variant maps pool position through vmap and never returns an omitted index', () => {
   const obj = { variants: 4, vmap: [0, 1, 3, 4] }; // v2 omitted from the pool
   const seen = new Set();
-  for (let i = 0; i < 1000; i++) seen.add(pickF6Variant(obj, i / 1000).variant);
+  for (let i = 0; i < 1000; i++) {
+    const pk = pickF6Variant(obj, i / 1000);
+    assert.ok(pk.pos >= 0 && pk.pos < 4, `pos ${pk.pos} out of [0,4)`);
+    seen.add(pk.variant);
+  }
   assert.ok(!seen.has(2), 'omitted variant 2 must never be selected');
   for (const v of seen) assert.ok([0, 1, 3, 4].includes(v), `unexpected variant ${v}`);
 });
@@ -85,7 +89,7 @@ test('pickF6Variant is identity when no vmap (back-compat)', () => {
 test('f6 placement variant resolves to a real on-disk vmap entry', () => {
   clearClaimCaches();
   const at = findTreeTile();
-  const o = LG_CATALOG.forest.find(x => x.name === (f6Placements(at[0], at[1], forest)[0].name));
   const p = f6Placements(at[0], at[1], forest)[0];
+  const o = LG_CATALOG.forest.find(x => x.name === p.name);
   assert.ok((o.vmap || []).includes(p.variant) || !o.vmap, 'p.variant must be a vmap member');
 });
