@@ -22,7 +22,7 @@
 // blend op. Pure geometry/intensity helpers are exported for testing.
 //
 // Live-tune from the console: window._damage.age = 0.8; window._damage.strength = 1.2; .enabled = false
-// In-game tuner dialog: src/dev/damage-tuner.js — toggle with ' (apostrophe).
+// In-game tuner dialog (Dev HUD ` → "Damage" tab; includes an age-preview slider): src/dev/damage-tuner.js
 
 import { rand2, lerp } from '../../core/random.js';
 import { getWorldSeed } from '../../core/world-seed.js';

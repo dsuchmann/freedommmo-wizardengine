@@ -90,7 +90,14 @@ import('./world/biome-atmosphere.js').then(m => {
     get(biome) { return m.BIOME_ATMOSPHERE[biome]; },
   };
 });
-import('./dev/field-tuner.js').then(m => m.initFieldTuner()); // field tuner (key `)
+// Unified Dev HUD (key `): one panel, tabbed. Tools register themselves as tabs.
+import('./dev/dev-hud.js').then(m => {
+  m.initDevHUD();
+  import('./dev/dev-overlays-tab.js').then(o => o.registerOverlaysTab()); // Overlays/flags checklist
+  import('./dev/field-tuner.js').then(f => f.initFieldTuner());           // "Fields" tab (+ applies field tuning)
+  import('./dev/weathering-tuner.js').then(w => w.initWeatheringTuner()); // "Weathering" tab
+  import('./dev/damage-tuner.js').then(d => d.initDamageTuner());         // "Damage" tab (D1)
+});
 const weather = new WeatherSystem(lighting);
 const overmap = new OvermapController(overmapCanvas, player, chunks);
 const camera = new Camera();
