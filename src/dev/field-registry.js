@@ -65,7 +65,7 @@ export var FIELD_REGISTRY = [
     animCategories: [['wind_sway', 'wind']],
     objectsFor: function (biome) {
       return (LG_CATALOG[biome] || []).map(function (o) {
-        return { name: o.name, variants: range(o.variants) };
+        return { name: o.name, variants: o.vmap || range(o.variants) };
       });
     },
     stateNames: function () { return F6_STATE_ORDER; },
