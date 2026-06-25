@@ -10,8 +10,11 @@ fields F0–F8. Organized as 8 fields **D0 weathering → D7 identity**, each a 
 the `building-tile-pipeline` skill produced. This skill is for **adding/refining ONE dressing field** (or an
 arbitrary new wall/ground layer you imagine). It is NOT for generating walls/roofs — that's `building-tile-pipeline`.
 
-> Status (2026-06-24): D0 shipped. D3 placement scaffolding proven (sockets + overlay). The PixelLab
-> per-field GENERATION half (§7) is **TBD until the first D3 prop is landed end-to-end** — fill it then.
+> Status (2026-06-25): **D0 + D3 SHIPPED.** D0 = procedural weathering (mechanism A, asset-free). D3 =
+> wall-attachments (mechanism B, PixelLab) landed end-to-end across **all 12 tile-corpus biomes** (13 hero
+> props × biome, identity-aware over-door emblems, procedural + generated anims). The PixelLab per-field
+> GENERATION pipeline (§7) is now PROVEN and reusable — see **"Scaling a field" (§0)** for the recipe and
+> field-type decision. NEXT capability: D1 Damage (a CODE field — mechanism A, no PixelLab).
 
 ## Rule -1 — autonomy contract (run the field to DONE without check-ins)
 When asked to build a dressing field/biome autonomously, do NOT pause for approval between steps. Drive the
@@ -31,6 +34,49 @@ candidate fails), download → post-process → record ids in `_pixellab_ids.jso
 Make sensible defaults and note them. Pilot-before-burst still holds. STOP only for a real blocker: the cost
 ceiling is hit (watch `get_balance`), a tool fails repeatedly, or a decision has no reasonable default. Report
 ONCE at the end with what's testable AND what (if anything) hit the ceiling.
+
+## §0 — Scaling a field (the recipe — read FIRST when asked to build/scale any D-field)
+Every D-field is one of **two types**. Decide which BEFORE doing anything — it determines whether you touch
+PixelLab at all:
+
+**TYPE 1 — CODE field (procedural, asset-free).** D0 weathering, **D1 damage**, D7 identity-composer. The whole
+field is a `src/render/dressing/<field>.js` module that paints world-locked procedural noise/decals (mechanism
+A) or fires other fields (mechanism D). NO PixelLab, NO manifest-of-prompts, NO download/tracker. Clone the
+shape of `d0-weathering.js`: a pure coverage/pattern function + a `drawXxxPass()` called from
+`building-occluder.js`, a `renderOn('<layer>')` gate, a Dev HUD tuner, a pure unit test. A code field is ~a day;
+its only "honest-absence" question is *what scalar drives it* (and if the sim source is absent, render the
+absent semantics — no-mock — don't fake a driver). **D1 is this type.**
+
+**TYPE 2 — GENERATED field (PixelLab props/decals).** D3 wall-attachments (done), D2 vines, D4 structural,
+D5/D6 ground. These ride the **reusable generation pipeline** proven by D3 — DON'T reinvent it per field, drive
+these field-agnostic parts:
+1. **Prompt generator** `scripts/<field>-prompts.mjs` — deterministic: `BIOMES` skin profiles × `PROPS`
+   templates with always-keep clauses (transparent-bg / sidescroller-view / pixel / no-text) → JSON
+   `{biome:{prop:{px,tag,prompt}}}`. Pattern: `scripts/d3-prompts.mjs`.
+2. **Fire + in-flight tracker** — `create_1_direction_object` per row (each = **20 generations** flat, any
+   candidate count); record every returned group id IMMEDIATELY into `scripts/_<field>_jobs.json`
+   (biome→prop→{group,px}) — NEVER hold ids in memory/chat (the volcanic-tracking-bug lesson). Fire in batches
+   that respect the rate limit (**≤~10 concurrent jobs**, and check whether a second agent is also generating).
+3. **Download** — `scripts/d3-download.mjs` is field-agnostic: reads `_<field>_jobs.json`, curls the SPREAD of
+   candidate frames straight off the CDN bucket (no select/promote API needed) → `dressing/<biome>/<prop>/
+   base__vN.png`, validates the PNG signature, idempotent (skips existing). Reuse it; only the jobs-file path
+   varies.
+4. **Believable-placement review** — `scripts/dressing-review.mjs` composites ONE candidate onto the real
+   feature (door/window/wall) BEFORE bursting (see rule #9). Fix the construction PROMPT, not just placement.
+5. **Re-fire failures (MANDATORY).** PixelLab stalls **~30–50%** of jobs ("Generation stalled and was
+   automatically failed"). After downloading, reconcile downloaded-vs-expected, re-fire the GAP with the
+   SAME corrected prompt, overwrite the failed group ids in the tracker, and re-poll. A field is NOT done
+   while any prop is short its art. (Background poll: re-run the downloader every ~45s until count==target;
+   128px jobs are slow.)
+6. **Wire + flag + tune + test** — renderer module reads `_pixellab_ids.json` (disk-authoritative, per biome),
+   picks among variants seeded, draws in the `building-occluder.js` before-roof pass at baseline depth, gated by
+   `renderOn('<layer>')`, tuned via a Dev HUD tab, with a pure geometry/coverage test.
+
+**Per-field deliverables checklist** (both types unless noted): design-manifest part + (Type-2) generation
+manifest · (Type-2) prompt generator + `_jobs.json` tracker + per-biome `_pixellab_ids.json` · renderer module ·
+`building-occluder.js` wire (before-roof) · `renderOn('<layer>')` flag · Dev HUD tuner · pure test · in-game
+verify (day-night frozen at noon). **Cost math (Type-2):** props × biomes × 20 gens for bases, + states + anims;
+budget against `get_balance` before a burst.
 
 ## The field stack
 | Field | Name | Mechanism | Notes |
@@ -218,10 +264,28 @@ garland) generate ONE node object that code tiles along the socket-to-socket spl
 `assets/pixelab/buildings/dressing/<biome>/<object_id>/{base__v0, state__<s>__v0, anim/<a>/frame_NNN}.png`
 + `_pixellab_ids.json`.
 
-**Still TBD until the first D3 prop lands end-to-end** (fill from what actually works):
-- post-process + QA gate for props (the dressing analog of `qa-tiles`/`qa-frames`);
-- WIRING: rigid → into the silhouette bitmap at baseline depth; flora-sorted → F2 `SPRITE_FLOATS` pool w/ `pivotY`;
-- the `light` component as procedural emissive into the GL lighting pass + flame particle (never a 2D overlay);
-- `scripts/dressing-status.mjs` disk tracker (mirror `desert-pilot-status.mjs`);
-- the affordance hookup (light/interact/destructible/content/attach).
-Until then, run DEFINE → PROVE-PLACEMENT (asset-free) → pilot a SINGLE prop to discover these.
+**PROVEN by the D3 all-biomes landing (2026-06-25) — this is what actually works:**
+- **Fire → tracker → download (no promote API).** `create_1_direction_object` (sidescroller, size=nativePx;
+  cost 20 gens flat); record group ids into `scripts/_<field>_jobs.json` at once; pull candidate frames
+  DIRECTLY off the CDN bucket via `scripts/d3-download.mjs` (SPREAD per px → `base__vN.png`, PNG-signature
+  validated, idempotent). `select_object_frames`/`dismiss_review` are NOT needed — curl the candidates.
+- **Re-fire failures is part of the loop, not an exception** (~30–50% stall rate) — reconcile + re-fire the gap.
+- **QA gate = the believable-placement review** (`scripts/dressing-review.mjs`, rule #9) — composite onto the
+  real feature; for props the in-situ read is the gate (no separate `qa-tiles`/`qa-frames` analog needed).
+- **WIRING (D3 pattern, `d3-props.js`):** rigid props paint into the silhouette in `building-occluder.js`'s
+  **before-roof** pass (`drawD3Props(...,'all')`) at baseline depth — drawing props OVER the roof is a
+  draw-order bug (user 2026-06-25). Variants picked by a seeded `rand2(b.x,b.y,...)`; pairs share a seed via
+  `pairX/pairY` so the two members match + the left mirrors. Strung pieces (lights/bunting/garland) tile ONE
+  node object along the widest CLEAR wall span (terminate at door/window edges, hang mid-wall below the eave).
+- **Anims, two ways:** generated (`animate_object` frames, `loopFrames()`) OR **procedural zero-gen** — a sway
+  is a code transform (top-pivot pendulum for hanging signs/banners; the prop body stays rigid), a flicker is an
+  additive `'lighter'` pulse. Rigid mounts (awning, sill box) get NO whole-sprite anim — only their fabric/
+  blooms should ripple (internal generated anim; TODO where not yet generated). Match MOTION to MOUNT (rule #9).
+- **Identity-aware over-door emblems:** `overdoorFor(b)` maps `building.footprint.typeId/category` → the right
+  emblem (tavern→trade-sign, bakery→board-sign, smith/jeweler→wrought-iron, civic/military→banner, shop→awning,
+  craft/commercial catch-all→sign); phase-gate identity vs ambient props so meaning never floats on the wrong
+  building. This is the D3 slice of D7.
+- **Disk tracker:** per-biome `assets/.../dressing/<biome>/_pixellab_ids.json` is authoritative (written by the
+  downloader). Still useful to add a `scripts/dressing-status.mjs` summary (mirror `desert-pilot-status.mjs`).
+**Still open:** the `light` component as GL emissive + flame particle (procedural pulse done; true GL light TODO);
+internal fabric/bloom anims for rigid props; the affordance hookup (interact/destructible/content/attach).

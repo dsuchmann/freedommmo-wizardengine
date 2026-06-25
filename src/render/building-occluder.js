@@ -22,6 +22,7 @@ import { wallAssetDir, wallPieceFile, roofAssetDir, roofTextureFile, ROOF_FASCIA
 import { drawBuildingTiles, isTiledBuilding, materialOf } from './building-tiles.js';
 import { renderOn } from './building-render-flags.js';
 import { paintWeatheredColumn } from './dressing/d0-weathering.js';
+import { paintDamagedColumn } from './dressing/d1-damage.js';
 import { drawD3Props } from './dressing/d3-props.js';
 
 // Source rect of the E/W side-face cap. The grassland edge_ew strip is a 32x128 quoin/side-cap;
@@ -518,6 +519,39 @@ function drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h) {
   }
 }
 
+// D1 DAMAGE post-pass — paint procedural structural decay (cracks/flaking/rot/runnels/rust) over the
+// SAME south-perimeter wall columns as weathering, AFTER it (damage rides on top of grime). Mechanism A:
+// into the silhouette ctx → GL present pass, never a 2D overlay. Drivers are honest: wetness derives from
+// the building's biome (wet biomes rot/runnel, cold biomes freeze-thaw); age is ABSENT (no sim source)
+// so age-driven cracks/dry-rot render nothing until the Dev HUD tuner raises window._damage.age.
+function drawDamagePass(ctx, b, camX, camY, tilePx, w, h) {
+  if (!renderOn('damage')) return;
+  const fp = b && b.footprint, sections = (fp && fp.sections) || [];
+  if (!sections.length) return;
+  const t = Math.round(tilePx);
+  const wH = Math.round(tilePx * WALL_CONFIG.wallHeight);
+  const WY = WALL_CONFIG.wallYOffset;
+  const stories = buildingFloors(b);
+  const material = materialOf(b);
+  const tsy = (wy) => Math.round(wy * tilePx - camY);
+  const floorSet = new Set();
+  for (const s of sections) for (let dy = 0; dy < s.h; dy++) for (let dx = 0; dx < s.w; dx++) floorSet.add((s.x0 + dx) + ',' + (s.y0 + dy));
+  for (const s of sections) {
+    const fbY = b.y + s.y0 + s.h;
+    for (let dx = 0; dx < s.w; dx++) {
+      const lx = s.x0 + dx;
+      if (floorSet.has(lx + ',' + (s.y0 + s.h))) continue; // south neighbour inside → not a south face
+      const ex = tileExtent(b.x + lx, tilePx, camX, 1);
+      const groundTop = tsy(fbY) - wH + Math.round(t * WY);
+      const colTop = groundTop - (stories - 1) * wH;
+      const colH = stories * wH;
+      if (ex.dx + ex.dw < 0 || ex.dx > w || colTop + colH < 0 || colTop > h) continue;
+      paintDamagedColumn(ctx, { dx: ex.dx, top: colTop, dw: ex.dw, colH, tilePx },
+        { wx: b.x + lx, wy: fbY }, { biome: b.biome, bx: b.x | 0, by: b.y | 0, material });
+    }
+  }
+}
+
 let _cv = null, _ox = null; // persistent offscreen authoring canvas
 
 /** Build the occlusion overlay bitmap (or null if nothing in front of the player). The caller
@@ -592,7 +626,7 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   // 2026-06-25: drawing props OVER the roof is wrong draw-order). Identity stays readable by PLACING props LOW
   // (signs/festoons at mid-wall, awnings at the door head — below the eave overhang), not by drawing over the roof.
   const drawProps = () => { if (renderOn('attachments')) { try { drawD3Props(ctx, b, camX, camY, tilePx, w, h, 'all'); } catch { /* skip props */ } } };
-  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h); drawProps(); drawRoof(); return true; }
+  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h); drawDamagePass(ctx, b, camX, camY, tilePx, w, h); drawProps(); drawRoof(); return true; }
   // A grassland TILE-CORPUS building whose tiles aren't loaded yet must NOT fall to the legacy
   // strip path — drawWalls would stamp a stone_brick 32px strip STRETCHED over the footprint (the
   // melted/stretched single-building artifact). Stay invisible this frame; it flips to mirror-tiled
@@ -602,6 +636,7 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   if (b) b._wallPath = 'legacy';
   drawWalls(ctx, b, camX, camY, tilePx, w, h);
   drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h);
+  drawDamagePass(ctx, b, camX, camY, tilePx, w, h);
   drawProps();
   drawRoof();
   return true;
