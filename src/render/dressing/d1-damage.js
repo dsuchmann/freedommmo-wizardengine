@@ -67,17 +67,22 @@ export function damageDrivers(biome, opts = {}) {
 //   driver  (d) => 0..1 from {age, wetness, freezeThaw}; returns 0 when its source is honestly absent
 //   dir     vertical carve: 'bottom' (rises from plinth), 'top' (falls from eave), 'none' (patchy)
 //   begin   intensity floor: driver must exceed `begin` before the layer appears (sparse onset)
+// NB: the wetness-driven layers (rot/runnels/freeze-thaw flaking/rust) are tuned to read CLEARLY on the
+// wet + cold buildable biomes (forest/dense_forest/taiga/tundra/mountains) and to be NOTICEABLE on
+// temperate ones (grassland/hills ~0.15), while staying near-zero on dry biomes (desert/savanna/steppe/
+// volcanic) — a dry building honestly shows little moisture decay. Age-driven cracks/dry-rot remain gated
+// on `age` (honestly absent in-world; tuner-preview only) per the manifest's no-mock contract.
 const LAYERS = [
-  { key: 'cracks',   tex: 'crack',  blend: 'multiply',   color: '#2b2724', dir: 'none',   begin: 0.35, max: 0.55,
+  { key: 'cracks',   tex: 'crack',  blend: 'multiply',   color: '#2b2724', dir: 'none',   begin: 0.35, max: 0.6,
     driver: (d, c) => d.age == null ? 0 : Math.max(0, d.age - 0.35) / 0.65 * (1 + 0.4 * d.freezeThaw) },
-  { key: 'flaking',  tex: 'blotch', blend: 'soft-light', color: '#d8cdbb', dir: 'none',   begin: 0.30, max: 0.42,
-    driver: (d, c) => Math.max(d.age == null ? 0 : d.age * 0.8, d.freezeThaw * 0.7) },
-  { key: 'rot',      tex: 'blotch', blend: 'soft-light', color: '#3a342a', dir: 'bottom', begin: 0.20, max: 0.5,
-    driver: (d, c) => d.age == null ? d.wetness * 0.45 : clamp01(d.age * (0.5 + 0.8 * d.wetness)) },
-  { key: 'runnels',  tex: 'streak', blend: 'multiply',   color: '#4a463d', dir: 'top',    begin: 0.25, max: 0.42,
-    driver: (d, c) => clamp01(d.wetness * 0.85) },
-  { key: 'rust',     tex: 'streak', blend: 'multiply',   color: '#7a3b1e', dir: 'top',    begin: 0.30, max: 0.4,
-    driver: (d, c) => clamp01(d.wetness * (0.5 + 0.6 * (d.age == null ? 0 : d.age)) - 0.1) },
+  { key: 'flaking',  tex: 'blotch', blend: 'soft-light', color: '#d8cdbb', dir: 'none',   begin: 0.18, max: 0.5,
+    driver: (d, c) => Math.max(d.age == null ? 0 : d.age * 0.8, d.freezeThaw * 0.85) },
+  { key: 'rot',      tex: 'blotch', blend: 'soft-light', color: '#34301f', dir: 'bottom', begin: 0.12, max: 0.6,
+    driver: (d, c) => d.age == null ? d.wetness * 0.6 : clamp01(d.age * (0.5 + 0.8 * d.wetness)) },
+  { key: 'runnels',  tex: 'streak', blend: 'multiply',   color: '#46423a', dir: 'top',    begin: 0.12, max: 0.55,
+    driver: (d, c) => clamp01(d.wetness * 0.95) },
+  { key: 'rust',     tex: 'streak', blend: 'multiply',   color: '#7a3b1e', dir: 'top',    begin: 0.22, max: 0.45,
+    driver: (d, c) => clamp01(d.wetness * (0.55 + 0.6 * (d.age == null ? 0 : d.age)) - 0.05) },
 ];
 export const DAMAGE_LAYER_KEYS = LAYERS.map((l) => l.key);
 
