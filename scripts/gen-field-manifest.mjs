@@ -4,7 +4,7 @@
 import fs from 'fs';
 import path from 'path';
 import url from 'url';
-import { loadImage } from '@napi-rs/canvas';
+import { loadImage, createCanvas } from '@napi-rs/canvas';
 import { FIELD_ROOTS, loadCuration, omitSetMap } from './lib/field-curation.mjs';
 
 const ROOT = path.join(path.dirname(url.fileURLToPath(import.meta.url)), '..');
@@ -18,7 +18,6 @@ const omit = omitSetMap(loadCuration(field));
 async function measure(file) {
   const img = await loadImage(file);
   const W = img.width, H = img.height;
-  const { createCanvas } = await import('@napi-rs/canvas');
   const c = createCanvas(W, H); const x = c.getContext('2d'); x.drawImage(img, 0, 0);
   const d = x.getImageData(0, 0, W, H).data;
   let minX = W, minY = H, maxX = -1, maxY = -1, opaque = 0, magenta = 0;
