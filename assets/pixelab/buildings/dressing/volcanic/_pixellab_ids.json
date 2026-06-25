@@ -44,21 +44,21 @@
   "anims": {}
  },
  "cloth_market_awning": {
-  "base": "82d56a79-8017-4185-90d6-7d6e418c9b3e",
+  "base": "a336990b-6544-450b-ae92-e4d5854b4074",
   "px": 128,
   "variants": 4,
   "states": {},
   "anims": {}
  },
  "wood_slat_awning": {
-  "base": "f52076d2-9568-466b-ab13-197a5c24f48d",
+  "base": "5d882104-f513-405b-b33a-c39a3c14b4b1",
   "px": 128,
   "variants": 4,
   "states": {},
   "anims": {}
  },
  "fringed_shop_canopy": {
-  "base": "7357acf0-d3ed-4d17-a4d0-f0482a759d51",
+  "base": "481e352f-f994-457a-8581-22d717f518d0",
   "px": 128,
   "variants": 4,
   "states": {},
