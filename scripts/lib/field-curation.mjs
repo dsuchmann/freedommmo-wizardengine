@@ -46,7 +46,7 @@ export function mergePicks(curation, picks, isoNow) {
     meta[`${w.biome}/${w.species}:${w.replaces}`] = { reason: w.reason || 'unspecified', note: w.note || '' };
   }
   for (const [key, d] of Object.entries(picks.decisions || {})) {
-    omits[key] = [...(d.omit || [])].sort((a, b) => a - b);
+    omits[key] = [...new Set(d.omit || [])].sort((a, b) => a - b);
     for (const v of d.omit || []) {
       meta[`${key}:${v}`] = { reason: (d.tags || {})[v] || 'unspecified', note: (d.notes || {})[v] || '' };
     }
@@ -54,7 +54,8 @@ export function mergePicks(curation, picks, isoNow) {
   for (const k of Object.keys(omits)) if (!omits[k].length) delete omits[k];
   const regenWorklist = [];
   for (const [key, vs] of Object.entries(omits)) {
-    const [biome, species] = key.split('/');
+    const slash = key.indexOf('/');
+    const biome = key.slice(0, slash), species = key.slice(slash + 1);
     for (const v of vs) {
       const mm = meta[`${key}:${v}`] || {};
       regenWorklist.push({ biome, species, replaces: v, reason: mm.reason || 'unspecified', note: mm.note || '' });
