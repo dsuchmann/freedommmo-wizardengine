@@ -1,0 +1,95 @@
+{
+ "_field": "D3",
+ "_note": "D3 props per biome (disk authoritative). group = create_1_direction_object review-pack id; base__vN.png = promoted candidate frames.",
+ "iron_candle_lantern": {
+  "base": "6b3d586b-1e69-4ea5-aa60-a218fbc8ea8f",
+  "px": 64,
+  "variants": 4,
+  "states": {},
+  "anims": {}
+ },
+ "swinging_trade_sign": {
+  "base": "d3de5dd2-5667-4140-822c-6a734b11aece",
+  "px": 96,
+  "variants": 4,
+  "states": {},
+  "anims": {}
+ },
+ "heraldic_banner": {
+  "base": "a561d03c-a3dc-494a-93f4-39df395992fc",
+  "px": 128,
+  "variants": 4,
+  "states": {},
+  "anims": {}
+ },
+ "wall_oil_lamp": {
+  "base": "0b52bb88-32eb-48e1-886f-4ab85e0acfa7",
+  "px": 64,
+  "variants": 4,
+  "states": {},
+  "anims": {}
+ },
+ "timber_flower_box": {
+  "base": "998c54a7-c73e-4863-b67d-cc071469ea6e",
+  "px": 64,
+  "variants": 4,
+  "states": {},
+  "anims": {}
+ },
+ "projecting_board_sign": {
+  "base": "6034bf7b-a6c4-4057-91aa-d929a1014622",
+  "px": 96,
+  "variants": 4,
+  "states": {},
+  "anims": {}
+ },
+ "wrought_iron_silhouette_sign": {
+  "base": "d9f75c3b-a61e-42e2-9362-f05f73cff9c3",
+  "px": 96,
+  "variants": 4,
+  "states": {},
+  "anims": {}
+ },
+ "wood_slat_awning": {
+  "base": "3581781d-0f2f-4215-86ea-02b4cdeaa814",
+  "px": 128,
+  "variants": 4,
+  "states": {},
+  "anims": {}
+ },
+ "fringed_shop_canopy": {
+  "base": "e8796965-03de-4872-93a3-acd0f44058c2",
+  "px": 128,
+  "variants": 4,
+  "states": {},
+  "anims": {}
+ },
+ "cloth_market_awning": {
+  "base": "3d82df5b-ab3f-4542-b3c8-94dc322b3358",
+  "px": 128,
+  "variants": 4,
+  "states": {},
+  "anims": {}
+ },
+ "strung_festival_lights": {
+  "base": "3c10b9a0-6571-422a-9bac-a6bff26e3110",
+  "px": 64,
+  "variants": 4,
+  "states": {},
+  "anims": {}
+ },
+ "triangle_bunting": {
+  "base": "69f01afc-c799-4e5b-b5c2-4168f3c1a3ea",
+  "px": 64,
+  "variants": 4,
+  "states": {},
+  "anims": {}
+ },
+ "festoon_garland": {
+  "base": "1dfa0b17-8597-41ec-a66a-68560131c465",
+  "px": 64,
+  "variants": 4,
+  "states": {},
+  "anims": {}
+ }
+}
