@@ -532,9 +532,12 @@ export class CanvasRenderer {
       // CACHED building-local sprite (baked ONCE per building, re-baked only until its tiles+roof finish loading,
       // then frozen) instead of rebuilding + re-uploading a full-screen silhouette per building per frame (the
       // ~336ms draw). The sprite is baked at _spr.builtTilePx; SCALE the GL quad to the live tilePx (like terrain
-      // chunks) so a zoom is a free quad-resize, not a re-bake. STEP 1: door + props are baked frozen (no anim
-      // yet) — that comes back next, kept OUT of the cache so it stays fast.
+      // chunks) so a zoom is a free quad-resize, not a re-bake. The DYNAMIC layer (door swing + animated props) is
+      // drawn LIVE right after each sprite, in the sprite's OWN local frame, at the SAME screen rect — so it can't
+      // freeze in the cache yet registers pixel-exactly over the baked walls/closed-door at any zoom.
       bumpSpriteFrame();
+      const _wantDyn = renderOn('walls') || renderOn('attachments');
+      const _dynList = _wantDyn ? [] : null;
       for (const _b of _blds) {
         const _spr = getBuildingSprite(_b, tilePx, drawBuildingTextured, buildingBakeState);
         if (!_spr) continue;
@@ -543,33 +546,25 @@ export class CanvasRenderer {
         const _dx = Math.round(_b.x * tilePx - camX - _spr.ax * _sc);
         const _dy = Math.round(_b.y * tilePx - camY - _spr.ay * _sc);
         this.glc.drawBuildingSprite(spriteKey(_b), _spr.canvas, _dx, _dy, _spr.w * _sc, _spr.h * _sc, _z);
+        if (_dynList) _dynList.push({ b: _b, spr: _spr, dx: _dx, dy: _dy, sc: _sc, z: _z });
         _wrote2 = true;
+      }
+      // LIVE DYNAMIC LAYER — door swing + animated props, in a SECOND pass AFTER every sprite has written its
+      // depth, so a NEARER building's roof (now in the depth buffer) OCCLUDES a farther building's door/props.
+      // Each is rendered in its sprite's cropped local frame at _spr.builtTilePx (localCam = b*builtTilePx −
+      // {ax,ay}) and drawn at the IDENTICAL quad rect with LEQUAL depth → it overlays the baked sprite EXACTLY
+      // (the open door covers the baked closed door at any zoom). The bake holds the CLOSED door + static walls/roof.
+      if (_dynList) for (const _d of _dynList) {
+        try {
+          const _dyn = drawBuildingDynamicInto(_d.b, _d.b.x * _d.spr.builtTilePx - _d.spr.ax, _d.b.y * _d.spr.builtTilePx - _d.spr.ay, _d.spr.builtTilePx, _d.spr.w, _d.spr.h);
+          if (_dyn) this.glc.drawBuildingPropsSprite(_dyn, _d.dx, _d.dy, _d.spr.w * _d.sc, _d.spr.h * _d.sc, _d.z);
+        } catch (e) { /* best-effort */ }
       }
       if (_wrote2) {
         const _see = (typeof window._depthSeeStrength === 'number') ? window._depthSeeStrength : 0.45;
         this.glc.setSpriteDepth(_refY, DEPTH_SCALE, _see);
         _depthActive = true;
       }
-    }
-
-    // LIVE DYNAMIC BUILDING LAYER — the door SWING + D3 wall attachments are pulled OUT of the cached building
-    // bake so they ANIMATE (a baked-in door/prop freezes in the cached sprite). Each building's dynamic layer is
-    // rendered into a tight building-local bitmap and drawn as a depth quad at THAT building's depth
-    // (drawBuildingPropsSprite, LEQUAL) — so it sits over its own wall but a NEARER building's roof (already in
-    // the depth buffer) OCCLUDES a farther building's door/props. Drawn AFTER the building sprites, BEFORE the
-    // F2/player pass. All GL. (The bake holds the CLOSED door + static walls/roof so it stays fast.)
-    if (!_inside && glScene && (renderOn('walls') || renderOn('attachments')) && typeof window !== 'undefined' && window._buildingDepthColor !== false) {
-      try {
-        const _refYp = (camY + h / 2) / tilePx;
-        const _pblds = nearDepthBuildings(getCachedBuildings(), camX, camY, tilePx, w, h)
-          .slice().sort((a, b) => (a.y + a.footprint.boundingBox.h) - (b.y + b.footprint.boundingBox.h)); // farthest-first
-        for (const _pb of _pblds) {
-          const _pr = drawBuildingDynamicInto(_pb, camX, camY, tilePx);
-          if (!_pr) continue;
-          const _pz = tileDepth(_pb.y + _pb.footprint.boundingBox.h, _refYp) * 2 - 1;
-          this.glc.drawBuildingPropsSprite(_pr.canvas, _pr.sx, _pr.sy, _pr.w, _pr.h, _pz);
-        }
-      } catch (e) { /* best-effort */ }
     }
 
     // D-STACK PLACEMENT OVERLAY (debug, off by default): highlight every façade socket where a wall

@@ -19,7 +19,7 @@ import { getWallImg } from './building-renderer.js';
 import { buildingFloors } from './building-shadow.js';
 import { queryBuildingTile } from './building-tile-query.js';
 import { wallAssetDir, wallPieceFile, roofAssetDir, roofTextureFile, ROOF_FASCIA_FILE } from '../../sim/world/buildings/building-material-registry.js';
-import { drawBuildingTiles, isTiledBuilding, materialOf, tileImagesReady, southRuns, drawDoorsLive } from './building-tiles.js';
+import { drawBuildingTiles, isTiledBuilding, materialOf, tileImagesReady, drawDoorsLive } from './building-tiles.js';
 import { renderOn } from './building-render-flags.js';
 import { paintWeatheredColumn } from './dressing/d0-weathering.js';
 import { paintDamagedColumn } from './dressing/d1-damage.js';
@@ -732,54 +732,33 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
 }
 
 // LIVE DYNAMIC BUILDING LAYER — the parts that ANIMATE and so can't live in the frozen cached sprite: the door
-// SWING (proximity) + the D3 props (banner/sign sway, lantern flicker; both time-driven). Render ONE building's
-// dynamic layer into a tight building-local scratch canvas, returned for the caller to draw via
-// glc.drawBuildingPropsSprite at THAT building's depth — so a back building's door/props are occluded by a front
-// building's roof (per-building depth), not flatly composited over everything. The scratch canvas is shared +
-// re-specified per building; the caller must upload it before the next call. Routes through GL (depth quad into
-// the scene FBO) → inherits scene lighting/CRT, never a 2D top-pass.
-const PROP_PAD = 2, PROP_PAD_BOTTOM = 3; // tiles of slack: props overhang the wall (banners hang below, lanterns flank)
+// SWING (proximity) + the D3 props (banner/sign sway, lantern flicker; both time-driven). CRITICAL: this renders
+// in the cached sprite's OWN cropped local frame at the sprite's `builtTilePx` (localCam = b.{x,y}*builtTilePx −
+// {ax,ay}, canvas = the sprite's {w,h}). The caller then draws the returned canvas at the EXACT same screen rect
+// as the sprite quad (destX, destY, w·sc, h·sc). So the live open door registers PIXEL-EXACTLY over the baked
+// closed door at ANY zoom — drawing at the live tilePx instead let the baked door peek at the door's top/bottom
+// once zoom ≠ bake-zoom (the NEAREST scale tradeoff). Returns the shared scratch canvas (re-specified per
+// building; upload it before the next call) or null when nothing dynamic this frame.
 let _bpCv = null, _bpCx = null;
-export function drawBuildingDynamicInto(b, camX, camY, tilePx) {
+export function drawBuildingDynamicInto(b, localCamX, localCamY, builtTilePx, cw, ch) {
   const wantWalls = renderOn('walls'), wantProps = renderOn('attachments');
   if ((!wantWalls && !wantProps) || !b || !b.footprint) return null;
-  const fp = b.footprint, bb = fp.boundingBox; if (!bb) return null;
-  const t = tilePx;
-  const stories = Math.max(1, buildingFloors(b));
-  const wHt = WALL_CONFIG.wallHeight, WY = WALL_CONFIG.wallYOffset; // storey height (tiles) + groundline offset
-  // Vertical span (world tiles): the walls rise `stories*wHt` above EACH south run's groundline; door + props
-  // hang within/below them. Cover the highest wall top to below the lowest groundline (handles stepped runs),
-  // then pad. This is storey-bounded (NOT footprint-depth bounded) so the per-frame upload stays small.
-  const runs = southRuns(fp);
-  let topTile = b.y + bb.h - stories * wHt, botTile = b.y + bb.h; // sane default for a degenerate footprint
-  if (runs.length) {
-    topTile = Infinity; botTile = -Infinity;
-    for (const r of runs) {
-      const gLine = b.y + r.y + 1 + WY;
-      if (gLine - stories * wHt < topTile) topTile = gLine - stories * wHt;
-      if (gLine > botTile) botTile = gLine;
-    }
-  }
-  topTile -= PROP_PAD; botTile += PROP_PAD_BOTTOM;
-  const ox = Math.round(b.x * t - camX - PROP_PAD * t);
-  const oy = Math.round(topTile * t - camY);
-  const w = Math.ceil((bb.w + 2 * PROP_PAD) * t);
-  const h = Math.ceil((botTile - topTile) * t);
-  if (w <= 0 || h <= 0 || w > 4096 || h > 4096) return null;
+  if (!(cw > 0) || !(ch > 0) || cw > 8192 || ch > 8192) return null;
   if (!_bpCv) {
-    _bpCv = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(w, h)
+    _bpCv = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(cw, ch)
       : (typeof document !== 'undefined') ? document.createElement('canvas') : null;
     if (!_bpCv) return null;
     _bpCx = _bpCv.getContext('2d');
   }
-  if (_bpCv.width !== w || _bpCv.height !== h) { _bpCv.width = w; _bpCv.height = h; } // resize also clears
+  if (_bpCv.width !== cw || _bpCv.height !== ch) { _bpCv.width = cw; _bpCv.height = ch; } // resize also clears
   const o = _bpCx; if (!o) return null;
   o.setTransform(1, 0, 0, 1, 0, 0); o.globalCompositeOperation = 'source-over';
-  o.clearRect(0, 0, w, h); o.imageSmoothingEnabled = false;
-  // Shift the camera by the local origin so this building's screen-space draws land inside the local canvas.
+  o.clearRect(0, 0, cw, ch); o.imageSmoothingEnabled = false;
+  // Render in the sprite's local frame (same camera + builtTilePx the bake used) so draws land exactly where the
+  // baked sprite has them — the open door covers the baked closed door, props sit on the same wall pixels.
   let drew = false;
-  if (wantWalls) { try { if (drawDoorsLive(o, b, camX + ox, camY + oy, t, w, h)) drew = true; } catch { /* skip */ } }
-  if (wantProps) { try { drawD3Props(o, b, camX + ox, camY + oy, t, w, h, 'all'); drew = true; } catch { /* skip */ } }
+  if (wantWalls) { try { if (drawDoorsLive(o, b, localCamX, localCamY, builtTilePx, cw, ch)) drew = true; } catch { /* skip */ } }
+  if (wantProps) { try { drawD3Props(o, b, localCamX, localCamY, builtTilePx, cw, ch, 'all'); drew = true; } catch { /* skip */ } }
   if (!drew) return null; // nothing dynamic this frame (door closed, props off) → skip the quad
-  return { canvas: _bpCv, sx: ox, sy: oy, w, h };
+  return _bpCv;
 }
