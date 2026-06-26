@@ -98,6 +98,9 @@ TOK_TILE = "__TILE_STRENGTH__"
 TOK_SEED = "__SEED__"
 
 OUT_SUFFIX = "@384"        # v0NN.png -> v0NN@384.png
+OUT_TAG = ""               # optional tag appended to outputs (v###@384<tag>.png) for A/B tuning
+FORCE = False              # --force: reprocess even if an output already exists
+SRC_PALETTE_COLORS = 64    # per-source palette size: quantize each sprite's OWN colors
 
 # ---------------------------------------------------------------------------
 # Prompt table — mirrors bulk_generate_f6's PROMPT / BIOME_PROMPTS /
@@ -183,7 +186,7 @@ def is_static_source(p: Path) -> bool:
     @384 output, NOT an _f6_state side file."""
     if p.suffix.lower() != ".png":
         return False
-    if OUT_SUFFIX in p.stem:                 # already an @384 output
+    if "@384" in p.stem:                     # already an @384 output (any tag)
         return False
     if "anim" in p.parts:                    # animation frames are not static sprites
         return False
@@ -208,8 +211,8 @@ def kind_of(p: Path) -> str:
 
 
 def output_path(src: Path) -> Path:
-    """v0NN.png -> v0NN@384.png, in the SAME directory as the source."""
-    return src.with_name(f"{src.stem}{OUT_SUFFIX}.png")
+    """v0NN.png -> v0NN@384<tag>.png, in the SAME directory as the source."""
+    return src.with_name(f"{src.stem}{OUT_SUFFIX}{OUT_TAG}.png")
 
 
 def enumerate_corpus(only_biome=None, only_type=None):
@@ -313,6 +316,13 @@ def template_graph(graph_text: str, *, image_name: str, positive: str,
                     ins[k] = float(ins[k])
                 except ValueError:
                     pass
+
+    # ComfyUI treats EVERY top-level key in the posted prompt as a node and calls
+    # node_data.get('_meta') on it — so a documentation key like "_comment" (a plain
+    # string) crashes validate_prompt with "'str' object has no attribute 'get'".
+    # Keep only real nodes (dict with a class_type) so comfy-graph.json can still carry
+    # a human-readable "_comment" without breaking the POST.
+    graph = {k: v for k, v in graph.items() if isinstance(v, dict) and "class_type" in v}
     return graph
 
 
@@ -396,10 +406,22 @@ def comfy_fetch_output(entry: dict) -> bytes:
 # Tail + QA (steps 3-4) — shell out to the sibling node scripts.
 # ---------------------------------------------------------------------------
 
-def run_repixelate(up_png: Path, final_png: Path, palette: Path):
+def source_palette(src: Path, dest: Path, colors: int = SRC_PALETTE_COLORS):
+    """Per-SOURCE remap palette: quantize THIS sprite's OWN opaque colors. The shared
+    per-biome palette is built from the green base trees, so off-base states (burned
+    reds/blacks, frozen blues, enchanted teals) snap to green and get tinted/crunched.
+    Remapping to the source's own colors keeps every state faithful."""
     import subprocess
+    subprocess.run(["magick", str(src), "-alpha", "off", "-colors", str(colors), str(dest)],
+                   check=True, capture_output=True)
+
+
+def run_repixelate(up_png: Path, final_png: Path, palette: Path, source: Path):
+    import subprocess
+    # --source: the SDXL output is a solid RGB square; the tail re-applies the
+    # ORIGINAL sprite's 1-bit alpha so the cutout matches the game's expectation.
     cmd = ["node", str(REPIXELATE), "--in", str(up_png), "--out", str(final_png),
-           "--res", str(OUT_RES), "--palette", str(palette)]
+           "--res", str(OUT_RES), "--palette", str(palette), "--source", str(source)]
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode != 0:
         raise RuntimeError(f"repixelate failed: {r.stderr or r.stdout}")
@@ -452,10 +474,22 @@ def process_one(state: dict, src: Path, graph_text: str) -> str:
     biome, obj = biome_type_of(src)
     palette = palette_for(biome)
 
-    # disk-first short-circuit: never redo a done file
-    if out.exists() and out.stat().st_size > 200:
-        state["done"][key] = {"out": src_key(out)}
-        return "skipped"
+    # disk-first short-circuit: skip a previously-produced output ONLY if it still
+    # PASSES QA. A killed/buggy run can leave a bad @384 on disk; don't let "it
+    # exists" mask a reject — re-validate, and reprocess if stale.
+    if not FORCE and out.exists() and out.stat().st_size > 200:
+        import tempfile
+        with tempfile.TemporaryDirectory(prefix="comfy-rev-") as _td:
+            _pal = Path(_td) / "srcpal.png"
+            try:
+                source_palette(src, _pal)
+            except Exception:
+                _pal = palette
+            ok, _ = run_qa(out, src, _pal)
+        if ok:
+            state["done"][key] = {"out": src_key(out)}
+            return "skipped"
+        out.unlink()  # stale/failed output — drop it and regenerate below
 
     positive = build_prompt(biome, obj, src)
 
@@ -490,12 +524,18 @@ def process_one(state: dict, src: Path, graph_text: str) -> str:
         with tempfile.TemporaryDirectory(prefix="comfy-up-") as td:
             up_png = Path(td) / "up.png"
             up_png.write_bytes(up_bytes)
+            # per-source palette (this sprite's own colors) — keeps off-base states faithful
+            pal = Path(td) / "srcpal.png"
             try:
-                run_repixelate(up_png, out, palette)
+                source_palette(src, pal)
+            except Exception:
+                pal = palette  # fall back to the biome palette if quantize fails
+            try:
+                run_repixelate(up_png, out, pal, src)
             except RuntimeError as e:
                 log.warning(f"{key}: repixelate failed (attempt {attempt+1}): {e}")
                 continue
-            ok, qa_out = run_qa(out, src, palette)
+            ok, qa_out = run_qa(out, src, pal)
             if ok:
                 state["done"][key] = {"out": src_key(out), "seed": seed, "attempt": attempt}
                 state["stats"]["produced"] += 1
@@ -515,10 +555,12 @@ def process_one(state: dict, src: Path, graph_text: str) -> str:
 # Driver
 # ---------------------------------------------------------------------------
 
-def run(only_biome, only_type):
+def run(only_biome, only_type, limit=None):
     state = load_state()
     graph_text = load_graph_text()
     sources = enumerate_corpus(only_biome, only_type)
+    if limit:
+        sources = sources[:limit]
     log.info(f"Corpus: {len(sources)} static sprites to consider"
              f"{f' (biome={only_biome})' if only_biome else ''}"
              f"{f' (type={only_type})' if only_type else ''}")
@@ -656,13 +698,28 @@ def report(state, only_biome=None, only_type=None):
 
 
 def main():
+    global DENOISE, TILE_STRENGTH, OUT_TAG, FORCE
     ap = argparse.ArgumentParser(description="Component E — ComfyUI tree-upscale batch harness")
     ap.add_argument("--status", action="store_true", help="Print progress and exit")
     ap.add_argument("--dry-run", action="store_true",
                     help="Enumerate corpus + template ONE asset, no ComfyUI calls")
     ap.add_argument("--biome", default=None, help="Process only this biome")
     ap.add_argument("--type", default=None, help="Process only this tree type")
+    ap.add_argument("--denoise", type=float, default=None,
+                    help=f"Override img2img denoise (default {DENOISE}). LOWER = closer to source / crisper leaves; higher = more invented detail.")
+    ap.add_argument("--tile", type=float, default=None,
+                    help=f"Override ControlNet-Tile strength (default {TILE_STRENGTH}). Higher locks composition tighter to the source.")
+    ap.add_argument("--limit", type=int, default=None, help="Process at most N sprites (fast A/B tuning)")
+    ap.add_argument("--force", action="store_true", help="Reprocess even if an output already exists")
+    ap.add_argument("--out-tag", default="", help="Append a tag to outputs (v###@384<tag>.png) so settings don't overwrite, e.g. --out-tag -dn30")
     args = ap.parse_args()
+
+    if args.denoise is not None:
+        DENOISE = args.denoise
+    if args.tile is not None:
+        TILE_STRENGTH = args.tile
+    OUT_TAG = args.out_tag
+    FORCE = args.force
 
     if not GRAPH_FILE.exists():
         log.error(f"missing graph template: {GRAPH_FILE}")
@@ -674,7 +731,7 @@ def main():
     if args.dry_run:
         dry_run(args.biome, args.type)
         return
-    run(args.biome, args.type)
+    run(args.biome, args.type, args.limit)
 
 
 if __name__ == "__main__":

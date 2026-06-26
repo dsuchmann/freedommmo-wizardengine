@@ -40,25 +40,39 @@ function magick(args) {
 
 /**
  * Re-pixelate one AI-upscaled sprite into a crisp, palette-locked, 1-bit-alpha PNG.
- * Pure pass-through to the proven tail; temp files live in an OS temp dir and are
- * always cleaned up (even on throw).
+ * Pure pass-through to magick; temp files live in an OS temp dir, always cleaned up.
  *
- * @param {{ in:string, out:string, res:number, palette:string }} opts
+ * `source` (the ORIGINAL sprite) is REQUIRED in production: the SDXL detail-add
+ * outputs a SOLID RGB square with no usable alpha, so the silhouette must come from
+ * the source's own 1-bit alpha — we keep the model's DETAIL but the source's SHAPE.
+ * Without `source` we fall back to the old self-alpha tail (used by the demo/tests
+ * where the input already carries the correct cutout).
+ *
+ * @param {{ in:string, out:string, res:number, palette:string, source?:string }} opts
  */
-export function repixelate({ in: input, out, res, palette }) {
+export function repixelate({ in: input, out, res, palette, source }) {
   const dir = mkdtempSync(join(tmpdir(), 'repixel-'));
   const s1 = join(dir, 's1.png');
   const s2 = join(dir, 's2.png');
   const s3 = join(dir, 's3.png');
   try {
-    // 1) nearest-neighbour resize onto the native pixel grid
-    magick([input, '-filter', 'point', '-resize', `${res}x${res}`, s1]);
-    // 2) SrcIn de-halo: color composited onto its own alpha-off clone => no fringe
-    magick([s1, '(', '+clone', '-alpha', 'off', ')', '-compose', 'SrcIn', '-composite', s2]);
-    // 3) hard 1-bit alpha
-    magick([s2, '-channel', 'A', '-threshold', '50%', '+channel', s3]);
-    // 4) snap to the locked palette, no dithering (keeps flat pixel-art fields)
-    magick([s3, '-dither', 'None', '-remap', palette, out]);
+    if (source) {
+      // 1) model DETAIL as opaque RGB on the native grid (discard the model's alpha)
+      magick([input, '-alpha', 'off', '-filter', 'point', '-resize', `${res}x${res}`, s1]);
+      // 2) snap RGB to the (per-source) palette FIRST, while still fully opaque — so the
+      //    remap can't flatten/drop the alpha (a palette without a transparent slot would).
+      magick([s1, '-dither', 'None', '-remap', palette, s2]);
+      // 3) SOURCE silhouette -> hard 1-bit mask at the same grid
+      magick([source, '-alpha', 'extract', '-filter', 'point', '-resize', `${res}x${res}`, '-threshold', '50%', s3]);
+      // 4) apply the source mask as alpha LAST, so the cutout survives any palette
+      magick([s2, s3, '-compose', 'CopyOpacity', '-composite', out]);
+    } else {
+      // self-alpha tail (input already has a correct 1-bit cutout — demo/tests)
+      magick([input, '-filter', 'point', '-resize', `${res}x${res}`, s1]);
+      magick([s1, '(', '+clone', '-alpha', 'off', ')', '-compose', 'SrcIn', '-composite', s2]);
+      magick([s2, '-channel', 'A', '-threshold', '50%', '+channel', s3]);
+      magick([s3, '-dither', 'None', '-remap', palette, out]);
+    }
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -104,10 +118,10 @@ if (isMain) {
   const args = parseArgs(process.argv.slice(2));
   const res = Number(args.res);
   if (!args.in || !args.out || !res || !args.palette) {
-    console.error('usage: node repixelate.mjs --in <up.png> --out <final.png> --res 384 --palette <palette.png>');
+    console.error('usage: node repixelate.mjs --in <up.png> --out <final.png> --res 384 --palette <palette.png> [--source <orig.png>]');
     process.exit(2);
   }
-  repixelate({ in: args.in, out: args.out, res, palette: args.palette });
+  repixelate({ in: args.in, out: args.out, res, palette: args.palette, source: args.source });
   const dims = dimsOf(args.out);
   const colors = rgbColorCount(args.out);
   const alphas = alphaValues(args.out);
