@@ -19,10 +19,7 @@ test('buildSockets emits door/window/corner/eave sockets for the south face', ()
   const socks = buildSockets(building(1));
   const byKind = (k) => socks.filter((s) => s.kind === k);
   assert.equal(byKind('above_door').length, 1, 'one door lintel');
-  // door at local x=1 in a 4-wide wall is near the LEFT edge, so only the RIGHT lantern fits (no clamping
-  // both onto the door). A central door gets a matched pair — see the next test.
-  assert.equal(byKind('beside_door').length, 1, 'edge door → ONE lantern on the open side');
-  assert.equal(byKind('beside_door')[0].id.startsWith('besideR'), true, 'the open (right) side lantern');
+  assert.equal(byKind('beside_door').length, 2, 'two lantern-flank sockets per door');
   assert.equal(byKind('on_door').length, 1, 'one on-door socket (knocker)');
   assert.equal(byKind('window_sill').length, 1, 'one ground-floor window sill');
   assert.equal(byKind('window_jamb').length, 2, 'two window jambs (shutter L+R)');
@@ -32,18 +29,6 @@ test('buildSockets emits door/window/corner/eave sockets for the south face', ()
   const door = byKind('above_door')[0];
   assert.equal(door.cxLocal, 1.5);
   assert.equal(door.floor, 0);
-});
-
-test('a CENTRAL door gets a matched lantern PAIR (left + mirrored right)', () => {
-  const fp = { sections: [{ x0: 0, y0: 0, w: 8, h: 3 }], boundingBox: { w: 8, h: 3 }, doors: [{ x: 4, y: 2 }], windows: [] };
-  const socks = buildSockets({ x: 0, y: 0, biome: 'grassland', wallSlug: 'fieldstone', footprint: fp });
-  const flank = socks.filter((s) => s.kind === 'beside_door');
-  assert.equal(flank.length, 2, 'central door → both lanterns fit');
-  const L = flank.find((s) => s.id.startsWith('besideL')), R = flank.find((s) => s.id.startsWith('besideR'));
-  assert.ok(L && R, 'one each side');
-  assert.ok(L.cxLocal < R.cxLocal, 'left is left of right');
-  assert.equal(!!L.mirror, false, 'left = default art');
-  assert.equal(R.mirror, true, 'right = mirrored art');
 });
 
 test('window sills stack per storey; corners run full height; eave rides the top storey', () => {

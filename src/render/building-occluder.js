@@ -677,12 +677,10 @@ function drawVinesPass(ctx, b, camX, camY, tilePx, w, h) {
 }
 
 // DOOR-REGION REPAINT — animate the swing WITHOUT re-baking the whole building (~111ms; the coverage passes
-// alone are ~85ms). Redraw ONLY the door's current frame into the cached sprite canvas, re-apply the coverage
-// passes to JUST the door's columns (clipped to the door rect), then re-draw the ROOF over the door rect —
-// because the roof bakes AFTER the door and its eave overhangs the door top on a single-storey building, so
-// drawDoorsCurrent's clear erased it (props are no longer baked, so they don't need restoring here). The door
-// region thus reproduces the original bake (walls→weathering→damage→growth→roof). Returns the dirty canvas rect
-// for the caller to re-upload, or null. ~12ms (3 columns) + ~9ms roof on 1-storey buildings.
+// alone are ~85ms). Redraw ONLY the door's current frame into the cached sprite canvas, then re-apply the
+// coverage passes to JUST the door's columns (clipped to the door rect) so it stays consistently weathered —
+// the door region thus reproduces the original bake (walls→weathering→damage→growth; no vines/roof/props touch
+// it). Returns the dirty canvas rect for the caller to re-upload, or null. ~a few ms (3 columns, not ~20).
 export function repaintBuildingDoors(entry, b) {
   if (!entry || !entry.canvas || !b) return null;
   const t = entry.builtTilePx || 32;
@@ -692,17 +690,11 @@ export function repaintBuildingDoors(entry, b) {
   const res = drawDoorsCurrent(ctx, b, camX, camY, t);
   if (!res) return null;
   const W = entry.canvas.width, H = entry.canvas.height;
-  const stories = Math.max(1, buildingFloors(b));
   ctx.save();
   ctx.beginPath(); ctx.rect(res.rect.x, res.rect.y, res.rect.w, res.rect.h); ctx.clip();
   drawWeatheringPass(ctx, b, camX, camY, t, W, H, res.colRange);
   drawDamagePass(ctx, b, camX, camY, t, W, H, res.colRange);
   drawGrowthPass(ctx, b, camX, camY, t, W, H, res.colRange);
-  // The roof's eave overhangs the door top ONLY on a 1-storey building (door top = wall top = roof base). On a
-  // 2+-storey building the roof sits a full storey above the ground door, so skip the cost there.
-  if (stories === 1 && _roof && renderOn('roof')) {
-    try { _roof.drawRoofForBuilding(ctx, b, camX, camY, t, { stories, northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b), roofFascia: roofFasciaFor(b), gableTex: gableTexFor(b) }); } catch { /* skip roof */ }
-  }
   ctx.restore();
   return res.rect;
 }
@@ -777,13 +769,13 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   // gate it would draw even when the roof layer is off (leaking an un-tuned, wall-misaligned roof over the
   // walls). With roof off, walls show clean; we align the roof eaves to the walls when the roof layer is on.
   const drawRoof = () => { if (_roof && renderOn('roof')) { try { _roof.drawRoofForBuilding(ctx, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b), roofFascia: roofFasciaFor(b), gableTex: gableTexFor(b) }); } catch { /* skip roof */ } } };
-  // D3 wall attachments are NO LONGER baked here — they ANIMATE (banner/sign sway, lantern flicker), and a
-  // baked-in prop FREEZES in the cached sprite. They're drawn LIVE each frame as a GL-composited overlay
-  // (buildBuildingPropsBitmap + glc.drawSceneOverlayBitmap) AFTER the building sprites and BEFORE the player —
-  // see canvas-renderer. So the static bake = walls+weathering+damage+growth+vines+chips+roof only.
+  // D3 wall attachments paint BEFORE the roof so the roof correctly OCCLUDES anything behind/above it (user
+  // 2026-06-25: drawing props OVER the roof is wrong draw-order). Identity stays readable by PLACING props LOW
+  // (signs/festoons at mid-wall, awnings at the door head — below the eave overhang), not by drawing over the roof.
+  const drawProps = () => { if (renderOn('attachments')) { try { drawD3Props(ctx, b, camX, camY, tilePx, w, h, 'all'); } catch { /* skip props */ } } };
   // D1 sprite-chips (plank gaps / patches) — gated with the rest of D1 damage; before the roof like the walls.
   const drawChips = () => { if (renderOn('damage')) { try { drawD1Chips(ctx, b, camX, camY, tilePx, w, h); } catch { /* skip chips */ } } };
-  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h); drawDamagePass(ctx, b, camX, camY, tilePx, w, h); drawGrowthPass(ctx, b, camX, camY, tilePx, w, h); drawVinesPass(ctx, b, camX, camY, tilePx, w, h); drawChips(); drawRoof(); return true; }
+  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h); drawDamagePass(ctx, b, camX, camY, tilePx, w, h); drawGrowthPass(ctx, b, camX, camY, tilePx, w, h); drawVinesPass(ctx, b, camX, camY, tilePx, w, h); drawChips(); drawProps(); drawRoof(); return true; }
   // A grassland TILE-CORPUS building whose tiles aren't loaded yet must NOT fall to the legacy
   // strip path — drawWalls would stamp a stone_brick 32px strip STRETCHED over the footprint (the
   // melted/stretched single-building artifact). Stay invisible this frame; it flips to mirror-tiled
@@ -797,29 +789,7 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   drawGrowthPass(ctx, b, camX, camY, tilePx, w, h);
   drawVinesPass(ctx, b, camX, camY, tilePx, w, h);
   drawChips();
+  drawProps();
   drawRoof();
   return true;
-}
-
-// LIVE D3 PROPS overlay — props are pulled out of the cached bake so they animate (sway/flicker). Draw the
-// near buildings' props into one full-frame bitmap each frame (drawD3Props is time-driven), composited into
-// the GL scene FBO via glc.drawSceneOverlayBitmap (inherits lighting/CRT — NOT a 2D top-pass). The caller draws
-// it AFTER the building sprites (props sit on the wall) and BEFORE the player/F2 pass (so the player, which
-// depth-tests against the baked building, slides in front when south, and the wall occludes both when north).
-let _propsCv = null, _propsCx = null;
-export function buildBuildingPropsBitmap(buildings, camX, camY, tilePx, w, h) {
-  if (!renderOn('attachments') || !buildings || !buildings.length) return null;
-  if (!_propsCv || _propsCv.width !== w || _propsCv.height !== h) {
-    _propsCv = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(w, h)
-      : (typeof document !== 'undefined') ? document.createElement('canvas') : null;
-    if (!_propsCv) return null;
-    _propsCv.width = w; _propsCv.height = h; _propsCx = _propsCv.getContext('2d');
-  }
-  const o = _propsCx; if (!o) return null;
-  o.setTransform(1, 0, 0, 1, 0, 0); o.globalCompositeOperation = 'source-over';
-  o.clearRect(0, 0, w, h); o.imageSmoothingEnabled = false;
-  // farthest-first so a nearer building's props composite over a farther one's
-  const sorted = buildings.slice().sort((a, b) => (a.y + a.footprint.boundingBox.h) - (b.y + b.footprint.boundingBox.h));
-  for (const b of sorted) { try { drawD3Props(o, b, camX, camY, tilePx, w, h, 'all'); } catch { /* skip */ } }
-  return _propsCv;
 }
