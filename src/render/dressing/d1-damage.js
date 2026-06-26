@@ -18,20 +18,21 @@
 //     age sim (no-mock: it makes no per-building claim of literal age; a real maintenance/age sim
 //     supersedes it). The Dev HUD `age` slider OVERRIDES it to preview age-driven decay uniformly.
 //
-// Each layer is a world-locked procedural coverage decal (the D0 technique): a seamless TEX×TEX noise
-// mask, phase-anchored to world space (pan-stable, flows across columns), optionally carved by a
-// vertical falloff (rot rises from the plinth; runnels fall from the eave), tinted, and blitted with a
-// blend op. Pure geometry/intensity helpers are exported for testing.
+// Each layer is a procedural coverage decal sampled from NON-TILING world-coordinate noise (period ~2^32,
+// so it NEVER visibly repeats — a unique weathering fingerprint per building), built once per wall-COLUMN
+// and cached by world position, then carved by a vertical falloff (rot rises from the plinth; runnels fall
+// from the eave), tinted, and blitted with a blend op. (The old build used a 128px tiled texture, which
+// repeated the same blotch motif every 128 world-px — glaring on a large wall.) Pan-stable: a column's mask
+// is keyed to its world position, so it stays fixed to the wall as the camera moves. Pure geometry/intensity
+// helpers are exported for testing.
 //
 // Live-tune from the console: window._damage.age = 0.8; window._damage.strength = 1.2; .enabled = false
 // In-game tuner dialog (Dev HUD ` → "Damage" tab; includes an age-preview slider): src/dev/damage-tuner.js
 
 import { rand2, lerp } from '../../core/random.js';
 import { getWorldSeed } from '../../core/world-seed.js';
-import { tileFbm } from './d0-weathering.js';
 
 const SALT = 0xD1;           // D1 dressing channel (distinct from D0's 0xD0 and the F-field salts)
-const TEX = 128;             // noise texture size (px) — also the world-lock tiling period
 const DISREPAIR_SKEW = 4;    // power-skew on the per-building disrepair hash: higher → fewer worn buildings
                              // (pow(rand,4) → ~1 in 4 buildings exceeds the crack onset; the rest stay clean)
 
@@ -140,42 +141,67 @@ function makeCanvas(w, h) {
   return null;
 }
 
+// --- Non-tiling world-coordinate value noise (period ~2^32 px → never visibly repeats) -----------
+// Feature size = cellPx (world px between lattice points). No wrap/modulo, so adjacent buildings sample
+// disjoint coordinate ranges → each reads as a unique fingerprint with no within-wall repeat.
+function worldNoise(x, y, cellPx, salt, seed) {
+  const fx = x / cellPx, fy = y / cellPx;
+  const x0 = Math.floor(fx), y0 = Math.floor(fy);
+  const tx = fx - x0, ty = fy - y0;
+  const sx = tx * tx * (3 - 2 * tx), sy = ty * ty * (3 - 2 * ty);
+  const a = rand2(x0, y0, salt, seed), b = rand2(x0 + 1, y0, salt, seed);
+  const c = rand2(x0, y0 + 1, salt, seed), d = rand2(x0 + 1, y0 + 1, salt, seed);
+  return lerp(lerp(a, b, sx), lerp(c, d, sx), sy);
+}
+const DMG_CELLS = [64, 32, 16, 8, 4]; // octave feature sizes in world px (coarse→fine) — keeps the old look
+function worldFbm(x, y, salt, seed = 0) {
+  let v = 0, amp = 0.5, norm = 0;
+  for (let o = 0; o < DMG_CELLS.length; o++) { v += worldNoise(x, y, DMG_CELLS[o], salt + o * 101, seed) * amp; norm += amp; amp *= 0.5; }
+  return norm > 0 ? v / norm : v;
+}
 // ridged noise in [0,1] sharpened toward 1 at fbm crossings → thin valleys read as fracture lines.
 function ridge(x, y, salt, seed) {
-  const n = tileFbm(x, y, salt, seed);
+  const n = worldFbm(x, y, salt, seed);
   const r = 1 - Math.abs(2 * n - 1);  // peak where n≈0.5
   return r * r * r;                    // sharpen → thin ridges
 }
 
-// One alpha mask per (kind, seed). White RGB, alpha = shape (reusable mask, recolored at paint time).
-const _texCache = {}; // key `${kind}:${seed}` → canvas
-function layerTex(kind, seed) {
-  const key = `${kind}:${seed}`;
-  if (_texCache[key]) return _texCache[key];
-  const c = makeCanvas(TEX, TEX); if (!c) return null;
-  const cx = c.getContext('2d'); if (!cx || typeof cx.createImageData !== 'function') return null;
-  const id = cx.createImageData(TEX, TEX);
-  for (let y = 0; y < TEX; y++) {
-    for (let x = 0; x < TEX; x++) {
-      const i = (y * TEX + x) * 4;
+// Per-COLUMN alpha mask, sampled from non-tiling world noise at ABSOLUTE world px (wx0,wy0 = the column's
+// top-left in world px) and cached by world position (terrain/noise never changes). White RGB, alpha =
+// shape; recolored/carved at paint time. The cache is config-INDEPENDENT (strength/age/disrepair only scale
+// intensity at blit), so tuner edits never invalidate it. Bounded with one-at-a-time LRU eviction (Map
+// preserves insertion order → drop the oldest) so a dense town never triggers a wholesale rebuild hitch.
+const _maskCache = new Map();
+const MASK_CAP = 3000;
+function columnMask(kind, wx0, wy0, w, h, seed) {
+  const key = kind + ':' + wx0 + ':' + wy0 + ':' + w + ':' + h + ':' + seed;
+  let cv = _maskCache.get(key);
+  if (cv) { _maskCache.delete(key); _maskCache.set(key, cv); return cv; } // bump to MRU
+  cv = makeCanvas(w, h); if (!cv) return null;
+  const cx = cv.getContext('2d'); if (!cx || typeof cx.createImageData !== 'function') return null;
+  const id = cx.createImageData(w, h);
+  for (let ly = 0; ly < h; ly++) {
+    for (let lx = 0; lx < w; lx++) {
+      const wx = wx0 + lx, wy = wy0 + ly, i = (ly * w + lx) * 4;
       let a;
       if (kind === 'crack') {
-        const r = ridge(x, y, 0xC1 + seed, seed);
+        const r = ridge(wx, wy, 0xC1 + seed, seed);
         a = r > 0.72 ? (r - 0.72) / 0.28 : 0;                 // only the sharpest ridges survive → sparse lines
       } else if (kind === 'streak') {
-        // vertical channels: a per-COLUMN threshold (constant down y → a streak), broken up by fine noise
-        const col = rand2(((x % TEX) + TEX) % TEX, 0, 0xC3 + seed, seed);
-        const colMask = col > 0.78 ? (col - 0.78) / 0.22 : 0; // ~22% of columns carry a streak
-        a = colMask * (0.55 + 0.45 * tileFbm(x, y * 0.5, 0xC4 + seed, seed));
-      } else { // 'blotch' — continuous patchy coverage (D0-grime style; reliably non-empty, denser where noise peaks)
-        a = Math.pow(tileFbm(x, y, 0xC2 + seed, seed), 2.0); // higher exponent → reads as scattered patches, not a wash
+        // vertical channels: a per-WORLD-COLUMN threshold (constant down y → a streak), broken up by fine noise
+        const col = rand2(wx, 0, 0xC3 + seed, seed);
+        const colMask = col > 0.78 ? (col - 0.78) / 0.22 : 0; // ~22% of world columns carry a streak
+        a = colMask * (0.55 + 0.45 * worldFbm(wx, wy * 0.5, 0xC4 + seed, seed));
+      } else { // 'blotch' — continuous patchy coverage (denser where noise peaks)
+        a = Math.pow(worldFbm(wx, wy, 0xC2 + seed, seed), 2.0);
       }
       id.data[i] = 255; id.data[i + 1] = 255; id.data[i + 2] = 255; id.data[i + 3] = Math.round(255 * clamp01(a));
     }
   }
   cx.putImageData(id, 0, 0);
-  _texCache[key] = c;
-  return c;
+  if (_maskCache.size >= MASK_CAP) _maskCache.delete(_maskCache.keys().next().value); // evict oldest
+  _maskCache.set(key, cv);
+  return cv;
 }
 
 // Reused stamp canvas (grow-only) where a mask is carved + tinted before one blit.
@@ -186,14 +212,10 @@ function stampCtx(w, h) {
   return _stampCtx;
 }
 
-// World-lock phase: the texel offset (in [0,TEX)) that should sit at a rect corner so the pattern stays
-// fixed to world space (pan-stable) and flows continuously across columns/buildings.
-const phase = (worldPx) => ((Math.round(worldPx) % TEX) + TEX) % TEX;
-
 /** Paint D1 damage over ONE wall column. Same call shape as D0's paintWeatheredColumn.
  *  rect = {dx, top, dw, colH, tilePx} screen px; world = {wx, wy} of the column's ground tile;
- *  opts = {biome, bx, by, material, age, wetness, strength, enabled}. No-op when disabled, when every
- *  layer's driver is absent/zero, when zero-sized, or when the ctx lacks the canvas APIs (headless). */
+ *  opts = {biome, bx, by, material, age, wetness, waterProximity, strength, enabled}. No-op when disabled,
+ *  when every layer's driver is absent/zero, when zero-sized, or when the ctx lacks the canvas APIs. */
 export function paintDamagedColumn(ctx, rect, world, opts = {}) {
   const cfg = (typeof window !== 'undefined' && window._damage) || DAMAGE;
   const enabled = opts.enabled != null ? opts.enabled : cfg.enabled;
@@ -204,31 +226,28 @@ export function paintDamagedColumn(ctx, rect, world, opts = {}) {
 
   const strength = opts.strength != null ? opts.strength : cfg.strength;
   if (!(strength > 0)) return;
-  const drivers = damageDrivers(opts.biome, { age: opts.age, wetness: opts.wetness, bx: opts.bx, by: opts.by });
+  const drivers = damageDrivers(opts.biome, { age: opts.age, wetness: opts.wetness, waterProximity: opts.waterProximity, bx: opts.bx, by: opts.by });
   const seed = opts.seed != null ? opts.seed : (typeof getWorldSeed === 'function' ? getWorldSeed() : 0);
 
   const tpx = rect.tilePx || 32;
-  const sx = phase(world.wx * tpx);
-  const sy = phase(world.wy * tpx - colH);
   const iw = Math.ceil(dw), ih = Math.ceil(colH);
+  // the column's top-left in absolute WORLD px — the mask is sampled here so it's world-locked (pan-stable)
+  // and unique per building (disjoint coords → no repeat).
+  const wx0 = Math.round(world.wx * tpx);
+  const wy0 = Math.round(world.wy * tpx - colH);
 
   for (const L of LAYERS) {
     if (cfg[L.key] === false) continue;                       // per-layer toggle off
     const intensity = layerIntensity(L.key, drivers, strength);
     if (intensity <= 0) continue;
-    const tex = layerTex(L.tex, seed); if (!tex) continue;
+    const mask = columnMask(L.tex, wx0, wy0, iw, ih, seed); if (!mask) continue;
     const sctx = stampCtx(iw, ih); if (!sctx) continue;
     sctx.save();
     sctx.setTransform(1, 0, 0, 1, 0, 0);
     sctx.globalAlpha = 1; sctx.globalCompositeOperation = 'source-over';
     sctx.clearRect(0, 0, iw, ih);
-    // 1) lay the world-locked mask
-    let pat; try { pat = sctx.createPattern(tex, 'repeat'); } catch { sctx.restore(); continue; }
-    if (!pat) { sctx.restore(); continue; }
-    sctx.translate(-sx, -sy);
-    sctx.fillStyle = pat;
-    sctx.fillRect(sx, sy, dw, colH);
-    sctx.setTransform(1, 0, 0, 1, 0, 0);
+    // 1) lay the world-aligned, non-tiling mask for this column
+    sctx.drawImage(mask, 0, 0);
     // 2) carve by a vertical falloff for directional layers (rot rises from base; runnels fall from eave)
     if (L.dir !== 'none') {
       sctx.globalCompositeOperation = 'destination-in';

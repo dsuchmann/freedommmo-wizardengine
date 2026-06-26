@@ -164,6 +164,16 @@ test('paintDamagedColumn: runnels are top-weighted (eave runoff darker up high)'
   assert.ok(topSum / n < botSum / m, `runnel top (${topSum / n}) should be darker than bottom (${botSum / m})`);
 });
 
+test('paintDamagedColumn: pattern does NOT repeat across the old 128px tile period (fingerprint, not tiled)', () => {
+  // tpx=32 → 128 world-px = 4 tiles. The old tiled mask was identical at wx and wx+4; the world-noise must differ.
+  const A = paintAndRead({ wx: 10, wy: 6 }, { biome: 'swamp', strength: 2.5 });
+  const B = paintAndRead({ wx: 14, wy: 6 }, { biome: 'swamp', strength: 2.5 }); // +4 tiles = +128 world px
+  let diff = 0, n = 0;
+  for (let y = A.rect.top + 4; y < A.rect.top + A.rect.colH - 4; y += 2)
+    for (let x = A.rect.dx + 2; x < A.rect.dx + A.rect.dw - 2; x += 2) { diff += Math.abs(A.at(x, y) - B.at(x, y)); n++; }
+  assert.ok(diff / n > 3, `columns 128px apart must differ (non-repeating), got mean diff ${(diff / n).toFixed(2)}`);
+});
+
 test('paintDamagedColumn: deterministic for the same world position', () => {
   const a = paintAndRead({ wx: 5, wy: 6 }, { biome: 'swamp', strength: 2, bx: 3, by: 4 });
   const b = paintAndRead({ wx: 5, wy: 6 }, { biome: 'swamp', strength: 2, bx: 3, by: 4 });
