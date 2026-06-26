@@ -15,7 +15,7 @@ import { drawBuildingShadows, buildBuildingShadowBitmap, updateBuildingHeightMas
 import { updateFloorViewTransform } from './floor-view.js';
 import { drawInteriorFloorWorld, drawInteriorWallsWorld, interiorLiftPx, updateInteriorLift } from './interior-renderer.js';
 import { buildInteriorSceneBitmap } from './interior-gl.js';
-import { buildOccluderBitmap, drawBuildingTextured, buildingBakeState, drawBuildingPropsInto } from './building-occluder.js';
+import { buildOccluderBitmap, drawBuildingTextured, buildingBakeState, drawBuildingDynamicInto } from './building-occluder.js';
 import { buildDoorLeafBitmap } from './door-leaves.js';
 import { buildBuildingLayerBitmaps } from './building-layer.js';
 import { nearDepthBuildings, renderBuildingSilhouette, tileDepth, DEPTH_SCALE } from './building-depth.js';
@@ -552,18 +552,19 @@ export class CanvasRenderer {
       }
     }
 
-    // LIVE D3 WALL ATTACHMENTS — props are pulled OUT of the cached building bake so they ANIMATE (banner/sign
-    // sway, lantern flicker); a baked-in prop freezes in the cached sprite. Each building's props are rendered
-    // into a tight building-local bitmap and drawn as a depth quad at THAT building's depth (drawBuildingPropsSprite,
-    // LEQUAL) — so they sit over their own wall but a NEARER building's roof (already in the depth buffer)
-    // OCCLUDES a farther building's props. Drawn AFTER the building sprites, BEFORE the F2/player pass. All GL.
-    if (!_inside && glScene && renderOn('attachments') && typeof window !== 'undefined' && window._buildingDepthColor !== false) {
+    // LIVE DYNAMIC BUILDING LAYER — the door SWING + D3 wall attachments are pulled OUT of the cached building
+    // bake so they ANIMATE (a baked-in door/prop freezes in the cached sprite). Each building's dynamic layer is
+    // rendered into a tight building-local bitmap and drawn as a depth quad at THAT building's depth
+    // (drawBuildingPropsSprite, LEQUAL) — so it sits over its own wall but a NEARER building's roof (already in
+    // the depth buffer) OCCLUDES a farther building's door/props. Drawn AFTER the building sprites, BEFORE the
+    // F2/player pass. All GL. (The bake holds the CLOSED door + static walls/roof so it stays fast.)
+    if (!_inside && glScene && (renderOn('walls') || renderOn('attachments')) && typeof window !== 'undefined' && window._buildingDepthColor !== false) {
       try {
         const _refYp = (camY + h / 2) / tilePx;
         const _pblds = nearDepthBuildings(getCachedBuildings(), camX, camY, tilePx, w, h)
           .slice().sort((a, b) => (a.y + a.footprint.boundingBox.h) - (b.y + b.footprint.boundingBox.h)); // farthest-first
         for (const _pb of _pblds) {
-          const _pr = drawBuildingPropsInto(_pb, camX, camY, tilePx);
+          const _pr = drawBuildingDynamicInto(_pb, camX, camY, tilePx);
           if (!_pr) continue;
           const _pz = tileDepth(_pb.y + _pb.footprint.boundingBox.h, _refYp) * 2 - 1;
           this.glc.drawBuildingPropsSprite(_pr.canvas, _pr.sx, _pr.sy, _pr.w, _pr.h, _pz);

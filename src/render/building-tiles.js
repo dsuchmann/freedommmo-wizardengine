@@ -67,6 +67,61 @@ function doorOpenAmount(b, d) {
   return Math.max(0, Math.min(1, (R_OPEN - dist) / (R_OPEN - R_FULL)));
 }
 
+// Draw one aperture tile (door/window) clipped to its span, keeping its FULL width inside the run (nudge
+// inward near a wall end so it's never cut off). Module-level so both the bake (drawBuildingTiles) and the
+// live door overlay (drawDoorsLive) share the EXACT same geometry.
+function _drawAperture(ctx, tile, cx, top, spanTiles, left, right, t, wH, segW) {
+  const clipW = Math.round(spanTiles * t);
+  const half = clipW / 2;
+  if (left != null && right != null && right - left >= clipW) {
+    if (cx - half < left) cx = left + half;          // near the WEST end → nudge east so it fits
+    else if (cx + half > right) cx = right - half;   // near the EAST end → nudge west so it fits
+  }
+  let cl = cx - half, cr = cx + half;
+  if (left != null && cl < left) cl = left;
+  if (right != null && cr > right) cr = right;
+  if (cr <= cl) return;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(cl, top, cr - cl, wH); ctx.clip();
+  ctx.drawImage(tile, 0, 0, tile.naturalWidth, tile.naturalHeight, cx - segW / 2, top, segW, wH);
+  ctx.restore();
+}
+
+// LIVE DOOR SWING — draw ONLY the open door frame(s) for a building, at proximity, into ctx (which the caller
+// has shifted so building screen coords land in a building-local canvas). The cached building sprite bakes the
+// door CLOSED; this paints the open swing over it each frame so it animates without re-baking the static sprite.
+// Returns true if any door drew OPEN (so the caller can skip an empty quad). Mirrors the door geometry in
+// drawBuildingTiles exactly (same runs / groundline / aperture clamp).
+export function drawDoorsLive(ctx, b, camX, camY, tilePx, w, h) {
+  if (typeof window !== 'undefined' && window._tileWalls === false) return false;
+  const bb = b.footprint && b.footprint.boundingBox; if (!bb) return false;
+  const mat = materialOf(b); if (!mat) return false;
+  const D = getDIR(b.biome);
+  const doorTile = img(D + mat + '/ground_door__v0.png'); if (!doorTile) return false; // door material not loaded → leave the baked closed door
+  const fp = b.footprint;
+  const runs = southRuns(fp); if (!runs.length) return false;
+  const t = tilePx;
+  const wH = Math.round(t * WALL_CONFIG.wallHeight);
+  const WY = WALL_CONFIG.wallYOffset;
+  const segW = Math.round(4 * t);
+  ctx.imageSmoothingEnabled = false;
+  const runGroundY = (y) => Math.round((b.y + y + 1) * t - camY) + Math.round(t * WY);
+  const runFor = (ax, ay) => runs.find(r => r.y === ay && ax >= r.x0 && ax < r.x1) || runs[runs.length - 1];
+  const runEdges = (r) => ({ left: Math.round((b.x + r.x0) * t - camX), right: Math.round((b.x + r.x1) * t - camX) });
+  let anyOpen = false;
+  for (const d of (fp.doors || [])) {
+    const fi = Math.round(doorOpenAmount(b, d) * (ANIM_FRAMES - 1));
+    if (fi <= 0) continue;                                         // closed → the baked sprite already shows it
+    const frame = animFrame(b.biome, mat, 'door', fi); if (!frame) continue; // that swing frame not loaded yet
+    const r = runFor(d.x, d.y);
+    const gY = runGroundY(r.y);
+    const { left, right } = runEdges(r);
+    _drawAperture(ctx, frame, Math.round((b.x + d.x + 0.5) * t - camX), gY - wH, 2.6, left, right, t, wH, segW);
+    anyOpen = true;
+  }
+  return anyOpen;
+}
+
 // Resolve a building to its tile-corpus FOLDER name, or null if its biome isn't tiled (→ legacy wall path).
 export function materialOf(b) {
   if (typeof window !== 'undefined' && window._tileMaterial) return window._tileMaterial;
@@ -227,32 +282,16 @@ export function drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h) {
   // (step onto the footprint), so the small visual shift doesn't affect walking in. Only if the run is too
   // narrow for the full span do we fall back to clamping the clip (tiny buildings). This replaces the old
   // clip-clamp that cut the door off when it landed near the wall end.
-  const drawAperture = (tile, cx, top, spanTiles, left, right) => {
-    const clipW = Math.round(spanTiles * t);
-    const half = clipW / 2;
-    if (left != null && right != null && right - left >= clipW) {
-      if (cx - half < left) cx = left + half;          // door near the WEST end → nudge east so it fits
-      else if (cx + half > right) cx = right - half;   // door near the EAST end → nudge west so it fits
-    }
-    let cl = cx - half, cr = cx + half;
-    if (left != null && cl < left) cl = left;
-    if (right != null && cr > right) cr = right;
-    if (cr <= cl) return;
-    ctx.save();
-    ctx.beginPath(); ctx.rect(cl, top, cr - cl, wH); ctx.clip();
-    ctx.drawImage(tile, 0, 0, tile.naturalWidth, tile.naturalHeight, cx - segW / 2, top, segW, wH);
-    ctx.restore();
-  };
+  const drawAperture = (tile, cx, top, spanTiles, left, right) => _drawAperture(ctx, tile, cx, top, spanTiles, left, right, t, wH, segW);
   const runEdges = (r) => ({ left: Math.round((b.x + r.x0) * t - camX), right: Math.round((b.x + r.x1) * t - camX) });
-  // DOORS — ground storey only. PROXIMITY DOOR ANIMATION: swing frame from player distance; fall back to
-  // the closed static tile until that frame loads (frame 0 == closed == static tile).
+  // DOORS — ground storey only. The cached building sprite bakes the door CLOSED (the static door tile); the
+  // live swing is painted each frame as a dynamic depth overlay (drawDoorsLive) so it animates WITHOUT re-baking
+  // the expensive static sprite. Baking closed keeps the wall complete even if the dynamic overlay is off.
   if (doorTile) for (const d of (fp.doors || [])) {
     const r = runFor(d.x, d.y);
     const gY = runGroundY(r.y);
     const { left, right } = runEdges(r);
-    const fi = Math.round(doorOpenAmount(b, d) * (ANIM_FRAMES - 1));
-    const frame = (fi > 0 && animFrame(b.biome, mat, 'door', fi)) || doorTile;
-    drawAperture(frame, Math.round((b.x + d.x + 0.5) * t - camX), gY - wH, 2.6, left, right); // door span ~2.5 tiles, clamped to the run
+    drawAperture(doorTile, Math.round((b.x + d.x + 0.5) * t - camX), gY - wH, 2.6, left, right); // CLOSED; swing = drawDoorsLive
   }
   // WINDOWS — on EVERY storey (stacked in vertical columns at each window x).
   for (const wn of (fp.windows || [])) {

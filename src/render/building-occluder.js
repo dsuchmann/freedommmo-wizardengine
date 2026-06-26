@@ -19,7 +19,7 @@ import { getWallImg } from './building-renderer.js';
 import { buildingFloors } from './building-shadow.js';
 import { queryBuildingTile } from './building-tile-query.js';
 import { wallAssetDir, wallPieceFile, roofAssetDir, roofTextureFile, ROOF_FASCIA_FILE } from '../../sim/world/buildings/building-material-registry.js';
-import { drawBuildingTiles, isTiledBuilding, materialOf, tileImagesReady } from './building-tiles.js';
+import { drawBuildingTiles, isTiledBuilding, materialOf, tileImagesReady, southRuns, drawDoorsLive } from './building-tiles.js';
 import { renderOn } from './building-render-flags.js';
 import { paintWeatheredColumn } from './dressing/d0-weathering.js';
 import { paintDamagedColumn } from './dressing/d1-damage.js';
@@ -707,9 +707,10 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   // gate it would draw even when the roof layer is off (leaking an un-tuned, wall-misaligned roof over the
   // walls). With roof off, walls show clean; we align the roof eaves to the walls when the roof layer is on.
   const drawRoof = () => { if (_roof && renderOn('roof')) { try { _roof.drawRoofForBuilding(ctx, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b), roofFascia: roofFasciaFor(b), gableTex: gableTexFor(b) }); } catch { /* skip roof */ } } };
-  // D3 wall attachments are NO LONGER baked here — they ANIMATE (banner/sign sway, lantern flicker), and a
-  // baked-in prop FREEZES in the cached sprite. They're drawn LIVE each frame as a GL-composited overlay
-  // (buildBuildingPropsBitmap → glc.drawSceneOverlayBitmap) AFTER the building sprites — see canvas-renderer.
+  // D3 wall attachments + the door SWING are NO LONGER baked here — they ANIMATE (banner/sign sway, lantern
+  // flicker, door open/close), and a baked-in prop/door FREEZES in the cached sprite. They're drawn LIVE each
+  // frame as a per-building depth quad (drawBuildingDynamicInto → glc.drawBuildingPropsSprite) AFTER the building
+  // sprites — see canvas-renderer. The bake holds the CLOSED door (so the wall is complete) + static walls/roof.
   // The roof now terminates at the wall top (no south overhang), so wall-mounted props sit cleanly under it.
   // D1 sprite-chips (plank gaps / patches) — gated with the rest of D1 damage; before the roof like the walls.
   const drawChips = () => { if (renderOn('damage')) { try { drawD1Chips(ctx, b, camX, camY, tilePx, w, h); } catch { /* skip chips */ } } };
@@ -730,21 +731,40 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   return true;
 }
 
-// LIVE D3 PROPS — props are pulled OUT of the cached bake so they animate (banner/sign sway, lantern flicker;
-// drawD3Props is time-driven). Render ONE building's props into a tight building-local scratch canvas, returned
-// for the caller to draw via glc.drawBuildingPropsSprite at THAT building's depth — so a back building's props
-// are occluded by a front building's roof (per-building depth), not flatly composited over everything. The
-// scratch canvas is shared + re-specified per building; the caller must upload it before the next call.
-// Routes through GL (depth quad into the scene FBO) → inherits scene lighting/CRT, never a 2D top-pass.
-const PROP_PAD = 2, PROP_PAD_BOTTOM = 3; // tiles of slack: props overhang the footprint (banners hang below, lanterns flank)
+// LIVE DYNAMIC BUILDING LAYER — the parts that ANIMATE and so can't live in the frozen cached sprite: the door
+// SWING (proximity) + the D3 props (banner/sign sway, lantern flicker; both time-driven). Render ONE building's
+// dynamic layer into a tight building-local scratch canvas, returned for the caller to draw via
+// glc.drawBuildingPropsSprite at THAT building's depth — so a back building's door/props are occluded by a front
+// building's roof (per-building depth), not flatly composited over everything. The scratch canvas is shared +
+// re-specified per building; the caller must upload it before the next call. Routes through GL (depth quad into
+// the scene FBO) → inherits scene lighting/CRT, never a 2D top-pass.
+const PROP_PAD = 2, PROP_PAD_BOTTOM = 3; // tiles of slack: props overhang the wall (banners hang below, lanterns flank)
 let _bpCv = null, _bpCx = null;
-export function drawBuildingPropsInto(b, camX, camY, tilePx) {
-  if (!renderOn('attachments') || !b || !b.footprint) return null;
-  const bb = b.footprint.boundingBox; if (!bb) return null;
-  const ox = Math.round(b.x * tilePx - camX - PROP_PAD * tilePx);
-  const oy = Math.round(b.y * tilePx - camY - PROP_PAD * tilePx);
-  const w = Math.ceil((bb.w + 2 * PROP_PAD) * tilePx);
-  const h = Math.ceil((bb.h + PROP_PAD + PROP_PAD_BOTTOM) * tilePx);
+export function drawBuildingDynamicInto(b, camX, camY, tilePx) {
+  const wantWalls = renderOn('walls'), wantProps = renderOn('attachments');
+  if ((!wantWalls && !wantProps) || !b || !b.footprint) return null;
+  const fp = b.footprint, bb = fp.boundingBox; if (!bb) return null;
+  const t = tilePx;
+  const stories = Math.max(1, buildingFloors(b));
+  const wHt = WALL_CONFIG.wallHeight, WY = WALL_CONFIG.wallYOffset; // storey height (tiles) + groundline offset
+  // Vertical span (world tiles): the walls rise `stories*wHt` above EACH south run's groundline; door + props
+  // hang within/below them. Cover the highest wall top to below the lowest groundline (handles stepped runs),
+  // then pad. This is storey-bounded (NOT footprint-depth bounded) so the per-frame upload stays small.
+  const runs = southRuns(fp);
+  let topTile = b.y + bb.h - stories * wHt, botTile = b.y + bb.h; // sane default for a degenerate footprint
+  if (runs.length) {
+    topTile = Infinity; botTile = -Infinity;
+    for (const r of runs) {
+      const gLine = b.y + r.y + 1 + WY;
+      if (gLine - stories * wHt < topTile) topTile = gLine - stories * wHt;
+      if (gLine > botTile) botTile = gLine;
+    }
+  }
+  topTile -= PROP_PAD; botTile += PROP_PAD_BOTTOM;
+  const ox = Math.round(b.x * t - camX - PROP_PAD * t);
+  const oy = Math.round(topTile * t - camY);
+  const w = Math.ceil((bb.w + 2 * PROP_PAD) * t);
+  const h = Math.ceil((botTile - topTile) * t);
   if (w <= 0 || h <= 0 || w > 4096 || h > 4096) return null;
   if (!_bpCv) {
     _bpCv = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(w, h)
@@ -756,7 +776,10 @@ export function drawBuildingPropsInto(b, camX, camY, tilePx) {
   const o = _bpCx; if (!o) return null;
   o.setTransform(1, 0, 0, 1, 0, 0); o.globalCompositeOperation = 'source-over';
   o.clearRect(0, 0, w, h); o.imageSmoothingEnabled = false;
-  // Shift the camera by the local origin so this building's screen-space props land inside the local canvas.
-  try { drawD3Props(o, b, camX + ox, camY + oy, tilePx, w, h, 'all'); } catch { /* skip */ }
+  // Shift the camera by the local origin so this building's screen-space draws land inside the local canvas.
+  let drew = false;
+  if (wantWalls) { try { if (drawDoorsLive(o, b, camX + ox, camY + oy, t, w, h)) drew = true; } catch { /* skip */ } }
+  if (wantProps) { try { drawD3Props(o, b, camX + ox, camY + oy, t, w, h, 'all'); drew = true; } catch { /* skip */ } }
+  if (!drew) return null; // nothing dynamic this frame (door closed, props off) → skip the quad
   return { canvas: _bpCv, sx: ox, sy: oy, w, h };
 }
