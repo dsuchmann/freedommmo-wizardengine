@@ -12,6 +12,15 @@
 //
 // Pure (no DOM), unit-tested. A vine point is { cxLocal, v } where v = height in STOREY-BANDS (0 = wall base,
 // `stories` = eave); project it with the SAME storey-stack as a socket: projectSocket(b,{runY,cxLocal,v,floor:0},…).
+//
+// DRAW ORDER (locked for the render step, user 2026-06-26): the vine clings to the WALL, so the static kit
+// (root_base + segment + fork) BAKES INTO the building silhouette in the BEFORE-roof pass of
+// building-occluder.drawBuildingTextured() — right after the D2 growth pass, before drawRoof() — so (a) the roof
+// EAVE occludes the vine top (the climb caps at v≤stories, the eave, so it never paints over the roof), (b) the
+// vine is part of the depth-sorted cached sprite (player/other buildings sort correctly), and (c) the LIVE D3
+// props (lanterns/signs, drawn as the dynamic overlay AFTER the sprite) sit IN FRONT of the vine — correct for a
+// fixture mounted over ivy. The one animating piece (ivy_leaf_cluster's gentle leaf flutter) rides the dynamic
+// layer / a small shader perturbation, NOT the bake (a baked leaf would freeze) — deferred to the anim step.
 import { buildingFloors } from '../building-shadow.js';
 import { southRuns } from '../building-tiles.js';
 import { rand2 } from '../../core/random.js';
@@ -27,10 +36,14 @@ export const VINE_RULES = {
   minStrip: 0.7,   // a climbable bare strip must be at least this wide to host a vine root
   edge: 0.15,      // keep the root off the very wall corner
   maxRoots: 3,     // manifest: 0–3 roots per wall surface (run)
-  rootChance: 0.5, // per clear strip: chance a vine roots there (× abandonBoost). PROOF default is generous so
-                   // the placement is visible; shipped density is ~0.2 ordinary, ~0.85 for the abandoned role.
+  buildingChance: 0.15, // per-BUILDING gate: only ~10–20% of buildings EVER carry a vine (user 2026-06-26:
+                   // selective, NOT every building). × abandonBoost for the overgrown role. The proof overlay
+                   // cranks this (and rootChance) to 1 so vines are visible everywhere for testing.
+  rootChance: 0.6, // per clear strip WITHIN a vine-bearing building: chance a vine roots there (× abandonBoost).
   capMin: 0.55, capSpan: 0.45, // climb height = (capMin + capSpan·rand)·stories per root (age honestly absent)
-  meanderAmp: 0.3, // max horizontal wander of the stem (tiles), further bounded by the strip width
+  meanderAmp: 0.3, // base horizontal wander of a stem (tiles), scaled by complexity + bounded by strip width
+  maxDepth: 2,     // recursion depth of the branch tree (0=main stem, 1=branch, 2=twig) → fractal complexity
+  maxForks: 3,     // forks a branch can spawn at depth 0 (fewer deeper); actual count scales with complexity
 };
 
 // Merge sorted [a,b] intervals into non-overlapping spans.
@@ -45,16 +58,21 @@ function mergeIntervals(iv) {
   return out;
 }
 
-/** Climbing-vine splines for a building. Returns [{ runY, rootX, pts:[{cxLocal,v}] }] in building-local terms.
- *  Each vine roots at the wall base inside a BARE strip (clear of door/window columns) and climbs, meandering
- *  within that strip (so the stem never crosses an aperture), up to a per-root height cap.
- *  opts: { rules?: Partial<VINE_RULES>, abandonBoost?: number }. */
+/** Climbing-vine splines for a building. Returns
+ *    [{ runY, rootX, complexity, branches: [{ pts:[{cxLocal,v}], depth }] }]
+ *  in building-local terms. Each vine roots at the wall base inside a BARE strip (clear of door/window
+ *  columns) and grows a BRANCH TREE up the wall: a main stem plus 0..N recursive forks. A per-vine
+ *  `complexity` (0..1) drives meander amplitude + fork count + (downstream) leaf density, so the field spans
+ *  SIMPLE single stems → LUSH fractal vines. Every branch is clamped inside its strip → the whole organism
+ *  avoids apertures by construction. opts: { rules?: Partial<VINE_RULES>, abandonBoost?: number }. */
 export function buildVineSplines(b, opts = {}) {
   const fp = b && b.footprint; if (!fp) return [];
   const runs = southRuns(fp); if (!runs.length) return [];
   const stories = Math.max(1, buildingFloors(b));
   const R = { ...VINE_RULES, ...(opts.rules || {}) };
   const boost = opts.abandonBoost || 1; // abandoned/overgrown role turns the field up (D7); 1× until that role exists
+  // PER-BUILDING gate FIRST — only ~buildingChance of buildings ever carry a vine (selective, not every wall).
+  if (rand2(b.x | 0, b.y | 0, 0xD2A0) > Math.min(1, R.buildingChance * boost)) return [];
   const splines = [];
   for (const r of runs) {
     // Blocked x-columns within this run (doors + windows), merged.
@@ -73,24 +91,44 @@ export function buildVineSplines(b, opts = {}) {
     let rooted = 0;
     for (let si = 0; si < wide.length && rooted < R.maxRoots; si++) {
       const [a, c] = wide[si];
-      const seed = rand2((b.x + r.x0 + si * 7) | 0, (b.y + r.y) | 0, 0xD2A1);
+      const sd = (salt) => rand2((b.x + r.x0 + si * 7) | 0, (b.y + r.y) | 0, salt);
+      const seed = sd(0xD2A1);
       if (seed > Math.min(1, R.rootChance * boost)) continue;
-      const seed2 = rand2((b.x + r.x0 + si * 7) | 0, (b.y + r.y + 13) | 0, 0xD2A2);
+      const seed2 = sd(0xD2A2);
+      const complexity = sd(0xD2A3);          // 0=simple single stem … 1=lush fractal
       const width = c - a;
-      const rootX = (a + c) / 2 + (seed2 - 0.5) * Math.max(0, width - R.minStrip);
-      const amp = Math.min(R.meanderAmp, Math.max(0, (width - 0.4) / 2));
+      const clampX = (x) => Math.max(a + 0.1, Math.min(c - 0.1, x));
+      const rootX = clampX((a + c) / 2 + (seed2 - 0.5) * Math.max(0, width - R.minStrip));
+      const ampBase = Math.min(R.meanderAmp * (0.45 + complexity), Math.max(0.04, (width - 0.4) / 2));
       const top = (R.capMin + R.capSpan * seed2) * stories;
-      const N = Math.max(8, Math.round(top * 6)); // ~6 samples per storey-band
-      const phase = seed * 6.2832;
-      const pts = [];
-      for (let i = 0; i <= N; i++) {
-        const v = (top * i) / N;
-        // Organic horizontal wander (two octaves), CLAMPED into the strip so the stem never crosses an aperture.
-        let cx = rootX + amp * Math.sin(v * 2.1 + phase) + amp * 0.4 * Math.sin(v * 5.3 + phase * 1.7);
-        cx = Math.max(a + 0.1, Math.min(c - 0.1, cx));
-        pts.push({ cxLocal: cx, v });
-      }
-      splines.push({ runY: r.y, rootX, pts });
+      const branches = [];
+
+      // Grow one branch from (x0,v0) up to vTop, meandering; then spawn forks (recursive → fractal).
+      const grow = (x0, v0, vTop, depth, gseed) => {
+        const span = Math.max(0.15, vTop - v0);
+        const N = Math.max(4, Math.round(span * 6));               // ~6 samples per storey-band
+        const phase = gseed * 6.2832;
+        const amp = ampBase * (1 - depth * 0.3);                   // twigs wander less
+        const drift = (gseed - 0.5) * ampBase * 1.2;               // a fork leans away from its parent
+        const pts = [];
+        for (let i = 0; i <= N; i++) {
+          const v = v0 + (span * i) / N;
+          const x = clampX(x0 + drift * (i / N) + amp * Math.sin(v * 2.1 + phase) + amp * 0.4 * Math.sin(v * 5.3 + phase * 1.7));
+          pts.push({ cxLocal: x, v });
+        }
+        branches.push({ pts, depth });
+        if (depth >= R.maxDepth) return;
+        const nForks = Math.floor(complexity * (R.maxForks - depth));   // lush → more forks, fewer deeper
+        for (let k = 0; k < nForks; k++) {
+          const fseed = rand2((b.x + r.x0 + si * 7) | 0, (b.y + r.y + depth * 31 + k * 9 + 1) | 0, 0xD2B0);
+          const fv = v0 + span * (0.25 + 0.55 * fseed);                 // fork point along the parent
+          const fx = clampX(x0 + drift * ((fv - v0) / span));
+          const childTop = Math.min(stories, fv + (vTop - fv) * (0.5 + 0.5 * fseed) + 0.3); // climbs on, maybe past
+          grow(fx, fv, childTop, depth + 1, fseed * 7.31 + 0.13);
+        }
+      };
+      grow(rootX, 0, top, 0, seed);
+      splines.push({ runY: r.y, rootX, complexity, branches });
       rooted++;
     }
   }
