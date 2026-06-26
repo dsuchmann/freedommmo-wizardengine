@@ -31,6 +31,7 @@
 
 import { rand2, lerp } from '../../core/random.js';
 import { getWorldSeed } from '../../core/world-seed.js';
+import { columnMask } from './surface-noise.js';
 
 const SALT = 0xD1;           // D1 dressing channel (distinct from D0's 0xD0 and the F-field salts)
 const DISREPAIR_SKEW = 4;    // power-skew on the per-building disrepair hash: higher → fewer worn buildings
@@ -141,68 +142,8 @@ function makeCanvas(w, h) {
   return null;
 }
 
-// --- Non-tiling world-coordinate value noise (period ~2^32 px → never visibly repeats) -----------
-// Feature size = cellPx (world px between lattice points). No wrap/modulo, so adjacent buildings sample
-// disjoint coordinate ranges → each reads as a unique fingerprint with no within-wall repeat.
-function worldNoise(x, y, cellPx, salt, seed) {
-  const fx = x / cellPx, fy = y / cellPx;
-  const x0 = Math.floor(fx), y0 = Math.floor(fy);
-  const tx = fx - x0, ty = fy - y0;
-  const sx = tx * tx * (3 - 2 * tx), sy = ty * ty * (3 - 2 * ty);
-  const a = rand2(x0, y0, salt, seed), b = rand2(x0 + 1, y0, salt, seed);
-  const c = rand2(x0, y0 + 1, salt, seed), d = rand2(x0 + 1, y0 + 1, salt, seed);
-  return lerp(lerp(a, b, sx), lerp(c, d, sx), sy);
-}
-const DMG_CELLS = [64, 32, 16, 8, 4]; // octave feature sizes in world px (coarse→fine) — keeps the old look
-function worldFbm(x, y, salt, seed = 0) {
-  let v = 0, amp = 0.5, norm = 0;
-  for (let o = 0; o < DMG_CELLS.length; o++) { v += worldNoise(x, y, DMG_CELLS[o], salt + o * 101, seed) * amp; norm += amp; amp *= 0.5; }
-  return norm > 0 ? v / norm : v;
-}
-// ridged noise in [0,1] sharpened toward 1 at fbm crossings → thin valleys read as fracture lines.
-function ridge(x, y, salt, seed) {
-  const n = worldFbm(x, y, salt, seed);
-  const r = 1 - Math.abs(2 * n - 1);  // peak where n≈0.5
-  return r * r * r;                    // sharpen → thin ridges
-}
-
-// Per-COLUMN alpha mask, sampled from non-tiling world noise at ABSOLUTE world px (wx0,wy0 = the column's
-// top-left in world px) and cached by world position (terrain/noise never changes). White RGB, alpha =
-// shape; recolored/carved at paint time. The cache is config-INDEPENDENT (strength/age/disrepair only scale
-// intensity at blit), so tuner edits never invalidate it. Bounded with one-at-a-time LRU eviction (Map
-// preserves insertion order → drop the oldest) so a dense town never triggers a wholesale rebuild hitch.
-const _maskCache = new Map();
-const MASK_CAP = 3000;
-function columnMask(kind, wx0, wy0, w, h, seed) {
-  const key = kind + ':' + wx0 + ':' + wy0 + ':' + w + ':' + h + ':' + seed;
-  let cv = _maskCache.get(key);
-  if (cv) { _maskCache.delete(key); _maskCache.set(key, cv); return cv; } // bump to MRU
-  cv = makeCanvas(w, h); if (!cv) return null;
-  const cx = cv.getContext('2d'); if (!cx || typeof cx.createImageData !== 'function') return null;
-  const id = cx.createImageData(w, h);
-  for (let ly = 0; ly < h; ly++) {
-    for (let lx = 0; lx < w; lx++) {
-      const wx = wx0 + lx, wy = wy0 + ly, i = (ly * w + lx) * 4;
-      let a;
-      if (kind === 'crack') {
-        const r = ridge(wx, wy, 0xC1 + seed, seed);
-        a = r > 0.72 ? (r - 0.72) / 0.28 : 0;                 // only the sharpest ridges survive → sparse lines
-      } else if (kind === 'streak') {
-        // vertical channels: a per-WORLD-COLUMN threshold (constant down y → a streak), broken up by fine noise
-        const col = rand2(wx, 0, 0xC3 + seed, seed);
-        const colMask = col > 0.78 ? (col - 0.78) / 0.22 : 0; // ~22% of world columns carry a streak
-        a = colMask * (0.55 + 0.45 * worldFbm(wx, wy * 0.5, 0xC4 + seed, seed));
-      } else { // 'blotch' — continuous patchy coverage (denser where noise peaks)
-        a = Math.pow(worldFbm(wx, wy, 0xC2 + seed, seed), 2.0);
-      }
-      id.data[i] = 255; id.data[i + 1] = 255; id.data[i + 2] = 255; id.data[i + 3] = Math.round(255 * clamp01(a));
-    }
-  }
-  cx.putImageData(id, 0, 0);
-  if (_maskCache.size >= MASK_CAP) _maskCache.delete(_maskCache.keys().next().value); // evict oldest
-  _maskCache.set(key, cv);
-  return cv;
-}
+// Non-tiling world-noise + the per-column mask cache now live in ./surface-noise.js (shared with D2 growth
+// so neither field can regress to a tiled, repeating motif — the D1 lesson). columnMask(kind, wx0,wy0,w,h,seed).
 
 // Reused stamp canvas (grow-only) where a mask is carved + tinted before one blit.
 let _stamp = null, _stampCtx = null;

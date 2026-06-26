@@ -97,12 +97,14 @@ import('./dev/dev-hud.js').then(m => {
   import('./dev/field-tuner.js').then(f => f.initFieldTuner());           // "Fields" tab (+ applies field tuning)
   import('./dev/weathering-tuner.js').then(w => w.initWeatheringTuner()); // "Weathering" tab
   import('./dev/damage-tuner.js').then(d => d.initDamageTuner());         // "Damage" tab (D1)
+  import('./dev/growth-tuner.js').then(g => g.initGrowthTuner());         // "Growth" tab (D2)
 });
 const weather = new WeatherSystem(lighting);
 const overmap = new OvermapController(overmapCanvas, player, chunks);
 const camera = new Camera();
 window._camera = camera; // test/dev hook: set zoom via manualZoom
 const perf = new PerformanceMonitor();
+window._perf = perf; // dev hook: read fps / updateMs / drawMs split live from the console
 
 // ---- Sim process connection (honest-absence: no-sim path changes ZERO behaviour) ----
 const simWorldState = new SimWorldState();

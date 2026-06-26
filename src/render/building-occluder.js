@@ -24,6 +24,7 @@ import { renderOn } from './building-render-flags.js';
 import { paintWeatheredColumn } from './dressing/d0-weathering.js';
 import { paintDamagedColumn } from './dressing/d1-damage.js';
 import { drawD1Chips } from './dressing/d1-chips.js';
+import { paintGrowthColumn, isStoneSlug } from './dressing/d2-growth.js';
 import { isWaterTile } from '../../sim/world/buildings/terrain-suitability.js';
 import { drawD3Props } from './dressing/d3-props.js';
 
@@ -580,6 +581,39 @@ function drawDamagePass(ctx, b, camX, camY, tilePx, w, h) {
   }
 }
 
+// D2 SURFACE-GROWTH post-pass — paint procedural moss + lichen over the SAME south-perimeter wall columns,
+// AFTER weathering+damage (growth colonises the aged surface). Mechanism A → GL present pass. Honest drivers:
+// lichen = stable per-surface random + mild wetness, boosted on stone hosts; moss = wetness (biome + water
+// proximity), bottom-weighted, lush only in wet biomes (the sunny south face stays modest).
+function drawGrowthPass(ctx, b, camX, camY, tilePx, w, h) {
+  if (!renderOn('growth')) return;
+  const fp = b && b.footprint, sections = (fp && fp.sections) || [];
+  if (!sections.length) return;
+  const t = Math.round(tilePx);
+  const wH = Math.round(tilePx * WALL_CONFIG.wallHeight);
+  const WY = WALL_CONFIG.wallYOffset;
+  const stories = buildingFloors(b);
+  const stone = isStoneSlug(materialOf(b) || b.wallSlug || '');
+  const waterProximity = buildingWaterProximity(b);
+  const tsy = (wy) => Math.round(wy * tilePx - camY);
+  const floorSet = new Set();
+  for (const s of sections) for (let dy = 0; dy < s.h; dy++) for (let dx = 0; dx < s.w; dx++) floorSet.add((s.x0 + dx) + ',' + (s.y0 + dy));
+  for (const s of sections) {
+    const fbY = b.y + s.y0 + s.h;
+    for (let dx = 0; dx < s.w; dx++) {
+      const lx = s.x0 + dx;
+      if (floorSet.has(lx + ',' + (s.y0 + s.h))) continue; // south neighbour inside → not a south face
+      const ex = tileExtent(b.x + lx, tilePx, camX, 1);
+      const groundTop = tsy(fbY) - wH + Math.round(t * WY);
+      const colTop = groundTop - (stories - 1) * wH;
+      const colH = stories * wH;
+      if (ex.dx + ex.dw < 0 || ex.dx > w || colTop + colH < 0 || colTop > h) continue;
+      paintGrowthColumn(ctx, { dx: ex.dx, top: colTop, dw: ex.dw, colH, tilePx },
+        { wx: b.x + lx, wy: fbY }, { biome: b.biome, bx: b.x | 0, by: b.y | 0, stone, waterProximity });
+    }
+  }
+}
+
 let _cv = null, _ox = null; // persistent offscreen authoring canvas
 
 /** Build the occlusion overlay bitmap (or null if nothing in front of the player). The caller
@@ -656,7 +690,7 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   const drawProps = () => { if (renderOn('attachments')) { try { drawD3Props(ctx, b, camX, camY, tilePx, w, h, 'all'); } catch { /* skip props */ } } };
   // D1 sprite-chips (plank gaps / patches) — gated with the rest of D1 damage; before the roof like the walls.
   const drawChips = () => { if (renderOn('damage')) { try { drawD1Chips(ctx, b, camX, camY, tilePx, w, h); } catch { /* skip chips */ } } };
-  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h); drawDamagePass(ctx, b, camX, camY, tilePx, w, h); drawChips(); drawProps(); drawRoof(); return true; }
+  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h); drawDamagePass(ctx, b, camX, camY, tilePx, w, h); drawGrowthPass(ctx, b, camX, camY, tilePx, w, h); drawChips(); drawProps(); drawRoof(); return true; }
   // A grassland TILE-CORPUS building whose tiles aren't loaded yet must NOT fall to the legacy
   // strip path — drawWalls would stamp a stone_brick 32px strip STRETCHED over the footprint (the
   // melted/stretched single-building artifact). Stay invisible this frame; it flips to mirror-tiled
@@ -667,6 +701,7 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   drawWalls(ctx, b, camX, camY, tilePx, w, h);
   drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h);
   drawDamagePass(ctx, b, camX, camY, tilePx, w, h);
+  drawGrowthPass(ctx, b, camX, camY, tilePx, w, h);
   drawChips();
   drawProps();
   drawRoof();
