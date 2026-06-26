@@ -66,6 +66,35 @@ function doorOpenAmount(b, d) {
   const R_OPEN = 4.0, R_FULL = 1.5;   // starts opening at 4 tiles, fully open within 1.5
   return Math.max(0, Math.min(1, (R_OPEN - dist) / (R_OPEN - R_FULL)));
 }
+// STATIC-DOOR BAKE MODE: the building sprite cache bakes each building's silhouette ONCE and never rebuilds
+// (perf: no per-frame full-screen repaint). A proximity door swing is per-frame, so it MUST NOT bake into that
+// static sprite — it would freeze at the bake-time frame (closed, since the building is first seen far away).
+// So the cache wraps its bake in setStaticDoorBake(true): the door bakes CLOSED, and the live frame is drawn
+// separately on top each frame as its own GL sprite (building-door-overlay.js). The non-cached A/B paths
+// (building-layer / building-depth direct calls) leave this false and keep their inline per-frame door swing.
+let _staticDoorBake = false;
+export function setStaticDoorBake(on) { _staticDoorBake = !!on; }
+// Live door swing frame index [0..ANIM_FRAMES-1] for door `d` of building `b`. 0 in static-bake mode (closed)
+// or when the player position is unknown. Exported pure so the door-overlay + tests share ONE definition.
+export function doorFrameIndex(b, d) {
+  if (_staticDoorBake) return 0;
+  return Math.round(doorOpenAmount(b, d) * (ANIM_FRAMES - 1));
+}
+// Clamp an aperture's [cx±half] span inside the run [left,right] — SHIFT inward when there's room, else clip.
+// Pure: the single source of truth for door/window placement, shared by drawAperture (bake) AND doorAnimRects
+// (the live door-overlay sprite), so the overlay lands EXACTLY where the baked closed door was. Returns the
+// final centre + the clipped visible edges {cx, cl, cr} (cr<=cl ⇒ nothing visible).
+export function aperturePlacement(cx, clipW, left, right) {
+  const half = clipW / 2;
+  if (left != null && right != null && right - left >= clipW) {
+    if (cx - half < left) cx = left + half;
+    else if (cx + half > right) cx = right - half;
+  }
+  let cl = cx - half, cr = cx + half;
+  if (left != null && cl < left) cl = left;
+  if (right != null && cr > right) cr = right;
+  return { cx, cl, cr };
+}
 
 // Resolve a building to its tile-corpus FOLDER name, or null if its biome isn't tiled (→ legacy wall path).
 export function materialOf(b) {
@@ -82,6 +111,30 @@ export function isTiledBuilding(b) {
   return !!materialOf(b);
 }
 export function tileMaterialReady(b) { const m = materialOf(b); return !!(m && img(getDIR(b && b.biome) + m + '/ground_plain__v0.png')); }
+// FULL readiness: every tile this building will actually DRAW is loaded — base + end corners, the upper-storey
+// tile (if multi-storey), and the door/window state tiles (only if the footprint HAS doors/windows). Mirrors
+// the img() lookups in drawBuildingTiles so it can't disagree. The building sprite cache gates on this: it must
+// NOT freeze a half-loaded bake (walls before the windows/doors/roof finish async-loading) into a permanent
+// walls-only sprite — it re-bakes until this returns true. (Optional dressing PROPS are intentionally excluded:
+// a 404/absent prop variant must not block the structural bake forever.)
+export function tileImagesReady(b) {
+  const mat = materialOf(b); if (!mat) return false;
+  const D = getDIR(b && b.biome);
+  const has = (name) => !!img(D + mat + '/' + name);
+  if (!has('ground_plain__v0.png')) return false;
+  const leftC = has('ground_left_corner__v0.png') || has('left_corner__v0.png');
+  const rightC = has('ground_right_corner__v0.png') || has('right_corner__v0.png');
+  if (!leftC || !rightC) return false;
+  const fp = (b && b.footprint) || {};
+  const stories = Math.max(1, buildingFloors(b));
+  if (stories > 1 && !has('upper_plain__v0.png')) return false;
+  if ((fp.doors || []).length && !has('ground_door__v0.png')) return false;
+  if ((fp.windows || []).length) {
+    if (!has('ground_window__v0.png')) return false;
+    if (stories > 1 && !has('upper_window__v0.png')) return false;
+  }
+  return true;
+}
 // The plain-wall + window tiles for this building's material, or null if its biome isn't tiled. The
 // dressing socket-index diffs these two (the window is a state OF the plain wall) to measure the opening.
 export function windowTilePaths(b) {
@@ -153,12 +206,19 @@ export function drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h) {
   const fp = b.footprint;
   const runs = southRuns(fp);                                       // true outline → one wall per front run
   if (!runs.length) return true;
+  const fpSet = footprintSet(fp);                                   // membership test: a run-end abutting ANOTHER footprint tile is an internal junction (tile seamlessly), not a real building edge (finished corner)
+  const fpMinY = (fp.sections && fp.sections.length) ? Math.min(...fp.sections.map((s) => s.y0)) : 0;
+  // A run-end is a REAL building edge (→ finished, alpha-trimmed corner) only if the column just OUTSIDE it has
+  // NO footprint tile at the run's row OR ANY row NORTH of it. At a +/T/L junction the flanking section sits at a
+  // DIFFERENT (higher) row, so a same-row check misses it and the transparent corner reveals terrain = a "pillar
+  // not connected" seam. Walking up to fpMinY catches it → use the plain base there so the wall connects. (user 2026-06-25)
+  const wallContinues = (col, y) => { for (let yy = fpMinY; yy <= y; yy++) if (fpSet.has(col + ',' + yy)) return true; return false; };
   const runGroundY = (y) => Math.round((b.y + y + 1) * t - camY) + Math.round(t * WY);
 
   ctx.imageSmoothingEnabled = false;
   // One FRONT-WALL SEGMENT per south-facing run, so L/T/round/courtyard footprints draw their real stepped
   // outline (mirror-tiled wall + finished end corners), not one bounding-box rectangle over empty notches.
-  const drawRun = (left, right, groundY) => {
+  const drawRun = (left, right, groundY, leftEdge, rightEdge) => {
     for (let st = 0; st < stories; st++) {
       const tile = st === 0 ? base : upper;
       const top = groundY - (st + 1) * wH;
@@ -168,8 +228,12 @@ export function drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h) {
       // terrain shows past the building edge instead of a black outline). If the base wall were drawn UNDER
       // the corner, that opaque base would bleed through the corner's transparent edge (the "other texture
       // behind the column edge" bug). So inset the base by the corner width on each capped end.
-      const lc = st === 0 ? leftC : upperLeftC;
-      const rc = st === 0 ? rightC : upperRightC;
+      // Finished END corner ONLY where the run-end is a REAL building edge (abuts landscape). At an INTERNAL
+      // junction (a +/T/L footprint where this run-end meets another section), the corner's alpha-trimmed outer
+      // edge would reveal terrain = a "disconnected pillar" seam — so use NO corner there and let the plain base
+      // tile fill flush to the boundary, connecting seamlessly into the adjacent section. (user 2026-06-25)
+      const lc = leftEdge ? (st === 0 ? leftC : upperLeftC) : null;
+      const rc = rightEdge ? (st === 0 ? rightC : upperRightC) : null;
       const cw = Math.max(1, Math.min(segW, (right - left) / 2));
       const bL = lc ? left + cw : left;   // base starts after the left corner
       const bR = rc ? right - cw : right;  // base ends before the right corner
@@ -195,7 +259,13 @@ export function drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h) {
       if (rc) { const sw = rc.naturalWidth * (cw / segW); ctx.drawImage(rc, rc.naturalWidth - sw, 0, sw, rc.naturalHeight, right - cw, top, cw, wH); }
     }
   };
-  for (const r of runs) drawRun(Math.round((b.x + r.x0) * t - camX), Math.round((b.x + r.x1) * t - camX), runGroundY(r.y));
+  for (const r of runs) {
+    // A run covers tiles x0..x1-1; its WEST neighbour is x0-1, its EAST neighbour is x1. If that neighbour tile
+    // is in the footprint, this end butts another section (internal junction → plain wall); else it's a real edge.
+    const leftEdge = !wallContinues(r.x0 - 1, r.y);
+    const rightEdge = !wallContinues(r.x1, r.y);
+    drawRun(Math.round((b.x + r.x0) * t - camX), Math.round((b.x + r.x1) * t - camX), runGroundY(r.y), leftEdge, rightEdge);
+  }
 
   // PER-MATERIAL APERTURES — drawn on the run at the aperture's row, at that run's ground line (so apertures
   // sit on the correct stepped wall, not the bbox). Real generated state tiles, clipped to their span.
@@ -207,18 +277,11 @@ export function drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h) {
   // clip-clamp that cut the door off when it landed near the wall end.
   const drawAperture = (tile, cx, top, spanTiles, left, right) => {
     const clipW = Math.round(spanTiles * t);
-    const half = clipW / 2;
-    if (left != null && right != null && right - left >= clipW) {
-      if (cx - half < left) cx = left + half;          // door near the WEST end → nudge east so it fits
-      else if (cx + half > right) cx = right - half;   // door near the EAST end → nudge west so it fits
-    }
-    let cl = cx - half, cr = cx + half;
-    if (left != null && cl < left) cl = left;
-    if (right != null && cr > right) cr = right;
-    if (cr <= cl) return;
+    const p = aperturePlacement(cx, clipW, left, right);
+    if (p.cr <= p.cl) return;
     ctx.save();
-    ctx.beginPath(); ctx.rect(cl, top, cr - cl, wH); ctx.clip();
-    ctx.drawImage(tile, 0, 0, tile.naturalWidth, tile.naturalHeight, cx - segW / 2, top, segW, wH);
+    ctx.beginPath(); ctx.rect(p.cl, top, p.cr - p.cl, wH); ctx.clip();
+    ctx.drawImage(tile, 0, 0, tile.naturalWidth, tile.naturalHeight, p.cx - segW / 2, top, segW, wH);
     ctx.restore();
   };
   const runEdges = (r) => ({ left: Math.round((b.x + r.x0) * t - camX), right: Math.round((b.x + r.x1) * t - camX) });
@@ -228,7 +291,7 @@ export function drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h) {
     const r = runFor(d.x, d.y);
     const gY = runGroundY(r.y);
     const { left, right } = runEdges(r);
-    const fi = Math.round(doorOpenAmount(b, d) * (ANIM_FRAMES - 1));
+    const fi = doorFrameIndex(b, d);                    // 0 (closed) in static-bake mode → overlay animates on top
     const frame = (fi > 0 && animFrame(b.biome, mat, 'door', fi)) || doorTile;
     drawAperture(frame, Math.round((b.x + d.x + 0.5) * t - camX), gY - wH, 2.6, left, right); // door span ~2.5 tiles, clamped to the run
   }
@@ -241,4 +304,45 @@ export function drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h) {
     for (let st = 0; st < stories; st++) { const wt = st === 0 ? winTile : upperWinTile; if (wt) drawAperture(wt, cx, gY - (st + 1) * wH, 2.0, left, right); }
   }
   return true;
+}
+
+// LIVE DOOR-OVERLAY rects — the per-door geometry the door-overlay sprite (building-door-overlay.js) needs to
+// draw the CURRENT swing frame on top of the cached (closed-door) static building. Mirrors the door block above
+// + the drawAperture clamp EXACTLY (via the shared aperturePlacement) so the overlay registers on the baked
+// door. Returns [] when not a tiled building, it has no doors, the base/frame isn't loaded yet, or every door
+// is CLOSED (fi==0 ⇒ the baked closed door already reads → no overlay). Each entry is in SCREEN px at the
+// current camera/zoom: { idx, fi, img, cl, cr, top, wH, srcX, srcW, srcH }.
+export function doorAnimRects(b, camX, camY, tilePx) {
+  const fp = b && b.footprint; if (!fp || !(fp.doors && fp.doors.length)) return [];
+  const mat = materialOf(b); if (!mat) return [];
+  const D = getDIR(b.biome);
+  if (!img(D + mat + '/ground_door__v0.png')) return [];           // base door tile not loaded → nothing to overlay yet
+  const t = tilePx;
+  const wH = Math.round(t * WALL_CONFIG.wallHeight);
+  const WY = WALL_CONFIG.wallYOffset;
+  const segW = Math.round(4 * t);
+  const runs = southRuns(fp); if (!runs.length) return [];
+  const runFor = (ax, ay) => runs.find(r => r.y === ay && ax >= r.x0 && ax < r.x1) || runs[runs.length - 1];
+  const out = [];
+  let di = 0;
+  for (const d of fp.doors) {
+    const idx = di++;
+    const fi = doorFrameIndex(b, d);
+    if (fi <= 0) continue;                                          // closed → baked door reads; no overlay
+    const frame = animFrame(b.biome, mat, 'door', fi); if (!frame) continue; // that frame not loaded → baked closed door shows
+    const r = runFor(d.x, d.y);
+    const gY = Math.round((b.y + r.y + 1) * t - camY) + Math.round(t * WY);
+    const left = Math.round((b.x + r.x0) * t - camX), right = Math.round((b.x + r.x1) * t - camX);
+    const cx0 = Math.round((b.x + d.x + 0.5) * t - camX);
+    const p = aperturePlacement(cx0, Math.round(2.6 * t), left, right);
+    if (p.cr <= p.cl) continue;
+    const destX0 = p.cx - segW / 2;                                 // where the full 4-tile frame would be drawn
+    const iw = frame.naturalWidth, ih = frame.naturalHeight;
+    out.push({
+      idx, fi, img: frame, cl: p.cl, cr: p.cr, top: gY - wH, wH,
+      srcX: (p.cl - destX0) / segW * iw,                            // sub-rect of the frame revealed by the clip [cl..cr]
+      srcW: (p.cr - p.cl) / segW * iw, srcH: ih,
+    });
+  }
+  return out;
 }
