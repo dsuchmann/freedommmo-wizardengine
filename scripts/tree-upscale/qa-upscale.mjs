@@ -19,9 +19,11 @@ import { loadImage, createCanvas } from '@napi-rs/canvas';
 // ---- tunable thresholds (WHY each is here, not just the number) -------------------------
 const MAX_ALPHA_VALUES = 2;   // 1-bit alpha = at most {0, 255}; the sources are 1-bit, the upscale must stay so.
 const MAX_UNIQUE_RGB   = 160; // pixel-art trees here sit ~19–105 colours; AI-smooth output blows past this with blends.
-const MIN_FLAT_SHARE   = 0.40; // share of orthogonal neighbour PAIRS that are byte-identical. Blocky art is full of
-                               //   flat runs (the known-good 2x-repixel demo measures ~0.70); a gaussian blur makes
-                               //   almost every neighbour differ (~0.15). 0.40 sits cleanly between them.
+const MIN_FLAT_SHARE   = 0.25; // share of orthogonal neighbour PAIRS that are byte-identical. The re-pixel tail
+                               //   already guarantees hard pixels + <=64 colours, so this only needs to catch
+                               //   genuinely-degenerate noise (a gaussian-blurred mush bands to ~0.15). BUSY but
+                               //   crisp sprites (frozen ice/frost/sparkle detail) legitimately sit ~0.30 — 0.40
+                               //   false-failed them. 0.25 passes detailed art, still rejects ~0.15 smear.
                                //   NB: we count equal *pairs*, not "all-4-equal" pixels — at a 2x repixel the interior
                                //   of a 2x2 block shares only 2 of its 4 neighbours, so "all-4-equal" is misleadingly low.
 const MIN_SILHOUETTE_IOU = 0.80; // alpha IoU vs the source point-upscaled to final res — guards shape drift.
