@@ -13,6 +13,7 @@ import { isClaimedAt, f4Placements, f4SpriteUrl, f4AnimUrlBase, f5Placements, f5
 import { tuneSize, tuneBiomeDensity, tuneObjDensity, tuneAnimEnabled, tuneStateWeights, rollWeighted,
   F2_STATE_ORDER, F2_STATE_DEFAULTS } from '../world/field-tuning.js';
 import { coalesceDirty, lowerBound } from './sprite-pool-util.js';
+import { upscaleUrl } from '../world/upscale-manifest.js';
 
 var ANIM_RADIUS = 40; // tiles around player — large enough to cover full screen at any zoom
 var REBUILD_MARGIN = 4; // hysteresis: the pool collects this many extra tiles past the
@@ -373,6 +374,7 @@ function temporalDenoise(animKey) {
 }
 
 function loadFrame(url, frameCount) {
+  url = upscaleUrl(url); // F6 anim: load the @384 frame when one exists (else the 192 source unchanged)
   if (frameCache.has(url)) return frameCache.get(url);
   if (loadingSet.has(url)) return null;
   loadingSet.add(url);
@@ -742,16 +744,19 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
   var f6pls = f6Placements(wx, wy, _claimTileInfo(chunkStore));
   for (var hi = 0; hi < f6pls.length; hi++) {
     var hp = f6pls[hi];
+    // @384 detail upscale (tree-upscale pipeline): if this sprite has one, load it and draw at 2x
+    // (384px native = 12 tiles, full detail). Falls back to the 192 source -> no change for other trees.
+    var _f6url = f6SpriteUrl(hp), _f6up = upscaleUrl(_f6url), _f6big = _f6up !== _f6url;
     f4Blades.push({
       bi: 60 + hi, // distinct trigger-key space (F2 0-19, F5 80+, F4 90+)
       stateUrl: null,
       animUrlBase: (hp.hasAnim && !hp.state
         && tuneAnimEnabled('f6', hp.biome, hp.name, 'wind_sway'))
         ? f6AnimUrlBase(hp) : null,
-      staticUrl: f6SpriteUrl(hp),
+      staticUrl: _f6up,                     // @384 upscale when present, else the 192 source
       isRigid: true,                        // trunk never sway-rotates; wind lives in the frames
       frameCount: 8,                        // W2 tree anims are 8 frames (F2/F4/F5 use the 9-frame default)
-      lifeScale: hp.sizeTiles,              // 192px @ 1.0 -> 6 tiles
+      lifeScale: hp.sizeTiles * (_f6big ? 2 : 1), // upscaled -> 2x so the 384 detail actually shows
       lifeSway: 0,
       baseAngle: 0,
       offUX: hp.ux - 0.5,
