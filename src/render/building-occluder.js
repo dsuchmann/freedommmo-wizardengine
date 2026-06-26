@@ -27,6 +27,8 @@ import { drawD1Chips } from './dressing/d1-chips.js';
 import { paintGrowthColumn, isStoneSlug } from './dressing/d2-growth.js';
 import { isWaterTile } from '../../sim/world/buildings/terrain-suitability.js';
 import { drawD3Props } from './dressing/d3-props.js';
+import { drawVinePass, vineArtReady } from './dressing/vine-render.js';
+import { buildVineSplines } from './dressing/vine-index.js';
 
 // Source rect of the E/W side-face cap. The grassland edge_ew strip is a 32x128 quoin/side-cap;
 // sample its LEFT quoin column (x=0..16) as the true vertical corner post (`isQuoinStrip`) — drawing
@@ -138,6 +140,11 @@ export function buildingBakeState(b) {
       }
     } else {
       complete = !!getWallImg('south_base'); // legacy wall path needs the stone_brick fallback loaded
+    }
+    // D2 vines bake INTO the sprite (before-roof) — don't freeze a vine-bearing building's sprite before its
+    // ivy art has loaded, or the vine would be permanently absent. Wait until the segment art is on disk.
+    if (complete && renderOn('vines')) {
+      try { if (buildVineSplines(b).length && !vineArtReady(b.biome)) complete = false; } catch { /* ignore */ }
     }
   } catch { complete = true; } // never block forever on a predicate error
   return { complete, sig: '' };
@@ -714,7 +721,10 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   // The roof now terminates at the wall top (no south overhang), so wall-mounted props sit cleanly under it.
   // D1 sprite-chips (plank gaps / patches) — gated with the rest of D1 damage; before the roof like the walls.
   const drawChips = () => { if (renderOn('damage')) { try { drawD1Chips(ctx, b, camX, camY, tilePx, w, h); } catch { /* skip chips */ } } };
-  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h); drawDamagePass(ctx, b, camX, camY, tilePx, w, h); drawGrowthPass(ctx, b, camX, camY, tilePx, w, h); drawChips(); drawRoof(); return true; }
+  // D2 PLACED vines climb the wall — baked here (BEFORE the roof) so the eave occludes the top and the static
+  // stem rides the cached sprite. Painted after the D2 coverage growth so ivy sits over moss/lichen.
+  const drawVines = () => { if (renderOn('vines')) { try { drawVinePass(ctx, b, camX, camY, tilePx, w, h); } catch { /* skip vines */ } } };
+  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h); drawDamagePass(ctx, b, camX, camY, tilePx, w, h); drawGrowthPass(ctx, b, camX, camY, tilePx, w, h); drawChips(); drawVines(); drawRoof(); return true; }
   // A grassland TILE-CORPUS building whose tiles aren't loaded yet must NOT fall to the legacy
   // strip path — drawWalls would stamp a stone_brick 32px strip STRETCHED over the footprint (the
   // melted/stretched single-building artifact). Stay invisible this frame; it flips to mirror-tiled
@@ -727,6 +737,7 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   drawDamagePass(ctx, b, camX, camY, tilePx, w, h);
   drawGrowthPass(ctx, b, camX, camY, tilePx, w, h);
   drawChips();
+  drawVines();
   drawRoof();
   return true;
 }

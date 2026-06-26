@@ -67,6 +67,8 @@ export function bumpSpriteFrame() {
 
 /** Drop every cached sprite (e.g. on a material/weather change that should re-bake appearance). */
 export function invalidateBuildingSprites() { _cache.clear(); if (typeof window !== 'undefined' && window._buildingSpriteStats) window._buildingSpriteStats.size = 0; }
+// Dev hook: re-bake all building sprites after a baked-layer tuning change (e.g. window._vines.chance).
+if (typeof window !== 'undefined') window.invalidateBuildingSprites = invalidateBuildingSprites;
 
 /** Tight alpha bounding box of an RGBA buffer, or null if fully transparent. */
 export function alphaBBox(data, W, H) {
