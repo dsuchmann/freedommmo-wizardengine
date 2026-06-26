@@ -61,7 +61,7 @@ const SUBMIT_DELAY = 1500;      // ms between create submissions
 const JOB_TIMEOUT = 1200000;    // 20 min — requeue a stuck job (no try penalty)
 
 // Fixed create params (the pilot-proven recipe)
-const VIEW = "high top-down";
+const VIEW = "side";          // side profile reliably kills the base ground-pad (high top-down re-bakes it)
 const DETAIL = "high detail";
 const SHADING = "detailed shading";
 const OUTLINE = "single color outline";
