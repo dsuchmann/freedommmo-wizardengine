@@ -130,7 +130,12 @@ export function buildingBakeState(b) {
   try {
     if (isTiledBuilding(b)) {
       if (!tileImagesReady(b)) complete = false;
-      else if (renderOn('roof')) { ensureRoof(); complete = !!_roof; } // roof engine still loading → bake again later
+      else if (renderOn('roof')) {
+        ensureRoof();
+        if (!_roof) complete = false;                            // roof ENGINE still loading → bake again later
+        else if (b.roofSlug && !roofTexFor(b)) complete = false; // roof TEXTURE still loading → else it bakes a flat
+                                                                 // procedural base colour ("green roof") and freezes
+      }
     } else {
       complete = !!getWallImg('south_base'); // legacy wall path needs the stone_brick fallback loaded
     }
