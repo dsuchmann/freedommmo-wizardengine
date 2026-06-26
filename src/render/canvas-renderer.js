@@ -15,12 +15,10 @@ import { drawBuildingShadows, buildBuildingShadowBitmap, updateBuildingHeightMas
 import { updateFloorViewTransform } from './floor-view.js';
 import { drawInteriorFloorWorld, drawInteriorWallsWorld, interiorLiftPx, updateInteriorLift } from './interior-renderer.js';
 import { buildInteriorSceneBitmap } from './interior-gl.js';
-import { buildOccluderBitmap, drawBuildingTextured, buildingBakeState, repaintBuildingDoors } from './building-occluder.js';
-import { doorSig } from './building-tiles.js';
+import { buildOccluderBitmap } from './building-occluder.js';
 import { buildDoorLeafBitmap } from './door-leaves.js';
 import { buildBuildingLayerBitmaps } from './building-layer.js';
 import { nearDepthBuildings, renderBuildingSilhouette, tileDepth, DEPTH_SCALE } from './building-depth.js';
-import { getBuildingSprite, spriteKey, bumpSpriteFrame } from './building-sprite-cache.js';
 import { buildSocketOverlayBitmap } from './dressing/socket-overlay.js';
 import { isInside } from './active-interior.js';
 import { initWallTuner, drawWallTuner } from './wall-tuner.js';
@@ -247,7 +245,6 @@ export class CanvasRenderer {
     const sun = lighting.sun();
     this._sun = sun;
     const tilePx = WORLD.tileSize * camera.zoom;
-    bumpSpriteFrame(); // advance the building-sprite-cache LRU clock once per frame
     const focusTile = chunkStore.tileAt(player.x, player.y);
     const glOn = this.useGL && this.glc && this.glc.ok;
     // Stage 3: art-resolution scene pass. The GL scene renders 1:1 with the
@@ -435,17 +432,14 @@ export class CanvasRenderer {
     // (interior layer enabled). With the interior assembly disabled, the interior never draws the
     // player, so keep rendering them here — otherwise the player vanishes inside any building.
     const _interiorDraws = _inside && renderOn('interior');
-    // DEV/QA hook: window._hidePlayer suppresses the player sprite (2D world-layer, GL-atlas, and interior
-    // paths) so a headless render-QA probe can frame a building's wall WITHOUT the avatar in front of it.
-    const _hidePlayer = (typeof window !== 'undefined' && window._hidePlayer);
-    setField2PlayerDraw((_interiorDraws || _hidePlayer) ? function(){} : function(drawCtx) {
+    setField2PlayerDraw(_interiorDraws ? function(){} : function(drawCtx) {
       _self.drawPlayerAt(w / 2, _playerScreenY, camera.zoom, player);
     });
     // In GL mode, also composite the player into a small offscreen canvas so
     // field2 can upload it to the sprite atlas and draw it INSIDE the
     // depth-sorted GL batch — keeping all F2 sprites in one ordering domain
     // (a 2D/GL split pops sprite depth at the split boundary while walking).
-    if (!_inside && glOn && this.glc.spritesOk && !_hidePlayer) {
+    if (!_inside && glOn && this.glc.spritesOk) {
       var PC = 256; // matches glc._playerRegion
       var PBASE = 192; // player baseline row inside the canvas
       if (!this._playerCanvas) {
@@ -535,31 +529,10 @@ export class CanvasRenderer {
         .slice().sort((a, b) => (a.y + a.footprint.boundingBox.h) - (b.y + b.footprint.boundingBox.h)); // farthest-first
       let _wrote2 = false;
       for (const _b of _blds) {
-        // CACHED building-local sprite (built once, reused every frame) instead of rebuilding +
-        // re-uploading a full-screen silhouette per building per frame. The sprite is baked at
-        // _spr.builtTilePx; SCALE the quad to the live tilePx (like terrain chunks) so a zoom gesture is
-        // a free quad-resize, NOT a per-frame rebuild. Anchor offsets scale with it.
-        // Cache bakes once and reuses; buildingBakeState makes it re-bake until the building is fully loaded
-        // (no walls-only freeze) AND whenever the live door swing frame changes (the proximity door is baked
-        // INTO the sprite so it inherits the same weathering/scale/depth — re-baked the ~8 times its frame
-        // steps as the player nears, then frozen again). Closed/far → stable → reused (the perf win).
-        const _spr = getBuildingSprite(_b, tilePx, drawBuildingTextured, buildingBakeState);
-        if (!_spr) continue;
-        const _sc = tilePx / _spr.builtTilePx;
+        const _sil = renderBuildingSilhouette(_b, camX, camY, tilePx, w, h);
+        if (!_sil) continue;
         const _z = tileDepth(_b.y + _b.footprint.boundingBox.h, _refY) * 2 - 1;
-        const _dx = Math.round(_b.x * tilePx - camX - _spr.ax * _sc);
-        const _dy = Math.round(_b.y * tilePx - camY - _spr.ay * _sc);
-        this.glc.drawBuildingSprite(spriteKey(_b), _spr.canvas, _dx, _dy, _spr.w * _sc, _spr.h * _sc, _z);
-        // DOOR SWING — animate WITHOUT a full re-bake: when the door frame changes, repaint ONLY the door
-        // region into the cached canvas (door tile + coverage for its ~3 columns) and re-upload (~few ms vs
-        // ~100ms). Closed/far → sig stable → nothing happens (the steady-state perf win is untouched).
-        if (_spr.complete) {
-          const _ds = doorSig(_b);
-          if (_ds && _spr._doorSig !== _ds) {
-            try { if (repaintBuildingDoors(_spr, _b)) this.glc.reuploadBuildingSprite(spriteKey(_b), _spr.canvas); } catch { /* skip */ }
-            _spr._doorSig = _ds;
-          }
-        }
+        this.glc.drawBuildingColorDepth(_sil, _z);
         _wrote2 = true;
       }
       if (_wrote2) {
@@ -746,10 +719,7 @@ export class CanvasRenderer {
     const drawables = [];
     const overhead = [];
     const playerTile = chunkStore.tileAt(player.x, player.y);
-    // DEV/QA hook: window._hidePlayer suppresses the player sprite + its shadow so a headless render-QA probe
-    // can frame a building's wall WITHOUT the avatar standing in front of it and contaminating pixel samples.
-    // Test-only render gate (same family as _tileWalls/_buildingRender); never set in normal play.
-    if (!(typeof window !== 'undefined' && window._hidePlayer)) drawables.push({
+    drawables.push({
       type: 'player',
       player,
       tile: playerTile,

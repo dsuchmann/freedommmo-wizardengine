@@ -19,13 +19,12 @@ import { getWallImg } from './building-renderer.js';
 import { buildingFloors } from './building-shadow.js';
 import { queryBuildingTile } from './building-tile-query.js';
 import { wallAssetDir, wallPieceFile, roofAssetDir, roofTextureFile, ROOF_FASCIA_FILE } from '../../sim/world/buildings/building-material-registry.js';
-import { drawBuildingTiles, isTiledBuilding, materialOf, tileImagesReady, southRuns, drawDoorsCurrent } from './building-tiles.js';
+import { drawBuildingTiles, isTiledBuilding, materialOf } from './building-tiles.js';
 import { renderOn } from './building-render-flags.js';
 import { paintWeatheredColumn } from './dressing/d0-weathering.js';
 import { paintDamagedColumn } from './dressing/d1-damage.js';
 import { drawD1Chips } from './dressing/d1-chips.js';
 import { paintGrowthColumn, isStoneSlug } from './dressing/d2-growth.js';
-import { getVineSystem, paintVines, VINES } from './dressing/d2-vines.js';
 import { isWaterTile } from '../../sim/world/buildings/terrain-suitability.js';
 import { drawD3Props } from './dressing/d3-props.js';
 
@@ -119,29 +118,6 @@ function ensureRoof() {
   if (_roof || _roofLoading || _roofFailed) return;
   _roofLoading = true;
   import('../../tools/roof/roof-ingame.js').then(m => { _roof = m; }).catch(() => { _roofFailed = true; }).finally(() => { _roofLoading = false; });
-}
-
-// Bake-state for the building sprite cache: { complete, sig }.
-//  • complete — is the TEXTURED silhouette fully renderable RIGHT NOW (every wall/aperture tile loaded AND the
-//    procedural roof engine ready)? The cache re-bakes until this is true so it never freezes a half-loaded
-//    (walls-only, no roof/windows/doors) sprite forever (tiles + roof module load async, so the FIRST drawable
-//    frame is walls-only — that must NOT be the permanent bake). Excludes optional dressing props (a 404/absent
-//    prop must not block the structural bake).
-//  • sig — anything baked-IN that VARIES and must trigger a re-bake when it changes. Currently EMPTY: the only
-//    candidate was the door swing, but a full building re-bake is ~111ms (large building, measured) so an
-//    8-step swing stutters hard — the door is baked CLOSED instead (building-tiles), and a perf-safe swing
-//    needs a region-only update (a focused follow-on), NOT a per-frame full re-bake. Kicks ensureRoof.
-export function buildingBakeState(b) {
-  let complete = true;
-  try {
-    if (isTiledBuilding(b)) {
-      if (!tileImagesReady(b)) complete = false;
-      else if (renderOn('roof')) { ensureRoof(); complete = !!_roof; } // roof engine still loading → bake again later
-    } else {
-      complete = !!getWallImg('south_base'); // legacy wall path needs the stone_brick fallback loaded
-    }
-  } catch { complete = true; } // never block forever on a predicate error
-  return { complete, sig: '' }; // sig stable → a complete building bakes ONCE and is reused (the perf win)
 }
 
 // Lazy biome roof-texture cache so the re-drawn roof gets the SAME ground-skin the worker bakes
@@ -519,7 +495,7 @@ export function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
 // D0 WEATHERING post-pass — tint each exposed SOUTH perimeter wall COLUMN with procedural ground grime +
 // tonal variation. Mechanism A: painted into the silhouette ctx, so it rides the GL present pass (lighting/
 // CRT/day-night) — never a 2D overlay. Walks the same south-perimeter columns as the cob-foundation pass.
-function drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h, colRange) {
+function drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h) {
   if (!renderOn('weathering')) return;
   const fp = b && b.footprint, sections = (fp && fp.sections) || [];
   if (!sections.length) return;
@@ -535,7 +511,6 @@ function drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h, colRange) {
     const lr = s.y0 + s.h - 1, fbY = b.y + s.y0 + s.h;
     for (let dx = 0; dx < s.w; dx++) {
       const lx = s.x0 + dx;
-      if (colRange && (lx < colRange.x0 || lx > colRange.x1)) continue; // door-region repaint: only its columns
       if (floorSet.has(lx + ',' + (lr + 1))) continue; // south neighbour inside → not a south face
       const ex = tileExtent(b.x + lx, tilePx, camX, 1);
       const groundTop = tsy(fbY) - wH + Math.round(t * WY);
@@ -577,7 +552,7 @@ function buildingWaterProximity(b) {
 // into the silhouette ctx → GL present pass, never a 2D overlay. Drivers are honest: wetness derives from
 // the building's biome AND its real water-proximity (waterfront buildings rot/runnel in any biome); a
 // per-building disrepair baseline drives cracks/flaking; age is honestly absent (tuner-preview only).
-function drawDamagePass(ctx, b, camX, camY, tilePx, w, h, colRange) {
+function drawDamagePass(ctx, b, camX, camY, tilePx, w, h) {
   if (!renderOn('damage')) return;
   const fp = b && b.footprint, sections = (fp && fp.sections) || [];
   if (!sections.length) return;
@@ -594,7 +569,6 @@ function drawDamagePass(ctx, b, camX, camY, tilePx, w, h, colRange) {
     const fbY = b.y + s.y0 + s.h;
     for (let dx = 0; dx < s.w; dx++) {
       const lx = s.x0 + dx;
-      if (colRange && (lx < colRange.x0 || lx > colRange.x1)) continue; // door-region repaint: only its columns
       if (floorSet.has(lx + ',' + (s.y0 + s.h))) continue; // south neighbour inside → not a south face
       const ex = tileExtent(b.x + lx, tilePx, camX, 1);
       const groundTop = tsy(fbY) - wH + Math.round(t * WY);
@@ -611,7 +585,7 @@ function drawDamagePass(ctx, b, camX, camY, tilePx, w, h, colRange) {
 // AFTER weathering+damage (growth colonises the aged surface). Mechanism A → GL present pass. Honest drivers:
 // lichen = stable per-surface random + mild wetness, boosted on stone hosts; moss = wetness (biome + water
 // proximity), bottom-weighted, lush only in wet biomes (the sunny south face stays modest).
-function drawGrowthPass(ctx, b, camX, camY, tilePx, w, h, colRange) {
+function drawGrowthPass(ctx, b, camX, camY, tilePx, w, h) {
   if (!renderOn('growth')) return;
   const fp = b && b.footprint, sections = (fp && fp.sections) || [];
   if (!sections.length) return;
@@ -628,7 +602,6 @@ function drawGrowthPass(ctx, b, camX, camY, tilePx, w, h, colRange) {
     const fbY = b.y + s.y0 + s.h;
     for (let dx = 0; dx < s.w; dx++) {
       const lx = s.x0 + dx;
-      if (colRange && (lx < colRange.x0 || lx > colRange.x1)) continue; // door-region repaint: only its columns
       if (floorSet.has(lx + ',' + (s.y0 + s.h))) continue; // south neighbour inside → not a south face
       const ex = tileExtent(b.x + lx, tilePx, camX, 1);
       const groundTop = tsy(fbY) - wH + Math.round(t * WY);
@@ -639,64 +612,6 @@ function drawGrowthPass(ctx, b, camX, camY, tilePx, w, h, colRange) {
         { wx: b.x + lx, wy: fbY }, { biome: b.biome, bx: b.x | 0, by: b.y | 0, stone, waterProximity });
     }
   }
-}
-
-// D2 PLACED GROWTH (climbing ivy) — grown UP each south wall RUN as ONE organism (the spline engine), NOT a
-// per-column decal like the coverage fields. Paints the spline into the silhouette AFTER the growth coverage
-// (vines climb over moss/lichen), so it bakes into the cached sprite (deterministic + static → zero per-frame
-// cost). Honest incidence: most walls carry no vine; damp/worn ones carry 1–3. Routes around door/window
-// columns (the manifest avoid-zones). Mechanism A → GL present pass, never a 2D overlay.
-function drawVinesPass(ctx, b, camX, camY, tilePx, w, h) {
-  if (!renderOn('growth')) return;
-  const cfg = (typeof window !== 'undefined' && window._vines) || VINES;
-  if (!cfg.enabled) return;
-  const fp = b && b.footprint; if (!fp) return;
-  const runs = southRuns(fp); if (!runs.length) return;
-  const t = Math.round(tilePx);
-  const wH = Math.round(tilePx * WALL_CONFIG.wallHeight);
-  const WY = WALL_CONFIG.wallYOffset;
-  const stories = Math.max(1, buildingFloors(b));
-  const hTiles = stories * WALL_CONFIG.wallHeight;
-  const waterProximity = buildingWaterProximity(b);
-  for (const r of runs) {
-    const wTiles = r.x1 - r.x0;
-    if (wTiles < 1) continue;
-    const leftX = Math.round((b.x + r.x0) * t - camX);
-    const rightX = Math.round((b.x + r.x1) * t - camX);
-    const baseY = Math.round((b.y + r.y + 1) * t - camY) + Math.round(t * WY);
-    const top = baseY - stories * wH;
-    if (rightX < 0 || leftX > w || top > h || baseY < 0) continue; // off-screen run
-    // aperture blocked spans (tile-x LOCAL to the run) — the vine routes AROUND doors/windows
-    const blocked = [];
-    for (const d of (fp.doors || [])) if (d.y === r.y && d.x >= r.x0 && d.x < r.x1) { const c = d.x - r.x0 + 0.5; blocked.push({ x0: c - 1.1, x1: c + 1.1 }); }
-    for (const wn of (fp.windows || [])) if (wn.y === r.y && wn.x >= r.x0 && wn.x < r.x1) { const c = wn.x - r.x0 + 0.5; blocked.push({ x0: c - 0.9, x1: c + 0.9 }); }
-    const system = getVineSystem(b, { wTiles, hTiles, blocked, runY: r.y }, { biome: b.biome, waterProximity });
-    if (!system || !system.present) continue;
-    paintVines(ctx, { leftX, baseY, tilePx: t }, system, cfg);
-  }
-}
-
-// DOOR-REGION REPAINT — animate the swing WITHOUT re-baking the whole building (~111ms; the coverage passes
-// alone are ~85ms). Redraw ONLY the door's current frame into the cached sprite canvas, then re-apply the
-// coverage passes to JUST the door's columns (clipped to the door rect) so it stays consistently weathered —
-// the door region thus reproduces the original bake (walls→weathering→damage→growth; no vines/roof/props touch
-// it). Returns the dirty canvas rect for the caller to re-upload, or null. ~a few ms (3 columns, not ~20).
-export function repaintBuildingDoors(entry, b) {
-  if (!entry || !entry.canvas || !b) return null;
-  const t = entry.builtTilePx || 32;
-  let ctx; try { ctx = entry.canvas.getContext('2d'); } catch { return null; }
-  if (!ctx || typeof ctx.clip !== 'function') return null;
-  const camX = b.x * t - entry.ax, camY = b.y * t - entry.ay;        // world (b.x,b.y) → canvas (ax,ay)
-  const res = drawDoorsCurrent(ctx, b, camX, camY, t);
-  if (!res) return null;
-  const W = entry.canvas.width, H = entry.canvas.height;
-  ctx.save();
-  ctx.beginPath(); ctx.rect(res.rect.x, res.rect.y, res.rect.w, res.rect.h); ctx.clip();
-  drawWeatheringPass(ctx, b, camX, camY, t, W, H, res.colRange);
-  drawDamagePass(ctx, b, camX, camY, t, W, H, res.colRange);
-  drawGrowthPass(ctx, b, camX, camY, t, W, H, res.colRange);
-  ctx.restore();
-  return res.rect;
 }
 
 let _cv = null, _ox = null; // persistent offscreen authoring canvas
@@ -775,7 +690,7 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   const drawProps = () => { if (renderOn('attachments')) { try { drawD3Props(ctx, b, camX, camY, tilePx, w, h, 'all'); } catch { /* skip props */ } } };
   // D1 sprite-chips (plank gaps / patches) — gated with the rest of D1 damage; before the roof like the walls.
   const drawChips = () => { if (renderOn('damage')) { try { drawD1Chips(ctx, b, camX, camY, tilePx, w, h); } catch { /* skip chips */ } } };
-  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h); drawDamagePass(ctx, b, camX, camY, tilePx, w, h); drawGrowthPass(ctx, b, camX, camY, tilePx, w, h); drawVinesPass(ctx, b, camX, camY, tilePx, w, h); drawChips(); drawProps(); drawRoof(); return true; }
+  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h); drawDamagePass(ctx, b, camX, camY, tilePx, w, h); drawGrowthPass(ctx, b, camX, camY, tilePx, w, h); drawChips(); drawProps(); drawRoof(); return true; }
   // A grassland TILE-CORPUS building whose tiles aren't loaded yet must NOT fall to the legacy
   // strip path — drawWalls would stamp a stone_brick 32px strip STRETCHED over the footprint (the
   // melted/stretched single-building artifact). Stay invisible this frame; it flips to mirror-tiled
@@ -787,7 +702,6 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h);
   drawDamagePass(ctx, b, camX, camY, tilePx, w, h);
   drawGrowthPass(ctx, b, camX, camY, tilePx, w, h);
-  drawVinesPass(ctx, b, camX, camY, tilePx, w, h);
   drawChips();
   drawProps();
   drawRoof();
