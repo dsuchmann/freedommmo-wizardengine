@@ -15,11 +15,18 @@ import { getWorldSeed } from '../../core/world-seed.js';
 import { buildVineSystem, VINE_CFG_DEFAULTS } from './vine-spline.js';
 import { damageDrivers } from './d1-damage.js';
 
+// Arid / frozen biomes have NO leafy climbing vine (manifest: dropped, replaced by climbing roots) — vines
+// only grow where a leafy creeper plausibly would.
+const VINE_DROP_BIOMES = new Set(['desert', 'volcanic', 'arctic', 'tundra', 'savanna', 'steppe']);
+export function vineApplies(biome) { return !VINE_DROP_BIOMES.has(biome); }
+
 const DEFAULTS = {
   enabled: true,
   strength: 1.0,            // master alpha multiplier
-  // spline knobs (mirror VINE_CFG_DEFAULTS — the tuner edits these live)
-  baseChance: VINE_CFG_DEFAULTS.baseChance,
+  // spline knobs (mirror VINE_CFG_DEFAULTS — the tuner edits these live). baseChance is raised well above the
+  // engine default so vines are COMMONLY VISIBLE on a stroll (the honest wetness/disrepair terms still bias
+  // them toward damp/worn walls) — tune down for a sparser look.
+  baseChance: 0.42,
   wetWeight: VINE_CFG_DEFAULTS.wetWeight,
   disrepairWeight: VINE_CFG_DEFAULTS.disrepairWeight,
   maxRoots: VINE_CFG_DEFAULTS.maxRoots,
@@ -63,6 +70,7 @@ function cacheSig(geom, drivers, cfg) {
 /** Build (or reuse) the vine system for one wall run. geom = {wTiles, hTiles, blocked, runY}. */
 export function getVineSystem(b, geom, opts = {}) {
   const cfgLive = (typeof window !== 'undefined' && window._vines) || VINES;
+  if (!cfgLive.force && !vineApplies(opts.biome)) return { present: false, roots: [] }; // arid/frozen → no leafy vine
   const cfg = vineCfg(cfgLive);
   const drivers = vineDrivers(opts.biome, { bx: b.x | 0, by: b.y | 0, waterProximity: opts.waterProximity });
   const seed = opts.seed != null ? opts.seed : (typeof getWorldSeed === 'function' ? getWorldSeed() : 0);
