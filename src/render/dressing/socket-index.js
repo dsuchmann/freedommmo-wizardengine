@@ -50,12 +50,15 @@ export function buildSockets(b, opts = {}) {
     const r = runFor(runs, d.x, d.y);
     const ry = r ? r.y : d.y;
     out.push({ id: `door:${d.x},${d.y}`, kind: 'above_door', face: 'south', floor: 0, runY: ry, cxLocal: d.x + 0.5, v: SOCKET_V.above_door });
-    const lo = r ? r.x0 + 0.5 : d.x - 1, hi = r ? r.x1 - 0.5 : d.x + 2;
-    const cl = (v) => Math.max(lo, Math.min(hi, v));
-    // pairX/pairY = a key SHARED by both flank sockets, so a paired prop (lanterns) picks the SAME variant
-    // on the left and right (a matched pair). The left member keeps mirror:true so it faces inward.
-    out.push({ id: `besideL:${d.x},${d.y}`, kind: 'beside_door', face: 'south', floor: 0, runY: ry, cxLocal: cl(d.x + 0.5 - 1.2), v: SOCKET_V.beside_door, mirror: true, pairX: d.x, pairY: ry });
-    out.push({ id: `besideR:${d.x},${d.y}`, kind: 'beside_door', face: 'south', floor: 0, runY: ry, cxLocal: cl(d.x + 0.5 + 1.2), v: SOCKET_V.beside_door, pairX: d.x, pairY: ry });
+    // Flanking lanterns: emit a side ONLY if the lantern actually FITS there (no clamping onto the door or off
+    // the wall end) — so a CENTRAL door gets a matched PAIR but an EDGE door gets ONE lantern on the open side
+    // (the old code clamped both onto the door → cluttered). mirror is on the RIGHT member now (left = default
+    // art, right = its mirror) so the pair faces the right way (user: it was swapped). pairX/pairY = a shared
+    // key so a present pair picks the SAME variant.
+    const rx0 = r ? r.x0 : d.x - 2, rx1 = r ? r.x1 : d.x + 3;
+    const leftX = d.x + 0.5 - 1.2, rightX = d.x + 0.5 + 1.2;
+    if (leftX >= rx0 + 0.7) out.push({ id: `besideL:${d.x},${d.y}`, kind: 'beside_door', face: 'south', floor: 0, runY: ry, cxLocal: leftX, v: SOCKET_V.beside_door, pairX: d.x, pairY: ry });
+    if (rightX <= rx1 - 0.7) out.push({ id: `besideR:${d.x},${d.y}`, kind: 'beside_door', face: 'south', floor: 0, runY: ry, cxLocal: rightX, v: SOCKET_V.beside_door, mirror: true, pairX: d.x, pairY: ry });
     out.push({ id: `onDoor:${d.x},${d.y}`, kind: 'on_door', face: 'south', floor: 0, runY: ry, cxLocal: d.x + 0.5, v: SOCKET_V.on_door });
   }
   // Window sills, on every storey the window stacks up (mirrors the renderer's per-storey window draw).
