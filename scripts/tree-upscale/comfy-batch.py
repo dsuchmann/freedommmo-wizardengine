@@ -231,7 +231,10 @@ def enumerate_corpus(only_biome=None, only_type=None):
         if only_type and obj != only_type:
             continue
         out.append(p)
-    out.sort()
+    # Process base sprites FIRST, then states, then the (much larger) anim frames — so a full
+    # run upgrades the visible trees in ~15 min and the animations fill in after, rather than
+    # burying the base behind 576 frames.
+    out.sort(key=lambda p: ("anim" in p.parts, "_states" in p.parts, str(p)))
     return out
 
 
