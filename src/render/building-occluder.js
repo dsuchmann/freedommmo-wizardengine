@@ -26,6 +26,11 @@ import { paintDamagedColumn } from './dressing/d1-damage.js';
 import { drawD1Chips } from './dressing/d1-chips.js';
 import { paintGrowthColumn, isStoneSlug } from './dressing/d2-growth.js';
 import { getVineSystem, paintVines, VINES } from './dressing/d2-vines.js';
+import { getRootSystem, paintRoots, ROOTS } from './dressing/d2-roots.js';
+import { paintCushions, CUSHIONS } from './dressing/d2-cushions.js';
+import { tuftDrivers, tuftPresent, paintTuft, TUFTS } from './dressing/d2-tufts.js';
+import { fungusApplies, fungusDrivers, placeFungusAt, paintFungus, FUNGUS } from './dressing/d2-fungus.js';
+import { buildSockets, projectSocket } from './dressing/socket-index.js';
 import { isWaterTile } from '../../sim/world/buildings/terrain-suitability.js';
 import { drawD3Props } from './dressing/d3-props.js';
 
@@ -676,6 +681,113 @@ function drawVinesPass(ctx, b, camX, camY, tilePx, w, h) {
   }
 }
 
+// D2 CLIMBING ROOTS — the leafless woody sibling of vines (reuses the spline engine). Per-RUN, painted AFTER
+// vines so woody tendrils sit over moss/lichen + ivy. Lower incidence than vines; dropped in arctic/tundra.
+function drawRootsPass(ctx, b, camX, camY, tilePx, w, h) {
+  if (!renderOn('growth')) return;
+  const cfg = (typeof window !== 'undefined' && window._roots) || ROOTS;
+  if (cfg && cfg.enabled === false) return;
+  const fp = b && b.footprint; if (!fp) return;
+  const runs = southRuns(fp); if (!runs.length) return;
+  const t = Math.round(tilePx);
+  const wH = Math.round(tilePx * WALL_CONFIG.wallHeight);
+  const WY = WALL_CONFIG.wallYOffset;
+  const stories = Math.max(1, buildingFloors(b));
+  const hTiles = stories * WALL_CONFIG.wallHeight;
+  const waterProximity = buildingWaterProximity(b);
+  for (const r of runs) {
+    const wTiles = r.x1 - r.x0;
+    if (wTiles < 1) continue;
+    const leftX = Math.round((b.x + r.x0) * t - camX);
+    const rightX = Math.round((b.x + r.x1) * t - camX);
+    const baseY = Math.round((b.y + r.y + 1) * t - camY) + Math.round(t * WY);
+    const top = baseY - stories * wH;
+    if (rightX < 0 || leftX > w || top > h || baseY < 0) continue;
+    const blocked = [];
+    for (const d of (fp.doors || [])) if (d.y === r.y && d.x >= r.x0 && d.x < r.x1) { const c = d.x - r.x0 + 0.5; blocked.push({ x0: c - 1.1, x1: c + 1.1 }); }
+    for (const wn of (fp.windows || [])) if (wn.y === r.y && wn.x >= r.x0 && wn.x < r.x1) { const c = wn.x - r.x0 + 0.5; blocked.push({ x0: c - 0.9, x1: c + 0.9 }); }
+    const system = getRootSystem(b, { wTiles, hTiles, blocked, runY: r.y }, { biome: b.biome, waterProximity });
+    if (!system || !system.present) continue;
+    paintRoots(ctx, { leftX, baseY, tilePx: t }, system, cfg, { biome: b.biome });
+  }
+}
+
+// D2 MOSS CUSHIONS — raised moss tufts that sit ON the moss film. Per-COLUMN base-band scatter (like growth),
+// gated on local moss coverage (>~0.6), so they only appear on genuinely mossy (wet) walls. Run AFTER growth.
+function drawCushionsPass(ctx, b, camX, camY, tilePx, w, h) {
+  if (!renderOn('growth')) return;
+  const cfg = (typeof window !== 'undefined' && window._cushions) || CUSHIONS;
+  if (cfg && cfg.enabled === false) return;
+  const fp = b && b.footprint, sections = (fp && fp.sections) || [];
+  if (!sections.length) return;
+  const t = Math.round(tilePx);
+  const wH = Math.round(tilePx * WALL_CONFIG.wallHeight);
+  const WY = WALL_CONFIG.wallYOffset;
+  const stories = buildingFloors(b);
+  const waterProximity = buildingWaterProximity(b);
+  const tsy = (wy) => Math.round(wy * tilePx - camY);
+  const floorSet = new Set();
+  for (const s of sections) for (let dy = 0; dy < s.h; dy++) for (let dx = 0; dx < s.w; dx++) floorSet.add((s.x0 + dx) + ',' + (s.y0 + dy));
+  for (const s of sections) {
+    const fbY = b.y + s.y0 + s.h;
+    for (let dx = 0; dx < s.w; dx++) {
+      const lx = s.x0 + dx;
+      if (floorSet.has(lx + ',' + (s.y0 + s.h))) continue;
+      const ex = tileExtent(b.x + lx, tilePx, camX, 1);
+      const groundTop = tsy(fbY) - wH + Math.round(t * WY);
+      const colTop = groundTop - (stories - 1) * wH;
+      const colH = stories * wH;
+      if (ex.dx + ex.dw < 0 || ex.dx > w || colTop + colH < 0 || colTop > h) continue;
+      paintCushions(ctx, { dx: ex.dx, top: colTop, dw: ex.dw, colH, tilePx }, { wx: b.x + lx, wy: fbY }, { biome: b.biome, bx: b.x | 0, by: b.y | 0, waterProximity });
+    }
+  }
+}
+
+// D2 WALL WEEDS + BRACKET FUNGUS — discrete SOCKET props (crack/ledge tufts; damp-timber fungus). Each gates
+// honestly (wetness/disrepair, host material, biome allowlist) so most sockets stay bare. Static → bake into
+// the sprite. A seed combines building + socket position so presence and look are world-locked + pan-stable.
+function socketSeed(b, s) { return ((b.x | 0) * 73856093 ^ (b.y | 0) * 19349663 ^ ((s.cxLocal * 100) | 0)) | 0; }
+function drawTuftsPass(ctx, b, camX, camY, tilePx, w, h) {
+  if (!renderOn('growth')) return;
+  const cfg = (typeof window !== 'undefined' && window._tufts) || TUFTS;
+  if (cfg && cfg.enabled === false) return;
+  if (!b || !b.footprint) return;
+  let socks; try { socks = buildSockets(b); } catch { return; }
+  if (!socks || !socks.length) return;
+  const waterProximity = buildingWaterProximity(b);
+  const drivers = tuftDrivers(b.biome, { bx: b.x | 0, by: b.y | 0, waterProximity });
+  const t = Math.round(tilePx);
+  for (const s of socks) {
+    if (s.kind !== 'ledge_tuft' && s.kind !== 'wall_crack') continue;
+    const seed = socketSeed(b, s);
+    if (!tuftPresent(seed, drivers, cfg)) continue;
+    const p = projectSocket(b, s, camX, camY, tilePx);
+    if (p.x < -t || p.x > w + t || p.y < -t || p.y > h + t) continue;
+    paintTuft(ctx, p.x, p.y, Math.round(0.5 * t), seed, { skin: drivers.skin, biome: b.biome });
+  }
+}
+function drawFungusPass(ctx, b, camX, camY, tilePx, w, h) {
+  if (!renderOn('growth')) return;
+  const cfg = (typeof window !== 'undefined' && window._fungus) || FUNGUS;
+  if (cfg && cfg.enabled === false) return;
+  if (!b || !b.footprint) return;
+  const material = materialOf(b) || b.wallSlug || '';
+  const waterProximity = buildingWaterProximity(b);
+  const drivers = fungusDrivers(b.biome, { bx: b.x | 0, by: b.y | 0, waterProximity });
+  if (!fungusApplies(b.biome, material, drivers.wetness, cfg)) return; // biome+timber+wetness host gate (early-out)
+  let socks; try { socks = buildSockets(b); } catch { return; }
+  if (!socks || !socks.length) return;
+  const t = Math.round(tilePx);
+  for (const s of socks) {
+    if (s.kind !== 'damp_timber') continue;
+    const seed = socketSeed(b, s);
+    if (!placeFungusAt(b.biome, material, drivers, seed, cfg)) continue;
+    const p = projectSocket(b, s, camX, camY, tilePx);
+    if (p.x < -t || p.x > w + t || p.y < -t || p.y > h + t) continue;
+    paintFungus(ctx, p.x, p.y, Math.round(0.6 * t), seed, cfg);
+  }
+}
+
 // DOOR-REGION REPAINT — animate the swing WITHOUT re-baking the whole building (~111ms; the coverage passes
 // alone are ~85ms). Redraw ONLY the door's current frame into the cached sprite canvas, re-apply the coverage
 // passes to JUST the door's columns (clipped to the door rect), then re-draw the ROOF over the door rect —
@@ -783,7 +895,7 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   // see canvas-renderer. So the static bake = walls+weathering+damage+growth+vines+chips+roof only.
   // D1 sprite-chips (plank gaps / patches) — gated with the rest of D1 damage; before the roof like the walls.
   const drawChips = () => { if (renderOn('damage')) { try { drawD1Chips(ctx, b, camX, camY, tilePx, w, h); } catch { /* skip chips */ } } };
-  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h); drawDamagePass(ctx, b, camX, camY, tilePx, w, h); drawGrowthPass(ctx, b, camX, camY, tilePx, w, h); drawVinesPass(ctx, b, camX, camY, tilePx, w, h); drawChips(); drawRoof(); return true; }
+  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h); drawDamagePass(ctx, b, camX, camY, tilePx, w, h); drawGrowthPass(ctx, b, camX, camY, tilePx, w, h); drawCushionsPass(ctx, b, camX, camY, tilePx, w, h); drawVinesPass(ctx, b, camX, camY, tilePx, w, h); drawRootsPass(ctx, b, camX, camY, tilePx, w, h); drawTuftsPass(ctx, b, camX, camY, tilePx, w, h); drawFungusPass(ctx, b, camX, camY, tilePx, w, h); drawChips(); drawRoof(); return true; }
   // A grassland TILE-CORPUS building whose tiles aren't loaded yet must NOT fall to the legacy
   // strip path — drawWalls would stamp a stone_brick 32px strip STRETCHED over the footprint (the
   // melted/stretched single-building artifact). Stay invisible this frame; it flips to mirror-tiled
@@ -795,7 +907,11 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h);
   drawDamagePass(ctx, b, camX, camY, tilePx, w, h);
   drawGrowthPass(ctx, b, camX, camY, tilePx, w, h);
+  drawCushionsPass(ctx, b, camX, camY, tilePx, w, h);
   drawVinesPass(ctx, b, camX, camY, tilePx, w, h);
+  drawRootsPass(ctx, b, camX, camY, tilePx, w, h);
+  drawTuftsPass(ctx, b, camX, camY, tilePx, w, h);
+  drawFungusPass(ctx, b, camX, camY, tilePx, w, h);
   drawChips();
   drawRoof();
   return true;

@@ -14,10 +14,11 @@
 import { WALL_CONFIG } from '../wall-config.js';
 import { buildingFloors } from '../building-shadow.js';
 import { southRuns } from '../building-tiles.js';
+import { rand2 } from '../../core/random.js';
 
 // Vertical anchor within a storey band: 0 = the storey's ground line (band bottom), 1 = band top.
 // Tunable per kind; a real prop adds its own fine-offset from its anchor metadata on top of this.
-export const SOCKET_V = { window_sill: 0.30, above_door: 0.92, wall_corner: 0.5, roof_edge: 1.0, beside_door: 0.62, window_jamb: 0.55, on_door: 0.45, bare_wall: 0.92 };
+export const SOCKET_V = { window_sill: 0.30, above_door: 0.92, wall_corner: 0.5, roof_edge: 1.0, beside_door: 0.62, window_jamb: 0.55, on_door: 0.45, bare_wall: 0.92, ledge_tuft: 0.22, wall_crack: 0.40, damp_timber: 0.34 };
 // Upper-storey window tiles are the ground tile with the bottom foundation cropped (derive-upper foundFrac
 // 0.16) and rescaled to the full band, so every feature — including the window OPENING — shifts. A ground
 // sill at band-fraction v lands at v' = 1 − (1−v)/UPPER_TILE_KEEP on upper storeys. Used by projectSocket so
@@ -67,6 +68,8 @@ export function buildSockets(b, opts = {}) {
       out.push({ id: `win:${wn.x},${wn.y}#${st}`, kind: 'window_sill', face: 'south', floor: st, runY: ry, cxLocal: cx, v: sillV, winX: wn.x });
       out.push({ id: `jambL:${wn.x},${wn.y}#${st}`, kind: 'window_jamb', face: 'south', floor: st, runY: ry, cxLocal: cx - 0.9, v: SOCKET_V.window_jamb, winX: wn.x, mirror: true });
       out.push({ id: `jambR:${wn.x},${wn.y}#${st}`, kind: 'window_jamb', face: 'south', floor: st, runY: ry, cxLocal: cx + 0.9, v: SOCKET_V.window_jamb, winX: wn.x });
+      // D2 wall-weed LEDGE anchor — the sill lip just below the glass, where wind-blown soil collects.
+      out.push({ id: `ledge:${wn.x},${wn.y}#${st}`, kind: 'ledge_tuft', face: 'south', floor: st, runY: ry, cxLocal: cx, v: SOCKET_V.ledge_tuft, winX: wn.x });
     }
   }
   // Wall corners — a corner is a full-height vertical edge, so emit one per storey at each run end.
@@ -99,6 +102,26 @@ export function buildSockets(b, opts = {}) {
     }
   }
   if (best) out.push({ id: `bare:${best.t},${best.r.y}`, kind: 'bare_wall', face: 'south', floor: 0, runY: best.r.y, cxLocal: best.t + 0.5, v: SOCKET_V.bare_wall });
+  // D2 WALL-CRACK anchors (wall weeds) — up to 2 DETERMINISTIC mid-wall mortar-crack points per run, world-locked
+  // (rand2) so they're pan-stable, kept clear of doors/windows (the `occupied` Set) and the corners. OFFERED only;
+  // d2-tufts.tuftPresent() then decides honestly whether each carries a weed, so most stay bare.
+  for (const r of runs) {
+    const span = Math.max(0, (r.x1 - r.x0) - 1.2);
+    for (let k = 0; k < 2; k++) {
+      const cxLocal = r.x0 + 0.6 + rand2(r.x0, r.y, 0xC4A + k) * span;
+      if (occupied.has(Math.round(cxLocal))) continue;
+      out.push({ id: `crack:${r.x0},${r.y}#${k}`, kind: 'wall_crack', face: 'south', floor: 0, runY: r.y, cxLocal, v: 0.25 + rand2(r.x0, r.y, 0xC4B + k) * 0.45 });
+    }
+  }
+  // D2 DAMP-TIMBER anchors (bracket fungus) — the non-occupied SOUTH ground columns, on the lower damp band.
+  // d2-fungus host-gates each (timber material + wetness + allowed biome) + a sparse incidence roll, so most
+  // produce nothing; emitting per column is cheap (the gate is a hash).
+  for (const r of runs) {
+    for (let t = r.x0; t < r.x1; t++) {
+      if (occupied.has(t)) continue;
+      out.push({ id: `damp:${t},${r.y}`, kind: 'damp_timber', face: 'south', floor: 0, runY: r.y, cxLocal: t + 0.5, v: SOCKET_V.damp_timber });
+    }
+  }
   return out;
 }
 
