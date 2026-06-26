@@ -1327,6 +1327,66 @@ export class GLCompositor {
     gl.bindVertexArray(null);
   }
 
+  // LIVE D3 PROPS quad — same depth-writing program as drawBuildingSprite, for the per-building props bitmap
+  // rebuilt EVERY frame (banner sway / lantern flicker animate). Two differences vs the cached-sprite path:
+  // (1) ALWAYS re-upload (the bitmap changes each frame), and (2) depthFunc LEQUAL + depthMask FALSE so props
+  // pass OVER their OWN building's wall (equal building-z) yet stay OCCLUDED by a NEARER building's silhouette
+  // (smaller z already in the depth buffer) — fixing a back-building's props drawing over a front-building's
+  // roof. Props only TEST depth, never WRITE it. One shared texture, re-specified per building per frame.
+  drawBuildingPropsSprite(bitmap, sx, sy, dw, dh, depthZ) {
+    if (!this.ok || !this.sceneActive || !bitmap || this.colorDepthOk === false) return;
+    var gl = this.gl;
+    if (!this.colorDepthProgram) {
+      var prog = this._buildProgram(DEPTHWRITE_VERT_SRC, COLORDEPTH_FRAG_SRC);
+      if (!prog) { this.colorDepthOk = false; return; }
+      this.colorDepthProgram = prog;
+      this.cdUViewport = gl.getUniformLocation(prog, 'uViewport');
+      this.cdUPos = gl.getUniformLocation(prog, 'uPos');
+      this.cdUSize = gl.getUniformLocation(prog, 'uSize');
+      this.cdUTex = gl.getUniformLocation(prog, 'uTex');
+      this.cdUDepthZ = gl.getUniformLocation(prog, 'uDepthZ');
+      this.colorDepthVao = gl.createVertexArray();
+      gl.bindVertexArray(this.colorDepthVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.unitVbo);
+      var cloc = gl.getAttribLocation(prog, 'aUnit');
+      gl.enableVertexAttribArray(cloc);
+      gl.vertexAttribPointer(cloc, 2, gl.FLOAT, false, 0, 0);
+      gl.bindVertexArray(null);
+      this._colorDepthTex = gl.createTexture();
+    }
+    if (!this._propTex) this._propTex = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this._propTex);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.sceneFbo);
+    gl.viewport(0, 0, this._artW, this._artH);
+    gl.useProgram(this.colorDepthProgram);
+    gl.bindVertexArray(this.colorDepthVao);
+    gl.uniform2f(this.cdUViewport, this._artW, this._artH);
+    gl.uniform2f(this.cdUPos, sx, sy);
+    gl.uniform2f(this.cdUSize, dw, dh);
+    gl.uniform1f(this.cdUDepthZ, depthZ);
+    gl.uniform1i(this.cdUTex, 0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);     // pass over own building (equal z); occluded by a nearer building (smaller z)
+    gl.depthMask(false);         // props TEST depth but never WRITE it
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.colorMask(true, true, true, true);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.disable(gl.BLEND);
+    gl.depthFunc(gl.LEQUAL);
+    gl.disable(gl.DEPTH_TEST);
+    gl.depthMask(true);
+    gl.bindVertexArray(null);
+  }
+
   // Evict building-sprite textures unused for a while (LRU). Called from _sweep alongside chunk eviction.
   _evictBuildingTextures(maxAgeFrames) {
     if (!this.bldTextures) return;

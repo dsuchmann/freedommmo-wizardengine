@@ -15,7 +15,7 @@ import { drawBuildingShadows, buildBuildingShadowBitmap, updateBuildingHeightMas
 import { updateFloorViewTransform } from './floor-view.js';
 import { drawInteriorFloorWorld, drawInteriorWallsWorld, interiorLiftPx, updateInteriorLift } from './interior-renderer.js';
 import { buildInteriorSceneBitmap } from './interior-gl.js';
-import { buildOccluderBitmap, drawBuildingTextured, buildingBakeState, buildBuildingPropsBitmap } from './building-occluder.js';
+import { buildOccluderBitmap, drawBuildingTextured, buildingBakeState, drawBuildingPropsInto } from './building-occluder.js';
 import { buildDoorLeafBitmap } from './door-leaves.js';
 import { buildBuildingLayerBitmaps } from './building-layer.js';
 import { nearDepthBuildings, renderBuildingSilhouette, tileDepth, DEPTH_SCALE } from './building-depth.js';
@@ -553,14 +553,21 @@ export class CanvasRenderer {
     }
 
     // LIVE D3 WALL ATTACHMENTS — props are pulled OUT of the cached building bake so they ANIMATE (banner/sign
-    // sway, lantern flicker); a baked-in prop freezes in the cached sprite. Drawn here as ONE GL-composited
-    // overlay AFTER the building sprites (props sit low on the wall, under the baked roof — the roof terminates
-    // at the wall top, no south overhang, so no draw-order clash) and BEFORE the F2/player pass. Routes through
-    // GL (drawSceneOverlayBitmap) like the shadow pass — inherits scene lighting/CRT, never a 2D top-pass.
+    // sway, lantern flicker); a baked-in prop freezes in the cached sprite. Each building's props are rendered
+    // into a tight building-local bitmap and drawn as a depth quad at THAT building's depth (drawBuildingPropsSprite,
+    // LEQUAL) — so they sit over their own wall but a NEARER building's roof (already in the depth buffer)
+    // OCCLUDES a farther building's props. Drawn AFTER the building sprites, BEFORE the F2/player pass. All GL.
     if (!_inside && glScene && renderOn('attachments') && typeof window !== 'undefined' && window._buildingDepthColor !== false) {
       try {
-        const _propsBmp = buildBuildingPropsBitmap(nearDepthBuildings(getCachedBuildings(), camX, camY, tilePx, w, h), camX, camY, tilePx, w, h);
-        if (_propsBmp) this.glc.drawSceneOverlayBitmap(_propsBmp);
+        const _refYp = (camY + h / 2) / tilePx;
+        const _pblds = nearDepthBuildings(getCachedBuildings(), camX, camY, tilePx, w, h)
+          .slice().sort((a, b) => (a.y + a.footprint.boundingBox.h) - (b.y + b.footprint.boundingBox.h)); // farthest-first
+        for (const _pb of _pblds) {
+          const _pr = drawBuildingPropsInto(_pb, camX, camY, tilePx);
+          if (!_pr) continue;
+          const _pz = tileDepth(_pb.y + _pb.footprint.boundingBox.h, _refYp) * 2 - 1;
+          this.glc.drawBuildingPropsSprite(_pr.canvas, _pr.sx, _pr.sy, _pr.w, _pr.h, _pz);
+        }
       } catch (e) { /* best-effort */ }
     }
 

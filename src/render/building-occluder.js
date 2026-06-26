@@ -730,25 +730,33 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   return true;
 }
 
-// LIVE D3 PROPS overlay — props are pulled OUT of the cached bake so they animate (banner/sign sway, lantern
-// flicker). Draw the near buildings' props into one full-frame bitmap each frame (drawD3Props is time-driven),
-// composited into the GL scene FBO via glc.drawSceneOverlayBitmap (inherits scene lighting/CRT — NOT a 2D
-// top-pass). The caller draws it AFTER the cached building sprites (props sit on the wall, under the roof which
-// is baked in the sprite) and BEFORE the player/F2 pass.
-let _propsCv = null, _propsCx = null;
-export function buildBuildingPropsBitmap(buildings, camX, camY, tilePx, w, h) {
-  if (!renderOn('attachments') || !buildings || !buildings.length) return null;
-  if (!_propsCv || _propsCv.width !== w || _propsCv.height !== h) {
-    _propsCv = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(w, h)
+// LIVE D3 PROPS — props are pulled OUT of the cached bake so they animate (banner/sign sway, lantern flicker;
+// drawD3Props is time-driven). Render ONE building's props into a tight building-local scratch canvas, returned
+// for the caller to draw via glc.drawBuildingPropsSprite at THAT building's depth — so a back building's props
+// are occluded by a front building's roof (per-building depth), not flatly composited over everything. The
+// scratch canvas is shared + re-specified per building; the caller must upload it before the next call.
+// Routes through GL (depth quad into the scene FBO) → inherits scene lighting/CRT, never a 2D top-pass.
+const PROP_PAD = 2, PROP_PAD_BOTTOM = 3; // tiles of slack: props overhang the footprint (banners hang below, lanterns flank)
+let _bpCv = null, _bpCx = null;
+export function drawBuildingPropsInto(b, camX, camY, tilePx) {
+  if (!renderOn('attachments') || !b || !b.footprint) return null;
+  const bb = b.footprint.boundingBox; if (!bb) return null;
+  const ox = Math.round(b.x * tilePx - camX - PROP_PAD * tilePx);
+  const oy = Math.round(b.y * tilePx - camY - PROP_PAD * tilePx);
+  const w = Math.ceil((bb.w + 2 * PROP_PAD) * tilePx);
+  const h = Math.ceil((bb.h + PROP_PAD + PROP_PAD_BOTTOM) * tilePx);
+  if (w <= 0 || h <= 0 || w > 4096 || h > 4096) return null;
+  if (!_bpCv) {
+    _bpCv = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(w, h)
       : (typeof document !== 'undefined') ? document.createElement('canvas') : null;
-    if (!_propsCv) return null;
-    _propsCv.width = w; _propsCv.height = h; _propsCx = _propsCv.getContext('2d');
+    if (!_bpCv) return null;
+    _bpCx = _bpCv.getContext('2d');
   }
-  const o = _propsCx; if (!o) return null;
+  if (_bpCv.width !== w || _bpCv.height !== h) { _bpCv.width = w; _bpCv.height = h; } // resize also clears
+  const o = _bpCx; if (!o) return null;
   o.setTransform(1, 0, 0, 1, 0, 0); o.globalCompositeOperation = 'source-over';
   o.clearRect(0, 0, w, h); o.imageSmoothingEnabled = false;
-  // farthest-first so a nearer building's props composite over a farther one's
-  const sorted = buildings.slice().sort((a, b) => (a.y + a.footprint.boundingBox.h) - (b.y + b.footprint.boundingBox.h));
-  for (const b of sorted) { try { drawD3Props(o, b, camX, camY, tilePx, w, h, 'all'); } catch { /* skip */ } }
-  return _propsCv;
+  // Shift the camera by the local origin so this building's screen-space props land inside the local canvas.
+  try { drawD3Props(o, b, camX + ox, camY + oy, tilePx, w, h, 'all'); } catch { /* skip */ }
+  return { canvas: _bpCv, sx: ox, sy: oy, w, h };
 }
