@@ -5583,10 +5583,10 @@
    "biome": "tundra",
    "species": "dwarf_willow",
    "replaces": 54,
-   "status": "queued",
+   "status": "done",
    "newIndex": 71,
-   "objectId": "1f104ef0-cb6f-465a-a035-ff81aa44d759",
-   "tries": 1
+   "objectId": "a4900011-d7c6-46c2-a217-e5b9531866ba",
+   "tries": 2
   },
   "f6:tundra/dwarf_willow#55@481": {
    "key": "f6:tundra/dwarf_willow#55@481",
