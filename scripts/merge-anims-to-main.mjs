@@ -129,17 +129,15 @@ function main() {
   console.log(`\nsample of net-new files (first 8):`);
   toAdd.slice(0, 8).forEach((r) => console.log(`  + ${r.split(path.sep).join("/")}`));
 
-  // ---- bookkeeping-file WARNINGS (handled by humans/agents, NOT this script) ----
+  // ---- bookkeeping files: this script copies NONE of them ----
   console.log(`\n=== BOOKKEEPING FILES (this script does NOT copy these) ===`);
   console.log(`  _upscaled.json  : main's only — DO NOT copy; regenerate on main`);
   console.log(`                    (node scripts/tree-upscale/gen-upscale-manifest.mjs) after upscaling.`);
-  console.log(`  _f6_state.json  : ⚠ the worktree's copy is STALE and from a DIFFERENT generator`);
-  console.log(`                    (bulk_generate_f6.py). The real progress lives in`);
-  console.log(`                    scripts/_states_anims_state.json. Do NOT blind-copy _f6_state.json`);
-  console.log(`                    to main — it would under-report completion and make the upscaler's`);
-  console.log(`                    --ready gate SKIP the newly-arrived types. Instead run the upscaler`);
-  console.log(`                    disk-first (no --ready / no state file), or rebuild _f6_state.json`);
-  console.log(`                    on main from disk after this copy.`);
+  console.log(`  _f6_state.json  : NOT copied and NOT needed. The upscaler's --ready gate is now`);
+  console.log(`                    purely disk-driven (main commit 75a512060) — it reads no state`);
+  console.log(`                    JSON, just detects each type complete on disk (anim dirs >=8 frames`);
+  console.log(`                    + populated _states/). So zero special-cased JSON in this merge.`);
+  console.log(`                    (Before the copy, restart main's --watch so it loads the disk-driven gate.)`);
 
   if (!APPLY) {
     console.log(`\nDRY RUN complete. Nothing was written. Re-run with --apply to copy the ${toAdd.length} net-new files.`);
@@ -162,10 +160,10 @@ function main() {
   console.log(`\nDONE: copied ${copied}, skipped-existing ${skipped}, errors ${errors}.`);
   console.log(`Overwrites: 0 (guaranteed by COPYFILE_EXCL).`);
   console.log(`\nNEXT (per the coordination plan):`);
-  console.log(`  1. let main's upscaler --watch pick up the now-complete types -> @384`);
-  console.log(`  2. regenerate _upscaled.json on main`);
-  console.log(`  3. rebuild/refresh _f6_state.json on main from disk (do NOT use the worktree's)`);
-  console.log(`  4. commit assets on main; cherry-pick the worktree's code commits`);
+  console.log(`  1. main's upscaler --watch (restarted on the disk-driven gate) auto-detects the`);
+  console.log(`     newly-complete types -> @384  (no JSON step needed)`);
+  console.log(`  2. regenerate _upscaled.json on main (node scripts/tree-upscale/gen-upscale-manifest.mjs)`);
+  console.log(`  3. commit assets on main; cherry-pick the worktree's code commits`);
 }
 
 main();
