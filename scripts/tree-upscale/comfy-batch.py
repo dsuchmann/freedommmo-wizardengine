@@ -227,23 +227,52 @@ def f6_state():
         return None
 
 
+F6_ANIM_MIN_FRAMES = 8   # an anim variant is "complete" once its dir holds >= this many frames (F6 = 8-9)
+
+
+def _anim_done(anim_dir):
+    """True if anim_dir holds a full set of source frame PNGs (not @384, not partial)."""
+    if not anim_dir.is_dir():
+        return False
+    n = sum(1 for f in anim_dir.iterdir()
+            if f.suffix.lower() == '.png' and f.stem.startswith('frame_') and '@384' not in f.stem)
+    return n >= F6_ANIM_MIN_FRAMES
+
+
 def complete_f6_types():
-    """Set of 'biome/obj' types FULLY generated on disk per _f6_state.json: every base variant's PNG
-    present, every state 'done', every anim 'done'. None if no state file (caller treats all as ready).
-    This is the gate that lets the upscale run NOW on finished types while PixelLab generates the rest."""
+    """Set of 'biome/obj' types whose FULL source set is present ON DISK: every planned base variant PNG,
+    every planned state sprite, and every planned anim (a dir with all its frames).
+
+    The PLAN (which variants/states/anims a type should have) comes from _f6_state.json's KEYS; PRESENCE is
+    checked on DISK. We deliberately IGNORE the JSON's 'status' fields — they are STALE (written by the old
+    bulk_generate_f6.py; the live generator records progress in a separate file and never updates them).
+    Trusting 'status' would skip types that are actually finished on disk. Returns None if no _f6_state.json
+    (caller then treats every on-disk type as ready)."""
     d = f6_state()
     if d is None:
         return None
     from collections import defaultdict
-    agg = defaultdict(lambda: {'vt': 0, 'vd': 0, 'at': 0, 'ad': 0, 'st': 0, 'sd': 0})
-    for v in d.get('variants', {}).values():
-        t = v['biome'] + '/' + v['obj']; agg[t]['vt'] += 1; agg[t]['vd'] += 1 if v.get('png') else 0
-    for v in d.get('anims', {}).values():
-        t = v['biome'] + '/' + v['obj']; agg[t]['at'] += 1; agg[t]['ad'] += 1 if v.get('status') == 'done' else 0
-    for v in d.get('states', {}).values():
-        t = v['biome'] + '/' + v['obj']; agg[t]['st'] += 1; agg[t]['sd'] += 1 if v.get('status') == 'done' else 0
-    return {t for t, c in agg.items()
-            if c['vt'] and c['vd'] == c['vt'] and c['ad'] == c['at'] and c['sd'] == c['st']}
+    plan = defaultdict(lambda: {'v': set(), 'a': set(), 's': []})  # base variants, anim-variants, (state, v)
+    for x in d.get('variants', {}).values():
+        plan[x['biome'] + '/' + x['obj']]['v'].add(x['v'])
+    for x in d.get('anims', {}).values():
+        plan[x['biome'] + '/' + x['obj']]['a'].add(x['v'])
+    for x in d.get('states', {}).values():
+        t = x['biome'] + '/' + x['obj']
+        for v in x.get('vs', []):
+            plan[t]['s'].append((x['state'], v))
+    ready = set()
+    for t, p in plan.items():
+        biome, obj = t.split('/', 1)
+        base = FLORA_DIR / biome / obj
+        if not p['v'] or not all((base / f"v{v:03d}.png").exists() for v in p['v']):
+            continue                                                  # base variants not all present
+        if not all(_anim_done(base / "anim" / "wind_sway" / f"v{v:03d}") for v in p['a']):
+            continue                                                  # an anim missing/partial -> still generating
+        if not all((base / "_states" / st / f"v{v:03d}.png").exists() for (st, v) in p['s']):
+            continue                                                  # a state sprite not present
+        ready.add(t)
+    return ready
 
 
 def all_f6_types():
