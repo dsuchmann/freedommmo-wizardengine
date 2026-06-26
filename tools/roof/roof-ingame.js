@@ -99,7 +99,9 @@ export function resolveForBuilding(b, biomeOverride) {
   // terminates at the wall edge on the sides, and ALLOW a small SOUTH (front) overhang so the roof reads
   // as a real eave hanging over the front. Kept small via overhangDroop so it laps the wall-plate without
   // hiding the door/window below.
-  R.geom.noSouthOverhang = false;       // small front eave over the south wall top
+  R.geom.noSouthOverhang = true;        // NO south overhang — the roof/gable terminates AT the wall's south
+                                        // edge (the terminal wall top), not extending south OVER the wall. The
+                                        // small front eave drooped over the wall top (user 2026-06-26). Was false.
   R.geom.noEastWestOverhang = true;     // flush E/W eaves (no extra-tile flare on the sides)
   R.geom.overhangDroop = 0;             // eave/gable TERMINATES at the wall top (h=0), no droop below — was 0.30,
                                         // which lapped 0.3 tiles BELOW the wall top and overlapped the south wall
