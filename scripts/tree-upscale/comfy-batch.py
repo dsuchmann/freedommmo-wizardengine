@@ -101,6 +101,7 @@ OUT_SUFFIX = "@384"        # v0NN.png -> v0NN@384.png
 OUT_TAG = ""               # optional tag appended to outputs (v###@384<tag>.png) for A/B tuning
 FORCE = False              # --force: reprocess even if an output already exists
 SRC_PALETTE_COLORS = 64    # per-source palette size: quantize each sprite's OWN colors
+INCLUDE_ANIMS = True       # include anim/ frames; set False with --no-anims for a fast statics-only pass
 
 # ---------------------------------------------------------------------------
 # Prompt table — mirrors bulk_generate_f6's PROMPT / BIOME_PROMPTS /
@@ -182,16 +183,16 @@ log = logging.getLogger("comfy-batch")
 # ---------------------------------------------------------------------------
 
 def is_static_source(p: Path) -> bool:
-    """A static tree sprite we should upscale: v###.png, NOT under anim/, NOT an
-    @384 output, NOT an _f6_state side file."""
+    """A tree sprite we should upscale: a base/state variant v###.png OR an animation
+    frame anim/wind_sway/v###/frame_###.png — anim frames are just more 192px images,
+    run through the identical pipeline. Excludes already-produced @384 outputs."""
     if p.suffix.lower() != ".png":
         return False
     if "@384" in p.stem:                     # already an @384 output (any tag)
         return False
-    if "anim" in p.parts:                    # animation frames are not static sprites
-        return False
     name = p.stem
-    # base/state variants are v###; tolerate any v\d+ stem
+    if name.startswith("frame_") and name[6:].isdigit():
+        return INCLUDE_ANIMS                 # anim frame — gated by --no-anims
     return name.startswith("v") and name[1:].isdigit()
 
 
@@ -221,7 +222,7 @@ def enumerate_corpus(only_biome=None, only_type=None):
     out = []
     if not FLORA_DIR.exists():
         return out
-    for p in FLORA_DIR.rglob("v*.png"):
+    for p in FLORA_DIR.rglob("*.png"):       # v###.png (base/state) + frame_###.png (anim); predicate filters
         if not is_static_source(p):
             continue
         biome, obj = biome_type_of(p)
@@ -698,7 +699,7 @@ def report(state, only_biome=None, only_type=None):
 
 
 def main():
-    global DENOISE, TILE_STRENGTH, OUT_TAG, FORCE
+    global DENOISE, TILE_STRENGTH, OUT_TAG, FORCE, INCLUDE_ANIMS
     ap = argparse.ArgumentParser(description="Component E — ComfyUI tree-upscale batch harness")
     ap.add_argument("--status", action="store_true", help="Print progress and exit")
     ap.add_argument("--dry-run", action="store_true",
@@ -712,6 +713,7 @@ def main():
     ap.add_argument("--limit", type=int, default=None, help="Process at most N sprites (fast A/B tuning)")
     ap.add_argument("--force", action="store_true", help="Reprocess even if an output already exists")
     ap.add_argument("--out-tag", default="", help="Append a tag to outputs (v###@384<tag>.png) so settings don't overwrite, e.g. --out-tag -dn30")
+    ap.add_argument("--no-anims", action="store_true", help="Skip anim/ frames (fast statics-only pass: base + states)")
     args = ap.parse_args()
 
     if args.denoise is not None:
@@ -720,6 +722,7 @@ def main():
         TILE_STRENGTH = args.tile
     OUT_TAG = args.out_tag
     FORCE = args.force
+    INCLUDE_ANIMS = not args.no_anims
 
     if not GRAPH_FILE.exists():
         log.error(f"missing graph template: {GRAPH_FILE}")
