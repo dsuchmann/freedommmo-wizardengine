@@ -101,7 +101,9 @@ export function resolveForBuilding(b, biomeOverride) {
   // hiding the door/window below.
   R.geom.noSouthOverhang = false;       // small front eave over the south wall top
   R.geom.noEastWestOverhang = true;     // flush E/W eaves (no extra-tile flare on the sides)
-  R.geom.overhangDroop = 0.30;          // a touch more droop so the small front eave reads as an overhang
+  R.geom.overhangDroop = 0;             // eave/gable TERMINATES at the wall top (h=0), no droop below — was 0.30,
+                                        // which lapped 0.3 tiles BELOW the wall top and overlapped the south wall
+                                        // (user 2026-06-26: the gable must start at the wall's terminal edge).
   const grid = buildRoofGrid(R.sections, R.geom);
   // shift the heightmap so the perimeter EAVE sits at h=0 (the lifted wall-top plane),
   // so the roof's back edge is flush with the north wall top, not floating above it.

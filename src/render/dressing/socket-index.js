@@ -53,9 +53,10 @@ export function buildSockets(b, opts = {}) {
     const lo = r ? r.x0 + 0.5 : d.x - 1, hi = r ? r.x1 - 0.5 : d.x + 2;
     const cl = (v) => Math.max(lo, Math.min(hi, v));
     // pairX/pairY = a key SHARED by both flank sockets, so a paired prop (lanterns) picks the SAME variant
-    // on the left and right (a matched pair). The left member keeps mirror:true so it faces inward.
-    out.push({ id: `besideL:${d.x},${d.y}`, kind: 'beside_door', face: 'south', floor: 0, runY: ry, cxLocal: cl(d.x + 0.5 - 1.2), v: SOCKET_V.beside_door, mirror: true, pairX: d.x, pairY: ry });
-    out.push({ id: `besideR:${d.x},${d.y}`, kind: 'beside_door', face: 'south', floor: 0, runY: ry, cxLocal: cl(d.x + 0.5 + 1.2), v: SOCKET_V.beside_door, pairX: d.x, pairY: ry });
+    // on the left and right (a matched pair). mirror:true is on the RIGHT member so the pair faces the right
+    // way (user 2026-06-26: the left/right lanterns were swapped — moved the flip from besideL to besideR).
+    out.push({ id: `besideL:${d.x},${d.y}`, kind: 'beside_door', face: 'south', floor: 0, runY: ry, cxLocal: cl(d.x + 0.5 - 1.2), v: SOCKET_V.beside_door, pairX: d.x, pairY: ry });
+    out.push({ id: `besideR:${d.x},${d.y}`, kind: 'beside_door', face: 'south', floor: 0, runY: ry, cxLocal: cl(d.x + 0.5 + 1.2), v: SOCKET_V.beside_door, mirror: true, pairX: d.x, pairY: ry });
     out.push({ id: `onDoor:${d.x},${d.y}`, kind: 'on_door', face: 'south', floor: 0, runY: ry, cxLocal: d.x + 0.5, v: SOCKET_V.on_door });
   }
   // Window sills, on every storey the window stacks up (mirrors the renderer's per-storey window draw).
