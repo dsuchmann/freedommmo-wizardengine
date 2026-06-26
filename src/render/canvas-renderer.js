@@ -15,10 +15,11 @@ import { drawBuildingShadows, buildBuildingShadowBitmap, updateBuildingHeightMas
 import { updateFloorViewTransform } from './floor-view.js';
 import { drawInteriorFloorWorld, drawInteriorWallsWorld, interiorLiftPx, updateInteriorLift } from './interior-renderer.js';
 import { buildInteriorSceneBitmap } from './interior-gl.js';
-import { buildOccluderBitmap } from './building-occluder.js';
+import { buildOccluderBitmap, drawBuildingTextured, buildingBakeState } from './building-occluder.js';
 import { buildDoorLeafBitmap } from './door-leaves.js';
 import { buildBuildingLayerBitmaps } from './building-layer.js';
 import { nearDepthBuildings, renderBuildingSilhouette, tileDepth, DEPTH_SCALE } from './building-depth.js';
+import { getBuildingSprite, spriteKey, bumpSpriteFrame } from './building-sprite-cache.js';
 import { buildSocketOverlayBitmap } from './dressing/socket-overlay.js';
 import { isInside } from './active-interior.js';
 import { initWallTuner, drawWallTuner } from './wall-tuner.js';
@@ -528,11 +529,20 @@ export class CanvasRenderer {
       const _blds = nearDepthBuildings(getCachedBuildings(), camX, camY, tilePx, w, h)
         .slice().sort((a, b) => (a.y + a.footprint.boundingBox.h) - (b.y + b.footprint.boundingBox.h)); // farthest-first
       let _wrote2 = false;
+      // CACHED building-local sprite (baked ONCE per building, re-baked only until its tiles+roof finish loading,
+      // then frozen) instead of rebuilding + re-uploading a full-screen silhouette per building per frame (the
+      // ~336ms draw). The sprite is baked at _spr.builtTilePx; SCALE the GL quad to the live tilePx (like terrain
+      // chunks) so a zoom is a free quad-resize, not a re-bake. STEP 1: door + props are baked frozen (no anim
+      // yet) — that comes back next, kept OUT of the cache so it stays fast.
+      bumpSpriteFrame();
       for (const _b of _blds) {
-        const _sil = renderBuildingSilhouette(_b, camX, camY, tilePx, w, h);
-        if (!_sil) continue;
+        const _spr = getBuildingSprite(_b, tilePx, drawBuildingTextured, buildingBakeState);
+        if (!_spr) continue;
+        const _sc = tilePx / _spr.builtTilePx;
         const _z = tileDepth(_b.y + _b.footprint.boundingBox.h, _refY) * 2 - 1;
-        this.glc.drawBuildingColorDepth(_sil, _z);
+        const _dx = Math.round(_b.x * tilePx - camX - _spr.ax * _sc);
+        const _dy = Math.round(_b.y * tilePx - camY - _spr.ay * _sc);
+        this.glc.drawBuildingSprite(spriteKey(_b), _spr.canvas, _dx, _dy, _spr.w * _sc, _spr.h * _sc, _z);
         _wrote2 = true;
       }
       if (_wrote2) {

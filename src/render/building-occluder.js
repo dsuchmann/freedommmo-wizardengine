@@ -19,7 +19,7 @@ import { getWallImg } from './building-renderer.js';
 import { buildingFloors } from './building-shadow.js';
 import { queryBuildingTile } from './building-tile-query.js';
 import { wallAssetDir, wallPieceFile, roofAssetDir, roofTextureFile, ROOF_FASCIA_FILE } from '../../sim/world/buildings/building-material-registry.js';
-import { drawBuildingTiles, isTiledBuilding, materialOf } from './building-tiles.js';
+import { drawBuildingTiles, isTiledBuilding, materialOf, tileImagesReady } from './building-tiles.js';
 import { renderOn } from './building-render-flags.js';
 import { paintWeatheredColumn } from './dressing/d0-weathering.js';
 import { paintDamagedColumn } from './dressing/d1-damage.js';
@@ -118,6 +118,24 @@ function ensureRoof() {
   if (_roof || _roofLoading || _roofFailed) return;
   _roofLoading = true;
   import('../../tools/roof/roof-ingame.js').then(m => { _roof = m; }).catch(() => { _roofFailed = true; }).finally(() => { _roofLoading = false; });
+}
+
+// Bake-state for the building sprite cache: { complete, sig }. complete = is the TEXTURED silhouette fully
+// renderable RIGHT NOW (all wall/aperture tiles loaded AND the roof engine loaded)? The cache re-bakes until
+// complete so it never FREEZES a half-loaded (walls-only / no-roof) sprite — tiles + the roof module load async,
+// so the first drawable frame is walls-only and that must NOT be the permanent bake. sig is '' for now (Step 1:
+// the door + props are baked FROZEN — no per-frame re-bake yet). Kicks ensureRoof so the roof starts loading.
+export function buildingBakeState(b) {
+  let complete = true;
+  try {
+    if (isTiledBuilding(b)) {
+      if (!tileImagesReady(b)) complete = false;
+      else if (renderOn('roof')) { ensureRoof(); complete = !!_roof; } // roof engine still loading → bake again later
+    } else {
+      complete = !!getWallImg('south_base'); // legacy wall path needs the stone_brick fallback loaded
+    }
+  } catch { complete = true; } // never block forever on a predicate error
+  return { complete, sig: '' };
 }
 
 // Lazy biome roof-texture cache so the re-drawn roof gets the SAME ground-skin the worker bakes

@@ -82,6 +82,28 @@ export function isTiledBuilding(b) {
   return !!materialOf(b);
 }
 export function tileMaterialReady(b) { const m = materialOf(b); return !!(m && img(getDIR(b && b.biome) + m + '/ground_plain__v0.png')); }
+// FULL readiness: every tile this building will DRAW is loaded — base + end corners, the upper-storey tile (if
+// multi-storey), and the door/window state tiles (only if the footprint HAS doors/windows). The building sprite
+// cache gates on this so it never FREEZES a half-loaded (walls-only) bake into a permanent sprite — it re-bakes
+// until this returns true. (Optional dressing props are excluded — a 404/absent prop must not block forever.)
+export function tileImagesReady(b) {
+  const mat = materialOf(b); if (!mat) return false;
+  const D = getDIR(b && b.biome);
+  const has = (name) => !!img(D + mat + '/' + name);
+  if (!has('ground_plain__v0.png')) return false;
+  const leftC = has('ground_left_corner__v0.png') || has('left_corner__v0.png');
+  const rightC = has('ground_right_corner__v0.png') || has('right_corner__v0.png');
+  if (!leftC || !rightC) return false;
+  const fp = (b && b.footprint) || {};
+  const stories = Math.max(1, buildingFloors(b));
+  if (stories > 1 && !has('upper_plain__v0.png')) return false;
+  if ((fp.doors || []).length && !has('ground_door__v0.png')) return false;
+  if ((fp.windows || []).length) {
+    if (!has('ground_window__v0.png')) return false;
+    if (stories > 1 && !has('upper_window__v0.png')) return false;
+  }
+  return true;
+}
 // The plain-wall + window tiles for this building's material, or null if its biome isn't tiled. The
 // dressing socket-index diffs these two (the window is a state OF the plain wall) to measure the opening.
 export function windowTilePaths(b) {
