@@ -49,15 +49,32 @@ export function buildSockets(b, opts = {}) {
   for (const d of (fp.doors || [])) {
     const r = runFor(runs, d.x, d.y);
     const ry = r ? r.y : d.y;
-    out.push({ id: `door:${d.x},${d.y}`, kind: 'above_door', face: 'south', floor: 0, runY: ry, cxLocal: d.x + 0.5, v: SOCKET_V.above_door });
+    // The DOOR renders NUDGED inward to keep its full ~2.6-tile span inside the run (building-tiles
+    // _drawAperture does the same nudge). Door-anchored props MUST use that same nudged centre, or they sit
+    // off the rendered door on a narrow wall (user 2026-06-26: awning + lanterns off-centre on small buildings).
+    const DHALF = 1.3; // door span 2.6 / 2
+    let cxDoor = d.x + 0.5;
+    if (r && (r.x1 - r.x0) >= 2 * DHALF) {
+      if (cxDoor - DHALF < r.x0) cxDoor = r.x0 + DHALF;
+      else if (cxDoor + DHALF > r.x1) cxDoor = r.x1 - DHALF;
+    }
+    out.push({ id: `door:${d.x},${d.y}`, kind: 'above_door', face: 'south', floor: 0, runY: ry, cxLocal: cxDoor, v: SOCKET_V.above_door });
     const lo = r ? r.x0 + 0.5 : d.x - 1, hi = r ? r.x1 - 0.5 : d.x + 2;
     const cl = (v) => Math.max(lo, Math.min(hi, v));
-    // pairX/pairY = a key SHARED by both flank sockets, so a paired prop (lanterns) picks the SAME variant
-    // on the left and right (a matched pair). mirror:true is on the RIGHT member so the pair faces the right
-    // way (user 2026-06-26: the left/right lanterns were swapped — moved the flip from besideL to besideR).
-    out.push({ id: `besideL:${d.x},${d.y}`, kind: 'beside_door', face: 'south', floor: 0, runY: ry, cxLocal: cl(d.x + 0.5 - 1.2), v: SOCKET_V.beside_door, pairX: d.x, pairY: ry });
-    out.push({ id: `besideR:${d.x},${d.y}`, kind: 'beside_door', face: 'south', floor: 0, runY: ry, cxLocal: cl(d.x + 0.5 + 1.2), v: SOCKET_V.beside_door, mirror: true, pairX: d.x, pairY: ry });
-    out.push({ id: `onDoor:${d.x},${d.y}`, kind: 'on_door', face: 'south', floor: 0, runY: ry, cxLocal: d.x + 0.5, v: SOCKET_V.on_door });
+    // FLANKING LANTERNS: a matched PAIR only when BOTH sides have wall room beside the door; otherwise a
+    // SINGLE lantern on the roomier side (user 2026-06-26: two lanterns crammed onto a small building's door
+    // read as clutter → drop to one, on the side that has space). LFLANK = offset from the door centre;
+    // LROOM = run span needed on that side. pairX/pairY key both flanks so a pair picks the SAME variant;
+    // mirror:true on the RIGHT member faces the pair inward.
+    const LFLANK = 1.2, LROOM = 1.7;
+    const leftRoom = cxDoor - (r ? r.x0 : d.x - 1);
+    const rightRoom = (r ? r.x1 : d.x + 2) - cxDoor;
+    const emitL = () => out.push({ id: `besideL:${d.x},${d.y}`, kind: 'beside_door', face: 'south', floor: 0, runY: ry, cxLocal: cl(cxDoor - LFLANK), v: SOCKET_V.beside_door, pairX: d.x, pairY: ry });
+    const emitR = () => out.push({ id: `besideR:${d.x},${d.y}`, kind: 'beside_door', face: 'south', floor: 0, runY: ry, cxLocal: cl(cxDoor + LFLANK), v: SOCKET_V.beside_door, mirror: true, pairX: d.x, pairY: ry });
+    if (leftRoom >= LROOM && rightRoom >= LROOM) { emitL(); emitR(); }   // both fit → matched pair
+    else if (rightRoom >= leftRoom) { if (rightRoom >= LROOM) emitR(); } // tight → one on the roomier side
+    else { if (leftRoom >= LROOM) emitL(); }
+    out.push({ id: `onDoor:${d.x},${d.y}`, kind: 'on_door', face: 'south', floor: 0, runY: ry, cxLocal: cxDoor, v: SOCKET_V.on_door });
   }
   // Window sills, on every storey the window stacks up (mirrors the renderer's per-storey window draw).
   for (const wn of (fp.windows || [])) {

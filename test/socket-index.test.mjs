@@ -19,7 +19,7 @@ test('buildSockets emits door/window/corner/eave sockets for the south face', ()
   const socks = buildSockets(building(1));
   const byKind = (k) => socks.filter((s) => s.kind === k);
   assert.equal(byKind('above_door').length, 1, 'one door lintel');
-  assert.equal(byKind('beside_door').length, 2, 'two lantern-flank sockets per door');
+  assert.equal(byKind('beside_door').length, 1, 'narrow 4-wide building, door near the left edge → ONE flanking lantern (the roomier right side)');
   assert.equal(byKind('on_door').length, 1, 'one on-door socket (knocker)');
   assert.equal(byKind('window_sill').length, 1, 'one ground-floor window sill');
   assert.equal(byKind('window_jamb').length, 2, 'two window jambs (shutter L+R)');
@@ -29,6 +29,17 @@ test('buildSockets emits door/window/corner/eave sockets for the south face', ()
   const door = byKind('above_door')[0];
   assert.equal(door.cxLocal, 1.5);
   assert.equal(door.floor, 0);
+});
+
+test('lantern flanks: a wide door gets a matched PAIR; a narrow door gets a SINGLE on the roomier side', () => {
+  // WIDE: 8-wide building, centred door → both sides have wall room → matched pair (L+R).
+  const wide = { x: 0, y: 0, biome: 'grassland', footprint: { sections: [{ x0: 0, y0: 0, w: 8, h: 3 }], boundingBox: { w: 8, h: 3 }, doors: [{ x: 3, y: 2 }], windows: [] } };
+  assert.equal(buildSockets(wide).filter((s) => s.kind === 'beside_door').length, 2, 'wide centred door → flanking pair');
+  // NARROW: 4-wide, door at the left → only the right side has room → single lantern, on the right.
+  const narrow = { x: 0, y: 0, biome: 'grassland', footprint: { sections: [{ x0: 0, y0: 0, w: 4, h: 3 }], boundingBox: { w: 4, h: 3 }, doors: [{ x: 1, y: 2 }], windows: [] } };
+  const one = buildSockets(narrow).filter((s) => s.kind === 'beside_door');
+  assert.equal(one.length, 1, 'narrow door → single lantern');
+  assert.ok(one[0].cxLocal > 1.5, 'the single lantern sits to the RIGHT of the door centre (roomier side)');
 });
 
 test('window sills stack per storey; corners run full height; eave rides the top storey', () => {
