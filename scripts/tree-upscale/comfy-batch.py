@@ -240,38 +240,32 @@ def _anim_done(anim_dir):
 
 
 def complete_f6_types():
-    """Set of 'biome/obj' types whose FULL source set is present ON DISK: every planned base variant PNG,
-    every planned state sprite, and every planned anim (a dir with all its frames).
-
-    The PLAN (which variants/states/anims a type should have) comes from _f6_state.json's KEYS; PRESENCE is
-    checked on DISK. We deliberately IGNORE the JSON's 'status' fields — they are STALE (written by the old
-    bulk_generate_f6.py; the live generator records progress in a separate file and never updates them).
-    Trusting 'status' would skip types that are actually finished on disk. Returns None if no _f6_state.json
-    (caller then treats every on-disk type as ready)."""
-    d = f6_state()
-    if d is None:
-        return None
-    from collections import defaultdict
-    plan = defaultdict(lambda: {'v': set(), 'a': set(), 's': []})  # base variants, anim-variants, (state, v)
-    for x in d.get('variants', {}).values():
-        plan[x['biome'] + '/' + x['obj']]['v'].add(x['v'])
-    for x in d.get('anims', {}).values():
-        plan[x['biome'] + '/' + x['obj']]['a'].add(x['v'])
-    for x in d.get('states', {}).values():
-        t = x['biome'] + '/' + x['obj']
-        for v in x.get('vs', []):
-            plan[t]['s'].append((x['state'], v))
+    """Set of 'biome/obj' types whose generation is COMPLETE, judged PURELY from disk — NO reliance on
+    _f6_state.json, whose 'status' AND state-variant plan are BOTH unreliable for the current generator
+    (status frozen at the old bulk run; states on disk are 1 variant/state vs the old plan's 9). A type is
+    ready when: it has base variants, EVERY base variant has a complete anim dir (>= F6_ANIM_MIN_FRAMES
+    frames), and it has at least one populated _states/<state>/ subdir. The anim check is the real guard
+    (no half-generated anim can end up mixed 192/384); states are static fallbacks so 'present' suffices.
+    Self-correcting: as the generator finishes a type's anims on disk, it flips to ready on the next scan."""
     ready = set()
-    for t, p in plan.items():
-        biome, obj = t.split('/', 1)
-        base = FLORA_DIR / biome / obj
-        if not p['v'] or not all((base / f"v{v:03d}.png").exists() for v in p['v']):
-            continue                                                  # base variants not all present
-        if not all(_anim_done(base / "anim" / "wind_sway" / f"v{v:03d}") for v in p['a']):
-            continue                                                  # an anim missing/partial -> still generating
-        if not all((base / "_states" / st / f"v{v:03d}.png").exists() for (st, v) in p['s']):
-            continue                                                  # a state sprite not present
-        ready.add(t)
+    if not FLORA_DIR.exists():
+        return ready
+    for bd in FLORA_DIR.iterdir():
+        if not bd.is_dir() or bd.name.startswith('_'):
+            continue
+        for od in bd.iterdir():
+            if not od.is_dir():
+                continue
+            base = {f.stem for f in od.glob("v*.png") if f.stem[1:].isdigit() and '@384' not in f.stem}
+            if not base:
+                continue
+            aroot = od / "anim" / "wind_sway"
+            if not aroot.is_dir() or not all(_anim_done(aroot / v) for v in base):
+                continue                                              # a base variant's anim missing/partial
+            sdir = od / "_states"
+            if not sdir.is_dir() or not any(s.is_dir() and any(s.glob("v*.png")) for s in sdir.iterdir()):
+                continue                                              # no states yet
+            ready.add(bd.name + '/' + od.name)
     return ready
 
 
