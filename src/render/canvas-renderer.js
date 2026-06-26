@@ -15,7 +15,7 @@ import { drawBuildingShadows, buildBuildingShadowBitmap, updateBuildingHeightMas
 import { updateFloorViewTransform } from './floor-view.js';
 import { drawInteriorFloorWorld, drawInteriorWallsWorld, interiorLiftPx, updateInteriorLift } from './interior-renderer.js';
 import { buildInteriorSceneBitmap } from './interior-gl.js';
-import { buildOccluderBitmap, drawBuildingTextured, buildingBakeState } from './building-occluder.js';
+import { buildOccluderBitmap, drawBuildingTextured, buildingBakeState, buildBuildingPropsBitmap } from './building-occluder.js';
 import { buildDoorLeafBitmap } from './door-leaves.js';
 import { buildBuildingLayerBitmaps } from './building-layer.js';
 import { nearDepthBuildings, renderBuildingSilhouette, tileDepth, DEPTH_SCALE } from './building-depth.js';
@@ -550,6 +550,18 @@ export class CanvasRenderer {
         this.glc.setSpriteDepth(_refY, DEPTH_SCALE, _see);
         _depthActive = true;
       }
+    }
+
+    // LIVE D3 WALL ATTACHMENTS — props are pulled OUT of the cached building bake so they ANIMATE (banner/sign
+    // sway, lantern flicker); a baked-in prop freezes in the cached sprite. Drawn here as ONE GL-composited
+    // overlay AFTER the building sprites (props sit low on the wall, under the baked roof — the roof terminates
+    // at the wall top, no south overhang, so no draw-order clash) and BEFORE the F2/player pass. Routes through
+    // GL (drawSceneOverlayBitmap) like the shadow pass — inherits scene lighting/CRT, never a 2D top-pass.
+    if (!_inside && glScene && renderOn('attachments') && typeof window !== 'undefined' && window._buildingDepthColor !== false) {
+      try {
+        const _propsBmp = buildBuildingPropsBitmap(nearDepthBuildings(getCachedBuildings(), camX, camY, tilePx, w, h), camX, camY, tilePx, w, h);
+        if (_propsBmp) this.glc.drawSceneOverlayBitmap(_propsBmp);
+      } catch (e) { /* best-effort */ }
     }
 
     // D-STACK PLACEMENT OVERLAY (debug, off by default): highlight every façade socket where a wall
