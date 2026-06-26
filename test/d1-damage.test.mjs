@@ -41,6 +41,41 @@ test('damageDrivers: per-building jitter varies wetness deterministically', () =
   assert.ok(a.wetness !== c.wetness, 'different building → different wetness');
 });
 
+// --- per-building disrepair baseline (the honest stand-in for the absent age sim) ----------------
+test('damageDrivers: disrepair baseline is deterministic, in range, and 0 without building coords', () => {
+  assert.equal(damageDrivers('grassland').disrepair, 0, 'no coords → no disrepair (pure-geometry safe)');
+  const a = damageDrivers('grassland', { bx: 10, by: 20 });
+  const b = damageDrivers('grassland', { bx: 10, by: 20 });
+  assert.equal(a.disrepair, b.disrepair, 'same building → same disrepair');
+  assert.ok(a.disrepair >= 0 && a.disrepair <= 1, 'in range');
+});
+
+test('damageDrivers: disrepair is skewed low — cracks are OCCASIONAL, not universal', () => {
+  let cracked = 0; const N = 600;
+  for (let i = 0; i < N; i++) {
+    const d = damageDrivers('grassland', { bx: i * 13 + 1, by: i * 7 + 5 });
+    if (layerIntensity('cracks', d) > 0) cracked++;
+  }
+  assert.ok(cracked > 0, 'some buildings DO show cracks in-world (D1 is visible)');
+  assert.ok(cracked < N * 0.35, `cracks should be a minority, got ${(100 * cracked / N).toFixed(0)}%`);
+});
+
+test('damageDrivers: cond = disrepair in-world, but the age preview overrides it', () => {
+  const wn = damageDrivers('grassland', { bx: 5, by: 9 });
+  assert.equal(wn.cond, wn.disrepair, 'in-world cond is the disrepair baseline');
+  const preview = damageDrivers('grassland', { bx: 5, by: 9, age: 0.9 });
+  assert.equal(preview.cond, 0.9, 'age preview overrides cond');
+});
+
+test('damageDrivers: disrepair amount 0 → wetness-only (no in-world cracks/age-decay)', () => {
+  let cracked = 0; const N = 300;
+  for (let i = 0; i < N; i++) {
+    const d = damageDrivers('grassland', { bx: i * 13 + 1, by: i * 7 + 5, disrepairAmount: 0 });
+    if (layerIntensity('cracks', d) > 0) cracked++;
+  }
+  assert.equal(cracked, 0, 'with disrepair off, no building shows cracks (age honestly absent)');
+});
+
 // --- layer gating (the no-mock heart of D1) ------------------------------------------------------
 test('layerIntensity: age-driven cracks are 0 while age is absent, but fire once age is present', () => {
   const absent = damageDrivers('grassland');               // age null

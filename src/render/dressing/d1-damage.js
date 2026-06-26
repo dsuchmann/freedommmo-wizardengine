@@ -8,13 +8,15 @@
 //
 // Damage ≠ weathering. D0 is universal soft grime that every wall carries; D1 is OCCASIONAL structural
 // decay (cracks, flaking, rot, rust, eroded runnels) that most buildings DON'T have. So the layers are
-// driver-GATED, not always-on:
-//   • cracks / flaking / dry-rot are AGE-driven → HONESTLY ABSENT until a sim age/maintenance source
-//     exists (no-mock: we do NOT fake aging). In production age is null → these render nothing; the
-//     Dev HUD tuner can raise window._damage.age to PREVIEW them.
+// driver-GATED, not always-on, on two honest signals:
 //   • wet-rot / runnels / rust / freeze-thaw spall are WETNESS-driven → wetness is HONESTLY DERIVABLE
-//     now from biome climate (+ water-proximity, a TODO), so these CAN render in the world today: wet
-//     biomes show rot/runnels, cold biomes show freeze-thaw, dry biomes show almost nothing.
+//     now from biome climate (+ water-proximity, a TODO): wet biomes show rot/runnels, cold biomes show
+//     freeze-thaw, dry biomes show almost nothing.
+//   • cracks / flaking / age-rot key on a per-building DISREPAIR baseline (`cond`): a deterministic,
+//     heavily-skewed hash so MOST buildings are clean and a visible MINORITY are worn (~1 in 4) — the
+//     SAME honest device D0 uses for its absent driver. This is spatial UPKEEP variation, NOT a faked
+//     age sim (no-mock: it makes no per-building claim of literal age; a real maintenance/age sim
+//     supersedes it). The Dev HUD `age` slider OVERRIDES it to preview age-driven decay uniformly.
 //
 // Each layer is a world-locked procedural coverage decal (the D0 technique): a seamless TEX×TEX noise
 // mask, phase-anchored to world space (pan-stable, flows across columns), optionally carved by a
@@ -30,6 +32,8 @@ import { tileFbm } from './d0-weathering.js';
 
 const SALT = 0xD1;           // D1 dressing channel (distinct from D0's 0xD0 and the F-field salts)
 const TEX = 128;             // noise texture size (px) — also the world-lock tiling period
+const DISREPAIR_SKEW = 4;    // power-skew on the per-building disrepair hash: higher → fewer worn buildings
+                             // (pow(rand,4) → ~1 in 4 buildings exceeds the crack onset; the rest stay clean)
 
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
@@ -47,8 +51,16 @@ const BIOME_WETNESS = {
 const COLD_BIOMES = new Set(['taiga', 'tundra', 'mountains', 'arctic']);
 
 /** Resolve the damage drivers for a building from its biome + the live/opts config. Returns
- *  { age, wetness, freezeThaw } each in [0,1] (age can be null = honestly absent). Pure + deterministic
- *  for testing. A small per-building jitter keeps a town from reading as one uniform wetness. */
+ *  { age, wetness, freezeThaw, disrepair, cond } in [0,1] (age can be null = honestly absent).
+ *  Pure + deterministic for testing. A small per-building jitter keeps a town from reading as one
+ *  uniform wetness.
+ *
+ *  `disrepair` is a per-building DETERMINISTIC, heavily-skewed hash (most buildings ~0, a visible
+ *  minority worn) that stands in for the absent age/maintenance sim — the SAME honest device D0 uses
+ *  for its missing driver. It is SPATIAL UPKEEP VARIATION, not a claim that a building is N years old;
+ *  a real maintenance/age sim supersedes it when one lands. `cond` is the effective "age-class" condition
+ *  driving cracks/flaking/rot: the tuner's `age` preview OVERRIDES it when set, else it's the disrepair
+ *  baseline. `disrepair` is 0 with no building coords (pure-geometry tests) so age-class layers stay off. */
 export function damageDrivers(biome, opts = {}) {
   const cfg = (typeof window !== 'undefined' && window._damage) || DAMAGE;
   const age = opts.age !== undefined ? opts.age : cfg.age; // null/undefined → absent
@@ -56,7 +68,11 @@ export function damageDrivers(biome, opts = {}) {
   // deterministic per-building variation (±0.12) so wetness-driven decay isn't a flat town-wide value
   if (opts.bx != null && opts.by != null) wetness = clamp01(wetness + (rand2(opts.bx, opts.by, SALT + 7) - 0.5) * 0.24);
   const freezeThaw = COLD_BIOMES.has(biome) ? clamp01(wetness * 1.1) : 0;
-  return { age: age == null ? null : clamp01(age), wetness: clamp01(wetness), freezeThaw };
+  const amount = opts.disrepairAmount != null ? opts.disrepairAmount : cfg.disrepair; // prevalence multiplier (0 = off)
+  let disrepair = 0;
+  if (opts.bx != null && opts.by != null && amount > 0) disrepair = clamp01(Math.pow(rand2(opts.bx, opts.by, SALT + 11), DISREPAIR_SKEW) * amount);
+  const cond = age != null ? clamp01(age) : disrepair;
+  return { age: age == null ? null : clamp01(age), wetness: clamp01(wetness), freezeThaw, disrepair, cond };
 }
 
 // --- The damage layers ---------------------------------------------------------------------------
@@ -72,17 +88,20 @@ export function damageDrivers(biome, opts = {}) {
 // temperate ones (grassland/hills ~0.15), while staying near-zero on dry biomes (desert/savanna/steppe/
 // volcanic) — a dry building honestly shows little moisture decay. Age-driven cracks/dry-rot remain gated
 // on `age` (honestly absent in-world; tuner-preview only) per the manifest's no-mock contract.
+// `d.cond` = effective age-class condition (disrepair baseline in-world, or the tuner's age preview).
+// `d.wetness`/`d.freezeThaw` = moisture/climate (derivable today). cracks & age-flaking key on cond;
+// rot takes the MAX of a wetness floor and cond-amplification; runnels are pure wetness runoff.
 const LAYERS = [
   { key: 'cracks',   tex: 'crack',  blend: 'multiply',   color: '#2b2724', dir: 'none',   begin: 0.35, max: 0.6,
-    driver: (d, c) => d.age == null ? 0 : Math.max(0, d.age - 0.35) / 0.65 * (1 + 0.4 * d.freezeThaw) },
+    driver: (d, c) => d.cond <= 0 ? 0 : Math.max(0, d.cond - 0.35) / 0.65 * (1 + 0.4 * d.freezeThaw) },
   { key: 'flaking',  tex: 'blotch', blend: 'soft-light', color: '#d8cdbb', dir: 'none',   begin: 0.18, max: 0.5,
-    driver: (d, c) => Math.max(d.age == null ? 0 : d.age * 0.8, d.freezeThaw * 0.85) },
+    driver: (d, c) => Math.max(d.cond * 0.8, d.freezeThaw * 0.85) },
   { key: 'rot',      tex: 'blotch', blend: 'soft-light', color: '#34301f', dir: 'bottom', begin: 0.12, max: 0.6,
-    driver: (d, c) => d.age == null ? d.wetness * 0.6 : clamp01(d.age * (0.5 + 0.8 * d.wetness)) },
+    driver: (d, c) => clamp01(Math.max(d.wetness * 0.6, d.cond * (0.5 + 0.8 * d.wetness))) },
   { key: 'runnels',  tex: 'streak', blend: 'multiply',   color: '#46423a', dir: 'top',    begin: 0.12, max: 0.55,
     driver: (d, c) => clamp01(d.wetness * 0.95) },
   { key: 'rust',     tex: 'streak', blend: 'multiply',   color: '#7a3b1e', dir: 'top',    begin: 0.22, max: 0.45,
-    driver: (d, c) => clamp01(d.wetness * (0.55 + 0.6 * (d.age == null ? 0 : d.age)) - 0.05) },
+    driver: (d, c) => clamp01(d.wetness * (0.55 + 0.6 * d.cond) - 0.05) },
 ];
 export const DAMAGE_LAYER_KEYS = LAYERS.map((l) => l.key);
 
@@ -100,7 +119,8 @@ export function layerIntensity(key, drivers, strength = 1) {
 const DEFAULTS = {
   enabled: true,
   strength: 1.0,   // master multiplier across all layers
-  age: null,       // honestly ABSENT (no sim source) — set 0..1 in the tuner to preview age-driven decay
+  age: null,       // honestly ABSENT (no sim source) — set 0..1 in the tuner to preview age-driven decay UNIFORMLY
+  disrepair: 1.0,  // prevalence of the per-building disrepair baseline (0 = off → wetness-only; 1 = ~1 in 4 buildings worn)
   // per-layer enable toggles (the tuner flips these)
   cracks: true, flaking: true, rot: true, runnels: true, rust: true,
 };

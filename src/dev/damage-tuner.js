@@ -14,16 +14,17 @@ const LS_KEY = 'damageTuning';
 
 // Bool/range knobs (age handled by its own preview row; see below).
 const KNOBS = [
-  { key: 'enabled',  kind: 'bool',  desc: 'master on/off' },
-  { key: 'strength', kind: 'range', range: [0, 3, 0.05], desc: 'decay intensity multiplier' },
-  { key: 'cracks',   kind: 'bool',  desc: 'hairline / structural cracks (age-driven)' },
-  { key: 'flaking',  kind: 'bool',  desc: 'paint / render flaking (age + freeze-thaw)' },
-  { key: 'rot',      kind: 'bool',  desc: 'wet rot, bottom-weighted (wetness/age)' },
-  { key: 'runnels',  kind: 'bool',  desc: 'eroded drip runnels, top-weighted (wetness)' },
-  { key: 'rust',     kind: 'bool',  desc: 'iron rust streaks (wetness/age)' },
+  { key: 'enabled',   kind: 'bool',  desc: 'master on/off' },
+  { key: 'strength',  kind: 'range', range: [0, 3, 0.05],   desc: 'decay intensity multiplier' },
+  { key: 'disrepair', kind: 'range', range: [0, 1.5, 0.05], desc: 'per-building wear prevalence (0=wetness-only)' },
+  { key: 'cracks',    kind: 'bool',  desc: 'hairline / structural cracks (disrepair-driven)' },
+  { key: 'flaking',   kind: 'bool',  desc: 'paint / render flaking (disrepair + freeze-thaw)' },
+  { key: 'rot',       kind: 'bool',  desc: 'wet rot, bottom-weighted (wetness/disrepair)' },
+  { key: 'runnels',   kind: 'bool',  desc: 'eroded drip runnels, top-weighted (wetness)' },
+  { key: 'rust',      kind: 'bool',  desc: 'iron rust streaks (wetness/disrepair)' },
 ];
-// Full key list for copy-config (matches the DEFAULTS literal, age included).
-const CONFIG_KEYS = ['enabled', 'strength', 'age', 'cracks', 'flaking', 'rot', 'runnels', 'rust'];
+// Full key list for copy-config (matches the DEFAULTS literal, age + disrepair included).
+const CONFIG_KEYS = ['enabled', 'strength', 'disrepair', 'age', 'cracks', 'flaking', 'rot', 'runnels', 'rust'];
 
 const inputs = {}; // key -> { set(v) }
 
@@ -94,11 +95,11 @@ function copyConfig() {
 
 function mountDamageTuner(container) {
   container.appendChild(el('div', 'color:#5e729a;font-size:10px;margin-bottom:4px',
-    'wetness derives from biome (wet → rot/runnels, cold → freeze-thaw). age is absent until a sim source.'));
+    'wetness from biome (wet→rot/runnels, cold→freeze-thaw). disrepair = per-building wear baseline (~1 in 4). age slider previews uniform aging.'));
   for (const k of KNOBS) {
     if (k.kind === 'bool') container.appendChild(boolRow(k));
     else container.appendChild(rangeRow(k));
-    if (k.key === 'strength') container.appendChild(ageRow()); // age preview right after strength
+    if (k.key === 'disrepair') container.appendChild(ageRow()); // age preview right after the disrepair knob
   }
 
   // freeze-noon helper — honest A/B needs day/night frozen (same as the weathering tuner).
