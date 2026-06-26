@@ -1260,6 +1260,103 @@ export class GLCompositor {
     gl.bindVertexArray(null);
   }
 
+  // CACHED building sprite → colour+depth. Same depth-write semantics as drawBuildingColorDepth, but the
+  // bitmap is a SMALL building-local image uploaded ONCE per `key` (texImage2D only on a miss / bitmap
+  // swap) and re-drawn each frame as a building-sized quad at (sx,sy,dw,dh). This is the fix for the
+  // ~336ms draw: no per-frame full-screen repaint and no per-frame full-screen texture re-upload — the
+  // GPU just samples a cached texture, farthest-first, depth-testing the player per-pixel as before.
+  drawBuildingSprite(key, bitmap, sx, sy, dw, dh, depthZ) {
+    if (!this.ok || !this.sceneActive || !bitmap || this.colorDepthOk === false) return;
+    var gl = this.gl;
+    if (!this.colorDepthProgram) {
+      var prog = this._buildProgram(DEPTHWRITE_VERT_SRC, COLORDEPTH_FRAG_SRC);
+      if (!prog) { this.colorDepthOk = false; return; }
+      this.colorDepthProgram = prog;
+      this.cdUViewport = gl.getUniformLocation(prog, 'uViewport');
+      this.cdUPos = gl.getUniformLocation(prog, 'uPos');
+      this.cdUSize = gl.getUniformLocation(prog, 'uSize');
+      this.cdUTex = gl.getUniformLocation(prog, 'uTex');
+      this.cdUDepthZ = gl.getUniformLocation(prog, 'uDepthZ');
+      this.colorDepthVao = gl.createVertexArray();
+      gl.bindVertexArray(this.colorDepthVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.unitVbo);
+      var cloc = gl.getAttribLocation(prog, 'aUnit');
+      gl.enableVertexAttribArray(cloc);
+      gl.vertexAttribPointer(cloc, 2, gl.FLOAT, false, 0, 0);
+      gl.bindVertexArray(null);
+      this._colorDepthTex = gl.createTexture();
+    }
+    // Per-key texture cache: upload the small building bitmap once; bind & reuse every later frame.
+    if (!this.bldTextures) this.bldTextures = new Map();
+    var entry = this.bldTextures.get(key);
+    if (!entry || entry.bmp !== bitmap) {
+      var tex = entry ? entry.tex : gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);  // premultiplied for ONE/ONE_MINUS_SRC_ALPHA
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      entry = { tex: tex, bmp: bitmap, lastUsed: this.frame };
+      this.bldTextures.set(key, entry);
+    } else {
+      entry.lastUsed = this.frame;
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.sceneFbo);
+    gl.viewport(0, 0, this._artW, this._artH);
+    gl.useProgram(this.colorDepthProgram);
+    gl.bindVertexArray(this.colorDepthVao);
+    gl.uniform2f(this.cdUViewport, this._artW, this._artH);
+    gl.uniform2f(this.cdUPos, sx, sy);
+    gl.uniform2f(this.cdUSize, dw, dh);
+    gl.uniform1f(this.cdUDepthZ, depthZ);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, entry.tex);
+    gl.uniform1i(this.cdUTex, 0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LESS);        // nearer building (smaller z) wins where silhouettes overlap
+    gl.depthMask(true);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.colorMask(true, true, true, true);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.disable(gl.BLEND);
+    gl.depthFunc(gl.LEQUAL);
+    gl.disable(gl.DEPTH_TEST);
+    gl.depthMask(true);
+    gl.bindVertexArray(null);
+  }
+
+  // Re-upload a cached building sprite's texture after its canvas was edited in place (the door-region repaint
+  // edits only a small rect of the canvas, but we re-upload the whole small building-local texture — ~1-2ms,
+  // far cheaper than the ~100ms full re-bake it replaces). No-op if the key was never uploaded.
+  reuploadBuildingSprite(key, bitmap) {
+    if (!this.ok || !this.bldTextures || !bitmap) return;
+    var entry = this.bldTextures.get(key);
+    if (!entry) return;
+    var gl = this.gl;
+    gl.bindTexture(gl.TEXTURE_2D, entry.tex);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    entry.bmp = bitmap;
+    entry.lastUsed = this.frame;
+  }
+
+  // Evict building-sprite textures unused for a while (LRU). Called from endFrame alongside chunk eviction.
+  _evictBuildingTextures(maxAgeFrames) {
+    if (!this.bldTextures) return;
+    var gl = this.gl;
+    for (var [key, entry] of this.bldTextures) {
+      if (this.frame - entry.lastUsed > maxAgeFrames) {
+        gl.deleteTexture(entry.tex);
+        this.bldTextures.delete(key);
+      }
+    }
+  }
+
   // --- Stage 2: sprite atlas + instanced rendering ---
 
   _initSprites() {
@@ -1862,6 +1959,7 @@ export class GLCompositor {
         this.textures.delete(key);
       }
     }
+    this._evictBuildingTextures(EVICT_AFTER_FRAMES);
   }
 
   stats() {

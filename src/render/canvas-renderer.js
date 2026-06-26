@@ -15,7 +15,8 @@ import { drawBuildingShadows, buildBuildingShadowBitmap, updateBuildingHeightMas
 import { updateFloorViewTransform } from './floor-view.js';
 import { drawInteriorFloorWorld, drawInteriorWallsWorld, interiorLiftPx, updateInteriorLift } from './interior-renderer.js';
 import { buildInteriorSceneBitmap } from './interior-gl.js';
-import { buildOccluderBitmap, drawBuildingTextured, buildingBakeState } from './building-occluder.js';
+import { buildOccluderBitmap, drawBuildingTextured, buildingBakeState, repaintBuildingDoors } from './building-occluder.js';
+import { doorSig } from './building-tiles.js';
 import { buildDoorLeafBitmap } from './door-leaves.js';
 import { buildBuildingLayerBitmaps } from './building-layer.js';
 import { nearDepthBuildings, renderBuildingSilhouette, tileDepth, DEPTH_SCALE } from './building-depth.js';
@@ -549,6 +550,16 @@ export class CanvasRenderer {
         const _dx = Math.round(_b.x * tilePx - camX - _spr.ax * _sc);
         const _dy = Math.round(_b.y * tilePx - camY - _spr.ay * _sc);
         this.glc.drawBuildingSprite(spriteKey(_b), _spr.canvas, _dx, _dy, _spr.w * _sc, _spr.h * _sc, _z);
+        // DOOR SWING — animate WITHOUT a full re-bake: when the door frame changes, repaint ONLY the door
+        // region into the cached canvas (door tile + coverage for its ~3 columns) and re-upload (~few ms vs
+        // ~100ms). Closed/far → sig stable → nothing happens (the steady-state perf win is untouched).
+        if (_spr.complete) {
+          const _ds = doorSig(_b);
+          if (_ds && _spr._doorSig !== _ds) {
+            try { if (repaintBuildingDoors(_spr, _b)) this.glc.reuploadBuildingSprite(spriteKey(_b), _spr.canvas); } catch { /* skip */ }
+            _spr._doorSig = _ds;
+          }
+        }
         _wrote2 = true;
       }
       if (_wrote2) {

@@ -97,7 +97,8 @@ import('./dev/dev-hud.js').then(m => {
   import('./dev/field-tuner.js').then(f => f.initFieldTuner());           // "Fields" tab (+ applies field tuning)
   import('./dev/weathering-tuner.js').then(w => w.initWeatheringTuner()); // "Weathering" tab
   import('./dev/damage-tuner.js').then(d => d.initDamageTuner());         // "Damage" tab (D1)
-  import('./dev/growth-tuner.js').then(g => g.initGrowthTuner());         // "Growth" tab (D2)
+  import('./dev/growth-tuner.js').then(g => g.initGrowthTuner());         // "Growth" tab (D2 coverage)
+  import('./dev/vines-tuner.js').then(v => v.initVinesTuner());           // "Vines" tab (D2 placed: climbing ivy)
 });
 const weather = new WeatherSystem(lighting);
 const overmap = new OvermapController(overmapCanvas, player, chunks);

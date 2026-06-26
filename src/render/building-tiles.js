@@ -280,11 +280,15 @@ export function drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h) {
   const runEdges = (r) => ({ left: Math.round((b.x + r.x0) * t - camX), right: Math.round((b.x + r.x1) * t - camX) });
   // DOORS — ground storey only. PROXIMITY DOOR ANIMATION: swing frame from player distance; fall back to
   // the closed static tile until that frame loads (frame 0 == closed == static tile).
+  // Door baked at its CURRENT swing frame. A full building re-bake per frame-step is ~111ms (measured) so the
+  // swing does NOT drive a re-bake; instead the door REGION is repainted in place (drawDoorsCurrent + the
+  // coverage passes scoped to the door columns) — see building-occluder.repaintBuildingDoors. The bake captures
+  // whatever frame is current (closed when far); the region repaint updates it as the player nears.
   if (doorTile) for (const d of (fp.doors || [])) {
     const r = runFor(d.x, d.y);
     const gY = runGroundY(r.y);
     const { left, right } = runEdges(r);
-    const fi = doorFrameIndex(b, d);                    // 0 (closed) in static-bake mode → overlay animates on top
+    const fi = doorFrameIndex(b, d);
     const frame = (fi > 0 && animFrame(b.biome, mat, 'door', fi)) || doorTile;
     drawAperture(frame, Math.round((b.x + d.x + 0.5) * t - camX), gY - wH, 2.6, left, right); // door span ~2.5 tiles, clamped to the run
   }
@@ -297,5 +301,52 @@ export function drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h) {
     for (let st = 0; st < stories; st++) { const wt = st === 0 ? winTile : upperWinTile; if (wt) drawAperture(wt, cx, gY - (st + 1) * wH, 2.0, left, right); }
   }
   return true;
+}
+
+// Repaint ONLY the doors at their CURRENT swing frame into ctx, clearing each door's clip rect first so the new
+// frame fully replaces the old. The door-region repaint (building-occluder.repaintBuildingDoors) calls this on
+// the cached sprite canvas instead of re-baking the whole building (~111ms), then re-applies coverage to just
+// the door columns. Returns { rect, colRange } or null. rect = union door rect (ctx px); colRange = the LOCAL
+// tile column span the door clips cover (so coverage repaints only those columns).
+export function drawDoorsCurrent(ctx, b, camX, camY, tilePx) {
+  const fp = b && b.footprint; if (!fp || !(fp.doors && fp.doors.length)) return null;
+  const mat = materialOf(b); if (!mat) return null;
+  const D = getDIR(b.biome);
+  const doorTile = img(D + mat + '/ground_door__v0.png'); if (!doorTile) return null;
+  const t = tilePx, wH = Math.round(t * WALL_CONFIG.wallHeight), WY = WALL_CONFIG.wallYOffset, segW = Math.round(4 * t);
+  const runs = southRuns(fp); if (!runs.length) return null;
+  const runFor = (ax, ay) => runs.find((r) => r.y === ay && ax >= r.x0 && ax < r.x1) || runs[runs.length - 1];
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, cMin = Infinity, cMax = -Infinity;
+  ctx.imageSmoothingEnabled = false;
+  for (const d of fp.doors) {
+    const r = runFor(d.x, d.y);
+    const gY = Math.round((b.y + r.y + 1) * t - camY) + Math.round(t * WY);
+    const left = Math.round((b.x + r.x0) * t - camX), right = Math.round((b.x + r.x1) * t - camX);
+    const fi = doorFrameIndex(b, d);
+    const frame = (fi > 0 && animFrame(b.biome, mat, 'door', fi)) || doorTile;
+    const cx = Math.round((b.x + d.x + 0.5) * t - camX);
+    const p = aperturePlacement(cx, Math.round(2.6 * t), left, right);
+    if (p.cr <= p.cl) continue;
+    const top = gY - wH;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(p.cl, top, p.cr - p.cl, wH); ctx.clip();
+    ctx.clearRect(p.cl, top, p.cr - p.cl, wH);
+    ctx.drawImage(frame, 0, 0, frame.naturalWidth, frame.naturalHeight, p.cx - segW / 2, top, segW, wH);
+    ctx.restore();
+    x0 = Math.min(x0, p.cl); y0 = Math.min(y0, top); x1 = Math.max(x1, p.cr); y1 = Math.max(y1, top + wH);
+    cMin = Math.min(cMin, Math.floor((p.cl + camX) / t) - b.x);        // local tile columns the clip covers
+    cMax = Math.max(cMax, Math.ceil((p.cr + camX) / t) - 1 - b.x);
+  }
+  if (x1 < x0) return null;
+  return { rect: { x: Math.floor(x0), y: Math.floor(y0), w: Math.ceil(x1 - x0), h: Math.ceil(y1 - y0) }, colRange: { x0: cMin, x1: cMax } };
+}
+
+// Door swing signature — the per-door proximity frame indices. When it CHANGES the door region must repaint.
+// '' when the building has no doors (→ never repaints).
+export function doorSig(b) {
+  const doors = (b && b.footprint && b.footprint.doors) || [];
+  let s = '';
+  for (const d of doors) s += doorFrameIndex(b, d) + ',';
+  return s;
 }
 
