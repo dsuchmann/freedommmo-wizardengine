@@ -1,9 +1,10 @@
-// Door proximity-animation, after the building-sprite-cache regression fix: the cached static building bakes
-// the door CLOSED (setStaticDoorBake) and the live swing frame is drawn as its own GL sprite. These cover the
-// PURE pieces that decide WHICH frame and WHERE — the in-GL overlay draw is verified in-game.
+// Door proximity-animation, after the building-sprite-cache regression fix: the live swing frame is baked INTO
+// the building sprite (so it inherits the wall's weathering/scale/depth) and the cache re-bakes whenever the
+// frame index changes. These cover the PURE pieces that decide WHICH frame (doorFrameIndex) and WHERE the
+// aperture lands (aperturePlacement); the bake re-trigger is covered in building-sprite-cache.test.mjs.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { aperturePlacement, doorFrameIndex, setStaticDoorBake } from '../src/render/building-tiles.js';
+import { aperturePlacement, doorFrameIndex } from '../src/render/building-tiles.js';
 
 // --- aperturePlacement: the single clamp shared by the baked door + the live overlay (must agree exactly) ---
 test('aperturePlacement: centered door in a wide run → no shift, symmetric clip', () => {
@@ -38,12 +39,5 @@ test('doorFrameIndex: far → closed, at-door → fully open, mid → ramps', ()
   assert.equal(doorFrameIndex(B, D), 8);
   globalThis.window = { _player: { x: 101.5, y: 103.25 } }; // dist 2.75 → (4-2.75)/2.5 = 0.5 → round(0.5*8) = 4
   assert.equal(doorFrameIndex(B, D), 4);
-});
-test('doorFrameIndex: static-bake mode forces CLOSED regardless of proximity (so the cache bakes closed)', () => {
-  globalThis.window = { _player: { x: 101.5, y: 100.5 } };  // would be full-open live
-  setStaticDoorBake(true);
-  assert.equal(doorFrameIndex(B, D), 0, 'baked door must be closed');
-  setStaticDoorBake(false);
-  assert.equal(doorFrameIndex(B, D), 8, 'live door animates again after the bake');
   globalThis.window = undefined;
 });

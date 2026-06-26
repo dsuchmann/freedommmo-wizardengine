@@ -66,24 +66,17 @@ function doorOpenAmount(b, d) {
   const R_OPEN = 4.0, R_FULL = 1.5;   // starts opening at 4 tiles, fully open within 1.5
   return Math.max(0, Math.min(1, (R_OPEN - dist) / (R_OPEN - R_FULL)));
 }
-// STATIC-DOOR BAKE MODE: the building sprite cache bakes each building's silhouette ONCE and never rebuilds
-// (perf: no per-frame full-screen repaint). A proximity door swing is per-frame, so it MUST NOT bake into that
-// static sprite — it would freeze at the bake-time frame (closed, since the building is first seen far away).
-// So the cache wraps its bake in setStaticDoorBake(true): the door bakes CLOSED, and the live frame is drawn
-// separately on top each frame as its own GL sprite (building-door-overlay.js). The non-cached A/B paths
-// (building-layer / building-depth direct calls) leave this false and keep their inline per-frame door swing.
-let _staticDoorBake = false;
-export function setStaticDoorBake(on) { _staticDoorBake = !!on; }
-// Live door swing frame index [0..ANIM_FRAMES-1] for door `d` of building `b`. 0 in static-bake mode (closed)
-// or when the player position is unknown. Exported pure so the door-overlay + tests share ONE definition.
+// Live door swing frame index [0..ANIM_FRAMES-1] for door `d` of building `b`, from player proximity (0 when
+// the player position is unknown → closed). The frame is baked INTO the building sprite (so it inherits the
+// wall's weathering/scale/depth — never a separate overlay, which can't match a scaled, weathered cache); the
+// sprite cache's bake-state re-bakes the building whenever this changes. Exported pure so the cache + tests
+// share ONE definition.
 export function doorFrameIndex(b, d) {
-  if (_staticDoorBake) return 0;
   return Math.round(doorOpenAmount(b, d) * (ANIM_FRAMES - 1));
 }
 // Clamp an aperture's [cx±half] span inside the run [left,right] — SHIFT inward when there's room, else clip.
-// Pure: the single source of truth for door/window placement, shared by drawAperture (bake) AND doorAnimRects
-// (the live door-overlay sprite), so the overlay lands EXACTLY where the baked closed door was. Returns the
-// final centre + the clipped visible edges {cx, cl, cr} (cr<=cl ⇒ nothing visible).
+// Pure single source of truth for door/window placement (used by drawAperture). Returns the final centre +
+// the clipped visible edges {cx, cl, cr} (cr<=cl ⇒ nothing visible).
 export function aperturePlacement(cx, clipW, left, right) {
   const half = clipW / 2;
   if (left != null && right != null && right - left >= clipW) {
@@ -306,43 +299,3 @@ export function drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h) {
   return true;
 }
 
-// LIVE DOOR-OVERLAY rects — the per-door geometry the door-overlay sprite (building-door-overlay.js) needs to
-// draw the CURRENT swing frame on top of the cached (closed-door) static building. Mirrors the door block above
-// + the drawAperture clamp EXACTLY (via the shared aperturePlacement) so the overlay registers on the baked
-// door. Returns [] when not a tiled building, it has no doors, the base/frame isn't loaded yet, or every door
-// is CLOSED (fi==0 ⇒ the baked closed door already reads → no overlay). Each entry is in SCREEN px at the
-// current camera/zoom: { idx, fi, img, cl, cr, top, wH, srcX, srcW, srcH }.
-export function doorAnimRects(b, camX, camY, tilePx) {
-  const fp = b && b.footprint; if (!fp || !(fp.doors && fp.doors.length)) return [];
-  const mat = materialOf(b); if (!mat) return [];
-  const D = getDIR(b.biome);
-  if (!img(D + mat + '/ground_door__v0.png')) return [];           // base door tile not loaded → nothing to overlay yet
-  const t = tilePx;
-  const wH = Math.round(t * WALL_CONFIG.wallHeight);
-  const WY = WALL_CONFIG.wallYOffset;
-  const segW = Math.round(4 * t);
-  const runs = southRuns(fp); if (!runs.length) return [];
-  const runFor = (ax, ay) => runs.find(r => r.y === ay && ax >= r.x0 && ax < r.x1) || runs[runs.length - 1];
-  const out = [];
-  let di = 0;
-  for (const d of fp.doors) {
-    const idx = di++;
-    const fi = doorFrameIndex(b, d);
-    if (fi <= 0) continue;                                          // closed → baked door reads; no overlay
-    const frame = animFrame(b.biome, mat, 'door', fi); if (!frame) continue; // that frame not loaded → baked closed door shows
-    const r = runFor(d.x, d.y);
-    const gY = Math.round((b.y + r.y + 1) * t - camY) + Math.round(t * WY);
-    const left = Math.round((b.x + r.x0) * t - camX), right = Math.round((b.x + r.x1) * t - camX);
-    const cx0 = Math.round((b.x + d.x + 0.5) * t - camX);
-    const p = aperturePlacement(cx0, Math.round(2.6 * t), left, right);
-    if (p.cr <= p.cl) continue;
-    const destX0 = p.cx - segW / 2;                                 // where the full 4-tile frame would be drawn
-    const iw = frame.naturalWidth, ih = frame.naturalHeight;
-    out.push({
-      idx, fi, img: frame, cl: p.cl, cr: p.cr, top: gY - wH, wH,
-      srcX: (p.cl - destX0) / segW * iw,                            // sub-rect of the frame revealed by the clip [cl..cr]
-      srcW: (p.cr - p.cl) / segW * iw, srcH: ih,
-    });
-  }
-  return out;
-}

@@ -15,13 +15,11 @@ import { drawBuildingShadows, buildBuildingShadowBitmap, updateBuildingHeightMas
 import { updateFloorViewTransform } from './floor-view.js';
 import { drawInteriorFloorWorld, drawInteriorWallsWorld, interiorLiftPx, updateInteriorLift } from './interior-renderer.js';
 import { buildInteriorSceneBitmap } from './interior-gl.js';
-import { buildOccluderBitmap, drawBuildingTextured, buildingTextureComplete } from './building-occluder.js';
+import { buildOccluderBitmap, drawBuildingTextured, buildingBakeState } from './building-occluder.js';
 import { buildDoorLeafBitmap } from './door-leaves.js';
 import { buildBuildingLayerBitmaps } from './building-layer.js';
 import { nearDepthBuildings, renderBuildingSilhouette, tileDepth, DEPTH_SCALE } from './building-depth.js';
 import { getBuildingSprite, spriteKey, bumpSpriteFrame } from './building-sprite-cache.js';
-import { setStaticDoorBake } from './building-tiles.js';
-import { drawAnimatedDoors } from './building-door-overlay.js';
 import { buildSocketOverlayBitmap } from './dressing/socket-overlay.js';
 import { isInside } from './active-interior.js';
 import { initWallTuner, drawWallTuner } from './wall-tuner.js';
@@ -540,20 +538,17 @@ export class CanvasRenderer {
         // re-uploading a full-screen silhouette per building per frame. The sprite is baked at
         // _spr.builtTilePx; SCALE the quad to the live tilePx (like terrain chunks) so a zoom gesture is
         // a free quad-resize, NOT a per-frame rebuild. Anchor offsets scale with it.
-        // The cached sprite bakes ONCE and never rebuilds, so the proximity door swing CANNOT live in it (it
-        // would freeze at the bake-time frame). Bake the door CLOSED, then draw the live swing frame on top as
-        // its own GL sprite (drawAnimatedDoors) — see building-door-overlay.js. setStaticDoorBake only matters
-        // during an actual (miss) bake; a cache hit doesn't call the renderFn, so it's a no-op there.
-        setStaticDoorBake(true);
-        const _spr = getBuildingSprite(_b, tilePx, drawBuildingTextured, buildingTextureComplete);
-        setStaticDoorBake(false);
+        // Cache bakes once and reuses; buildingBakeState makes it re-bake until the building is fully loaded
+        // (no walls-only freeze) AND whenever the live door swing frame changes (the proximity door is baked
+        // INTO the sprite so it inherits the same weathering/scale/depth — re-baked the ~8 times its frame
+        // steps as the player nears, then frozen again). Closed/far → stable → reused (the perf win).
+        const _spr = getBuildingSprite(_b, tilePx, drawBuildingTextured, buildingBakeState);
         if (!_spr) continue;
         const _sc = tilePx / _spr.builtTilePx;
         const _z = tileDepth(_b.y + _b.footprint.boundingBox.h, _refY) * 2 - 1;
         const _dx = Math.round(_b.x * tilePx - camX - _spr.ax * _sc);
         const _dy = Math.round(_b.y * tilePx - camY - _spr.ay * _sc);
         this.glc.drawBuildingSprite(spriteKey(_b), _spr.canvas, _dx, _dy, _spr.w * _sc, _spr.h * _sc, _z);
-        drawAnimatedDoors(this.glc, _b, camX, camY, tilePx, _z);  // live proximity door swing, depth-sorted with the building
         _wrote2 = true;
       }
       if (_wrote2) {

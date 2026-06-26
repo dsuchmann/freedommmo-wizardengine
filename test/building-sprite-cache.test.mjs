@@ -139,20 +139,41 @@ test('a renderer that is not ready (returns false) does not cache and returns nu
 test('REGRESSION: an INCOMPLETE bake re-bakes every frame until complete, then freezes (no walls-only freeze)', () => {
   // The bug: a building bakes ONCE on first sight — but its tiles + roof load async, so the first drawable
   // frame is walls-only, and that froze forever (eviction only fires when size>384, so a small town never
-  // recovers → permanent missing roofs/windows/doors). Fix: re-bake while isComplete(b) is false, then freeze.
+  // recovers → permanent missing roofs/windows/doors). Fix: re-bake while bakeState.complete is false.
   invalidateBuildingSprites();
   const counter = { n: 0 };
   const render = makeFakeRender(counter);
   const b = fakeB(700, 700);
   let ready = false;                                   // simulate the building's tiles/roof still loading
-  const isComplete = () => ready;
-  for (let i = 0; i < 3; i++) { bumpSpriteFrame(); assert.ok(getBuildingSprite(b, 32, render, isComplete)); }
+  const bakeState = () => ({ complete: ready, sig: '' });
+  for (let i = 0; i < 3; i++) { bumpSpriteFrame(); assert.ok(getBuildingSprite(b, 32, render, bakeState)); }
   assert.equal(counter.n, 3, 'an incomplete sprite re-bakes every frame so late assets can still appear');
   ready = true;                                        // assets finish loading → next bake is the complete one
-  bumpSpriteFrame(); getBuildingSprite(b, 32, render, isComplete);
+  bumpSpriteFrame(); getBuildingSprite(b, 32, render, bakeState);
   assert.equal(counter.n, 4, 'baked once more, now structurally complete');
-  for (let i = 0; i < 5; i++) { bumpSpriteFrame(); getBuildingSprite(b, 32, render, isComplete); }
+  for (let i = 0; i < 5; i++) { bumpSpriteFrame(); getBuildingSprite(b, 32, render, bakeState); }
   assert.equal(counter.n, 4, 'complete sprite is now a cache hit — no further re-bakes (perf win preserved)');
+});
+
+test('DOOR ANIM: a complete sprite re-bakes when its sig (door frame) changes, then freezes when stable', () => {
+  // The door swing is baked INTO the sprite (so it inherits weathering/scale/depth — an external overlay can't
+  // match those). The cache re-bakes ONLY when the door-frame sig changes (the ~8 steps of an approach), then
+  // freezes again when the player stops/leaves — so a resting town pays nothing.
+  invalidateBuildingSprites();
+  const counter = { n: 0 };
+  const render = makeFakeRender(counter);
+  const b = fakeB(800, 800);
+  let frame = 0;                                       // door closed
+  const bakeState = () => ({ complete: true, sig: 'd' + frame });
+  bumpSpriteFrame(); getBuildingSprite(b, 32, render, bakeState);
+  assert.equal(counter.n, 1, 'first bake (closed)');
+  for (let i = 0; i < 4; i++) { bumpSpriteFrame(); getBuildingSprite(b, 32, render, bakeState); }
+  assert.equal(counter.n, 1, 'closed door + far → sig stable → reused, no re-bake (perf win)');
+  for (frame = 1; frame <= 8; frame++) { bumpSpriteFrame(); getBuildingSprite(b, 32, render, bakeState); } // door opens
+  assert.equal(counter.n, 9, 'one re-bake per frame-step as the door swings open (8 steps)');
+  frame = 8;                                            // door held fully open at its last-baked frame
+  for (let i = 0; i < 5; i++) { bumpSpriteFrame(); getBuildingSprite(b, 32, render, bakeState); }
+  assert.equal(counter.n, 9, 'door fully open + held → sig stable again → frozen, no further re-bakes');
 });
 
 test('invalidateBuildingSprites clears the cache (forces a rebuild)', () => {

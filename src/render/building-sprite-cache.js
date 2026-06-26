@@ -133,22 +133,31 @@ function buildSprite(b, tilePx, renderFn) {
  *  at its camera-relative position; returns false if it could not draw (assets not loaded). Matches
  *  drawBuildingTextured's signature exactly.
  *
- *  isComplete(b) -> boolean (optional): is the building FULLY renderable now (all tiles + roof loaded)? A bake
- *  is only frozen-and-reused once complete; an incomplete bake (walls before the windows/doors/roof finish
- *  async-loading) is RE-baked each frame until it completes, so late assets actually appear instead of being
- *  frozen out. Omitted → every bake is treated as complete (legacy behavior). */
-export function getBuildingSprite(b, tilePx, renderFn, isComplete) {
+ *  bakeState(b) -> { complete:boolean, sig:string } (optional): the cache reuses a frozen sprite ONLY while
+ *  the building is complete AND its sig is unchanged. Two jobs:
+ *   • complete — is the building FULLY renderable now (all tiles + roof loaded)? An incomplete bake (walls
+ *     before the windows/doors/roof finish async-loading) is RE-baked each frame until it completes, so late
+ *     assets appear instead of being frozen into a permanent walls-only sprite.
+ *   • sig — a string of anything that VARIES and must be re-baked INTO the sprite when it changes: the live
+ *     door swing frame indices. A door is part of the weathered, scaled, depth-sorted sprite (NOT a separate
+ *     overlay — an overlay can't match the cache's scaling/weathering), so we re-bake the sprite the ~8 times
+ *     its frame steps as the player approaches, then freeze again. Closed door (player far) → sig stable →
+ *     frozen (the perf win). Omitted → always complete, never stale (legacy behavior). */
+export function getBuildingSprite(b, tilePx, renderFn, bakeState) {
   const key = spriteKey(b);
   const hit = _cache.get(key);
-  if (hit && hit.complete) { hit.frame = _frame; _stat('hits'); return hit; } // complete → reuse forever (the perf win)
-  // A miss, OR a prior INCOMPLETE bake (still loading): (re)bake until structurally complete, then freeze.
+  const state = bakeState ? bakeState(b) : null;
+  const liveSig = state ? state.sig : '';
+  if (hit && hit.complete && hit.sig === liveSig) { hit.frame = _frame; _stat('hits'); return hit; } // unchanged → reuse (perf win)
+  // A miss, an INCOMPLETE bake (still loading), or a STALE one (door frame changed): (re)bake.
   if (_builds >= BUILD_BUDGET) { if (hit) { hit.frame = _frame; return hit; } return null; } // over budget → show last partial / defer
   const built = buildSprite(b, tilePx, renderFn);
   if (!built) { if (hit) { hit.frame = _frame; return hit; } return null; }                  // can't draw yet → keep last partial
   _builds++;
   const firstFrame = hit && hit.firstFrame != null ? hit.firstFrame : _frame;
   built.firstFrame = firstFrame;
-  built.complete = isComplete ? !!isComplete(b) : true;
+  built.complete = state ? !!state.complete : true;
+  built.sig = liveSig;
   if (!built.complete && _frame - firstFrame > MAX_WARMUP) built.complete = true;            // backstop: freeze as-is
   _cache.set(key, built);
   if (!hit) _stat('built');

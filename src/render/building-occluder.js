@@ -19,7 +19,7 @@ import { getWallImg } from './building-renderer.js';
 import { buildingFloors } from './building-shadow.js';
 import { queryBuildingTile } from './building-tile-query.js';
 import { wallAssetDir, wallPieceFile, roofAssetDir, roofTextureFile, ROOF_FASCIA_FILE } from '../../sim/world/buildings/building-material-registry.js';
-import { drawBuildingTiles, isTiledBuilding, materialOf, tileImagesReady } from './building-tiles.js';
+import { drawBuildingTiles, isTiledBuilding, materialOf, tileImagesReady, doorFrameIndex } from './building-tiles.js';
 import { renderOn } from './building-render-flags.js';
 import { paintWeatheredColumn } from './dressing/d0-weathering.js';
 import { paintDamagedColumn } from './dressing/d1-damage.js';
@@ -120,20 +120,32 @@ function ensureRoof() {
   import('../../tools/roof/roof-ingame.js').then(m => { _roof = m; }).catch(() => { _roofFailed = true; }).finally(() => { _roofLoading = false; });
 }
 
-// Is this building's TEXTURED silhouette fully renderable RIGHT NOW — every wall/aperture tile loaded AND the
-// procedural roof engine ready? The building sprite cache gates its one-time bake on this so it never freezes a
-// half-loaded (walls-only, no roof/windows/doors) sprite forever (the roof module + tile PNGs load async, so the
-// FIRST drawable frame is walls-only — that must NOT be the permanent bake). Kicks ensureRoof so the roof engine
-// starts loading. Excludes optional dressing props (a 404/absent prop must not block the structural bake).
-export function buildingTextureComplete(b) {
+// Bake-state for the building sprite cache: { complete, sig }.
+//  • complete — is the TEXTURED silhouette fully renderable RIGHT NOW (every wall/aperture tile loaded AND the
+//    procedural roof engine ready)? The cache re-bakes until this is true so it never freezes a half-loaded
+//    (walls-only, no roof/windows/doors) sprite forever (tiles + roof module load async, so the FIRST drawable
+//    frame is walls-only — that must NOT be the permanent bake). Excludes optional dressing props (a 404/absent
+//    prop must not block the structural bake).
+//  • sig — the live DOOR SWING frame indices. The proximity door animation is baked INTO the sprite (so it
+//    inherits the same weathering, scaling and depth as the wall — an external overlay can't match those); the
+//    cache re-bakes the ~8 times the frame steps as the player approaches, then freezes again (closed door, far
+//    away → sig stable → frozen, the perf win). Kicks ensureRoof so the roof engine starts loading.
+export function buildingBakeState(b) {
+  let complete = true;
   try {
     if (isTiledBuilding(b)) {
-      if (!tileImagesReady(b)) return false;
-      if (renderOn('roof')) { ensureRoof(); if (!_roof) return false; } // roof engine still loading → bake again later
-      return true;
+      if (!tileImagesReady(b)) complete = false;
+      else if (renderOn('roof')) { ensureRoof(); complete = !!_roof; } // roof engine still loading → bake again later
+    } else {
+      complete = !!getWallImg('south_base'); // legacy wall path needs the stone_brick fallback loaded
     }
-    return !!getWallImg('south_base'); // legacy wall path needs the stone_brick fallback loaded
-  } catch { return true; } // never block forever on a predicate error
+  } catch { complete = true; } // never block forever on a predicate error
+  let sig = '';
+  try {
+    const doors = (b && b.footprint && b.footprint.doors) || [];
+    for (const d of doors) sig += doorFrameIndex(b, d) + ',';
+  } catch { /* no door sig → static */ }
+  return { complete, sig };
 }
 
 // Lazy biome roof-texture cache so the re-drawn roof gets the SAME ground-skin the worker bakes
