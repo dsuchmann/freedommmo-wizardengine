@@ -1,0 +1,8 @@
+{
+  "_note": "D2 climbing-plant (vine) kit — in-flight generation tracker. biome -> piece -> {group, px}. The KIT pieces (vine_segment / vine_root_base / vine_fork / vine_leaf_cluster) are biome-INVARIANT in structure; the per-biome SKIN varies the PLANT (grassland=ivy, desert=desert creeper, tropical=liana, arctic=frost-killed vine, ...). group = create_1_direction_object review-pack id; download to dressing/<biome>/<piece>/base__vN.png via scripts/d3-download.mjs scripts/_d2_vine_jobs.json.",
+  "grassland": {
+    "vine_segment": { "group": "e028a6be-bfc9-4b07-ac10-ce16e8df9dd7", "px": 64 },
+    "vine_root_base": { "group": "b9286e60-8637-4a95-9c96-4d2696784d6b", "px": 64 },
+    "vine_fork": { "group": "f235b899-b388-4295-b165-b2df449c738e", "px": 64 }
+  }
+}
