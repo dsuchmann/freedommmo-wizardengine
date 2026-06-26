@@ -335,7 +335,10 @@
    23,
    25,
    26,
-   27
+   27,
+   29,
+   30,
+   31
   ],
   "mystic/glowing_ancient": [
    2,
@@ -348,7 +351,11 @@
    23,
    26,
    28,
-   29
+   29,
+   30,
+   31,
+   32,
+   33
   ],
   "savanna/baobab": [
    4,
@@ -504,11 +511,29 @@
    40,
    41,
    42,
-   43
+   43,
+   44,
+   45,
+   46,
+   47,
+   48,
+   49,
+   50,
+   51,
+   52,
+   53,
+   54,
+   55,
+   56,
+   57,
+   58,
+   59,
+   60
   ],
   "tundra/krummholz_pine": [
    9,
-   24
+   24,
+   25
   ],
   "volcanic/charred_trunk": [
    1,
@@ -4391,6 +4416,156 @@
    "replaces": 30,
    "reason": "basepad_reroll",
    "note": "Blue-grey elliptical painted ground platform with a central lava burst; clear gr"
+  },
+  {
+   "biome": "mystic",
+   "species": "crystal_tree",
+   "replaces": 29,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "mystic",
+   "species": "crystal_tree",
+   "replaces": 30,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "mystic",
+   "species": "crystal_tree",
+   "replaces": 31,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "mystic",
+   "species": "glowing_ancient",
+   "replaces": 30,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "mystic",
+   "species": "glowing_ancient",
+   "replaces": 31,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "mystic",
+   "species": "glowing_ancient",
+   "replaces": 32,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "mystic",
+   "species": "glowing_ancient",
+   "replaces": 33,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "tundra",
+   "species": "dwarf_willow",
+   "replaces": 44,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "tundra",
+   "species": "dwarf_willow",
+   "replaces": 45,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "tundra",
+   "species": "dwarf_willow",
+   "replaces": 46,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "tundra",
+   "species": "dwarf_willow",
+   "replaces": 47,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "tundra",
+   "species": "dwarf_willow",
+   "replaces": 48,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "tundra",
+   "species": "dwarf_willow",
+   "replaces": 49,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "tundra",
+   "species": "dwarf_willow",
+   "replaces": 50,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "tundra",
+   "species": "dwarf_willow",
+   "replaces": 51,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "tundra",
+   "species": "dwarf_willow",
+   "replaces": 52,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "tundra",
+   "species": "dwarf_willow",
+   "replaces": 53,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "tundra",
+   "species": "dwarf_willow",
+   "replaces": 54,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "tundra",
+   "species": "dwarf_willow",
+   "replaces": 55,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "tundra",
+   "species": "dwarf_willow",
+   "replaces": 56,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "tundra",
+   "species": "dwarf_willow",
+   "replaces": 57,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "tundra",
+   "species": "dwarf_willow",
+   "replaces": 58,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "tundra",
+   "species": "dwarf_willow",
+   "replaces": 59,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "tundra",
+   "species": "dwarf_willow",
+   "replaces": 60,
+   "reason": "basepad_reroll2_groundspecies"
+  },
+  {
+   "biome": "tundra",
+   "species": "krummholz_pine",
+   "replaces": 25,
+   "reason": "basepad_reroll2_groundspecies"
   }
  ]
 }
