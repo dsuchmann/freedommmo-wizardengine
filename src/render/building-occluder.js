@@ -23,6 +23,7 @@ import { drawBuildingTiles, isTiledBuilding, materialOf } from './building-tiles
 import { renderOn } from './building-render-flags.js';
 import { paintWeatheredColumn } from './dressing/d0-weathering.js';
 import { paintDamagedColumn } from './dressing/d1-damage.js';
+import { drawD1Chips } from './dressing/d1-chips.js';
 import { isWaterTile } from '../../sim/world/buildings/terrain-suitability.js';
 import { drawD3Props } from './dressing/d3-props.js';
 
@@ -653,7 +654,9 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   // 2026-06-25: drawing props OVER the roof is wrong draw-order). Identity stays readable by PLACING props LOW
   // (signs/festoons at mid-wall, awnings at the door head — below the eave overhang), not by drawing over the roof.
   const drawProps = () => { if (renderOn('attachments')) { try { drawD3Props(ctx, b, camX, camY, tilePx, w, h, 'all'); } catch { /* skip props */ } } };
-  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h); drawDamagePass(ctx, b, camX, camY, tilePx, w, h); drawProps(); drawRoof(); return true; }
+  // D1 sprite-chips (plank gaps / patches) — gated with the rest of D1 damage; before the roof like the walls.
+  const drawChips = () => { if (renderOn('damage')) { try { drawD1Chips(ctx, b, camX, camY, tilePx, w, h); } catch { /* skip chips */ } } };
+  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h); drawDamagePass(ctx, b, camX, camY, tilePx, w, h); drawChips(); drawProps(); drawRoof(); return true; }
   // A grassland TILE-CORPUS building whose tiles aren't loaded yet must NOT fall to the legacy
   // strip path — drawWalls would stamp a stone_brick 32px strip STRETCHED over the footprint (the
   // melted/stretched single-building artifact). Stay invisible this frame; it flips to mirror-tiled
@@ -664,6 +667,7 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   drawWalls(ctx, b, camX, camY, tilePx, w, h);
   drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h);
   drawDamagePass(ctx, b, camX, camY, tilePx, w, h);
+  drawChips();
   drawProps();
   drawRoof();
   return true;

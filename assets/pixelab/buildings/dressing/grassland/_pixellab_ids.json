@@ -1,26 +1,234 @@
 {
-  "_field": "D3",
-  "_note": "Dressing prop PixelLab object ids (DISK is source of truth; see docs/superpowers/specs/2026-06-24-d3-generation-manifest.md). base = create_1_direction_object; variants vN = select_object_frames spreads on disk as base__vN.png (only a subset of obj ids recorded here — disk has the full set). The 4 animated props (lantern/lamp/sign/banner) carry per-variant anims at anim/vN/; `anims.vN` records that variant's [object_id, animation_id]. Other props are static. states = honest-absence (no age/damage driver yet).",
-  "iron_candle_lantern":          { "base": "fcd02090-c3a7-48d3-8a7d-0e6ee924a297", "variants": { "v1": "cf9787a2-1853-4357-8790-72b0721bcab7", "v2": "a9113fc1-29c7-4c55-b37c-6483a865c809" }, "states": {}, "anims": { "v1": ["cf9787a2-1853-4357-8790-72b0721bcab7", "41597c77-8652-4c34-8f79-0aecb2d63191"], "v2": ["a9113fc1-29c7-4c55-b37c-6483a865c809", "9e8f090e-cccf-42d4-a0a9-a5baebdc1f0f"] } },
-  "swinging_trade_sign":          { "base": "f735f8cc-dd28-47a5-ab4f-9e478b540d6a", "variants": { "v1": "0b221516-a87a-46c0-b039-8cdf69779752", "v2": "dd68d024-ddd6-45c9-b380-7a79c26cdc54" }, "states": {}, "anims": { "v1": ["0b221516-a87a-46c0-b039-8cdf69779752", "d3cd9358-7edc-4e50-bf33-d41352ad9a10"], "v2": ["dd68d024-ddd6-45c9-b380-7a79c26cdc54", "06050953-7a99-4ce2-bead-d95f09da063e"] } },
-  "wood_slat_awning":             { "base": "cf2d74c6-8436-488a-9b86-de49d8b44023", "variants": { "v1": "4491a390-ea4f-428f-980f-84efafaf2ddf" }, "states": {}, "anims": {} },
-  "board_batten_shutter":         { "base": "fc013a77-3497-43b3-9b48-8b2ec6fe4fad", "variants": { "v1": "0dafaa8b-79a1-4339-a655-d4d6c7a2d83c" }, "states": {}, "anims": {} },
-  "timber_flower_box":            { "base": "58379abf-1039-4a05-9bd8-bcc029077026", "variants": { "v1": "9e1233f7-175e-4711-b5ec-17edb65f7e13" }, "states": {}, "anims": {} },
-  "door_knocker":                 { "base": "d86c9171-3fe4-48d0-8c22-a28b3d939aee", "variants": { "v1": "15955f5e-3735-46ff-a8a3-8bf56b029562" }, "states": {}, "anims": {} },
-  "wrought_iron_bracket":         { "base": "dab3c8f3-5163-4a1b-bf62-4367a81a80f7", "variants": { "v1": "74e69c44-4696-41a8-96b6-0f81a9fbe836" }, "states": {}, "anims": {} },
-  "cloth_market_awning":          { "base": "975899dd-5248-469b-816b-ebcd9208e5be", "variants": { "v1": "c0eeb311-4a9b-4596-8334-0b5be7b53304" }, "states": {}, "anims": {} },
-  "fringed_shop_canopy":          { "base": "5338e32f-1bab-4815-8c8e-508c87a01a9b", "variants": { "v1": "74701de6-af18-4b76-a28c-4c505a46dd3e" }, "states": {}, "anims": {} },
-  "projecting_board_sign":        { "base": "3b4646fa-9759-400d-9a67-04ff441c15ad", "variants": { "v1": "c6adf47e-29c1-4ac2-8614-d975c53f29a3" }, "states": {}, "anims": {} },
-  "wrought_iron_silhouette_sign": { "base": "64ec9638-7d21-4974-ac3c-847bad0ba7f2", "variants": { "v1": "c60efcba-f936-4a8e-bac6-6d08e780f0b9" }, "states": {}, "anims": {} },
-  "wall_oil_lamp":                { "base": "ec6e7cfc-e342-49de-9388-25062e8eaaaf", "variants": { "v1": "100fe08e-1c6d-4138-b1b4-15eb42ee28c3", "v2": "f52738ed-0748-4a02-b75d-73a29a568521" }, "states": {}, "anims": { "v1": ["100fe08e-1c6d-4138-b1b4-15eb42ee28c3", "cc77ce09-793d-4af9-8fe9-a335c5f7795b"], "v2": ["f52738ed-0748-4a02-b75d-73a29a568521", "bb8de3ed-a720-49cf-8eee-87799419508c"] } },
-  "strung_festival_lights":       { "base": "cec482c6-cd5d-4f5e-be29-87f8b4cef77c", "variants": { "v1": "fa1c2200-f802-48b4-a803-05ad6287f191" }, "states": {}, "anims": {} },
-  "louvred_shutter":              { "base": "2ae57951-70fe-49fd-aaad-617b2ba1566a", "variants": { "v1": "26ef4215-6bfa-45f0-8513-ff18f8878ec8" }, "states": {}, "anims": {} },
-  "terracotta_wall_planter":      { "base": "d7c39896-8e5f-48fb-8daf-51e7fb4a4f12", "variants": { "v1": "a1f2f7cd-caf2-44b8-951c-fcdf93738f5c" }, "states": {}, "anims": {} },
-  "carved_timber_bracket":        { "base": "3965bdc6-3e7e-4cbe-9849-acc61fe86415", "variants": { "v1": "ddb59c14-2856-405f-9569-53ddb9225c12" }, "states": {}, "anims": {} },
-  "door_handle_latch":            { "base": "1a0fec9f-58d6-4a1c-b04e-82509df6d20a", "variants": { "v1": "398a3c29-c092-416d-84a9-420dbd039870" }, "states": {}, "anims": {} },
-  "door_nameplate":               { "base": "216aeb85-24a6-4ac2-9974-49ca56d8cb4b", "variants": { "v1": "9111af7d-babf-4f03-a13d-aff5abf7001f" }, "states": {}, "anims": {} },
-  "heraldic_banner":              { "base": "73027caf-b730-4cd1-860d-78b7392fd41e", "variants": { "v1": "5a177288-f0eb-4f1f-a33e-f3bde66c6fc4", "v2": "d280ffee-c505-4c78-b5ef-8cc387a05d2b" }, "states": {}, "anims": { "v1": ["5a177288-f0eb-4f1f-a33e-f3bde66c6fc4", "19b3e675-e7da-4ea5-8c4f-330303265759"], "v2": ["d280ffee-c505-4c78-b5ef-8cc387a05d2b", "1c15bf9c-9ea3-4770-9eaa-2078d4d6ff90"] } },
-  "triangle_bunting":             { "base": "a1aa305f-f68f-4e8c-b8d5-ccad5a9a5d4d", "variants": { "v1": "2d13eeff-3b06-416e-8c95-73cf13abd84b" }, "states": {}, "anims": {} },
-  "door_wreath":                  { "base": "9d645f27-bcfb-45e2-85ed-50d4650a4c03", "variants": { "v1": "7cb123a9-d983-4e91-882b-d5ea1f6ec191" }, "states": {}, "anims": {} },
-  "festoon_garland":              { "base": "ca35c8e9-062d-4830-a06d-254ec69d61a1", "variants": { "v1": "3954e26f-5441-4938-8450-9e6d24629e1f" }, "states": {}, "anims": {} }
+ "_field": "D3",
+ "_note": "Dressing prop PixelLab object ids (DISK is source of truth; see docs/superpowers/specs/2026-06-24-d3-generation-manifest.md). base = create_1_direction_object; variants vN = select_object_frames spreads on disk as base__vN.png (only a subset of obj ids recorded here — disk has the full set). The 4 animated props (lantern/lamp/sign/banner) carry per-variant anims at anim/vN/; `anims.vN` records that variant's [object_id, animation_id]. Other props are static. states = honest-absence (no age/damage driver yet).",
+ "iron_candle_lantern": {
+  "base": "fcd02090-c3a7-48d3-8a7d-0e6ee924a297",
+  "variants": {
+   "v1": "cf9787a2-1853-4357-8790-72b0721bcab7",
+   "v2": "a9113fc1-29c7-4c55-b37c-6483a865c809"
+  },
+  "states": {},
+  "anims": {
+   "v1": [
+    "cf9787a2-1853-4357-8790-72b0721bcab7",
+    "41597c77-8652-4c34-8f79-0aecb2d63191"
+   ],
+   "v2": [
+    "a9113fc1-29c7-4c55-b37c-6483a865c809",
+    "9e8f090e-cccf-42d4-a0a9-a5baebdc1f0f"
+   ]
+  }
+ },
+ "swinging_trade_sign": {
+  "base": "f735f8cc-dd28-47a5-ab4f-9e478b540d6a",
+  "variants": {
+   "v1": "0b221516-a87a-46c0-b039-8cdf69779752",
+   "v2": "dd68d024-ddd6-45c9-b380-7a79c26cdc54"
+  },
+  "states": {},
+  "anims": {
+   "v1": [
+    "0b221516-a87a-46c0-b039-8cdf69779752",
+    "d3cd9358-7edc-4e50-bf33-d41352ad9a10"
+   ],
+   "v2": [
+    "dd68d024-ddd6-45c9-b380-7a79c26cdc54",
+    "06050953-7a99-4ce2-bead-d95f09da063e"
+   ]
+  }
+ },
+ "wood_slat_awning": {
+  "base": "cf2d74c6-8436-488a-9b86-de49d8b44023",
+  "variants": {
+   "v1": "4491a390-ea4f-428f-980f-84efafaf2ddf"
+  },
+  "states": {},
+  "anims": {}
+ },
+ "board_batten_shutter": {
+  "base": "fc013a77-3497-43b3-9b48-8b2ec6fe4fad",
+  "variants": {
+   "v1": "0dafaa8b-79a1-4339-a655-d4d6c7a2d83c"
+  },
+  "states": {},
+  "anims": {}
+ },
+ "timber_flower_box": {
+  "base": "58379abf-1039-4a05-9bd8-bcc029077026",
+  "variants": {
+   "v1": "9e1233f7-175e-4711-b5ec-17edb65f7e13"
+  },
+  "states": {},
+  "anims": {}
+ },
+ "door_knocker": {
+  "base": "d86c9171-3fe4-48d0-8c22-a28b3d939aee",
+  "variants": {
+   "v1": "15955f5e-3735-46ff-a8a3-8bf56b029562"
+  },
+  "states": {},
+  "anims": {}
+ },
+ "wrought_iron_bracket": {
+  "base": "dab3c8f3-5163-4a1b-bf62-4367a81a80f7",
+  "variants": {
+   "v1": "74e69c44-4696-41a8-96b6-0f81a9fbe836"
+  },
+  "states": {},
+  "anims": {}
+ },
+ "cloth_market_awning": {
+  "base": "975899dd-5248-469b-816b-ebcd9208e5be",
+  "variants": {
+   "v1": "c0eeb311-4a9b-4596-8334-0b5be7b53304"
+  },
+  "states": {},
+  "anims": {}
+ },
+ "fringed_shop_canopy": {
+  "base": "5338e32f-1bab-4815-8c8e-508c87a01a9b",
+  "variants": {
+   "v1": "74701de6-af18-4b76-a28c-4c505a46dd3e"
+  },
+  "states": {},
+  "anims": {}
+ },
+ "projecting_board_sign": {
+  "base": "3b4646fa-9759-400d-9a67-04ff441c15ad",
+  "variants": {
+   "v1": "c6adf47e-29c1-4ac2-8614-d975c53f29a3"
+  },
+  "states": {},
+  "anims": {}
+ },
+ "wrought_iron_silhouette_sign": {
+  "base": "64ec9638-7d21-4974-ac3c-847bad0ba7f2",
+  "variants": {
+   "v1": "c60efcba-f936-4a8e-bac6-6d08e780f0b9"
+  },
+  "states": {},
+  "anims": {}
+ },
+ "wall_oil_lamp": {
+  "base": "ec6e7cfc-e342-49de-9388-25062e8eaaaf",
+  "variants": {
+   "v1": "100fe08e-1c6d-4138-b1b4-15eb42ee28c3",
+   "v2": "f52738ed-0748-4a02-b75d-73a29a568521"
+  },
+  "states": {},
+  "anims": {
+   "v1": [
+    "100fe08e-1c6d-4138-b1b4-15eb42ee28c3",
+    "cc77ce09-793d-4af9-8fe9-a335c5f7795b"
+   ],
+   "v2": [
+    "f52738ed-0748-4a02-b75d-73a29a568521",
+    "bb8de3ed-a720-49cf-8eee-87799419508c"
+   ]
+  }
+ },
+ "strung_festival_lights": {
+  "base": "cec482c6-cd5d-4f5e-be29-87f8b4cef77c",
+  "variants": {
+   "v1": "fa1c2200-f802-48b4-a803-05ad6287f191"
+  },
+  "states": {},
+  "anims": {}
+ },
+ "louvred_shutter": {
+  "base": "2ae57951-70fe-49fd-aaad-617b2ba1566a",
+  "variants": {
+   "v1": "26ef4215-6bfa-45f0-8513-ff18f8878ec8"
+  },
+  "states": {},
+  "anims": {}
+ },
+ "terracotta_wall_planter": {
+  "base": "d7c39896-8e5f-48fb-8daf-51e7fb4a4f12",
+  "variants": {
+   "v1": "a1f2f7cd-caf2-44b8-951c-fcdf93738f5c"
+  },
+  "states": {},
+  "anims": {}
+ },
+ "carved_timber_bracket": {
+  "base": "3965bdc6-3e7e-4cbe-9849-acc61fe86415",
+  "variants": {
+   "v1": "ddb59c14-2856-405f-9569-53ddb9225c12"
+  },
+  "states": {},
+  "anims": {}
+ },
+ "door_handle_latch": {
+  "base": "1a0fec9f-58d6-4a1c-b04e-82509df6d20a",
+  "variants": {
+   "v1": "398a3c29-c092-416d-84a9-420dbd039870"
+  },
+  "states": {},
+  "anims": {}
+ },
+ "door_nameplate": {
+  "base": "216aeb85-24a6-4ac2-9974-49ca56d8cb4b",
+  "variants": {
+   "v1": "9111af7d-babf-4f03-a13d-aff5abf7001f"
+  },
+  "states": {},
+  "anims": {}
+ },
+ "heraldic_banner": {
+  "base": "73027caf-b730-4cd1-860d-78b7392fd41e",
+  "variants": {
+   "v1": "5a177288-f0eb-4f1f-a33e-f3bde66c6fc4",
+   "v2": "d280ffee-c505-4c78-b5ef-8cc387a05d2b"
+  },
+  "states": {},
+  "anims": {
+   "v1": [
+    "5a177288-f0eb-4f1f-a33e-f3bde66c6fc4",
+    "19b3e675-e7da-4ea5-8c4f-330303265759"
+   ],
+   "v2": [
+    "d280ffee-c505-4c78-b5ef-8cc387a05d2b",
+    "1c15bf9c-9ea3-4770-9eaa-2078d4d6ff90"
+   ]
+  }
+ },
+ "triangle_bunting": {
+  "base": "a1aa305f-f68f-4e8c-b8d5-ccad5a9a5d4d",
+  "variants": {
+   "v1": "2d13eeff-3b06-416e-8c95-73cf13abd84b"
+  },
+  "states": {},
+  "anims": {}
+ },
+ "door_wreath": {
+  "base": "9d645f27-bcfb-45e2-85ed-50d4650a4c03",
+  "variants": {
+   "v1": "7cb123a9-d983-4e91-882b-d5ea1f6ec191"
+  },
+  "states": {},
+  "anims": {}
+ },
+ "festoon_garland": {
+  "base": "ca35c8e9-062d-4830-a06d-254ec69d61a1",
+  "variants": {
+   "v1": "3954e26f-5441-4938-8450-9e6d24629e1f"
+  },
+  "states": {},
+  "anims": {}
+ },
+ "d1_plank_gap": {
+  "base": "f08ec970-d365-439a-b74c-946b1a53891f",
+  "px": 64,
+  "variants": 4,
+  "states": {},
+  "anims": {}
+ },
+ "d1_board_patch": {
+  "base": "9f9c41c5-3016-4147-bb65-7fd79fdf8024",
+  "px": 64,
+  "variants": 4,
+  "states": {},
+  "anims": {}
+ }
 }

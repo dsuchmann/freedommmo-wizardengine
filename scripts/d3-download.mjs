@@ -8,7 +8,8 @@ import { execSync } from 'node:child_process';
 
 const ROOT = 'assets/pixelab/buildings/dressing';
 const BUCKET = 'https://backblaze.pixellab.ai/file/pixellab-characters/objects/0f1031f5-9eee-4df4-996f-0a4114148eba';
-const jobs = JSON.parse(fs.readFileSync('scripts/_d3_jobs.json', 'utf8'));
+const JOBS_PATH = process.argv[2] || 'scripts/_d3_jobs.json'; // field-agnostic: pass scripts/_d1_jobs.json for D1 chips
+const jobs = JSON.parse(fs.readFileSync(JOBS_PATH, 'utf8'));
 const SPREAD = { 64: [0, 4, 8, 12], 96: [0, 1, 2, 3], 128: [0, 1, 2, 3] };
 
 function curlPng(url, out) {
