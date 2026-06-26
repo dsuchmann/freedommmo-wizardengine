@@ -153,7 +153,16 @@ EVERY field against these, in-game, and correct:
    corner must pull inward, not hang in the air.
 3. **Pair-mirrored — symmetric pairs face inward.** The LEFT member of a pair (left lantern, left shutter)
    must be flipped on X so the two mirror each other / point the right way. Tag the left socket (`mirror:true`)
-   and `ctx.scale(-1,1)` it. Whenever you place a thing in pairs, consider rotation/flip.
+   and `ctx.scale(-1,1)` it. Whenever you place a thing in pairs, consider rotation/flip. **Drop the pair to a
+   SINGLE when the wall is too narrow** — emit both flanks only when BOTH sides have wall room (e.g. ≥1.7 tiles
+   from the door centre); otherwise one prop on the roomier side. Two lanterns crammed onto a small building's
+   door read as clutter (user 2026-06-26).
+   - **Anchor door/window props to the RENDERED feature centre, not the logical tile centre.** The tile-corpus
+     renderer NUDGES a door/window aperture inward to keep its full ~2.6-tile span inside the run
+     (`building-tiles.js _drawAperture`). A socket at the raw `d.x+0.5` then sits OFF the rendered door on a
+     narrow wall (awning/lanterns drift toward the building edge). Mirror the SAME nudge in `socket-index.js`
+     so the socket centre = the rendered aperture centre. An awning that must centre on the door should also
+     SKIP the footprint clamp (let it overhang a bit) rather than be pushed off-centre (user 2026-06-26).
 4. **Shape- & space-aware — seat the prop ON its feature.** A prop sits where it physically belongs relative
    to the thing it attaches to and the shape of both: a flower box hangs FROM the window sill (anchor its TOP
    at the sill, body/blooms below — not floating mid-wall, not down on the foundation); a wall planter needs a
