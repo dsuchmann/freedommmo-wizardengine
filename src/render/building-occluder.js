@@ -23,6 +23,7 @@ import { drawBuildingTiles, isTiledBuilding, materialOf } from './building-tiles
 import { renderOn } from './building-render-flags.js';
 import { paintWeatheredColumn } from './dressing/d0-weathering.js';
 import { paintDamagedColumn } from './dressing/d1-damage.js';
+import { isWaterTile } from '../../sim/world/buildings/terrain-suitability.js';
 import { drawD3Props } from './dressing/d3-props.js';
 
 // Source rect of the E/W side-face cap. The grassland edge_ew strip is a 32x128 quoin/side-cap;
@@ -519,11 +520,36 @@ function drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h) {
   }
 }
 
+// Honest water-proximity for a building, cached on the building (terrain never changes): the Chebyshev
+// distance to the nearest basin-water tile (river/lake/coast) within a small radius, mapped to [0,1]
+// (1 = water immediately adjacent). Buildings are filtered OFF water but can sit beside it, so this is a
+// real hydrology signal → a waterfront building rots/runnels in ANY biome. 0 when no water is near or the
+// classifier is unavailable (honest absence → biome-climate wetness only).
+const WATER_PROX_R = 10;
+function buildingWaterProximity(b) {
+  if (b._d1WaterProx !== undefined) return b._d1WaterProx;
+  let prox = 0;
+  try {
+    const bb = b && b.footprint && b.footprint.boundingBox;
+    if (bb) {
+      const x0 = b.x, y0 = b.y, x1 = b.x + bb.w - 1, y1 = b.y + bb.h - 1;
+      let found = 0;
+      for (let r = 1; r <= WATER_PROX_R && !found; r++) {
+        for (let x = x0 - r; x <= x1 + r && !found; x++) if (isWaterTile(x, y0 - r) || isWaterTile(x, y1 + r)) found = r;
+        for (let y = y0 - r; y <= y1 + r && !found; y++) if (isWaterTile(x0 - r, y) || isWaterTile(x1 + r, y)) found = r;
+      }
+      if (found) prox = 1 - (found - 1) / WATER_PROX_R; // adjacent → 1.0, at the radius edge → ~0.1
+    }
+  } catch { prox = 0; } // classifier not available client-side → no water signal (honest)
+  b._d1WaterProx = prox;
+  return prox;
+}
+
 // D1 DAMAGE post-pass — paint procedural structural decay (cracks/flaking/rot/runnels/rust) over the
 // SAME south-perimeter wall columns as weathering, AFTER it (damage rides on top of grime). Mechanism A:
 // into the silhouette ctx → GL present pass, never a 2D overlay. Drivers are honest: wetness derives from
-// the building's biome (wet biomes rot/runnel, cold biomes freeze-thaw); age is ABSENT (no sim source)
-// so age-driven cracks/dry-rot render nothing until the Dev HUD tuner raises window._damage.age.
+// the building's biome AND its real water-proximity (waterfront buildings rot/runnel in any biome); a
+// per-building disrepair baseline drives cracks/flaking; age is honestly absent (tuner-preview only).
 function drawDamagePass(ctx, b, camX, camY, tilePx, w, h) {
   if (!renderOn('damage')) return;
   const fp = b && b.footprint, sections = (fp && fp.sections) || [];
@@ -533,6 +559,7 @@ function drawDamagePass(ctx, b, camX, camY, tilePx, w, h) {
   const WY = WALL_CONFIG.wallYOffset;
   const stories = buildingFloors(b);
   const material = materialOf(b);
+  const waterProximity = buildingWaterProximity(b);
   const tsy = (wy) => Math.round(wy * tilePx - camY);
   const floorSet = new Set();
   for (const s of sections) for (let dy = 0; dy < s.h; dy++) for (let dx = 0; dx < s.w; dx++) floorSet.add((s.x0 + dx) + ',' + (s.y0 + dy));
@@ -547,7 +574,7 @@ function drawDamagePass(ctx, b, camX, camY, tilePx, w, h) {
       const colH = stories * wH;
       if (ex.dx + ex.dw < 0 || ex.dx > w || colTop + colH < 0 || colTop > h) continue;
       paintDamagedColumn(ctx, { dx: ex.dx, top: colTop, dw: ex.dw, colH, tilePx },
-        { wx: b.x + lx, wy: fbY }, { biome: b.biome, bx: b.x | 0, by: b.y | 0, material });
+        { wx: b.x + lx, wy: fbY }, { biome: b.biome, bx: b.x | 0, by: b.y | 0, material, waterProximity });
     }
   }
 }

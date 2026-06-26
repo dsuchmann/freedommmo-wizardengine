@@ -67,6 +67,11 @@ export function damageDrivers(biome, opts = {}) {
   let wetness = opts.wetness != null ? opts.wetness : (BIOME_WETNESS[biome] != null ? BIOME_WETNESS[biome] : 0.35);
   // deterministic per-building variation (±0.12) so wetness-driven decay isn't a flat town-wide value
   if (opts.bx != null && opts.by != null) wetness = clamp01(wetness + (rand2(opts.bx, opts.by, SALT + 7) - 0.5) * 0.24);
+  // WATER PROXIMITY (honest hydrology): a building beside a river/lake/coast is genuinely wetter than its
+  // biome climate implies, so a waterfront building rots/runnels in ANY biome. opts.waterProximity ∈ [0,1]
+  // (1 = water immediately adjacent) is sampled from the real water tiles by the renderer; it lerps wetness
+  // UP toward saturation. Absent/0 → biome-climate-only (honest: no water signal available → no boost).
+  if (opts.waterProximity > 0) wetness = lerp(clamp01(wetness), 0.92, clamp01(opts.waterProximity));
   const freezeThaw = COLD_BIOMES.has(biome) ? clamp01(wetness * 1.1) : 0;
   const amount = opts.disrepairAmount != null ? opts.disrepairAmount : cfg.disrepair; // prevalence multiplier (0 = off)
   let disrepair = 0;

@@ -28,6 +28,16 @@ test('damageDrivers: age is HONESTLY ABSENT (null) by default — never fabricat
   assert.equal(damageDrivers('grassland', { age: 0.7 }).age, 0.7); // tuner/opts can preview it
 });
 
+test('damageDrivers: water proximity raises wetness (waterfront decay in any biome)', () => {
+  const dryInland = damageDrivers('desert');                       // 0.05, no water
+  const dryShore = damageDrivers('desert', { waterProximity: 1 }); // oasis-edge
+  assert.ok(dryShore.wetness > dryInland.wetness + 0.5, `shore (${dryShore.wetness}) >> inland (${dryInland.wetness})`);
+  assert.ok(layerIntensity('runnels', dryShore) > 0, 'a waterfront desert building runnels');
+  assert.equal(layerIntensity('runnels', dryInland), 0, 'an inland desert building stays clean');
+  // proximity only raises, never lowers; 0/absent = biome climate only
+  assert.equal(damageDrivers('dense_forest', { waterProximity: 0 }).wetness, damageDrivers('dense_forest').wetness);
+});
+
 test('damageDrivers: freeze-thaw only fires in cold biomes', () => {
   assert.equal(damageDrivers('savanna').freezeThaw, 0);
   assert.ok(damageDrivers('tundra').freezeThaw > 0, 'cold biome has freeze-thaw');
