@@ -216,12 +216,51 @@ def output_path(src: Path) -> Path:
     return src.with_name(f"{src.stem}{OUT_SUFFIX}{OUT_TAG}.png")
 
 
-def enumerate_corpus(only_biome=None, only_type=None):
+def f6_state():
+    """The F6 generator's live state (_f6_state.json), or None if absent/unreadable."""
+    sf = FLORA_DIR / "_f6_state.json"
+    if not sf.exists():
+        return None
+    try:
+        return json.loads(sf.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def complete_f6_types():
+    """Set of 'biome/obj' types FULLY generated on disk per _f6_state.json: every base variant's PNG
+    present, every state 'done', every anim 'done'. None if no state file (caller treats all as ready).
+    This is the gate that lets the upscale run NOW on finished types while PixelLab generates the rest."""
+    d = f6_state()
+    if d is None:
+        return None
+    from collections import defaultdict
+    agg = defaultdict(lambda: {'vt': 0, 'vd': 0, 'at': 0, 'ad': 0, 'st': 0, 'sd': 0})
+    for v in d.get('variants', {}).values():
+        t = v['biome'] + '/' + v['obj']; agg[t]['vt'] += 1; agg[t]['vd'] += 1 if v.get('png') else 0
+    for v in d.get('anims', {}).values():
+        t = v['biome'] + '/' + v['obj']; agg[t]['at'] += 1; agg[t]['ad'] += 1 if v.get('status') == 'done' else 0
+    for v in d.get('states', {}).values():
+        t = v['biome'] + '/' + v['obj']; agg[t]['st'] += 1; agg[t]['sd'] += 1 if v.get('status') == 'done' else 0
+    return {t for t, c in agg.items()
+            if c['vt'] and c['vd'] == c['vt'] and c['ad'] == c['at'] and c['sd'] == c['st']}
+
+
+def all_f6_types():
+    """Every 'biome/obj' the generator plans to produce (from _f6_state.json), or None."""
+    d = f6_state()
+    if d is None:
+        return None
+    return {v['biome'] + '/' + v['obj'] for v in d.get('variants', {}).values()}
+
+
+def enumerate_corpus(only_biome=None, only_type=None, ready_only=False):
     """Return a sorted list of source Paths to process, applying filters.
-    Disk-first: globs the real tree on disk."""
+    Disk-first: globs the real tree on disk. ready_only=True keeps ONLY fully-generated types."""
     out = []
     if not FLORA_DIR.exists():
         return out
+    ready = complete_f6_types() if ready_only else None
     for p in FLORA_DIR.rglob("*.png"):       # v###.png (base/state) + frame_###.png (anim); predicate filters
         if not is_static_source(p):
             continue
@@ -229,6 +268,8 @@ def enumerate_corpus(only_biome=None, only_type=None):
         if only_biome and biome != only_biome:
             continue
         if only_type and obj != only_type:
+            continue
+        if ready is not None and (biome + '/' + obj) not in ready:
             continue
         out.append(p)
     # Process base sprites FIRST, then states, then the (much larger) anim frames — so a full
@@ -559,15 +600,24 @@ def process_one(state: dict, src: Path, graph_text: str) -> str:
 # Driver
 # ---------------------------------------------------------------------------
 
-def run(only_biome, only_type, limit=None):
+def run(only_biome, only_type, limit=None, ready_only=False):
     state = load_state()
     graph_text = load_graph_text()
-    sources = enumerate_corpus(only_biome, only_type)
+    if ready_only:
+        ready = complete_f6_types()
+        allt = all_f6_types()
+        if ready is None:
+            log.warning("--ready: no _f6_state.json found -> treating ALL types as ready")
+        else:
+            log.info(f"--ready gate: {len(ready)}/{len(allt or ready)} F6 types fully generated on disk "
+                     f"(base+states+anims) -> processing those; the rest wait for PixelLab")
+    sources = enumerate_corpus(only_biome, only_type, ready_only=ready_only)
     if limit:
         sources = sources[:limit]
-    log.info(f"Corpus: {len(sources)} static sprites to consider"
+    log.info(f"Corpus: {len(sources)} sprites to consider"
              f"{f' (biome={only_biome})' if only_biome else ''}"
-             f"{f' (type={only_type})' if only_type else ''}")
+             f"{f' (type={only_type})' if only_type else ''}"
+             f"{' [READY-ONLY]' if ready_only else ''}")
 
     # Bounded concurrency is conceptually MAX_INFLIGHT, but each sprite's tail+QA
     # is serial and short; the real GPU bound is one prompt at a time in ComfyUI.
@@ -586,14 +636,34 @@ def run(only_biome, only_type, limit=None):
     save_state(state, force=True)
     log.info(f"Run complete: produced={n_done} skipped(done)={n_skip} failed={n_fail}")
     report(state, only_biome, only_type)
+    return n_done
+
+
+def watch_run(only_biome, only_type, interval_min):
+    """Kick once, walk the whole F6 corpus in completeness order: process every fully-generated type,
+    then poll _f6_state.json for newly-finished types and process them too, until all are done (or Ctrl+C).
+    Lets the upscale run continuously ALONGSIDE PixelLab generation (different compute) without ever
+    touching a half-generated type."""
+    import time
+    while True:
+        produced = run(only_biome, only_type, ready_only=True)
+        ready = complete_f6_types() or set()
+        allt = all_f6_types() or set()
+        if allt and ready >= allt and produced == 0:
+            log.info(f"watch: all {len(allt)} F6 types complete and upscaled — done.")
+            return
+        remaining = (len(allt) - len(ready)) if allt else '?'
+        log.info(f"watch: {len(ready)}/{len(allt) if allt else '?'} types ready, {remaining} still "
+                 f"generating; sleeping {interval_min} min then re-checking...")
+        time.sleep(max(1, interval_min) * 60)
 
 
 # ---------------------------------------------------------------------------
 # --dry-run: enumerate the real corpus + template ONE asset's graph, NO HTTP.
 # ---------------------------------------------------------------------------
 
-def dry_run(only_biome, only_type):
-    sources = enumerate_corpus(only_biome, only_type)
+def dry_run(only_biome, only_type, ready_only=False):
+    sources = enumerate_corpus(only_biome, only_type, ready_only=ready_only)
     n_base = sum(1 for p in sources if kind_of(p) == "base")
     n_state = sum(1 for p in sources if kind_of(p) == "state")
 
@@ -717,6 +787,8 @@ def main():
     ap.add_argument("--force", action="store_true", help="Reprocess even if an output already exists")
     ap.add_argument("--out-tag", default="", help="Append a tag to outputs (v###@384<tag>.png) so settings don't overwrite, e.g. --out-tag -dn30")
     ap.add_argument("--no-anims", action="store_true", help="Skip anim/ frames (fast statics-only pass: base + states)")
+    ap.add_argument("--ready", action="store_true", help="Process ONLY types fully generated on disk (base+states+anims per _f6_state.json); skip ones PixelLab is still rendering")
+    ap.add_argument("--watch", type=int, default=0, metavar="MIN", help="Loop: process ready types, re-check every MIN min for newly-finished types, until all done (implies --ready). Kick once, walks the whole corpus.")
     args = ap.parse_args()
 
     if args.denoise is not None:
@@ -735,9 +807,12 @@ def main():
         report(load_state(), args.biome, args.type)
         return
     if args.dry_run:
-        dry_run(args.biome, args.type)
+        dry_run(args.biome, args.type, ready_only=args.ready)
         return
-    run(args.biome, args.type, args.limit)
+    if args.watch:
+        watch_run(args.biome, args.type, args.watch)
+        return
+    run(args.biome, args.type, args.limit, ready_only=args.ready)
 
 
 if __name__ == "__main__":
