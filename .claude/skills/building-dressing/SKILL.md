@@ -223,6 +223,15 @@ Pilot-before-burst applies to anims too: prove ONE anim's playback wiring before
   only for true HUD/UI like the Dev HUD panel.) See [[feedback_everything_through_gl]] / CLAUDE.md.
 - **No-mock.** A field may be ABSENT but never FAKE. Each field declares its honest-absence (e.g. `age`/`wetness`
   have no sim source yet → render the absent semantics, don't hardcode a fake driver).
+- **Honest ≠ invisible (D1 lesson, 2026-06-25).** Honest-absence is not an excuse to ship a field that renders
+  ~nothing where it can actually be seen. QUANTIFY the in-world intensity per BUILDABLE biome before calling a
+  field done (D1's first cut was 0.05 on grassland, 0.000 on dry biomes — invisible; the wettest biomes have no
+  buildings). When a driver is genuinely absent, the honest way to still be experienceable is a **deterministic
+  per-instance BASELINE hash** — the device D0 weathering uses (per-location coverage hash) and D1 damage uses
+  (`pow(rand2(bx,by),k)` per-building disrepair, ~1 in 4 worn): it's SPATIAL VARIATION, not a faked per-instance
+  claim of the missing quantity, and a real sim supersedes it. Diagnose "is it rendering at all?" with a forced
+  A/B PIXEL-DIFF (crank the field, screenshot on vs off, diff the region) — separates a real bug from mere
+  subtlety before you touch the math.
 - **Pilot-before-burst.** Prove one category in-game before generating the field's full object set.
 - **Tracker, not memory.** Build a disk-authoritative field tracker before calling a field "done" (mirror the
   buildings tracker `scripts/desert-pilot-status.mjs`). Queued ≠ done until PNGs are on disk + QA-clean.
