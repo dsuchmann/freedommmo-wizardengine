@@ -21,6 +21,7 @@ import { buildBuildingLayerBitmaps } from './building-layer.js';
 import { nearDepthBuildings, renderBuildingSilhouette, tileDepth, DEPTH_SCALE } from './building-depth.js';
 import { getBuildingSprite, spriteKey, bumpSpriteFrame } from './building-sprite-cache.js';
 import { buildSocketOverlayBitmap } from './dressing/socket-overlay.js';
+import { buildVineOverlayBitmap } from './dressing/vine-overlay.js';
 import { isInside } from './active-interior.js';
 import { initWallTuner, drawWallTuner } from './wall-tuner.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations, buildWaveField } from './water-wave-overlay.js';
@@ -574,6 +575,16 @@ export class CanvasRenderer {
       try {
         const _sock = buildSocketOverlayBitmap(nearDepthBuildings(getCachedBuildings(), camX, camY, tilePx, w, h), camX, camY, tilePx, w, h);
         if (_sock) this.glc.drawSceneOverlayBitmap(_sock);
+      } catch (e) { /* best-effort */ }
+    }
+
+    // D2 VINE PLACEMENT overlay (debug, off by default): the climbing-vine SPLINE paths (root → stem → leaves),
+    // routed through GL so they sit on the walls — proves the vine addressing before any ivy art. Toggle
+    // window._vineOverlay.enabled (window._vineOverlay.rootChance=1 to root a vine on every bare strip).
+    if (glScene && !_inside && typeof window !== 'undefined' && window._vineOverlay && window._vineOverlay.enabled) {
+      try {
+        const _vine = buildVineOverlayBitmap(nearDepthBuildings(getCachedBuildings(), camX, camY, tilePx, w, h), camX, camY, tilePx, w, h);
+        if (_vine) this.glc.drawSceneOverlayBitmap(_vine);
       } catch (e) { /* best-effort */ }
     }
 
