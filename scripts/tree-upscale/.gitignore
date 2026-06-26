@@ -1,0 +1,4 @@
+# runtime artifacts — never commit
+__pycache__/
+*.log
+_state.json

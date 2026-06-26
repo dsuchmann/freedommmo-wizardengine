@@ -1,0 +1,142 @@
+{
+  "_comment": "ComfyUI API-format prompt (POST to /prompt). Tree detail-add img2img graph. Component E (the harness) deep-clones this, string-replaces the __TOKENS__, then POSTs it. RGB-only: the source 1-bit alpha is NOT carried through the model; the re-pixelation tail (magick) re-applies the source alpha. Tokens: __INPUT_IMAGE__ (filename already uploaded to ComfyUI /input), __POSITIVE__, __DENOISE__ (e.g. 0.40), __TILE_STRENGTH__ (ControlNet-Tile strength, e.g. 0.6), __SEED__ (integer).",
+
+  "1": {
+    "class_type": "LoadImage",
+    "_meta": { "title": "Load source tree sprite (192/256px RGBA)" },
+    "inputs": {
+      "image": "__INPUT_IMAGE__",
+      "upload": "image"
+    }
+  },
+
+  "2": {
+    "class_type": "UpscaleModelLoader",
+    "_meta": { "title": "Load RealESRGAN x4plus anime 6B ESRGAN model (BSD-3, commercial-OK)" },
+    "inputs": {
+      "model_name": "RealESRGAN_x4plus_anime_6B.pth"
+    }
+  },
+
+  "3": {
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": { "title": "ESRGAN 4x (192->768 / 256->1024) — clean structural upscale BEFORE the model" },
+    "inputs": {
+      "upscale_model": ["2", 0],
+      "image": ["1", 0]
+    }
+  },
+
+  "4": {
+    "class_type": "ImageScale",
+    "_meta": { "title": "Normalize longest side to ~1024 so SDXL works at its native band" },
+    "inputs": {
+      "image": ["3", 0],
+      "upscale_method": "lanczos",
+      "width": 1024,
+      "height": 1024,
+      "crop": "disabled"
+    }
+  },
+
+  "5": {
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": { "title": "SDXL base 1.0" },
+    "inputs": {
+      "ckpt_name": "sd_xl_base_1.0.safetensors"
+    }
+  },
+
+  "6": {
+    "class_type": "LoraLoader",
+    "_meta": { "title": "Pixel Art XL LoRA (forces blocky pixel-art detail)" },
+    "inputs": {
+      "model": ["5", 0],
+      "clip": ["5", 1],
+      "lora_name": "pixel-art-xl.safetensors",
+      "strength_model": 0.8,
+      "strength_clip": 0.8
+    }
+  },
+
+  "7": {
+    "class_type": "CLIPTextEncode",
+    "_meta": { "title": "Positive prompt" },
+    "inputs": {
+      "clip": ["6", 1],
+      "text": "__POSITIVE__"
+    }
+  },
+
+  "8": {
+    "class_type": "CLIPTextEncode",
+    "_meta": { "title": "Negative prompt" },
+    "inputs": {
+      "clip": ["6", 1],
+      "text": "blurry, smooth shading, anti-aliasing, gradient, photo, 3d render"
+    }
+  },
+
+  "9": {
+    "class_type": "ControlNetLoader",
+    "_meta": { "title": "ControlNet-Tile SDXL (locks composition to the source so detail is added, not invented)" },
+    "inputs": {
+      "control_net_name": "controlnet-tile-sdxl-1.0.safetensors"
+    }
+  },
+
+  "10": {
+    "class_type": "ControlNetApply",
+    "_meta": { "title": "Apply tile ControlNet using the upscaled image as the control hint" },
+    "inputs": {
+      "conditioning": ["7", 0],
+      "control_net": ["9", 0],
+      "image": ["4", 0],
+      "strength": "__TILE_STRENGTH__"
+    }
+  },
+
+  "11": {
+    "class_type": "VAEEncode",
+    "_meta": { "title": "Encode the upscaled image to latent (img2img start)" },
+    "inputs": {
+      "pixels": ["4", 0],
+      "vae": ["5", 2]
+    }
+  },
+
+  "12": {
+    "class_type": "KSampler",
+    "_meta": { "title": "img2img refine — low denoise keeps the silhouette, adds bark/leaf detail" },
+    "inputs": {
+      "model": ["6", 0],
+      "positive": ["10", 0],
+      "negative": ["8", 0],
+      "latent_image": ["11", 0],
+      "seed": "__SEED__",
+      "steps": 24,
+      "cfg": 6.0,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": "__DENOISE__"
+    }
+  },
+
+  "13": {
+    "class_type": "VAEDecode",
+    "_meta": { "title": "Decode back to RGB" },
+    "inputs": {
+      "samples": ["12", 0],
+      "vae": ["5", 2]
+    }
+  },
+
+  "14": {
+    "class_type": "SaveImage",
+    "_meta": { "title": "Save detailed RGB (harness pulls this, then runs the magick re-pixelation tail)" },
+    "inputs": {
+      "images": ["13", 0],
+      "filename_prefix": "tree_upscale/detail"
+    }
+  }
+}
