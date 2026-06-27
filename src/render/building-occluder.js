@@ -27,8 +27,7 @@ import { drawD1Chips } from './dressing/d1-chips.js';
 import { paintGrowthColumn, isStoneSlug } from './dressing/d2-growth.js';
 import { isWaterTile } from '../../sim/world/buildings/terrain-suitability.js';
 import { drawD3Props } from './dressing/d3-props.js';
-import { drawVinePass, vineArtReady } from './dressing/vine-render.js';
-import { buildVineSplines } from './dressing/vine-index.js';
+import { drawVinePass } from './dressing/vine-render.js';
 
 // Source rect of the E/W side-face cap. The grassland edge_ew strip is a 32x128 quoin/side-cap;
 // sample its LEFT quoin column (x=0..16) as the true vertical corner post (`isQuoinStrip`) — drawing
@@ -141,11 +140,10 @@ export function buildingBakeState(b) {
     } else {
       complete = !!getWallImg('south_base'); // legacy wall path needs the stone_brick fallback loaded
     }
-    // D2 vines bake INTO the sprite (before-roof) — don't freeze a vine-bearing building's sprite before its
-    // ivy art has loaded, or the vine would be permanently absent. Wait until the segment art is on disk.
-    if (complete && renderOn('vines')) {
-      try { if (buildVineSplines(b).length && !vineArtReady(b.biome)) complete = false; } catch { /* ignore */ }
-    }
+    // NOTE: do NOT compute buildVineSplines() here. buildingBakeState runs EVERY FRAME for EVERY building (it's
+    // the cache's validity check), so any non-trivial work here is a per-frame CPU cost on the hot path (2026-06-26
+    // perf bug: a vine gate here dropped a town to 20fps). The vine art (small, on disk) decodes well within the
+    // multi-frame window the tiles+roof completeness already provides, so a separate vine wait isn't worth it.
   } catch { complete = true; } // never block forever on a predicate error
   return { complete, sig: '' };
 }
