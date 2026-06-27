@@ -1,0 +1,470 @@
+{
+ "grassland": {
+  "vine_root_base": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_root_base_grassland",
+   "prompt": "The rooted BASE of green English ivy at the foot of a wall: a thicker woody base where a thin woody brown stem emerges from the ground, a few small glossy dark-green ivy leaves low down, a small soft ground-contact shadow. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_segment": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_segment_grassland",
+   "prompt": "A short vertical section of green English ivy clinging to a wall: a thin woody brown stem with small clusters of small glossy dark-green ivy leaves along it, designed to connect SEAMLESSLY when stacked end-to-end vertically. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_fork": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_fork_grassland",
+   "prompt": "A Y-branch junction of green English ivy: a thin woody brown stem splitting into two leafy shoots diverging upward, each with small glossy dark-green ivy leaves. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_leaf_cluster": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_leaf_cluster_grassland",
+   "prompt": "A small dense cluster of small glossy dark-green ivy leaves — the leafy growth tip of green English ivy. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  }
+ },
+ "forest": {
+  "vine_root_base": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_root_base_forest",
+   "prompt": "The rooted BASE of woodland green ivy at the foot of a wall: a thicker woody base where a woody brown stem emerges from the ground, a few green ivy leaves low down, a small soft ground-contact shadow. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_segment": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_segment_forest",
+   "prompt": "A short vertical section of woodland green ivy clinging to a wall: a woody brown stem with small clusters of green ivy leaves along it, designed to connect SEAMLESSLY when stacked end-to-end vertically. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_fork": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_fork_forest",
+   "prompt": "A Y-branch junction of woodland green ivy: a woody brown stem splitting into two leafy shoots diverging upward, each with green ivy leaves. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_leaf_cluster": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_leaf_cluster_forest",
+   "prompt": "A small dense cluster of green ivy leaves — the leafy growth tip of woodland green ivy. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  }
+ },
+ "hills": {
+  "vine_root_base": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_root_base_hills",
+   "prompt": "The rooted BASE of hardy green ivy at the foot of a wall: a thicker woody base where a wiry woody stem emerges from the ground, a few small green ivy leaves low down, a small soft ground-contact shadow. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_segment": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_segment_hills",
+   "prompt": "A short vertical section of hardy green ivy clinging to a wall: a wiry woody stem with small clusters of small green ivy leaves along it, designed to connect SEAMLESSLY when stacked end-to-end vertically. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_fork": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_fork_hills",
+   "prompt": "A Y-branch junction of hardy green ivy: a wiry woody stem splitting into two leafy shoots diverging upward, each with small green ivy leaves. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_leaf_cluster": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_leaf_cluster_hills",
+   "prompt": "A small dense cluster of small green ivy leaves — the leafy growth tip of hardy green ivy. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  }
+ },
+ "lake": {
+  "vine_root_base": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_root_base_lake",
+   "prompt": "The rooted BASE of lush damp ivy at the foot of a wall: a thicker woody base where a moist woody stem emerges from the ground, a few lush green leaves low down, a small soft ground-contact shadow. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_segment": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_segment_lake",
+   "prompt": "A short vertical section of lush damp ivy clinging to a wall: a moist woody stem with small clusters of lush green leaves along it, designed to connect SEAMLESSLY when stacked end-to-end vertically. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_fork": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_fork_lake",
+   "prompt": "A Y-branch junction of lush damp ivy: a moist woody stem splitting into two leafy shoots diverging upward, each with lush green leaves. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_leaf_cluster": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_leaf_cluster_lake",
+   "prompt": "A small dense cluster of lush green leaves — the leafy growth tip of lush damp ivy. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  }
+ },
+ "river": {
+  "vine_root_base": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_root_base_river",
+   "prompt": "The rooted BASE of lush damp ivy at the foot of a wall: a thicker woody base where a moist woody stem emerges from the ground, a few lush green leaves low down, a small soft ground-contact shadow. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_segment": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_segment_river",
+   "prompt": "A short vertical section of lush damp ivy clinging to a wall: a moist woody stem with small clusters of lush green leaves along it, designed to connect SEAMLESSLY when stacked end-to-end vertically. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_fork": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_fork_river",
+   "prompt": "A Y-branch junction of lush damp ivy: a moist woody stem splitting into two leafy shoots diverging upward, each with lush green leaves. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_leaf_cluster": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_leaf_cluster_river",
+   "prompt": "A small dense cluster of lush green leaves — the leafy growth tip of lush damp ivy. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  }
+ },
+ "dense_forest": {
+  "vine_root_base": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_root_base_dense_forest",
+   "prompt": "The rooted BASE of dark mossy creeper at the foot of a wall: a thicker woody base where a moss-furred dark stem emerges from the ground, a few dark serrated mossy leaves low down, a small soft ground-contact shadow. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_segment": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_segment_dense_forest",
+   "prompt": "A short vertical section of dark mossy creeper clinging to a wall: a moss-furred dark stem with small clusters of dark serrated mossy leaves along it, designed to connect SEAMLESSLY when stacked end-to-end vertically. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_fork": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_fork_dense_forest",
+   "prompt": "A Y-branch junction of dark mossy creeper: a moss-furred dark stem splitting into two leafy shoots diverging upward, each with dark serrated mossy leaves. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_leaf_cluster": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_leaf_cluster_dense_forest",
+   "prompt": "A small dense cluster of dark serrated mossy leaves — the leafy growth tip of dark mossy creeper. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  }
+ },
+ "tropical_forest": {
+  "vine_root_base": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_root_base_tropical_forest",
+   "prompt": "The rooted BASE of thick jungle liana at the foot of a wall: a thicker woody base where a thick woody liana with hanging aerial roots emerges from the ground, a few broad glossy tropical leaves low down, a small soft ground-contact shadow. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_segment": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_segment_tropical_forest",
+   "prompt": "A short vertical section of thick jungle liana clinging to a wall: a thick woody liana with hanging aerial roots with small clusters of broad glossy tropical leaves along it, designed to connect SEAMLESSLY when stacked end-to-end vertically. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_fork": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_fork_tropical_forest",
+   "prompt": "A Y-branch junction of thick jungle liana: a thick woody liana with hanging aerial roots splitting into two leafy shoots diverging upward, each with broad glossy tropical leaves. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_leaf_cluster": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_leaf_cluster_tropical_forest",
+   "prompt": "A small dense cluster of broad glossy tropical leaves — the leafy growth tip of thick jungle liana. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  }
+ },
+ "swamp": {
+  "vine_root_base": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_root_base_swamp",
+   "prompt": "The rooted BASE of swamp mangrove liana at the foot of a wall: a thicker woody base where a thick woody liana with dangling aerial roots emerges from the ground, a few broad waxy swamp leaves low down, a small soft ground-contact shadow. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_segment": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_segment_swamp",
+   "prompt": "A short vertical section of swamp mangrove liana clinging to a wall: a thick woody liana with dangling aerial roots with small clusters of broad waxy swamp leaves along it, designed to connect SEAMLESSLY when stacked end-to-end vertically. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_fork": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_fork_swamp",
+   "prompt": "A Y-branch junction of swamp mangrove liana: a thick woody liana with dangling aerial roots splitting into two leafy shoots diverging upward, each with broad waxy swamp leaves. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_leaf_cluster": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_leaf_cluster_swamp",
+   "prompt": "A small dense cluster of broad waxy swamp leaves — the leafy growth tip of swamp mangrove liana. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  }
+ },
+ "savanna": {
+  "vine_root_base": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_root_base_savanna",
+   "prompt": "The rooted BASE of sparse dry creeper at the foot of a wall: a thicker woody base where a dry pale-brown stem emerges from the ground, a few sparse small sun-dried leaves low down, a small soft ground-contact shadow. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_segment": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_segment_savanna",
+   "prompt": "A short vertical section of sparse dry creeper clinging to a wall: a dry pale-brown stem with small clusters of sparse small sun-dried leaves along it, designed to connect SEAMLESSLY when stacked end-to-end vertically. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_fork": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_fork_savanna",
+   "prompt": "A Y-branch junction of sparse dry creeper: a dry pale-brown stem splitting into two leafy shoots diverging upward, each with sparse small sun-dried leaves. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_leaf_cluster": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_leaf_cluster_savanna",
+   "prompt": "A small dense cluster of sparse small sun-dried leaves — the leafy growth tip of sparse dry creeper. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  }
+ },
+ "steppe": {
+  "vine_root_base": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_root_base_steppe",
+   "prompt": "The rooted BASE of sparse dry creeper at the foot of a wall: a thicker woody base where a dry wiry stem emerges from the ground, a few sparse small grey-green leaves low down, a small soft ground-contact shadow. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_segment": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_segment_steppe",
+   "prompt": "A short vertical section of sparse dry creeper clinging to a wall: a dry wiry stem with small clusters of sparse small grey-green leaves along it, designed to connect SEAMLESSLY when stacked end-to-end vertically. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_fork": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_fork_steppe",
+   "prompt": "A Y-branch junction of sparse dry creeper: a dry wiry stem splitting into two leafy shoots diverging upward, each with sparse small grey-green leaves. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_leaf_cluster": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_leaf_cluster_steppe",
+   "prompt": "A small dense cluster of sparse small grey-green leaves — the leafy growth tip of sparse dry creeper. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  }
+ },
+ "taiga": {
+  "vine_root_base": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_root_base_taiga",
+   "prompt": "The rooted BASE of hardy boreal creeper at the foot of a wall: a thicker woody base where a tough dark stem emerges from the ground, a few small dark needled leaves low down, a small soft ground-contact shadow. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_segment": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_segment_taiga",
+   "prompt": "A short vertical section of hardy boreal creeper clinging to a wall: a tough dark stem with small clusters of small dark needled leaves along it, designed to connect SEAMLESSLY when stacked end-to-end vertically. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_fork": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_fork_taiga",
+   "prompt": "A Y-branch junction of hardy boreal creeper: a tough dark stem splitting into two leafy shoots diverging upward, each with small dark needled leaves. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_leaf_cluster": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_leaf_cluster_taiga",
+   "prompt": "A small dense cluster of small dark needled leaves — the leafy growth tip of hardy boreal creeper. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  }
+ },
+ "beach": {
+  "vine_root_base": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_root_base_beach",
+   "prompt": "The rooted BASE of salt-tolerant beach creeper at the foot of a wall: a thicker woody base where a pale fleshy stem emerges from the ground, a few small waxy sea-green leaves low down, a small soft ground-contact shadow. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_segment": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_segment_beach",
+   "prompt": "A short vertical section of salt-tolerant beach creeper clinging to a wall: a pale fleshy stem with small clusters of small waxy sea-green leaves along it, designed to connect SEAMLESSLY when stacked end-to-end vertically. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_fork": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_fork_beach",
+   "prompt": "A Y-branch junction of salt-tolerant beach creeper: a pale fleshy stem splitting into two leafy shoots diverging upward, each with small waxy sea-green leaves. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_leaf_cluster": {
+   "px": 64,
+   "kind": "vine",
+   "tag": "d2_vine_leaf_cluster_beach",
+   "prompt": "A small dense cluster of small waxy sea-green leaves — the leafy growth tip of salt-tolerant beach creeper. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  }
+ },
+ "mystic": {
+  "vine_root_base": {
+   "px": 64,
+   "kind": "crystal",
+   "tag": "d2_vine_root_base_mystic",
+   "prompt": "The BASE of glowing blue-violet astral crystals growing up a wall: a thick angular cluster of glowing blue-violet astral crystals sprouting from the wall foot where a pale silvery crystalline tendril begins, a small ground-contact shadow. Add a SUBTLE cool blue-violet emissive sheen (the in-engine glow is separate; do NOT bake a large halo). on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_segment": {
+   "px": 64,
+   "kind": "crystal",
+   "tag": "d2_vine_segment_mystic",
+   "prompt": "A short vertical section of a pale silvery crystalline tendril creeping up a wall, studded with small glowing blue-violet astral crystals, designed to connect SEAMLESSLY when stacked end-to-end vertically. Add a SUBTLE cool blue-violet emissive sheen (the in-engine glow is separate; do NOT bake a large halo). on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_fork": {
+   "px": 64,
+   "kind": "crystal",
+   "tag": "d2_vine_fork_mystic",
+   "prompt": "A junction where a pale silvery crystalline tendril splits into two, each carrying small glowing blue-violet astral crystals. Add a SUBTLE cool blue-violet emissive sheen (the in-engine glow is separate; do NOT bake a large halo). on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_leaf_cluster": {
+   "px": 64,
+   "kind": "crystal",
+   "tag": "d2_vine_leaf_cluster_mystic",
+   "prompt": "A showy faceted cluster of sharp angular glowing blue-violet astral crystals — the growth tip catching light. Add a SUBTLE cool blue-violet emissive sheen (the in-engine glow is separate; do NOT bake a large halo). on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  }
+ },
+ "arctic": {
+  "vine_root_base": {
+   "px": 64,
+   "kind": "crystal",
+   "tag": "d2_vine_root_base_arctic",
+   "prompt": "The BASE of clear pale-blue ICE crystals growing up a wall: a thick angular cluster of clear pale-blue ICE crystals sprouting from the wall foot where a frosted icy tendril begins, a small ground-contact shadow. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_segment": {
+   "px": 64,
+   "kind": "crystal",
+   "tag": "d2_vine_segment_arctic",
+   "prompt": "A short vertical section of a frosted icy tendril creeping up a wall, studded with small clear pale-blue ICE crystals, designed to connect SEAMLESSLY when stacked end-to-end vertically. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_fork": {
+   "px": 64,
+   "kind": "crystal",
+   "tag": "d2_vine_fork_arctic",
+   "prompt": "A junction where a frosted icy tendril splits into two, each carrying small clear pale-blue ICE crystals. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_leaf_cluster": {
+   "px": 64,
+   "kind": "crystal",
+   "tag": "d2_vine_leaf_cluster_arctic",
+   "prompt": "A showy faceted cluster of sharp angular clear pale-blue ICE crystals — the growth tip catching light. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  }
+ },
+ "tundra": {
+  "vine_root_base": {
+   "px": 64,
+   "kind": "crystal",
+   "tag": "d2_vine_root_base_tundra",
+   "prompt": "The BASE of frost-rimed pale ice crystals growing up a wall: a thick angular cluster of frost-rimed pale ice crystals sprouting from the wall foot where a frost-crusted tendril begins, a small ground-contact shadow. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_segment": {
+   "px": 64,
+   "kind": "crystal",
+   "tag": "d2_vine_segment_tundra",
+   "prompt": "A short vertical section of a frost-crusted tendril creeping up a wall, studded with small frost-rimed pale ice crystals, designed to connect SEAMLESSLY when stacked end-to-end vertically. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_fork": {
+   "px": 64,
+   "kind": "crystal",
+   "tag": "d2_vine_fork_tundra",
+   "prompt": "A junction where a frost-crusted tendril splits into two, each carrying small frost-rimed pale ice crystals. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_leaf_cluster": {
+   "px": 64,
+   "kind": "crystal",
+   "tag": "d2_vine_leaf_cluster_tundra",
+   "prompt": "A showy faceted cluster of sharp angular frost-rimed pale ice crystals — the growth tip catching light. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  }
+ },
+ "volcanic": {
+  "vine_root_base": {
+   "px": 64,
+   "kind": "column",
+   "tag": "d2_vine_root_base_volcanic",
+   "prompt": "The BASE of a black basalt pillar rising against a wall: a thick rough black basalt mass at the wall foot threaded with glowing red-orange molten lava in the seams, a small ground-contact shadow. Add a SUBTLE warm ember glow in the lava cracks (the in-engine glow is separate; do NOT bake a large halo). on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_segment": {
+   "px": 64,
+   "kind": "column",
+   "tag": "d2_vine_segment_volcanic",
+   "prompt": "A short vertical section of a black basalt pillar climbing a wall — rough hexagonal-jointed black basalt threaded with glowing red-orange molten lava in the seams, designed to connect SEAMLESSLY when stacked end-to-end vertically into one continuous column. Add a SUBTLE warm ember glow in the lava cracks (the in-engine glow is separate; do NOT bake a large halo). on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_fork": {
+   "px": 64,
+   "kind": "column",
+   "tag": "d2_vine_fork_volcanic",
+   "prompt": "A point where a black basalt pillar buds a smaller offshoot column to one side threaded with glowing red-orange molten lava in the seams. Add a SUBTLE warm ember glow in the lava cracks (the in-engine glow is separate; do NOT bake a large halo). on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_leaf_cluster": {
+   "px": 64,
+   "kind": "column",
+   "tag": "d2_vine_leaf_cluster_volcanic",
+   "prompt": "The craggy CROWN/top of a black basalt pillar threaded with glowing red-orange molten lava in the seams. Add a SUBTLE warm ember glow in the lava cracks (the in-engine glow is separate; do NOT bake a large halo). on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  }
+ },
+ "mountains": {
+  "vine_root_base": {
+   "px": 64,
+   "kind": "spire",
+   "tag": "d2_vine_root_base_mountains",
+   "prompt": "The thick BASE of a jagged grey-brown banded flowstone spire rising from the wall foot like a stalagmite, banded mineral, a small ground-contact shadow. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_segment": {
+   "px": 64,
+   "kind": "spire",
+   "tag": "d2_vine_segment_mountains",
+   "prompt": "A short vertical section of a jagged grey-brown banded flowstone spire climbing a wall — angular banded grey-brown banded flowstone, designed to connect SEAMLESSLY when stacked end-to-end vertically. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_fork": {
+   "px": 64,
+   "kind": "spire",
+   "tag": "d2_vine_fork_mountains",
+   "prompt": "A jagged grey-brown banded flowstone spire splitting into two sharp points. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_leaf_cluster": {
+   "px": 64,
+   "kind": "spire",
+   "tag": "d2_vine_leaf_cluster_mountains",
+   "prompt": "The sharp POINTED TIP of a grey-brown banded flowstone spire — a small clustered cap of mineral points. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  }
+ },
+ "desert": {
+  "vine_root_base": {
+   "px": 64,
+   "kind": "mound",
+   "tag": "d2_vine_root_base_desert",
+   "prompt": "A low BUILDUP of pale golden sand drifted against the foot of a wall — a soft wind-piled mound, rippled, with a small ground-contact shadow. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_segment": {
+   "px": 64,
+   "kind": "mound",
+   "tag": "d2_vine_segment_desert",
+   "prompt": "A short low section of pale golden sand drift along the base of a wall — rippled wind-piled grains, designed to connect SEAMLESSLY when stacked end-to-end HORIZONTALLY. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_fork": {
+   "px": 64,
+   "kind": "mound",
+   "tag": "d2_vine_fork_desert",
+   "prompt": "A low lobe of pale golden sand drift branching to one side at the wall base. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  },
+  "vine_leaf_cluster": {
+   "px": 64,
+   "kind": "mound",
+   "tag": "d2_vine_leaf_cluster_desert",
+   "prompt": "A small wind-blown CREST of pale golden sand at the top of a base drift. on a FULLY TRANSPARENT background — the growth ONLY, no wall, no ground, nothing else. front-facing flat orthographic SIDESCROLLER view, clinging flat to a vertical wall, even lighting. crisp pixel-art, clean alpha edges, render NO legible text."
+  }
+ }
+}
