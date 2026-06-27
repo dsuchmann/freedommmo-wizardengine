@@ -238,25 +238,21 @@ export function drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h) {
   ctx.imageSmoothingEnabled = false;
   // One FRONT-WALL SEGMENT per south-facing run, so L/T/round/courtyard footprints draw their real stepped
   // outline (mirror-tiled wall + finished end corners), not one bounding-box rectangle over empty notches.
-  const drawRun = (left, right, groundY) => {
+  const drawRun = (left, right, groundY, interiorLeft, interiorRight) => {
     for (let st = 0; st < stories; st++) {
       const tile = st === 0 ? base : upper;
       const top = groundY - (st + 1) * wH;
       if (top + wH < 0 || top > h) continue;
-      // FINISHED END CORNERS provide the wall at the run's ends; the mirror-tiled BASE fills ONLY the gap
-      // between them. CRUCIAL: the corner tile's OUTER edge is alpha-trimmed (transparent, so the world's
-      // terrain shows past the building edge instead of a black outline). If the base wall were drawn UNDER
-      // the corner, that opaque base would bleed through the corner's transparent edge (the "other texture
-      // behind the column edge" bug). So inset the base by the corner width on each capped end.
-      const lc = st === 0 ? leftC : upperLeftC;
-      const rc = st === 0 ? rightC : upperRightC;
+      // Only TRUE outer ends get the alpha-trimmed finished corner (its transparent outer edge reveals
+      // terrain past the building). An INTERIOR junction (a wing meeting the trunk) must stay solid wall,
+      // so there we draw NO corner and let the opaque base run flush to the edge — else terrain shows through.
+      const lc = (st === 0 ? leftC : upperLeftC), rc = (st === 0 ? rightC : upperRightC);
+      const useLC = !!lc && !interiorLeft;
+      const useRC = !!rc && !interiorRight;
       const cw = Math.max(1, Math.min(segW, (right - left) / 2));
-      const bL = lc ? left + cw : left;   // base starts after the left corner
-      const bR = rc ? right - cw : right;  // base ends before the right corner
-      // SYMMETRIC mirror-tiling: the per-segment flip is a PALINDROME about the run centre, so the wall reads
-      // the same left↔right and its mirror-join "studs" land the same distance from each end (beside BOTH
-      // flanking windows, not just one). Condition f(j) = !f(nSeg-1-j): even seg counts already alternate
-      // symmetrically (NFNF); odd counts pivot on a centre tile (the building's centreline).
+      const bL = useLC ? left + cw : left;   // base starts after a real corner; flush at an interior end
+      const bR = useRC ? right - cw : right;  // base ends before a real corner; flush at an interior end
+      // SYMMETRIC mirror-tiling (palindrome about the run centre) — unchanged.
       const nSeg = Math.max(1, Math.ceil((bR - bL) / segW));
       const flipAt = (j) => { const m = nSeg - 1 - j; return j <= m ? (j % 2 === 1) : ((m % 2) !== 1); };
       let seg = 0;
@@ -269,13 +265,11 @@ export function drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h) {
         ctx.restore();
         seg++;
       }
-      // ground storey carries the foundation; upper storeys don't. Corner art scaled to cw; its OUTER edge
-      // lands exactly at the run edge (left / right) so its alpha-trimmed outline reveals terrain.
-      if (lc) { const sw = lc.naturalWidth * (cw / segW); ctx.drawImage(lc, 0, 0, sw, lc.naturalHeight, left, top, cw, wH); }
-      if (rc) { const sw = rc.naturalWidth * (cw / segW); ctx.drawImage(rc, rc.naturalWidth - sw, 0, sw, rc.naturalHeight, right - cw, top, cw, wH); }
+      if (useLC) { const sw = lc.naturalWidth * (cw / segW); ctx.drawImage(lc, 0, 0, sw, lc.naturalHeight, left, top, cw, wH); }
+      if (useRC) { const sw = rc.naturalWidth * (cw / segW); ctx.drawImage(rc, rc.naturalWidth - sw, 0, sw, rc.naturalHeight, right - cw, top, cw, wH); }
     }
   };
-  for (const r of runs) drawRun(Math.round((b.x + r.x0) * t - camX), Math.round((b.x + r.x1) * t - camX), runGroundY(r.y));
+  for (const r of runs) drawRun(Math.round((b.x + r.x0) * t - camX), Math.round((b.x + r.x1) * t - camX), runGroundY(r.y), r.interiorLeft, r.interiorRight);
 
   // PER-MATERIAL APERTURES — drawn on the run at the aperture's row, at that run's ground line (so apertures
   // sit on the correct stepped wall, not the bbox). Real generated state tiles, clipped to their span.
