@@ -194,8 +194,11 @@ export function southRuns(fp) {
   for (const [y, xs] of byY) {
     xs.sort((a, b) => a - b);
     let s = xs[0], p = xs[0];
-    for (let i = 1; i < xs.length; i++) { if (xs[i] === p + 1) p = xs[i]; else { runs.push({ y, x0: s, x1: p + 1 }); s = p = xs[i]; } }
-    runs.push({ y, x0: s, x1: p + 1 });
+    // interiorLeft/Right: a building cell beside the run end (same row) => concave INTERIOR junction
+    // (wall continues, must stay solid); absent => TRUE outer edge (grass beyond, keep alpha silhouette).
+    const mk = (x0, x1) => ({ y, x0, x1, interiorLeft: set.has((x0 - 1) + ',' + y), interiorRight: set.has(x1 + ',' + y) });
+    for (let i = 1; i < xs.length; i++) { if (xs[i] === p + 1) p = xs[i]; else { runs.push(mk(s, p + 1)); s = p = xs[i]; } }
+    runs.push(mk(s, p + 1));
   }
   runs.sort((a, b) => a.y - b.y);
   return runs;
