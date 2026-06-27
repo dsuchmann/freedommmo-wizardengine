@@ -34,10 +34,10 @@ const FORMS = {
     vine_leaf_cluster: (b) => `A showy faceted cluster of sharp angular ${b.crystal} — the growth tip catching light.${b.glow} ${A_BG}. ${A_VIEW}. ${A_PIX}.`,
   },
   column: {
-    vine_root_base:    (b) => `The BASE of a ${b.material} pillar rising against a wall: a thick rough ${b.material} mass at the wall foot${b.core}, a small ground-contact shadow.${b.glow} ${A_BG}. ${A_VIEW}. ${A_PIX}.`,
-    vine_segment:      (b) => `A short vertical section of a ${b.material} pillar climbing a wall — rough hexagonal-jointed ${b.material}${b.core}, ${A_TILE} vertically into one continuous column.${b.glow} ${A_BG}. ${A_VIEW}. ${A_PIX}.`,
-    vine_fork:         (b) => `A point where a ${b.material} pillar buds a smaller offshoot column to one side${b.core}.${b.glow} ${A_BG}. ${A_VIEW}. ${A_PIX}.`,
-    vine_leaf_cluster: (b) => `The craggy CROWN/top of a ${b.material} pillar${b.core}.${b.glow} ${A_BG}. ${A_VIEW}. ${A_PIX}.`,
+    vine_root_base:    (b) => `The BASE of a thick ${b.material} pillar against a wall: a SOLID rounded ${b.material} mass that FILLS the lower frame edge-to-edge (no gaps), ${b.coreThin}, a small ground-contact shadow.${b.glow} ${A_BG}. ${A_VIEW}. ${A_PIX}.`,
+    vine_segment:      (b) => `A SOLID vertical block of ${b.material} that COMPLETELY FILLS the image edge-to-edge with NO transparent gaps in the body — one section of a thick unbroken ${b.material} pillar, ${b.coreThin}. ${A_TILE} top-to-bottom into one continuous solid column.${b.glow} ${A_BG}. ${A_VIEW}. ${A_PIX}.`,
+    vine_fork:         (b) => `A SOLID ${b.material} pillar section that FILLS the frame and buds a smaller solid offshoot column to one side, ${b.coreThin}.${b.glow} ${A_BG}. ${A_VIEW}. ${A_PIX}.`,
+    vine_leaf_cluster: (b) => `The craggy solid CROWN/top of a thick ${b.material} pillar, ${b.coreThin}.${b.glow} ${A_BG}. ${A_VIEW}. ${A_PIX}.`,
   },
   spire: {
     vine_root_base:    (b) => `The thick BASE of a jagged ${b.mineral} spire rising from the wall foot like a stalagmite, banded mineral, a small ground-contact shadow. ${A_BG}. ${A_VIEW}. ${A_PIX}.`,
@@ -74,7 +74,7 @@ const BIOMES = {
   arctic:          { form: 'crystal', skin: { crystal: 'clear pale-blue ICE crystals', tendril: 'a frosted icy tendril', glow: '' } },
   tundra:          { form: 'crystal', skin: { crystal: 'frost-rimed pale ice crystals', tendril: 'a frost-crusted tendril', glow: '' } },
   // ---- column (basalt / lava pillars) ----
-  volcanic:        { form: 'column', skin: { material: 'black basalt', core: ' threaded with glowing red-orange molten lava in the seams', glow: ' Add a SUBTLE warm ember glow in the lava cracks (the in-engine glow is separate; do NOT bake a large halo).' } },
+  volcanic:        { form: 'column', skin: { material: 'dark basalt rock', coreThin: 'mostly solid dark basalt with only a FEW THIN glowing red-orange lava cracks (NOT large lava areas)', glow: ' Add a SUBTLE warm ember glow in the thin lava cracks (the in-engine glow is separate; do NOT bake a large halo).' } },
   // ---- spire (jagged mineral) ----
   mountains:       { form: 'spire', skin: { mineral: 'grey-brown banded flowstone' } },
   // ---- mound (basal sand drift) ----
