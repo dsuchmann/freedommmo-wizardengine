@@ -49,5 +49,59 @@
    "group": "af618fed-2ff6-4fa6-96b9-c64c78642e72",
    "px": 64
   }
+ },
+ "mountains": {
+  "vine_segment": {
+   "group": "f3844be8-10a7-4599-8b3e-21f1841efb88",
+   "px": 64
+  },
+  "vine_root_base": {
+   "group": "acd4d09c-662a-42fc-bc12-72ecd9b823b5",
+   "px": 64
+  },
+  "vine_fork": {
+   "group": "684800b0-6403-4963-97d3-835c02e38b4a",
+   "px": 64
+  },
+  "vine_leaf_cluster": {
+   "group": "071eb490-8810-47e8-bbf6-a90d9b18fb58",
+   "px": 64
+  }
+ },
+ "desert": {
+  "vine_segment": {
+   "group": "ef319298-fd9c-42e7-beb7-3a3a135047df",
+   "px": 64
+  },
+  "vine_root_base": {
+   "group": "844c06eb-e7fb-4091-844d-7abd5465bd0d",
+   "px": 64
+  },
+  "vine_fork": {
+   "group": "9527e904-d7f5-4909-830e-6cde48df620e",
+   "px": 64
+  },
+  "vine_leaf_cluster": {
+   "group": "f6a670b6-88a9-4589-bcf2-3f3cd39fa076",
+   "px": 64
+  }
+ },
+ "tropical_forest": {
+  "vine_segment": {
+   "group": "0ff7583f-6eb5-4e7f-925a-5010eaf60db0",
+   "px": 64
+  },
+  "vine_root_base": {
+   "group": "4625e2f0-55ba-44aa-b591-190c947788fb",
+   "px": 64
+  },
+  "vine_fork": {
+   "group": "fa0432de-1abb-458e-8a6f-4ee612980d2b",
+   "px": 64
+  },
+  "vine_leaf_cluster": {
+   "group": "8d3a7c70-c122-4a1c-be38-168b4b493382",
+   "px": 64
+  }
  }
 }
