@@ -150,17 +150,32 @@ export function getBuildingSprite(b, tilePx, renderFn, bakeState) {
   const hit = _cache.get(key);
   const state = bakeState ? bakeState(b) : null;
   const liveSig = state ? state.sig : '';
-  if (hit && hit.complete && hit.sig === liveSig) { hit.frame = _frame; _stat('hits'); return hit; } // unchanged → reuse (perf win)
-  // A miss, an INCOMPLETE bake (still loading), or a STALE one (door frame changed): (re)bake.
+  const liveComplete = state ? !!state.complete : true;   // is the building GENUINELY renderable RIGHT NOW?
+  // Reuse the cached sprite when its content can't have changed (same door-swing sig AND it's marked complete)
+  // — UNLESS it's a warmup-frozen PARTIAL (forcedComplete) whose assets have SINCE finished loading
+  // (liveComplete flipped true). That one case falls through to a one-time UPGRADE re-bake below, so a late
+  // window / roof / aperture tile that missed the warmup window finally appears, instead of the building being
+  // frozen walls-only for the whole session (the disk-starved-load bug: under heavy I/O the tile loads slower
+  // than MAX_WARMUP, the partial freezes, and it never recovered because `complete` stayed latched true).
+  if (hit && hit.complete && hit.sig === liveSig && !(hit.forcedComplete && liveComplete)) {
+    hit.frame = _frame; _stat('hits'); return hit;                                            // unchanged → reuse (perf win)
+  }
+  // A miss, an INCOMPLETE bake (still loading), a STALE one (door frame changed), or a warmup-frozen partial
+  // whose assets are now ready (upgrade): (re)bake.
   if (_builds >= BUILD_BUDGET) { if (hit) { hit.frame = _frame; return hit; } return null; } // over budget → show last partial / defer
   const built = buildSprite(b, tilePx, renderFn);
   if (!built) { if (hit) { hit.frame = _frame; return hit; } return null; }                  // can't draw yet → keep last partial
   _builds++;
   const firstFrame = hit && hit.firstFrame != null ? hit.firstFrame : _frame;
   built.firstFrame = firstFrame;
-  built.complete = state ? !!state.complete : true;
+  built.complete = liveComplete;
+  built.forcedComplete = false;
   built.sig = liveSig;
-  if (!built.complete && _frame - firstFrame > MAX_WARMUP) built.complete = true;            // backstop: freeze as-is
+  // BACKSTOP: a building whose assets never finish (a genuine 404) must stop re-baking eventually, so after
+  // MAX_WARMUP we freeze the partial AS-IS. But flag it forcedComplete (a PROVISIONAL freeze) so that if the
+  // assets DO load later — e.g. slow disk frees up — the reuse check above lets it upgrade with a one-time
+  // re-bake, instead of latching a permanent walls-only sprite.
+  if (!built.complete && _frame - firstFrame > MAX_WARMUP) { built.complete = true; built.forcedComplete = true; }
   _cache.set(key, built);
   if (!hit) _stat('built');
   if (_cache.size > MAX_SPRITES) {

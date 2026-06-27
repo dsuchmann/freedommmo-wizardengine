@@ -155,6 +155,35 @@ test('REGRESSION: an INCOMPLETE bake re-bakes every frame until complete, then f
   assert.equal(counter.n, 4, 'complete sprite is now a cache hit — no further re-bakes (perf win preserved)');
 });
 
+test('REGRESSION: a warmup-FROZEN partial UPGRADES (re-bakes once) when its assets finally load', () => {
+  // The disk-starved-load bug: when a tile loads slower than MAX_WARMUP (900 frames) — e.g. heavy disk I/O —
+  // the cache's backstop froze the walls-only partial AS-IS and latched `complete=true`, so the window/roof
+  // NEVER appeared even after the tile finished loading (frozen for the whole session). Fix: a warmup-freeze
+  // is PROVISIONAL (forcedComplete) — once bakeState.complete flips true, it re-bakes EXACTLY ONCE to pick up
+  // the late assets, then freezes genuinely.
+  invalidateBuildingSprites();
+  const counter = { n: 0 };
+  const render = makeFakeRender(counter);
+  const b = fakeB(900, 900);
+  let ready = false;                                   // window/roof tile still loading (slow disk)
+  const bakeState = () => ({ complete: ready, sig: '' });
+  // Drive past MAX_WARMUP (900) so the still-incomplete partial gets force-frozen. Budget is 3/frame but a
+  // single building bakes every frame it's incomplete (budget only bites with many buildings).
+  for (let i = 0; i < 905; i++) { bumpSpriteFrame(); getBuildingSprite(b, 32, render, bakeState); }
+  const bakesAtFreeze = counter.n;
+  assert.ok(bakesAtFreeze > 1, 'kept re-baking while incomplete');
+  // Now it is frozen. While assets are STILL not ready, it must be a pure cache hit (no thrash).
+  for (let i = 0; i < 5; i++) { bumpSpriteFrame(); getBuildingSprite(b, 32, render, bakeState); }
+  assert.equal(counter.n, bakesAtFreeze, 'warmup-frozen partial is reused (no re-bake) while assets remain absent');
+  // Assets finish loading → the provisional freeze upgrades with EXACTLY ONE more bake.
+  ready = true;
+  bumpSpriteFrame(); getBuildingSprite(b, 32, render, bakeState);
+  assert.equal(counter.n, bakesAtFreeze + 1, 'upgraded: re-baked once now that the late window/roof is ready');
+  // Genuinely complete now → reused forever (perf win restored, no permanent walls-only sprite).
+  for (let i = 0; i < 5; i++) { bumpSpriteFrame(); getBuildingSprite(b, 32, render, bakeState); }
+  assert.equal(counter.n, bakesAtFreeze + 1, 'after the upgrade it is a stable cache hit again');
+});
+
 test('DOOR ANIM: a complete sprite re-bakes when its sig (door frame) changes, then freezes when stable', () => {
   // The door swing is baked INTO the sprite (so it inherits weathering/scale/depth — an external overlay can't
   // match those). The cache re-bakes ONLY when the door-frame sig changes (the ~8 steps of an approach), then
