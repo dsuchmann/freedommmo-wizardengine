@@ -85,10 +85,10 @@ function drawMound(ctx, b, biome, splines, camX, camY, tilePx, w, h) {
       ctx.lineTo(arc[i].x, baseY + spill * (0.28 + 0.72 * (0.5 + 0.5 * Math.sin(t * 9 + ph))));
     }
     ctx.closePath(); ctx.clip();
-    // fill with the PixelLab sand texture (nearest-tiled), else a flat sand colour
-    let filled = false;
-    if (tex) { const pat = ctx.createPattern(tex, 'repeat'); if (pat) { ctx.fillStyle = pat; ctx.fillRect(bx, by, bw, bh); filled = true; } }
-    if (!filled) { ctx.fillStyle = '#d9b878'; ctx.fillRect(bx, by, bw, bh); }
+    // SOLID opaque sand base FIRST (so the drift is never see-through — the GL pass discards alpha<0.5, so a
+    // gappy texture would erase to the wall), then the texture on top for grain.
+    ctx.fillStyle = '#cda968'; ctx.fillRect(bx, by, bw, bh);
+    if (tex) { const pat = ctx.createPattern(tex, 'repeat'); if (pat) { ctx.fillStyle = pat; ctx.fillRect(bx, by, bw, bh); } }
     // dune shading: lit crest → shadowed foot/spill
     const g = ctx.createLinearGradient(0, minY, 0, botY);
     g.addColorStop(0, 'rgba(255,246,214,0.30)'); g.addColorStop(0.5, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(54,36,12,0.40)');
