@@ -103,5 +103,11 @@
    "group": "8d3a7c70-c122-4a1c-be38-168b4b493382",
    "px": 64
   }
+ },
+ "_textures": {
+  "desert_sand": {
+   "group": "884ae611-9a7f-4065-bf90-74d2afd6ee02",
+   "frame": 2
+  }
  }
 }

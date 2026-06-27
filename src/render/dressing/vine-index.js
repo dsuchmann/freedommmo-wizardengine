@@ -153,14 +153,14 @@ export function buildVineSplines(b, opts = {}) {
         }
       };
       if (R.basal) {
-        // BASAL form (sand mound): not a climb — a low drift HUGGING the wall base, spread across the strip with
-        // a gentle crest in the middle. One horizontal branch; the renderer tiles drift pieces along it.
-        const bw = Math.min(width - 0.2, 5);                    // drift half-spread, capped
-        const x0b = clampX(rootX - bw / 2), x1b = clampX(rootX + bw / 2);
-        const crest = (R.capMin + R.capSpan * seed2) * Math.max(0.6, stories * 0.5);
-        const M = Math.max(4, Math.round((x1b - x0b) * 4));
+        // BASAL form (sand mound): not a climb — a low broad drift HUGGING the wall base. The arc here is the
+        // mound's TOP PROFILE (the renderer fills the silhouette below it with sand texture). Spans the whole
+        // bare strip; height is independent of building storeys (a drift is a drift). Flattened top (pow<1).
+        const x0b = a + 0.1, x1b = c - 0.1;
+        const crest = 0.18 + 0.12 * seed2;                       // storey-band height (~0.7–1.2 tiles)
+        const M = Math.max(6, Math.round((x1b - x0b) * 4));
         const pts = [];
-        for (let i = 0; i <= M; i++) { const t = i / M; pts.push({ cxLocal: x0b + (x1b - x0b) * t, v: crest * Math.sin(Math.PI * t) }); }
+        for (let i = 0; i <= M; i++) { const t = i / M; pts.push({ cxLocal: x0b + (x1b - x0b) * t, v: crest * Math.pow(Math.sin(Math.PI * t), 0.7) }); }
         branches.push({ pts, depth: 0 });
       } else {
         grow(rootX, 0, top, 0, seed);

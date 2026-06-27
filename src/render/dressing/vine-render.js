@@ -59,6 +59,38 @@ function resample(pts, step) {
   return out;
 }
 
+// SHAPE-FILL render mode (for the BASAL form, e.g. desert sand mound). A heap is too-simple a geometry to tile a
+// sprite (it reads as stamped fans); instead DRAW the mound silhouette procedurally and FILL it with a flat
+// PixelLab TEXTURE (pixel-interpolated), plus dune shading — user 2026-06-27. The skeleton's arc is the mound's
+// top profile; the run groundline is its base.
+function drawMound(ctx, b, biome, splines, camX, camY, tilePx, w, h) {
+  const tex = img(ROOT + biome + '/sand_texture/base__v0.png'); // flat fill texture (fallback to a colour)
+  for (const sp of splines) {
+    const br = sp.branches[0]; if (!br || br.pts.length < 2) continue;
+    const arc = br.pts.map((pt) => proj(b, sp.runY, pt, camX, camY, tilePx));
+    const baseY = proj(b, sp.runY, { cxLocal: br.pts[0].cxLocal, v: 0 }, camX, camY, tilePx).y; // groundline
+    let minX = 1e9, maxX = -1e9, minY = 1e9;
+    for (const p of arc) { if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x; if (p.y < minY) minY = p.y; }
+    if (maxX < -32 || minX > w + 32 || minY > h + 32 || baseY < -32) continue;
+    const bx = Math.floor(minX) - 1, by = Math.floor(minY) - 1, bw = Math.ceil(maxX - minX) + 2, bh = Math.ceil(baseY - minY) + 2;
+    ctx.save();
+    // procedural mound silhouette: groundline → up over the arc → back down to the groundline
+    ctx.beginPath(); ctx.moveTo(arc[0].x, baseY);
+    for (const p of arc) ctx.lineTo(p.x, p.y);
+    ctx.lineTo(arc[arc.length - 1].x, baseY);
+    ctx.closePath(); ctx.clip();
+    // fill with the PixelLab sand texture (nearest-tiled), else a flat sand colour
+    let filled = false;
+    if (tex) { const pat = ctx.createPattern(tex, 'repeat'); if (pat) { ctx.fillStyle = pat; ctx.fillRect(bx, by, bw, bh); filled = true; } }
+    if (!filled) { ctx.fillStyle = '#d9b878'; ctx.fillRect(bx, by, bw, bh); }
+    // dune shading: lit crest → shadowed foot
+    const g = ctx.createLinearGradient(0, minY, 0, baseY);
+    g.addColorStop(0, 'rgba(255,246,214,0.28)'); g.addColorStop(0.55, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(54,36,12,0.42)');
+    ctx.fillStyle = g; ctx.fillRect(bx, by, bw, bh);
+    ctx.restore();
+  }
+}
+
 /** Paint a building's vines into ctx (the silhouette bitmap), BEFORE the roof. No-op when the art isn't loaded
  *  (the building has no vine that frame; the cache waits via vineArtReady) or the building rolls no vine. */
 export function drawVinePass(ctx, b, camX, camY, tilePx, w, h) {
@@ -72,6 +104,8 @@ export function drawVinePass(ctx, b, camX, camY, tilePx, w, h) {
   const opts = (cfg.chance != null) ? { rules: { buildingChance: cfg.chance, rootChance: Math.max(cfg.chance, 0.6) } } : {};
   let splines; try { splines = buildVineSplines(b, opts); } catch { return; }
   if (!splines.length) return;
+  // BASAL forms (sand mound) render as a procedural SHAPE filled with texture, NOT a tiled kit (a heap tiles ugly).
+  if (getVineShape(biome).basal) { ctx.save(); ctx.imageSmoothingEnabled = false; try { drawMound(ctx, b, biome, splines, camX, camY, tilePx, w, h); } catch { /* skip */ } ctx.restore(); return; }
   const formSeg = getVineShape(biome).segTile || 1.0; // per-form piece size (thick basalt pillar vs thin tendril)
   const seg = Math.max(6, Math.round(tilePx * formSeg * (cfg.segTile || 1.0)));
   const leafSz = Math.max(6, Math.round(tilePx * formSeg * (cfg.leafTile || 0.85)));
