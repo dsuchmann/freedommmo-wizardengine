@@ -72,9 +72,9 @@ const P = {
   // awnings are RIGID-MOUNTED canopies at the door head (after-roof identity pass → always visible). NO object
   // sway — a bolted-on awning doesn't swing as a unit (user 2026-06-25); only its fabric ripples, which is an
   // internal generated wind_sway anim (TODO), never a procedural rotation of the whole sprite.
-  wood_slat_awning:             { socket: 'above_door', size: 2.2,  vBias: -0.14, overdoor: true, salt: 0x05, z: 2 },
-  cloth_market_awning:          { socket: 'above_door', size: 2.35, vBias: -0.14, overdoor: true, salt: 0x06, z: 2 },
-  fringed_shop_canopy:          { socket: 'above_door', size: 2.35, vBias: -0.14, overdoor: true, salt: 0x07, z: 2 },
+  wood_slat_awning:             { socket: 'above_door', size: 2.85, vBias: -0.14, overdoor: true, salt: 0x05, z: 2 },
+  cloth_market_awning:          { socket: 'above_door', size: 3.05, vBias: -0.14, overdoor: true, salt: 0x06, z: 2 },
+  fringed_shop_canopy:          { socket: 'above_door', size: 3.05, vBias: -0.14, overdoor: true, salt: 0x07, z: 2 },
   // a banner hangs on a BARE south column (no door/window) — never over the door, where the door-swing anim
   // would slide out from under it. `overdoor:true` here only gates it to civic/military/religious buildings.
   heraldic_banner:              { socket: 'bare_wall', size: 2.2, vBias: -0.55, anim: 'sway', overdoor: true, salt: 0x08, z: 2 },
