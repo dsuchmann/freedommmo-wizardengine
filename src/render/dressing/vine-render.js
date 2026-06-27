@@ -6,9 +6,22 @@
 // (c) is part of the depth-sorted CACHED sprite — the static stem bakes once (no per-frame cost). The one
 // animating piece (leaf flutter) is deferred to the dynamic layer. Per-biome SKIN is just the art on disk
 // (grassland=ivy, …); this renderer is biome-invariant. Gated by renderOn('vines').
-import { buildVineSplines, getVineShape } from './vine-index.js';
+import { buildVineSplines, getVineShape, BIOME_FORM } from './vine-index.js';
 import { projectSocket } from './socket-index.js';
 import { rand2 } from '../../core/random.js';
+
+// Per-FORM "stem" style for the CONTIGUITY underlay: a continuous tapered stroke is drawn along each branch in
+// this colour FIRST (one unbroken silhouette → reads as a single organism, not stacked stamps), then the PixelLab
+// asset is stamped ON TOP for the real surface texture (user 2026-06-27: tiled sprites looked copy-pasted; draw
+// the structure, blend in the asset). stemW = stroke width as a fraction of the piece size.
+const FORM_STYLE = {
+  vine:    { stemColor: '#3b2a17', stemW: 0.30 },
+  crystal: { stemColor: '#9fb4d4', stemW: 0.34 },
+  column:  { stemColor: '#1b1920', stemW: 0.60 },
+  spire:   { stemColor: '#574b3f', stemW: 0.50 },
+  mound:   { stemColor: '#c3a368', stemW: 0.72 },
+};
+const formStyleOf = (biome) => FORM_STYLE[BIOME_FORM[biome] || 'vine'] || FORM_STYLE.vine;
 
 const ROOT = '/assets/pixelab/buildings/dressing/';
 const _img = new Map();
@@ -18,7 +31,7 @@ function variants(biome, piece) { const a = []; for (let i = 0; i < 8; i++) { co
 // chance=null → use the live selective defaults (buildVineSplines: ~15% of buildings). Set window._vines.chance
 // (0..1) + call window.invalidateBuildingSprites() to re-bake denser for testing. segTile = segment draw size
 // (tiles); stepFrac = overlap spacing as a fraction of segTile (smaller = denser/more continuous).
-export const VINE_RENDER = { enabled: true, chance: null, segTile: 1.0, stepFrac: 0.55, leafTile: 0.85 };
+export const VINE_RENDER = { enabled: true, chance: null, segTile: 1.0, stepFrac: 0.42, leafTile: 0.85, stem: true };
 if (typeof window !== 'undefined') window._vines = window._vines || VINE_RENDER;
 
 /** True once this biome's vine SEGMENT art is on disk + decoded — the cache's completeness check waits on this
@@ -69,11 +82,22 @@ export function drawVinePass(ctx, b, camX, camY, tilePx, w, h) {
   };
   // Stamp a segment ROTATED to the local path tangent so the stem FOLLOWS the skeleton's curve (the segment art
   // grows bottom→top, ang=0 is straight up; tilt = atan2(dx, -dy) of the path direction).
-  const blitRot = (sprite, x, y, sz, ang) => {
+  const blitRot = (sprite, x, y, sz, ang, flip) => {
     if (!sprite || x < -sz * 1.6 || x > w + sz * 1.6 || y < -sz * 1.6 || y > h + sz * 1.6) return;
-    ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.rotate(ang);
+    ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.rotate(ang); if (flip) ctx.scale(-1, 1);
     ctx.drawImage(sprite, 0, 0, sprite.naturalWidth, sprite.naturalHeight, -sz / 2, -sz / 2, sz, sz);
     ctx.restore();
+  };
+  // CONTIGUITY UNDERLAY — one continuous tapered stroke along the whole branch (a single unbroken silhouette in
+  // the form's stem colour), drawn BEFORE the texture stamps so the organism reads as one piece, not stacked tiles.
+  const style = formStyleOf(biome);
+  const drawStem = (path, depth) => {
+    if (cfg.stem === false || path.length < 2) return;
+    ctx.save(); ctx.strokeStyle = style.stemColor; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.lineWidth = Math.max(2, seg * style.stemW * (1 - depth * 0.22));
+    ctx.beginPath(); ctx.moveTo(path[0].x, path[0].y);
+    for (let i = 1; i < path.length; i++) ctx.lineTo(path[i].x, path[i].y);
+    ctx.stroke(); ctx.restore();
   };
   ctx.save(); ctx.imageSmoothingEnabled = false;
   for (const sp of splines) {
@@ -84,10 +108,11 @@ export function drawVinePass(ctx, b, camX, camY, tilePx, w, h) {
     //    ROTATED to the local path tangent so it follows the skeleton's meander/branch angle.
     for (const br of sp.branches.slice().sort((a, c) => c.depth - a.depth)) {
       const path = resample(br.pts.map((pt) => proj(b, sp.runY, pt, camX, camY, tilePx)), step);
+      drawStem(path, br.depth); // continuous silhouette UNDER the texture
       for (let i = 0; i < path.length; i++) {
         const a = path[Math.max(0, i - 1)], c = path[Math.min(path.length - 1, i + 1)];
         const ang = Math.atan2(c.x - a.x, -(c.y - a.y)); // 0 = straight up
-        blitRot(segSprite, path[i].x, path[i].y, seg, ang);
+        blitRot(segSprite, path[i].x, path[i].y, seg, ang, (i % 2) === 1); // alt-flip → break the copy-paste repeat
       }
     }
     // 2) FORKS at each branch junction (a child branch's base)
