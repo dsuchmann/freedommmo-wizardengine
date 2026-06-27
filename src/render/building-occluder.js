@@ -749,6 +749,7 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
 // once zoom ≠ bake-zoom (the NEAREST scale tradeoff). Returns the shared scratch canvas (re-specified per
 // building; upload it before the next call) or null when nothing dynamic this frame.
 let _bpCv = null, _bpCx = null;
+let _dmCv = null, _dmCx = null; // door-silhouette mask: weather the LIVE door swing to match the baked closed door
 export function drawBuildingDynamicInto(b, localCamX, localCamY, builtTilePx, cw, ch) {
   const wantWalls = renderOn('walls'), wantProps = renderOn('attachments');
   if ((!wantWalls && !wantProps) || !b || !b.footprint) return null;
@@ -766,7 +767,31 @@ export function drawBuildingDynamicInto(b, localCamX, localCamY, builtTilePx, cw
   // Render in the sprite's local frame (same camera + builtTilePx the bake used) so draws land exactly where the
   // baked sprite has them — the open door covers the baked closed door, props sit on the same wall pixels.
   let drew = false;
-  if (wantWalls) { try { if (drawDoorsLive(o, b, localCamX, localCamY, builtTilePx, cw, ch)) drew = true; } catch { /* skip */ } }
+  if (wantWalls) {
+    try {
+      if (drawDoorsLive(o, b, localCamX, localCamY, builtTilePx, cw, ch)) {
+        drew = true;
+        // The baked CLOSED door carries the building's D0/D1/D2 dressing (drawBuildingTextured runs weathering/
+        // damage/growth before caching). The live swing is drawn fresh, so without this it would lose that grime/
+        // tone and visibly "lighten" the instant it opens. Re-run the SAME passes in the SAME local frame, then
+        // mask the result back to the door silhouette so ONLY the door is tinted (props, drawn next, stay clean).
+        if (renderOn('weathering') || renderOn('damage') || renderOn('growth')) {
+          try {
+            if (!_dmCv) { _dmCv = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(cw, ch) : (typeof document !== 'undefined') ? document.createElement('canvas') : null; if (_dmCv) _dmCx = _dmCv.getContext('2d'); }
+            if (_dmCv && _dmCx) {
+              if (_dmCv.width !== cw || _dmCv.height !== ch) { _dmCv.width = cw; _dmCv.height = ch; }
+              _dmCx.setTransform(1, 0, 0, 1, 0, 0); _dmCx.globalCompositeOperation = 'source-over';
+              _dmCx.clearRect(0, 0, cw, ch); _dmCx.drawImage(_bpCv, 0, 0); // snapshot the door-only silhouette
+              drawWeatheringPass(o, b, localCamX, localCamY, builtTilePx, cw, ch);
+              drawDamagePass(o, b, localCamX, localCamY, builtTilePx, cw, ch);
+              drawGrowthPass(o, b, localCamX, localCamY, builtTilePx, cw, ch);
+              o.save(); o.globalCompositeOperation = 'destination-in'; o.drawImage(_dmCv, 0, 0); o.restore();
+            }
+          } catch { /* dressing the live door is best-effort */ }
+        }
+      }
+    } catch { /* skip */ }
+  }
   if (wantProps) { try { drawD3Props(o, b, localCamX, localCamY, builtTilePx, cw, ch, 'all'); drew = true; } catch { /* skip */ } }
   if (!drew) return null; // nothing dynamic this frame (door closed, props off) → skip the quad
   return _bpCv;
