@@ -65,27 +65,33 @@ function resample(pts, step) {
 // top profile; the run groundline is its base.
 function drawMound(ctx, b, biome, splines, camX, camY, tilePx, w, h) {
   const tex = img(ROOT + biome + '/sand_texture/base__v0.png'); // flat fill texture (fallback to a colour)
+  const spill = 0.4 * tilePx; // how far the drift spills DOWN onto the floor (varies per x)
   for (const sp of splines) {
     const br = sp.branches[0]; if (!br || br.pts.length < 2) continue;
-    const arc = br.pts.map((pt) => proj(b, sp.runY, pt, camX, camY, tilePx));
+    const arc = br.pts.map((pt) => proj(b, sp.runY, pt, camX, camY, tilePx));     // undulating TOP profile
     const baseY = proj(b, sp.runY, { cxLocal: br.pts[0].cxLocal, v: 0 }, camX, camY, tilePx).y; // groundline
     let minX = 1e9, maxX = -1e9, minY = 1e9;
     for (const p of arc) { if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x; if (p.y < minY) minY = p.y; }
-    if (maxX < -32 || minX > w + 32 || minY > h + 32 || baseY < -32) continue;
-    const bx = Math.floor(minX) - 1, by = Math.floor(minY) - 1, bw = Math.ceil(maxX - minX) + 2, bh = Math.ceil(baseY - minY) + 2;
+    const botY = baseY + spill;
+    if (maxX < -32 || minX > w + 32 || minY > h + 32 || botY < -32) continue;
+    const ph = b.x * 1.3 + b.y * 0.7 + sp.rootX * 2.1; // per-drift phase for the spill wobble
+    const bx = Math.floor(minX) - 1, by = Math.floor(minY) - 1, bw = Math.ceil(maxX - minX) + 2, bh = Math.ceil(botY - minY) + 2;
     ctx.save();
-    // procedural mound silhouette: groundline → up over the arc → back down to the groundline
-    ctx.beginPath(); ctx.moveTo(arc[0].x, baseY);
-    for (const p of arc) ctx.lineTo(p.x, p.y);
-    ctx.lineTo(arc[arc.length - 1].x, baseY);
+    // silhouette: undulating top (arc) left→right, then a VARYING-SPILL bottom right→left (sand spilling onto the floor)
+    ctx.beginPath(); ctx.moveTo(arc[0].x, arc[0].y);
+    for (let i = 1; i < arc.length; i++) ctx.lineTo(arc[i].x, arc[i].y);
+    for (let i = arc.length - 1; i >= 0; i--) {
+      const t = i / (arc.length - 1);
+      ctx.lineTo(arc[i].x, baseY + spill * (0.28 + 0.72 * (0.5 + 0.5 * Math.sin(t * 9 + ph))));
+    }
     ctx.closePath(); ctx.clip();
     // fill with the PixelLab sand texture (nearest-tiled), else a flat sand colour
     let filled = false;
     if (tex) { const pat = ctx.createPattern(tex, 'repeat'); if (pat) { ctx.fillStyle = pat; ctx.fillRect(bx, by, bw, bh); filled = true; } }
     if (!filled) { ctx.fillStyle = '#d9b878'; ctx.fillRect(bx, by, bw, bh); }
-    // dune shading: lit crest → shadowed foot
-    const g = ctx.createLinearGradient(0, minY, 0, baseY);
-    g.addColorStop(0, 'rgba(255,246,214,0.28)'); g.addColorStop(0.55, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(54,36,12,0.42)');
+    // dune shading: lit crest → shadowed foot/spill
+    const g = ctx.createLinearGradient(0, minY, 0, botY);
+    g.addColorStop(0, 'rgba(255,246,214,0.30)'); g.addColorStop(0.5, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(54,36,12,0.40)');
     ctx.fillStyle = g; ctx.fillRect(bx, by, bw, bh);
     ctx.restore();
   }

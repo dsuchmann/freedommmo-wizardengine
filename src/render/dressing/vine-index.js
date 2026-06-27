@@ -66,7 +66,7 @@ export const SHAPE_PROFILES = {
   crystal: { capMin: 0.45, capSpan: 0.35, meanderAmp: 0.10, maxForks: 2, maxRoots: 2, segTile: 0.95, basal: false }, // angular, sparse
   column:  { capMin: 0.60, capSpan: 0.30, meanderAmp: 0.05, maxForks: 1, maxRoots: 2, segTile: 1.35, basal: false }, // straight + thick
   spire:   { capMin: 0.30, capSpan: 0.28, meanderAmp: 0.08, maxForks: 1, maxRoots: 3, segTile: 1.15, basal: false }, // mid-wall jagged clusters
-  mound:   { capMin: 0.12, capSpan: 0.10, meanderAmp: 0.00, maxForks: 0, maxRoots: 1, segTile: 1.25, basal: true  }, // basal sand drift
+  mound:   { capMin: 0.12, capSpan: 0.10, meanderAmp: 0.00, maxForks: 0, maxRoots: 6, rootChance: 1.0, segTile: 1.25, basal: true }, // basal sand drift on EVERY wall section
 };
 export function getVineShape(biome) { return SHAPE_PROFILES[BIOME_FORM[biome] || 'vine'] || SHAPE_PROFILES.vine; }
 
@@ -153,14 +153,22 @@ export function buildVineSplines(b, opts = {}) {
         }
       };
       if (R.basal) {
-        // BASAL form (sand mound): not a climb — a low broad drift HUGGING the wall base. The arc here is the
-        // mound's TOP PROFILE (the renderer fills the silhouette below it with sand texture). Spans the whole
-        // bare strip; height is independent of building storeys (a drift is a drift). Flattened top (pow<1).
-        const x0b = a + 0.1, x1b = c - 0.1;
-        const crest = 0.18 + 0.12 * seed2;                       // storey-band height (~0.7–1.2 tiles)
-        const M = Math.max(6, Math.round((x1b - x0b) * 4));
+        // BASAL form (sand mound): not a climb — a low broad UNDULATING drift along the WHOLE strip base, wider
+        // than tall, with varying high/low bumps (user 2026-06-27). The arc is the mound's TOP PROFILE (height
+        // above the groundline, storey-bands); env tapers the ends so it thins toward apertures, the sine sum
+        // gives the varying topology. The renderer fills below it and adds a varying spill onto the floor.
+        const x0b = a + 0.1, x1b = c - 0.1, sw = x1b - x0b;
+        const driftH = 0.17 + 0.10 * seed2;
+        const nB = Math.max(1, Math.round(sw / 1.7));            // ~1 bump per 1.7 tiles
+        const p1 = seed * 6.2832, p2 = sd(0xD2C9) * 6.2832;
+        const M = Math.max(8, Math.round(sw * 5));
         const pts = [];
-        for (let i = 0; i <= M; i++) { const t = i / M; pts.push({ cxLocal: x0b + (x1b - x0b) * t, v: crest * Math.pow(Math.sin(Math.PI * t), 0.7) }); }
+        for (let i = 0; i <= M; i++) {
+          const t = i / M;
+          const env = Math.pow(Math.sin(Math.PI * t), 0.4);      // broad, tapered ends
+          const rip = 0.55 + 0.30 * Math.sin(t * nB * 6.2832 + p1) + 0.17 * Math.sin(t * nB * 3.3 + p2);
+          pts.push({ cxLocal: x0b + sw * t, v: driftH * env * Math.max(0.12, rip) });
+        }
         branches.push({ pts, depth: 0 });
       } else {
         grow(rootX, 0, top, 0, seed);
