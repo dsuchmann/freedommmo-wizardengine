@@ -100,10 +100,12 @@ export function buildVineSplines(b, opts = {}) {
   if (rand2(b.x | 0, b.y | 0, 0xD2A0) > Math.min(1, R.buildingChance * boost)) return [];
   const splines = [];
   for (const r of runs) {
-    // Blocked x-columns within this run (doors + windows), merged.
+    // Blocked x-columns within this run (doors + windows), merged. A BASAL drift (sand mound) piles at the wall
+    // BASE, so windows — which sit ABOVE the base — DON'T break it; only DOORS (which reach the ground / door
+    // path) do. So a basal drift runs the FULL wall length, breaking only at doorways. Climbing forms avoid both.
     const occ = [];
     for (const d of (fp.doors || [])) if (d.x >= r.x0 && d.x < r.x1) occ.push([d.x + 0.5 - R.doorHalf, d.x + 0.5 + R.doorHalf]);
-    for (const wn of (fp.windows || [])) if (wn.x >= r.x0 && wn.x < r.x1) occ.push([wn.x + 0.5 - R.winHalf, wn.x + 0.5 + R.winHalf]);
+    if (!R.basal) for (const wn of (fp.windows || [])) if (wn.x >= r.x0 && wn.x < r.x1) occ.push([wn.x + 0.5 - R.winHalf, wn.x + 0.5 + R.winHalf]);
     const blocked = mergeIntervals(occ);
     // Bare climbable strips inside [r.x0+edge, r.x1-edge].
     const lo = r.x0 + R.edge, hi = r.x1 - R.edge;
