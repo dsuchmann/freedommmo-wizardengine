@@ -6,7 +6,7 @@
 // (c) is part of the depth-sorted CACHED sprite — the static stem bakes once (no per-frame cost). The one
 // animating piece (leaf flutter) is deferred to the dynamic layer. Per-biome SKIN is just the art on disk
 // (grassland=ivy, …); this renderer is biome-invariant. Gated by renderOn('vines').
-import { buildVineSplines } from './vine-index.js';
+import { buildVineSplines, getVineShape } from './vine-index.js';
 import { projectSocket } from './socket-index.js';
 import { rand2 } from '../../core/random.js';
 
@@ -59,8 +59,9 @@ export function drawVinePass(ctx, b, camX, camY, tilePx, w, h) {
   const opts = (cfg.chance != null) ? { rules: { buildingChance: cfg.chance, rootChance: Math.max(cfg.chance, 0.6) } } : {};
   let splines; try { splines = buildVineSplines(b, opts); } catch { return; }
   if (!splines.length) return;
-  const seg = Math.max(6, Math.round(tilePx * (cfg.segTile || 1.0)));
-  const leafSz = Math.max(6, Math.round(tilePx * (cfg.leafTile || 0.85)));
+  const formSeg = getVineShape(biome).segTile || 1.0; // per-form piece size (thick basalt pillar vs thin tendril)
+  const seg = Math.max(6, Math.round(tilePx * formSeg * (cfg.segTile || 1.0)));
+  const leafSz = Math.max(6, Math.round(tilePx * formSeg * (cfg.leafTile || 0.85)));
   const step = Math.max(4, seg * (cfg.stepFrac || 0.55));
   const blit = (sprite, x, y, sz, dy0 = 0) => {
     if (!sprite || x < -sz || x > w + sz || y < -sz || y > h + sz) return;

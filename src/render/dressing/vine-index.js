@@ -46,6 +46,30 @@ export const VINE_RULES = {
   maxForks: 3,     // forks a branch can spawn at depth 0 (fewer deeper); actual count scales with complexity
 };
 
+// PER-BIOME GROWTH FORM (user 2026-06-26): the D2 wall accretion is NOT always a vine — each biome expresses a
+// different climbing/accreting thing with a different SHAPE. The placement engine reads the form's shape params;
+// the renderer reads the form's per-biome ART (dressing/<biome>/vine_* slots). Keep BIOME_FORM in sync with
+// scripts/d2-vine-prompts.mjs (the art manifest). Water biomes (ocean/deep_ocean/shallow_water) are absent.
+export const BIOME_FORM = {
+  grassland: 'vine', forest: 'vine', dense_forest: 'vine', tropical_forest: 'vine', swamp: 'vine',
+  hills: 'vine', lake: 'vine', river: 'vine', savanna: 'vine', steppe: 'vine', taiga: 'vine', beach: 'vine',
+  mystic: 'crystal', arctic: 'crystal', tundra: 'crystal',   // crystalline tendrils + crystal clusters crawling up
+  volcanic: 'column',                                        // basalt / lava PILLARS rising from the base
+  mountains: 'spire',                                        // jagged mineral spires (stalagmite/flowstone), mid-wall
+  desert: 'mound',                                           // a sand-drift BUILDUP hugging the wall base (not a climb)
+};
+// Shape params per form, merged over VINE_RULES for the building's biome. cap{Min,Span} = climb-height fraction
+// of the wall; meanderAmp = horizontal wander; maxForks/complexity = branchiness; maxRoots = count per wall;
+// segTile = piece draw size (thick pillars vs thin tendrils); basal=true → hug the base (sand mound) not climb.
+export const SHAPE_PROFILES = {
+  vine:    { capMin: 0.55, capSpan: 0.45, meanderAmp: 0.30, maxForks: 3, maxRoots: 3, segTile: 1.00, basal: false },
+  crystal: { capMin: 0.45, capSpan: 0.35, meanderAmp: 0.10, maxForks: 2, maxRoots: 2, segTile: 0.95, basal: false }, // angular, sparse
+  column:  { capMin: 0.60, capSpan: 0.30, meanderAmp: 0.05, maxForks: 1, maxRoots: 2, segTile: 1.35, basal: false }, // straight + thick
+  spire:   { capMin: 0.30, capSpan: 0.28, meanderAmp: 0.08, maxForks: 1, maxRoots: 3, segTile: 1.15, basal: false }, // mid-wall jagged clusters
+  mound:   { capMin: 0.12, capSpan: 0.10, meanderAmp: 0.00, maxForks: 0, maxRoots: 1, segTile: 1.25, basal: true  }, // basal sand drift
+};
+export function getVineShape(biome) { return SHAPE_PROFILES[BIOME_FORM[biome] || 'vine'] || SHAPE_PROFILES.vine; }
+
 // Merge sorted [a,b] intervals into non-overlapping spans.
 function mergeIntervals(iv) {
   iv.sort((a, c) => a[0] - c[0]);
@@ -69,7 +93,8 @@ export function buildVineSplines(b, opts = {}) {
   const fp = b && b.footprint; if (!fp) return [];
   const runs = southRuns(fp); if (!runs.length) return [];
   const stories = Math.max(1, buildingFloors(b));
-  const R = { ...VINE_RULES, ...(opts.rules || {}) };
+  // Per-biome FORM shape (vine/crystal/column/spire/mound) overrides the vine defaults; opts.rules wins last.
+  const R = { ...VINE_RULES, ...getVineShape(b && b.biome), ...(opts.rules || {}) };
   const boost = opts.abandonBoost || 1; // abandoned/overgrown role turns the field up (D7); 1× until that role exists
   // PER-BUILDING gate FIRST — only ~buildingChance of buildings ever carry a vine (selective, not every wall).
   if (rand2(b.x | 0, b.y | 0, 0xD2A0) > Math.min(1, R.buildingChance * boost)) return [];
@@ -127,7 +152,19 @@ export function buildVineSplines(b, opts = {}) {
           grow(fx, fv, childTop, depth + 1, fseed * 7.31 + 0.13);
         }
       };
-      grow(rootX, 0, top, 0, seed);
+      if (R.basal) {
+        // BASAL form (sand mound): not a climb — a low drift HUGGING the wall base, spread across the strip with
+        // a gentle crest in the middle. One horizontal branch; the renderer tiles drift pieces along it.
+        const bw = Math.min(width - 0.2, 5);                    // drift half-spread, capped
+        const x0b = clampX(rootX - bw / 2), x1b = clampX(rootX + bw / 2);
+        const crest = (R.capMin + R.capSpan * seed2) * Math.max(0.6, stories * 0.5);
+        const M = Math.max(4, Math.round((x1b - x0b) * 4));
+        const pts = [];
+        for (let i = 0; i <= M; i++) { const t = i / M; pts.push({ cxLocal: x0b + (x1b - x0b) * t, v: crest * Math.sin(Math.PI * t) }); }
+        branches.push({ pts, depth: 0 });
+      } else {
+        grow(rootX, 0, top, 0, seed);
+      }
       splines.push({ runY: r.y, rootX, complexity, branches });
       rooted++;
     }
