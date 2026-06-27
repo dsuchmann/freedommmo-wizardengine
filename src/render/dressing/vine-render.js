@@ -18,7 +18,7 @@ function variants(biome, piece) { const a = []; for (let i = 0; i < 8; i++) { co
 // chance=null → use the live selective defaults (buildVineSplines: ~15% of buildings). Set window._vines.chance
 // (0..1) + call window.invalidateBuildingSprites() to re-bake denser for testing. segTile = segment draw size
 // (tiles); stepFrac = overlap spacing as a fraction of segTile (smaller = denser/more continuous).
-export const VINE_RENDER = { enabled: true, chance: null, forceBiome: null, segTile: 1.0, stepFrac: 0.55, leafTile: 0.85 };
+export const VINE_RENDER = { enabled: true, chance: null, segTile: 1.0, stepFrac: 0.55, leafTile: 0.85 };
 if (typeof window !== 'undefined') window._vines = window._vines || VINE_RENDER;
 
 /** True once this biome's vine SEGMENT art is on disk + decoded — the cache's completeness check waits on this
@@ -51,18 +51,12 @@ function resample(pts, step) {
 export function drawVinePass(ctx, b, camX, camY, tilePx, w, h) {
   const cfg = (typeof window !== 'undefined' && window._vines) || VINE_RENDER;
   if (cfg.enabled === false) return;
-  if (!b || !b.biome) return;
-  // DEV: window._vines.forceBiome = 'mystic' | 'volcanic' | … renders EVERY building's growth with THAT biome's
-  // FORM + ART (on the building's own geometry), so the per-biome forms can be eyeballed without travelling to
-  // each biome. Unset → each building uses its real biome. (Re-bake after changing: invalidateBuildingSprites().)
-  const biome = (cfg.forceBiome) || b.biome;
+  const biome = b && b.biome; if (!biome) return;
   const segs = variants(biome, 'vine_segment'); if (!segs.length) return; // art not loaded → absent
   const roots = variants(biome, 'vine_root_base');
   const forks = variants(biome, 'vine_fork');
   const leaves = variants(biome, 'vine_leaf_cluster');
-  const chanceRules = (cfg.chance != null) ? { buildingChance: cfg.chance, rootChance: Math.max(cfg.chance, 0.6) } : {};
-  // force the FORM shape too when overriding the biome (so volcanic columns render straight+thick, not vine-shaped)
-  const opts = { rules: { ...(cfg.forceBiome ? getVineShape(biome) : {}), ...chanceRules } };
+  const opts = (cfg.chance != null) ? { rules: { buildingChance: cfg.chance, rootChance: Math.max(cfg.chance, 0.6) } } : {};
   let splines; try { splines = buildVineSplines(b, opts); } catch { return; }
   if (!splines.length) return;
   const formSeg = getVineShape(biome).segTile || 1.0; // per-form piece size (thick basalt pillar vs thin tendril)
