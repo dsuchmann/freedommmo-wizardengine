@@ -19,14 +19,14 @@ import { getWallImg } from './building-renderer.js';
 import { buildingFloors } from './building-shadow.js';
 import { queryBuildingTile } from './building-tile-query.js';
 import { wallAssetDir, wallPieceFile, roofAssetDir, roofTextureFile, ROOF_FASCIA_FILE } from '../../sim/world/buildings/building-material-registry.js';
-import { drawBuildingTiles, isTiledBuilding, materialOf, tileImagesReady, drawDoorsLive } from './building-tiles.js';
+import { drawBuildingTiles, isTiledBuilding, materialOf, tileImagesReady, drawDoorsLive, doorSwingSig } from './building-tiles.js';
 import { renderOn } from './building-render-flags.js';
 import { paintWeatheredColumn } from './dressing/d0-weathering.js';
 import { paintDamagedColumn } from './dressing/d1-damage.js';
 import { drawD1Chips } from './dressing/d1-chips.js';
 import { paintGrowthColumn, isStoneSlug } from './dressing/d2-growth.js';
 import { isWaterTile } from '../../sim/world/buildings/terrain-suitability.js';
-import { drawD3Props } from './dressing/d3-props.js';
+import { drawD3Props, drawBakedAwnings } from './dressing/d3-props.js';
 import { drawVinePass } from './dressing/vine-render.js';
 
 // Source rect of the E/W side-face cap. The grassland edge_ew strip is a 32x128 quoin/side-cap;
@@ -523,7 +523,7 @@ export function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
 // D0 WEATHERING post-pass — tint each exposed SOUTH perimeter wall COLUMN with procedural ground grime +
 // tonal variation. Mechanism A: painted into the silhouette ctx, so it rides the GL present pass (lighting/
 // CRT/day-night) — never a 2D overlay. Walks the same south-perimeter columns as the cob-foundation pass.
-function drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h) {
+function drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h, colSet) {
   if (!renderOn('weathering')) return;
   const fp = b && b.footprint, sections = (fp && fp.sections) || [];
   if (!sections.length) return;
@@ -545,6 +545,7 @@ function drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h) {
       const colTop = groundTop - (stories - 1) * wH;
       const colH = stories * wH;
       if (ex.dx + ex.dw < 0 || ex.dx > w || colTop + colH < 0 || colTop > h) continue;
+      if (colSet && !colSet.has(lx)) continue; // door-only repaint: grime just the door's columns (caller passes a colSet)
       paintWeatheredColumn(ctx, { dx: ex.dx, top: colTop, dw: ex.dw, colH, tilePx }, { wx: b.x + lx, wy: fbY }, { material });
     }
   }
@@ -580,7 +581,7 @@ function buildingWaterProximity(b) {
 // into the silhouette ctx → GL present pass, never a 2D overlay. Drivers are honest: wetness derives from
 // the building's biome AND its real water-proximity (waterfront buildings rot/runnel in any biome); a
 // per-building disrepair baseline drives cracks/flaking; age is honestly absent (tuner-preview only).
-function drawDamagePass(ctx, b, camX, camY, tilePx, w, h) {
+function drawDamagePass(ctx, b, camX, camY, tilePx, w, h, colSet) {
   if (!renderOn('damage')) return;
   const fp = b && b.footprint, sections = (fp && fp.sections) || [];
   if (!sections.length) return;
@@ -603,6 +604,7 @@ function drawDamagePass(ctx, b, camX, camY, tilePx, w, h) {
       const colTop = groundTop - (stories - 1) * wH;
       const colH = stories * wH;
       if (ex.dx + ex.dw < 0 || ex.dx > w || colTop + colH < 0 || colTop > h) continue;
+      if (colSet && !colSet.has(lx)) continue; // door-only repaint: damage just the door's columns
       paintDamagedColumn(ctx, { dx: ex.dx, top: colTop, dw: ex.dw, colH, tilePx },
         { wx: b.x + lx, wy: fbY }, { biome: b.biome, bx: b.x | 0, by: b.y | 0, material, waterProximity });
     }
@@ -613,7 +615,7 @@ function drawDamagePass(ctx, b, camX, camY, tilePx, w, h) {
 // AFTER weathering+damage (growth colonises the aged surface). Mechanism A → GL present pass. Honest drivers:
 // lichen = stable per-surface random + mild wetness, boosted on stone hosts; moss = wetness (biome + water
 // proximity), bottom-weighted, lush only in wet biomes (the sunny south face stays modest).
-function drawGrowthPass(ctx, b, camX, camY, tilePx, w, h) {
+function drawGrowthPass(ctx, b, camX, camY, tilePx, w, h, colSet) {
   if (!renderOn('growth')) return;
   const fp = b && b.footprint, sections = (fp && fp.sections) || [];
   if (!sections.length) return;
@@ -636,6 +638,7 @@ function drawGrowthPass(ctx, b, camX, camY, tilePx, w, h) {
       const colTop = groundTop - (stories - 1) * wH;
       const colH = stories * wH;
       if (ex.dx + ex.dw < 0 || ex.dx > w || colTop + colH < 0 || colTop > h) continue;
+      if (colSet && !colSet.has(lx)) continue; // door-only repaint: growth just the door's columns
       paintGrowthColumn(ctx, { dx: ex.dx, top: colTop, dw: ex.dw, colH, tilePx },
         { wx: b.x + lx, wy: fbY }, { biome: b.biome, bx: b.x | 0, by: b.y | 0, stone, waterProximity });
     }
@@ -722,7 +725,10 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   // D2 PLACED vines climb the wall — baked here (BEFORE the roof) so the eave occludes the top and the static
   // stem rides the cached sprite. Painted after the D2 coverage growth so ivy sits over moss/lichen.
   const drawVines = () => { if (renderOn('vines')) { try { drawVinePass(ctx, b, camX, camY, tilePx, w, h); } catch { /* skip vines */ } } };
-  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h); drawDamagePass(ctx, b, camX, camY, tilePx, w, h); drawGrowthPass(ctx, b, camX, camY, tilePx, w, h); drawChips(); drawVines(); drawRoof(); return true; }
+  // D3 awnings bake BEFORE the roof (like vines) so the eave overhangs the door-head canopy and it projects out
+  // from UNDERNEATH the roof, not over it (user 2026-06-27). All OTHER props stay on the live dynamic overlay.
+  const drawAwnings = () => { if (renderOn('attachments')) { try { drawBakedAwnings(ctx, b, camX, camY, tilePx, w, h); } catch { /* skip awnings */ } } };
+  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h); drawDamagePass(ctx, b, camX, camY, tilePx, w, h); drawGrowthPass(ctx, b, camX, camY, tilePx, w, h); drawChips(); drawVines(); drawAwnings(); drawRoof(); return true; }
   // A grassland TILE-CORPUS building whose tiles aren't loaded yet must NOT fall to the legacy
   // strip path — drawWalls would stamp a stone_brick 32px strip STRETCHED over the footprint (the
   // melted/stretched single-building artifact). Stay invisible this frame; it flips to mirror-tiled
@@ -736,6 +742,7 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   drawGrowthPass(ctx, b, camX, camY, tilePx, w, h);
   drawChips();
   drawVines();
+  drawAwnings();
   drawRoof();
   return true;
 }
@@ -750,6 +757,55 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
 // building; upload it before the next call) or null when nothing dynamic this frame.
 let _bpCv = null, _bpCx = null;
 let _dmCv = null, _dmCx = null; // door-silhouette mask: weather the LIVE door swing to match the baked closed door
+// Per-building cache of the WEATHERED LIVE-DOOR layer, keyed by the building anchor + its door-swing sig.
+// Re-dressing the door (3 per-pixel weathering/damage/growth passes over the WHOLE façade) is the expensive
+// part of the dynamic layer; it's DETERMINISTIC and changes ONLY when a door's discrete frame index steps
+// (~8 times across an approach), so bake it once per (building, sig) and reuse it every frame the player holds
+// position — instead of repainting the façade at 60Hz, which collapsed FPS to <20 whenever a door was open.
+// Props (banner sway / lantern flicker) stay per-frame; they're cheap. Only OPEN-door buildings are ever
+// stored, so it stays tiny; a crude cap-clear bounds it as the player roams a town.
+const _doorDynCache = new Map(); // "x,y" -> { canvas, sig, w, h }
+const _DOOR_DYN_CAP = 96;
+
+// (Re)bake one building's weathered live door into its OWN canvas (the heavy path — run only on a frame step).
+// Returns the canvas, or null if the door asset isn't loaded yet / nothing opened.
+function _renderWeatheredDoor(b, localCamX, localCamY, builtTilePx, cw, ch) {
+  const dc = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(cw, ch)
+    : (typeof document !== 'undefined') ? document.createElement('canvas') : null;
+  if (!dc) return null;
+  if (dc.width !== cw || dc.height !== ch) { dc.width = cw; dc.height = ch; }
+  const o = dc.getContext('2d'); if (!o) return null;
+  o.setTransform(1, 0, 0, 1, 0, 0); o.globalCompositeOperation = 'source-over';
+  o.clearRect(0, 0, cw, ch); o.imageSmoothingEnabled = false;
+  if (!drawDoorsLive(o, b, localCamX, localCamY, builtTilePx, cw, ch)) return null; // asset not loaded → baked closed door shows
+  // The baked CLOSED door carries the building's D0/D1/D2 dressing (drawBuildingTextured runs weathering/damage/
+  // growth before caching). The live swing is drawn fresh, so without this it would lose that grime and visibly
+  // "lighten" the instant it opens. Re-run the SAME passes in the SAME local frame, then mask back to the door
+  // silhouette so ONLY the door is tinted. (This is the cost we now amortise across the held-open frames.)
+  if (renderOn('weathering') || renderOn('damage') || renderOn('growth')) {
+    try {
+      if (!_dmCv) { _dmCv = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(cw, ch) : (typeof document !== 'undefined') ? document.createElement('canvas') : null; if (_dmCv) _dmCx = _dmCv.getContext('2d'); }
+      if (_dmCv && _dmCx) {
+        if (_dmCv.width !== cw || _dmCv.height !== ch) { _dmCv.width = cw; _dmCv.height = ch; }
+        _dmCx.setTransform(1, 0, 0, 1, 0, 0); _dmCx.globalCompositeOperation = 'source-over';
+        _dmCx.clearRect(0, 0, cw, ch); _dmCx.drawImage(dc, 0, 0); // snapshot the door-only silhouette
+        // Only the door's columns can survive the silhouette mask, so grime ONLY those — running the full-façade
+        // coverage here (~85ms on a big building) is what tanked FPS while a door was open. A fixed ~6-column span
+        // around each door over-covers any door width (the mask trims the rest), so the rebuild cost is CONSTANT
+        // (door columns) instead of scaling with building width.
+        let colSet = null;
+        const doors = b.footprint && b.footprint.doors;
+        if (doors && doors.length) { colSet = new Set(); for (const d of doors) { const x0 = d.x | 0; for (let lx = x0 - 2; lx <= x0 + 3; lx++) colSet.add(lx); } }
+        drawWeatheringPass(o, b, localCamX, localCamY, builtTilePx, cw, ch, colSet);
+        drawDamagePass(o, b, localCamX, localCamY, builtTilePx, cw, ch, colSet);
+        drawGrowthPass(o, b, localCamX, localCamY, builtTilePx, cw, ch, colSet);
+        o.save(); o.globalCompositeOperation = 'destination-in'; o.drawImage(_dmCv, 0, 0); o.restore();
+      }
+    } catch { /* dressing the live door is best-effort */ }
+  }
+  return dc;
+}
+
 export function drawBuildingDynamicInto(b, localCamX, localCamY, builtTilePx, cw, ch) {
   const wantWalls = renderOn('walls'), wantProps = renderOn('attachments');
   if ((!wantWalls && !wantProps) || !b || !b.footprint) return null;
@@ -769,26 +825,21 @@ export function drawBuildingDynamicInto(b, localCamX, localCamY, builtTilePx, cw
   let drew = false;
   if (wantWalls) {
     try {
-      if (drawDoorsLive(o, b, localCamX, localCamY, builtTilePx, cw, ch)) {
-        drew = true;
-        // The baked CLOSED door carries the building's D0/D1/D2 dressing (drawBuildingTextured runs weathering/
-        // damage/growth before caching). The live swing is drawn fresh, so without this it would lose that grime/
-        // tone and visibly "lighten" the instant it opens. Re-run the SAME passes in the SAME local frame, then
-        // mask the result back to the door silhouette so ONLY the door is tinted (props, drawn next, stay clean).
-        if (renderOn('weathering') || renderOn('damage') || renderOn('growth')) {
-          try {
-            if (!_dmCv) { _dmCv = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(cw, ch) : (typeof document !== 'undefined') ? document.createElement('canvas') : null; if (_dmCv) _dmCx = _dmCv.getContext('2d'); }
-            if (_dmCv && _dmCx) {
-              if (_dmCv.width !== cw || _dmCv.height !== ch) { _dmCv.width = cw; _dmCv.height = ch; }
-              _dmCx.setTransform(1, 0, 0, 1, 0, 0); _dmCx.globalCompositeOperation = 'source-over';
-              _dmCx.clearRect(0, 0, cw, ch); _dmCx.drawImage(_bpCv, 0, 0); // snapshot the door-only silhouette
-              drawWeatheringPass(o, b, localCamX, localCamY, builtTilePx, cw, ch);
-              drawDamagePass(o, b, localCamX, localCamY, builtTilePx, cw, ch);
-              drawGrowthPass(o, b, localCamX, localCamY, builtTilePx, cw, ch);
-              o.save(); o.globalCompositeOperation = 'destination-in'; o.drawImage(_dmCv, 0, 0); o.restore();
-            }
-          } catch { /* dressing the live door is best-effort */ }
+      const sig = doorSwingSig(b); // '' while every door is shut → the baked closed door already shows it
+      if (sig) {
+        const key = b.x + ',' + b.y;
+        let entry = _doorDynCache.get(key);
+        if (!entry || entry.sig !== sig || entry.w !== cw || entry.h !== ch) {
+          const dc = _renderWeatheredDoor(b, localCamX, localCamY, builtTilePx, cw, ch); // heavy — only on a frame step
+          entry = dc ? { canvas: dc, sig, w: cw, h: ch } : null;
+          if (entry) {
+            if (_doorDynCache.size > _DOOR_DYN_CAP) _doorDynCache.clear(); // crude bound (only open-door blds stored)
+            _doorDynCache.set(key, entry);
+          } else {
+            _doorDynCache.delete(key);
+          }
         }
+        if (entry) { o.drawImage(entry.canvas, 0, 0); drew = true; } // reuse the cached weathered door (the perf win)
       }
     } catch { /* skip */ }
   }

@@ -69,12 +69,13 @@ const P = {
   swinging_trade_sign:          { socket: 'bare_wall', size: 1.4,  anchor: 'top', vBias: -0.30, anim: 'sway', overdoor: true, salt: 0x02, z: 2 },
   projecting_board_sign:        { socket: 'bare_wall', size: 1.3,  anchor: 'top', vBias: -0.30, overdoor: true, salt: 0x03, z: 2 },
   wrought_iron_silhouette_sign: { socket: 'bare_wall', size: 1.25, anchor: 'top', vBias: -0.30, overdoor: true, salt: 0x04, z: 2 },
-  // awnings are RIGID-MOUNTED canopies at the door head (after-roof identity pass → always visible). NO object
-  // sway — a bolted-on awning doesn't swing as a unit (user 2026-06-25); only its fabric ripples, which is an
-  // internal generated wind_sway anim (TODO), never a procedural rotation of the whole sprite.
-  wood_slat_awning:             { socket: 'above_door', size: 2.85, vBias: -0.14, overdoor: true, salt: 0x05, z: 2 },
-  cloth_market_awning:          { socket: 'above_door', size: 3.05, vBias: -0.14, overdoor: true, salt: 0x06, z: 2 },
-  fringed_shop_canopy:          { socket: 'above_door', size: 3.05, vBias: -0.14, overdoor: true, salt: 0x07, z: 2 },
+  // awnings are RIGID-MOUNTED canopies at the door head. They are bolted UNDER the eave, so they bake into the
+  // building sprite BEFORE the roof (underRoof:true → drawBakedAwnings) and the roof overhangs their top — the
+  // awning projects out from UNDERNEATH the roof (user 2026-06-27), NOT over it. NO object sway — a bolted-on
+  // awning doesn't swing as a unit (user 2026-06-25); only its fabric ripples (internal wind_sway anim, TODO).
+  wood_slat_awning:             { socket: 'above_door', size: 2.85, vBias: -0.14, overdoor: true, underRoof: true, salt: 0x05, z: 2 },
+  cloth_market_awning:          { socket: 'above_door', size: 3.05, vBias: -0.14, overdoor: true, underRoof: true, salt: 0x06, z: 2 },
+  fringed_shop_canopy:          { socket: 'above_door', size: 3.05, vBias: -0.14, overdoor: true, underRoof: true, salt: 0x07, z: 2 },
   // a banner hangs on a BARE south column (no door/window) — never over the door, where the door-swing anim
   // would slide out from under it. `overdoor:true` here only gates it to civic/military/religious buildings.
   heraldic_banner:              { socket: 'bare_wall', size: 2.2, vBias: -0.55, anim: 'sway', overdoor: true, salt: 0x08, z: 2 },
@@ -136,10 +137,13 @@ function pickGroup(b, g) {
   return null;
 }
 
-// phase: 'ambient' = wall-flat props drawn BEFORE the roof (lanterns, flower box); 'identity' = the trade
-// emblems + festoons that COMMUNICATE the building's business, drawn AFTER the roof so the eave overhang can
-// never occlude them (and physically a projecting sign/awning/festoon sits IN FRONT of the eave). 'all' = both.
-export function drawD3Props(ctx, b, camX, camY, tilePx, w, h, phase = 'all') {
+// D3 props have TWO entry points so AWNINGS can be occluded by the roof:
+//   • drawBakedAwnings — ONLY the door-head awnings (underRoof:true). Called from the building bake BEFORE the
+//     roof, so the eave overhangs the awning top and it projects out from UNDERNEATH the roof (user 2026-06-27).
+//   • drawD3Props — EVERYTHING ELSE (signs, banners, lanterns, flower box, festoons). Drawn LIVE on the dynamic
+//     prop quad over the cached sprite; these animate (sway/flicker) and the roof has no south overhang, so they
+//     sit cleanly on the wall. Awnings are SKIPPED here (baked under the roof instead) to avoid a double-draw.
+function renderProps(ctx, b, camX, camY, tilePx, w, h, keep, withFestoons) {
   const cfg = (typeof window !== 'undefined' && window._d3Props) || D3_PROPS;
   if (cfg.enabled === false) return;
   const biome = b && b.biome; if (!biome) return;
@@ -157,9 +161,7 @@ export function drawD3Props(ctx, b, camX, camY, tilePx, w, h, phase = 'all') {
   ctx.imageSmoothingEnabled = false;
   for (const obj of DRAW_ORDER) {
     const pl = P[obj];
-    // identity emblems (overdoor) ride the AFTER-roof pass; everything else the BEFORE-roof pass.
-    if (phase === 'ambient' && pl.overdoor) continue;
-    if (phase === 'identity' && !pl.overdoor) continue;
+    if (!keep(pl)) continue; // splits the two entry points: awnings (underRoof) bake separately from the overlay
     if (pl.overdoor) { if (obj !== overdoor) continue; }
     else if (pl.group && picks[pl.group] !== obj) continue;
     const variants = variantSprites(biome, obj); if (!variants.length) continue;
@@ -221,9 +223,19 @@ export function drawD3Props(ctx, b, camX, camY, tilePx, w, h, phase = 'all') {
       }
     }
   }
-  if (phase !== 'identity') { // festoons hang on a CLEAR mid-wall section → BEFORE-roof pass (occludable by the roof, like real wall decor)
+  if (withFestoons) { // festoons hang across a CLEAR mid-wall section, draped over the front of festive buildings
     const strung = strungChoice(b);
     if (strung) drawStrung(ctx, b, camX, camY, tilePx, w, h, strung, biome, socks, gscale);
   }
   ctx.restore();
+}
+
+// Dynamic prop overlay (drawn over the cached sprite): every prop EXCEPT the awnings, which bake under the roof.
+export function drawD3Props(ctx, b, camX, camY, tilePx, w, h) {
+  renderProps(ctx, b, camX, camY, tilePx, w, h, (pl) => !pl.underRoof, true);
+}
+// Bake pass (drawn into the building sprite BEFORE the roof): ONLY the door-head awnings, so the eave overhangs
+// their top and they project out from underneath the roof. No festoons here.
+export function drawBakedAwnings(ctx, b, camX, camY, tilePx, w, h) {
+  renderProps(ctx, b, camX, camY, tilePx, w, h, (pl) => !!pl.underRoof, false);
 }
