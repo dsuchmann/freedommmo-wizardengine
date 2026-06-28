@@ -36,10 +36,15 @@ export function sourceById(id) {
 // consumers (gen-mf-catalog, curationPath) keep working unchanged.
 export const FIELD_ROOTS = Object.fromEntries(SOURCES.map(s => [s.id, s.root]));
 
+// FIELD_ASSET_ROOT lets the sidecar resolve against a DIFFERENT checkout than this script — some fields'
+// assets (e.g. large_objects) are gitignored and live only in the MAIN checkout while the curation code runs
+// from a worktree. Defaults to the repo root the script lives in.
+const ASSET_BASE = process.env.FIELD_ASSET_ROOT ? path.resolve(process.env.FIELD_ASSET_ROOT) : ROOT;
+
 export function curationPath(field) {
   const root = FIELD_ROOTS[field];
   if (!root) throw new Error(`field-curation: unknown field "${field}"`);
-  return path.join(ROOT, root, `_${field}_curation.json`);
+  return path.join(ASSET_BASE, root, `_${field}_curation.json`);
 }
 
 export function loadCuration(field) {

@@ -1,0 +1,15 @@
+{
+ "field": "large_objects",
+ "decidedAt": "2026-06-28",
+ "reason": "Scene-bound terrain features (holes-in-terrain / cliff faces / leaked pollution slugs) — NOT free-standing objects, so they can never satisfy the isolated-specimen-on-transparency rule. Route to a terrain/POI/wall-tile pipeline; do NOT regenerate as large_objects. Free-standing rock objects (sandstone_arch, rock_spire, magma_vent) are KEPT.",
+ "droppedSpecies": [
+  { "key": "hills/small_bear_den_entrance_dark", "kind": "den" },
+  { "key": "hills/transparent_background", "kind": "cave / pollution-slug" },
+  { "key": "mountains/cave_entrance_dark_opening_inide", "kind": "cave" },
+  { "key": "mountains/dark_cave_entrance_in_rocky", "kind": "cave" },
+  { "key": "mountains/fantasy_game", "kind": "cave / pollution-slug" },
+  { "key": "mountains/transparent_background", "kind": "cliff / cave / pollution-slug" },
+  { "key": "mountains/rocky_cliff_face_with_exposed", "kind": "cliff_face" },
+  { "key": "mountains/rocky_overhang_stone_ledge_jutting", "kind": "overhang / ledge" }
+ ]
+}
