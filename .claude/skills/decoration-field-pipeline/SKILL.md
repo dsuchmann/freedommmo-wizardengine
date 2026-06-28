@@ -69,16 +69,19 @@ Compose every prompt from the **four universal clauses** + an **object-class bod
 - A species slug must be a **clean object noun** (`oak`, `coconut_palm`, `sandstone_arch`). Reject slugs that are truncated prompt fragments (trailing `_in`/`_with`/`_over`/`_wrapped`/`_encased`, or leaked fragments like `transparent_background`, `fantasy_game`, `…ruggedide`). Move all descriptors into the prompt body.
 - **Scene-bound subjects do not belong in a transparent-sprite field.** Cave/den entrances, cliff faces, rocky overhangs, ledges, "landscape" — these are holes-in-terrain or terrain features and are FRAG+SQUARE+SCENE by construction. Route them to a terrain / POI / wall-tile pipeline, never `large_objects`.
 - **Field-fit:** `large_objects` is for discrete free-standing natural specimens. Man-made columns/statues/architecture (mystic "aether pillar" → marble columns) are a taxonomy mismatch even when well-rendered.
+- **DROPPED (2026-06-28):** 8 large_objects species were dropped wholesale as scene-bound — recorded in `scripts/asset-corpus/large_objects_dropped.json` (the two `transparent_background` + `fantasy_game` pollution-slug buckets, 3 cave/den entrances, 1 cliff face, 1 overhang/ledge). `node scripts/apply-dropped-species.mjs large_objects` marks them in the sidecar's `droppedSpecies`. Free-standing rock objects (`sandstone_arch`, `rock_spire`, `magma_vent`) are KEPT — those are real specimens, fixable by the rock/vent prompts above.
 
-## Deterministic QA gates (run BEFORE a human ever curates)
+## Deterministic QA gate (WIRED — runs in gen-field-manifest)
 
-Cheap pixel checks that catch the mechanical failures so curation only sees real art decisions. (`gen-field-manifest.mjs` already measures bbox/fill/area/magenta per variant — extend it.)
-- **EMPTY/MAGENTA-BLANK:** reject if opaque-non-key pixels < 1% OR magenta-key pixels > 50%.
-- **SQUARE/no-alpha:** flag if fill ≥ 0.95 AND bbox touches all four edges (opaque plate).
-- **BAKED-GROUND:** flag if the bottom ~15% of rows is a near-solid opaque band wider than the trunk (disc/plate signature).
-- **CROP:** flag if the opaque bbox touches the top or bottom edge (crown/base clipped).
-- **SCALE:** flag if `area / median(area)` for the species is < 0.4 or > 2.5.
-- HALO is informational only; do not auto-reject (self-luminous subjects need it).
+`gen-field-manifest.mjs` computes a per-variant `qa.flags` for EVERY field (F2–F6, large_objects) — pixel-only checks that catch the mechanical failures so human curation only sees real art decisions:
+- **BROKEN / BLANK** — undecodable stub, OR opaque < 1% / magenta-key > 50% (empty or failed render). The ONLY auto-rejectable class.
+- **SQUARE** — fill ≥ 0.95 AND bbox ≈ the whole canvas (opaque plate to the edges).
+- **CROP** — opaque bbox touches the **TOP** edge (crown clipped). NOT the bottom — a grounded specimen's base belongs at the bottom edge, so bottom-touch is normal.
+- **GROUND** — a wide, near-solid opaque band at the very bottom, ≥1.6× wider than the body above it (baked ground disc). Deliberately conservative/high-precision; the real GROUND fix is the generation prompt, not post-hoc detection.
+- **SCALE** — `area / species-median` < 0.4 or > 2.5.
+- HALO is intentionally NOT gated (self-luminous subjects need a glow).
+
+Then `node scripts/qa-gate.mjs <field>` reports the flag counts + the failed-render list; `--apply` UNIONs the failed renders (BROKEN+BLANK) into the omit-set — the only auto-safe reject, and never the PNGs. For gitignored fields set `FIELD_ASSET_ROOT=<main checkout>` (gen-field-manifest, qa-gate, curate all honor it). **Validated on large_objects (2026-06-28):** the gate independently re-found the human's 112 failed renders (16 each in cherry_blossom, baobab, thorny_acacia, banyan, jungle_tree, magma_vent, crystal_ice_tower) at `+0` new — no false-positives, none missed.
 
 ## Curation workflow (already built)
 
@@ -91,4 +94,6 @@ The omit sidecar is non-destructive (catalog-exclude / future renderer-cull, nev
 
 ## Status
 
-- **`large_objects` curated 2026-06-27:** 3,538 removed / 4,363 kept, 75 species. Sidecar + manifest written. **Regeneration deferred** — the corpus is older and registry-less; when we regen, build a clean registry (like `f6_trees.json`) using the prompts above, drop the FRAG/scene-bound slugs, and segregate by object-class so wearables/architecture never land in a flora slug.
+- **`large_objects` curated 2026-06-27:** 3,538 removed / 4,363 kept, 75 species. Sidecar + manifest written.
+- **QA gate WIRED + 8 scene-bound species DROPPED (2026-06-28).** The full corpus is 12,845 variants across ~135 species (the cull touched 75); the gate flagged BROKEN=112, CROP=1621 (top-edge), GROUND=251, SCALE=88, SQUARE=9.
+- **Regeneration deferred** — the corpus is older and registry-less; when we regen, build a clean registry (like `f6_trees.json`) using the prompts above, honor `large_objects_dropped.json`, and segregate by object-class so wearables/architecture never land in a flora slug. Run the QA gate before curation each burst.
