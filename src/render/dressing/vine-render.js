@@ -63,52 +63,47 @@ function resample(pts, step) {
 // sprite (it reads as stamped fans); instead DRAW the mound silhouette procedurally and FILL it with a flat
 // PixelLab TEXTURE (pixel-interpolated), plus dune shading — user 2026-06-27. The skeleton's arc is the mound's
 // top profile; the run groundline is its base.
-const SAND_GRAIN = ['#cda968', '#bf9a58', '#d8b87a', '#b0894e', '#e0c488'];
+const SAND_GRAIN = ['#cda968', '#bf9a58', '#d8b87a', '#b0894e', '#e0c488', '#9a7740', '#86682f'];
 function drawMound(ctx, b, biome, splines, camX, camY, tilePx, w, h) {
   const tex = img(ROOT + biome + '/sand_texture/base__v0.png'); // flat fill texture (fallback to a colour)
-  const spill = 0.4 * tilePx;     // how far the SOLID drift spills DOWN onto the floor (varies per x)
   for (const sp of splines) {
     const br = sp.branches[0]; if (!br || br.pts.length < 2) continue;
     const arc = br.pts.map((pt) => proj(b, sp.runY, pt, camX, camY, tilePx));     // undulating TOP profile
     const baseY = proj(b, sp.runY, { cxLocal: br.pts[0].cxLocal, v: 0 }, camX, camY, tilePx).y; // groundline
     let minX = 1e9, maxX = -1e9, minY = 1e9;
     for (const p of arc) { if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x; if (p.y < minY) minY = p.y; }
-    const botY = baseY + spill;
-    if (maxX < -32 || minX > w + 32 || minY > h + 32 || botY < -32) continue;
-    const ph = b.x * 1.3 + b.y * 0.7 + sp.rootX * 2.1; // per-drift phase for the spill wobble
-    const bot = arc.map((p, i) => ({ x: p.x, y: baseY + spill * (0.28 + 0.72 * (0.5 + 0.5 * Math.sin((i / (arc.length - 1)) * 9 + ph))) }));
-    const bx = Math.floor(minX) - 1, by = Math.floor(minY) - 1, bw = Math.ceil(maxX - minX) + 2, bh = Math.ceil(botY - minY) + 2;
+    if (maxX < -32 || minX > w + 32 || minY > h + 32 || baseY < -32) continue;
+    const coreBot = baseY - 0.12 * tilePx; // the SOLID part stops just shy of the groundline; below is all grains
+    const bx = Math.floor(minX) - 1, by = Math.floor(minY) - 1, bw = Math.ceil(maxX - minX) + 2, bh = Math.ceil(coreBot - minY) + 2;
     ctx.save();
-    // silhouette: undulating top (arc) left→right, then the VARYING-SPILL bottom right→left
+    // SOLID core: undulating top (arc) → a flat-ish line just above the groundline. The whole BOTTOM is then a
+    // grain dissolve (below), so there is NO clean solid bottom line where it meets the floor.
     ctx.beginPath(); ctx.moveTo(arc[0].x, arc[0].y);
     for (let i = 1; i < arc.length; i++) ctx.lineTo(arc[i].x, arc[i].y);
-    for (let i = arc.length - 1; i >= 0; i--) ctx.lineTo(bot[i].x, bot[i].y);
+    ctx.lineTo(arc[arc.length - 1].x, coreBot); ctx.lineTo(arc[0].x, coreBot);
     ctx.closePath(); ctx.clip();
-    // SOLID opaque sand base FIRST (the GL pass discards alpha<0.5, so a gappy texture would erase to the wall),
-    // then the texture for grain.
-    ctx.fillStyle = '#cda968'; ctx.fillRect(bx, by, bw, bh);
+    ctx.fillStyle = '#cda968'; ctx.fillRect(bx, by, bw, bh);                       // opaque base (beats alpha<0.5 discard)
     if (tex) { const pat = ctx.createPattern(tex, 'repeat'); if (pat) { ctx.fillStyle = pat; ctx.fillRect(bx, by, bw, bh); } }
-    // dune shading: lit crest → shadowed foot/spill
-    const g = ctx.createLinearGradient(0, minY, 0, botY);
-    g.addColorStop(0, 'rgba(255,246,214,0.30)'); g.addColorStop(0.5, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(54,36,12,0.40)');
+    const g = ctx.createLinearGradient(0, minY, 0, coreBot);                       // dune shading: lit crest → shadowed foot
+    g.addColorStop(0, 'rgba(255,246,214,0.30)'); g.addColorStop(0.55, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(54,36,12,0.42)');
     ctx.fillStyle = g; ctx.fillRect(bx, by, bw, bh);
     ctx.restore();
-    // DIFFUSE grain fringe — scatter opaque sand specks OUTSIDE the silhouette along the top + outer edges, dense
-    // near the edge and thinning out (r² falloff), so the drift dissolves into grains instead of a clean line.
-    const fringe = (edge, dirY, band, count, fall) => {
-      for (const p of edge) {
-        for (let gi = 0; gi < count; gi++) {
-          const r = rand2((p.x * 5) | 0, ((p.y * 5) | 0) + gi * 17, 0xD2E1);
-          const jx = (rand2((p.x * 3) | 0, ((p.y * 3) | 0) + gi, 0xD2E2) - 0.5) * 3.5;
-          const px = Math.round(p.x + jx), py = Math.round(p.y + dirY * Math.pow(r, fall) * band);
-          if (px < -2 || px > w + 2 || py < -2 || py > h + 2) continue;
-          ctx.fillStyle = SAND_GRAIN[(gi + (p.x | 0)) % SAND_GRAIN.length];
-          ctx.fillRect(px, py, rand2((p.x) | 0, ((p.y) | 0) + gi, 0xD2E3) < 0.22 ? 2 : 1, 1);
-        }
+    // DISSOLVE the edges into a grain field: dense (near-solid) at the edge, thinning to a long sparse tail.
+    // shaded — some grains darker — so it reads as scattered sand on the floor, not a flat colour wash.
+    const scatter = (edge, dirY, band, count, fall) => {
+      for (const p of edge) for (let gi = 0; gi < count; gi++) {
+        const r = rand2((p.x * 5) | 0, ((p.y * 5) | 0) + gi * 17, 0xD2E1);
+        const px = Math.round(p.x + (rand2((p.x * 3) | 0, ((p.y * 3) | 0) + gi, 0xD2E2) - 0.5) * 4.5);
+        const py = Math.round(p.y + dirY * Math.pow(r, fall) * band);
+        if (px < -2 || px > w + 2 || py < -2 || py > h + 2) continue;
+        const sz = r < 0.5 ? 2 : 1;                                                // bigger chunks near the edge
+        ctx.fillStyle = SAND_GRAIN[(gi + (px & 7)) % SAND_GRAIN.length];
+        ctx.fillRect(px, py, sz, sz);
       }
     };
-    fringe(arc, -1, 0.6 * tilePx, 5, 2.0);   // TOP (against the wall): a soft, less-clean contact edge
-    fringe(bot, 1, 1.4 * tilePx, 11, 2.8);   // BOTTOM: a LONG sparse TAIL of grains diffusing into the ground
+    const ground = arc.map((p) => ({ x: p.x, y: baseY }));                          // bottom dissolve anchored at the groundline
+    scatter(arc, -1, 0.6 * tilePx, 7, 2.0);    // TOP (against the wall): a soft grainy contact edge
+    scatter(ground, 1, 1.5 * tilePx, 22, 2.3); // BOTTOM: dense at the base → LONG sparse tail spilling onto the floor
   }
 }
 
@@ -118,15 +113,20 @@ export function drawVinePass(ctx, b, camX, camY, tilePx, w, h) {
   const cfg = (typeof window !== 'undefined' && window._vines) || VINE_RENDER;
   if (cfg.enabled === false) return;
   const biome = b && b.biome; if (!biome) return;
+  const opts = (cfg.chance != null) ? { rules: { buildingChance: cfg.chance, rootChance: Math.max(cfg.chance, 0.6) } } : {};
+  let splines; try { splines = buildVineSplines(b, opts); } catch { return; }
+  if (!splines.length) return;
+  // BASAL forms (sand mound) render as a procedural SHAPE filled with a TEXTURE — NOT a tiled kit (a heap tiles
+  // ugly). Gate on the fill TEXTURE it actually uses, not vine_segment.
+  if (getVineShape(biome).basal) {
+    if (!img(ROOT + biome + '/sand_texture/base__v0.png')) return; // fill texture not loaded yet → absent
+    ctx.save(); ctx.imageSmoothingEnabled = false; try { drawMound(ctx, b, biome, splines, camX, camY, tilePx, w, h); } catch { /* skip */ } ctx.restore(); return;
+  }
+  // KIT-tiled forms need their segment + accent art.
   const segs = variants(biome, 'vine_segment'); if (!segs.length) return; // art not loaded → absent
   const roots = variants(biome, 'vine_root_base');
   const forks = variants(biome, 'vine_fork');
   const leaves = variants(biome, 'vine_leaf_cluster');
-  const opts = (cfg.chance != null) ? { rules: { buildingChance: cfg.chance, rootChance: Math.max(cfg.chance, 0.6) } } : {};
-  let splines; try { splines = buildVineSplines(b, opts); } catch { return; }
-  if (!splines.length) return;
-  // BASAL forms (sand mound) render as a procedural SHAPE filled with texture, NOT a tiled kit (a heap tiles ugly).
-  if (getVineShape(biome).basal) { ctx.save(); ctx.imageSmoothingEnabled = false; try { drawMound(ctx, b, biome, splines, camX, camY, tilePx, w, h); } catch { /* skip */ } ctx.restore(); return; }
   const formSeg = getVineShape(biome).segTile || 1.0; // per-form piece size (thick basalt pillar vs thin tendril)
   const seg = Math.max(6, Math.round(tilePx * formSeg * (cfg.segTile || 1.0)));
   const leafSz = Math.max(6, Math.round(tilePx * formSeg * (cfg.leafTile || 0.85)));
