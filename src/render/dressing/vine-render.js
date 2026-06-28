@@ -72,38 +72,40 @@ function drawMound(ctx, b, biome, splines, camX, camY, tilePx, w, h) {
     const baseY = proj(b, sp.runY, { cxLocal: br.pts[0].cxLocal, v: 0 }, camX, camY, tilePx).y; // groundline
     let minX = 1e9, maxX = -1e9, minY = 1e9;
     for (const p of arc) { if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x; if (p.y < minY) minY = p.y; }
-    if (maxX < -32 || minX > w + 32 || minY > h + 32 || baseY < -32) continue;
-    const coreBot = baseY - 0.12 * tilePx; // the SOLID part stops just shy of the groundline; below is all grains
-    const bx = Math.floor(minX) - 1, by = Math.floor(minY) - 1, bw = Math.ceil(maxX - minX) + 2, bh = Math.ceil(coreBot - minY) + 2;
+    const spill = 0.4 * tilePx;                            // the SOLID drift reaches DOWN to the floor (varying), so it
+    const ph = b.x * 1.3 + b.y * 0.7 + sp.rootX * 2.1;     // sits ON the ground — NOT floating. Then its edge dissolves.
+    const bot = arc.map((p, i) => ({ x: p.x, y: baseY + spill * (0.30 + 0.70 * (0.5 + 0.5 * Math.sin((i / (arc.length - 1)) * 9 + ph))) }));
+    const tailEnd = baseY + spill + 1.2 * tilePx;
+    if (maxX < -32 || minX > w + 32 || minY > h + 32 || tailEnd < -32) continue;
+    const bx = Math.floor(minX) - 1, by = Math.floor(minY) - 1, bw = Math.ceil(maxX - minX) + 2, bh = Math.ceil(tailEnd - minY) + 2;
     ctx.save();
-    // SOLID core: undulating top (arc) → a flat-ish line just above the groundline. The whole BOTTOM is then a
-    // grain dissolve (below), so there is NO clean solid bottom line where it meets the floor.
+    // SOLID body: undulating top (arc) → the varying-spill bottom (bot), which reaches the floor. The body STAYS
+    // solid & grounded; only the EDGES dissolve into grains (below) — so it connects to the ground, not floats.
     ctx.beginPath(); ctx.moveTo(arc[0].x, arc[0].y);
     for (let i = 1; i < arc.length; i++) ctx.lineTo(arc[i].x, arc[i].y);
-    ctx.lineTo(arc[arc.length - 1].x, coreBot); ctx.lineTo(arc[0].x, coreBot);
+    for (let i = arc.length - 1; i >= 0; i--) ctx.lineTo(bot[i].x, bot[i].y);
     ctx.closePath(); ctx.clip();
     ctx.fillStyle = '#cda968'; ctx.fillRect(bx, by, bw, bh);                       // opaque base (beats alpha<0.5 discard)
     if (tex) { const pat = ctx.createPattern(tex, 'repeat'); if (pat) { ctx.fillStyle = pat; ctx.fillRect(bx, by, bw, bh); } }
-    const g = ctx.createLinearGradient(0, minY, 0, coreBot);                       // dune shading: lit crest → shadowed foot
+    const g = ctx.createLinearGradient(0, minY, 0, baseY + spill);                 // dune shading: lit crest → shadowed foot
     g.addColorStop(0, 'rgba(255,246,214,0.30)'); g.addColorStop(0.55, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(54,36,12,0.42)');
     ctx.fillStyle = g; ctx.fillRect(bx, by, bw, bh);
     ctx.restore();
-    // DISSOLVE the edges into a grain field: dense (near-solid) at the edge, thinning to a long sparse tail.
-    // shaded — some grains darker — so it reads as scattered sand on the floor, not a flat colour wash.
+    // DISSOLVE only the EDGES into grains: start grains just INSIDE the solid edge (so the clean line is broken),
+    // dense at the edge → thinning to a long sparse tail. shaded — some grains darker — reads as scattered sand.
     const scatter = (edge, dirY, band, count, fall) => {
       for (const p of edge) for (let gi = 0; gi < count; gi++) {
         const r = rand2((p.x * 5) | 0, ((p.y * 5) | 0) + gi * 17, 0xD2E1);
         const px = Math.round(p.x + (rand2((p.x * 3) | 0, ((p.y * 3) | 0) + gi, 0xD2E2) - 0.5) * 4.5);
-        const py = Math.round(p.y + dirY * Math.pow(r, fall) * band);
+        const py = Math.round(p.y + dirY * (Math.pow(r, fall) * band - 0.12 * tilePx)); // start inside the body → no clean line
         if (px < -2 || px > w + 2 || py < -2 || py > h + 2) continue;
         const sz = r < 0.5 ? 2 : 1;                                                // bigger chunks near the edge
         ctx.fillStyle = SAND_GRAIN[(gi + (px & 7)) % SAND_GRAIN.length];
         ctx.fillRect(px, py, sz, sz);
       }
     };
-    const ground = arc.map((p) => ({ x: p.x, y: baseY }));                          // bottom dissolve anchored at the groundline
     scatter(arc, -1, 0.6 * tilePx, 7, 2.0);    // TOP (against the wall): a soft grainy contact edge
-    scatter(ground, 1, 1.5 * tilePx, 22, 2.3); // BOTTOM: dense at the base → LONG sparse tail spilling onto the floor
+    scatter(bot, 1, 1.2 * tilePx, 20, 2.3);    // BOTTOM: dense at the grounded base → LONG sparse tail onto the floor
   }
 }
 
