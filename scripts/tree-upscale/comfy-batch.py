@@ -524,7 +524,23 @@ def save_state(state: dict, force=False):
     tmp = STATE_FILE.with_suffix(".json.tmp")
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(state, f, indent=1)
-    os.replace(tmp, STATE_FILE)
+    # Windows transiently locks STATE_FILE (another reader, AV scan, or a 2nd batch run) -> os.replace
+    # raises PermissionError/WinError 32. State-save is best-effort: outputs are already on disk and a
+    # re-run skips them, so retry briefly and NEVER let a failed save crash the whole batch.
+    for _ in range(10):
+        try:
+            os.replace(tmp, STATE_FILE)
+            break
+        except PermissionError:
+            time.sleep(0.3)
+    else:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+        print(f"[WARN] {STATE_FILE.name} locked by another process; continued without saving state",
+              flush=True)
+        return
     _last_save = time.time()
 
 
@@ -538,6 +554,11 @@ def src_key(src: Path) -> str:
 
 def process_one(state: dict, src: Path, graph_text: str) -> str:
     key = src_key(src)
+    if not src.exists():
+        # Source vanished between enumeration and now (e.g. a transient 9th/reference anim
+        # frame trimmed back to the canonical 8). Skip instantly instead of 3x ComfyUI-retry.
+        log.info(f"{key}: source no longer on disk -> skip")
+        return "skipped"
     out = output_path(src)
     biome, obj = biome_type_of(src)
     palette = palette_for(biome)
