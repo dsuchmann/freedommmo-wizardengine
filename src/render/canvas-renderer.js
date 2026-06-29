@@ -331,6 +331,7 @@ export class CanvasRenderer {
     }
     _P.terrain = Math.round(performance.now() - _Tt);
     const _Tm = performance.now();
+    _P.bShadow = 0; _P.bSprites = 0; // sub-timers within mid (set below when those passes run)
 
     // (glc.endFrame() runs at the end of draw() — F2 sprite instances still
     // need to land on the GL canvas after terrain.)
@@ -516,10 +517,12 @@ export class CanvasRenderer {
     // billboard composites OVER (and occludes) its own shadow. Blits COLOR only (no depth); the next pass
     // (drawBuildingColorDepth) draws the opaque walls over it. The 2D drawBuildingShadows path is the !glScene fallback.
     if (glScene && !_inside && renderOn('shadow') && (typeof window === 'undefined' || window._buildingShadows !== false) && sun && sun.isDaytime) {
+      const _Tsh = performance.now();
       try {
         const _shadowBmp = buildBuildingShadowBitmap(nearDepthBuildings(getCachedBuildings(), camX, camY, tilePx, w, h), camX, camY, tilePx, w, h, sun);
         if (_shadowBmp) this.glc.drawSceneOverlayBitmap(_shadowBmp);
       } catch (e) { /* best-effort */ }
+      _P.bShadow = Math.round(performance.now() - _Tsh);
     }
 
     // UNIFIED PER-OBJECT BUILDING COLOUR+DEPTH (#12 fix — DEFAULT; opt out with window._buildingDepthColor
@@ -529,6 +532,7 @@ export class CanvasRenderer {
     // behind→in-front-of smoothly with NO whole-building flip (no pop), and the see-through ghost keys on
     // the real depth test. Runs BEFORE the sprite batch.
     if (!_inside && glScene && renderOn('walls') && typeof window !== 'undefined' && window._buildingDepthColor !== false) {
+      const _Tsp = performance.now();
       const _refY = (camY + h / 2) / tilePx;
       const _blds = nearDepthBuildings(getCachedBuildings(), camX, camY, tilePx, w, h)
         .slice().sort((a, b) => (a.y + a.footprint.boundingBox.h) - (b.y + b.footprint.boundingBox.h)); // farthest-first
@@ -569,6 +573,7 @@ export class CanvasRenderer {
         this.glc.setSpriteDepth(_refY, DEPTH_SCALE, _see);
         _depthActive = true;
       }
+      _P.bSprites = Math.round(performance.now() - _Tsp);
     }
 
     // D-STACK PLACEMENT OVERLAY (debug, off by default): highlight every façade socket where a wall
