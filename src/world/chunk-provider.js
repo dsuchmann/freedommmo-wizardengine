@@ -4,6 +4,7 @@ import { ChunkCompiler } from './chunk-compiler.js';
 import { sampleRegionalMapChunk } from './regional-map.js';
 import { preloadLargeObjectSprites } from '../render/large-object-renderer.js';
 import { preloadField2Animations } from '../render/field2-animator.js';
+import { fireSceneDiscontinuity } from '../core/scene-teardown.js';
 
 export class ChunkProvider {
   constructor({ workerCount = Math.max(2, Math.min(6, (navigator.hardwareConcurrency ?? 8) - 2)) } = {}) {
@@ -48,6 +49,10 @@ export class ChunkProvider {
     // tick happens to clear the guard — sometimes never, if the jump landed within 15 chunks.
     if (!force && this._lastPreload && Math.max(Math.abs(pcx - this._lastPreload.cx), Math.abs(pcy - this._lastPreload.cy)) < 15) return;
     this._lastPreload = { cx: pcx, cy: pcy };
+    // A forced preload is a teleport/fast-travel DISCONTINUITY: fire the teardown bus so every
+    // per-biome cache (GL textures, decoded-image caches, …) drops its now-offscreen old-biome
+    // entries at once, instead of leaking them until a slow age-based sweep (the 3-4fps cause).
+    if (force) fireSceneDiscontinuity({ x: wx, y: wy });
     const biomeSet = new Set();
     // Sample a grid around the player — sparse sampling is fine, just need biome variety
     const sampleRadius = 30;

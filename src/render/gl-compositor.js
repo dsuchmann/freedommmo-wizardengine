@@ -9,6 +9,8 @@
 // Quad placement uses the exact same CSS-pixel sx/sy/chunkPx math as the 2D
 // path, so the two modes are pixel-comparable with the A/B toggle (G key).
 
+import { onSceneDiscontinuity } from '../core/scene-teardown.js';
+
 var VERT_SRC = `#version 300 es
 precision highp float;
 in vec2 aUnit;            // unit quad corner (0..1)
@@ -553,9 +555,12 @@ void main() {
   outColor = vec4(c, 1.0);
 }`;
 
-// Evict chunk textures not drawn for this many frames.
-var EVICT_AFTER_FRAMES = 600;
-var SWEEP_INTERVAL = 256;
+// Evict chunk textures not drawn for this many frames. Tightened from 600/256: the old ~14s
+// retention (600 frames + a sweep only every 256) let rapid biome teleports pile up 300-500MB of
+// stale chunk VRAM before anything freed -> 3-4fps. The discontinuity purge (purgeOffscreen, fired
+// on every far teleport) is the real fix for teleports; these are the gradual-walking backstop.
+var EVICT_AFTER_FRAMES = 240;
+var SWEEP_INTERVAL = 120;
 // Max NEW chunk-bitmap texImage2D uploads per frame. Spreads the boundary-crossing
 // burst (up to ~6 workers finishing at once) across frames to kill walk stutter.
 var CHUNK_UPLOAD_BUDGET = 2;
@@ -605,6 +610,10 @@ export class GLCompositor {
     }
     this.gl = gl;
     this.textures = new Map(); // 'cx,cy' -> { tex, bmp, lastUsed }
+    // Far teleport = discontinuity: free this biome's chunk/building textures + reset the sprite
+    // atlas at once (purgeOffscreen), instead of waiting ~14s for the lastUsed sweep — that wait is
+    // what let rapid teleports accumulate stale VRAM and collapse fps to 3-4.
+    onSceneDiscontinuity((info) => this.purgeOffscreen(info));
     this.crt = true;      // subtle CRT scanlines + grille (C key toggles)
     this.frame = 0;
     this._lastSkyCss = null;
@@ -2002,6 +2011,37 @@ export class GLCompositor {
       }
     }
     this._evictBuildingTextures(EVICT_AFTER_FRAMES);
+  }
+
+  // Reclaim the entire sprite-atlas working set (mirrors the atlas-full path). atlasGen++ also
+  // invalidates field2's _stripCache memo; sprites repack lazily from whatever is actually drawn next.
+  resetAtlas() {
+    this._lastAtlasReset = this.frame;
+    this.atlasGen++;
+    if (this.atlasRects) this.atlasRects.clear();
+    this._shelfX = 1;
+    this._shelfY = this._playerRegion ? this._playerRegion.y + this._playerRegion.h + 2 : 1;
+    this._shelfH = 0;
+  }
+
+  // Discontinuity teardown (registered on the scene-teardown bus). After a far teleport the cached
+  // chunk + building textures are stale; the destination biome re-uploads what it needs. Keep only
+  // chunk textures NEAR the destination (so short/overlapping teleports don't re-upload), free the
+  // rest + all building textures + reset the atlas — so rapid teleports can't accumulate stale VRAM.
+  purgeOffscreen(info) {
+    if (!this.ok) return 0;
+    var gl = this.gl, freed = 0;
+    var hasDest = info && typeof info.x === 'number';
+    var dcx = hasDest ? Math.floor(info.x / 64) : 0, dcy = hasDest ? Math.floor(info.y / 64) : 0;
+    var KEEP = 8; // chunks: keep a margin around the destination, evict everything farther
+    for (var [key, entry] of this.textures) {
+      var keep = false;
+      if (hasDest) { var p = key.split(','); if (Math.abs((+p[0]) - dcx) <= KEEP && Math.abs((+p[1]) - dcy) <= KEEP) keep = true; }
+      if (!keep) { gl.deleteTexture(entry.tex); this.textures.delete(key); freed++; }
+    }
+    if (this.bldTextures) { for (var [, e2] of this.bldTextures) { gl.deleteTexture(e2.tex); freed++; } this.bldTextures.clear(); }
+    this.resetAtlas();
+    return freed;
   }
 
   stats() {
