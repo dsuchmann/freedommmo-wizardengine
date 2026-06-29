@@ -1227,6 +1227,13 @@ function _poolRebuild(chunkStore, player, glc, radiusX, radiusY) {
   // overflows the atlas (thrash). Keeps worldX/Y in the mirror for the player split.
   var gpuSkip = gpuFlora && glc.animOk;
   if (gpuFlora) {
+    // PROACTIVE COMPACTION: the atlas never evicts individual sprites, so walking leaves a
+    // trail of off-screen strips that eventually fills it and forces an overflow reset MID-DRAW
+    // — which repacks over many ticks and looks like everything reloading. If the atlas is
+    // getting full, reset it HERE, before this rebuild re-packs: the now-visible (already-loaded)
+    // strips repack inline in this single pass, the trail is dropped, and nothing reloads on
+    // screen. 0.65 leaves headroom so the fresh visible set fits without immediately refilling.
+    if (glc.resetAtlas && glc.atlasFillRatio && glc.atlasFillRatio() > 0.65) glc.resetAtlas();
     if (glc.atlasGen !== _stripAtlasGen) { clearStripCache(); _stripAtlasGen = glc.atlasGen; }
     if (!_pool.animMirror || _pool.animMirror.length < (n + 1) * ANIM_SPRITE_FLOATS)
       _pool.animMirror = new Float32Array(Math.max(4096, (n + 1) * ANIM_SPRITE_FLOATS * 2));

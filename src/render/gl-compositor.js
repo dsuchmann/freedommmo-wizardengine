@@ -2024,6 +2024,16 @@ export class GLCompositor {
     this._shelfH = 0;
   }
 
+  // Fraction of the atlas height consumed by packed shelves (0..1). The atlas never
+  // evicts individual sprites, so walking accumulates a trail of off-screen sprites until
+  // it fills and resets mid-draw — which reloads on screen. Callers use this to compact
+  // PROACTIVELY at a rebuild boundary (resetAtlas before re-packing) so the now-visible set
+  // repacks fresh inline in one pass instead of overflowing mid-frame.
+  atlasFillRatio() {
+    if (!this.ok || !this.atlasSize) return 0;
+    return this._shelfY / this.atlasSize;
+  }
+
   // Discontinuity teardown (registered on the scene-teardown bus). After a far teleport the cached
   // chunk + building textures are stale; the destination biome re-uploads what it needs. Keep only
   // chunk textures NEAR the destination (so short/overlapping teleports don't re-upload), free the
