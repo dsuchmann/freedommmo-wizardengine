@@ -2040,7 +2040,10 @@ export class GLCompositor {
       if (!keep) { gl.deleteTexture(entry.tex); this.textures.delete(key); freed++; }
     }
     if (this.bldTextures) { for (var [, e2] of this.bldTextures) { gl.deleteTexture(e2.tex); freed++; } this.bldTextures.clear(); }
-    this.resetAtlas();
+    // INTENTIONALLY NOT resetting the sprite atlas here. resetAtlas() bumped atlasGen → forced a full
+    // re-pack of every visible F2 sprite (SPRITE_PACK_BUDGET=32/frame ≈ 1.5s = the post-teleport stutter).
+    // The atlas is a fixed-size texture (no leak); stale old-biome sprites are reclaimed lazily by its own
+    // overflow reset when it actually fills. Freeing the big per-chunk textures above is the real VRAM win.
     return freed;
   }
 
