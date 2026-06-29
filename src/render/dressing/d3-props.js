@@ -12,14 +12,34 @@
 import { buildSockets, projectSocket } from './socket-index.js';
 import { rand2 } from '../../core/random.js';
 import { onSceneDiscontinuity } from '../../core/scene-teardown.js';
+import { DRESSING_ALLOWED } from '../../world/dressing-vmap.js';
 
 const ROOT = '/assets/pixelab/buildings/dressing/';
 const _img = new Map();
 function img(url) { let im = _img.get(url); if (!im) { im = new Image(); im.src = url; _img.set(url, im); } return (im.complete && im.naturalWidth) ? im : null; }
-// Every base__vN variant on disk for this object (v0..v7), in order, that has loaded. Picked per placement.
+// Every allowed base__vN variant for this object, as {sprite, diskIdx} pairs.
+// diskIdx is the on-disk variant number (used for anim/v<n>/ frame paths).
+// DRESSING_ALLOWED["biome/prop"] = [allowed_disk_indices]:
+//   • present + non-empty → only those indices loaded (omitted variants excluded).
+//   • present + []        → prop fully culled; returns empty array → caller skips it.
+//   • absent              → uncurated; fall back to scanning v0..v7 (current behaviour).
 function variantSprites(biome, obj) {
+  const key = biome + '/' + obj;
+  const allowed = DRESSING_ALLOWED[key];
   const arr = [];
-  for (let i = 0; i < 8; i++) { const im = img(ROOT + biome + '/' + obj + '/base__v' + i + '.png'); if (im) arr.push(im); }
+  if (allowed !== undefined) {
+    // Curated: load only the disk indices in the allowed list.
+    for (const i of allowed) {
+      const im = img(ROOT + biome + '/' + obj + '/base__v' + i + '.png');
+      if (im) arr.push({ sprite: im, diskIdx: i });
+    }
+  } else {
+    // Uncurated (no entry yet): scan v0..v7, keep loaded images.
+    for (let i = 0; i < 8; i++) {
+      const im = img(ROOT + biome + '/' + obj + '/base__v' + i + '.png');
+      if (im) arr.push({ sprite: im, diskIdx: i });
+    }
+  }
   return arr;
 }
 // Per-variant continuous-loop animation frames (anim/v<n>/frame_N.png) — flicker / sway, played by time.
@@ -121,7 +141,7 @@ function drawStrung(ctx, b, camX, camY, tilePx, w, h, obj, biome, socks, gscale)
   const x0 = ends[0].x, x1 = ends[1].x, y0 = ends[0].y;
   if (x1 - x0 < tilePx) return;
   const sag = tilePx * 0.5;
-  const node = variants[Math.floor(rand2(b.x | 0, b.y | 0, 0xD40) * variants.length)];
+  const node = variants[Math.floor(rand2(b.x | 0, b.y | 0, 0xD40) * variants.length)].sprite;
   const sz = Math.round(tilePx * 0.6 * gscale), step = Math.max(6, Math.round(sz * 0.8));
   for (let px = x0; px <= x1; px += step) {
     const t = (px - x0) / (x1 - x0);
@@ -181,7 +201,9 @@ function renderProps(ctx, b, camX, camY, tilePx, w, h, keep, withFestoons) {
       const seedX = (b.x + (s.pairX != null ? s.pairX : vx)) | 0;
       const seedY = (b.y + (s.pairY != null ? s.pairY : s.runY)) | 0;
       const vi = Math.min(Math.floor(rand2(seedX, seedY, (pl.salt || 0) ^ 0x5A) * variants.length), variants.length - 1);
-      const vloop = loopFramesV(biome, obj, vi);
+      // variants[vi].diskIdx is the on-disk variant number; required for anim/v<n>/ frame path lookup.
+      // vi is only the array index after curation filtering — they diverge when variants are omitted.
+      const vloop = loopFramesV(biome, obj, variants[vi].diskIdx);
       let sprite;
       if (vloop.length) {
         // phase stays per-SOCKET (uses vx) so the two matched flames flicker independently, not in lockstep.
@@ -189,7 +211,7 @@ function renderProps(ctx, b, camX, camY, tilePx, w, h, keep, withFestoons) {
         const tnow = (typeof performance !== 'undefined' && performance.now) ? performance.now() : 0;
         sprite = vloop[(Math.floor(tnow / 110) + phase) % vloop.length];
       } else {
-        sprite = variants[vi];
+        sprite = variants[vi].sprite;
       }
       const p = projectSocket(b, { ...s, v: s.v + (pl.vBias || 0) }, camX, camY, tilePx);
       let cx = p.x;
