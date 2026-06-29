@@ -1,0 +1,1912 @@
+{
+ "field": "f5",
+ "omits": {
+  "arctic/frozen_ruin": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30,
+   31,
+   32,
+   33,
+   34,
+   35,
+   36,
+   37,
+   38,
+   39,
+   40,
+   41,
+   42,
+   43,
+   44,
+   45,
+   46,
+   47,
+   48,
+   49,
+   50,
+   51,
+   52,
+   53,
+   54,
+   55,
+   56,
+   57,
+   58,
+   59,
+   60,
+   61,
+   62,
+   63
+  ],
+  "arctic/ice_formation": [
+   3,
+   13,
+   20,
+   21,
+   29,
+   41,
+   45,
+   55,
+   57,
+   59
+  ],
+  "beach/beached_log": [
+   9,
+   10,
+   11,
+   13,
+   14,
+   46,
+   54
+  ],
+  "desert/sandstone_formation": [
+   2,
+   3,
+   4,
+   5,
+   9,
+   10,
+   17,
+   19,
+   22,
+   26,
+   42,
+   54,
+   55,
+   56,
+   62
+  ],
+  "hills/granite_outcrop": [
+   35,
+   50,
+   57
+  ],
+  "mountains/cliff_fragment": [
+   8,
+   9,
+   10,
+   11,
+   23,
+   36,
+   37,
+   38,
+   39,
+   44,
+   45,
+   46,
+   47,
+   48,
+   49,
+   50,
+   51,
+   58
+  ],
+  "mystic/ancient_altar": [
+   6,
+   43
+  ],
+  "steppe/buried_post": [
+   12,
+   13,
+   14,
+   15,
+   28,
+   29,
+   41,
+   42,
+   43,
+   60,
+   61
+  ],
+  "swamp/bog_log": [
+   43,
+   45,
+   46,
+   47,
+   59,
+   60,
+   62,
+   63
+  ],
+  "swamp/rotting_dock": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30,
+   31,
+   32,
+   33,
+   34,
+   35,
+   36,
+   37,
+   38,
+   39,
+   40,
+   41,
+   42,
+   43,
+   44,
+   45,
+   46,
+   47,
+   48,
+   49,
+   50,
+   51,
+   52,
+   53,
+   54,
+   55,
+   56,
+   57,
+   58,
+   59,
+   60,
+   61,
+   62,
+   63
+  ]
+ },
+ "history": [
+  {
+   "appliedAt": "2026-06-29T19:17:39.659Z",
+   "decisions": {
+    "arctic/frozen_ruin": {
+     "omit": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63
+     ],
+     "tags": {},
+     "notes": {}
+    },
+    "arctic/ice_formation": {
+     "omit": [
+      3,
+      13,
+      20,
+      21,
+      29,
+      41,
+      45,
+      55,
+      57,
+      59
+     ],
+     "tags": {},
+     "notes": {}
+    },
+    "beach/beached_log": {
+     "omit": [
+      9,
+      10,
+      11,
+      13,
+      14,
+      46,
+      54
+     ],
+     "tags": {},
+     "notes": {}
+    },
+    "desert/sandstone_formation": {
+     "omit": [
+      2,
+      3,
+      4,
+      5,
+      9,
+      10,
+      17,
+      19,
+      22,
+      26,
+      42,
+      54,
+      55,
+      56,
+      62
+     ],
+     "tags": {},
+     "notes": {}
+    },
+    "hills/granite_outcrop": {
+     "omit": [
+      35,
+      50,
+      57
+     ],
+     "tags": {},
+     "notes": {}
+    },
+    "mountains/cliff_fragment": {
+     "omit": [
+      8,
+      9,
+      10,
+      11,
+      23,
+      36,
+      37,
+      38,
+      39,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      58
+     ],
+     "tags": {},
+     "notes": {}
+    },
+    "mystic/ancient_altar": {
+     "omit": [
+      6,
+      43
+     ],
+     "tags": {},
+     "notes": {}
+    },
+    "steppe/buried_post": {
+     "omit": [
+      12,
+      13,
+      14,
+      15,
+      28,
+      29,
+      41,
+      42,
+      43,
+      60,
+      61
+     ],
+     "tags": {},
+     "notes": {}
+    },
+    "swamp/bog_log": {
+     "omit": [
+      43,
+      45,
+      46,
+      47,
+      59,
+      60,
+      62,
+      63
+     ],
+     "tags": {},
+     "notes": {}
+    },
+    "swamp/rotting_dock": {
+     "omit": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63
+     ],
+     "tags": {},
+     "notes": {}
+    }
+   }
+  }
+ ],
+ "regenWorklist": [
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 0,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 1,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 2,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 3,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 4,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 5,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 6,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 7,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 8,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 9,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 10,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 11,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 12,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 13,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 14,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 15,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 16,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 17,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 18,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 19,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 20,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 21,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 22,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 23,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 24,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 25,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 26,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 27,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 28,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 29,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 30,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 31,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 32,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 33,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 34,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 35,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 36,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 37,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 38,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 39,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 40,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 41,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 42,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 43,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 44,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 45,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 46,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 47,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 48,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 49,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 50,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 51,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 52,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 53,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 54,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 55,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 56,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 57,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 58,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 59,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 60,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 61,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 62,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "frozen_ruin",
+   "replaces": 63,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "ice_formation",
+   "replaces": 3,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "ice_formation",
+   "replaces": 13,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "ice_formation",
+   "replaces": 20,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "ice_formation",
+   "replaces": 21,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "ice_formation",
+   "replaces": 29,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "ice_formation",
+   "replaces": 41,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "ice_formation",
+   "replaces": 45,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "ice_formation",
+   "replaces": 55,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "ice_formation",
+   "replaces": 57,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "arctic",
+   "species": "ice_formation",
+   "replaces": 59,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "beach",
+   "species": "beached_log",
+   "replaces": 9,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "beach",
+   "species": "beached_log",
+   "replaces": 10,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "beach",
+   "species": "beached_log",
+   "replaces": 11,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "beach",
+   "species": "beached_log",
+   "replaces": 13,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "beach",
+   "species": "beached_log",
+   "replaces": 14,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "beach",
+   "species": "beached_log",
+   "replaces": 46,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "beach",
+   "species": "beached_log",
+   "replaces": 54,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "desert",
+   "species": "sandstone_formation",
+   "replaces": 2,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "desert",
+   "species": "sandstone_formation",
+   "replaces": 3,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "desert",
+   "species": "sandstone_formation",
+   "replaces": 4,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "desert",
+   "species": "sandstone_formation",
+   "replaces": 5,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "desert",
+   "species": "sandstone_formation",
+   "replaces": 9,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "desert",
+   "species": "sandstone_formation",
+   "replaces": 10,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "desert",
+   "species": "sandstone_formation",
+   "replaces": 17,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "desert",
+   "species": "sandstone_formation",
+   "replaces": 19,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "desert",
+   "species": "sandstone_formation",
+   "replaces": 22,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "desert",
+   "species": "sandstone_formation",
+   "replaces": 26,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "desert",
+   "species": "sandstone_formation",
+   "replaces": 42,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "desert",
+   "species": "sandstone_formation",
+   "replaces": 54,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "desert",
+   "species": "sandstone_formation",
+   "replaces": 55,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "desert",
+   "species": "sandstone_formation",
+   "replaces": 56,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "desert",
+   "species": "sandstone_formation",
+   "replaces": 62,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "hills",
+   "species": "granite_outcrop",
+   "replaces": 35,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "hills",
+   "species": "granite_outcrop",
+   "replaces": 50,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "hills",
+   "species": "granite_outcrop",
+   "replaces": 57,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mountains",
+   "species": "cliff_fragment",
+   "replaces": 8,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mountains",
+   "species": "cliff_fragment",
+   "replaces": 9,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mountains",
+   "species": "cliff_fragment",
+   "replaces": 10,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mountains",
+   "species": "cliff_fragment",
+   "replaces": 11,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mountains",
+   "species": "cliff_fragment",
+   "replaces": 23,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mountains",
+   "species": "cliff_fragment",
+   "replaces": 36,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mountains",
+   "species": "cliff_fragment",
+   "replaces": 37,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mountains",
+   "species": "cliff_fragment",
+   "replaces": 38,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mountains",
+   "species": "cliff_fragment",
+   "replaces": 39,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mountains",
+   "species": "cliff_fragment",
+   "replaces": 44,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mountains",
+   "species": "cliff_fragment",
+   "replaces": 45,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mountains",
+   "species": "cliff_fragment",
+   "replaces": 46,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mountains",
+   "species": "cliff_fragment",
+   "replaces": 47,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mountains",
+   "species": "cliff_fragment",
+   "replaces": 48,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mountains",
+   "species": "cliff_fragment",
+   "replaces": 49,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mountains",
+   "species": "cliff_fragment",
+   "replaces": 50,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mountains",
+   "species": "cliff_fragment",
+   "replaces": 51,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mountains",
+   "species": "cliff_fragment",
+   "replaces": 58,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mystic",
+   "species": "ancient_altar",
+   "replaces": 6,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mystic",
+   "species": "ancient_altar",
+   "replaces": 43,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "steppe",
+   "species": "buried_post",
+   "replaces": 12,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "steppe",
+   "species": "buried_post",
+   "replaces": 13,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "steppe",
+   "species": "buried_post",
+   "replaces": 14,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "steppe",
+   "species": "buried_post",
+   "replaces": 15,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "steppe",
+   "species": "buried_post",
+   "replaces": 28,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "steppe",
+   "species": "buried_post",
+   "replaces": 29,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "steppe",
+   "species": "buried_post",
+   "replaces": 41,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "steppe",
+   "species": "buried_post",
+   "replaces": 42,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "steppe",
+   "species": "buried_post",
+   "replaces": 43,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "steppe",
+   "species": "buried_post",
+   "replaces": 60,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "steppe",
+   "species": "buried_post",
+   "replaces": 61,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "bog_log",
+   "replaces": 43,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "bog_log",
+   "replaces": 45,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "bog_log",
+   "replaces": 46,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "bog_log",
+   "replaces": 47,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "bog_log",
+   "replaces": 59,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "bog_log",
+   "replaces": 60,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "bog_log",
+   "replaces": 62,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "bog_log",
+   "replaces": 63,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 0,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 1,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 2,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 3,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 4,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 5,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 6,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 7,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 8,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 9,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 10,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 11,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 12,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 13,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 14,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 15,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 16,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 17,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 18,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 19,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 20,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 21,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 22,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 23,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 24,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 25,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 26,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 27,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 28,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 29,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 30,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 31,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 32,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 33,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 34,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 35,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 36,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 37,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 38,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 39,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 40,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 41,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 42,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 43,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 44,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 45,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 46,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 47,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 48,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 49,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 50,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 51,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 52,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 53,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 54,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 55,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 56,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 57,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 58,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 59,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 60,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 61,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 62,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "swamp",
+   "species": "rotting_dock",
+   "replaces": 63,
+   "reason": "unspecified",
+   "note": ""
+  }
+ ]
+}
