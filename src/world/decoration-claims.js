@@ -864,11 +864,16 @@ export function f6Placements(wx, wy, tileInfo) {
     ux: ux, uy: uy, sizeTiles: sizeTiles,
     hasAnim: obj.anims.indexOf(variant) !== -1,
     bx: foot.bx, by: foot.by, fw: foot.fw, fh: foot.fh,
+    source: obj.source,
   };
   return cachePut(_f6Cache, key, [p]);
 }
 
 export function f6SpriteUrl(p) {
+  if (p.source && p.source.dir === 'large_objects') {
+    return '/assets/pixelab/landscape_v2/micro/large_objects/' + p.biome + '/' + p.name +
+      '/lg__' + p.biome + '__' + p.name + '__v' + pad3(p.variant) + '.png';
+  }
   if (p.state && p.stateOnDisk) {
     return LG_BASE_PATH + p.biome + '/' + p.name + '/_states/' + p.state +
       '/v' + pad3(p.variant) + '.png';
@@ -877,6 +882,7 @@ export function f6SpriteUrl(p) {
 }
 
 export function f6AnimUrlBase(p) {
+  if (p.source && p.source.dir === 'large_objects') return null;
   return LG_BASE_PATH + p.biome + '/' + p.name + '/anim/wind_sway/v' + pad3(p.variant) + '/';
 }
 
