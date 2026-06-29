@@ -808,6 +808,18 @@ export function f5AnimUrlBase(p) {
   return MO_BASE_PATH + p.biome + '/' + p.name + '/anim/wind_sway/v' + pad3(p.variant) + '/';
 }
 
+// Map a [0,1) roll to a pool POSITION, then through the species vmap to the real on-disk filename index.
+// vmap decouples pool position from filename so omitted (culled) variants are simply absent from vmap.
+// obj.variants >= 1 is a catalog invariant (an object with no usable variants is never cataloged).
+export function pickF6Variant(obj, r) {
+  var n = obj.variants;
+  var pos = Math.floor(r * n);
+  if (pos >= n) pos = n - 1;
+  if (pos < 0) pos = 0;
+  var variant = obj.vmap ? obj.vmap[pos] : pos;
+  return { pos: pos, variant: variant };
+}
+
 // One tree per tile max. Deterministic (seed roots 9830-9840). Same contract
 // as f4/f5 placements, plus `trim` ([x,y,w,h] file px) for claims + the
 // future traversal system (Plan B). Claim = trunk base, not canopy: F2/F4
@@ -832,7 +844,8 @@ export function f6Placements(wx, wy, tileInfo) {
     tuneStateWeights('f6', t.biome, obj.name, F6_STATE_DEFAULTS),
     F6_STATE_ORDER, rand2(wx, wy, 9835));
   if (st === 'base') st = null;
-  var variant = Math.floor(rand2(wx, wy, 9832) * obj.variants);
+  var pick = pickF6Variant(obj, rand2(wx, wy, 9832));
+  var variant = pick.variant;
   var stateOnDisk = !!(st && obj.states[st] && obj.states[st].indexOf(variant) !== -1);
 
   var ux = 0.5 + (rand2(wx, wy, 9833) - 0.5) * 0.5;
@@ -841,13 +854,13 @@ export function f6Placements(wx, wy, tileInfo) {
     tuneSize('f6', t.biome, obj.name, variant, wx, wy, 9840);
   var sizeTiles = obj.size * scale / TILE_ART_PX; // 192px @ 1.0 -> 6 tiles
   var drawPx = obj.size * scale;
-  var trim = (obj.trims && obj.trims[variant]) || null;
+  var trim = (obj.trims && obj.trims[pick.pos]) || null;
   var cx = (wx + ux) * TILE_ART_PX, cy = (wy + uy) * TILE_ART_PX;
   var foot = trimFoot(cx, cy, obj.size, drawPx, trim, 0.30, 0.10, 0.30, 0.16);
   var p = {
     name: obj.name, biome: t.biome, size: obj.size, variant: variant,
     state: st, stateOnDisk: stateOnDisk, trim: trim,
-    sil: (obj.sil && obj.sil[variant]) || null,
+    sil: (obj.sil && obj.sil[pick.pos]) || null,
     ux: ux, uy: uy, sizeTiles: sizeTiles,
     hasAnim: obj.anims.indexOf(variant) !== -1,
     bx: foot.bx, by: foot.by, fw: foot.fw, fh: foot.fh,
