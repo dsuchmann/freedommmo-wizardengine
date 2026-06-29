@@ -596,7 +596,12 @@ function startPreload(item) {
   img.onerror = function() {
     _activePreloads--;
     item.attempts++;
-    if (item.attempts < MAX_PRELOAD_ATTEMPTS) {
+    // Only STATIC sprites retry (they gate readiness, and a failure there is usually transient browser
+    // resource-exhaustion under the 48-wide preload). ANIM frames are non-critical (the static still
+    // renders) and a 404 is PERMANENT — a variant with a static but no wind_sway anim. Retrying those 3x
+    // with delays is the rolling "flash-reload" storm as the player walks into new biomes; null-cache
+    // them immediately on first failure instead.
+    if (item.isStatic && item.attempts < MAX_PRELOAD_ATTEMPTS) {
       // Transient failure (browser resource exhaustion) — retry after a delay
       setTimeout(function() {
         (item.isStatic ? _staticQueue : _preloadQueue).push(item);
