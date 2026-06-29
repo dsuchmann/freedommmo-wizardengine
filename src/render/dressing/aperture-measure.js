@@ -5,15 +5,8 @@
 // socket sits on the real glass (bottom-centre) instead of a guessed fraction. Measured once per material,
 // cached; returns null until both tiles have loaded (the socket falls back to its default sill meanwhile).
 
-import { onSceneDiscontinuity } from '../../core/scene-teardown.js';
-
 const _imgs = new Map();
 const _cache = new Map(); // windowUrl -> { xFrac, sillV } | null
-onSceneDiscontinuity(function () {
-  for (const v of _imgs.values()) { try { if (v) v.src = ''; } catch (e) {} }
-  _imgs.clear();
-  _cache.clear();
-});
 function img(url) { let im = _imgs.get(url); if (!im) { im = new Image(); im.src = url; _imgs.set(url, im); } return (im.complete && im.naturalWidth) ? im : null; }
 function makeCanvas(w, h) {
   if (typeof OffscreenCanvas !== 'undefined') return new OffscreenCanvas(w, h);

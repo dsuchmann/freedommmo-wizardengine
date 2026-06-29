@@ -71,9 +71,6 @@ export class OvermapController {
     // 15-chunk guard), so decoration sprites are missing — sometimes permanently — after a jump.
     const provider = this.chunkStore.provider;
     if (provider && provider.initPreload) provider.initPreload(this.player.x, this.player.y, true);
-    // A teleport invalidates the F2 tile-descriptor cache + pool built for the old
-    // location; clear it so stale entries are torn down rather than lingering.
-    clearF2TileDescriptors();
   }
 
   draw(force = false) {

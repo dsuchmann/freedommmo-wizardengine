@@ -15,10 +15,6 @@ import { onSceneDiscontinuity } from '../../core/scene-teardown.js';
 
 const ROOT = '/assets/pixelab/buildings/dressing/';
 const _img = new Map();
-onSceneDiscontinuity(function () {
-  for (const v of _img.values()) { try { if (v) v.src = ''; } catch (e) {} }
-  _img.clear();
-});
 function img(url) { let im = _img.get(url); if (!im) { im = new Image(); im.src = url; _img.set(url, im); } return (im.complete && im.naturalWidth) ? im : null; }
 // Every base__vN variant on disk for this object (v0..v7), in order, that has loaded. Picked per placement.
 function variantSprites(biome, obj) {

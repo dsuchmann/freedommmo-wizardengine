@@ -4,10 +4,12 @@
 
 import { WORLD } from '../core/constants.js';
 import { rand2 } from '../core/random.js';
-import { LG_BIOME_OBJECTS_LIST, LG_BASE_PATH, LG_VARIANT_COUNT } from './wang-image-list.js';
+import { LG_BASE_PATH } from './wang-image-list.js';
+// Full per-biome species list (every large_object on disk, NOT a hardcoded shortlist) with each species'
+// ALLOWED variant indices (disk minus curated omits). Regenerate via scripts/gen-lg-objects-catalog.mjs.
+import { LG_OBJECTS } from '../world/lg-objects-catalog.js';
 import { floorDiv } from '../world/chunk.js';
 import { getBuildingHeightMask, sampleHeight } from './building-shadow.js';
-import { onSceneDiscontinuity } from '../core/scene-teardown.js';
 
 // Water biomes don't get large objects
 var WATER_BIOMES = { ocean: 1, deep_ocean: 1, shallow_water: 1, river: 1, lake: 1, stream: 1 };
@@ -65,18 +67,6 @@ var DOMINANT_WEIGHT = 0.70; // 70% chance of dominant type, 30% split among othe
 var spriteCache = new Map();
 var loadingSet = new Set();
 var badSprites = new Set();
-
-// Evict per-url sprite caches on far teleport so memory doesn't grow unbounded
-// as the player roams biomes. Values are usually Images, but may be ImageBitmaps;
-// close those first to free GPU memory.
-onSceneDiscontinuity(function () {
-  for (var v of spriteCache.values()) {
-    try { if (v && v.close) v.close(); } catch (e) {}
-  }
-  spriteCache.clear();
-  loadingSet.clear();
-  badSprites.clear();
-});
 
 // Offscreen canvas for sprite quality validation
 var _validationCanvas = null;
@@ -161,12 +151,14 @@ export function preloadLargeObjectSprites(biomes) {
   if (key === lastPreloadKey) return;
   lastPreloadKey = key;
   for (var b = 0; b < biomes.length; b++) {
-    var objects = LG_BIOME_OBJECTS_LIST[biomes[b]];
+    var objects = LG_OBJECTS[biomes[b]];
     if (!objects) continue;
     for (var oi = 0; oi < objects.length; oi++) {
-      for (var v = 0; v < LG_VARIANT_COUNT; v++) {
+      var vs = objects[oi].variants;
+      for (var vi = 0; vi < vs.length; vi++) {
+        var v = vs[vi];
         var idx = v < 10 ? '00' + v : (v < 100 ? '0' + v : '' + v);
-        var url = LG_BASE_PATH + biomes[b] + '/' + objects[oi] + '/lg__' + biomes[b] + '__' + objects[oi] + '__v' + idx + '.png';
+        var url = LG_BASE_PATH + biomes[b] + '/' + objects[oi].name + '/lg__' + biomes[b] + '__' + objects[oi].name + '__v' + idx + '.png';
         loadSprite(url);
       }
     }
@@ -179,7 +171,7 @@ function elevationLift(elevation) {
 
 function getLargeObjectForTile(tile) {
   if (!tile || WATER_BIOMES[tile.biome]) return null;
-  var objects = LG_BIOME_OBJECTS_LIST[tile.biome];
+  var objects = LG_OBJECTS[tile.biome];
   if (!objects || objects.length === 0) return null;
 
   var density = LG_DENSITY[tile.biome] || 0.01;
@@ -218,9 +210,12 @@ function getLargeObjectForTile(tile) {
     var otherRoll = Math.floor(rand2(tile.wx, tile.wy, 6011) * (objects.length - 1));
     typeIdx = otherRoll >= dominantIdx ? otherRoll + 1 : otherRoll;
   }
-  var objectName = objects[typeIdx];
+  var entry = objects[typeIdx];
+  var objectName = entry.name;
 
-  var variant = Math.floor(rand2(tile.wx, tile.wy, 6020) * LG_VARIANT_COUNT);
+  // Pick from this species' ALLOWED variants only (curated-out variants are absent, so they never place).
+  var vlist = entry.variants;
+  var variant = vlist[Math.floor(rand2(tile.wx, tile.wy, 6020) * vlist.length)];
   var idx = variant < 10 ? '00' + variant : (variant < 100 ? '0' + variant : '' + variant);
   var url = LG_BASE_PATH + tile.biome + '/' + objectName + '/lg__' + tile.biome + '__' + objectName + '__v' + idx + '.png';
 

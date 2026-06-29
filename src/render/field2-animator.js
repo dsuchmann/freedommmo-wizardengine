@@ -14,8 +14,6 @@ import { tuneSize, tuneBiomeDensity, tuneObjDensity, tuneAnimEnabled, tuneStateW
   F2_STATE_ORDER, F2_STATE_DEFAULTS } from '../world/field-tuning.js';
 import { coalesceDirty, lowerBound } from './sprite-pool-util.js';
 import { upscaleUrl } from '../world/upscale-manifest.js';
-import { BudgetCache } from '../core/lru-cache.js';
-import { onSceneDiscontinuity } from '../core/scene-teardown.js';
 
 var ANIM_RADIUS = 40; // tiles around player — large enough to cover full screen at any zoom
 var REBUILD_MARGIN = 4; // hysteresis: the pool collects this many extra tiles past the
@@ -169,14 +167,10 @@ function samplePlayerPush(wx, wy, playerX, playerY, playerVX, playerVY) {
 }
 
 // Cache: url → Image (denoised)
-// Decoded F2/F4/F5/F6 sprite + anim frames keyed by URL. Byte-budgeted LRU (was an unbounded Map that
-// grew per biome — decoded @384 tree frames are ~590KB each — the main heap leak on teleport). onEvict
-// releases an Image's decode (src=''); canvases are GC'd. The on-screen working set stays hot via get().
-var frameCache = new BudgetCache({
-  budgetBytes: 320 * 1024 * 1024,
-  sizeOf: function (v) { return v ? ((v.naturalWidth || v.width || 0) * (v.naturalHeight || v.height || 0) * 4) : 0; },
-  onEvict: function (v) { if (v && 'src' in v) { try { v.src = ''; } catch (e) { /* release decode best-effort */ } } },
-});
+// Decoded F2/F4/F5/F6 sprite + anim frames keyed by URL. Plain Map — the working set is the CURRENT area's
+// ~20k sprites; any size/budget cap or trim-on-teleport just forces a catastrophic re-decode of all of them
+// (the permanent-<20fps regression). Per-biome growth is bounded in practice by the finite asset corpus.
+var frameCache = new Map();
 var loadingSet = new Set();
 var _denoiseCanvas = null;
 
@@ -435,19 +429,7 @@ function loadFrame(url, frameCount) {
 // halving) keeps silhouettes readable. Keyed by native img + scale bucket.
 // Upscale / near-native stays nearest-neighbor (crisp pixel art).
 var DOWNSCALE_BUCKETS = [0.5, 0.33, 0.25];
-// Pre-downscaled canvases keyed by (img.src + '@' + bucket). Byte-budgeted LRU (was unbounded).
-var _downCache = new BudgetCache({
-  budgetBytes: 96 * 1024 * 1024,
-  sizeOf: function (v) { return v ? ((v.width || 0) * (v.height || 0) * 4) : 0; },
-});
-// Teleport (discontinuity): the old biome's per-blade trigger state + decoded frames are stale. Clear
-// the small unbounded trigger map and trim the frame/downscale caches to the freshly-loaded set so the
-// old biome is released promptly (the byte budget alone would otherwise hold it until memory pressure).
-onSceneDiscontinuity(function () {
-  try { triggerTimes.clear(); } catch (e) { /* best-effort */ }
-  try { frameCache.trimTo(256); } catch (e) { /* best-effort */ }
-  try { _downCache.trimTo(128); } catch (e) { /* best-effort */ }
-});
+var _downCache = new Map(); // (img.src + '@' + bucket) -> canvas — plain Map (see frameCache note above)
 
 // Throttle NEW (cache-miss) downscales per frame. Walking ~4 tiles rebuilds the F2
 // pool and downscales a strip of ~200 new sprites at once (stepwise canvas halving) —

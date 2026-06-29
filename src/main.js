@@ -200,7 +200,6 @@ function update(dt) {
     player.vz = 0;
     chunks.streamAround(player.x, player.y);
     provider.initPreload(player.x, player.y, true); // discontinuity: force destination preload
-    if (_clearClaimCaches) _clearClaimCaches(); // teleport discontinuity: drop stale decoration-claim caches
   }
   if (input.wasPressed('p')) {
     var preset = weather.cyclePreset();
