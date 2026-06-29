@@ -2,7 +2,6 @@ import { getWorldSeed } from '../core/world-seed.js';
 import { chunkKey } from './chunk.js';
 import { ChunkCompiler } from './chunk-compiler.js';
 import { sampleRegionalMapChunk } from './regional-map.js';
-import { preloadLargeObjectSprites } from '../render/large-object-renderer.js';
 import { preloadField2Animations } from '../render/field2-animator.js';
 import { fireSceneDiscontinuity } from '../core/scene-teardown.js';
 

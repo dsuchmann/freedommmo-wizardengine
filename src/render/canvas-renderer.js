@@ -27,7 +27,6 @@ import { initWallTuner, drawWallTuner } from './wall-tuner.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations, buildWaveField } from './water-wave-overlay.js';
 import { drawRoofs } from './roof-overlay.js';
 import { renderOn } from './building-render-flags.js';
-import { drawLargeObjects, preloadLargeObjectSprites, setPlayerDrawFn } from './large-object-renderer.js';
 import { drawField2Animations, preloadField2Animations, drawWindWispOverlay, setField2PlayerDraw, setField2PlayerGL } from './field2-animator.js';
 import { findNearbyInteraction, objectReaction, performInteraction } from '../world/interactions.js';
 import { GLCompositor } from './gl-compositor.js';
