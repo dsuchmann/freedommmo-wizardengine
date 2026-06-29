@@ -790,6 +790,8 @@ let _dmCv = null, _dmCx = null; // door-silhouette mask: weather the LIVE door s
 // stored, so it stays tiny; a crude cap-clear bounds it as the player roams a town.
 const _doorDynCache = new Map(); // "x,y" -> { canvas, sig, w, h }
 const _DOOR_DYN_CAP = 96;
+const _propsDynCache = new Map(); // "x,y,w,h" -> canvas | null — D3 props are STATIC per building; bake once, blit
+const _PROPS_DYN_CAP = 512;
 
 // (Re)bake one building's weathered live door into its OWN canvas (the heavy path — run only on a frame step).
 // Returns the canvas, or null if the door asset isn't loaded yet / nothing opened.
@@ -834,6 +836,12 @@ export function drawBuildingDynamicInto(b, localCamX, localCamY, builtTilePx, cw
   const wantWalls = renderOn('walls'), wantProps = renderOn('attachments');
   if ((!wantWalls && !wantProps) || !b || !b.footprint) return null;
   if (!(cw > 0) || !(ch > 0) || cw > 8192 || ch > 8192) return null;
+  // FAST EARLY-OUT for fully-static buildings (door shut + props already known empty): skip ALL canvas
+  // work (resize/clear/composite) entirely. This is the common case in a town — most buildings aren't
+  // at the player's door. The props cache resolves to `null` after the one-time first-frame bake below;
+  // until then we fall through and do the full path once to populate it.
+  const _doorSig = wantWalls ? doorSwingSig(b) : '';
+  if (!_doorSig && (!wantProps || _propsDynCache.get(b.x + ',' + b.y + ',' + cw + ',' + ch) === null)) return null;
   if (!_bpCv) {
     _bpCv = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(cw, ch)
       : (typeof document !== 'undefined') ? document.createElement('canvas') : null;
@@ -849,7 +857,7 @@ export function drawBuildingDynamicInto(b, localCamX, localCamY, builtTilePx, cw
   let drew = false;
   if (wantWalls) {
     try {
-      const sig = doorSwingSig(b); // '' while every door is shut → the baked closed door already shows it
+      const sig = _doorSig; // '' while every door is shut → the baked closed door already shows it
       if (sig) {
         const key = b.x + ',' + b.y;
         let entry = _doorDynCache.get(key);
@@ -867,7 +875,36 @@ export function drawBuildingDynamicInto(b, localCamX, localCamY, builtTilePx, cw
       }
     } catch { /* skip */ }
   }
-  if (wantProps) { try { drawD3Props(o, b, localCamX, localCamY, builtTilePx, cw, ch, 'all'); drew = true; } catch { /* skip */ } }
+  if (wantProps) {
+    try {
+      // D3 props are STATIC + deterministic per building (no time/animation in drawD3Props), and the
+      // local camera frame is constant per baked building — so rasterize ONCE into a building-local
+      // canvas (with a one-time emptiness check so prop-less buildings cache `null` and cost nothing)
+      // and just blit it each frame. Re-rasterizing every near building EVERY frame was the sustained
+      // in-town stutter (~175ms / 'bSprites' in the draw profile).
+      const pkey = b.x + ',' + b.y + ',' + cw + ',' + ch;
+      let pc = _propsDynCache.get(pkey);
+      if (pc === undefined) {
+        let made = null;
+        const c = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(cw, ch)
+          : (typeof document !== 'undefined') ? document.createElement('canvas') : null;
+        if (c) {
+          c.width = cw; c.height = ch;
+          const cx = c.getContext('2d', { willReadFrequently: true });
+          if (cx) {
+            cx.imageSmoothingEnabled = false;
+            try { drawD3Props(cx, b, localCamX, localCamY, builtTilePx, cw, ch, 'all'); } catch { /* skip */ }
+            const id = cx.getImageData(0, 0, cw, ch).data;
+            for (let i = 3; i < id.length; i += 4) { if (id[i] !== 0) { made = c; break; } } // any opaque pixel → keep
+          }
+        }
+        pc = made;
+        if (_propsDynCache.size > _PROPS_DYN_CAP) _propsDynCache.clear();
+        _propsDynCache.set(pkey, pc);
+      }
+      if (pc) { o.drawImage(pc, 0, 0); drew = true; }
+    } catch { /* skip */ }
+  }
   if (!drew) return null; // nothing dynamic this frame (door closed, props off) → skip the quad
   return _bpCv;
 }
