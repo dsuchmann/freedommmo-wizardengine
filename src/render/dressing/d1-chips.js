@@ -19,9 +19,14 @@ import { projectSocket } from './socket-index.js';
 import { rand2 } from '../../core/random.js';
 import { damageDrivers } from './d1-damage.js';
 import { materialOf, southRuns } from '../building-tiles.js';
+import { onSceneDiscontinuity } from '../../core/scene-teardown.js';
 
 const ROOT = '/assets/pixelab/buildings/dressing/';
 const _img = new Map();
+onSceneDiscontinuity(function () {
+  for (const v of _img.values()) { try { if (v) v.src = ''; } catch (e) {} }
+  _img.clear();
+});
 function img(url) { let im = _img.get(url); if (!im) { im = new Image(); im.src = url; _img.set(url, im); } return (im.complete && im.naturalWidth) ? im : null; }
 function variantSprites(biome, obj) {
   const a = [];

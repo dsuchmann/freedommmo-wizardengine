@@ -23,6 +23,8 @@
 // This module is deliberately render-AGNOSTIC: the caller supplies the renderFn (drawBuildingTextured),
 // so this file pulls in none of the heavy occluder/roof/dressing import chain and stays unit-testable.
 
+import { onSceneDiscontinuity } from '../core/scene-teardown.js';
+
 // Generous north headroom (tiles) above the footprint top for tall walls + roof overhang. Matches the
 // nearDepthBuildings cull margin (16 tiles) plus slack; the alpha-crop tightens the stored sprite, so
 // over-sizing the transient work canvas only costs a few ms on the (one-time) miss, never per frame.
@@ -42,6 +44,15 @@ const MAX_WARMUP = 900;      // frames an INCOMPLETE bake may keep RE-baking bef
                              // never recovers). This cap is the backstop for a building whose assets never finish.
 
 const _cache = new Map();    // key -> { canvas, ax, ay, w, h, builtTilePx, frame }
+
+// Far teleport (scene discontinuity): the player has roamed to a wholly new region, so every cached
+// building sprite (each holding a building-local canvas/texture) is now dead weight. Drop them all —
+// they re-bake on demand the next time a building is drawn.
+onSceneDiscontinuity(function () {
+  _cache.clear();
+  if (typeof window !== 'undefined' && window._buildingSpriteStats) window._buildingSpriteStats.size = 0;
+});
+
 let _frame = 0;
 let _builds = 0;             // NEW bakes used this frame
 let _work = null, _wx = null;

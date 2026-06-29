@@ -11,6 +11,17 @@ import { getAllFloorTileURLs } from '../render/building-tile-query.js';
 var compiler = new ChunkCompiler();
 var SLICE_ROWS = 8;
 var imageCache = new Map();
+// Cap cached tile bitmaps (small 32px wang/soil/cover tiles). Was unbounded — every biome's tileset
+// stayed forever. FIFO-evict the oldest beyond the cap (and close the bitmap to free its memory).
+var IMG_CAP = 4000;
+function trimImageCache(max) {
+  while (imageCache.size > max) {
+    var k = imageCache.keys().next().value;
+    var bmp = imageCache.get(k);
+    imageCache.delete(k);
+    try { if (bmp && bmp.close) bmp.close(); } catch (e) {}
+  }
+}
 var imagesReady = false;
 var chunksNeedingRepaint = [];
 var neighborCache = new Map();
@@ -82,6 +93,7 @@ async function loadImageBatch(urls, batchSize) {
       }));
     }
   }
+  trimImageCache(IMG_CAP);
   return { loaded: loaded, failed: failed };
 }
 
@@ -280,6 +292,12 @@ self.onmessage = function(event) {
 
   if (data.type === 'setF3RemovedKeys') {
     setF3RemovedKeys(data.keys ?? []);
+    return;
+  }
+
+  if (data.type === 'sceneDiscontinuity') {
+    // Far teleport: aggressively trim the tile-bitmap cache so the old biome's tiles don't linger.
+    trimImageCache(1200);
     return;
   }
 

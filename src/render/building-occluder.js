@@ -28,6 +28,7 @@ import { paintGrowthColumn, isStoneSlug } from './dressing/d2-growth.js';
 import { isWaterTile } from '../../sim/world/buildings/terrain-suitability.js';
 import { drawD3Props, drawBakedAwnings } from './dressing/d3-props.js';
 import { drawVinePass } from './dressing/vine-render.js';
+import { onSceneDiscontinuity } from '../core/scene-teardown.js';
 
 // Source rect of the E/W side-face cap. The grassland edge_ew strip is a 32x128 quoin/side-cap;
 // sample its LEFT quoin column (x=0..16) as the true vertical corner post (`isQuoinStrip`) — drawing
@@ -766,6 +767,15 @@ let _dmCv = null, _dmCx = null; // door-silhouette mask: weather the LIVE door s
 // stored, so it stays tiny; a crude cap-clear bounds it as the player roams a town.
 const _doorDynCache = new Map(); // "x,y" -> { canvas, sig, w, h }
 const _DOOR_DYN_CAP = 96;
+
+// Bound these per-URL / per-coord caches: clear them on every far teleport (scene discontinuity)
+// so roaming biomes can't grow them unbounded. _tex holds lazy Images (drop src to free); the
+// _doorDynCache holds per-building canvases (just clear).
+onSceneDiscontinuity(function () {
+  for (const im of _tex.values()) { try { if (im) im.src = ''; } catch (e) {} }
+  _tex.clear();
+  _doorDynCache.clear();
+});
 
 // (Re)bake one building's weathered live door into its OWN canvas (the heavy path — run only on a frame step).
 // Returns the canvas, or null if the door asset isn't loaded yet / nothing opened.

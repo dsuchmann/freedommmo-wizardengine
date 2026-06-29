@@ -52,7 +52,11 @@ export class ChunkProvider {
     // A forced preload is a teleport/fast-travel DISCONTINUITY: fire the teardown bus so every
     // per-biome cache (GL textures, decoded-image caches, …) drops its now-offscreen old-biome
     // entries at once, instead of leaking them until a slow age-based sweep (the 3-4fps cause).
-    if (force) fireSceneDiscontinuity({ x: wx, y: wy });
+    if (force) {
+      fireSceneDiscontinuity({ x: wx, y: wy });
+      this.wangDebug.clear();                                    // unbounded debug map — drop old-biome entries
+      for (const worker of this.workers) worker.postMessage({ type: 'sceneDiscontinuity' });
+    }
     const biomeSet = new Set();
     // Sample a grid around the player — sparse sampling is fine, just need biome variety
     const sampleRadius = 30;

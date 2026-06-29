@@ -7,6 +7,7 @@ import { rand2 } from '../core/random.js';
 import { LG_BIOME_OBJECTS_LIST, LG_BASE_PATH, LG_VARIANT_COUNT } from './wang-image-list.js';
 import { floorDiv } from '../world/chunk.js';
 import { getBuildingHeightMask, sampleHeight } from './building-shadow.js';
+import { onSceneDiscontinuity } from '../core/scene-teardown.js';
 
 // Water biomes don't get large objects
 var WATER_BIOMES = { ocean: 1, deep_ocean: 1, shallow_water: 1, river: 1, lake: 1, stream: 1 };
@@ -64,6 +65,18 @@ var DOMINANT_WEIGHT = 0.70; // 70% chance of dominant type, 30% split among othe
 var spriteCache = new Map();
 var loadingSet = new Set();
 var badSprites = new Set();
+
+// Evict per-url sprite caches on far teleport so memory doesn't grow unbounded
+// as the player roams biomes. Values are usually Images, but may be ImageBitmaps;
+// close those first to free GPU memory.
+onSceneDiscontinuity(function () {
+  for (var v of spriteCache.values()) {
+    try { if (v && v.close) v.close(); } catch (e) {}
+  }
+  spriteCache.clear();
+  loadingSet.clear();
+  badSprites.clear();
+});
 
 // Offscreen canvas for sprite quality validation
 var _validationCanvas = null;
