@@ -294,9 +294,6 @@ export function generateFootprint(seed, typeId, race, tier) {
   // 8. Bounding box
   const bbox = boundingBox(sections);
 
-  // 9. Generate interior (I0-I6 fields)
-  const interior = generateInterior(mix(seed, 0x5050), typeId, race, tier, { sections, walls, doors, floors });
-
   const result = {
     typeId,
     typeName: type.name,
@@ -310,9 +307,26 @@ export function generateFootprint(seed, typeId, race, tier) {
     windows,
     floors,
     features,
-    interior,
     boundingBox: bbox,
   };
+
+  // 9. Interior (I0-I6 fields) is generated LAZILY. Settlement layout calls generateFootprint for
+  // EVERY candidate slot — including the many rejected by collision/terrain — and the interior gen
+  // was the dominant cold-layout cost (~tens of ms each) yet placement never reads it. The first real
+  // reader (floor material during the cached building bake / walk-in detail / the '9' overlay) triggers
+  // it once, then it's memoized on the instance. Enumerable so structuredClone + JSON snapshots still
+  // capture it (they invoke the getter), preserving byte-identical output.
+  let _interior;
+  Object.defineProperty(result, 'interior', {
+    enumerable: true, configurable: true,
+    get() {
+      if (_interior === undefined) {
+        _interior = generateInterior(mix(seed, 0x5050), typeId, race, tier, { sections, walls, doors, floors });
+      }
+      return _interior;
+    },
+    set(v) { _interior = v; },
+  });
 
   // S2.6: attach the lazy multi-floor BlueprintNode. NON-ENUMERABLE so every existing
   // field/snapshot stays byte-identical and structured-clone/JSON skip it (the node
