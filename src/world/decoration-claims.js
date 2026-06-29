@@ -640,10 +640,13 @@ export function f4Placements(wx, wy, tileInfo) {
   if (st === 'base') st = null;
   var variant;
   if (st && obj.statePool.length) {
+    // statePool already contains only surviving (vmap-present) variant indices.
     variant = obj.statePool[pickIndex(rand2(wx, wy, 9706), obj.statePool.length)];
   } else {
     st = null; // no pool -> render base
-    variant = pickIndex(rand2(wx, wy, 9702), obj.variants);
+    // Map pool position through vmap so omitted variants are never selected.
+    variant = obj.vmap ? obj.vmap[pickIndex(rand2(wx, wy, 9702), obj.vmap.length)]
+                       : pickIndex(rand2(wx, wy, 9702), obj.variants);
   }
   var ux = 0.5 + (rand2(wx, wy, 9703) - 0.5) * 0.5;
   var uy = 0.5 + (rand2(wx, wy, 9704) - 0.5) * 0.5;
@@ -729,7 +732,10 @@ function f5Candidate(wx, wy, tileInfo) {
   var weights = tuneStateWeights('f5', t.biome, obj.name, f5StateDefaults(t.biome));
   var st = rollWeighted(weights, F5_STATE_ORDER, rand2(wx, wy, 9805));
   if (st === 'base') st = null;
-  var variant = pickIndex(rand2(wx, wy, 9802), obj.variants);
+  // pickF5Variant maps pool position through vmap so omitted variants are never selected.
+  // pos indexes positional arrays (trims/sil); variant is the original on-disk file index.
+  var pick = pickF5Variant(obj, rand2(wx, wy, 9802));
+  var variant = pick.variant;
   var stateOnDisk = !!(st && obj.states[st] && obj.states[st].indexOf(variant) !== -1);
 
   var ux = 0.5 + (rand2(wx, wy, 9803) - 0.5) * 0.5;
@@ -743,14 +749,14 @@ function f5Candidate(wx, wy, tileInfo) {
   // for trimless art (~2x F4's absolute claim — objects are ground-heavy).
   var cx = (wx + ux) * TILE_ART_PX, cy = (wy + uy) * TILE_ART_PX;
   var foot = trimFoot(cx, cy, obj.size, drawPx,
-    (obj.trims && obj.trims[variant]) || null, 0.42, 0.22, 0.42, 0.22);
+    (obj.trims && obj.trims[pick.pos]) || null, 0.42, 0.22, 0.42, 0.22);
   var p = {
     name: obj.name, biome: t.biome, size: obj.size, variant: variant,
     state: st, stateOnDisk: stateOnDisk,
     ux: ux, uy: uy, sizeTiles: sizeTiles,
     hasAnim: obj.anims.indexOf(variant) !== -1,
-    trim: (obj.trims && obj.trims[variant]) || null,
-    sil: (obj.sil && obj.sil[variant]) || null,
+    trim: (obj.trims && obj.trims[pick.pos]) || null,
+    sil: (obj.sil && obj.sil[pick.pos]) || null,
     bx: foot.bx, by: foot.by, fw: foot.fw, fh: foot.fh,
   };
   return cachePut(_f5CandCache, key, [p]);
@@ -809,8 +815,17 @@ export function f5AnimUrlBase(p) {
 }
 
 // Map a [0,1) roll to a pool POSITION, then through the species vmap to the real on-disk filename index.
-// vmap decouples pool position from filename so omitted (culled) variants are simply absent from vmap.
+// Returns { pos, variant }: pos indexes into positional arrays (trims/sil); variant is the original file index.
 // obj.variants >= 1 is a catalog invariant (an object with no usable variants is never cataloged).
+export function pickF5Variant(obj, r) {
+  var n = obj.variants;
+  var pos = Math.floor(r * n);
+  if (pos >= n) pos = n - 1;
+  if (pos < 0) pos = 0;
+  var variant = obj.vmap ? obj.vmap[pos] : pos;
+  return { pos: pos, variant: variant };
+}
+
 export function pickF6Variant(obj, r) {
   var n = obj.variants;
   var pos = Math.floor(r * n);

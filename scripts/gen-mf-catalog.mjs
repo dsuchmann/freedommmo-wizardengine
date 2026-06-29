@@ -64,6 +64,7 @@ const LO_OBJECT_TILES = {
 };
 const LO_DEFAULT_TILES = 4;
 
+const F4_OMIT = omitSetMap(loadCuration('f4')); // "biome/object" -> Set(omitted variant indices)
 const catalog = {};
 for (const biome of fs.readdirSync(FLORA)) {
   const bdir = path.join(FLORA, biome);
@@ -78,15 +79,25 @@ for (const biome of fs.readdirSync(FLORA)) {
       .filter(f => parseInt(f.match(/__v(\d{3})\.png$/)[1], 10) < cap)
       .sort();
     if (!bases.length) continue;
-    const size = pngWidth(path.join(odir, bases[0]));
-    // state pool: union of variant indices across all state dirs
+    // Curation: drop omitted variants (non-destructive — files stay on disk).
+    const omit = F4_OMIT.get(biome + '/' + obj) || new Set();
+    const survEntries = bases
+      .map(f => ({ f, idx: parseInt(f.match(/__v(\d{3})\.png$/)[1], 10) }))
+      .filter(({ idx }) => !omit.has(idx));
+    if (!survEntries.length) continue;
+    const survBases = survEntries.map(e => e.f);
+    const vmap = survEntries.map(e => e.idx);
+    const vmapSet = new Set(vmap);
+    const size = pngWidth(path.join(odir, survBases[0]));
+    // state pool: union of variant indices across all state dirs, intersected with vmap
+    // so omitted variants can never be selected via a state pick either.
     const pool = new Set();
     for (const st of fs.readdirSync(path.join(odir, '_states'))) {
       const sdir = path.join(odir, '_states', st);
       if (!fs.statSync(sdir).isDirectory()) continue;
       for (const f of fs.readdirSync(sdir)) {
         const m = f.match(/__v(\d{3})\.png$/);
-        if (m && parseInt(m[1], 10) < cap) pool.add(parseInt(m[1], 10));
+        if (m && parseInt(m[1], 10) < cap && vmapSet.has(parseInt(m[1], 10))) pool.add(parseInt(m[1], 10));
       }
     }
     // anim variants: v dirs under anim/wind_sway with >= 9 frames
@@ -102,7 +113,8 @@ for (const biome of fs.readdirSync(FLORA)) {
     }
     (catalog[biome] = catalog[biome] || []).push({
       name: obj, size,
-      variants: bases.length,
+      variants: survBases.length,
+      vmap,
       statePool: [...pool].sort((a, b) => a - b),
       anims: anims.sort((a, b) => a - b),
     });
@@ -120,6 +132,7 @@ console.log(`wrote ${OUT}: ${nTypes} types, ${nAnims} animated variants`);
 const OBJECTS = path.join(ROOT, 'assets/pixelab/landscape_v2/micro/medium_objects');
 const MO_OUT = path.join(ROOT, 'src/world/mo-catalog.js');
 
+const F5_OMIT = omitSetMap(loadCuration('f5')); // "biome/object" -> Set(omitted variant indices)
 const moCatalog = {};
 for (const biome of fs.readdirSync(OBJECTS)) {
   const bdir = path.join(OBJECTS, biome);
@@ -131,8 +144,17 @@ for (const biome of fs.readdirSync(OBJECTS)) {
       .filter(f => /^mo__.*__v\d{3}\.png$/.test(f))
       .sort();
     if (!bases.length) continue;
-    const size = pngWidth(path.join(odir, bases[0]));
+    // Curation: drop omitted variants (non-destructive — files stay on disk).
+    const omit = F5_OMIT.get(biome + '/' + obj) || new Set();
+    const survEntries = bases
+      .map(f => ({ f, idx: parseInt(f.match(/__v(\d{3})\.png$/)[1], 10) }))
+      .filter(({ idx }) => !omit.has(idx));
+    if (!survEntries.length) continue;
+    const survBases = survEntries.map(e => e.f);
+    const vmap = survEntries.map(e => e.idx);
+    const size = pngWidth(path.join(odir, survBases[0]));
     // per-state variant lists: _states/<name> -> sorted variant indices on disk
+    // (original indices; omitted indices can never be selected because vmap excludes them)
     const states = {};
     const sroot = path.join(odir, '_states');
     if (fs.existsSync(sroot)) {
@@ -158,12 +180,14 @@ for (const biome of fs.readdirSync(OBJECTS)) {
         if (frames.length >= 9) anims.push(parseInt(m[1], 10));
       }
     }
-    const trims = trimsFor(odir, bases);
+    // trims/sil aligned to survBases (positional, parallel to vmap).
+    const trims = trimsFor(odir, survBases);
     (moCatalog[biome] = moCatalog[biome] || []).push({
       name: obj, size,
-      variants: bases.length,
+      variants: survBases.length,
+      vmap,
       trims,
-      sil: silsFor(odir, bases, trims),
+      sil: silsFor(odir, survBases, trims),
       states,
       anims: anims.sort((a, b) => a - b),
     });
