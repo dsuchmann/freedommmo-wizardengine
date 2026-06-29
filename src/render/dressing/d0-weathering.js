@@ -133,7 +133,14 @@ function patternsFor(ctx, seed) {
 let _stamp = null, _stampCtx = null;
 function stampCtx(w, h) {
   if (!_stamp) { _stamp = makeCanvas(w, h); if (!_stamp) return null; _stampCtx = _stamp.getContext('2d'); }
-  if (_stamp.width < w || _stamp.height < h) { _stamp.width = Math.max(_stamp.width, w); _stamp.height = Math.max(_stamp.height, h); _stampCtx = _stamp.getContext('2d'); }
+  // Grow to fit; also shrink when the buffer has grown far larger than currently needed, so a single
+  // tall/wide column doesn't pin the canvas at its peak size forever. Hysteresis (only shrink when the
+  // need is below half the backing size) avoids per-call realloc thrash. The backing-store size never
+  // affects output: the stamp is cleared and fully redrawn within the w×h region on every call, and the
+  // canvas is always >= (w,h) after this returns.
+  const needW = (_stamp.width < w || _stamp.width > w * 2) ? w : _stamp.width;
+  const needH = (_stamp.height < h || _stamp.height > h * 2) ? h : _stamp.height;
+  if (needW !== _stamp.width || needH !== _stamp.height) { _stamp.width = needW; _stamp.height = needH; _stampCtx = _stamp.getContext('2d'); }
   return _stampCtx;
 }
 

@@ -62,25 +62,36 @@ export class ChunkStore {
     const currentReady = this.getIfReady(pcx, pcy);
     if (currentReady) this.lastPlayerChunk = { cx: pcx, cy: pcy };
 
-    const jobs = [];
-    const addJobsAround = (ccx, ccy, extraPriority = 0) => {
-      for (let cy = ccy - WORLD.loadRadius; cy <= ccy + WORLD.loadRadius; cy++) {
-        for (let cx = ccx - WORLD.loadRadius; cx <= ccx + WORLD.loadRadius; cx++) {
-          jobs.push({ cx, cy, d: Math.abs(cx - ccx) + Math.abs(cy - ccy) + extraPriority });
-        }
-      }
-    };
-    addJobsAround(pcx, pcy, 0);
-    // Predictive prefetch: when near a chunk edge, start streaming the next
-    // chunk neighborhood before the player crosses the boundary.
+    // The job list (and its distance sort) is fully determined by the player
+    // chunk (pcx,pcy) and the local-in-chunk position (lx,ly). Memoize the
+    // built+sorted array on those determinants so we skip the rebuild and the
+    // per-frame sort while the player stays on the same tile within a chunk.
     const lx = ((Math.floor(wx) % WORLD.chunkSize) + WORLD.chunkSize) % WORLD.chunkSize;
     const ly = ((Math.floor(wy) % WORLD.chunkSize) + WORLD.chunkSize) % WORLD.chunkSize;
-    const margin = Math.max(24, Math.floor(WORLD.chunkSize * 0.50));
-    if (lx < margin) addJobsAround(pcx - 1, pcy, 3);
-    if (lx >= WORLD.chunkSize - margin) addJobsAround(pcx + 1, pcy, 3);
-    if (ly < margin) addJobsAround(pcx, pcy - 1, 3);
-    if (ly >= WORLD.chunkSize - margin) addJobsAround(pcx, pcy + 1, 3);
-    jobs.sort((a, b) => a.d - b.d);
+    let jobs;
+    const jobCache = this._jobsCache;
+    if (jobCache && jobCache.pcx === pcx && jobCache.pcy === pcy && jobCache.lx === lx && jobCache.ly === ly) {
+      jobs = jobCache.jobs;
+    } else {
+      jobs = [];
+      const addJobsAround = (ccx, ccy, extraPriority = 0) => {
+        for (let cy = ccy - WORLD.loadRadius; cy <= ccy + WORLD.loadRadius; cy++) {
+          for (let cx = ccx - WORLD.loadRadius; cx <= ccx + WORLD.loadRadius; cx++) {
+            jobs.push({ cx, cy, d: Math.abs(cx - ccx) + Math.abs(cy - ccy) + extraPriority });
+          }
+        }
+      };
+      addJobsAround(pcx, pcy, 0);
+      // Predictive prefetch: when near a chunk edge, start streaming the next
+      // chunk neighborhood before the player crosses the boundary.
+      const margin = Math.max(24, Math.floor(WORLD.chunkSize * 0.50));
+      if (lx < margin) addJobsAround(pcx - 1, pcy, 3);
+      if (lx >= WORLD.chunkSize - margin) addJobsAround(pcx + 1, pcy, 3);
+      if (ly < margin) addJobsAround(pcx, pcy - 1, 3);
+      if (ly >= WORLD.chunkSize - margin) addJobsAround(pcx, pcy + 1, 3);
+      jobs.sort((a, b) => a.d - b.d);
+      this._jobsCache = { pcx, pcy, lx, ly, jobs };
+    }
     const seenJobs = new Set();
     for (const job of jobs) {
       const key = chunkKey(job.cx, job.cy);

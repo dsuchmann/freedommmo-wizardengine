@@ -117,11 +117,15 @@ export function buildingShadowHull(b, sun, tilePx, camX, camY, scale) {
 // uses (worker-chunk-renderer.js:1352-1469) — so this aligns by construction, not by copying it.
 
 function floorSetOf(fp) {
+  // Footprint sections are static per building, so the membership Set is too. Cache it on the
+  // footprint object instead of rebuilding (O(area)) every frame in the drapeRects hot path.
+  if (fp._floorSetCache) return fp._floorSetCache;
   const s = new Set();
   for (const sec of fp.sections)
     for (let dy = 0; dy < sec.h; dy++)
       for (let dx = 0; dx < sec.w; dx++)
         s.add((sec.x0 + dx) + ',' + (sec.y0 + dy));
+  fp._floorSetCache = s;
   return s;
 }
 
@@ -258,9 +262,20 @@ export function buildingSilhouetteRect(b, tilePx, camX, camY) {
  * Per-frame screen-space height grid: each cell = storeys of the TALLEST building silhouette over
  * that pixel (0 = open ground). Pure. Shape carries the transform it was built under (stale-guard).
  */
+let _maskBuf = null, _maskBufLen = -1;
 export function buildHeightMask(buildings, camX, camY, tilePx, w, h, cell = HEIGHT_MASK_CELL) {
   const cols = Math.max(1, Math.ceil(w / cell)), rows = Math.max(1, Math.ceil(h / cell));
-  const data = new Uint8Array(cols * rows);
+  const len = cols * rows;
+  // Reuse the module-level grid buffer across frames; the content is fully recomputed below, so
+  // we only reallocate when the cell-grid dimensions change (else zero the existing buffer).
+  let data;
+  if (_maskBuf && _maskBufLen === len) {
+    data = _maskBuf;
+    data.fill(0);
+  } else {
+    data = _maskBuf = new Uint8Array(len);
+    _maskBufLen = len;
+  }
   for (const b of buildings || []) {
     if (!b || !b.footprint || !b.footprint.boundingBox) continue;
     const r = buildingSilhouetteRect(b, tilePx, camX, camY);

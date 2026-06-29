@@ -1,5 +1,6 @@
 import { WORLD } from '../core/constants.js';
 import { sampleRegionalMapChunk } from './regional-map.js';
+import { clearF2TileDescriptors } from '../render/field2-animator.js';
 
 export class OvermapController {
   constructor(element, player, chunkStore) {
@@ -70,6 +71,9 @@ export class OvermapController {
     // 15-chunk guard), so decoration sprites are missing — sometimes permanently — after a jump.
     const provider = this.chunkStore.provider;
     if (provider && provider.initPreload) provider.initPreload(this.player.x, this.player.y, true);
+    // A teleport invalidates the F2 tile-descriptor cache + pool built for the old
+    // location; clear it so stale entries are torn down rather than lingering.
+    clearF2TileDescriptors();
   }
 
   draw(force = false) {
@@ -118,7 +122,15 @@ export class OvermapController {
     if (w <= 0 || h <= 0) return;
     const cs = this.chunkScale;
     const half = Math.floor(this.size / 2);
-    const image = this.baseCtx.createImageData(w, h);
+    const size = this.size;
+    // Reuse a persistent full-size ImageData buffer instead of allocating a fresh
+    // createImageData(w,h) each call (a recenter resamples several strips per frame).
+    // Pixels are written at full-size stride; putImageData's dirty-rect copies only
+    // the [x0,y0,w,h] window to (x0,y0) — identical output to the per-strip buffer.
+    if (!this._resampleBuffer || this._resampleBuffer.width !== size || this._resampleBuffer.height !== size) {
+      this._resampleBuffer = this.baseCtx.createImageData(size, size);
+    }
+    const image = this._resampleBuffer;
     const data = image.data;
     for (let yy = 0; yy < h; yy++) {
       const py = y0 + yy;
@@ -131,14 +143,14 @@ export class OvermapController {
         const east = sampleRegionalMapChunk(cx + cs, cy).climate.elevation;
         const south = sampleRegionalMapChunk(cx, cy + cs).climate.elevation;
         const hill = Math.max(-35, Math.min(45, (sample.climate.elevation - 0.5) * 80 + (sample.climate.elevation - east) * 180 + (sample.climate.elevation - south) * 140));
-        const idx = (yy * w + xx) * 4;
+        const idx = (py * size + px) * 4;
         data[idx] = clamp(rgb.r + hill);
         data[idx + 1] = clamp(rgb.g + hill);
         data[idx + 2] = clamp(rgb.b + hill);
         data[idx + 3] = 255;
       }
     }
-    this.baseCtx.putImageData(image, x0, y0);
+    this.baseCtx.putImageData(image, 0, 0, x0, y0, w, h);
   }
 
   playerChunk() {

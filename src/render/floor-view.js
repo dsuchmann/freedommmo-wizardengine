@@ -46,6 +46,22 @@ function layoutFor(fv, floorIndex) {
   return _layoutCache.layout;
 }
 
+/** Memoize derived tile data (present-set + pre-parsed coords) on the layout object.
+ *  Computed once per layout (layouts are themselves memoized by layoutFor), reused every
+ *  frame — avoids rebuilding the Set and re-running split(',').map(Number) per draw call. */
+function presentFor(layout) {
+  if (!layout._presentCache) {
+    const set = new Set(layout.walkable);
+    for (const u of layout.units) for (const t of u.tiles) set.add(`${t.x},${t.y}`);
+    const coords = [];
+    for (const k of set) { const i = k.indexOf(','); coords.push({ x: +k.slice(0, i), y: +k.slice(i + 1) }); }
+    const walkCoords = [];
+    for (const k of layout.walkable) { const i = k.indexOf(','); walkCoords.push({ x: +k.slice(0, i), y: +k.slice(i + 1) }); }
+    layout._presentCache = { set, coords, walkCoords };
+  }
+  return layout._presentCache;
+}
+
 /** MAIN ENTRY — call from canvas-renderer after the world + overlays are drawn. */
 export function drawFloorView(ctx, w, h, now) {
   if (!isFloorViewActive()) { _transStart = null; _transRef = null; return; }
@@ -84,15 +100,14 @@ function drawFloorLayer(ctx, layout, V, alpha, yShift, w, h) {
   const { tile, ox, oy } = V;
   const sx = x => ox + x * tile, sy = y => oy + y * tile + yShift;
   ctx.save(); ctx.globalAlpha = alpha;
-  const present = new Set(layout.walkable);
-  for (const u of layout.units) for (const t of u.tiles) present.add(`${t.x},${t.y}`);
+  const { set: present, coords: presentCoords, walkCoords } = presentFor(layout);
 
   // drop shadow
   ctx.fillStyle = '#0008';
-  for (const k of present) { const [x, y] = k.split(',').map(Number); ctx.fillRect(sx(x) + 2, sy(y) + 3, tile, tile); }
+  for (const c of presentCoords) ctx.fillRect(sx(c.x) + 2, sy(c.y) + 3, tile, tile);
   // circulation
   ctx.fillStyle = COL.circ;
-  for (const k of layout.walkable) { const [x, y] = k.split(',').map(Number); ctx.fillRect(sx(x), sy(y), tile - 1, tile - 1); }
+  for (const c of walkCoords) ctx.fillRect(sx(c.x), sy(c.y), tile - 1, tile - 1);
   // units (+ multi-floor badge)
   const multi = new Set(layout.multiFloorUnits);
   for (const u of layout.units) {
@@ -106,19 +121,19 @@ function drawFloorLayer(ctx, layout, V, alpha, yShift, w, h) {
   ctx.fillStyle = COL.door;
   for (const u of layout.units) ctx.fillRect(sx(u.doorTile.x) + tile * 0.3, sy(u.doorTile.y) + tile * 0.3, tile * 0.4, tile * 0.4);
   // walls (dollhouse-cutaway default / floor-plan)
-  drawWalls(ctx, present, sx, sy, tile);
+  drawWalls(ctx, present, presentCoords, sx, sy, tile);
   // stair + lift glyphs (fixed per-column positions)
   if (layout.stairTile) glyph(ctx, sx(layout.stairTile.x), sy(layout.stairTile.y), tile, COL.stair, '≡');
   if (layout.liftTile) glyph(ctx, sx(layout.liftTile.x), sy(layout.liftTile.y), tile, COL.lift, '⇅');
   ctx.restore();
 }
 
-function drawWalls(ctx, present, sx, sy, tile) {
+function drawWalls(ctx, present, coords, sx, sy, tile) {
   const has = (x, y) => present.has(`${x},${y}`);
   const wH = _wallStyle === 'plan' ? 0 : tile * 0.85;
   const nearH = _wallStyle === 'plan' ? 0 : tile * 0.18;
-  for (const k of present) {
-    const [x, y] = k.split(',').map(Number); const X = sx(x), Y = sy(y);
+  for (const c of coords) {
+    const x = c.x, y = c.y; const X = sx(x), Y = sy(y);
     if (!has(x, y - 1)) { // far/north wall
       if (wH > 0) { ctx.fillStyle = '#3a4253'; ctx.fillRect(X, Y - wH, tile, wH); brick(ctx, X, Y - wH, tile, wH); }
       else stroke(ctx, X, Y, X + tile, Y);

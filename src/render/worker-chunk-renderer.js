@@ -508,9 +508,21 @@ function computeShoreDistanceMap(chunk, chunkSize) {
   return dist;
 }
 
+// Cache of prepared luminance blobs keyed by biome/object/coords/count.
+// The result is fully deterministic per (biome, objName, wx, wy, count) once the
+// source sprites are decoded (variant selection uses rand2 on fixed coords and
+// getSoilPixels is itself cached), so it only needs computing ONCE instead of on
+// every chunk repaint. Only COMPLETE sets (all `count` blobs extracted) are
+// cached; a partial set (images still loading) is left uncached so a later
+// repaint can re-attempt and fill it.
+var _lumBlobCache = new Map();
+
 // Precompute luminance arrays from ground cover sprites.
 // Returns array of { lum: Float32Array(1024), alpha: Uint8ClampedArray(1024) }
 function prepareLuminanceBlobs(biome, objName, wx, wy, imageCache, count) {
+  var cacheKey = biome + '/' + objName + '/' + wx + '/' + wy + '/' + count;
+  var cachedBlobs = _lumBlobCache.get(cacheKey);
+  if (cachedBlobs) return cachedBlobs;
   var blobs = [];
   for (var b = 0; b < count; b++) {
     var v = Math.floor(rand2(wx, wy, 7030 + b) * GC_VARIANT_COUNT);
@@ -528,6 +540,9 @@ function prepareLuminanceBlobs(biome, objName, wx, wy, imageCache, count) {
     }
     blobs.push({ lum: lum, alpha: alpha });
   }
+  // Only memoize once the full set was extracted (all sprites decoded). A partial
+  // set means images are still loading — leave it uncached so a repaint retries.
+  if (blobs.length === count) _lumBlobCache.set(cacheKey, blobs);
   return blobs;
 }
 
@@ -969,6 +984,23 @@ function applySmallScatterToChunk(ctx, chunk, tileSize, chunkSize, imageCache, m
   return missed;
 }
 
+// Persistent per-worker render scratch — avoids allocating a full-chunk
+// OffscreenCanvas + a dozen tile-count diagnostic arrays on EVERY chunk render.
+// renderChunkToBitmap runs synchronously start-to-finish (single worker thread,
+// no awaits) and transferToImageBitmap() resets the canvas to transparent black
+// on exit, so a single shared canvas is safe to reuse. The debug arrays are
+// fully overwritten every render (one entry per tile) and postMessage
+// structured-clones them (`wangDebug`) before the next render can run, so
+// recycling them cannot leak stale data to consumers.
+var _renderCanvas = null;
+var _renderCtx = null;
+var _renderCanvasSize = 0;
+var _dbgTileCount = 0;
+var _dbgMasks, _dbgSuccesses, _dbgSrcs, _dbgBiomes, _dbgNeighbors, _dbgTransitionDirs,
+    _dbgTransitionSides, _dbgCornerMasks, _dbgVariants, _dbgCliffLevels,
+    _dbgInteriorUsed, _dbgCliffOverlay;
+var _occupancyBuf = null; // persistent decoration-field occupancy grid
+
 // Render a chunk to an OffscreenCanvas and return an ImageBitmap.
 // neighbors: Map<"cx,cy", tileArray> — cached tiles from adjacent chunks
 // imageCache: Map<url, ImageBitmap> — preloaded wang tile bitmaps
@@ -977,22 +1009,50 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
   var chunkSize = WORLD.chunkSize;
   var tileSize = WORLD.tileSize;
   var canvasSize = chunkSize * tileSize;
-  var offscreen = new OffscreenCanvas(canvasSize, canvasSize);
-  var ctx = offscreen.getContext('2d', { alpha: true });
+  if (!_renderCanvas || _renderCanvasSize !== canvasSize) {
+    _renderCanvas = new OffscreenCanvas(canvasSize, canvasSize);
+    _renderCtx = _renderCanvas.getContext('2d', { alpha: true });
+    _renderCanvasSize = canvasSize;
+  }
+  var offscreen = _renderCanvas;
+  var ctx = _renderCtx;
+  // Reset any context state that could have leaked from a prior render and clear
+  // the surface. transferToImageBitmap() already clears on exit, but be defensive
+  // so output is byte-identical to the previous fresh-canvas-per-render path.
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = 1.0;
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.filter = 'none';
+  ctx.clearRect(0, 0, canvasSize, canvasSize);
   var tileCount = chunkSize * chunkSize;
-  var debugMasks = new Array(tileCount);
-  var debugSuccesses = new Array(tileCount);
-  var debugSrcs = new Array(tileCount);
-  var debugBiomes = new Array(tileCount);
+  if (_dbgTileCount !== tileCount) {
+    _dbgMasks = new Array(tileCount);
+    _dbgSuccesses = new Array(tileCount);
+    _dbgSrcs = new Array(tileCount);
+    _dbgBiomes = new Array(tileCount);
+    _dbgNeighbors = new Array(tileCount);
+    _dbgTransitionDirs = new Array(tileCount);
+    _dbgTransitionSides = new Array(tileCount);
+    _dbgCornerMasks = new Array(tileCount);
+    _dbgVariants = new Array(tileCount);
+    _dbgCliffLevels = new Array(tileCount);
+    _dbgInteriorUsed = new Array(tileCount);
+    _dbgCliffOverlay = new Array(tileCount);
+    _dbgTileCount = tileCount;
+  }
+  var debugMasks = _dbgMasks;
+  var debugSuccesses = _dbgSuccesses;
+  var debugSrcs = _dbgSrcs;
+  var debugBiomes = _dbgBiomes;
   // 8-layer diagnostic arrays
-  var debugNeighbors = new Array(tileCount);
-  var debugTransitionDirs = new Array(tileCount);
-  var debugTransitionSides = new Array(tileCount);
-  var debugCornerMasks = new Array(tileCount);
-  var debugVariants = new Array(tileCount);
-  var debugCliffLevels = new Array(tileCount);
-  var debugInteriorUsed = new Array(tileCount);
-  var debugCliffOverlay = new Array(tileCount);
+  var debugNeighbors = _dbgNeighbors;
+  var debugTransitionDirs = _dbgTransitionDirs;
+  var debugTransitionSides = _dbgTransitionSides;
+  var debugCornerMasks = _dbgCornerMasks;
+  var debugVariants = _dbgVariants;
+  var debugCliffLevels = _dbgCliffLevels;
+  var debugInteriorUsed = _dbgInteriorUsed;
+  var debugCliffOverlay = _dbgCliffOverlay;
   var floorMissing = 0;  // building floor images not yet in cache
 
   var tileAt = function(wx, wy) {
@@ -1297,7 +1357,15 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
   var cellsPerTile = 4;
   var cellPx = tileSize / cellsPerTile; // 8px per cell
   var gridW = chunkSize * cellsPerTile; // 256
-  var occupancy = new Uint8Array(gridW * gridW); // 0 = free, 1 = occupied
+  // Reuse a persistent occupancy grid across renders (zeroed on reuse) instead of
+  // allocating an 8KB Uint8Array every chunk render.
+  var occSize = gridW * gridW;
+  if (!_occupancyBuf || _occupancyBuf.length !== occSize) {
+    _occupancyBuf = new Uint8Array(occSize);
+  } else {
+    _occupancyBuf.fill(0);
+  }
+  var occupancy = _occupancyBuf; // 0 = free, 1 = occupied
 
   // Apply decoration fields in order — each field reads+writes the occupancy grid
   // DEBUG: check if soil images are in cache

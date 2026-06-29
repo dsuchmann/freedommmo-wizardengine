@@ -24,18 +24,23 @@ export function tileDepth(tileY, refY) {
 }
 
 let _tmp = null, _tx = null;
+// Reused module-level result buffer for nearDepthBuildings (per-frame alloc fix). Each caller
+// consumes the returned array synchronously before the next nearDepthBuildings() call, and the one
+// caller that needs to retain/sort it (.slice().sort()) copies it first — so a single shared,
+// repopulated array is behaviourally identical to allocating a fresh array per call.
+const _nearPool = [];
 /** Near buildings whose silhouette can cover the player (on-screen + a generous NORTH margin for
  *  tall roofs rising above the view). The caller writes each one's depth separately. */
 export function nearDepthBuildings(buildings, camX, camY, tilePx, w, h) {
-  if (!buildings || !buildings.length) return [];
-  const near = [];
+  _nearPool.length = 0;
+  if (!buildings || !buildings.length) return _nearPool;
   for (const b of buildings) {
     const bb = b.footprint && b.footprint.boundingBox; if (!bb) continue;
     const sx = b.x * tilePx - camX, sy = b.y * tilePx - camY;
     if (sx + bb.w * tilePx < -tilePx || sy + bb.h * tilePx < -16 * tilePx || sx > w + tilePx || sy > h + tilePx) continue;
-    near.push(b);
+    _nearPool.push(b);
   }
-  return near;
+  return _nearPool;
 }
 
 /** Render ONE building's wall+roof SILHOUETTE (textured; only its ALPHA is used) to a shared temp

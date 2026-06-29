@@ -70,15 +70,17 @@ function spotlightComposite(ctx, w, h, px, py, radius, drawFn) {
 
 // The wall-sprite set the interior shares with the exterior bake. Loaded by ensureFloorImages();
 // any piece may be null until onload (drawInteriorWallSet guards on south_base).
+const _wallImgs = { south_base: null, south_window: null, south_door: null, south_corner_west: null, south_corner_east: null, edge_ew: null };
 function interiorWallImgs() {
-  return {
-    south_base: getWallImg('south_base'),
-    south_window: getWallImg('south_window'),
-    south_door: getWallImg('south_door'),
-    south_corner_west: getWallImg('south_corner_west'),
-    south_corner_east: getWallImg('south_corner_east'),
-    edge_ew: getWallImg('edge_ew'),
-  };
+  // Reuse one persistent object — getWallImg() returns shared Image references (null until
+  // onload), so we only refresh the fields in place instead of allocating a new object per frame.
+  _wallImgs.south_base = getWallImg('south_base');
+  _wallImgs.south_window = getWallImg('south_window');
+  _wallImgs.south_door = getWallImg('south_door');
+  _wallImgs.south_corner_west = getWallImg('south_corner_west');
+  _wallImgs.south_corner_east = getWallImg('south_corner_east');
+  _wallImgs.edge_ew = getWallImg('edge_ew');
+  return _wallImgs;
 }
 
 // Draw the active floor's perimeter walls EXACTLY as the exterior bake does
@@ -86,6 +88,7 @@ function interiorWallImgs() {
 // WALL_CONFIG offsets — but a SINGLE story (this floor), lifted with the floor, and the door on
 // the ground floor only. `sides` selects which edges to draw so the caller can render N/E/W solid
 // (behind the player) and the S wall inside the spotlight layer (so it never hides the player).
+const _skipSet = new Set(); // reused per-section south-wall column-skip set (cleared each section)
 function drawInteriorWallSet(ctx, ai, wImgs, camX, camY, tilePx, lift, w, h, sides, isGround) {
   if (!wImgs.south_base) return;
   const t = Math.round(tilePx), wp = 1;
@@ -94,9 +97,15 @@ function drawInteriorWallSet(ctx, ai, wImgs, camX, camY, tilePx, lift, w, h, sid
   const sxAt = (wx) => Math.round(wx * tilePx - camX);
   const syAt = (wy) => Math.round(wy * tilePx - camY - lift);
   const fp = ai.building.footprint, sections = fp.sections || [];
-  const floorSet = new Set();
-  for (const s of sections) for (let dy = 0; dy < s.h; dy++) for (let dx = 0; dx < s.w; dx++) floorSet.add((s.x0 + dx) + ',' + (s.y0 + dy));
-  const doorSet = new Set((fp.doors || []).map(d => d.x + ',' + d.y));
+  // floorSet/doorSet are a pure function of the (immutable) footprint geometry — memoize them on
+  // the footprint so the two passes per frame (N/E/W then S) don't rebuild identical Sets.
+  let floorSet = fp._floorSet, doorSet = fp._doorSet;
+  if (!floorSet) {
+    floorSet = new Set();
+    for (const s of sections) for (let dy = 0; dy < s.h; dy++) for (let dx = 0; dx < s.w; dx++) floorSet.add((s.x0 + dx) + ',' + (s.y0 + dy));
+    doorSet = new Set((fp.doors || []).map(d => d.x + ',' + d.y));
+    fp._floorSet = floorSet; fp._doorSet = doorSet;
+  }
   ctx.imageSmoothingEnabled = false;
 
   // NORTH (back wall) — rises up off the north edge, behind the player.
@@ -150,16 +159,21 @@ function drawInteriorWallSet(ctx, ai, wImgs, camX, camY, tilePx, lift, w, h, sid
   if (sides.south) {
     for (const s of sections) {
       const lr = s.y0 + s.h - 1, fbY = ai.by + s.y0 + s.h;
-      const win = new Set(); let iv = 0;
-      for (let dx = 0; dx < s.w; dx++) {
-        const lx = s.x0 + dx, ly = lr;
-        if (floorSet.has(lx + ',' + (ly + 1))) continue;
-        if (doorSet.has(lx + ',' + ly)) { iv = 0; continue; }
-        if (dx < 2 || dx >= s.w - 2) { iv++; continue; }
-        if (doorSet.has((lx - 1) + ',' + ly) || doorSet.has((lx + 1) + ',' + ly)) { iv++; continue; }
-        iv++; if (iv % 3 === 0) win.add(lx + ',' + ly);
+      // The window pattern is deterministic from the section + doorSet — memoize it on the section.
+      let win = s._winSet;
+      if (!win) {
+        win = new Set(); let iv = 0;
+        for (let dx = 0; dx < s.w; dx++) {
+          const lx = s.x0 + dx, ly = lr;
+          if (floorSet.has(lx + ',' + (ly + 1))) continue;
+          if (doorSet.has(lx + ',' + ly)) { iv = 0; continue; }
+          if (dx < 2 || dx >= s.w - 2) { iv++; continue; }
+          if (doorSet.has((lx - 1) + ',' + ly) || doorSet.has((lx + 1) + ',' + ly)) { iv++; continue; }
+          iv++; if (iv % 3 === 0) win.add(lx + ',' + ly);
+        }
+        s._winSet = win;
       }
-      const skip = new Set();
+      _skipSet.clear(); const skip = _skipSet; // transient per-section column-skip set, reused
       for (let dx = 0; dx < s.w; dx++) {
         if (skip.has(dx)) continue;
         const lx = s.x0 + dx, ly = lr;

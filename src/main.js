@@ -60,7 +60,9 @@ const compositor = new RuntimeCompositor(defaultAssetCatalog);
 const renderer = new CanvasRenderer(canvas, stats, compositor);
 window._dbgRenderer = renderer;
 window._dbgChunkStore = chunks;
+let _clearClaimCaches = null; // captured from the async import below; called on teleport discontinuity
 import('./world/decoration-claims.js').then(function (m) {
+  _clearClaimCaches = m.clearClaimCaches;
   window._claims = {
     mask: function (wx, wy) { return Array.from(m.getClaimMask(wx, wy, function (x, y) {
       var t = window._dbgChunkStore && window._dbgChunkStore.tileAt(x, y);
@@ -198,6 +200,7 @@ function update(dt) {
     player.vz = 0;
     chunks.streamAround(player.x, player.y);
     provider.initPreload(player.x, player.y, true); // discontinuity: force destination preload
+    if (_clearClaimCaches) _clearClaimCaches(); // teleport discontinuity: drop stale decoration-claim caches
   }
   if (input.wasPressed('p')) {
     var preset = weather.cyclePreset();

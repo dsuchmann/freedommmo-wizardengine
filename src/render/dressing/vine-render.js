@@ -26,7 +26,24 @@ const formStyleOf = (biome) => FORM_STYLE[BIOME_FORM[biome] || 'vine'] || FORM_S
 const ROOT = '/assets/pixelab/buildings/dressing/';
 const _img = new Map();
 function img(url) { let im = _img.get(url); if (!im) { im = new Image(); im.src = url; _img.set(url, im); } return (im.complete && im.naturalWidth) ? im : null; }
-function variants(biome, piece) { const a = []; for (let i = 0; i < 8; i++) { const im = img(ROOT + biome + '/' + piece + '/base__v' + i + '.png'); if (im) a.push(im); } return a; }
+// Cache the resolved variant array per biome+piece. The filtered set only STABILIZES once every candidate image
+// has settled (decoded or 404'd); until then we recompute (identical to before) so a still-loading sprite isn't
+// permanently excluded. Once all 8 are settled the array can never change, so we memoize it.
+const _variantCache = new Map();
+function variants(biome, piece) {
+  const key = biome + '/' + piece;
+  const cached = _variantCache.get(key);
+  if (cached) return cached;
+  const a = []; let allSettled = true;
+  for (let i = 0; i < 8; i++) {
+    const url = ROOT + biome + '/' + piece + '/base__v' + i + '.png';
+    const im = img(url);
+    if (im) a.push(im);
+    else { const raw = _img.get(url); if (!raw || !raw.complete) allSettled = false; }
+  }
+  if (allSettled) _variantCache.set(key, a);
+  return a;
+}
 
 // chance=null → use the live selective defaults (buildVineSplines: ~15% of buildings). Set window._vines.chance
 // (0..1) + call window.invalidateBuildingSprites() to re-bake denser for testing. segTile = segment draw size
