@@ -1025,6 +1025,15 @@ var _stripCache = new Map();
 var _stripAtlasGen = -1; // atlas reset relocates strips -> drop the cache + re-pack
 function clearStripCache() { _stripCache.clear(); }
 function _resolveStrip(bl, simState, drawSizePx, glc, extraUrl) {
+  // Quantize the atlas resolution into coarse buckets. drawSizePx only sets the
+  // TEXEL resolution of the packed frames — the DISPLAY size comes from sizeTiles +
+  // camera zoom per-instance, never from this. But per-instance size jitter made
+  // Math.round(drawSizePx) nearly unique, so the SAME species packed a separate full
+  // frame-strip for every plant → the atlas filled with thousands of near-duplicate
+  // strips and thrashed (reset → atlasGen++ → repack → refill, every frame = the
+  // walking flash-reload). Snapping to 32px buckets collapses those duplicates into a
+  // handful of shared strips with no visible change.
+  drawSizePx = Math.max(32, Math.round(drawSizePx / 32) * 32);
   var urls = null;
   if (!bl) { if (extraUrl) urls = [extraUrl]; else return null; } // extra decor: 1-frame static
   if (bl && simState && simState !== 'REMOVED') {
