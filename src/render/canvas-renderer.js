@@ -241,6 +241,7 @@ export class CanvasRenderer {
 
   draw(chunkStore, player, lighting, camera, provider, weather) {
     const ctx = this.ctx;
+    const _P = (typeof window !== 'undefined') ? (window._drawProf = window._drawProf || {}) : {};
     ctx.imageSmoothingEnabled = false;
     const w = window.innerWidth;
     const h = window.innerHeight;
@@ -310,6 +311,7 @@ export class CanvasRenderer {
     // building, not under it. (Per-chunk sort can't fix a cross-chunk inversion; the
     // distance sort let the closer/north chunk win.) Covers the 2D + GL blit loop.
     chunkJobs.sort((a, b) => (a.cy - b.cy) || (a.cx - b.cx));
+    const _Tt = performance.now();
     for (const job of chunkJobs) {
       const { cx, cy, chunk } = job;
       const key = `${cx},${cy}`;
@@ -328,6 +330,8 @@ export class CanvasRenderer {
       if (wd && !getDebugWangData(key)) setDebugWangData(key, wd);
       visibleChunks.push({ cx, cy, key, sx, sy, dw: chunkPx, dh: chunkPx });
     }
+    _P.terrain = Math.round(performance.now() - _Tt);
+    const _Tm = performance.now();
 
     // (glc.endFrame() runs at the end of draw() — F2 sprite instances still
     // need to land on the GL canvas after terrain.)
@@ -588,6 +592,7 @@ export class CanvasRenderer {
       } catch (e) { /* best-effort */ }
     }
 
+    _P.mid = Math.round(performance.now() - _Tm);
     // === FIELD 2: ANIMATED WIND SWAY ===
     // Skip F2 when civilization overlay is active or zoomed far out —
     // thousands of animated sprites kill FPS at low zoom.
@@ -595,7 +600,9 @@ export class CanvasRenderer {
     if (!civOverlay && camera.zoom > 0.7) {
       const chunkArtPx = WORLD.chunkSize * ts;
       const f2Grid = { baseSX, baseSY, minCX, minCY, chunkPx };
+      const _f2t = performance.now();
       drawField2Animations(ctx, chunkStore, player, camera, w, h, f2Grid, performance.now(), weather, sun, glOn ? this.glc : null);
+      if (typeof window !== 'undefined') (window._drawProf = window._drawProf || {}).f2 = performance.now() - _f2t;
     }
     if (_depthActive) this.glc.clearSpriteDepth(); // player drawn; stop depth-testing subsequent pool draws
 
@@ -703,7 +710,9 @@ export class CanvasRenderer {
       // Unconditional call site — must be explicitly gated by the master switch.
       const _dl = renderOn('doors') ? buildDoorLeafBitmap(getCachedBuildings(), camX, camY, tilePx, w, h, player) : null;
       if (_dl) this.glc.drawSceneOverlayBitmap(_dl);
+      const _Tp = performance.now();
       this.glc.presentScene(w, h, camera.zoom, fracX, fracY);
+      _P.present = Math.round(performance.now() - _Tp);
     }
     if (glOn) this.glc.endFrame();
 
