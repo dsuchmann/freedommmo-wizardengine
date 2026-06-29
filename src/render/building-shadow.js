@@ -71,8 +71,12 @@ export function resolveScale(v) {
 /** Above-ground floor count for a building (defensive — the lazy node/payload may be absent). */
 export function buildingFloors(b) {
   try {
-    const agf = b && b.footprint && b.footprint.node && b.footprint.node.payload
-      && b.footprint.node.payload.aboveGroundFloors;
+    // Worker-resolved buildings carry a plain `aboveGroundFloors` (the functional node is dropped
+    // crossing postMessage); fall back to the node payload for the synchronous path.
+    const fp = b && b.footprint;
+    const plain = fp && fp.aboveGroundFloors;
+    if (plain && plain > 0) return Math.min(plain | 0, MAX_FLOORS);
+    const agf = fp && fp.node && fp.node.payload && fp.node.payload.aboveGroundFloors;
     if (agf && agf > 0) return Math.min(agf | 0, MAX_FLOORS);
   } catch (e) { /* honest absence -> single story */ }
   return 1;

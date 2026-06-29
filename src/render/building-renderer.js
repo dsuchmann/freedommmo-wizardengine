@@ -13,6 +13,7 @@ import { classifyBiome } from '../world/biomes.js';
 import { rand } from '../../sim/kernel/rng.js';
 import { setArchitectureClaim } from '../world/decoration-claims.js';
 import { resolveBuildingsInRange, settlementsInResolveRange, isSettlementWarm, warmSettlement } from '../../sim/world/buildings/resolved-buildings.js';
+import { buildingWorkerEnabled, requestResolve, latestBuildings, latestKey } from './building-resolve-client.js';
 import { getWorldSeed } from '../core/world-seed.js';
 import { WALL_CONFIG } from './wall-config.js';
 
@@ -111,6 +112,16 @@ export function updateBuildingClaims(camX, camY, tilePx, w, h) {
   const mx1 = Math.ceil(Math.ceil((camX + w + margin) / tilePx) / MACRO_TILES);
   const my1 = Math.ceil(Math.ceil((camY + h + margin) / tilePx) / MACRO_TILES);
   const cacheKey = `${mx0},${my0},${mx1},${my1}`;
+  if (buildingWorkerEnabled()) {
+    // OFF-THREAD path (window._buildingWorker): ask the worker to resolve this range and serve the
+    // latest set it has returned. The render thread never blocks — it keeps drawing the previous set
+    // until the new one lands (brief, like terrain chunk streaming). The worker sets the architecture
+    // claim on reply. First load / teleport shows no buildings for a few frames, then they stream in.
+    requestResolve(getWorldSeed(), mx0, my0, mx1, my1, cacheKey);
+    const wb = latestBuildings();
+    if (wb && latestKey()) _cache = { key: latestKey(), buildings: wb };
+    return;
+  }
   if (_cache.key !== cacheKey) {
     _cache = { key: cacheKey, buildings: discoverBuildings(camX, camY, w, h, tilePx) };
   }

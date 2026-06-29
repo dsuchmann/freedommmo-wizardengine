@@ -339,5 +339,10 @@ export function generateFootprint(seed, typeId, race, tier) {
       centrality: 0.5, race: race ?? type.race ?? null, sections,
     }),
   });
+  // The generation seed, stashed NON-enumerably so the sync path + snapshots stay byte-identical.
+  // When the resolve runs in a Worker, `node` (functions) can't cross postMessage; the worker copies
+  // this to an enumerable field so the main thread can rebuild an identical node lazily. See
+  // docs/superpowers/specs/2026-06-29-building-resolve-worker-plan.md.
+  Object.defineProperty(result, '_genSeed', { value: seed, enumerable: false, configurable: true });
   return result;
 }
