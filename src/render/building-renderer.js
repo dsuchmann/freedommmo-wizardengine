@@ -12,7 +12,7 @@ import { regionChronicle, settlementState, chronicleTier } from '../../sim/chron
 import { classifyBiome } from '../world/biomes.js';
 import { rand } from '../../sim/kernel/rng.js';
 import { setArchitectureClaim } from '../world/decoration-claims.js';
-import { resolveBuildingsInRange } from '../../sim/world/buildings/resolved-buildings.js';
+import { resolveBuildingsInRange, settlementsInResolveRange, isSettlementWarm, warmSettlement } from '../../sim/world/buildings/resolved-buildings.js';
 import { getWorldSeed } from '../core/world-seed.js';
 import { WALL_CONFIG } from './wall-config.js';
 
@@ -99,23 +99,55 @@ function discoverBuildings(camX, camY, w, h, tilePx) {
   return buildings;
 }
 
+// Amortized resolve job (null = idle). Warming a COLD settlement layout is ~tens-to-hundreds of ms,
+// and a macro crossing can bring many cold settlements into range at once — measured 1.9s for 19 in
+// ONE synchronous frame (the walk-into-new-area freeze). So we never resolve the new range inside the
+// crossing frame: we keep drawing the CURRENT _cache.buildings and warm the new range's settlements a
+// few per frame; once all are warm the final resolve is cheap (all memoized) and we swap. Buildings
+// pop in a few frames late, like terrain chunks, instead of freezing the whole game.
+let _job = null;
+const COLD_LAYOUTS_PER_FRAME = 1; // EXPENSIVE cold layouts per frame; already-warm settlements are free
+
 /** Update building claims. Call every frame before F2. */
 export function updateBuildingClaims(camX, camY, tilePx, w, h) {
   ensureFloorImages();
   // Buildings live in world/tile space — which ones exist is independent of zoom.
   // resolveBuildingsInRange() is a pure f(seed, macro-range), so key the cache on
-  // the visible MACRO-CELL range, NOT on tilePx. Previously `Math.floor(tilePx*10)`
-  // changed every frame of a zoom gesture, re-resolving the whole (expensive)
-  // building set every frame — the dominant zoom-out stall. Now it re-resolves
-  // only when the visible macro range actually changes (a macro-boundary crossing).
+  // the visible MACRO-CELL range, NOT on tilePx (zoom must not re-resolve).
   const margin = MACRO_TILES * tilePx * 2;
   const mx0 = Math.floor(Math.floor((camX - margin) / tilePx) / MACRO_TILES);
   const my0 = Math.floor(Math.floor((camY - margin) / tilePx) / MACRO_TILES);
   const mx1 = Math.ceil(Math.ceil((camX + w + margin) / tilePx) / MACRO_TILES);
   const my1 = Math.ceil(Math.ceil((camY + h + margin) / tilePx) / MACRO_TILES);
   const cacheKey = `${mx0},${my0},${mx1},${my1}`;
-  if (_cache.key !== cacheKey) {
+
+  // First-ever resolve (world would otherwise be empty on load): pay it synchronously, once.
+  if (_cache.key === '') {
     _cache = { key: cacheKey, buildings: discoverBuildings(camX, camY, w, h, tilePx) };
+    return;
+  }
+
+  // Visible range changed → (re)start an amortized warm-up for the new range. The old set stays live.
+  if (_cache.key !== cacheKey && (!_job || _job.key !== cacheKey)) {
+    const seed = getWorldSeed();
+    _job = { key: cacheKey, camX, camY, tilePx, w, h,
+             settlements: settlementsInResolveRange(seed, mx0, my0, mx1, my1), si: 0 };
+  }
+
+  if (_job) {
+    const seed = getWorldSeed();
+    let coldDone = 0;
+    while (_job.si < _job.settlements.length) {
+      const s = _job.settlements[_job.si];
+      if (isSettlementWarm(seed, s)) { _job.si++; continue; }   // already laid out → free, skip
+      if (coldDone >= COLD_LAYOUTS_PER_FRAME) break;            // budget spent → resume next frame
+      warmSettlement(seed, s); coldDone++; _job.si++;           // pay ONE cold layout this frame
+    }
+    if (_job.si >= _job.settlements.length) {
+      // Every settlement in range is warm — the resolve is now cheap (all memo hits). Assemble + swap.
+      _cache = { key: _job.key, buildings: discoverBuildings(_job.camX, _job.camY, _job.tilePx, _job.w, _job.h) };
+      _job = null;
+    }
   }
 }
 
