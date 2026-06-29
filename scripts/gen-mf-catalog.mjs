@@ -281,7 +281,7 @@ if (fs.existsSync(LOBJ)) {
       const odir = path.join(bdir, obj);
       let os; try { os = fs.statSync(odir); } catch { continue; }
       if (!os.isDirectory() || existing.has(obj)) continue;
-      const re = /^lg__.*__v(\d+)\.png$/;
+      const re = /^lg__.*__v(\d{3})\.png$/; // 3-digit to match the padded size-probe path below
       const present = fs.readdirSync(odir)
         .map((f) => { const m = f.match(re); return m ? parseInt(m[1], 10) : null; })
         .filter((v) => v !== null).sort((a, b) => a - b);
