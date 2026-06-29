@@ -201,38 +201,30 @@ export function drawBuildingWalls(ctx, camX, camY, tilePx, w, h) {
   for (const b of buildings) {
     const fp = b.footprint;
 
-    // floorSet / doorSet / windowPositions are a PURE function of the (immutable)
-    // footprint — identical every frame for a given building. Memoize them on the
-    // footprint object instead of reallocating three Sets per building per frame.
-    let _wallSets = fp._wallSetCache;
-    if (!_wallSets) {
-      // Build floor set
-      const floorSet = new Set();
-      for (const sec of fp.sections) {
-        for (let dy = 0; dy < sec.h; dy++)
-          for (let dx = 0; dx < sec.w; dx++)
-            floorSet.add((sec.x0 + dx) + ',' + (sec.y0 + dy));
-      }
-      const doorSet = new Set((fp.doors || []).map(d => d.x + ',' + d.y));
-
-      // Window positions
-      const windowPositions = new Set();
-      for (const sec of fp.sections) {
-        const lastRow = sec.y0 + sec.h - 1;
-        let interval = 0;
-        for (let dx = 0; dx < sec.w; dx++) {
-          const lx = sec.x0 + dx, ly = lastRow;
-          if (floorSet.has(lx + ',' + (ly + 1))) continue;
-          if (doorSet.has(lx + ',' + ly)) { interval = 0; continue; }
-          if (dx < 2 || dx >= sec.w - 2) { interval++; continue; }
-          if (doorSet.has((lx - 1) + ',' + ly) || doorSet.has((lx + 1) + ',' + ly)) { interval++; continue; }
-          interval++;
-          if (interval % 3 === 0) windowPositions.add(lx + ',' + ly);
-        }
-      }
-      _wallSets = fp._wallSetCache = { floorSet, doorSet, windowPositions };
+    // Build floor set
+    const floorSet = new Set();
+    for (const sec of fp.sections) {
+      for (let dy = 0; dy < sec.h; dy++)
+        for (let dx = 0; dx < sec.w; dx++)
+          floorSet.add((sec.x0 + dx) + ',' + (sec.y0 + dy));
     }
-    const { floorSet, doorSet, windowPositions } = _wallSets;
+    const doorSet = new Set((fp.doors || []).map(d => d.x + ',' + d.y));
+
+    // Window positions
+    const windowPositions = new Set();
+    for (const sec of fp.sections) {
+      const lastRow = sec.y0 + sec.h - 1;
+      let interval = 0;
+      for (let dx = 0; dx < sec.w; dx++) {
+        const lx = sec.x0 + dx, ly = lastRow;
+        if (floorSet.has(lx + ',' + (ly + 1))) continue;
+        if (doorSet.has(lx + ',' + ly)) { interval = 0; continue; }
+        if (dx < 2 || dx >= sec.w - 2) { interval++; continue; }
+        if (doorSet.has((lx - 1) + ',' + ly) || doorSet.has((lx + 1) + ',' + ly)) { interval++; continue; }
+        interval++;
+        if (interval % 3 === 0) windowPositions.add(lx + ',' + ly);
+      }
+    }
 
     // Helper: draw a wall row (south-facing) along a section edge
     function drawSouthWallRow(sec, isExterior) {
