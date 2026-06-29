@@ -55,7 +55,6 @@ export class ChunkProvider {
     if (force) {
       fireSceneDiscontinuity({ x: wx, y: wy });
       this.wangDebug.clear();                                    // unbounded debug map — drop old-biome entries
-      for (const worker of this.workers) worker.postMessage({ type: 'sceneDiscontinuity' });
     }
     const biomeSet = new Set();
     // Sample a grid around the player — sparse sampling is fine, just need biome variety
