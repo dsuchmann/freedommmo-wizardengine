@@ -603,6 +603,7 @@ export class CanvasRenderer {
       drawField2Animations(ctx, chunkStore, player, camera, w, h, f2Grid, performance.now(), weather, sun, glOn ? this.glc : null);
       if (typeof window !== 'undefined') (window._drawProf = window._drawProf || {}).f2 = performance.now() - _f2t;
     }
+    const _Tpost = performance.now(); // everything from here to presentScene was previously uninstrumented
     if (_depthActive) this.glc.clearSpriteDepth(); // player drawn; stop depth-testing subsequent pool draws
 
     // Building walls: rendered in chunk pipeline via shared wall-draw.js.
@@ -647,6 +648,7 @@ export class CanvasRenderer {
       // seams — the field spans the whole viewport).
       // Wave/atmosphere fields: tile origins in CSS-pixel texel space.
       // camX/camY are CSS-pixel camera coords; tilePx = tileSize * zoom.
+      const _Tf = performance.now();
       const tile0X = Math.floor(camX / tilePx);
       const tile0Y = Math.floor(camY / tilePx);
       const tilesW = Math.ceil(w / tilePx) + 4;
@@ -679,6 +681,8 @@ export class CanvasRenderer {
         playerY: player.y * tilePx,
         playerLight: 1,
       });
+      _P.fields = Math.round(performance.now() - _Tf);
+      const _To = performance.now();
       // GL-native building→player occlusion: a building IN FRONT of the player (baked into the
       // chunk below the sprite batch) would wrongly draw under them. Build an overlay bitmap of
       // those buildings with a see-through hole around the player and blit it into the scene FBO
@@ -709,6 +713,8 @@ export class CanvasRenderer {
       // Unconditional call site — must be explicitly gated by the master switch.
       const _dl = renderOn('doors') ? buildDoorLeafBitmap(getCachedBuildings(), camX, camY, tilePx, w, h, player) : null;
       if (_dl) this.glc.drawSceneOverlayBitmap(_dl);
+      _P.overlays = Math.round(performance.now() - _To);
+      _P.post = Math.round(performance.now() - _Tpost);
       const _Tp = performance.now();
       this.glc.presentScene(w, h, camera.zoom, fracX, fracY);
       _P.present = Math.round(performance.now() - _Tp);
