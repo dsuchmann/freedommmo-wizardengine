@@ -1,6 +1,7 @@
 // Wang tile image URL list — shared between main thread and workers.
 // No DOM dependencies. Pure data.
 import { SS_BIOME_OBJECTS, SS_BASE_PATH as SS_BASE_PATH_DC, SS_VARIANT_COUNT as SS_VARIANT_COUNT_DC, f3StateUrls, ssAllowedVariants } from '../world/decoration-claims.js';
+import { SF_CATALOG } from '../world/sf-catalog.js';
 
 var WANG_SUFFIX = '__v000.png';
 var TRANSITIONS_BASE = '/assets/pixelab/landscape_v2/transitions/';
@@ -284,7 +285,7 @@ var SF_BIOME_OBJECTS_LIST = {
   taiga: ['frost_grass', 'low_juniper', 'cold_moss_tuft'],
   tropical_forest: ['broad_fern', 'orchid_sprout', 'vine_tendril'],
   tundra: ['tundra_grass', 'low_berry_bush', 'ice_moss'],
-  volcanic: ['heat_sprout', 'lava_fern'],
+  volcanic: ['heat_sprout', 'lava_fern', 'ash_grass'],
 };
 var SF_BASE_PATH = '/assets/pixelab/landscape_v2/micro/small_flora/';
 var SF_VARIANT_COUNT = 64;
@@ -363,6 +364,13 @@ var SF_EXTRA_OBJECTS = {
 export { SF_BIOME_OBJECTS_LIST, SF_BASE_PATH, SF_VARIANT_COUNT, SF_VARIANT_WHITELIST, SF_EXTRA_OBJECTS };
 
 export function sfVariantsFor(biome, objName) {
+  // Prefer catalog vmap (disk-derived, curation-filtered) over hand-curated whitelist.
+  var catBiome = SF_CATALOG[biome];
+  if (catBiome) {
+    for (var ci = 0; ci < catBiome.length; ci++) {
+      if (catBiome[ci].name === objName) return catBiome[ci].vmap;
+    }
+  }
   return SF_VARIANT_WHITELIST[biome + '/' + objName] || null;
 }
 
