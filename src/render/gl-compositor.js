@@ -1423,13 +1423,25 @@ export class GLCompositor {
     this.sUDepthScale = gl.getUniformLocation(prog, 'uDepthScale');
     this.sUSeeThrough = gl.getUniformLocation(prog, 'uSeeThrough');
 
-    // Runtime shelf-packed sprite atlas. With F2 (32px), F4 (64px), F5
-    // (96px), and F6 (192px) sprites sharing one atlas, 4096² overflows
-    // in dense forests. 8192² gives 4× headroom with negligible VRAM cost.
-    this.atlasSize = Math.min(8192, gl.getParameter(gl.MAX_TEXTURE_SIZE));
+    // Runtime shelf-packed sprite atlas. With F2 (32px), F4 (64px), F5 (96px),
+    // F6 (192px) AND F6 upscaled trees (up to 384px) sharing one atlas, even 8192²
+    // overflows in dense tree biomes (arctic/forest), which forced repeated mid-walk
+    // resets (the on-screen reload). Prefer 16384² — 4× the area — so a realistic
+    // visible set never overflows; the atlas never evicts, so capacity IS the budget.
+    // Allocation is GL-error-checked: if the driver can't back the larger texture we
+    // fall back to 8192² (the compaction + sync-rebuild path still hides the rare reset).
+    var maxTex = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+    this.atlasSize = Math.min(16384, maxTex);
     this.atlasTex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, this.atlasTex);
+    while (gl.getError() !== gl.NO_ERROR) {} // drain stale errors before probing the alloc
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, this.atlasSize, this.atlasSize, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    if (gl.getError() !== gl.NO_ERROR && this.atlasSize > 8192) {
+      console.warn('[GL] sprite atlas ' + this.atlasSize + '² alloc failed — falling back to 8192²');
+      this.atlasSize = 8192;
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, this.atlasSize, this.atlasSize, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    }
+    console.log('[GL] sprite atlas: ' + this.atlasSize + '² (max ' + maxTex + ')');
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
