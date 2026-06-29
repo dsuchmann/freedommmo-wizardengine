@@ -504,6 +504,7 @@ export function preloadField2Animations(biomes) {
     if (!objects) continue;
     for (var oi = 0; oi < objects.length; oi++) {
       var wl = sfVariantsFor(biomes[b], objects[oi]);
+      if (Array.isArray(wl) && wl.length === 0) continue; // fully culled → skip entirely
       var animWl = sfAnimVariantsFor(biomes[b], objects[oi]); // null = full coverage
       var variantCount = wl ? wl.length : SF_VARIANT_COUNT;
       for (var v = 0; v < variantCount; v++) {
@@ -853,6 +854,7 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
     if (f2od < 1 && rand2(wx, wy, 7400 + bi) > f2od) continue;
 
     var variantWl = sfVariantsFor(biome, objName);
+    if (Array.isArray(variantWl) && variantWl.length === 0) continue; // fully culled → render nothing
     var variantIdx = variantWl
       ? variantWl[pickIndex(rand2(wx, wy, 7035 + bi), variantWl.length)]
       : pickIndex(rand2(wx, wy, 7035 + bi), SF_VARIANT_COUNT);

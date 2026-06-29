@@ -1108,6 +1108,10 @@ export var SF_CATALOG = {
    ]
   },
   {
+   "name": "hillside_grass",
+   "vmap": []
+  },
+  {
    "name": "rock_flower_bud",
    "vmap": [
     0,
@@ -1298,6 +1302,10 @@ export var SF_CATALOG = {
     60,
     61
    ]
+  },
+  {
+   "name": "rock_cress",
+   "vmap": []
   }
  ],
  "mystic": [
@@ -1816,6 +1824,10 @@ export var SF_CATALOG = {
     62,
     63
    ]
+  },
+  {
+   "name": "wind_grass",
+   "vmap": []
   }
  ],
  "swamp": [
@@ -1907,6 +1919,10 @@ export var SF_CATALOG = {
     61,
     62
    ]
+  },
+  {
+   "name": "swamp_herb",
+   "vmap": []
   }
  ],
  "taiga": [

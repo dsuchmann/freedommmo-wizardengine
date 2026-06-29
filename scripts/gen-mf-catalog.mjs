@@ -331,7 +331,10 @@ if (fs.existsSync(SF_SMALL)) {
       if (!present.length) continue;
       const omit = F2_OMIT.get(biome + '/' + obj) || new Set();
       const vmap = present.filter(v => !omit.has(v));
-      if (!vmap.length) continue; // all omitted → drop species from in-game pool
+      // Do NOT drop fully-omitted species — emit with empty vmap so the renderer
+      // can distinguish "no catalog entry" (null → full fallback) from
+      // "fully culled" ([] → render nothing). Species with no base sprites on
+      // disk were already skipped above (present.length check).
       (sfCatalog[biome] = sfCatalog[biome] || []).push({ name: obj, vmap });
     }
   }
