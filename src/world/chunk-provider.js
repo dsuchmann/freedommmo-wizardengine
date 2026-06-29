@@ -13,6 +13,10 @@ export class ChunkProvider {
     this.pending = new Map();
     this.queued = new Map();
     this.completed = [];
+    // Parallel key index for O(1) membership tests (has()/request()); kept in
+    // exact sync with `completed` at every push/shift/splice site below so the
+    // visible result is identical to the old `completed.some(...)` scan.
+    this.completedKeys = new Set();
     this.assembling = new Map();
     this.bitmaps = new Map();
     this.workers = [];
@@ -185,7 +189,7 @@ export class ChunkProvider {
           const partial = this.assembling.get(key);
           this.assembling.delete(key);
           this.pending.delete(key);
-          if (partial) this.completed.push({ key, chunk: { cx: partial.cx, cy: partial.cy, tiles: partial.tiles, renderTiles: partial.renderTiles, objects: partial.objects } });
+          if (partial) { this.completed.push({ key, chunk: { cx: partial.cx, cy: partial.cy, tiles: partial.tiles, renderTiles: partial.renderTiles, objects: partial.objects } }); this.completedKeys.add(key); }
           this.schedulePump();
         } else if (msg.type === 'repaintNeedsTiles') {
           // Worker evicted this chunk's tiles from its neighbor cache — resend them
@@ -213,11 +217,12 @@ export class ChunkProvider {
           const partial = this.assembling.get(key);
           this.assembling.delete(key);
           this.pending.delete(key);
-          if (partial) this.completed.push({ key, chunk: { cx: partial.cx, cy: partial.cy, tiles: partial.tiles, renderTiles: partial.renderTiles, objects: partial.objects } });
+          if (partial) { this.completed.push({ key, chunk: { cx: partial.cx, cy: partial.cy, tiles: partial.tiles, renderTiles: partial.renderTiles, objects: partial.objects } }); this.completedKeys.add(key); }
           this.schedulePump();
         } else if (msg.chunk) {
           this.pending.delete(key);
           this.completed.push({ key, chunk: msg.chunk });
+          this.completedKeys.add(key);
           this.schedulePump();
         }
       };
@@ -232,12 +237,12 @@ export class ChunkProvider {
 
   has(cx, cy) {
     const key = chunkKey(cx, cy);
-    return this.ready.has(key) || this.pending.has(key) || this.queued.has(key) || this.assembling.has(key) || this.completed.some(item => item.key === key);
+    return this.ready.has(key) || this.pending.has(key) || this.queued.has(key) || this.assembling.has(key) || this.completedKeys.has(key);
   }
 
   request(cx, cy, priority = 0) {
     const key = chunkKey(cx, cy);
-    if (this.ready.has(key) || this.pending.has(key) || this.queued.has(key) || this.assembling.has(key) || this.completed.some(item => item.key === key)) return;
+    if (this.ready.has(key) || this.pending.has(key) || this.queued.has(key) || this.assembling.has(key) || this.completedKeys.has(key)) return;
 
     if (!this.workerSupported || this.workers.length === 0) {
       this.ready.set(key, this.compiler.compile(cx, cy));
@@ -263,20 +268,26 @@ export class ChunkProvider {
     let adopted = 0;
     while (this.completed.length > 0 && (adopted === 0 || performance.now() - t0 < budget)) {
       const { key, chunk } = this.completed.shift();
+      this.completedKeys.delete(key);
       this.ready.set(key, chunk);
       adopted++;
     }
 
     const readyWorkers = this.workers.filter(w => w._imagesReady);
-    if (readyWorkers.length > 0) {
-      while (this.pending.size < this.maxActive && this.queued.size > 0) {
-        const pc = this._playerChunk;
-        const jobs = [...this.queued.values()].sort((a, b) => {
-          const da = pc ? Math.abs(a.cx - pc.cx) + Math.abs(a.cy - pc.cy) : a.priority;
-          const db = pc ? Math.abs(b.cx - pc.cx) + Math.abs(b.cy - pc.cy) : b.priority;
-          return da - db || a.requestedAt - b.requestedAt;
-        });
-        const job = jobs[0];
+    if (readyWorkers.length > 0 && this.pending.size < this.maxActive && this.queued.size > 0) {
+      // Sort the queue ONCE per pump (was re-sorted on every dispatched job).
+      // The sort key (player chunk + per-job priority/requestedAt) is invariant
+      // for the duration of this call, so taking jobs in sorted order yields the
+      // identical dispatch sequence the per-iteration re-sort produced.
+      const pc = this._playerChunk;
+      const jobs = [...this.queued.values()].sort((a, b) => {
+        const da = pc ? Math.abs(a.cx - pc.cx) + Math.abs(a.cy - pc.cy) : a.priority;
+        const db = pc ? Math.abs(b.cx - pc.cx) + Math.abs(b.cy - pc.cy) : b.priority;
+        return da - db || a.requestedAt - b.requestedAt;
+      });
+      let ji = 0;
+      while (this.pending.size < this.maxActive && ji < jobs.length) {
+        const job = jobs[ji++];
         this.queued.delete(job.key);
         this.pending.set(job.key, job);
         const worker = readyWorkers[this.nextWorker++ % readyWorkers.length];
@@ -324,6 +335,7 @@ export class ChunkProvider {
       const idx = this.completed.findIndex(item => item.key === key);
       if (idx >= 0) {
         const [item] = this.completed.splice(idx, 1);
+        this.completedKeys.delete(key);
         this.ready.set(key, item.chunk);
       } else {
         this.ready.set(key, this.compiler.compile(cx, cy));
@@ -354,6 +366,7 @@ export class ChunkProvider {
     if (bmp) { bmp.close(); this.bitmaps.delete(bitmapKey); }
     const idx = this.completed.findIndex(item => item.key === key);
     if (idx >= 0) this.completed.splice(idx, 1);
+    this.completedKeys.delete(key);
   }
 
   stats() {

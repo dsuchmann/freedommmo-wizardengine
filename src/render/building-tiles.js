@@ -90,8 +90,10 @@ const FOUNDATION_FRAC = 0.18; // bottom share of a ground-storey tile occupied b
 // stored at <material>/anim/<kind>/frame_NNN.png. The door PLAYS on player proximity: far = frame 0
 // (closed), near = last frame (open). Returns the frame image (or null until that frame loads).
 const ANIM_FRAMES = 9;
+// Pre-computed zero-padded frame indices so the hot door-swing loop skips String.padStart() every frame.
+const FRAME_PAD = ['000', '001', '002', '003', '004', '005', '006', '007', '008'];
 function animFrame(biome, mat, kind, idx) {
-  return img(getDIR(biome) + mat + '/anim/' + kind + '/frame_' + String(idx).padStart(3, '0') + '.png');
+  return img(getDIR(biome) + mat + '/anim/' + kind + '/frame_' + (FRAME_PAD[idx] || String(idx).padStart(3, '0')) + '.png');
 }
 // 0 (closed, player far) → 1 (open, player at the door). World-tile distance ramp.
 function doorOpenAmount(b, d) {
@@ -235,6 +237,10 @@ function footprintSet(fp) {
 // round building's stepped front) instead of one bounding-box rectangle. Sorted north→south so nearer
 // (front) walls draw over farther ones.
 export function southRuns(fp) {
+  // The footprint shape (fp.sections) is fixed once the building is generated, so the south-facing runs are
+  // deterministic — memoize them on the footprint object instead of rebuilding the Set/Map every frame
+  // (southRuns is called per-frame from drawBuildingTiles AND drawDoorsLive).
+  if (fp._southRuns) return fp._southRuns;
   const set = footprintSet(fp);
   const byY = new Map();
   for (const key of set) {
@@ -253,6 +259,7 @@ export function southRuns(fp) {
     runs.push(mk(s, p + 1));
   }
   runs.sort((a, b) => a.y - b.y);
+  fp._southRuns = runs;
   return runs;
 }
 

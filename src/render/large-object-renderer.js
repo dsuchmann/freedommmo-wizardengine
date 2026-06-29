@@ -241,6 +241,11 @@ function getLargeObjectForTile(tile) {
   };
 }
 
+// Persistent drawables array, reused every frame to avoid per-frame GC churn.
+// Cleared (length=0) at the start of each drawLargeObjects() call; the set of
+// elements pushed/sorted/drawn is identical to allocating a fresh array.
+var _drawablesPool = [];
+
 // chunkGrid: { baseSX, baseSY, minCX, minCY, chunkPx } from canvas-renderer
 export function drawLargeObjects(ctx, chunkStore, player, camera, w, h, chunkGrid) {
   var tilePx = WORLD.tileSize * camera.zoom;
@@ -256,7 +261,8 @@ export function drawLargeObjects(ctx, chunkStore, player, camera, w, h, chunkGri
   var camX = player.x * tilePx - w / 2;
   var camY = player.y * tilePx - h / 2 + (camera.elevationOffsetY ?? 0);
 
-  var drawables = [];
+  var drawables = _drawablesPool;
+  drawables.length = 0;
   var pad = 10;
 
   var minWX = Math.floor(camX / tilePx) - pad;

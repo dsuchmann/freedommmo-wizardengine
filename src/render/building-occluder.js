@@ -300,6 +300,33 @@ function occludes(b, px, py) {
   return true;
 }
 
+// Per-building memoised floor-occupancy Set (keys "lx,ly" of every footprint tile). The footprint
+// sections are STATIC building geometry, so the identical Set was being rebuilt every frame in
+// drawWalls + all three dressing passes (5 O(n²) rebuilds/building/frame). Cache it on the building,
+// invalidated by the sections-array IDENTITY (a regenerated footprint swaps the array reference →
+// rebuild). The Set is only ever read (.has) by callers, never mutated, so sharing is safe.
+function floorSetFor(b) {
+  const fp = b && b.footprint;
+  const sections = (fp && fp.sections) || [];
+  if (b._floorSetCache && b._floorSetSrc === sections) return b._floorSetCache;
+  const set = new Set();
+  for (const s of sections) for (let dy = 0; dy < s.h; dy++) for (let dx = 0; dx < s.w; dx++) set.add((s.x0 + dx) + ',' + (s.y0 + dy));
+  b._floorSetCache = set;
+  b._floorSetSrc = sections;
+  return set;
+}
+// Per-building memoised door Set (keys "lx,ly"). doors are static footprint geometry; same identity-
+// keyed cache + read-only-share rationale as floorSetFor.
+function doorSetFor(b) {
+  const fp = b && b.footprint;
+  const doors = (fp && fp.doors) || [];
+  if (b._doorSetCache && b._doorSetSrc === doors) return b._doorSetCache;
+  const set = new Set(doors.map(d => d.x + ',' + d.y));
+  b._doorSetCache = set;
+  b._doorSetSrc = doors;
+  return set;
+}
+
 // Re-draw ONE building's walls EXACTLY as the worker bakes them (worker-chunk-renderer.js wall
 // post-pass): legacy strips use the full `(0,0,W,128)` crop (isotropic — matches building-renderer.js;
 // no vertical stretch), boundary-derived tile extents (no seams), same WALL_CONFIG offsets, STACKED
@@ -314,9 +341,8 @@ export function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
   const stories = buildingFloors(b);
   const fp = b.footprint, sections = fp.sections || [];
   const tsy = (wy) => Math.round(wy * tilePx - camY);
-  const floorSet = new Set();
-  for (const s of sections) for (let dy = 0; dy < s.h; dy++) for (let dx = 0; dx < s.w; dx++) floorSet.add((s.x0 + dx) + ',' + (s.y0 + dy));
-  const doorSet = new Set((fp.doors || []).map(d => d.x + ',' + d.y));
+  const floorSet = floorSetFor(b);
+  const doorSet = doorSetFor(b);
 
   // Grassland wall pieces are now 32x128 STRUCTURED STRIPS (cap+body+foundation baked in) and the
   // wide pieces (south_doorway/window) are 64x128 — both drop straight into the isotropic per-32px
@@ -534,8 +560,7 @@ function drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h, colSet) {
   const stories = buildingFloors(b);
   const material = materialOf(b); // pass to the weathering pass so pale woven/thatch walls get gentler grime
   const tsy = (wy) => Math.round(wy * tilePx - camY);
-  const floorSet = new Set();
-  for (const s of sections) for (let dy = 0; dy < s.h; dy++) for (let dx = 0; dx < s.w; dx++) floorSet.add((s.x0 + dx) + ',' + (s.y0 + dy));
+  const floorSet = floorSetFor(b);
   for (const s of sections) {
     const lr = s.y0 + s.h - 1, fbY = b.y + s.y0 + s.h;
     for (let dx = 0; dx < s.w; dx++) {
@@ -593,8 +618,7 @@ function drawDamagePass(ctx, b, camX, camY, tilePx, w, h, colSet) {
   const material = materialOf(b);
   const waterProximity = buildingWaterProximity(b);
   const tsy = (wy) => Math.round(wy * tilePx - camY);
-  const floorSet = new Set();
-  for (const s of sections) for (let dy = 0; dy < s.h; dy++) for (let dx = 0; dx < s.w; dx++) floorSet.add((s.x0 + dx) + ',' + (s.y0 + dy));
+  const floorSet = floorSetFor(b);
   for (const s of sections) {
     const fbY = b.y + s.y0 + s.h;
     for (let dx = 0; dx < s.w; dx++) {
@@ -627,8 +651,7 @@ function drawGrowthPass(ctx, b, camX, camY, tilePx, w, h, colSet) {
   const stone = isStoneSlug(materialOf(b) || b.wallSlug || '');
   const waterProximity = buildingWaterProximity(b);
   const tsy = (wy) => Math.round(wy * tilePx - camY);
-  const floorSet = new Set();
-  for (const s of sections) for (let dy = 0; dy < s.h; dy++) for (let dx = 0; dx < s.w; dx++) floorSet.add((s.x0 + dx) + ',' + (s.y0 + dy));
+  const floorSet = floorSetFor(b);
   for (const s of sections) {
     const fbY = b.y + s.y0 + s.h;
     for (let dx = 0; dx < s.w; dx++) {
