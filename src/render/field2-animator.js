@@ -1088,7 +1088,7 @@ function _patchGpuAnim(glc) {
     // TIME-BUDGETED: packing a strip is texSubImage2D x frameCount. When a big batch of
     // frames finishes loading at once, packing them ALL in one tick froze the frame for
     // ~1s. Cap the work per tick; deferred strips retry next tick so the fill spreads.
-    var still = [], pend = _pool.animPending, deadline = performance.now() + 4, p = 0;
+    var still = [], pend = _pool.animPending, deadline = performance.now() + 2, p = 0;
     for (; p < pend.length; p++) {
       if (performance.now() >= deadline) break;
       var pi = pend[p], pm = _pool.meta[pi];
@@ -1497,7 +1497,11 @@ function _poolTick(timeMs, timeSec, glc, tilePxSnapped) {
 // the CURRENT static buffer every frame for free, build the NEXT pool incrementally
 // across frames into staging buffers, then swap — no single frame ever freezes.
 var _gb = null;          // active build state (null = idle)
-var AMORT_BUDGET_MS = 8; // build work per frame; leaves headroom in a 16ms frame for the draw
+// Build work per frame while new chunks stream in. The build is double-buffered (the GPU keeps
+// drawing the committed pool), so a SMALLER budget never blanks flora — it just fills in over a
+// few more frames. 8ms blew the 144fps frame budget (6.9ms) all by itself = the walk-into-chunks
+// stutter/skip; 3ms keeps the build + draw inside a 144fps frame and stays comfortable at 60fps.
+var AMORT_BUDGET_MS = 3;
 
 function _startAmortBuild(chunkStore, player, glc, radiusX, radiusY) {
   var px = Math.floor(player.x), py = Math.floor(player.y);
@@ -1707,7 +1711,7 @@ function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, we
     //  2) On ANY reset (ours, or an overflow triggered by another atlas consumer), drop the stale
     //     strip cache + any in-flight build and rebuild SYNCHRONOUSLY this frame, so the pool we
     //     draw has correct UVs. Trades a rare one-frame hitch for never showing a multi-tick reload.
-    if (!_gb && glc.atlasFillRatio && glc.atlasFillRatio() > 0.8) glc.resetAtlas();
+    if (!_gb && glc.atlasFillRatio && glc.atlasFillRatio() > 0.92) glc.resetAtlas();
     var atlasReset = glc.atlasGen !== _stripAtlasGen;
     if (atlasReset) { clearStripCache(); _stripAtlasGen = glc.atlasGen; _gb = null; }
     if ((atlasReset || !_pool.animUploaded || moved || grew || newChunks) && !_gb) {
