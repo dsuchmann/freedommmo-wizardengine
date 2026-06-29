@@ -46,6 +46,24 @@ const VARIANT_CAP = {
   'tropical_forest/bird_of_paradise': 48,
 };
 
+// Per-species on-screen size in WORLD TILES for folded large_objects (sprites are small-native, so size by
+// tiles not px). Recovered from the retired large-object-renderer.js. Unmapped species default to LO_DEFAULT_TILES.
+const LO_OBJECT_TILES = {
+  ancient_oak: 5, gnarled_elm: 5, strangler_fig: 5, oak: 5, spirit_tree: 5,
+  banyan: 5, jungle_tree: 5, coconut_palm: 5, cypress: 5, spruce: 5,
+  birch: 4, maple: 4, cherry_blossom: 4, meadow_oak: 4, beach_palm: 4,
+  date_palm: 4, frost_cedar: 4, snow_pine: 4, dead_willow: 4, crystal_tree: 4,
+  apple_tree: 4, baobab: 5, mangrove: 4, frozen_tree: 4,
+  rowan: 4, scots_pine: 4, cliff_pine: 4, mountain_ash: 4, coastal_pine: 4,
+  acacia: 4, thorny_acacia: 4, dead_tree: 4, charred_tree: 4,
+  frost_willow: 4, saguaro: 3, aether_pillar: 3, ice_crystal_spire: 3,
+  crystal_ice_tower: 4, stunted_pine: 3,
+  standing_stone: 3, stone_monolith: 3, rock_spire: 3, ice_pillar: 3,
+  obsidian_spike: 3, sandstone_arch: 3, twisted_shrub: 3,
+  driftwood: 2, magma_vent: 2,
+};
+const LO_DEFAULT_TILES = 4;
+
 const catalog = {};
 for (const biome of fs.readdirSync(FLORA)) {
   const bdir = path.join(FLORA, biome);
@@ -250,6 +268,7 @@ if (fs.existsSync(LOBJ)) {
       const size = pngWidth(path.join(odir, `lg__${biome}__${obj}__v${String(vmap[0]).padStart(3, '0')}.png`));
       (lgCatalog[biome] = lgCatalog[biome] || []).push({
         name: obj, size, variants: vmap.length, vmap,
+        tileSize: LO_OBJECT_TILES[obj] || LO_DEFAULT_TILES,
         states: {}, anims: [], trims: null, sil: null,
         source: { dir: 'large_objects', file: 'lg_prefixed', biome },
       });

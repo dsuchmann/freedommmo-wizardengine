@@ -1680,6 +1680,7 @@ export var LG_CATALOG = {
     60,
     62
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -1833,6 +1834,7 @@ export var LG_CATALOG = {
     189,
     191
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -1865,6 +1867,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -1897,6 +1900,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -1928,6 +1932,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -2121,6 +2126,7 @@ export var LG_CATALOG = {
     190,
     191
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -2186,6 +2192,7 @@ export var LG_CATALOG = {
     61,
     63
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -2208,6 +2215,7 @@ export var LG_CATALOG = {
     12,
     14
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -2288,6 +2296,7 @@ export var LG_CATALOG = {
     62,
     63
    ],
+   "tileSize": 3,
    "states": {},
    "anims": [],
    "trims": null,
@@ -2496,6 +2505,7 @@ export var LG_CATALOG = {
     190,
     191
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -2528,6 +2538,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -4236,6 +4247,7 @@ export var LG_CATALOG = {
     171,
     173
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -4253,6 +4265,7 @@ export var LG_CATALOG = {
    "vmap": [
     12
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -4295,6 +4308,7 @@ export var LG_CATALOG = {
     61,
     62
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -4539,6 +4553,7 @@ export var LG_CATALOG = {
     254,
     255
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -4569,6 +4584,7 @@ export var LG_CATALOG = {
     13,
     14
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -10986,6 +11002,7 @@ export var LG_CATALOG = {
     190,
     191
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -11182,6 +11199,7 @@ export var LG_CATALOG = {
     190,
     191
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -11214,6 +11232,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -11290,6 +11309,7 @@ export var LG_CATALOG = {
     62,
     63
    ],
+   "tileSize": 5,
    "states": {},
    "anims": [],
    "trims": null,
@@ -11379,6 +11399,7 @@ export var LG_CATALOG = {
     237,
     238
    ],
+   "tileSize": 5,
    "states": {},
    "anims": [],
    "trims": null,
@@ -13864,6 +13885,7 @@ export var LG_CATALOG = {
     190,
     191
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -13885,6 +13907,7 @@ export var LG_CATALOG = {
     13,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -13949,6 +13972,7 @@ export var LG_CATALOG = {
     46,
     47
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -13981,6 +14005,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -14013,6 +14038,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -14285,6 +14311,7 @@ export var LG_CATALOG = {
     254,
     255
    ],
+   "tileSize": 3,
    "states": {},
    "anims": [],
    "trims": null,
@@ -14496,6 +14523,7 @@ export var LG_CATALOG = {
     254,
     255
    ],
+   "tileSize": 3,
    "states": {},
    "anims": [],
    "trims": null,
@@ -14528,6 +14556,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -14608,6 +14637,7 @@ export var LG_CATALOG = {
     62,
     63
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -23004,6 +23034,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -23036,6 +23067,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -23068,6 +23100,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -23276,6 +23309,7 @@ export var LG_CATALOG = {
     190,
     191
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -23308,6 +23342,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -23576,6 +23611,7 @@ export var LG_CATALOG = {
     254,
     255
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -23608,6 +23644,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -23640,6 +23677,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -23767,6 +23805,7 @@ export var LG_CATALOG = {
     188,
     191
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -23786,6 +23825,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -23818,6 +23858,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -24026,6 +24067,7 @@ export var LG_CATALOG = {
     190,
     191
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -32612,6 +32654,7 @@ export var LG_CATALOG = {
     254,
     255
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -32676,6 +32719,7 @@ export var LG_CATALOG = {
     62,
     63
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -32702,6 +32746,7 @@ export var LG_CATALOG = {
     60,
     62
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -34530,6 +34575,7 @@ export var LG_CATALOG = {
     190,
     191
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -34562,6 +34608,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -34590,6 +34637,7 @@ export var LG_CATALOG = {
     10,
     11
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -34842,6 +34890,7 @@ export var LG_CATALOG = {
     254,
     255
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -34922,6 +34971,7 @@ export var LG_CATALOG = {
     62,
     63
    ],
+   "tileSize": 3,
    "states": {},
    "anims": [],
    "trims": null,
@@ -36942,6 +36992,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -37037,6 +37088,7 @@ export var LG_CATALOG = {
     244,
     254
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -37305,6 +37357,7 @@ export var LG_CATALOG = {
     254,
     255
    ],
+   "tileSize": 3,
    "states": {},
    "anims": [],
    "trims": null,
@@ -39080,6 +39133,7 @@ export var LG_CATALOG = {
     186,
     187
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -39151,6 +39205,7 @@ export var LG_CATALOG = {
     62,
     63
    ],
+   "tileSize": 3,
    "states": {},
    "anims": [],
    "trims": null,
@@ -39183,6 +39238,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -39215,6 +39271,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -39247,6 +39304,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -39279,6 +39337,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -39359,6 +39418,7 @@ export var LG_CATALOG = {
     62,
     63
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -39631,6 +39691,7 @@ export var LG_CATALOG = {
     254,
     255
    ],
+   "tileSize": 5,
    "states": {},
    "anims": [],
    "trims": null,
@@ -39839,6 +39900,7 @@ export var LG_CATALOG = {
     190,
     191
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -41175,6 +41237,7 @@ export var LG_CATALOG = {
     190,
     191
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -41207,6 +41270,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -41266,6 +41330,7 @@ export var LG_CATALOG = {
     62,
     63
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -41298,6 +41363,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -41330,6 +41396,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -43166,6 +43233,7 @@ export var LG_CATALOG = {
     190,
     191
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -43297,6 +43365,7 @@ export var LG_CATALOG = {
     188,
     190
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -43326,6 +43395,7 @@ export var LG_CATALOG = {
     12,
     14
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -43369,6 +43439,7 @@ export var LG_CATALOG = {
     30,
     31
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -43449,6 +43520,7 @@ export var LG_CATALOG = {
     62,
     63
    ],
+   "tileSize": 3,
    "states": {},
    "anims": [],
    "trims": null,
@@ -43721,6 +43793,7 @@ export var LG_CATALOG = {
     254,
     255
    ],
+   "tileSize": 3,
    "states": {},
    "anims": [],
    "trims": null,
@@ -43753,6 +43826,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -44587,6 +44661,7 @@ export var LG_CATALOG = {
     251,
     252
    ],
+   "tileSize": 5,
    "states": {},
    "anims": [],
    "trims": null,
@@ -44619,6 +44694,7 @@ export var LG_CATALOG = {
     51,
     56
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -44692,6 +44768,7 @@ export var LG_CATALOG = {
     181,
     185
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -44719,6 +44796,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -44736,6 +44814,7 @@ export var LG_CATALOG = {
    "vmap": [
     11
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -44841,6 +44920,7 @@ export var LG_CATALOG = {
     302,
     303
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -44869,6 +44949,7 @@ export var LG_CATALOG = {
     13,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -47174,6 +47255,7 @@ export var LG_CATALOG = {
     46,
     47
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -47206,6 +47288,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -47286,6 +47369,7 @@ export var LG_CATALOG = {
     62,
     63
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -47494,6 +47578,7 @@ export var LG_CATALOG = {
     190,
     191
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -47574,6 +47659,7 @@ export var LG_CATALOG = {
     62,
     63
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -47606,6 +47692,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -47670,6 +47757,7 @@ export var LG_CATALOG = {
     46,
     47
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -49435,6 +49523,7 @@ export var LG_CATALOG = {
     61,
     63
    ],
+   "tileSize": 5,
    "states": {},
    "anims": [],
    "trims": null,
@@ -49567,6 +49656,7 @@ export var LG_CATALOG = {
     251,
     252
    ],
+   "tileSize": 5,
    "states": {},
    "anims": [],
    "trims": null,
@@ -49615,6 +49705,7 @@ export var LG_CATALOG = {
     62,
     63
    ],
+   "tileSize": 5,
    "states": {},
    "anims": [],
    "trims": null,
@@ -49647,6 +49738,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -49673,6 +49765,7 @@ export var LG_CATALOG = {
     13,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -49705,6 +49798,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -49728,6 +49822,7 @@ export var LG_CATALOG = {
     11,
     14
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -49936,6 +50031,7 @@ export var LG_CATALOG = {
     190,
     191
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -49968,6 +50064,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -50000,6 +50097,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -50112,6 +50210,7 @@ export var LG_CATALOG = {
     94,
     95
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -50144,6 +50243,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -50170,6 +50270,7 @@ export var LG_CATALOG = {
     10,
     11
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -51880,6 +51981,7 @@ export var LG_CATALOG = {
     62,
     63
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -52152,6 +52254,7 @@ export var LG_CATALOG = {
     254,
     255
    ],
+   "tileSize": 3,
    "states": {},
    "anims": [],
    "trims": null,
@@ -52232,6 +52335,7 @@ export var LG_CATALOG = {
     62,
     63
    ],
+   "tileSize": 3,
    "states": {},
    "anims": [],
    "trims": null,
@@ -52264,6 +52368,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -52296,6 +52401,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -54100,6 +54206,7 @@ export var LG_CATALOG = {
     190,
     191
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -54129,6 +54236,7 @@ export var LG_CATALOG = {
     13,
     14
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -54193,6 +54301,7 @@ export var LG_CATALOG = {
     46,
     47
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -54225,6 +54334,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -54305,6 +54415,7 @@ export var LG_CATALOG = {
     62,
     63
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -54325,6 +54436,7 @@ export var LG_CATALOG = {
     30,
     54
    ],
+   "tileSize": 2,
    "states": {},
    "anims": [],
    "trims": null,
@@ -54357,6 +54469,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -54437,6 +54550,7 @@ export var LG_CATALOG = {
     62,
     63
    ],
+   "tileSize": 3,
    "states": {},
    "anims": [],
    "trims": null,
@@ -54645,6 +54759,7 @@ export var LG_CATALOG = {
     190,
     191
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -54664,6 +54779,7 @@ export var LG_CATALOG = {
     6,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,
@@ -54697,6 +54813,7 @@ export var LG_CATALOG = {
     14,
     15
    ],
+   "tileSize": 4,
    "states": {},
    "anims": [],
    "trims": null,

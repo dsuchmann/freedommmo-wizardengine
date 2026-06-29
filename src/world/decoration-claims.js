@@ -852,8 +852,14 @@ export function f6Placements(wx, wy, tileInfo) {
   var uy = 0.5 + (rand2(wx, wy, 9836) - 0.5) * 0.5;
   var scale = (F6_BIOME_SCALE[t.biome] || 1.0) *
     tuneSize('f6', t.biome, obj.name, variant, wx, wy, 9840);
-  var sizeTiles = obj.size * scale / TILE_ART_PX; // 192px @ 1.0 -> 6 tiles
-  var drawPx = obj.size * scale;
+  var sizeTiles, drawPx;
+  if (obj.source && obj.source.dir === 'large_objects') {
+    sizeTiles = (obj.tileSize || 4) * scale;
+    drawPx = sizeTiles * TILE_ART_PX;
+  } else {
+    sizeTiles = obj.size * scale / TILE_ART_PX; // 192px @ 1.0 -> 6 tiles
+    drawPx = obj.size * scale;
+  }
   var trim = (obj.trims && obj.trims[pick.pos]) || null;
   var cx = (wx + ux) * TILE_ART_PX, cy = (wy + uy) * TILE_ART_PX;
   var foot = trimFoot(cx, cy, obj.size, drawPx, trim, 0.30, 0.10, 0.30, 0.16);
