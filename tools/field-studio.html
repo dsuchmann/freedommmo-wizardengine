@@ -1,0 +1,287 @@
+<!doctype html><html><head><meta charset="utf8"><title>Field Studio — curate decoration sprites</title>
+<style>
+ :root{--bg:#0c0e13;--panel:#161a22;--line:#262b37;--ink:#e8eaf0;--dim:#9aa3b4;--accent:#7cc4ff;--omit:#e0556b}
+ body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.4 ui-sans-serif,system-ui,sans-serif}
+ header{position:sticky;top:0;z-index:10;background:#0c0e13f2;border-bottom:1px solid var(--line);padding:9px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+ h1{font-size:14px;margin:0;color:#fc8}
+ button,select{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:5px 9px;font-size:12px;cursor:pointer}
+ .tab{padding:4px 10px} .tab.on{border-color:var(--accent);color:var(--accent)}
+ h2{font-size:13px;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;margin:16px 16px 2px;cursor:pointer}
+ .sp{margin:6px 16px 2px;color:var(--dim);font-size:12px}
+ .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;padding:4px 16px 10px}
+ .cell{position:relative;border:2px solid var(--line);border-radius:6px;background:#000;overflow:hidden;cursor:pointer}
+ .cell img{display:block;width:100%;height:96px;object-fit:contain;image-rendering:pixelated;background:#0a0c10}
+ .cell.omit{border-color:var(--omit)} .cell.omit img{opacity:.30}
+ .cell.cursor{box-shadow:0 0 0 2px var(--accent)}
+ .cell .x{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-size:30px;color:var(--omit);font-weight:800}
+ .cell.omit .x{display:flex}
+ .cell .meta{position:absolute;left:0;right:0;bottom:0;font-size:9px;color:#cdd;background:#000a;padding:1px 3px;display:flex;justify-content:space-between}
+ .cell.out{outline:2px dashed #e6b450;outline-offset:-2px}
+ .cell .tag{position:absolute;top:1px;left:3px;font-size:9px;color:#ffd27c}
+ .cell .note{position:absolute;top:1px;right:3px;font-size:11px}
+ /* object-level (collapsed) view: one tile per object */
+ .objgrid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+ .cell.objtile img{height:118px}
+ .cell.partial{border-color:#e6b450} .cell.partial img{opacity:.62}
+ .cell.objtile.omit img{opacity:.28}
+ .cell .objname{position:absolute;left:0;right:0;top:0;font-size:10px;color:#fff;background:#000b;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .cell .objcount{position:absolute;left:0;right:0;bottom:0;font-size:9px;color:#cdd;background:#000a;padding:1px 4px;text-align:center}
+ #notebox{position:fixed;display:none;z-index:30;background:var(--panel);border:1px solid var(--accent);border-radius:8px;padding:8px;width:260px}
+ #notebox textarea{width:100%;height:64px;background:#000;color:#cfe;border:1px solid var(--line);font:11px monospace}
+ .hint{color:var(--dim);font-size:11px;margin:0 16px}
+</style></head>
+<body>
+<header>
+ <h1>Field Studio</h1>
+ <span id="tabs"></span>
+ <button id="viewToggle" title="Switch between per-variant grid and one-tile-per-object">View: Variants</button>
+ <label><input type="checkbox" id="outliers"> outlier hints</label>
+ <button id="exp">⬇ Export picks</button>
+ <button id="imp">⬆ Import</button>
+ <input type="file" id="impFile" accept="application/json" style="display:none">
+ <span id="status" style="color:#6f6"></span>
+</header>
+<p class="hint" id="hintVar"><b>Variants view:</b> one tile per base variant (states &amp; animations are NOT shown — they follow the base automatically). Click a tile to OMIT (red) → its base + states + anims are all excluded. Each object also has an <b>omit whole object</b> button. Keys: <b>←↑↓→</b> move · <b>space</b> omit · <b>1-6</b> tag · <b>n</b> note. Autosaves; Export when done.</p>
+<p class="hint" id="hintObj" style="display:none"><b>Objects view:</b> one tile per object — click to OMIT the WHOLE object (every variant + its states &amp; anims). Amber = partially omitted. Double-click an object (or use <b>View</b>) to drill into its variants.</p>
+<div id="body"></div>
+<div id="notebox"><div id="noteFor" style="color:#8ad;font-size:11px;margin-bottom:4px"></div>
+ <textarea id="noteText" placeholder="why? (optional — applies to keep OR omit)"></textarea>
+ <div style="margin-top:4px"><button id="noteSave">Save</button> <button id="noteCancel">Close</button></div></div>
+
+<script type="module">
+const REASONS = ['perspective','painted','cropped','scale','halo','other'];
+// Active source state (mutated by selectSource). `dec` is per-source decisions.
+let field, manifest, LSKEY, dec;
+let cursor = null;       // {key, v}
+const cells = new Map(); // `${key}#${v}` -> element
+const order = [];        // flat [{key,v}] in DOM order
+
+// decisions: { "biome/species": { omit:Set, tags:{v:tag}, notes:{v:str} } }
+function load(){
+  const seed = {};
+  for (const [b,sp] of Object.entries(manifest.biomes)) for (const [s,o] of Object.entries(sp)){
+    const om = new Set(o.variants.filter(v=>v.omit).map(v=>v.v));
+    if (om.size) seed[`${b}/${s}`] = { omit: om, tags:{}, notes:{} };
+  }
+  try{
+    const saved = JSON.parse(localStorage.getItem(LSKEY)||'null');
+    if (saved) for (const [k,d] of Object.entries(saved)) seed[k] = { omit:new Set(d.omit||[]), tags:d.tags||{}, notes:d.notes||{} };
+  }catch(e){}
+  return seed;
+}
+function save(){
+  const out={}; for (const [k,d] of Object.entries(dec)) out[k]={omit:[...d.omit],tags:d.tags,notes:d.notes};
+  localStorage.setItem(LSKEY, JSON.stringify(out));
+  status(`${countOmit()} omitted`);
+}
+function status(t){ document.getElementById('status').textContent=t; }
+function countOmit(){ let n=0; for (const d of Object.values(dec)) n+=d.omit.size; return n; }
+function rec(key){ return dec[key] || (dec[key]={omit:new Set(),tags:{},notes:{}}); }
+
+// view: 'variants' = one tile per BASE variant (default — states/anims follow the
+// base, never shown as tiles); 'objects' = one tile per object (bulk omit).
+// drillKey: in variants view, when set, show ONLY that one object's variants.
+let view = 'variants';
+let drillKey = null;
+
+function objList(){ // [{biome,species,key,o}] in manifest order
+  const out=[];
+  for (const [biome, sp] of Object.entries(manifest.biomes))
+    for (const [species,o] of Object.entries(sp)) out.push({biome,species,key:`${biome}/${species}`,o});
+  return out;
+}
+function repVariant(key,o){ // thumbnail for an object: first NON-omitted, else v0
+  const d=dec[key];
+  if (d&&d.omit.size){ const kept=o.variants.find(v=>!d.omit.has(v.v)); if(kept) return kept; }
+  return o.variants[0];
+}
+function objState(key,o){ // 'none' | 'partial' | 'all'
+  const d=dec[key]; const n=d?d.omit.size:0;
+  if (!n) return 'none';
+  return n>=o.variants.length ? 'all' : 'partial';
+}
+
+function render(){
+  const body=document.getElementById('body'); body.innerHTML=''; cells.clear();
+  document.getElementById('hintVar').style.display = view==='variants' ? '' : 'none';
+  document.getElementById('hintObj').style.display = view==='variants' ? 'none' : '';
+  document.getElementById('viewToggle').textContent =
+    view==='variants' ? (drillKey?`View: ${drillKey.split('/')[1]}`:'View: Variants') : 'View: Objects';
+  if (view==='objects') renderObjects(body); else renderVariants(body);
+  paintAll(); applyOutliers();
+}
+
+// ---- Variants view: one tile per base variant (default). states/anims never tiled. ----
+function renderVariants(body){
+  if (drillKey){
+    const back=document.createElement('h2'); back.textContent='← back to all objects';
+    back.onclick=()=>{ drillKey=null; render(); rebuildOrder(); };
+    body.appendChild(back);
+  }
+  for (const [biome, sp] of Object.entries(manifest.biomes)){
+    let shown=false, wrap=null;
+    for (const [species,o] of Object.entries(sp)){
+      const key=`${biome}/${species}`;
+      if (drillKey && key!==drillKey) continue;
+      if (!shown){ const h=document.createElement('h2'); h.textContent=biome; body.appendChild(h);
+        wrap=document.createElement('div'); body.appendChild(wrap);
+        h.onclick=()=>wrap.style.display = wrap.style.display==='none'?'':'none'; shown=true; }
+      const lab=document.createElement('div'); lab.className='sp';
+      const st=objState(key,o); const stTxt = st==='all'?' · WHOLE OBJECT OMITTED':(st==='partial'?` · ${dec[key].omit.size} omitted`:'');
+      lab.innerHTML=`${species} · ${o.variants.length} variants${stTxt} `;
+      const allBtn=document.createElement('button'); allBtn.textContent = st==='all'?'restore object':'omit whole object';
+      allBtn.style.cssText='padding:1px 7px;font-size:11px;margin-left:6px';
+      allBtn.onclick=()=>{ toggleObject(key,o); render(); rebuildOrder(); };
+      lab.appendChild(allBtn); wrap.appendChild(lab);
+      const g=document.createElement('div'); g.className='grid'; wrap.appendChild(g);
+      for (const vd of o.variants){
+        const c=document.createElement('div'); c.className='cell'; c.dataset.key=key; c.dataset.v=vd.v;
+        c.innerHTML=`<img loading="lazy" src="${vd.file}"><div class="x">✕</div>`
+          +`<div class="tag"></div><div class="note"></div>`
+          +`<div class="meta"><span>v${String(vd.v).padStart(3,'0')}</span><span>${vd.scaleVsMedian}×</span></div>`;
+        c.title=`fill ${vd.fill} · scale ${vd.scaleVsMedian}× · magenta ${vd.magenta} — omitting this variant also drops its states & anims`;
+        if (vd.scaleVsMedian<0.45||vd.scaleVsMedian>2.2||(vd.bbox[1]===0&&vd.fill>0.5)) c.classList.add('outlierCand');
+        c.onclick=(e)=>{ e.preventDefault(); setCursor(key,vd.v); toggle(key,vd.v); };
+        g.appendChild(c); cells.set(`${key}#${vd.v}`, c);
+      }
+    }
+  }
+}
+
+// ---- Objects view: one tile per object (bulk omit) ----
+function renderObjects(body){
+  for (const [biome, sp] of Object.entries(manifest.biomes)){
+    const entries=Object.entries(sp); if(!entries.length) continue;
+    const h=document.createElement('h2'); h.textContent=biome; body.appendChild(h);
+    const wrap=document.createElement('div'); body.appendChild(wrap);
+    h.onclick=()=>wrap.style.display = wrap.style.display==='none'?'':'none';
+    const g=document.createElement('div'); g.className='grid objgrid'; wrap.appendChild(g);
+    for (const [species,o] of entries){
+      const key=`${biome}/${species}`;
+      const rep=repVariant(key,o);
+      const c=document.createElement('div'); c.className='cell objtile'; c.dataset.objkey=key;
+      c.innerHTML=`<div class="objname">${species}</div>`
+        +`<img loading="lazy" src="${rep.file}"><div class="x">✕</div>`
+        +`<div class="objcount">${o.variants.length} variants</div>`;
+      c.title=`${key} — click to omit/restore the whole object · double-click to view its variants`;
+      c.onclick=(e)=>{ e.preventDefault(); toggleObject(key,o); };
+      c.ondblclick=(e)=>{ e.preventDefault(); drillKey=key; view='variants'; render(); rebuildOrder(); };
+      g.appendChild(c); cells.set(`obj#${key}`, c);
+    }
+  }
+}
+
+// omit/restore EVERY variant of an object in one action. Downstream, an object with
+// all base variants omitted is dropped from the catalog (so its states & anims go too).
+function toggleObject(key,o){
+  const d=rec(key);
+  if (objState(key,o)==='all'){ d.omit.clear(); }            // restore
+  else { for (const vd of o.variants) d.omit.add(vd.v); }     // omit all
+  save();
+  if (view==='objects') paintObj(key,o); else paintAll();
+}
+function paintObj(key,o){
+  const c=cells.get(`obj#${key}`); if(!c) return;
+  const st=objState(key,o);
+  c.classList.toggle('omit', st==='all');
+  c.classList.toggle('partial', st==='partial');
+}
+function cell(key,v){ return cells.get(`${key}#${v}`); }
+function paint(key,v){
+  const c=cell(key,v); if(!c) return; const d=dec[key];
+  const om = d&&d.omit.has(v); c.classList.toggle('omit', !!om);
+  c.querySelector('.tag').textContent = d&&d.tags[v] ? d.tags[v][0].toUpperCase() : '';
+  c.querySelector('.note').textContent = d&&d.notes[v] ? '📝' : '';
+}
+function paintAll(){
+  if (view==='objects'){ for (const {key,o} of objList()){ if(cells.has(`obj#${key}`)) paintObj(key,o); } return; }
+  for (const k of cells.keys()){ if(k.startsWith('obj#')) continue; const i=k.indexOf('#'); paint(k.slice(0,i), +k.slice(i+1)); }
+}
+function toggle(key,v){ const d=rec(key); if(d.omit.has(v)) d.omit.delete(v); else d.omit.add(v); paint(key,v); save(); }
+function setCursor(key,v){ if(cursor) cell(cursor.key,cursor.v)?.classList.remove('cursor'); cursor={key,v}; const c=cell(key,v); if(c){c.classList.add('cursor'); c.scrollIntoView({block:'nearest'});} }
+
+document.getElementById('outliers').onchange=applyOutliers;
+function applyOutliers(){ const on=document.getElementById('outliers').checked;
+  for (const c of cells.values()) c.classList.toggle('out', on && c.classList.contains('outlierCand')); }
+
+document.getElementById('viewToggle').onclick=()=>{
+  if (view==='variants'){ view='objects'; drillKey=null; cursor=null; }
+  else { view='variants'; drillKey=null; }
+  render(); rebuildOrder();
+};
+
+// ---- keyboard ----
+function rebuildOrder(){ order.length=0; for (const k of cells.keys()){ if(k.startsWith('obj#')) continue; const i=k.indexOf('#'); order.push({key:k.slice(0,i),v:+k.slice(i+1)}); } }
+addEventListener('keydown',(e)=>{
+  if (document.getElementById('notebox').style.display==='block') return;
+  if (!cursor && order.length){ setCursor(order[0].key,order[0].v); return; }
+  const idx=order.findIndex(o=>o.key===cursor.key&&o.v===cursor.v);
+  const cols=Math.max(1,Math.floor(document.querySelector('.grid').clientWidth/104));
+  let ni=idx;
+  if (e.key==='ArrowRight') ni=idx+1; else if (e.key==='ArrowLeft') ni=idx-1;
+  else if (e.key==='ArrowDown') ni=idx+cols; else if (e.key==='ArrowUp') ni=idx-cols;
+  else if (e.key===' '){ e.preventDefault(); toggle(cursor.key,cursor.v); return; }
+  else if (/^[1-6]$/.test(e.key)){ rec(cursor.key).tags[cursor.v]=REASONS[+e.key-1]; paint(cursor.key,cursor.v); save(); return; }
+  else if (e.key==='n'){ openNote(cursor.key,cursor.v); return; }
+  else return;
+  e.preventDefault(); if (ni>=0&&ni<order.length) setCursor(order[ni].key,order[ni].v);
+});
+
+// ---- notes ----
+let noteCur=null;
+function openNote(key,v){ noteCur={key,v}; const nb=document.getElementById('notebox');
+  document.getElementById('noteFor').textContent=`${key} v${String(v).padStart(3,'0')}`;
+  document.getElementById('noteText').value=(dec[key]&&dec[key].notes[v])||'';
+  const c=cell(key,v).getBoundingClientRect(); nb.style.left=Math.min(c.right+6,innerWidth-280)+'px'; nb.style.top=c.top+'px'; nb.style.display='block';
+  document.getElementById('noteText').focus(); }
+document.getElementById('noteSave').onclick=()=>{ const t=document.getElementById('noteText').value.trim();
+  const d=rec(noteCur.key); if(t) d.notes[noteCur.v]=t; else delete d.notes[noteCur.v]; paint(noteCur.key,noteCur.v); save(); closeNote(); };
+document.getElementById('noteCancel').onclick=closeNote;
+function closeNote(){ document.getElementById('notebox').style.display='none'; }
+
+// ---- export / import ----
+function exportPicks(){
+  const decisions={};
+  for (const [k,d] of Object.entries(dec)){
+    if (!d.omit.size && !Object.keys(d.notes).length) continue;
+    decisions[k]={ omit:[...d.omit].sort((a,b)=>a-b), tags:d.tags, notes:d.notes };
+  }
+  return { field, savedAt:new Date().toISOString(), decisions };
+}
+window.__exportPicks = exportPicks; // probe hook
+document.getElementById('exp').onclick=()=>{
+  const blob=new Blob([JSON.stringify(exportPicks(),null,1)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`field-picks.${field}.json`; a.click();
+};
+document.getElementById('imp').onclick=()=>document.getElementById('impFile').click();
+document.getElementById('impFile').onchange=async(e)=>{
+  const j=JSON.parse(await e.target.files[0].text());
+  for (const [k,d] of Object.entries(j.decisions||{})) dec[k]={omit:new Set(d.omit||[]),tags:d.tags||{},notes:d.notes||{}};
+  save(); paintAll();
+};
+
+// ---- sources / tabs ----
+// Loaded from field-sources.json (written by gen-field-manifest.mjs --all). Falls back to F6-only.
+const tabs=document.getElementById('tabs');
+let SOURCES=[{id:'f6',label:'F6'}];
+try{ const s=await(await fetch('field-sources.json')).json(); if(Array.isArray(s)&&s.length) SOURCES=s; }catch(e){}
+
+async function selectSource(id){
+  // load manifest + per-source state, then rebuild grid
+  field=id; LSKEY=`field-studio:${field}`;
+  cursor=null; cells.clear(); order.length=0; view='variants'; drillKey=null;
+  manifest=await(await fetch(`field-manifest.${field}.json`)).json();
+  dec=load();
+  render(); rebuildOrder(); save();
+  for (const b of tabs.children) b.classList.toggle('on', b.dataset.id===id);
+}
+
+for (const s of SOURCES){
+  const b=document.createElement('button'); b.className='tab'; b.dataset.id=s.id;
+  b.textContent=(s.label||s.id).toUpperCase();
+  b.onclick=()=>selectSource(s.id);
+  tabs.appendChild(b);
+}
+
+await selectSource(SOURCES[0].id);
+</script></body></html>

@@ -1,0 +1,26 @@
+[
+ {
+  "id": "f6",
+  "label": "F6 large flora"
+ },
+ {
+  "id": "f4",
+  "label": "F4 medium flora"
+ },
+ {
+  "id": "f5",
+  "label": "F5 medium objects"
+ },
+ {
+  "id": "f2",
+  "label": "F2 small flora"
+ },
+ {
+  "id": "large_objects",
+  "label": "Large objects"
+ },
+ {
+  "id": "dressing",
+  "label": "Building dressing"
+ }
+]
