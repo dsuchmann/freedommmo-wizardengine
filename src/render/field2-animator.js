@@ -1697,13 +1697,29 @@ function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, we
   // AMORTIZED across frames (build the next pool into staging buffers while the GPU
   // keeps drawing the current one, then swap) so no single frame freezes.
   if (gpuFloraOn() && glc.animOk) {
-    if ((!_pool.animUploaded || moved || grew || newChunks) && !_gb) {
+    // ATLAS RESETS must be invisible. The sprite atlas is shared between the committed
+    // (currently-drawn) pool and any in-flight build, and it never evicts individual sprites —
+    // so walking accumulates a trail until it overflows and resets, which relocates every sprite
+    // and leaves the drawn pool's UVs (and our _stripCache) stale. That stale gap is the on-screen
+    // "everything reloads" the user sees. Two parts:
+    //  1) PROACTIVE: once the atlas is mostly full, compact it ourselves at a frame boundary
+    //     (only when no build is in flight, so we never reset out from under an in-flight pack).
+    //  2) On ANY reset (ours, or an overflow triggered by another atlas consumer), drop the stale
+    //     strip cache + any in-flight build and rebuild SYNCHRONOUSLY this frame, so the pool we
+    //     draw has correct UVs. Trades a rare one-frame hitch for never showing a multi-tick reload.
+    if (!_gb && glc.atlasFillRatio && glc.atlasFillRatio() > 0.8) glc.resetAtlas();
+    var atlasReset = glc.atlasGen !== _stripAtlasGen;
+    if (atlasReset) { clearStripCache(); _stripAtlasGen = glc.atlasGen; _gb = null; }
+    if ((atlasReset || !_pool.animUploaded || moved || grew || newChunks) && !_gb) {
       _pool.key = 'built'; _pool.centerX = px; _pool.centerY = py;
       _pool.radiusX = needRX; _pool.radiusY = needRY;
       _pool.readyCount = ready; _pool.lastRebuildAt = timeMs;
       _startAmortBuild(chunkStore, player, glc, needRX, needRY); // first paint AND warm: both spread
     }
-    if (_gb) _amortStep(performance.now() + AMORT_BUDGET_MS);
+    if (_gb) {
+      if (atlasReset) { var _sg = 0; while (_gb && _sg++ < 64) _amortStep(performance.now() + 1000); } // sync: no stale-UV frame
+      else _amortStep(performance.now() + AMORT_BUDGET_MS);
+    }
     var tickRanG = false;
     if (timeMs - _pool.lastTickMs >= 100) { _pool.lastTickMs = timeMs; _poolTick(timeMs, timeSec, glc, tilePxSnapped); tickRanG = true; }
     if (_pool.animUploaded) {
