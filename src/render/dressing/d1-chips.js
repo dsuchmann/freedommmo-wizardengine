@@ -20,10 +20,18 @@ import { rand2 } from '../../core/random.js';
 import { damageDrivers } from './d1-damage.js';
 import { materialOf, southRuns } from '../building-tiles.js';
 import { onSceneDiscontinuity } from '../../core/scene-teardown.js';
+import { buildingAssetExists } from '../building-asset-index.js';
 
 const ROOT = '/assets/pixelab/buildings/dressing/';
 const _img = new Map();
-function img(url) { let im = _img.get(url); if (!im) { im = new Image(); im.src = url; _img.set(url, im); } return (im.complete && im.naturalWidth) ? im : null; }
+// Manifest gate: skip the Image (+ 404) for a chip asset absent on disk (partial biomes). Cache the miss.
+function img(url) {
+  let im = _img.get(url);
+  if (im !== undefined) return (im && im.complete && im.naturalWidth) ? im : null;
+  if (!buildingAssetExists(url)) { _img.set(url, null); return null; }
+  im = new Image(); im.src = url; _img.set(url, im);
+  return (im.complete && im.naturalWidth) ? im : null;
+}
 function variantSprites(biome, obj) {
   const a = [];
   for (let i = 0; i < 8; i++) { const im = img(ROOT + biome + '/' + obj + '/base__v' + i + '.png'); if (im) a.push(im); }

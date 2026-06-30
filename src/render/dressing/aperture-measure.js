@@ -5,9 +5,17 @@
 // socket sits on the real glass (bottom-centre) instead of a guessed fraction. Measured once per material,
 // cached; returns null until both tiles have loaded (the socket falls back to its default sill meanwhile).
 
+import { buildingAssetExists } from '../building-asset-index.js';
+
 const _imgs = new Map();
 const _cache = new Map(); // windowUrl -> { xFrac, sillV } | null
-function img(url) { let im = _imgs.get(url); if (!im) { im = new Image(); im.src = url; _imgs.set(url, im); } return (im.complete && im.naturalWidth) ? im : null; }
+function img(url) {
+  let im = _imgs.get(url);
+  if (im !== undefined) return (im && im.complete && im.naturalWidth) ? im : null;
+  if (!buildingAssetExists(url)) { _imgs.set(url, null); return null; }
+  im = new Image(); im.src = url; _imgs.set(url, im);
+  return (im.complete && im.naturalWidth) ? im : null;
+}
 function makeCanvas(w, h) {
   if (typeof OffscreenCanvas !== 'undefined') return new OffscreenCanvas(w, h);
   if (typeof document !== 'undefined') { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
