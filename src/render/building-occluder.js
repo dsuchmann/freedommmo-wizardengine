@@ -752,7 +752,31 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   // D3 awnings bake BEFORE the roof (like vines) so the eave overhangs the door-head canopy and it projects out
   // from UNDERNEATH the roof, not over it (user 2026-06-27). All OTHER props stay on the live dynamic overlay.
   const drawAwnings = () => { if (renderOn('attachments')) { try { drawBakedAwnings(ctx, b, camX, camY, tilePx, w, h); } catch { /* skip awnings */ } } };
-  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h); drawDamagePass(ctx, b, camX, camY, tilePx, w, h); drawGrowthPass(ctx, b, camX, camY, tilePx, w, h); drawChips(); drawVines(); drawAwnings(); drawRoof(); return true; }
+  // BAKE SUB-TIMING (diagnostic): a single forest building bake measured ~450ms (window._drawProf.bSpr). Record
+  // the slowest building's per-pass breakdown into window._bbWorst so we can see WHICH pass eats it. ~free
+  // (one perf.now per pass on the one-time bake). Read window._bbWorst in console after walking.
+  const _T = (typeof performance !== 'undefined') ? () => performance.now() : () => 0;
+  let _t = _T();
+  const _tiled = drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h);
+  if (_tiled) {
+    if (b) b._wallPath = 'tiles';
+    const _sub = { tiles: _T() - _t };
+    _t = _T(); drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h); _sub.weather = _T() - _t;
+    _t = _T(); drawDamagePass(ctx, b, camX, camY, tilePx, w, h);   _sub.damage = _T() - _t;
+    _t = _T(); drawGrowthPass(ctx, b, camX, camY, tilePx, w, h);   _sub.growth = _T() - _t;
+    _t = _T(); drawChips();   _sub.chips = _T() - _t;
+    _t = _T(); drawVines();   _sub.vines = _T() - _t;
+    _t = _T(); drawAwnings(); _sub.awnings = _T() - _t;
+    _t = _T(); drawRoof();    _sub.roof = _T() - _t;
+    _sub.total = _sub.tiles + _sub.weather + _sub.damage + _sub.growth + _sub.chips + _sub.vines + _sub.awnings + _sub.roof;
+    if (typeof window !== 'undefined' && _sub.total > ((window._bbWorst && window._bbWorst.total) || 0)) {
+      _sub.biome = b && b.biome; _sub.material = (b && b.footprint && (b.footprint.material || (b.footprint.tier))) || null;
+      _sub.bbw = b && b.footprint && b.footprint.boundingBox && b.footprint.boundingBox.w;
+      _sub.bbh = b && b.footprint && b.footprint.boundingBox && b.footprint.boundingBox.h;
+      window._bbWorst = _sub;
+    }
+    return true;
+  }
   // A grassland TILE-CORPUS building whose tiles aren't loaded yet must NOT fall to the legacy
   // strip path — drawWalls would stamp a stone_brick 32px strip STRETCHED over the footprint (the
   // melted/stretched single-building artifact). Stay invisible this frame; it flips to mirror-tiled
