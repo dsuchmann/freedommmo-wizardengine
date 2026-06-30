@@ -196,7 +196,7 @@ function runRepaintPass() {
     }
     var chunk = { cx: rchunk.cx, cy: rchunk.cy, tiles: tiles };
     var sun = { height: 0.5, ambient: 0.85 };
-    var result = renderChunkToBitmap(chunk, neighborCache, sun, imageCache);
+    var result = renderChunkToBitmap(chunk, neighborCache, sun, imageCache, { skipSoil: gpuTerrain });
     if (result.needsRepaint && (rchunk.attempts || 0) < MAX_REPAINT_ATTEMPTS) {
       // An async resource is still loading — retry, bounded by the attempt cap.
       chunksNeedingRepaint.push({ key: rchunk.key, cx: rchunk.cx, cy: rchunk.cy, attempts: (rchunk.attempts || 0) + 1 });
@@ -391,7 +391,7 @@ self.onmessage = function(event) {
     // the (usually-cached) biome load.
     ensureChunkBiomes(cx, cy, chunk.tiles).then(function() {
       var sun = { height: 0.5, ambient: 0.85 };
-      var result = renderChunkToBitmap(chunk, neighborCache, sun, imageCache);
+      var result = renderChunkToBitmap(chunk, neighborCache, sun, imageCache, { skipSoil: gpuTerrain });
 
       // With wang/soil hot-loaded above, needsRepaint now only flags async
       // resources (roof engine, building floors) — a few bounded retries, not a storm.
@@ -429,14 +429,14 @@ self.onmessage = function(event) {
     }
     var chunk = { cx: cx, cy: cy, tiles: tiles };
     var sun = { height: 0.5, ambient: 0.85 };
-    var result = renderChunkToBitmap(chunk, neighborCache, sun, imageCache);
+    var result = renderChunkToBitmap(chunk, neighborCache, sun, imageCache, { skipSoil: gpuTerrain });
     if (result.scatterMissingUrls) {
       // F3 sprites this chunk needs aren't cached yet (background load still
       // running in this worker). Fetch just those, then repaint once — tuner
       // repaints must never ship F3-less bitmaps that look "final".
       result.bitmap.close();
       loadImageBatch(result.scatterMissingUrls, 20).then(function() {
-        var r2 = renderChunkToBitmap(chunk, neighborCache, sun, imageCache);
+        var r2 = renderChunkToBitmap(chunk, neighborCache, sun, imageCache, { skipSoil: gpuTerrain });
         if (r2.needsRepaint) {
           chunksNeedingRepaint.push({ key: key, cx: cx, cy: cy, attempts: 0 });
           scheduleRepaintPass();

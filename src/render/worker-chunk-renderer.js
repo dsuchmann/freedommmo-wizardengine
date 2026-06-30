@@ -983,7 +983,7 @@ var _occupancyBuf = null; // persistent decoration-field occupancy grid
 // neighbors: Map<"cx,cy", tileArray> — cached tiles from adjacent chunks
 // imageCache: Map<url, ImageBitmap> — preloaded wang tile bitmaps
 // sun: { height, ambient, ... }
-export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
+export function renderChunkToBitmap(chunk, neighbors, sun, imageCache, opts) {
   var chunkSize = WORLD.chunkSize;
   var tileSize = WORLD.tileSize;
   var canvasSize = chunkSize * tileSize;
@@ -1359,11 +1359,19 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
     imageCache.forEach(function(v, k) { if (k.includes('/soil/') && soilKeys.length < 5) soilKeys.push(k); });
     console.log('[SOIL DEBUG] actual soil keys:', soilKeys);
   }
-  var soilResult = applySoilFieldToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache);
+  // GPU-terrain renders F0 soil in the tilemap fragment shader, so the per-pixel
+  // CPU soil bake here is 100% redundant when gpuTerrain is on. Skipping it removes
+  // the single most expensive part of chunk production (a full-canvas getImageData/
+  // putImageData + ~4M-pixel blend) — directly speeding up streaming/pop-in. The
+  // bitmap is then a soil-less fallback only used until a chunk's GPU index arrives.
+  var skipSoil = !!(opts && opts.skipSoil);
+  var soilResult = skipSoil
+    ? { anySoil: false, missedSoil: false, soilPixels: 0 }
+    : applySoilFieldToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache);
   var hasSoil = soilResult.anySoil;
   // Diagnostic: a land chunk that painted few/no soil pixels indicates the soil
   // loop is skipping everything (not a missing-image problem)
-  if (soilResult.soilPixels < 10000 && !soilResult.missedSoil) {
+  if (!skipSoil && soilResult.soilPixels < 10000 && !soilResult.missedSoil) {
     console.log('[SOIL LOW] chunk', chunk.cx + ',' + chunk.cy, 'painted only', soilResult.soilPixels, 'soil pixels (anySoil=' + soilResult.anySoil + ')');
   }
   applyGroundCoverToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache, occupancy, cellsPerTile, cellPx, gridW);
