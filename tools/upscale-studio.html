@@ -61,15 +61,15 @@
  <span class="sep"></span>
  <span style="color:var(--dim)">field <b id="ctl-field">—</b> · biome <b id="ctl-biome">grassland</b></span>
  <span class="sep"></span>
- <label style="color:var(--dim)">sample N <input id="ctl-n" type="number" min="1" max="50" value="3"></label>
- <button id="btn-sample" class="go" title="Sample-upscale the first N variants of every object in this field via ComfyUI">▶ Sample-upscale this field</button>
- <button id="btn-cancel" title="Stop the running sample job" style="display:none">■ Cancel</button>
+ <button id="btn-bases" class="go" title="Upscale ALL base variants of every object in THIS field (base-only) via ComfyUI">▶ Upscale bases (this field)</button>
+ <button id="btn-all" class="go" title="Upscale ALL base variants across ALL fields (small/medium flora, medium/large objects) for this biome — one long job">▶ Upscale ALL bases (all fields)</button>
+ <button id="btn-cancel" title="Stop the running job" style="display:none">■ Cancel</button>
  <span class="sep"></span>
  <button id="btn-regen" title="Rebuild the preview manifest from disk and reload">↻ Refresh preview</button>
- <button id="btn-apply" class="apply" title="Apply this field's in-memory decisions on disk (blend/direct/upscale)">✓ Apply decisions</button>
+ <button id="btn-apply" class="apply" title="Generate + apply the winners' full sets on disk (upscale = full states+anims, blend = mix, direct = quarantine)">✓ Apply decisions</button>
 </div>
 <details id="logwrap"><summary>log / status</summary><pre id="logpanel"></pre></details>
-<p class="hint">Per object: <b>ORIGINAL</b> (raw PixelLab) · <b>UPSCALE</b> (AI @384) · <b>BLEND</b> (live in-browser mix). Panels draw at <b>2×</b> the object's true in-game draw size by default — toggle <b>game</b> / <b>native(384)</b> to judge how detail holds when scaled. Pick <b>Upscale / Blend / Direct</b> per object; the blend slider (= original's share) is live only for Blend. Use <b>◀ ▶</b> to flip sampled variants, and "override just this variant" for an oddball.</p>
+<p class="hint">Per object: <b>ORIGINAL</b> (raw PixelLab) · <b>UPSCALE</b> (AI @384) · <b>BLEND</b> (live in-browser mix). Panels draw at <b>2×</b> the object's true in-game draw size by default — toggle <b>game</b> / <b>native(384)</b> to judge how detail holds when scaled. Pick <b>Upscale / Blend / Direct</b> per object; the blend slider (= original's share) is live only for Blend. Use <b>◀ ▶</b> to flip through <b>all</b> variants, and "override just this variant" for an oddball.</p>
 <div id="body"></div>
 
 <script type="module">
@@ -363,7 +363,7 @@ function setServerUI(live) {
   s.textContent = live ? '● server live' : '○ no server (export-only)';
   s.className = live ? 'live' : 'dead';
   $('ctlbar').classList.toggle('off', !live);
-  for (const id of ['btn-sample', 'btn-regen', 'btn-apply', 'ctl-n']) $(id).disabled = !live;
+  for (const id of ['btn-bases', 'btn-all', 'btn-regen', 'btn-apply']) $(id).disabled = !live;
 }
 
 async function apiStatus() {
@@ -374,14 +374,14 @@ async function apiStatus() {
   } catch { return null; }
 }
 
-let sampleRunning = false;
-function setSampleRunning(on) {
-  sampleRunning = on;
-  $('btn-sample').disabled = on || !SERVER.live;
+let jobRunning = false;
+function setJobRunning(on) {
+  jobRunning = on;
+  for (const id of ['btn-bases', 'btn-all', 'btn-apply', 'btn-regen']) $(id).disabled = on || !SERVER.live;
   $('btn-cancel').style.display = on ? '' : 'none';
 }
 
-// SSE stream of the running sample job's stdout/stderr.
+// SSE stream of the running job's stdout/stderr (one job at a time — bases / all / apply).
 let evtSrc = null;
 function openLogStream() {
   if (evtSrc) return;
@@ -389,35 +389,47 @@ function openLogStream() {
   evtSrc.onmessage = (e) => {
     let m; try { m = JSON.parse(e.data); } catch { return; }
     if (m.type === 'line') logLine(m.line, classify(m.line));
-    else if (m.type === 'start') { setSampleRunning(true); }
+    else if (m.type === 'start') { setJobRunning(true); }
     else if (m.type === 'exit') {
-      logLine(`(sample finished, exit ${m.code})`, m.code === 0 ? 'done' : 'err');
-      onSampleExit(m.code);
+      logLine(`(job finished, exit ${m.code})`, m.code === 0 ? 'done' : 'err');
+      onJobExit(m.code);
     }
   };
   evtSrc.onerror = () => { /* keep retrying; server sets retry: 3000 */ };
 }
 
-async function onSampleExit(code) {
-  setSampleRunning(false);
-  // On success, auto-refresh the manifest so the upscale/blend panels populate without a manual step.
-  if (code === 0) { logLine('auto-refreshing preview…', 'cmd'); await doRegen(true); }
+async function onJobExit(code) {
+  setJobRunning(false);
+  // The job already regenerated the manifest on the server; reload it so the panels reflect new @384s.
+  logLine('auto-refreshing preview…', 'cmd');
+  await doRegen(true);
 }
 
-async function doSample() {
-  if (!SERVER.live || sampleRunning) return;
-  const field = curField, biome = BIOME, n = parseInt($('ctl-n').value, 10) || 3;
-  logClear(); logLine(`▶ sample-upscale ${field} / ${biome} (N=${n})`, 'cmd');
-  setSampleRunning(true); openLogStream();
+// kick a streamed job (bases / all / apply); the SSE stream handles live log + completion refresh.
+async function postJob(url, body, label) {
+  if (!SERVER.live || jobRunning) return;
+  setJobRunning(true); openLogStream();
   try {
-    const r = await fetch('/api/sample', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ field, biome, sample: n }) });
+    const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const j = await r.json();
-    if (!r.ok) { logLine('sample rejected: ' + (j.error || r.status), 'err'); setSampleRunning(false); }
-  } catch (e) { logLine('sample request failed: ' + e.message, 'err'); setSampleRunning(false); }
+    if (!r.ok) { logLine(`${label} rejected: ` + (j.error || r.status), 'err'); setJobRunning(false); }
+  } catch (e) { logLine(`${label} request failed: ` + e.message, 'err'); setJobRunning(false); }
+}
+
+async function doUpscaleBases() {
+  if (!SERVER.live || jobRunning) return;
+  logClear(); logLine(`▶ upscale bases — ${curField} / ${BIOME} (all base variants)`, 'cmd');
+  await postJob('/api/upscale-bases', { field: curField, biome: BIOME }, 'upscale-bases');
+}
+
+async function doUpscaleAll() {
+  if (!SERVER.live || jobRunning) return;
+  logClear(); logLine(`▶ upscale ALL bases (all fields) — ${BIOME}`, 'cmd');
+  await postJob('/api/upscale-all', { biome: BIOME }, 'upscale-all');
 }
 
 async function doCancel() {
-  try { await fetch('/api/sample-cancel', { method: 'POST' }); logLine('cancel requested…', 'cmd'); } catch {}
+  try { await fetch('/api/job-cancel', { method: 'POST' }); logLine('cancel requested…', 'cmd'); } catch {}
 }
 
 async function doRegen(quiet) {
@@ -433,21 +445,18 @@ async function doRegen(quiet) {
 }
 
 async function doApply() {
-  if (!SERVER.live) return;
+  if (!SERVER.live || jobRunning) return;
   const payload = exportDecisions(curField);
   const n = Object.keys(payload.decisions).length;
   if (!n) { logLine('no decisions to apply for ' + curField + ' (decide some objects first)', 'err'); return; }
-  logLine(`✓ applying ${n} decision(s) for ${curField}…`, 'cmd'); $('logwrap').open = true;
-  try {
-    const r = await fetch('/api/apply', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ field: curField, biome: BIOME, decisions: payload.decisions }) });
-    const j = await r.json();
-    if (j.output) for (const ln of j.output.split('\n')) if (ln.trim()) logLine(ln, classify(ln));
-    if (j.ok) { logLine('apply complete ✓', 'done'); await doRegen(true); }
-    else logLine('apply failed: ' + (j.error || ('exit ' + j.code)), 'err');
-  } catch (e) { logLine('apply request failed: ' + e.message, 'err'); }
+  // Apply now GENERATES the winners' full sets (states + anims) — a long GPU job — so it streams like the rest.
+  logLine(`✓ applying ${n} decision(s) for ${curField} — generating winners' full sets (long GPU job)…`, 'cmd');
+  $('logwrap').open = true;
+  await postJob('/api/apply', { field: curField, biome: BIOME, decisions: payload.decisions }, 'apply');
 }
 
-$('btn-sample').onclick = doSample;
+$('btn-bases').onclick = doUpscaleBases;
+$('btn-all').onclick = doUpscaleAll;
 $('btn-cancel').onclick = doCancel;
 $('btn-regen').onclick = () => doRegen(false);
 $('btn-apply').onclick = doApply;
@@ -457,7 +466,7 @@ await loadManifest();
 const st = await apiStatus();
 setServerUI(!!(st && st.ok));
 if (st && st.ok) {
-  if (st.sampleRunning) { setSampleRunning(true); openLogStream(); }
-  else openLogStream(); // attach so a later sample streams immediately
+  if (st.jobRunning) { setJobRunning(true); openLogStream(); }
+  else openLogStream(); // attach so a later job streams immediately
 }
 </script></body></html>

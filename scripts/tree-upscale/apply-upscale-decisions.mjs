@@ -12,19 +12,22 @@
 //   blendPct = the ORIGINAL's share (matches apply-mix --pct). Per-variant overrides win over object mode.
 //
 // Per object (and per overridden variant) the three modes resolve to:
-//   • upscale — keep the AI @384 (raw). This tool does NOT run the GPU; if any @384 is missing it PRINTS
-//               the exact `python comfy-batch.py --field <f> --biome <b> --type <o>` to run, and treats
-//               existing @384 as satisfied. A previously-quarantined @384 is restored.
-//   • blend   — ensure @384, then apply-mix scoped to that field/biome/object (per-variant when needed) at
-//               the object's blendPct. Backed up + revertible exactly like a normal apply-mix run.
+//   • upscale — RUN the FULL upscale for the winner: `python comfy-batch.py --field <f> --biome <b>
+//               --type <o>` (NO --base-only → base + _states + anims, ALL variants), producing the @384
+//               set on disk. Idempotent/disk-first (skips sprites already @384) — skipped entirely if the
+//               object is already fully @384 unless --force. A previously-quarantined @384 is restored.
+//   • blend   — run that same full comfy-batch FIRST, THEN apply-mix scoped to that field/biome/object
+//               (per-variant when needed) at the object's blendPct. Backed up + revertible.
 //   • direct  — no @384: any @384 for that variant is MOVED (never deleted) to
 //               tools/_premix/_direct_quarantine/<field>/… so the manifest excludes it. Reversible.
 // Then the field's manifest is regenerated so the game seam (upscaleUrl) draws each pick at draw scale.
 //
 // FIELD_ASSET_ROOT overrides the corpus base (offline test fixtures); premix/quarantine follow it.
+// PYTHON_BIN overrides the python interpreter used to spawn comfy-batch (default 'python').
 //
 // Usage:
 //   node scripts/tree-upscale/apply-upscale-decisions.mjs --decisions path/to/upscale-decisions.json
+//   node scripts/tree-upscale/apply-upscale-decisions.mjs --decisions … --force # regen even if @384 present
 //   node scripts/tree-upscale/apply-upscale-decisions.mjs --decisions … --dry   # plan only, touch nothing
 
 import fs from 'node:fs';
@@ -40,6 +43,12 @@ const arg = (k, d) => { const i = argv.indexOf('--' + k); return i >= 0 ? argv[i
 const has = (k) => argv.includes('--' + k);
 const DECISIONS = arg('decisions');
 const DRY = has('dry');
+const FORCE = has('force');
+const PY = process.env.PYTHON_BIN || 'python';   // interpreter for comfy-batch (overridable for tests/venvs)
+// comfy-batch.py self-locates the REAL corpus (it ignores FIELD_ASSET_ROOT). So when FIELD_ASSET_ROOT is set
+// — an offline fixture / test corpus — we CANNOT meaningfully run it (it'd target the real assets, not the
+// fixture). In that mode we RECORD the full-upscale command instead of spawning, like a --dry for the GPU step.
+const FIXTURE = !!process.env.FIELD_ASSET_ROOT;
 
 if (!DECISIONS) { console.error('usage: apply-upscale-decisions.mjs --decisions <path> [--dry]'); process.exit(2); }
 if (!fs.existsSync(DECISIONS)) { console.error('no decisions file at', DECISIONS); process.exit(2); }
@@ -83,6 +92,35 @@ function moveFile(src, dst) {
   fs.renameSync(src, dst);
 }
 
+// True when EVERY source sprite under objDir (base/state/anim frame, non-@384) already has its @384
+// sibling — i.e. the full upscale set is on disk and (absent --force) we can skip re-running the GPU.
+function objFullyUpscaled(objDir) {
+  let sawSource = false;
+  for (const f of walkFiles(objDir, [])) {
+    if (!f.endsWith('.png') || f.endsWith('@384.png')) continue;
+    sawSource = true;
+    if (!fs.existsSync(f.replace(/\.png$/, '@384.png'))) return false;
+  }
+  return sawSource;   // no sources at all → not "fully upscaled" (force a run / report nothing to do)
+}
+
+// RUN the full comfy-batch for one object (NO --base-only → base + _states + anims, all variants). This is
+// the step that actually GENERATES the winners' detail on disk. Disk-first/idempotent: comfy-batch skips
+// sprites already @384, so re-runs are cheap. stdio:'inherit' streams ComfyUI progress straight through to
+// our stdout (so the upscale-server's SSE log shows it live). --dry prints the command and runs nothing.
+function runComfyBatch(biome, object) {
+  const cliArgs = ['comfy-batch.py', '--field', FIELD, '--biome', biome, '--type', object];
+  if (FORCE) cliArgs.push('--force');
+  const cmdStr = `${PY} ${cliArgs.join(' ')}`;
+  console.log(`  $ ${cmdStr}`);
+  if (DRY || FIXTURE) return cmdStr;   // record only — can't run the GPU against a fixture corpus
+  const r = spawnSync(PY, [path.join(HERE, 'comfy-batch.py'), ...cliArgs.slice(1)], {
+    stdio: 'inherit', env: process.env, cwd: REPO,
+  });
+  if (r.status !== 0) console.error(`      comfy-batch exited ${r.status == null ? '(signal/' + r.signal + ')' : r.status}`);
+  return cmdStr;
+}
+
 // run apply-mix scoped to this field/biome/object (optionally one variant) at pct
 function runApplyMix(biome, object, variant, pct) {
   const a = ['apply-mix.mjs', '--field', FIELD, '--biome', biome, '--type', object, '--pct', String(pct)];
@@ -115,58 +153,58 @@ for (const objKey of Object.keys(DECS).sort()) {
   const effMode = (v) => (overrides[v] && overrides[v].mode) || objMode;
   const effPct = (v) => (overrides[v] && overrides[v].blendPct != null ? overrides[v].blendPct
     : (dec.blendPct != null ? dec.blendPct : 40));
-
-  // (a) RESTORE any quarantined @384 for variants that are now NON-direct (mode toggled back).
   const qDir = path.join(QUARANTINE, FIELD, biome, object);
+
+  // Variants present on disk (from any source sprite), and their effective modes.
+  const variants = new Set();
+  for (const f of walkFiles(objDir, [])) { if (f.endsWith('.png') && !f.endsWith('@384.png')) { const v = variantOf(relUnder(objDir, f)); if (v) variants.add(v); } }
+
+  // (1) GENERATE — for any UPSCALE/BLEND variant, RUN the FULL comfy-batch (states + anims + all variants)
+  // so the winner gets a complete @384 set on disk. Skip if already fully @384 (unless --force). --dry prints.
+  const wantGen = [...variants].some((v) => effMode(v) === 'upscale' || effMode(v) === 'blend');
+  if (wantGen) {
+    if (DRY || FIXTURE) {
+      cmds.push(runComfyBatch(biome, object));                       // prints the command, runs nothing
+      counts.cmds++;
+    } else if (!FORCE && objFullyUpscaled(objDir)) {
+      console.log('  generate: @384 present for every sprite — full set already on disk (use --force to redo)');
+    } else {
+      runComfyBatch(biome, object);
+    }
+  }
+
+  // (2) RESTORE any quarantined @384 for variants that are now NON-direct (mode toggled back).
   for (const qf of walkFiles(qDir, [])) {
     if (!qf.endsWith('@384.png')) continue;
     const rel = relUnder(qDir, qf);
     if (effMode(variantOf(rel)) === 'direct') continue;             // still direct → leave quarantined
     const dst = path.join(objDir, rel);
     if (DRY) { console.log('  would restore from quarantine:', rel); counts.restored++; continue; }
+    if (fs.existsSync(dst)) { fs.rmSync(qf); continue; }            // fresh @384 already regenerated → drop stale copy
     moveFile(qf, dst); counts.restored++;
     console.log('  restored from quarantine:', rel);
   }
 
-  // (b) QUARANTINE @384 for variants that are now direct (no @384 → excluded from the manifest).
+  // (3) QUARANTINE @384 for variants that are now direct (no @384 → excluded from the manifest).
   for (const f of walkFiles(objDir, [])) {
     if (!f.endsWith('@384.png')) continue;
     const rel = relUnder(objDir, f);
     if (effMode(variantOf(rel)) !== 'direct') continue;
     const dst = path.join(qDir, rel);
     if (DRY) { console.log('  would quarantine (direct):', rel); counts.quarantined++; continue; }
+    if (fs.existsSync(dst)) fs.rmSync(dst);                          // replace any stale quarantine copy
     moveFile(f, dst); counts.quarantined++;
   }
 
-  // What variants exist on disk (from base + remaining @384), and their effective modes.
-  const variants = new Set();
-  for (const f of walkFiles(objDir, [])) { if (f.endsWith('.png')) { const v = variantOf(relUnder(objDir, f)); if (v) variants.add(v); } }
+  // Effective modes after (de)quarantine → count + drive blend.
   const remaining = [...variants].filter((v) => effMode(v) !== 'direct');
   const blendVs = remaining.filter((v) => effMode(v) === 'blend');
   const upscaleVs = remaining.filter((v) => effMode(v) === 'upscale');
+  counts.upscale += upscaleVs.length;
+  counts.blend += blendVs.length;
 
-  // (c) UPSCALE — keep raw; flag missing @384 → print the GPU command (never run it here).
-  if (upscaleVs.length) {
-    counts.upscale += upscaleVs.length;
-    let missing = 0;
-    for (const f of walkFiles(objDir, [])) {
-      if (!f.endsWith('.png') || f.endsWith('@384.png')) continue;
-      const v = variantOf(relUnder(objDir, f));
-      if (effMode(v) !== 'upscale') continue;
-      if (!fs.existsSync(f.replace(/\.png$/, '@384.png'))) missing++;
-    }
-    if (missing) {
-      const cmd = `python comfy-batch.py --field ${FIELD} --biome ${biome} --type ${object}`;
-      console.log(`  upscale: ${missing} sprite(s) lack @384 → RUN:  ${cmd}`);
-      cmds.push(cmd); counts.cmds++;
-    } else {
-      console.log(`  upscale: @384 present for all ${upscaleVs.length} variant(s) — satisfied`);
-    }
-  }
-
-  // (d) BLEND — apply-mix object-scoped when it's the whole object at one pct; else per-variant.
+  // (4) BLEND — apply-mix object-scoped when it's the whole object at one pct; else per-variant.
   if (blendVs.length) {
-    counts.blend += blendVs.length;
     const pcts = new Set(blendVs.map(effPct));
     if (upscaleVs.length === 0 && pcts.size === 1) {
       runApplyMix(biome, object, null, [...pcts][0]);               // efficient whole-object blend
@@ -190,6 +228,6 @@ if (DRY) {
 // --- summary ---------------------------------------------------------------
 console.log(`\n${DRY ? 'DRY — ' : ''}done: ${counts.upscale} upscale · ${counts.blend} blend · ${counts.quarantined} quarantined · ${counts.restored} restored`);
 if (cmds.length) {
-  console.log('\nGPU still needed (run these, then re-run gen-upscale-manifest.mjs):');
+  console.log(`\n${DRY ? 'DRY — ' : ''}full-upscale command(s) recorded (NO --base-only → states + anims + all variants)${FIXTURE ? ' [fixture: comfy-batch targets the real corpus, so not run here]' : ''}:`);
   for (const c of cmds) console.log('  ' + c);
 }

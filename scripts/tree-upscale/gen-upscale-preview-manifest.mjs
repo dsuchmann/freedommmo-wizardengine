@@ -2,8 +2,10 @@
 // gen-upscale-preview-manifest.mjs — build the QA/preview manifest the upscale-studio dashboard loads.
 //
 // Scans the 5 object fields in fields.json for a biome (default grassland), and for each object dir
-// emits the first N (default 3) sampled variants with web URLs for: the raw PixelLab original, the AI
-// @384 upscale (null if not produced yet = "sample pending"), and any anim frame lists (+ @384 frames).
+// emits EVERY base variant (default = ALL — the dashboard now reviews every variant, not a sample of 3)
+// with web URLs for: the raw PixelLab original, the AI @384 upscale (null if not produced yet =
+// "upscale pending"), and any anim frame lists (+ @384 frames). An optional sample arg still caps the
+// count (cheap previews) but is no longer the default.
 //
 // Asset root: assets live in the MAIN checkout (gitignored). Override with FIELD_ASSET_ROOT; otherwise
 // defaults to the repo root that contains this script. Web URLs are emitted relative to the asset root
@@ -11,9 +13,10 @@
 //
 // Usage:
 //   node scripts/tree-upscale/gen-upscale-preview-manifest.mjs [biome] [sampleN]
-//   node scripts/tree-upscale/gen-upscale-preview-manifest.mjs grassland 3
+//   node scripts/tree-upscale/gen-upscale-preview-manifest.mjs grassland        # ALL base variants (default)
+//   node scripts/tree-upscale/gen-upscale-preview-manifest.mjs grassland 3      # cap to first 3/object
 //   FIELD_ASSET_ROOT=/path/to/checkout node scripts/tree-upscale/gen-upscale-preview-manifest.mjs grassland
-//   (env: UPSCALE_SAMPLE overrides N; --sample=N also accepted)
+//   (env: UPSCALE_SAMPLE overrides N; --sample=N also accepted; omit all = ALL variants)
 //
 // Output: tools/upscale-preview.<biome>.json
 //   { biome, generatedAt, assetRoot, sample, fields: [
@@ -36,7 +39,9 @@ const argv = process.argv.slice(2);
 const positional = argv.filter((a) => !a.startsWith('-'));
 const biome = positional[0] || 'grassland';
 const flagSample = (argv.find((a) => a.startsWith('--sample=')) || '').split('=')[1];
-const SAMPLE = parseInt(process.env.UPSCALE_SAMPLE || flagSample || positional[1] || '3', 10);
+// Default = ALL variants (Infinity). An explicit env/flag/positional still caps to the first N.
+const sampleRaw = process.env.UPSCALE_SAMPLE || flagSample || positional[1];
+const SAMPLE = (sampleRaw != null && sampleRaw !== '') ? parseInt(sampleRaw, 10) : Infinity;
 
 // Tab order for the dashboard (F2, F4, F5, F6, large_objects).
 const FIELD_ORDER = ['small_flora', 'medium_flora', 'medium_objects', 'large_flora', 'large_objects'];
@@ -78,7 +83,7 @@ function variantAnim(objDir, num) {
   };
 }
 
-const out = { biome, generatedAt: new Date().toISOString(), assetRoot: ASSET_ROOT, sample: SAMPLE, fields: [] };
+const out = { biome, generatedAt: new Date().toISOString(), assetRoot: ASSET_ROOT, sample: Number.isFinite(SAMPLE) ? SAMPLE : null, fields: [] };
 let totalObjects = 0;
 let totalVariants = 0;
 let withUpscale = 0;
@@ -104,7 +109,7 @@ for (const fieldName of FIELD_ORDER) {
     variants.sort((a, b) => a.num - b.num);
     if (!variants.length) continue;
 
-    const sampled = variants.slice(0, SAMPLE).map(({ num, stem, file }) => {
+    const sampled = (Number.isFinite(SAMPLE) ? variants.slice(0, SAMPLE) : variants).map(({ num, stem, file }) => {
       const original = webUrl(path.join(objDir, file));
       const upAbs = path.join(objDir, stem + '@384.png');
       const upscale = fs.existsSync(upAbs) ? webUrl(upAbs) : null;
@@ -126,8 +131,8 @@ fs.writeFileSync(OUT, JSON.stringify(out, null, 1));
 
 console.log(`wrote ${path.relative(REPO, OUT)}`);
 console.log(`  asset root: ${ASSET_ROOT}`);
-console.log(`  biome: ${biome} · sample N: ${SAMPLE}`);
-console.log(`  objects: ${totalObjects} (${withUpscale} with @384) · sampled variants: ${totalVariants}`);
+console.log(`  biome: ${biome} · sample N: ${Number.isFinite(SAMPLE) ? SAMPLE : 'ALL'}`);
+console.log(`  objects: ${totalObjects} (${withUpscale} with @384) · variants emitted: ${totalVariants}`);
 for (const f of out.fields) {
   const up = f.objects.filter((o) => o.hasUpscale).length;
   console.log(`    ${f.field}: ${f.objects.length} objects (${up} @384), drawPx ${f.drawPx}`);

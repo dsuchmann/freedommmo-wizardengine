@@ -78,5 +78,26 @@
    "cherry_blossom": "flowering cherry tree with a pink-white blossom canopy",
    "meadow_oak": "broad spreading meadow oak tree with full green canopy"
   }
+ },
+ "small_scatter": {
+  "label": "F3 small scatter",
+  "root": "assets/pixelab/landscape_v2/micro/small_scatter",
+  "file_re": "^ss__.*__v(\\d+)$",
+  "draw_px": 32,
+  "kinds": ["base"],
+  "transparent": true,
+  "denoise": 0.35,
+  "prompt_mode": "template",
+  "ready_gate": "disk",
+  "skip_biomes": ["ocean", "deep_ocean", "lake", "river", "shallow_water"],
+  "prompt": "top-down pixel art of a single small {obj}, crisp clean pixel-art shading, detailed surface texture, rich natural colors, high fantasy game asset, sharp blocky pixels, no anti-aliasing",
+  "objects": {
+   "field_stone": "small grey field stone with subtle moss",
+   "seashell": "small spiral seashell, pale ridged surface",
+   "bleached_bone": "small bleached white bone fragment",
+   "mushroom_cluster": "small cluster of forest mushrooms with rounded caps",
+   "pine_cone": "small brown pine cone with layered scales",
+   "obsidian_shard": "small glassy black obsidian shard"
+  }
  }
 }

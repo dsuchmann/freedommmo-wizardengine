@@ -122,6 +122,7 @@ FIELD_OBJECTS = {}                   # template-mode per-object {obj} overrides
 SAMPLE_N = None                      # --sample N: cap to the first N variants per object (None = all)
 DECISIONS_KEYS = None                # --decisions: set of "biome/obj" with mode upscale/blend (None = all)
 BASE_ONLY = False                    # --base-only: skip _states + anim (fast ALL-bases pass for the QA dashboard)
+SKIP_BIOMES = set()                  # per-field skip_biomes: biomes never rendered in-game (e.g. F3 water patches)
 
 
 def load_fields() -> dict:
@@ -134,7 +135,7 @@ def configure_field(name: str) -> dict:
     """Select a field row from fields.json and populate the FIELD_* globals.
     For 'large_flora' this is a no-op vs the original hardcoded F6 behavior."""
     global FIELD_NAME, FIELD_ROOT, FIELD_RE, PROMPT_MODE, READY_GATE
-    global FIELD_PROMPT, FIELD_OBJECTS, DENOISE
+    global FIELD_PROMPT, FIELD_OBJECTS, DENOISE, SKIP_BIOMES
     if not FIELDS_FILE.exists():
         log.error(f"missing field config: {FIELDS_FILE}")
         sys.exit(1)
@@ -151,6 +152,7 @@ def configure_field(name: str) -> dict:
     READY_GATE = cfg.get("ready_gate", "disk")
     FIELD_PROMPT = cfg.get("prompt")
     FIELD_OBJECTS = cfg.get("objects", {}) or {}
+    SKIP_BIOMES = set(cfg.get("skip_biomes", []) or [])
     # Per-field denoise becomes the new default; an explicit --denoise still wins (applied in main()).
     if cfg.get("denoise") is not None:
         DENOISE = float(cfg["denoise"])
@@ -385,6 +387,8 @@ def enumerate_corpus(only_biome=None, only_type=None, ready_only=False):
         if BASE_ONLY and len(rel) != 3:
             continue                         # base = <biome>/<object>/<file>.png exactly (skip _states + ANY anim dir)
         biome, obj = biome_type_of(p)
+        if biome in SKIP_BIOMES:
+            continue                         # field-config skip_biomes: never-rendered biomes (e.g. F3 water patches)
         if only_biome and biome != only_biome:
             continue
         if only_type and obj != only_type:
