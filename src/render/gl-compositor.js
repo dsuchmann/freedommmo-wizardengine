@@ -104,7 +104,7 @@ var TILEMAP_FRAG_SRC = `#version 300 es
 precision highp float;
 precision highp int;
 in vec2 vUV;
-uniform sampler2D uIndex;    // 64x64 RGBA8 index map
+uniform highp usampler2D uIndex;    // 64x64 RGBA16UI index map
 uniform sampler2D uAtlas;    // wang tile atlas
 uniform sampler2D uSlotUV;   // RG32F, width=uSlotUVW, height 1: texel[slot] = (u0,v0)
 uniform int   uSlotUVW;
@@ -115,11 +115,10 @@ void main() {
   vec2 t = vUV * CHUNK;            // tile space
   ivec2 cell = ivec2(clamp(floor(t), 0.0, CHUNK - 1.0));
   vec2 frac = fract(t);
-  vec4 texel = texelFetch(uIndex, cell, 0);   // RGBA8 in 0..1
-  int R = int(texel.r * 255.0 + 0.5);
-  int G = int(texel.g * 255.0 + 0.5);
-  int B = int(texel.b * 255.0 + 0.5);
-  int baseSlot = R | ((G & 15) << 8);
+  uvec4 ti = texelFetch(uIndex, cell, 0);     // RGBA16UI: r=baseSlot g=cliffSlot b=soilId
+  int baseSlot = int(ti.r);
+  int cliffSlot = int(ti.g);
+  int soilId = int(ti.b);
   if (baseSlot == 0) { outColor = vec4(0.0); return; }   // empty cell
   int s = baseSlot; if (s >= uSlotUVW) s = 0;
   vec2 uv0 = texelFetch(uSlotUV, ivec2(s, 0), 0).rg;     // tile origin (half-texel inset baked in)
@@ -127,9 +126,7 @@ void main() {
   vec2 atlasUv = uv0 + frac * (31.0 / uAtlasSize);
   vec4 col = texture(uAtlas, atlasUv);                    // base wang tile (premultiplied)
   // Cliff overlay — a SECOND atlas tile drawn over the base, exactly as the bitmap
-  // path layers paintCliffOverlay on top of paintWangBase. The (formerly unused)
-  // transitionSlot field carries the cliff slot; 0 = no cliff face here.
-  int cliffSlot = B | (((G >> 4) & 15) << 8);
+  // path layers paintCliffOverlay on top of paintWangBase. cliffSlot 0 = no cliff.
   if (cliffSlot != 0 && cliffSlot < uSlotUVW) {
     vec2 cuv0 = texelFetch(uSlotUV, ivec2(cliffSlot, 0), 0).rg;
     vec4 cliff = texture(uAtlas, cuv0 + frac * (31.0 / uAtlasSize));
@@ -2150,7 +2147,7 @@ export class GLCompositor {
     if (!tex) {
       tex = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, tex);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 64, 64, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16UI, 64, 64, 0, gl.RGBA_INTEGER, gl.UNSIGNED_SHORT, null);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -2159,7 +2156,8 @@ export class GLCompositor {
     } else {
       gl.bindTexture(gl.TEXTURE_2D, tex);
     }
-    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 64, 64, gl.RGBA, gl.UNSIGNED_BYTE, buf);
+    // Integer texture: format RGBA_INTEGER + type UNSIGNED_SHORT, buf is a Uint16Array.
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 64, 64, gl.RGBA_INTEGER, gl.UNSIGNED_SHORT, buf);
     gl.bindTexture(gl.TEXTURE_2D, null);
   }
 

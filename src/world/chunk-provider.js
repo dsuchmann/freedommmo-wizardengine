@@ -153,7 +153,7 @@ export class ChunkProvider {
     try {
       // Cache-bust: append timestamp so browser reloads worker modules on code changes
       const workerUrl = new URL('./chunk-worker.js', import.meta.url);
-      workerUrl.searchParams.set('v', '20260619f-roof-overhang-nodroop-gputiles3-cliff');
+      workerUrl.searchParams.set('v', '20260619f-roof-overhang-nodroop-gputiles4-rgba16ui');
       const worker = new Worker(workerUrl, { type: 'module' });
       worker._imagesReady = false;
       worker.onmessage = event => {
@@ -190,7 +190,7 @@ export class ChunkProvider {
             if (old) old.close();
             this.bitmaps.set(bitmapKey, msg.bitmap);
             if (msg.wangDebug) this.wangDebug.set(bitmapKey, msg.wangDebug);
-            if (msg.index) this.indexes.set(bitmapKey, new Uint8Array(msg.index));
+            if (msg.index) this.indexes.set(bitmapKey, new Uint16Array(msg.index));
           }
           // chunkPainted replaces chunkDone — finalize assembly
           const partial = this.assembling.get(key);
@@ -218,7 +218,7 @@ export class ChunkProvider {
             if (old) old.close();
             this.bitmaps.set(bitmapKey, msg.bitmap);
             if (msg.wangDebug) this.wangDebug.set(bitmapKey, msg.wangDebug);
-            if (msg.index) this.indexes.set(bitmapKey, new Uint8Array(msg.index));
+            if (msg.index) this.indexes.set(bitmapKey, new Uint16Array(msg.index));
           }
         } else if (msg.type === 'chunkDone') {
           // Legacy fallback — shouldn't fire with new worker but handle gracefully
