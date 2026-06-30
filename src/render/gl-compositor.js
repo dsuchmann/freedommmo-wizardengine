@@ -109,6 +109,11 @@ uniform sampler2D uAtlas;    // wang tile atlas
 uniform sampler2D uSlotUV;   // RG32F, width=uSlotUVW, height 1: texel[slot] = (u0,v0)
 uniform int   uSlotUVW;
 uniform float uAtlasSize;
+uniform vec2  uChunkOrigin;   // chunk's world-tile origin (cx*64, cy*64)
+uniform sampler2D uSoilAtlas; // RGBA8 strip, cell i = soil id i (32px cells)
+uniform sampler2D uSoilConfig;// RGBA32F count x 2 (row0 params, row1 tint)
+uniform int   uSoilCount;     // number of soil ids (atlas/config width)
+uniform float uSoilOn;        // 0 = soil pass disabled
 out vec4 outColor;
 const float CHUNK = 64.0;
 void main() {
@@ -131,6 +136,34 @@ void main() {
     vec2 cuv0 = texelFetch(uSlotUV, ivec2(cliffSlot, 0), 0).rg;
     vec4 cliff = texture(uAtlas, cuv0 + frac * (31.0 / uAtlasSize));
     col = cliff + col * (1.0 - cliff.a);                  // premultiplied "over"
+  }
+  // ── F0 soil pass — procedural per-pixel, replacing applySoilFieldToChunk ──
+  if (uSoilOn > 0.5 && soilId > 0 && soilId < uSoilCount) {
+    // World pixel coords (32 px per tile): origin tiles → tile cell → frac → px.
+    vec2 wp = (uChunkOrigin + vec2(cell)) * 32.0 + frac * 32.0;
+    vec2 ip = floor(wp);
+    // Per-pixel hash in [0,1). GPU hash (NOT the CPU float64 hash) — we replace the
+    // bitmap, so an equivalent distribution is the bar, not pixel identity.
+    float h = fract(sin(dot(ip, vec2(127.1, 311.7))) * 43758.5453123);
+    vec4 cfg0 = texelFetch(uSoilConfig, ivec2(soilId, 0), 0);  // density, alpha, tintStrength, hasTint
+    if (h <= cfg0.x) {
+      // Jittered sample within this id's 32px swatch cell — breaks the source
+      // sprite's diagonal patterns (CPU does this via random blob sampling).
+      float jx = fract(sin(dot(ip, vec2(269.5, 183.3))) * 43758.5453123);
+      float jy = fract(sin(dot(ip, vec2(419.2, 371.9))) * 43758.5453123);
+      float cellU = fract(frac.x + jx);
+      float cellV = fract(frac.y + jy);
+      float u = (float(soilId) + cellU) / float(uSoilCount);
+      vec4 soil = textureLod(uSoilAtlas, vec2(u, cellV), 0.0); // non-mip; safe in branch
+      if (soil.a > 0.0) {
+        vec3 srgb = soil.rgb;
+        if (cfg0.w > 0.5) {
+          vec4 cfg1 = texelFetch(uSoilConfig, ivec2(soilId, 1), 0); // tint rgb (0..1)
+          srgb = mix(srgb, cfg1.rgb, cfg0.z);                       // tint toward target
+        }
+        col.rgb = mix(col.rgb, srgb, soil.a * cfg0.y);              // alpha = swatch.a * cfg.alpha
+      }
+    }
   }
   outColor = col;
 }`;
@@ -2140,6 +2173,11 @@ export class GLCompositor {
     this._tmUSlotUV   = gl.getUniformLocation(prog, 'uSlotUV');
     this._tmUSlotUVW  = gl.getUniformLocation(prog, 'uSlotUVW');
     this._tmUAtlasSize = gl.getUniformLocation(prog, 'uAtlasSize');
+    this._tmUChunkOrigin = gl.getUniformLocation(prog, 'uChunkOrigin');
+    this._tmUSoilAtlas   = gl.getUniformLocation(prog, 'uSoilAtlas');
+    this._tmUSoilConfig  = gl.getUniformLocation(prog, 'uSoilConfig');
+    this._tmUSoilCount   = gl.getUniformLocation(prog, 'uSoilCount');
+    this._tmUSoilOn      = gl.getUniformLocation(prog, 'uSoilOn');
     // Own VAO that shares the same unit-quad VBO as the base chunk program
     this._tilemapVao = gl.createVertexArray();
     gl.bindVertexArray(this._tilemapVao);
@@ -2181,7 +2219,7 @@ export class GLCompositor {
   // Falls back (returns early) if atlas/slot-UV/index textures are not ready so the
   // caller can fall through to the bitmap drawChunk path. Restores the base chunk
   // program + VAO after drawing so drawChunk can be called interleaved.
-  drawChunkTilemap(key, sx, sy, dw, dh) {
+  drawChunkTilemap(key, cx, cy, sx, sy, dw, dh) {
     if (!this.ok || !this._wangAtlasTex || !this._slotUVTex) return;
     if (!this._chunkIndexTex) return;
     var indexTex = this._chunkIndexTex.get(key);
@@ -2212,6 +2250,22 @@ export class GLCompositor {
     gl.uniform1i(this._tmUSlotUV,   2);
     gl.uniform1i(this._tmUSlotUVW,  this._slotUVW);
     gl.uniform1f(this._tmUAtlasSize, this._wangAtlasSize);
+
+    // F0 soil pass — bind the soil swatch atlas (unit 3) + config (unit 4) and
+    // the chunk's world-tile origin. uSoilOn=0 when the soil textures aren't ready.
+    if (this._tmUChunkOrigin) gl.uniform2f(this._tmUChunkOrigin, cx * 64, cy * 64);
+    var _soilOn = (this._soilSwatchTex && this._soilConfigTex) ? 1 : 0;
+    if (this._tmUSoilOn) gl.uniform1f(this._tmUSoilOn, _soilOn);
+    if (_soilOn) {
+      gl.activeTexture(gl.TEXTURE3);
+      gl.bindTexture(gl.TEXTURE_2D, this._soilSwatchTex);
+      gl.activeTexture(gl.TEXTURE4);
+      gl.bindTexture(gl.TEXTURE_2D, this._soilConfigTex);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.uniform1i(this._tmUSoilAtlas, 3);
+      gl.uniform1i(this._tmUSoilConfig, 4);
+      gl.uniform1i(this._tmUSoilCount, this._soilCount);
+    }
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 

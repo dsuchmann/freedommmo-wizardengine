@@ -487,7 +487,7 @@ export class CanvasRenderer {
         if (_idx) {
           if (typeof window !== 'undefined') window._gpuTerrainStats.tilemap++;
           this.glc.uploadChunkIndex(key, _idx);
-          this.glc.drawChunkTilemap(key, sx, sy, chunkPx, chunkPx);
+          this.glc.drawChunkTilemap(key, cx, cy, sx, sy, chunkPx, chunkPx);
         } else {
           if (typeof window !== 'undefined') window._gpuTerrainStats.bitmap++;
           this.glc.drawChunk(key, cached, sx, sy, chunkPx, chunkPx);
