@@ -1444,7 +1444,7 @@ export function buildChunkIndex(chunk, opts) {
   var cliffResolver = opts.cliffResolver;
   var soilResolver  = opts.soilResolver || function() { return 0; };
 
-  var buf = new Uint8Array(size * size * 4);
+  var buf = new Uint16Array(size * size * 4);
 
   for (var ty = 0; ty < size; ty++) {
     for (var tx = 0; tx < size; tx++) {
