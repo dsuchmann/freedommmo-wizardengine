@@ -116,6 +116,18 @@ uniform int   uSoilCount;     // number of soil ids (atlas/config width)
 uniform float uSoilOn;        // 0 = soil pass disabled
 out vec4 outColor;
 const float CHUNK = 64.0;
+// Integer bit-hash — stable at ALL world coordinates. The classic
+// fract(sin(dot(p,k))) hash degenerates at large p: sin() loses float precision,
+// the "noise" becomes tile-periodic and the soil swatch tiles into a visible grid.
+// This maps two integer world-pixel coords + a salt → a well-distributed [0,1).
+uint uhash(uint x) {
+  x ^= x >> 16u; x *= 0x7feb352du; x ^= x >> 15u; x *= 0x846ca68bu; x ^= x >> 16u;
+  return x;
+}
+float hash01(int px, int py, uint salt) {
+  uint h = uhash(uint(px) ^ uhash(uint(py) * 2654435761u + salt));
+  return float(h & 0x00ffffffu) / float(0x01000000u);
+}
 void main() {
   vec2 t = vUV * CHUNK;            // tile space
   ivec2 cell = ivec2(clamp(floor(t), 0.0, CHUNK - 1.0));
@@ -141,16 +153,17 @@ void main() {
   if (uSoilOn > 0.5 && soilId > 0 && soilId < uSoilCount) {
     // World pixel coords (32 px per tile): origin tiles → tile cell → frac → px.
     vec2 wp = (uChunkOrigin + vec2(cell)) * 32.0 + frac * 32.0;
-    vec2 ip = floor(wp);
-    // Per-pixel hash in [0,1). GPU hash (NOT the CPU float64 hash) — we replace the
-    // bitmap, so an equivalent distribution is the bar, not pixel identity.
-    float h = fract(sin(dot(ip, vec2(127.1, 311.7))) * 43758.5453123);
+    int ipx = int(floor(wp.x));
+    int ipy = int(floor(wp.y));
+    // Per-pixel hash in [0,1) — integer bit-hash, stable at all world coords. (We
+    // replace the bitmap, so an equivalent distribution is the bar, not identity.)
+    float h = hash01(ipx, ipy, 0u);
     vec4 cfg0 = texelFetch(uSoilConfig, ivec2(soilId, 0), 0);  // density, alpha, tintStrength, hasTint
     if (h <= cfg0.x) {
       // Jittered sample within this id's 32px swatch cell — breaks the source
       // sprite's diagonal patterns (CPU does this via random blob sampling).
-      float jx = fract(sin(dot(ip, vec2(269.5, 183.3))) * 43758.5453123);
-      float jy = fract(sin(dot(ip, vec2(419.2, 371.9))) * 43758.5453123);
+      float jx = hash01(ipx, ipy, 1u);
+      float jy = hash01(ipx, ipy, 2u);
       float cellU = fract(frac.x + jx);
       float cellV = fract(frac.y + jy);
       float u = (float(soilId) + cellU) / float(uSoilCount);
