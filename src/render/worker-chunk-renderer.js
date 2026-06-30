@@ -8,6 +8,7 @@ var _f3RemovedKeys = new Set();
 export function setF3RemovedKeys(keys) { _f3RemovedKeys = keys instanceof Set ? keys : new Set(keys); }
 
 import { WORLD } from '../core/constants.js';
+import { encodeTexel } from './gpu-terrain-index.js';
 import { paintTerrainTile, paintCliffOverlay, getWangSrc } from './worker-tile-painter.js';
 import { cliffLevel } from '../world/terrain-shaper.js';
 import { soilMaterialForBiome, sfVariantsFor, wangAssetName } from './wang-image-list.js';
@@ -50,11 +51,13 @@ function transitionPairFor(a, b, elevA, elevB) {
   return { from: lower, to: upper, dir: wangAssetName(lower) + '_to_' + wangAssetName(upper) };
 }
 
-function elevationVariant(tile) {
-  var myLevel = cliffLevel(tile.climate.elevation);
-  var eLevel = cliffLevel(tile._elE != null ? tile._elE : tile.climate.elevation);
-  var sLevel = cliffLevel(tile._elS != null ? tile._elS : tile.climate.elevation);
-  var seLevel = cliffLevel(tile._elSE != null ? tile._elSE : tile.climate.elevation);
+export function elevationVariant(tile) {
+  // Defensive: support tiles with or without a climate sub-object
+  var base = (tile.climate != null) ? tile.climate.elevation : (tile.elevation != null ? tile.elevation : 0);
+  var myLevel = cliffLevel(base);
+  var eLevel = cliffLevel(tile._elE != null ? tile._elE : base);
+  var sLevel = cliffLevel(tile._elS != null ? tile._elS : base);
+  var seLevel = cliffLevel(tile._elSE != null ? tile._elSE : base);
   var maxDelta = Math.max(
     Math.abs(myLevel - eLevel),
     Math.abs(myLevel - sLevel),
@@ -1418,4 +1421,54 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
       soilPixels: soilResult.soilPixels, soilMissed: soilResult.missedSoil
     }
   };
+}
+
+// ── GPU index buffer emitter ───────────────────────────────────────────────────
+// Walks chunk tiles and writes one RGBA8 texel per tile into a Uint8Array.
+// Pure: no canvas, no GL, no worker globals — safe to call under plain node.
+//
+// opts.size          chunk dimension in tiles (default WORLD.chunkSize)
+// opts.slotResolver  (asset, level, cornerMask) → integer base slot
+// opts.soilResolver  (biome) → integer soil id 0..15
+//
+// Reuses the SAME per-tile classification logic as renderChunkToBitmap:
+//   • wangAssetName()  (already imported above)
+//   • cliffLevel()     (already imported above)
+//   • elevationVariant thresholds (inlined — maxDelta → wang/wang_25/wang_50/wang_100)
+//   • cornerMask derivation (inlined — same 15-wangEdgeMask relationship)
+//
+export function buildChunkIndex(chunk, opts) {
+  var size         = (opts && opts.size != null) ? opts.size : WORLD.chunkSize;
+  var slotResolver = opts.slotResolver;
+  var soilResolver = opts.soilResolver || function() { return 0; };
+
+  var buf = new Uint8Array(size * size * 4);
+
+  for (var ty = 0; ty < size; ty++) {
+    for (var tx = 0; tx < size; tx++) {
+      var off = (ty * size + tx) * 4;
+      var tile = chunk.tiles[ty * size + tx];
+      if (!tile) {
+        buf[off] = buf[off + 1] = buf[off + 2] = buf[off + 3] = 0;
+        continue;
+      }
+      // Use the SAME variant logic as renderChunkToBitmap (lines ~1219-1224)
+      var variant = elevationVariant(tile);
+      if (tile.transitionPair && tile.transitionPair.from === tile.transitionPair.to && variant === 'wang') {
+        variant = 'wang_25';
+      }
+      // Use the SAME getWangSrc as the bitmap painter so the GPU index selects the
+      // identical tile that the bitmap draws.
+      var src = getWangSrc(tile, variant);
+      var baseSlot = src ? (slotResolver(src) | 0) : 0;
+      var soilId   = opts.soilResolver ? (opts.soilResolver(tile.biome) | 0) : 0;
+      var texel    = encodeTexel(baseSlot, 0, soilId);
+      buf[off]     = texel[0];
+      buf[off + 1] = texel[1];
+      buf[off + 2] = texel[2];
+      buf[off + 3] = texel[3];
+    }
+  }
+
+  return buf;
 }

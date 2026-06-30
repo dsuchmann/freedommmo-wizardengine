@@ -95,6 +95,38 @@ void main() {
   outColor = texel;             // premultiplied colour (uploaded with UNPACK_PREMULTIPLY_ALPHA)
 }`;
 
+// GPU Wang-tile terrain: index-map sampler. Each 64×64 RGBA8 texel stores two 12-bit
+// atlas slot indices (base + transition) encoded by gpu-terrain-index.js::encodeTexel.
+// This phase decodes only baseSlot, looks up its (u0,v0) in the RG32F slot-UV table,
+// then samples the atlas at (u0 + frac * 31/atlasSize) where 31 texels = the tile
+// without its 1-px gutter. vUV (0..1) comes from the shared VERT_SRC vertex shader.
+var TILEMAP_FRAG_SRC = `#version 300 es
+precision highp float;
+precision highp int;
+in vec2 vUV;
+uniform sampler2D uIndex;    // 64x64 RGBA8 index map
+uniform sampler2D uAtlas;    // wang tile atlas
+uniform sampler2D uSlotUV;   // RG32F, width=uSlotUVW, height 1: texel[slot] = (u0,v0)
+uniform int   uSlotUVW;
+uniform float uAtlasSize;
+out vec4 outColor;
+const float CHUNK = 64.0;
+void main() {
+  vec2 t = vUV * CHUNK;            // tile space
+  ivec2 cell = ivec2(clamp(floor(t), 0.0, CHUNK - 1.0));
+  vec2 frac = fract(t);
+  vec4 texel = texelFetch(uIndex, cell, 0);   // RGBA8 in 0..1
+  int R = int(texel.r * 255.0 + 0.5);
+  int G = int(texel.g * 255.0 + 0.5);
+  int baseSlot = R | ((G & 15) << 8);
+  if (baseSlot == 0) { outColor = vec4(0.0); return; }   // empty cell
+  int s = baseSlot; if (s >= uSlotUVW) s = 0;
+  vec2 uv0 = texelFetch(uSlotUV, ivec2(s, 0), 0).rg;     // tile origin (half-texel inset baked in)
+  // tile spans 31 texels (matches WangAtlas du = (32-1)/atlasSize)
+  vec2 atlasUv = uv0 + frac * (31.0 / uAtlasSize);
+  outColor = texture(uAtlas, atlasUv);
+}`;
+
 // --- Stage 2: instanced sprite pipeline (F2 small flora) ---
 // Sprites live in a runtime shelf-packed atlas. Each instance replicates the
 // 2D path's pivot math: translate(sx, sy + halfDraw); rotate(a); drawImage at
@@ -2008,6 +2040,140 @@ export class GLCompositor {
     gl.disable(gl.BLEND);
   }
 
+  // --- GPU Wang-tile terrain compositor methods ---
+
+  // Register the fully-built WangAtlas texture + its serialized meta (from atlas.serializeMeta()).
+  // Builds a 1-row RG32F lookup texture so the tilemap fragment shader can resolve a slot integer
+  // to (u0,v0) atlas UV in one texelFetch. Call once after the atlas is fully populated (or again
+  // if new tiles are added — it rebuilds the lookup table each time).
+  setWangAtlas(tex, meta) {
+    if (!this.ok) return;
+    var gl = this.gl;
+    this._wangAtlasTex = tex;
+    this._wangAtlasSize = meta.atlasSize;
+
+    // Find the largest slot index across all registered tiles
+    var maxSlot = 0;
+    for (var val of Object.values(meta.slots)) { if (val.slot > maxSlot) maxSlot = val.slot; }
+    var w = maxSlot + 1;
+
+    // Fill a Float32Array: index slot*2 = u0, slot*2+1 = v0; slot 0 stays 0,0 (RESERVED=empty)
+    var data = new Float32Array(w * 2);
+    for (var val of Object.values(meta.slots)) {
+      data[val.slot * 2]     = val.u0;
+      data[val.slot * 2 + 1] = val.v0;
+    }
+
+    // Upload as RG32F 1-row texture (texelFetch-able in WebGL2 without extension)
+    if (!this._slotUVTex) this._slotUVTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, this._slotUVTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG32F, w, 1, 0, gl.RG, gl.FLOAT, data);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    this._slotUVW = w;
+
+    // Lazily build the tilemap program now that we know the atlas exists
+    if (!this._tilemapProgram) this._buildTilemapProgram();
+  }
+
+  _buildTilemapProgram() {
+    var gl = this.gl;
+    var prog = this._buildProgram(VERT_SRC, TILEMAP_FRAG_SRC);
+    if (!prog) { this._tilemapOk = false; return; }
+    this._tilemapProgram = prog;
+    this._tmUViewport = gl.getUniformLocation(prog, 'uViewport');
+    this._tmUPos      = gl.getUniformLocation(prog, 'uPos');
+    this._tmUSize     = gl.getUniformLocation(prog, 'uSize');
+    this._tmUIndex    = gl.getUniformLocation(prog, 'uIndex');
+    this._tmUAtlas    = gl.getUniformLocation(prog, 'uAtlas');
+    this._tmUSlotUV   = gl.getUniformLocation(prog, 'uSlotUV');
+    this._tmUSlotUVW  = gl.getUniformLocation(prog, 'uSlotUVW');
+    this._tmUAtlasSize = gl.getUniformLocation(prog, 'uAtlasSize');
+    // Own VAO that shares the same unit-quad VBO as the base chunk program
+    this._tilemapVao = gl.createVertexArray();
+    gl.bindVertexArray(this._tilemapVao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.unitVbo);
+    var loc = gl.getAttribLocation(prog, 'aUnit');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    gl.bindVertexArray(null);
+  }
+
+  // Upload (or refresh) the 64×64 RGBA8 index map for a chunk. buf is a Uint8Array
+  // of length 64*64*4 produced by encodeTexel in gpu-terrain-index.js. No upload
+  // budget/throttle: the index map is only 16 KB (vs ~16 MB for a chunk bitmap).
+  uploadChunkIndex(key, buf) {
+    if (!this.ok) return;
+    var gl = this.gl;
+    if (!this._chunkIndexTex) this._chunkIndexTex = new Map();
+    var tex = this._chunkIndexTex.get(key);
+    if (!tex) {
+      tex = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 64, 64, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      this._chunkIndexTex.set(key, tex);
+    } else {
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+    }
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 64, 64, gl.RGBA, gl.UNSIGNED_BYTE, buf);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+  }
+
+  // Draw a chunk quad by sampling the Wang tile atlas via the index map — the GPU
+  // tilemap path. Placement (sx/sy/dw/dh) is identical to drawChunk; the scene FBO
+  // and viewport are re-bound to match drawSceneOverlayBitmap's defensive pattern.
+  // Falls back (returns early) if atlas/slot-UV/index textures are not ready so the
+  // caller can fall through to the bitmap drawChunk path. Restores the base chunk
+  // program + VAO after drawing so drawChunk can be called interleaved.
+  drawChunkTilemap(key, sx, sy, dw, dh) {
+    if (!this.ok || !this._wangAtlasTex || !this._slotUVTex) return;
+    if (!this._chunkIndexTex) return;
+    var indexTex = this._chunkIndexTex.get(key);
+    if (!indexTex) return;
+    if (!this._tilemapProgram || this._tilemapOk === false) return;
+
+    var gl = this.gl;
+    // Bind scene FBO + viewport (defensive re-bind, mirrors drawSceneOverlayBitmap)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.sceneFbo);
+    gl.viewport(0, 0, this._artW, this._artH);
+    gl.useProgram(this._tilemapProgram);
+    gl.bindVertexArray(this._tilemapVao);
+
+    // Texture unit 0 = per-chunk index map, unit 1 = wang atlas, unit 2 = slot-UV table
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, indexTex);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this._wangAtlasTex);
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this._slotUVTex);
+    gl.activeTexture(gl.TEXTURE0); // restore unit 0 as active (convention)
+
+    gl.uniform2f(this._tmUViewport, this._artW, this._artH);
+    gl.uniform2f(this._tmUPos,      sx, sy);
+    gl.uniform2f(this._tmUSize,     dw, dh);
+    gl.uniform1i(this._tmUIndex,    0);
+    gl.uniform1i(this._tmUAtlas,    1);
+    gl.uniform1i(this._tmUSlotUV,   2);
+    gl.uniform1i(this._tmUSlotUVW,  this._slotUVW);
+    gl.uniform1f(this._tmUAtlasSize, this._wangAtlasSize);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+    // Restore base chunk pipeline so subsequent drawChunk calls continue to work
+    gl.useProgram(this.program);
+    gl.bindVertexArray(this.vao);
+    gl.uniform2f(this.uViewport, this._artW, this._artH);
+    gl.uniform1i(this.uTex, 0);
+    gl.activeTexture(gl.TEXTURE0);
+  }
+
   endFrame() {
     if (!this.ok) return;
     this.frame++;
@@ -2020,6 +2186,8 @@ export class GLCompositor {
       if (this.frame - entry.lastUsed > EVICT_AFTER_FRAMES) {
         gl.deleteTexture(entry.tex);
         this.textures.delete(key);
+        // Evict the GPU index texture for this chunk at the same time
+        if (this._chunkIndexTex) { var it = this._chunkIndexTex.get(key); if (it) { gl.deleteTexture(it); this._chunkIndexTex.delete(key); } }
       }
     }
     this._evictBuildingTextures(EVICT_AFTER_FRAMES);
@@ -2059,7 +2227,9 @@ export class GLCompositor {
     for (var [key, entry] of this.textures) {
       var keep = false;
       if (hasDest) { var p = key.split(','); if (Math.abs((+p[0]) - dcx) <= KEEP && Math.abs((+p[1]) - dcy) <= KEEP) keep = true; }
-      if (!keep) { gl.deleteTexture(entry.tex); this.textures.delete(key); freed++; }
+      if (!keep) { gl.deleteTexture(entry.tex); this.textures.delete(key); freed++;
+        if (this._chunkIndexTex) { var ci = this._chunkIndexTex.get(key); if (ci) { gl.deleteTexture(ci); this._chunkIndexTex.delete(key); } }
+      }
     }
     if (this.bldTextures) { for (var [, e2] of this.bldTextures) { gl.deleteTexture(e2.tex); freed++; } this.bldTextures.clear(); }
     // INTENTIONALLY NOT resetting the sprite atlas here. resetAtlas() bumped atlasGen → forced a full

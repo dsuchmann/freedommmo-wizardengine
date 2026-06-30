@@ -4,7 +4,7 @@ import { setFieldTuning } from './field-tuning.js';
 import { clearClaimCaches } from './decoration-claims.js';
 import { ChunkCompiler } from './chunk-compiler.js';
 import { getWangImageURLsForBiomes, getSoilImageURLsForBiomes, getGroundCoverImageURLsForBiomes, getSmallScatterImageURLs } from '../render/wang-image-list.js';
-import { renderChunkToBitmap, setF3RemovedKeys } from '../render/worker-chunk-renderer.js';
+import { renderChunkToBitmap, setF3RemovedKeys, buildChunkIndex } from '../render/worker-chunk-renderer.js';
 import { denoiseBitmap } from '../render/sprite-denoise.js';
 import { getAllFloorTileURLs } from '../render/building-tile-query.js';
 
@@ -20,6 +20,10 @@ var MAX_NEIGHBOR_CACHE = 50;
 // Field-tuning generation — stamped onto every painted bitmap so the main
 // thread can discard paints that were in flight when the tuning tree changed.
 var tuneGen = 0;
+
+// GPU terrain: slot metadata broadcast from the main thread; null until set.
+var wangAtlasMeta = null;
+var gpuTerrain = false;
 
 // URLs matching these patterns get denoised at load time
 function shouldDenoise(url) {
@@ -198,7 +202,8 @@ function runRepaintPass() {
       chunksNeedingRepaint.push({ key: rchunk.key, cx: rchunk.cx, cy: rchunk.cy, attempts: (rchunk.attempts || 0) + 1 });
       stillIncomplete++;
     }
-    self.postMessage({ type: 'chunkRepainted', key: rchunk.key, cx: rchunk.cx, cy: rchunk.cy, gen: tuneGen, bitmap: result.bitmap, wangDebug: result.debug }, [result.bitmap]);
+    var rIdxBuf = buildIndexBuffer(chunk);
+    self.postMessage({ type: 'chunkRepainted', key: rchunk.key, cx: rchunk.cx, cy: rchunk.cy, gen: tuneGen, bitmap: result.bitmap, wangDebug: result.debug, index: rIdxBuf }, rIdxBuf ? [result.bitmap, rIdxBuf] : [result.bitmap]);
   }
   // Self-reschedule only while chunks remain under the attempt cap. Bounded by
   // MAX_REPAINT_ATTEMPTS, so a building whose roof engine never loads stops
@@ -270,6 +275,22 @@ function evictNeighborCache() {
   }
 }
 
+// Build a per-chunk index buffer for the GPU terrain shader. Returns the
+// underlying ArrayBuffer (transferable) or null when GPU terrain is off.
+function buildIndexBuffer(chunk) {
+  if (!gpuTerrain || !wangAtlasMeta) return null;
+  try {
+    var idx = buildChunkIndex(chunk, {
+      slotResolver: function(src) {
+        var e = wangAtlasMeta.slots[src];
+        return e ? e.slot : 0;
+      },
+      soilResolver: function() { return 0; }, // Phase 3 wires real soil ids
+    });
+    return idx.buffer; // transferable ArrayBuffer
+  } catch (e) { return null; }
+}
+
 self.onmessage = function(event) {
   var data = event.data;
 
@@ -282,6 +303,16 @@ self.onmessage = function(event) {
 
   if (data.type === 'setF3RemovedKeys') {
     setF3RemovedKeys(data.keys ?? []);
+    return;
+  }
+
+  if (data.type === 'setWangAtlasMeta') {
+    wangAtlasMeta = data.meta;
+    return;
+  }
+
+  if (data.type === 'setGpuTerrain') {
+    gpuTerrain = !!data.on;
     return;
   }
 
@@ -355,8 +386,9 @@ self.onmessage = function(event) {
         scheduleRepaintPass();
       }
 
-      // Transfer bitmap to main thread (zero-copy)
-      self.postMessage({ type: 'chunkPainted', key: key, cx: cx, cy: cy, gen: tuneGen, bitmap: result.bitmap, wangDebug: result.debug }, [result.bitmap]);
+      // Transfer bitmap (and optional GPU index buffer) to main thread (zero-copy)
+      var idxBuf = buildIndexBuffer(chunk);
+      self.postMessage({ type: 'chunkPainted', key: key, cx: cx, cy: cy, gen: tuneGen, bitmap: result.bitmap, wangDebug: result.debug, index: idxBuf }, idxBuf ? [result.bitmap, idxBuf] : [result.bitmap]);
     });
   } else if (data.type === 'repaintChunk') {
     if (!imagesReady) return;
@@ -395,7 +427,8 @@ self.onmessage = function(event) {
           chunksNeedingRepaint.push({ key: key, cx: cx, cy: cy, attempts: 0 });
           scheduleRepaintPass();
         }
-        self.postMessage({ type: 'chunkRepainted', key: key, cx: cx, cy: cy, gen: tuneGen, bitmap: r2.bitmap, wangDebug: r2.debug }, [r2.bitmap]);
+        var r2IdxBuf = buildIndexBuffer(chunk);
+        self.postMessage({ type: 'chunkRepainted', key: key, cx: cx, cy: cy, gen: tuneGen, bitmap: r2.bitmap, wangDebug: r2.debug, index: r2IdxBuf }, r2IdxBuf ? [r2.bitmap, r2IdxBuf] : [r2.bitmap]);
       });
       return;
     }
@@ -403,6 +436,7 @@ self.onmessage = function(event) {
       chunksNeedingRepaint.push({ key: key, cx: cx, cy: cy, attempts: 0 });
       scheduleRepaintPass();
     }
-    self.postMessage({ type: 'chunkRepainted', key: key, cx: cx, cy: cy, gen: tuneGen, bitmap: result.bitmap, wangDebug: result.debug }, [result.bitmap]);
+    var repIdxBuf = buildIndexBuffer(chunk);
+    self.postMessage({ type: 'chunkRepainted', key: key, cx: cx, cy: cy, gen: tuneGen, bitmap: result.bitmap, wangDebug: result.debug, index: repIdxBuf }, repIdxBuf ? [result.bitmap, repIdxBuf] : [result.bitmap]);
   }
 };
