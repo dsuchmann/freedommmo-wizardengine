@@ -345,6 +345,24 @@ def all_f6_types():
     return {v['biome'] + '/' + v['obj'] for v in d.get('variants', {}).values()}
 
 
+def load_curation():
+    """Read the field's curation sidecar (_*_curation.json in FIELD_ROOT) so we NEVER upscale assets the user
+    omitted/dropped in field-studio. Returns (omits, dropped): omits = {"biome/obj": set(v)}; dropped = set of
+    fully-removed "biome/obj". Empty when no sidecar exists."""
+    omits, dropped = {}, set()
+    for cand in FIELD_ROOT.glob("_*_curation.json"):
+        try:
+            c = json.loads(cand.read_text(encoding="utf-8"))
+        except Exception as e:
+            log.warning(f"curation sidecar {cand.name} unreadable: {e}")
+            continue
+        for key, vs in (c.get("omits") or {}).items():
+            omits.setdefault(key, set()).update(int(v) for v in vs)
+        for d in (c.get("droppedSpecies") or []):
+            dropped.add(d if isinstance(d, str) else d.get("key"))
+    return omits, dropped
+
+
 def enumerate_corpus(only_biome=None, only_type=None, ready_only=False):
     """Return a sorted list of source Paths to process, applying filters.
     Disk-first: globs the real corpus on disk. ready_only=True keeps ONLY fully-generated
@@ -356,6 +374,8 @@ def enumerate_corpus(only_biome=None, only_type=None, ready_only=False):
     # The completeness gate only applies to live-generating F6; disk-static fields process
     # whatever is present (ready_gate == "disk").
     ready = complete_f6_types() if (ready_only and READY_GATE == "f6") else None
+    cur_omits, cur_dropped = load_curation()    # NEVER upscale field-studio omits / dropped species
+    n_skip_cur = 0
     for p in FIELD_ROOT.rglob("*.png"):      # variant PNGs (base/state) + frame_###.png (anim); predicate filters
         if not is_static_source(p):
             continue
@@ -367,6 +387,13 @@ def enumerate_corpus(only_biome=None, only_type=None, ready_only=False):
         if only_type and obj != only_type:
             continue
         key = biome + '/' + obj
+        if key in cur_dropped:
+            n_skip_cur += 1
+            continue
+        vi_cur = variant_index(p)
+        if vi_cur is not None and vi_cur in cur_omits.get(key, ()):
+            n_skip_cur += 1                  # this exact variant was pulled out in field-studio
+            continue
         if ready is not None and key not in ready:
             continue
         if DECISIONS_KEYS is not None and key not in DECISIONS_KEYS:
@@ -376,6 +403,8 @@ def enumerate_corpus(only_biome=None, only_type=None, ready_only=False):
             if vi is None or vi >= SAMPLE_N:
                 continue
         out.append(p)
+    if n_skip_cur:
+        log.info(f"curation: skipped {n_skip_cur} omitted/dropped sprite(s) — field-studio exclusions honored")
     # Process base sprites FIRST, then states, then the (much larger) anim frames — so a full
     # run upgrades the visible trees in ~15 min and the animations fill in after, rather than
     # burying the base behind 576 frames.
