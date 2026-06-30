@@ -251,10 +251,12 @@ export class CanvasRenderer {
 
     // Lazily create the persistent atlas + per-biome load bookkeeping.
     if (!this._wangAtlas) {
-      // 4096² (~15k 32px tiles) so the append-only atlas covers every biome's Wang
-      // + cliff tiles across a long session without overflowing to the bitmap path.
-      // ~64MB VRAM — negligible. All UVs/lookups are parameterized by atlasSize.
-      this._wangAtlas = new WangAtlas(gl, 4096);
+      // 2048² (~3.8k 32px tiles) — kept under the index texel's 12-bit slot ceiling
+      // (4095). Growing past this REQUIRES widening the index texel first (see the
+      // detail-fields spec); a larger atlas would silently truncate slots > 4095.
+      // When the atlas fills, chunks needing un-packed tiles fall back to the bitmap
+      // (graceful), never corrupt.
+      this._wangAtlas = new WangAtlas(gl, 2048);
       this._atlasBiomesLoaded = new Set(); // biomes whose URLs are loaded/loading
       this._wangAtlasState = this._wangAtlasState || null;
     }
