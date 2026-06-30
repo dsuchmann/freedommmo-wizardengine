@@ -240,14 +240,44 @@ export class CanvasRenderer {
     if (this.glc && this.glc.ok) this.glc.resize(window.innerWidth, window.innerHeight, window.devicePixelRatio);
   }
 
+  // Build + GROW the GPU-terrain Wang atlas. The atlas is persistent and grows
+  // incrementally to cover every biome the player nears (provider.getActiveBiomes),
+  // so GPU terrain works world-wide — not just the grassland bootstrap. Called
+  // every frame; cheap no-op once the atlas already covers the present biomes.
   _ensureWangAtlas(provider) {
     if (typeof window === 'undefined' || !window._gpuTerrain) return;
-    if (this._wangAtlasState) return; // build started or done already
-    this._wangAtlasState = 'loading';
     const gl = this.glc && this.glc.gl;
-    if (!gl) { this._wangAtlasState = null; return; } // GL not ready yet, retry next frame
-    const atlas = new WangAtlas(gl);
-    const urls = getWangImageURLsForBiomes(['grassland']);
+    if (!gl) return; // GL not ready yet, retry next frame
+
+    // Lazily create the persistent atlas + per-biome load bookkeeping.
+    if (!this._wangAtlas) {
+      this._wangAtlas = new WangAtlas(gl);
+      this._atlasBiomesLoaded = new Set(); // biomes whose URLs are loaded/loading
+      this._wangAtlasState = this._wangAtlasState || null;
+    }
+    if (this._atlasGrowing) return; // one growth batch at a time
+
+    // Which biomes does the player need right now? Bootstrap with grassland until
+    // the first initPreload has sampled the surrounding biomes.
+    let biomes = provider.getActiveBiomes() || [];
+    if (!biomes.length) biomes = ['grassland'];
+    const fresh = biomes.filter(b => !this._atlasBiomesLoaded.has(b));
+    if (!fresh.length) return; // atlas already covers everything present
+
+    if (this._wangAtlasState == null) this._wangAtlasState = 'loading';
+    fresh.forEach(b => this._atlasBiomesLoaded.add(b));
+    this._growAtlas(provider);
+  }
+
+  // Fetch every Wang URL for the union of loaded biomes (so border-transition
+  // tiles between any two present biomes are covered), skipping URLs already in
+  // the atlas, then re-publish the grown atlas + meta to the compositor + workers.
+  _growAtlas(provider) {
+    const atlas = this._wangAtlas;
+    const allBiomes = [...this._atlasBiomesLoaded];
+    const urls = getWangImageURLsForBiomes(allBiomes).filter(u => !atlas.hasKey(u));
+    if (!urls.length) { this._publishAtlas(provider); return; }
+    this._atlasGrowing = true;
     let pending = urls.length;
     for (const url of urls) {
       fetch(url)
@@ -256,16 +286,25 @@ export class CanvasRenderer {
         .then(bmp => { if (bmp) atlas.add(url, bmp); })
         .catch(() => {}) // 404s / decode fails are fine — skip that tile
         .finally(() => {
-          if (--pending === 0) {
-            this._wangAtlas = atlas;
-            this.glc.setWangAtlas(atlas.texture(), atlas.serializeMeta());
-            provider.setWangAtlasMeta(atlas.serializeMeta());
-            provider.setGpuTerrain(true);
-            this._wangAtlasState = 'ready';
-            if (typeof window !== 'undefined') window._gpuTerrainReady = true;
-          }
+          if (--pending === 0) this._publishAtlas(provider);
         });
     }
+  }
+
+  // Hand the grown atlas texture + slot→UV meta to the compositor and broadcast
+  // the meta to the workers so they resolve newly-added biome tiles. Slots are
+  // append-only, so existing chunk indexes stay valid across growth.
+  _publishAtlas(provider) {
+    const atlas = this._wangAtlas;
+    const meta = atlas.serializeMeta();
+    this.glc.setWangAtlas(atlas.texture(), meta);
+    provider.setWangAtlasMeta(meta);
+    if (this._wangAtlasState !== 'ready') {
+      provider.setGpuTerrain(true);
+      this._wangAtlasState = 'ready';
+      if (typeof window !== 'undefined') window._gpuTerrainReady = true;
+    }
+    this._atlasGrowing = false;
   }
 
   draw(chunkStore, player, lighting, camera, provider, weather) {

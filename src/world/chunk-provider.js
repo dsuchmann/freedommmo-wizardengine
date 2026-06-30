@@ -72,6 +72,10 @@ export class ChunkProvider {
       }
     }
     const biomes = [...biomeSet];
+    // Remember the wide biome set so the GPU-terrain atlas loader (canvas-renderer
+    // _ensureWangAtlas) can grow the Wang atlas to cover every biome the player is
+    // near — not just the bootstrap grassland set.
+    this._activeBiomes = biomes;
     // Tight "core" set: the biomes actually around the player right now. Workers
     // gate their first paint on this small set (see chunk-worker preloadBiomes)
     // so the world appears in seconds instead of blocking on all 21 biomes' wang
@@ -149,7 +153,7 @@ export class ChunkProvider {
     try {
       // Cache-bust: append timestamp so browser reloads worker modules on code changes
       const workerUrl = new URL('./chunk-worker.js', import.meta.url);
-      workerUrl.searchParams.set('v', '20260619f-roof-overhang-nodroop-gputiles1');
+      workerUrl.searchParams.set('v', '20260619f-roof-overhang-nodroop-gputiles2');
       const worker = new Worker(workerUrl, { type: 'module' });
       worker._imagesReady = false;
       worker.onmessage = event => {
@@ -343,6 +347,12 @@ export class ChunkProvider {
 
   getChunkIndex(cx, cy) {
     return this.indexes.get(cx + ',' + cy) || null;
+  }
+
+  // The wide biome set sampled around the player by the most recent initPreload.
+  // The GPU-terrain atlas loader grows the Wang atlas to cover these biomes.
+  getActiveBiomes() {
+    return this._activeBiomes || null;
   }
 
   setGpuTerrain(on) {

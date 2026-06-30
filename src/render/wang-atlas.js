@@ -83,6 +83,11 @@ export class WangAtlas {
     return slot;
   }
 
+  /** True if this URL is already packed into the atlas (skip refetch during growth). */
+  hasKey(key) {
+    return this._slots.has(key);
+  }
+
   /** Return {u0, v0} for a slot integer, or {u0:0, v0:0} for slot 0 / unknown. */
   slotUV(slot) {
     if (!slot) return { u0: 0, v0: 0 };

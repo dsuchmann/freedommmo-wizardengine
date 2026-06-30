@@ -280,13 +280,21 @@ function evictNeighborCache() {
 function buildIndexBuffer(chunk) {
   if (!gpuTerrain || !wangAtlasMeta) return null;
   try {
+    // If ANY visible wang tile isn't in the atlas yet (the atlas grows
+    // incrementally as the player nears new biomes), abandon the GPU index for
+    // this chunk so it draws via the still-correct bitmap instead of rendering
+    // atlas holes. The chunk re-emits a complete index on its next repaint once
+    // the atlas has grown to cover its biome.
+    var missing = false;
     var idx = buildChunkIndex(chunk, {
       slotResolver: function(src) {
         var e = wangAtlasMeta.slots[src];
-        return e ? e.slot : 0;
+        if (!e) { missing = true; return 0; }
+        return e.slot;
       },
       soilResolver: function() { return 0; }, // Phase 3 wires real soil ids
     });
+    if (missing) return null;
     return idx.buffer; // transferable ArrayBuffer
   } catch (e) { return null; }
 }
