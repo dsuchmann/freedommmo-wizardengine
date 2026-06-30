@@ -1009,16 +1009,21 @@ export function clearF2Pool() {
 
 // === GPU-driven flora (Phase 2): static-instance buffer build ===
 // When on, the rebuild packs each sprite's animation frames as an atlas STRIP and
-// writes a static 20-float instance; the GPU shader animates it from uTime. Toggled
-// live via window._gpuFlora so it can be A/B'd against the CPU path.
-// On = window._gpuFlora === true (session) OR localStorage 'gpuFlora'='1' (persists
-// across reloads, so the flag isn't lost on refresh). window._gpuFlora === false
-// force-disables either way.
+// writes a static 20-float instance; the GPU shader animates it from uTime — so the
+// per-frame CPU cost is ZERO and the only work (the rebuild) is AMORTIZED across frames.
+// This is the production path; the CPU path below is "Legacy" and runs _poolRebuild
+// SYNCHRONOUSLY (~25ms) on every margin crossing + a per-frame per-sprite loop = the
+// walking stutter. DEFAULT ON (2026-06-29) — every call site also requires glc.animOk,
+// so a context without WebGL2 instancing falls back to the CPU path automatically.
+// Escape hatch: window._gpuFlora === false (session) OR localStorage 'gpuFlora'='0'
+// force the legacy CPU path. window._gpuFlora === true forces GPU even if animOk is
+// flaky. Anything else (the default) = GPU on.
 function gpuFloraOn() {
   if (typeof window === 'undefined') return false;
   if (window._gpuFlora === true) return true;
   if (window._gpuFlora === false) return false;
-  try { return window.localStorage && localStorage.getItem('gpuFlora') === '1'; } catch (e) { return false; }
+  try { if (window.localStorage && localStorage.getItem('gpuFlora') === '0') return false; } catch (e) {}
+  return true; // DEFAULT ON — the amortized, zero-per-frame-cost path
 }
 
 // Resolve a sprite's frame strip (cached per url-set + size). Returns
