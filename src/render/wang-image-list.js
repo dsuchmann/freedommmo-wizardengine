@@ -173,6 +173,21 @@ var SOIL_MATERIALS = {
 var SOIL_BASE_PATH = '/assets/pixelab/landscape_v2/micro/soil/';
 var SOIL_VARIANT_COUNT = 64;
 
+// Stable per-biome soil id (1-based; 0 = no soil). The GPU soil pass uses this id
+// to index the soil-swatch atlas + per-biome config texture (see gl-compositor
+// setSoilAtlas). Order is fixed (SOIL_MATERIALS insertion order) so ids never shift
+// between sessions. Biomes that share a soil MATERIAL still get distinct ids
+// (same swatch art, own config).
+var SOIL_IDS = {};
+(function () {
+  var i = 1;
+  for (var biome in SOIL_MATERIALS) { SOIL_IDS[biome] = i++; }
+})();
+export { SOIL_IDS };
+export function soilIdForBiome(biome) {
+  return SOIL_IDS[biome] || 0;
+}
+
 export function getSoilImageURLs() {
   var urls = [];
   var seenMaterials = new Set();
