@@ -2113,6 +2113,20 @@ export class GLCompositor {
     if (!this._tilemapProgram) this._buildTilemapProgram();
   }
 
+  // Soil lookup textures for the GPU F0 pass.
+  //   swatchTex : RGBA8, width = count*32, height = 32. Cell i (origin x=i*32) is
+  //               soil id i's 32x32 representative swatch.
+  //   configTex : RGBA32F, width = count, height = 2. Row 0 texel[i] =
+  //               (density, alpha, tintStrength, hasTint); row 1 texel[i] = (tintR,tintG,tintB,0)
+  //               with tint in 0..1. Index by soil id i.
+  //   count     : number of soil ids + 1 (id 0 reserved/empty) = atlas/config width.
+  setSoilAtlas(swatchTex, configTex, count) {
+    this._soilSwatchTex = swatchTex;
+    this._soilConfigTex = configTex;
+    this._soilCount = count | 0;
+    this._soilCellW = 32;
+  }
+
   _buildTilemapProgram() {
     var gl = this.gl;
     var prog = this._buildProgram(VERT_SRC, TILEMAP_FRAG_SRC);

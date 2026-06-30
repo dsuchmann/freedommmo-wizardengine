@@ -11,7 +11,7 @@ import { WORLD } from '../core/constants.js';
 import { encodeTexel } from './gpu-terrain-index.js';
 import { paintTerrainTile, paintCliffOverlay, getWangSrc, getCliffSrc } from './worker-tile-painter.js';
 import { cliffLevel } from '../world/terrain-shaper.js';
-import { soilMaterialForBiome, sfVariantsFor, wangAssetName } from './wang-image-list.js';
+import { soilMaterialForBiome, sfVariantsFor, wangAssetName, SOIL_BIOME_CONFIG, SOIL_DEFAULT_CONFIG } from './wang-image-list.js';
 import { rand2 } from '../core/random.js';
 import { SS_BIOME_OBJECTS, f3Placements, f3SpriteUrl } from '../world/decoration-claims.js';
 import { queryBuildingTile, queryBuildingWall, isBuildingClaimed, floorTileUrl, wallTileUrl, wallSpriteSrc, getBuildingsNearChunk } from './building-tile-query.js';
@@ -74,34 +74,9 @@ export function elevationVariant(tile) {
 
 var SOIL_BASE_PATH = '/assets/pixelab/landscape_v2/micro/soil/';
 var SOIL_VARIANT_COUNT = 64;
-
-// Per-biome field 0 rendering parameters
-var SOIL_BIOME_CONFIG = {
-  // { density, alpha, blobMin, blobMax, tint: [r,g,b] or null }
-  // tint shifts pixel color toward target (0-255 RGB), blended at tintStrength (0-1)
-  forest:           { density: 0.96, alpha: 0.70, blobMin: 4, blobMax: 6, tint: null },
-  dense_forest:     { density: 0.97, alpha: 0.75, blobMin: 4, blobMax: 6, tint: null },
-  tropical_forest:  { density: 0.96, alpha: 0.70, blobMin: 4, blobMax: 6, tint: null },
-  taiga:            { density: 0.95, alpha: 0.65, blobMin: 4, blobMax: 6, tint: null },
-  grassland:        { density: 0.94, alpha: 0.60, blobMin: 4, blobMax: 6, tint: null },
-  savanna:          { density: 0.93, alpha: 0.55, blobMin: 3, blobMax: 5, tint: null },
-  steppe:           { density: 0.92, alpha: 0.55, blobMin: 3, blobMax: 5, tint: null },
-  desert:           { density: 0.96, alpha: 0.50, blobMin: 3, blobMax: 4, tint: null },
-  beach:            { density: 0.98, alpha: 0.50, blobMin: 3, blobMax: 4, tint: [245, 235, 200], tintStrength: 0.45 },
-  swamp:            { density: 0.97, alpha: 0.80, blobMin: 5, blobMax: 7, tint: null },
-  hills:            { density: 0.94, alpha: 0.60, blobMin: 4, blobMax: 7, tint: null },
-  mountains:        { density: 0.92, alpha: 0.55, blobMin: 5, blobMax: 8, tint: null },
-  volcanic:         { density: 0.90, alpha: 0.60, blobMin: 4, blobMax: 6, tint: null },
-  tundra:           { density: 0.97, alpha: 0.75, blobMin: 4, blobMax: 6, tint: null },
-  arctic:           { density: 0.88, alpha: 0.50, blobMin: 3, blobMax: 5, tint: null },
-  mystic:           { density: 0.95, alpha: 0.65, blobMin: 4, blobMax: 6, tint: null },
-  ocean:            { density: 0.96, alpha: 0.50, blobMin: 4, blobMax: 6, tint: null },
-  deep_ocean:       { density: 0.95, alpha: 0.45, blobMin: 3, blobMax: 5, tint: null },
-  shallow_water:    { density: 0.98, alpha: 0.50, blobMin: 4, blobMax: 6, tint: null },
-  river:            { density: 0.96, alpha: 0.50, blobMin: 4, blobMax: 6, tint: null },
-  lake:             { density: 0.96, alpha: 0.50, blobMin: 4, blobMax: 6, tint: null },
-};
-var SOIL_DEFAULT_CONFIG = { density: 0.94, alpha: 0.65, blobMin: 4, blobMax: 6, tint: null };
+// SOIL_BIOME_CONFIG / SOIL_DEFAULT_CONFIG moved to the shared wang-image-list.js
+// module (imported above) so the main-thread GPU soil-config loader can read them
+// without importing this worker-only renderer.
 
 // Cache for extracted pixel data from soil blob ImageBitmaps.
 // Key: URL, Value: Uint8ClampedArray (32*32*4 RGBA)

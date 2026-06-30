@@ -188,6 +188,34 @@ export function soilIdForBiome(biome) {
   return SOIL_IDS[biome] || 0;
 }
 
+// Per-biome F0 soil rendering params — shared by the worker bitmap path
+// (applySoilFieldToChunk) and the main-thread GPU soil-config texture loader.
+// { density, alpha, blobMin, blobMax, tint:[r,g,b]|null, tintStrength }
+export var SOIL_BIOME_CONFIG = {
+  forest:           { density: 0.96, alpha: 0.70, blobMin: 4, blobMax: 6, tint: null },
+  dense_forest:     { density: 0.97, alpha: 0.75, blobMin: 4, blobMax: 6, tint: null },
+  tropical_forest:  { density: 0.96, alpha: 0.70, blobMin: 4, blobMax: 6, tint: null },
+  taiga:            { density: 0.95, alpha: 0.65, blobMin: 4, blobMax: 6, tint: null },
+  grassland:        { density: 0.94, alpha: 0.60, blobMin: 4, blobMax: 6, tint: null },
+  savanna:          { density: 0.93, alpha: 0.55, blobMin: 3, blobMax: 5, tint: null },
+  steppe:           { density: 0.92, alpha: 0.55, blobMin: 3, blobMax: 5, tint: null },
+  desert:           { density: 0.96, alpha: 0.50, blobMin: 3, blobMax: 4, tint: null },
+  beach:            { density: 0.98, alpha: 0.50, blobMin: 3, blobMax: 4, tint: [245, 235, 200], tintStrength: 0.45 },
+  swamp:            { density: 0.97, alpha: 0.80, blobMin: 5, blobMax: 7, tint: null },
+  hills:            { density: 0.94, alpha: 0.60, blobMin: 4, blobMax: 7, tint: null },
+  mountains:        { density: 0.92, alpha: 0.55, blobMin: 5, blobMax: 8, tint: null },
+  volcanic:         { density: 0.90, alpha: 0.60, blobMin: 4, blobMax: 6, tint: null },
+  tundra:           { density: 0.97, alpha: 0.75, blobMin: 4, blobMax: 6, tint: null },
+  arctic:           { density: 0.88, alpha: 0.50, blobMin: 3, blobMax: 5, tint: null },
+  mystic:           { density: 0.95, alpha: 0.65, blobMin: 4, blobMax: 6, tint: null },
+  ocean:            { density: 0.96, alpha: 0.50, blobMin: 4, blobMax: 6, tint: null },
+  deep_ocean:       { density: 0.95, alpha: 0.45, blobMin: 3, blobMax: 5, tint: null },
+  shallow_water:    { density: 0.98, alpha: 0.50, blobMin: 4, blobMax: 6, tint: null },
+  river:            { density: 0.96, alpha: 0.50, blobMin: 4, blobMax: 6, tint: null },
+  lake:             { density: 0.96, alpha: 0.50, blobMin: 4, blobMax: 6, tint: null },
+};
+export var SOIL_DEFAULT_CONFIG = { density: 0.94, alpha: 0.65, blobMin: 4, blobMax: 6, tint: null };
+
 export function getSoilImageURLs() {
   var urls = [];
   var seenMaterials = new Set();

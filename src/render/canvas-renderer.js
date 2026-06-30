@@ -31,7 +31,7 @@ import { drawField2Animations, preloadField2Animations, drawWindWispOverlay, set
 import { findNearbyInteraction, objectReaction, performInteraction } from '../world/interactions.js';
 import { GLCompositor } from './gl-compositor.js';
 import { WangAtlas } from './wang-atlas.js';
-import { getWangImageURLsForBiomes } from './wang-image-list.js';
+import { getWangImageURLsForBiomes, SOIL_IDS, soilMaterialForBiome, SOIL_BIOME_CONFIG } from './wang-image-list.js';
 import { buildAtmoField } from './atmosphere-pass.js';
 import { drawHumanoidPlayer, playMotion, stopMotion } from './humanoid-player-renderer.js';
 import { drawSpriteCharacter } from './sprite-character-renderer.js';
@@ -274,6 +274,84 @@ export class CanvasRenderer {
     this._growAtlas(provider);
   }
 
+  // Build the soil-swatch atlas + per-biome config texture for the GPU F0 pass.
+  // Loads ONE representative swatch (v000) per biome soil material — ~21 fetches,
+  // so it loads in one shot (no incremental growth). Idempotent. The config texture
+  // is filled synchronously; the swatch cells stream in as their PNGs decode.
+  _ensureSoilAtlas(provider) {
+    if (typeof window === 'undefined' || !window._gpuTerrain) return;
+    if (this._soilState) return;
+    const gl = this.glc && this.glc.gl;
+    if (!gl) return;
+    this._soilState = 'loading';
+
+    const ids = SOIL_IDS;                 // biome → 1..N
+    let maxId = 0;
+    for (const b in ids) if (ids[b] > maxId) maxId = ids[b];
+    const count = maxId + 1;              // include reserved id 0
+    const cellW = 32;
+
+    // Config texture (RGBA32F, count x 2) — filled synchronously from SOIL_BIOME_CONFIG.
+    const cfgData = new Float32Array(count * 2 * 4);
+    for (const b in ids) {
+      const id = ids[b];
+      const c = SOIL_BIOME_CONFIG[b] || {};
+      const density = (c.density != null) ? c.density : 0.94;
+      const alpha = (c.alpha != null) ? c.alpha : 0.65;
+      const tint = c.tint || null;
+      const tintStrength = (c.tintStrength != null) ? c.tintStrength : 0.3;
+      cfgData[(0 * count + id) * 4 + 0] = density;
+      cfgData[(0 * count + id) * 4 + 1] = alpha;
+      cfgData[(0 * count + id) * 4 + 2] = tint ? tintStrength : 0.0;
+      cfgData[(0 * count + id) * 4 + 3] = tint ? 1.0 : 0.0;
+      cfgData[(1 * count + id) * 4 + 0] = tint ? tint[0] / 255 : 0;
+      cfgData[(1 * count + id) * 4 + 1] = tint ? tint[1] / 255 : 0;
+      cfgData[(1 * count + id) * 4 + 2] = tint ? tint[2] / 255 : 0;
+      cfgData[(1 * count + id) * 4 + 3] = 0;
+    }
+    const configTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, configTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, count, 2, 0, gl.RGBA, gl.FLOAT, cfgData);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+
+    // Swatch atlas (RGBA8, count*32 x 32) — allocated now, cells filled async.
+    const swatchTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, swatchTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, count * cellW, cellW, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);  // jittered sample wraps within a cell
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+
+    this.glc.setSoilAtlas(swatchTex, configTex, count);
+    this._soilState = 'ready';
+    if (typeof window !== 'undefined') window._gpuSoilReady = true;
+
+    // Fetch each biome's representative swatch (soil__<material>__v000.png) into cell[id].
+    const SOIL_BASE = '/assets/pixelab/landscape_v2/micro/soil/';
+    for (const b in ids) {
+      const id = ids[b];
+      const mat = soilMaterialForBiome(b);
+      const url = SOIL_BASE + mat + '/soil__' + mat + '__v000.png';
+      fetch(url)
+        .then(r => r.ok ? r.blob() : null)
+        .then(bl => bl ? createImageBitmap(bl) : null)
+        .then(bmp => {
+          if (!bmp) return;
+          gl.bindTexture(gl.TEXTURE_2D, swatchTex);
+          gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+          gl.texSubImage2D(gl.TEXTURE_2D, 0, id * cellW, 0, gl.RGBA, gl.UNSIGNED_BYTE, bmp);
+          gl.bindTexture(gl.TEXTURE_2D, null);
+        })
+        .catch(() => {}); // missing soil PNG → that cell stays transparent (honest absence)
+    }
+  }
+
   // Fetch every Wang URL for the union of loaded biomes (so border-transition
   // tiles between any two present biomes are covered), skipping URLs already in
   // the atlas, then re-publish the grown atlas + meta to the compositor + workers.
@@ -349,6 +427,7 @@ export class CanvasRenderer {
     }
 
     this._ensureWangAtlas(provider);
+    this._ensureSoilAtlas(provider);
 
     const camX = player.x * tilePx - w / 2;
     // Interior camera glide: advance the eased per-floor lift, then subtract it from camY so
