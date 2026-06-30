@@ -28,6 +28,7 @@ export class ChunkProvider {
     this._playerMoving = false;
     this.pumpScheduled = false;
     this.wangDebug = new Map();
+    this.indexes = new Map();
     this.workersReady = 0;
     // Field-tuning generation. Bumped on every F3-affecting tuning change;
     // workers stamp painted bitmaps with the gen they painted under, and
@@ -58,6 +59,7 @@ export class ChunkProvider {
     if (force) {
       fireSceneDiscontinuity({ x: wx, y: wy });
       this.wangDebug.clear();                                    // unbounded debug map — drop old-biome entries
+      this.indexes.clear();                                      // GPU index buffers — evict alongside wangDebug
     }
     const biomeSet = new Set();
     // Sample a grid around the player — sparse sampling is fine, just need biome variety
@@ -147,7 +149,7 @@ export class ChunkProvider {
     try {
       // Cache-bust: append timestamp so browser reloads worker modules on code changes
       const workerUrl = new URL('./chunk-worker.js', import.meta.url);
-      workerUrl.searchParams.set('v', '20260619f-roof-overhang-nodroop');
+      workerUrl.searchParams.set('v', '20260619f-roof-overhang-nodroop-gputiles1');
       const worker = new Worker(workerUrl, { type: 'module' });
       worker._imagesReady = false;
       worker.onmessage = event => {
@@ -184,6 +186,7 @@ export class ChunkProvider {
             if (old) old.close();
             this.bitmaps.set(bitmapKey, msg.bitmap);
             if (msg.wangDebug) this.wangDebug.set(bitmapKey, msg.wangDebug);
+            if (msg.index) this.indexes.set(bitmapKey, new Uint8Array(msg.index));
           }
           // chunkPainted replaces chunkDone — finalize assembly
           const partial = this.assembling.get(key);
@@ -211,6 +214,7 @@ export class ChunkProvider {
             if (old) old.close();
             this.bitmaps.set(bitmapKey, msg.bitmap);
             if (msg.wangDebug) this.wangDebug.set(bitmapKey, msg.wangDebug);
+            if (msg.index) this.indexes.set(bitmapKey, new Uint8Array(msg.index));
           }
         } else if (msg.type === 'chunkDone') {
           // Legacy fallback — shouldn't fire with new worker but handle gracefully
@@ -230,6 +234,10 @@ export class ChunkProvider {
         this.workerSupported = false;
       };
       this.workers.push(worker);
+      // Replay GPU-terrain state to this worker in case it was created after
+      // setWangAtlasMeta / setGpuTerrain were already broadcast to earlier workers.
+      if (this._wangAtlasMeta) worker.postMessage({ type: 'setWangAtlasMeta', meta: this._wangAtlasMeta });
+      if (this._gpuTerrain) worker.postMessage({ type: 'setGpuTerrain', on: true });
     } catch {
       this.workerSupported = false;
     }
@@ -331,6 +339,20 @@ export class ChunkProvider {
 
   getWangDebug(cx, cy) {
     return this.wangDebug.get(cx + ',' + cy) ?? null;
+  }
+
+  getChunkIndex(cx, cy) {
+    return this.indexes.get(cx + ',' + cy) || null;
+  }
+
+  setGpuTerrain(on) {
+    this._gpuTerrain = !!on;
+    for (const worker of this.workers) worker.postMessage({ type: 'setGpuTerrain', on: !!on });
+  }
+
+  setWangAtlasMeta(meta) {
+    this._wangAtlasMeta = meta;
+    for (const worker of this.workers) worker.postMessage({ type: 'setWangAtlasMeta', meta });
   }
 
   getReady(cx, cy) {
