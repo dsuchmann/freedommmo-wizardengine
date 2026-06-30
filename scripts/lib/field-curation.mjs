@@ -20,6 +20,8 @@ export const SOURCES = [
     group: 'biome', object: 'object', fileRegex: '^mo__.*__v(\\d{3})\\.png$' },
   { id: 'f2', label: 'F2 small flora', root: 'assets/pixelab/landscape_v2/micro/small_flora',
     group: 'biome', object: 'object', fileRegex: '^sf__.*__v(\\d{3})\\.png$' },
+  { id: 'f3', label: 'F3 small scatter', root: 'assets/pixelab/landscape_v2/micro/small_scatter',
+    group: 'biome', object: 'object', fileRegex: '^ss__.*__v(\\d+)\\.png$' },
   { id: 'large_objects', label: 'Large objects', root: 'assets/pixelab/landscape_v2/micro/large_objects',
     group: 'biome', object: 'object', fileRegex: '^lg__.*__v(\\d{3})\\.png$' },
   { id: 'dressing', label: 'Building dressing', root: 'assets/pixelab/buildings/dressing',
