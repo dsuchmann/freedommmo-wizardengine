@@ -29,6 +29,7 @@ import { isWaterTile } from '../../sim/world/buildings/terrain-suitability.js';
 import { drawD3Props, drawBakedAwnings } from './dressing/d3-props.js';
 import { drawVinePass } from './dressing/vine-render.js';
 import { onSceneDiscontinuity } from '../core/scene-teardown.js';
+import { buildingAssetExists } from './building-asset-index.js';
 
 // Source rect of the E/W side-face cap. The grassland edge_ew strip is a 32x128 quoin/side-cap;
 // sample its LEFT quoin column (x=0..16) as the true vertical corner post (`isQuoinStrip`) — drawing
@@ -157,7 +158,12 @@ const _tex = new Map();
 const _imageCache = {
   get(url) {
     let im = _tex.get(url);
-    if (!im) { im = new Image(); im.src = url; _tex.set(url, im); }
+    if (im !== undefined) return (im && im.complete && im.naturalWidth) ? im : null;
+    // Manifest gate: never request a roof/fascia/gable/tile asset that was never generated (partial biomes:
+    // forest/taiga/swamp/...). Caching null also lets roofTexFor's variant fall-through skip absent v004-v007
+    // instantly instead of firing a 404 per building — and the bake reaches `complete` without that wait.
+    if (!buildingAssetExists(url)) { _tex.set(url, null); return null; }
+    im = new Image(); im.src = url; _tex.set(url, im);
     return (im.complete && im.naturalWidth) ? im : null;
   },
 };

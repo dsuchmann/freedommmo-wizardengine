@@ -9,6 +9,7 @@
 import { WALL_CONFIG } from './wall-config.js';
 import { buildingFloors } from './building-shadow.js';
 import { onSceneDiscontinuity } from '../core/scene-teardown.js';
+import { buildingAssetExists } from './building-asset-index.js';
 
 const TILE_ROOT = '/assets/pixelab/buildings/tiles/';
 const getDIR = (biome) => TILE_ROOT + (biome || 'grassland') + '/';
@@ -50,7 +51,16 @@ const BIOME_FALLBACK = {
   lake: 'log_cabin', shallow_water: 'driftwood_patchwork', ocean: 'tarred_timber_stilt', deep_ocean: 'barnacled_piling',
 };
 const _img = new Map();
-function img(url) { let im = _img.get(url); if (!im) { im = new Image(); im.src = url; _img.set(url, im); } return (im.complete && im.naturalWidth) ? im : null; }
+// Manifest gate: skip the Image for a tile asset absent on disk (e.g. the `left_corner` vs `ground_left_corner`
+// fallback probe, or an ungenerated material) so tileImagesReady never blocks on — and never 404s — a file that
+// doesn't exist. Cache the miss as null (checked once per url).
+function img(url) {
+  let im = _img.get(url);
+  if (im !== undefined) return (im && im.complete && im.naturalWidth) ? im : null;
+  if (!buildingAssetExists(url)) { _img.set(url, null); return null; }
+  im = new Image(); im.src = url; _img.set(url, im);
+  return (im.complete && im.naturalWidth) ? im : null;
+}
 
 // Sampled SOLID tones for the opaque wall backfill: the wall mid-tone (central rows) and the foundation
 // tone (bottom rows) of a material's base tile. Cached per (biome,material). Filled BEHIND the tiles so any

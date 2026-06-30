@@ -13,10 +13,19 @@ import { buildSockets, projectSocket } from './socket-index.js';
 import { rand2 } from '../../core/random.js';
 import { onSceneDiscontinuity } from '../../core/scene-teardown.js';
 import { DRESSING_ALLOWED } from '../../world/dressing-vmap.js';
+import { buildingAssetExists } from '../building-asset-index.js';
 
 const ROOT = '/assets/pixelab/buildings/dressing/';
 const _img = new Map();
-function img(url) { let im = _img.get(url); if (!im) { im = new Image(); im.src = url; _img.set(url, im); } return (im.complete && im.naturalWidth) ? im : null; }
+// Manifest gate: skip the Image (and the 404 + decode wait) for a prop asset that was never generated
+// (partial biomes: forest/taiga/swamp/...). Cache the miss as null so the index is checked once per url.
+function img(url) {
+  let im = _img.get(url);
+  if (im !== undefined) return (im && im.complete && im.naturalWidth) ? im : null;
+  if (!buildingAssetExists(url)) { _img.set(url, null); return null; }
+  im = new Image(); im.src = url; _img.set(url, im);
+  return (im.complete && im.naturalWidth) ? im : null;
+}
 // Every allowed base__vN variant for this object, as {sprite, diskIdx} pairs.
 // diskIdx is the on-disk variant number (used for anim/v<n>/ frame paths).
 // DRESSING_ALLOWED["biome/prop"] = [allowed_disk_indices]:

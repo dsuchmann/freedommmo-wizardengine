@@ -9,6 +9,7 @@
 import { buildVineSplines, getVineShape, BIOME_FORM } from './vine-index.js';
 import { projectSocket } from './socket-index.js';
 import { rand2 } from '../../core/random.js';
+import { buildingAssetExists } from '../building-asset-index.js';
 
 // Per-FORM "stem" style for the CONTIGUITY underlay: a continuous tapered stroke is drawn along each branch in
 // this colour FIRST (one unbroken silhouette → reads as a single organism, not stacked stamps), then the PixelLab
@@ -25,7 +26,16 @@ const formStyleOf = (biome) => FORM_STYLE[BIOME_FORM[biome] || 'vine'] || FORM_S
 
 const ROOT = '/assets/pixelab/buildings/dressing/';
 const _img = new Map();
-function img(url) { let im = _img.get(url); if (!im) { im = new Image(); im.src = url; _img.set(url, im); } return (im.complete && im.naturalWidth) ? im : null; }
+// Manifest gate: skip the Image (+ 404) for a vine asset that was never generated (partial biomes). Cache
+// the miss as null. NOTE this also lets the variant memo (below) STABILISE immediately for absent assets —
+// no candidate stays "still loading", so a no-vine biome resolves to [] on the first frame.
+function img(url) {
+  let im = _img.get(url);
+  if (im !== undefined) return (im && im.complete && im.naturalWidth) ? im : null;
+  if (!buildingAssetExists(url)) { _img.set(url, null); return null; }
+  im = new Image(); im.src = url; _img.set(url, im);
+  return (im.complete && im.naturalWidth) ? im : null;
+}
 // Cache the resolved variant array per biome+piece. The filtered set only STABILIZES once every candidate image
 // has settled (decoded or 404'd); until then we recompute (identical to before) so a still-loading sprite isn't
 // permanently excluded. Once all 8 are settled the array can never change, so we memoize it.
