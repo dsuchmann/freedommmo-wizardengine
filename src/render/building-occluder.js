@@ -774,6 +774,7 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
       _sub.bbw = b && b.footprint && b.footprint.boundingBox && b.footprint.boundingBox.w;
       _sub.bbh = b && b.footprint && b.footprint.boundingBox && b.footprint.boundingBox.h;
       window._bbWorst = _sub;
+      try { console.log('[bbWorst]', JSON.stringify(_sub)); } catch (e) {}
     }
     return true;
   }

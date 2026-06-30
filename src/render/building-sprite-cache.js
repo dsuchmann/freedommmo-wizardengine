@@ -119,8 +119,16 @@ function buildSprite(b, tilePx, renderFn) {
   _wx.globalCompositeOperation = 'source-over';
   _wx.imageSmoothingEnabled = false;
   _wx.clearRect(0, 0, W, H);
+  // DIAGNOSTIC: time renderFn (the building draw) vs the getImageData+alphaBBox+crop tail separately. The
+  // ~450ms bSpr freeze is ONE bake; _bbWorst already times the draw sub-passes, but the getImageData over an
+  // ~18-tile-tall W×H canvas + a per-pixel JS alphaBBox scan happens HERE, outside that. Flat-log a new worst
+  // so it lands in the console log without manual expansion.
+  const _P = (typeof performance !== 'undefined');
+  const _t0 = _P ? performance.now() : 0;
   if (!renderFn(_wx, b, localCamX, localCamY, tilePx, W, H)) return null; // not ready → don't cache a blank
+  const _tRender = _P ? performance.now() - _t0 : 0;
 
+  const _t1 = _P ? performance.now() : 0;
   const id = _wx.getImageData(0, 0, W, H);
   const box = alphaBBox(id.data, W, H);
   if (!box) return null;
@@ -130,6 +138,14 @@ function buildSprite(b, tilePx, renderFn) {
   const cx = canvas.getContext('2d');
   cx.imageSmoothingEnabled = false;
   cx.drawImage(_work, box.minX, box.minY, cw, ch, 0, 0, cw, ch);
+  if (_P && typeof window !== 'undefined') {
+    const tail = performance.now() - _t1, total = _tRender + tail;
+    if (total > ((window._bbBake && window._bbBake.total) || 0)) {
+      window._bbBake = { total: Math.round(total), render: Math.round(_tRender), imageDataCrop: Math.round(tail),
+        W, H, workW: _work.width, workH: _work.height, key: spriteKey(b), biome: b && b.biome };
+      console.log('[bbBake]', JSON.stringify(window._bbBake));
+    }
+  }
   return { canvas, ax: side - box.minX, ay: head - box.minY, w: cw, h: ch, builtTilePx: tilePx, frame: _frame };
 }
 
