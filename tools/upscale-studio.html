@@ -1,0 +1,293 @@
+<!doctype html><html><head><meta charset="utf8"><title>Upscale Studio — original / upscale / blend @ draw scale</title>
+<style>
+ :root{--bg:#0c0e13;--panel:#161a22;--line:#262b37;--ink:#e8eaf0;--dim:#9aa3b4;--accent:#7cc4ff;--good:#7ee0a0;--warn:#e6b450}
+ body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.4 ui-sans-serif,system-ui,sans-serif}
+ header{position:sticky;top:0;z-index:10;background:#0c0e13f2;border-bottom:1px solid var(--line);padding:9px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+ h1{font-size:14px;margin:0;color:#fc8}
+ button,select{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:5px 9px;font-size:12px;cursor:pointer}
+ .tab{padding:4px 10px} .tab.on{border-color:var(--accent);color:var(--accent)}
+ .chip{color:var(--good);font-variant:tabular-nums}
+ .row{border-top:1px solid var(--line);padding:14px 16px}
+ .rhead{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+ .rhead .name{font-size:13px;color:var(--accent)}
+ .rhead .vnav{display:flex;gap:4px;align-items:center;color:var(--dim);font-variant:tabular-nums}
+ .seg button{padding:3px 9px} .seg button.on{border-color:var(--accent);color:var(--accent)}
+ .panels{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+ .panel{text-align:center}
+ .panel h3{margin:0 0 2px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#8b97a6}
+ .panel.blend h3{color:var(--good)}
+ .panel .nat{font-size:10px;color:#5d6b7a;margin:0 0 5px;font-variant:tabular-nums}
+ .stage{background:conic-gradient(#1b2129 0 25%,#161b22 0 50%,#1b2129 0 75%,#161b22 0) 0 0/22px 22px;border-radius:4px;display:flex;align-items:center;justify-content:center}
+ canvas{image-rendering:pixelated;display:block}
+ .pending{color:#6b7686;font-size:11px;font-style:italic;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px}
+ .decide{min-width:240px;display:flex;flex-direction:column;gap:6px;padding-top:14px}
+ .decide label{cursor:pointer;user-select:none}
+ .modes label{margin-right:10px}
+ .blendctl{display:flex;align-items:center;gap:8px;color:var(--dim)}
+ .blendctl.off{opacity:.4;pointer-events:none}
+ .ovr{color:var(--warn);font-size:12px}
+ .hint{color:var(--dim);font-size:11px;margin:8px 16px 0}
+ .decided-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#3a4250;margin-left:6px}
+ .decided-dot.on{background:var(--good)}
+</style></head>
+<body>
+<header>
+ <h1>Upscale Studio</h1>
+ <span id="tabs"></span>
+ <span class="chip" id="chip">0/0 decided</span>
+ <button id="exp">⬇ Export decisions</button>
+ <span id="status" style="color:#6f6"></span>
+</header>
+<p class="hint">Per object: <b>ORIGINAL</b> (raw PixelLab) · <b>UPSCALE</b> (AI @384) · <b>BLEND</b> (live in-browser mix). Panels draw at the object's true in-game <b>draw size</b> by default — toggle <b>2×</b> / <b>native(384)</b> to judge how detail holds when scaled. Pick <b>Upscale / Blend / Direct</b> per object; the blend slider (= original's share) is live only for Blend. Use <b>◀ ▶</b> to flip sampled variants, and "override just this variant" for an oddball.</p>
+<div id="body"></div>
+
+<script type="module">
+const PCT_DEFAULT = 40;            // blend default = original's share (matches apply-mix --pct)
+const SPEED_DEFAULT = 130;         // ms/frame
+const BIOME = 'grassland';
+
+// ---- decision store (in memory). store[field]["biome/object"] = {mode,blendPct,overrides,decided} ----
+// overrides: { "v007": {mode, blendPct} }
+const store = {};
+function recFor(field, key) {
+  store[field] = store[field] || {};
+  if (!store[field][key]) store[field][key] = { mode: null, blendPct: PCT_DEFAULT, overrides: {}, decided: false };
+  return store[field][key];
+}
+// effective mode/pct for a given variant (override beats object)
+function effective(rec, vKey) {
+  const ov = rec.overrides[vKey];
+  return {
+    mode: (ov && ov.mode) || rec.mode || 'upscale',
+    blendPct: ov && ov.mode === 'blend' ? ov.blendPct : (rec.mode === 'blend' ? rec.blendPct : (ov ? ov.blendPct : rec.blendPct)),
+  };
+}
+
+// ---- image cache (redraw the owning row once an image loads) ----
+const imgCache = new Map();
+function getImg(src, onload) {
+  if (!src) return null;
+  let im = imgCache.get(src);
+  if (!im) { im = new Image(); im.src = src; im._ready = false; im.onload = () => { im._ready = true; im._cb && im._cb(); }; imgCache.set(src, im); }
+  if (onload) im._cb = onload;
+  return im;
+}
+
+// ---- blend composite: upscale over nearest original at pct, re-clipped to upscale alpha ----
+function drawBlend(cv, px, origImg, upImg, pct) {
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0, 0, px, px);
+  if (!upImg || !upImg._ready) return;
+  ctx.imageSmoothingEnabled = false;
+  // original (nearest-scaled) full alpha
+  if (origImg && origImg._ready) ctx.drawImage(origImg, 0, 0, px, px);
+  // upscale on top with alpha = its share (1 - original's share)
+  ctx.globalAlpha = Math.max(0, Math.min(1, (100 - pct) / 100));
+  ctx.drawImage(upImg, 0, 0, px, px);
+  ctx.globalAlpha = 1;
+  // re-clip to the upscale's silhouette
+  ctx.globalCompositeOperation = 'destination-in';
+  ctx.drawImage(upImg, 0, 0, px, px);
+  ctx.globalCompositeOperation = 'source-over';
+}
+function drawSprite(cv, px, img) {
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0, 0, px, px);
+  if (img && img._ready) { ctx.imageSmoothingEnabled = false; ctx.drawImage(img, 0, 0, px, px); }
+}
+
+// ---- per-object row ----
+const VIEWS = { game: null, '2x': null, native: 384 }; // game/2x resolve from drawPx
+function displayPx(view, drawPx) {
+  if (view === 'native') return 384;
+  if (view === '2x') return drawPx * 2;
+  return drawPx;
+}
+
+let MANIFEST = null, curField = null;
+const rows = []; // active row controllers (current field)
+
+function buildRow(obj) {
+  const key = `${obj.biome}/${obj.object}`;
+  const rec = recFor(curField, key);
+  const st = { obj, key, rec, vi: 0, view: 'game', playing: true, speed: SPEED_DEFAULT, fi: 0, timer: null };
+
+  const el = document.createElement('div'); el.className = 'row';
+  el.innerHTML = `
+    <div class="rhead">
+      <span class="name">${obj.biome} / ${obj.field} / <b>${obj.object}</b><span class="decided-dot"></span></span>
+      <span class="vnav"><button class="vprev">◀</button> <span class="vlbl"></span> <button class="vnext">▶</button></span>
+      <span class="seg view">
+        <button data-view="game" class="on">game</button><button data-view="2x">2×</button><button data-view="native">native(384)</button>
+      </span>
+      <span class="seg anim"><button class="play">⏸</button> <input class="spd" type="range" min="60" max="400" step="10" value="${SPEED_DEFAULT}" title="anim speed"></span>
+    </div>
+    <div class="panels">
+      <div class="panel"><h3>original</h3><div class="nat orignat"></div><div class="stage"><canvas class="cv-orig"></canvas></div></div>
+      <div class="panel"><h3>upscale</h3><div class="nat">384px AI</div><div class="stage"><canvas class="cv-up"></canvas><div class="pending up-pending" style="display:none">sample<br>pending</div></div></div>
+      <div class="panel blend"><h3>blend</h3><div class="nat">384px mix</div><div class="stage"><canvas class="cv-blend"></canvas><div class="pending bl-pending" style="display:none">sample<br>pending</div></div></div>
+      <div class="decide">
+        <div class="modes">Decision:
+          <label><input type="radio" name="m-${key}" value="upscale"> Upscale</label>
+          <label><input type="radio" name="m-${key}" value="blend"> Blend</label>
+          <label><input type="radio" name="m-${key}" value="direct"> Direct</label>
+        </div>
+        <div class="blendctl"><span>original</span><input class="bslider" type="range" min="0" max="100" value="${rec.blendPct}"><span>upscale</span><span class="bpct" style="min-width:34px;color:var(--ink)">${rec.blendPct}%</span></div>
+        <label class="ovr"><input type="checkbox" class="ovrchk"> override just this variant</label>
+      </div>
+    </div>`;
+
+  const q = (s) => el.querySelector(s);
+  const cvOrig = q('.cv-orig'), cvUp = q('.cv-up'), cvBlend = q('.cv-blend');
+  const upPending = q('.up-pending'), blPending = q('.bl-pending');
+  const dot = q('.decided-dot');
+
+  function curVar() { return obj.variants[st.vi]; }
+  function eff() { return effective(rec, curVar().v); }
+  function origFrames() { const v = curVar(); return v.anim.length ? v.anim : [v.original]; }
+  function upFrames() { const v = curVar(); return v.animUpscale.length ? v.animUpscale : (v.upscale ? [v.upscale] : []); }
+  function frameCount() { return origFrames().length; }
+
+  function sizeCanvases() {
+    const px = displayPx(st.view, obj.drawPx);
+    for (const cv of [cvOrig, cvUp, cvBlend]) { cv.width = px; cv.height = px; cv.style.width = px + 'px'; cv.style.height = px + 'px'; }
+    q('.orignat').textContent = `${obj.drawPx}px draw`;
+  }
+
+  function redraw() {
+    const px = displayPx(st.view, obj.drawPx);
+    const v = curVar();
+    const of = origFrames(), uf = upFrames();
+    const fi = st.fi % Math.max(1, of.length);
+    const origImg = getImg(of[fi % of.length], redraw);
+    drawSprite(cvOrig, px, origImg);
+    const hasUp = !!(v.upscale || v.animUpscale.length);
+    upPending.style.display = hasUp ? 'none' : 'flex';
+    blPending.style.display = hasUp ? 'none' : 'flex';
+    cvUp.style.display = hasUp ? '' : 'none';
+    cvBlend.style.display = hasUp ? '' : 'none';
+    if (hasUp) {
+      const upImg = getImg(uf[fi % uf.length], redraw);
+      drawSprite(cvUp, px, upImg);
+      drawBlend(cvBlend, px, origImg, upImg, eff().blendPct);
+    }
+  }
+
+  function updateVlbl() { q('.vlbl').textContent = `${curVar().v} (${st.vi + 1}/${obj.variants.length})`; }
+  function updateDecideUI() {
+    const e = eff();
+    // radios reflect object-level mode (default upscale shown but not "decided" until clicked)
+    const shownMode = rec.mode || (obj.hasUpscale ? 'upscale' : 'direct');
+    for (const r of el.querySelectorAll(`input[name="m-${key}"]`)) r.checked = (r.value === shownMode);
+    const ovActive = !!rec.overrides[curVar().v];
+    q('.ovrchk').checked = ovActive;
+    const effMode = e.mode;
+    const slider = q('.bslider'), bctl = q('.blendctl');
+    const pctVal = ovActive ? (rec.overrides[curVar().v].blendPct ?? rec.blendPct) : rec.blendPct;
+    slider.value = pctVal; q('.bpct').textContent = pctVal + '%';
+    bctl.classList.toggle('off', effMode !== 'blend');
+    dot.classList.toggle('on', rec.decided);
+  }
+
+  function startTimer() { clearInterval(st.timer); if (st.playing && frameCount() > 1) st.timer = setInterval(() => { st.fi++; redraw(); }, st.speed); q('.play').textContent = st.playing ? '⏸' : '▶'; }
+
+  function fullRefresh() { sizeCanvases(); updateVlbl(); updateDecideUI(); redraw(); startTimer(); }
+
+  // ---- wiring ----
+  q('.vprev').onclick = () => { st.vi = (st.vi - 1 + obj.variants.length) % obj.variants.length; st.fi = 0; fullRefresh(); };
+  q('.vnext').onclick = () => { st.vi = (st.vi + 1) % obj.variants.length; st.fi = 0; fullRefresh(); };
+  for (const b of el.querySelectorAll('.view button')) b.onclick = () => {
+    st.view = b.dataset.view; for (const x of el.querySelectorAll('.view button')) x.classList.toggle('on', x === b); sizeCanvases(); redraw();
+  };
+  q('.play').onclick = () => { st.playing = !st.playing; startTimer(); };
+  q('.spd').oninput = (e) => { st.speed = +e.target.value; startTimer(); };
+
+  for (const r of el.querySelectorAll(`input[name="m-${key}"]`)) r.onchange = () => {
+    const ovActive = q('.ovrchk').checked;
+    if (ovActive) { rec.overrides[curVar().v] = rec.overrides[curVar().v] || { mode: rec.mode || 'upscale', blendPct: rec.blendPct }; rec.overrides[curVar().v].mode = r.value; }
+    else { rec.mode = r.value; }
+    rec.decided = true; markChanged(); updateDecideUI(); redraw();
+  };
+  q('.bslider').oninput = (e) => {
+    const pct = +e.target.value; q('.bpct').textContent = pct + '%';
+    const ovActive = q('.ovrchk').checked;
+    if (ovActive) { rec.overrides[curVar().v] = rec.overrides[curVar().v] || { mode: rec.mode || 'upscale', blendPct: rec.blendPct }; rec.overrides[curVar().v].blendPct = pct; }
+    else { rec.blendPct = pct; }
+    redraw();
+  };
+  q('.ovrchk').onchange = (e) => {
+    const v = curVar().v;
+    if (e.target.checked) { rec.overrides[v] = { mode: rec.mode || (obj.hasUpscale ? 'upscale' : 'direct'), blendPct: rec.blendPct }; }
+    else { delete rec.overrides[v]; }
+    rec.decided = true; markChanged(); updateDecideUI(); redraw();
+  };
+
+  st.el = el; st.fullRefresh = fullRefresh; st.dispose = () => clearInterval(st.timer);
+  fullRefresh();
+  return st;
+}
+
+function markChanged() { updateChip(); status('edited'); }
+function status(t) { document.getElementById('status').textContent = t; }
+
+function updateChip() {
+  let decided = 0, total = 0;
+  for (const f of MANIFEST.fields) for (const o of f.objects) {
+    total++;
+    const r = store[f.field] && store[f.field][`${o.biome}/${o.object}`];
+    if (r && r.decided) decided++;
+  }
+  document.getElementById('chip').textContent = `${decided}/${total} decided`;
+}
+
+function renderField(field) {
+  curField = field;
+  for (const r of rows) r.dispose();
+  rows.length = 0;
+  const body = document.getElementById('body'); body.innerHTML = '';
+  const fe = MANIFEST.fields.find((f) => f.field === field);
+  for (const obj of fe.objects) { const r = buildRow(obj); rows.push(r); body.appendChild(r.el); }
+  for (const b of document.getElementById('tabs').children) b.classList.toggle('on', b.dataset.field === field);
+  updateChip();
+}
+
+// ---- export (§3 schema): { field, decisions: { "biome/object": {mode, blendPct?, overrides?} } } ----
+function exportDecisions(field) {
+  field = field || curField;
+  const decisions = {};
+  const fs_ = store[field] || {};
+  for (const [key, r] of Object.entries(fs_)) {
+    if (!r.decided && !Object.keys(r.overrides).length) continue;
+    const d = { mode: r.mode || 'upscale' };
+    if (d.mode === 'blend') d.blendPct = r.blendPct;
+    const ov = {};
+    for (const [vk, o] of Object.entries(r.overrides)) {
+      const e = { mode: o.mode || 'upscale' };
+      if (e.mode === 'blend') e.blendPct = o.blendPct;
+      ov[vk] = e;
+    }
+    if (Object.keys(ov).length) d.overrides = ov;
+    decisions[key] = d;
+  }
+  return { field, biome: BIOME, savedAt: new Date().toISOString(), decisions };
+}
+window.__exportDecisions = exportDecisions; // probe hook
+window.__store = store;
+
+document.getElementById('exp').onclick = () => {
+  const payload = exportDecisions(curField);
+  const blob = new Blob([JSON.stringify(payload, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `upscale-decisions.${curField}.json`; a.click();
+};
+
+// ---- boot ----
+MANIFEST = await (await fetch(`upscale-preview.${BIOME}.json`)).json();
+const tabs = document.getElementById('tabs');
+for (const f of MANIFEST.fields) {
+  const b = document.createElement('button'); b.className = 'tab'; b.dataset.field = f.field;
+  b.textContent = (f.label || f.field);
+  b.onclick = () => renderField(f.field);
+  tabs.appendChild(b);
+}
+renderField(MANIFEST.fields[0].field);
+</script></body></html>

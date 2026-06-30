@@ -1,0 +1,915 @@
+{
+ "biome": "grassland",
+ "generatedAt": "2026-06-30T16:15:18.307Z",
+ "assetRoot": "C:\\Users\\daves\\AppData\\Roaming\\wizardgenie\\projects\\default",
+ "sample": 3,
+ "fields": [
+  {
+   "field": "small_flora",
+   "label": "F2 small flora",
+   "drawPx": 32,
+   "objects": [
+    {
+     "field": "small_flora",
+     "biome": "grassland",
+     "object": "dandelion_stem",
+     "drawPx": 32,
+     "hasUpscale": false,
+     "variants": [
+      {
+       "v": "v000",
+       "original": "/assets/pixelab/landscape_v2/micro/small_flora/grassland/dandelion_stem/sf__grassland__dandelion_stem__v000.png",
+       "upscale": null,
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/dandelion_stem/anim/wind_sway/v000/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/dandelion_stem/anim/wind_sway/v000/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/dandelion_stem/anim/wind_sway/v000/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/dandelion_stem/anim/wind_sway/v000/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/dandelion_stem/anim/wind_sway/v000/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/dandelion_stem/anim/wind_sway/v000/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/dandelion_stem/anim/wind_sway/v000/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/dandelion_stem/anim/wind_sway/v000/frame_007.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/dandelion_stem/anim/wind_sway/v000/frame_008.png"
+       ],
+       "animUpscale": []
+      },
+      {
+       "v": "v001",
+       "original": "/assets/pixelab/landscape_v2/micro/small_flora/grassland/dandelion_stem/sf__grassland__dandelion_stem__v001.png",
+       "upscale": null,
+       "anim": [],
+       "animUpscale": []
+      },
+      {
+       "v": "v002",
+       "original": "/assets/pixelab/landscape_v2/micro/small_flora/grassland/dandelion_stem/sf__grassland__dandelion_stem__v002.png",
+       "upscale": null,
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/dandelion_stem/anim/wind_sway/v002/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/dandelion_stem/anim/wind_sway/v002/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/dandelion_stem/anim/wind_sway/v002/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/dandelion_stem/anim/wind_sway/v002/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/dandelion_stem/anim/wind_sway/v002/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/dandelion_stem/anim/wind_sway/v002/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/dandelion_stem/anim/wind_sway/v002/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/dandelion_stem/anim/wind_sway/v002/frame_007.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/dandelion_stem/anim/wind_sway/v002/frame_008.png"
+       ],
+       "animUpscale": []
+      }
+     ]
+    },
+    {
+     "field": "small_flora",
+     "biome": "grassland",
+     "object": "tall_grass_blade",
+     "drawPx": 32,
+     "hasUpscale": false,
+     "variants": [
+      {
+       "v": "v000",
+       "original": "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/sf__grassland__tall_grass_blade__v000.png",
+       "upscale": null,
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v000/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v000/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v000/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v000/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v000/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v000/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v000/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v000/frame_007.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v000/frame_008.png"
+       ],
+       "animUpscale": []
+      },
+      {
+       "v": "v001",
+       "original": "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/sf__grassland__tall_grass_blade__v001.png",
+       "upscale": null,
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v001/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v001/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v001/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v001/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v001/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v001/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v001/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v001/frame_007.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v001/frame_008.png"
+       ],
+       "animUpscale": []
+      },
+      {
+       "v": "v002",
+       "original": "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/sf__grassland__tall_grass_blade__v002.png",
+       "upscale": null,
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v002/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v002/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v002/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v002/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v002/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v002/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v002/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v002/frame_007.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/tall_grass_blade/anim/wind_sway/v002/frame_008.png"
+       ],
+       "animUpscale": []
+      }
+     ]
+    },
+    {
+     "field": "small_flora",
+     "biome": "grassland",
+     "object": "wild_herb",
+     "drawPx": 32,
+     "hasUpscale": false,
+     "variants": [
+      {
+       "v": "v000",
+       "original": "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/sf__grassland__wild_herb__v000.png",
+       "upscale": null,
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v000/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v000/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v000/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v000/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v000/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v000/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v000/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v000/frame_007.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v000/frame_008.png"
+       ],
+       "animUpscale": []
+      },
+      {
+       "v": "v001",
+       "original": "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/sf__grassland__wild_herb__v001.png",
+       "upscale": null,
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v001/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v001/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v001/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v001/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v001/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v001/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v001/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v001/frame_007.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v001/frame_008.png"
+       ],
+       "animUpscale": []
+      },
+      {
+       "v": "v002",
+       "original": "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/sf__grassland__wild_herb__v002.png",
+       "upscale": null,
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v002/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v002/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v002/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v002/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v002/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v002/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v002/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v002/frame_007.png",
+        "/assets/pixelab/landscape_v2/micro/small_flora/grassland/wild_herb/anim/wind_sway/v002/frame_008.png"
+       ],
+       "animUpscale": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "field": "medium_flora",
+   "label": "F4 medium flora",
+   "drawPx": 64,
+   "objects": [
+    {
+     "field": "medium_flora",
+     "biome": "grassland",
+     "object": "cornflower",
+     "drawPx": 64,
+     "hasUpscale": false,
+     "variants": [
+      {
+       "v": "v000",
+       "original": "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/mf__grassland__cornflower__v000.png",
+       "upscale": null,
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v000/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v000/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v000/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v000/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v000/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v000/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v000/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v000/frame_007.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v000/frame_008.png"
+       ],
+       "animUpscale": []
+      },
+      {
+       "v": "v001",
+       "original": "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/mf__grassland__cornflower__v001.png",
+       "upscale": null,
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v001/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v001/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v001/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v001/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v001/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v001/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v001/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v001/frame_007.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v001/frame_008.png"
+       ],
+       "animUpscale": []
+      },
+      {
+       "v": "v002",
+       "original": "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/mf__grassland__cornflower__v002.png",
+       "upscale": null,
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v002/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v002/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v002/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v002/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v002/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v002/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v002/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v002/frame_007.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/cornflower/anim/wind_sway/v002/frame_008.png"
+       ],
+       "animUpscale": []
+      }
+     ]
+    },
+    {
+     "field": "medium_flora",
+     "biome": "grassland",
+     "object": "daisy_cluster",
+     "drawPx": 64,
+     "hasUpscale": false,
+     "variants": [
+      {
+       "v": "v000",
+       "original": "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/mf__grassland__daisy_cluster__v000.png",
+       "upscale": null,
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v000/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v000/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v000/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v000/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v000/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v000/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v000/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v000/frame_007.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v000/frame_008.png"
+       ],
+       "animUpscale": []
+      },
+      {
+       "v": "v001",
+       "original": "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/mf__grassland__daisy_cluster__v001.png",
+       "upscale": null,
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v001/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v001/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v001/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v001/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v001/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v001/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v001/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v001/frame_007.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v001/frame_008.png"
+       ],
+       "animUpscale": []
+      },
+      {
+       "v": "v002",
+       "original": "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/mf__grassland__daisy_cluster__v002.png",
+       "upscale": null,
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v002/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v002/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v002/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v002/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v002/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v002/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v002/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v002/frame_007.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/daisy_cluster/anim/wind_sway/v002/frame_008.png"
+       ],
+       "animUpscale": []
+      }
+     ]
+    },
+    {
+     "field": "medium_flora",
+     "biome": "grassland",
+     "object": "wild_lavender",
+     "drawPx": 64,
+     "hasUpscale": false,
+     "variants": [
+      {
+       "v": "v000",
+       "original": "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/mf__grassland__wild_lavender__v000.png",
+       "upscale": null,
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v000/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v000/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v000/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v000/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v000/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v000/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v000/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v000/frame_007.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v000/frame_008.png"
+       ],
+       "animUpscale": []
+      },
+      {
+       "v": "v001",
+       "original": "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/mf__grassland__wild_lavender__v001.png",
+       "upscale": null,
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v001/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v001/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v001/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v001/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v001/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v001/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v001/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v001/frame_007.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v001/frame_008.png"
+       ],
+       "animUpscale": []
+      },
+      {
+       "v": "v002",
+       "original": "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/mf__grassland__wild_lavender__v002.png",
+       "upscale": null,
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v002/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v002/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v002/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v002/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v002/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v002/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v002/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v002/frame_007.png",
+        "/assets/pixelab/landscape_v2/micro/medium_flora/grassland/wild_lavender/anim/wind_sway/v002/frame_008.png"
+       ],
+       "animUpscale": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "field": "medium_objects",
+   "label": "F5 medium objects",
+   "drawPx": 96,
+   "objects": [
+    {
+     "field": "medium_objects",
+     "biome": "grassland",
+     "object": "fence_post",
+     "drawPx": 96,
+     "hasUpscale": false,
+     "variants": [
+      {
+       "v": "v000",
+       "original": "/assets/pixelab/landscape_v2/micro/medium_objects/grassland/fence_post/mo__grassland__fence_post__v000.png",
+       "upscale": null,
+       "anim": [],
+       "animUpscale": []
+      },
+      {
+       "v": "v001",
+       "original": "/assets/pixelab/landscape_v2/micro/medium_objects/grassland/fence_post/mo__grassland__fence_post__v001.png",
+       "upscale": null,
+       "anim": [],
+       "animUpscale": []
+      },
+      {
+       "v": "v002",
+       "original": "/assets/pixelab/landscape_v2/micro/medium_objects/grassland/fence_post/mo__grassland__fence_post__v002.png",
+       "upscale": null,
+       "anim": [],
+       "animUpscale": []
+      }
+     ]
+    },
+    {
+     "field": "medium_objects",
+     "biome": "grassland",
+     "object": "field_boulder",
+     "drawPx": 96,
+     "hasUpscale": false,
+     "variants": [
+      {
+       "v": "v000",
+       "original": "/assets/pixelab/landscape_v2/micro/medium_objects/grassland/field_boulder/mo__grassland__field_boulder__v000.png",
+       "upscale": null,
+       "anim": [],
+       "animUpscale": []
+      },
+      {
+       "v": "v001",
+       "original": "/assets/pixelab/landscape_v2/micro/medium_objects/grassland/field_boulder/mo__grassland__field_boulder__v001.png",
+       "upscale": null,
+       "anim": [],
+       "animUpscale": []
+      },
+      {
+       "v": "v002",
+       "original": "/assets/pixelab/landscape_v2/micro/medium_objects/grassland/field_boulder/mo__grassland__field_boulder__v002.png",
+       "upscale": null,
+       "anim": [],
+       "animUpscale": []
+      }
+     ]
+    },
+    {
+     "field": "medium_objects",
+     "biome": "grassland",
+     "object": "hay_bale",
+     "drawPx": 96,
+     "hasUpscale": false,
+     "variants": [
+      {
+       "v": "v000",
+       "original": "/assets/pixelab/landscape_v2/micro/medium_objects/grassland/hay_bale/mo__grassland__hay_bale__v000.png",
+       "upscale": null,
+       "anim": [],
+       "animUpscale": []
+      },
+      {
+       "v": "v001",
+       "original": "/assets/pixelab/landscape_v2/micro/medium_objects/grassland/hay_bale/mo__grassland__hay_bale__v001.png",
+       "upscale": null,
+       "anim": [],
+       "animUpscale": []
+      },
+      {
+       "v": "v002",
+       "original": "/assets/pixelab/landscape_v2/micro/medium_objects/grassland/hay_bale/mo__grassland__hay_bale__v002.png",
+       "upscale": null,
+       "anim": [],
+       "animUpscale": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "field": "large_flora",
+   "label": "F6 large flora",
+   "drawPx": 192,
+   "objects": [
+    {
+     "field": "large_flora",
+     "biome": "grassland",
+     "object": "apple",
+     "drawPx": 192,
+     "hasUpscale": true,
+     "variants": [
+      {
+       "v": "v000",
+       "original": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/v000.png",
+       "upscale": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/v000@384.png",
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v000/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v000/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v000/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v000/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v000/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v000/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v000/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v000/frame_007.png"
+       ],
+       "animUpscale": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v000/frame_000@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v000/frame_001@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v000/frame_002@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v000/frame_003@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v000/frame_004@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v000/frame_005@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v000/frame_006@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v000/frame_007@384.png"
+       ]
+      },
+      {
+       "v": "v001",
+       "original": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/v001.png",
+       "upscale": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/v001@384.png",
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v001/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v001/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v001/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v001/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v001/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v001/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v001/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v001/frame_007.png"
+       ],
+       "animUpscale": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v001/frame_000@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v001/frame_001@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v001/frame_002@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v001/frame_003@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v001/frame_004@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v001/frame_005@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v001/frame_006@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v001/frame_007@384.png"
+       ]
+      },
+      {
+       "v": "v002",
+       "original": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/v002.png",
+       "upscale": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/v002@384.png",
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v002/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v002/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v002/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v002/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v002/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v002/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v002/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v002/frame_007.png"
+       ],
+       "animUpscale": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v002/frame_000@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v002/frame_001@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v002/frame_002@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v002/frame_003@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v002/frame_004@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v002/frame_005@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v002/frame_006@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/apple/anim/wind_sway/v002/frame_007@384.png"
+       ]
+      }
+     ]
+    },
+    {
+     "field": "large_flora",
+     "biome": "grassland",
+     "object": "cherry",
+     "drawPx": 192,
+     "hasUpscale": true,
+     "variants": [
+      {
+       "v": "v000",
+       "original": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/v000.png",
+       "upscale": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/v000@384.png",
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v000/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v000/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v000/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v000/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v000/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v000/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v000/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v000/frame_007.png"
+       ],
+       "animUpscale": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v000/frame_000@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v000/frame_001@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v000/frame_002@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v000/frame_003@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v000/frame_004@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v000/frame_005@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v000/frame_006@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v000/frame_007@384.png"
+       ]
+      },
+      {
+       "v": "v001",
+       "original": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/v001.png",
+       "upscale": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/v001@384.png",
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v001/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v001/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v001/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v001/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v001/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v001/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v001/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v001/frame_007.png"
+       ],
+       "animUpscale": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v001/frame_000@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v001/frame_001@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v001/frame_002@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v001/frame_003@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v001/frame_004@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v001/frame_005@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v001/frame_006@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v001/frame_007@384.png"
+       ]
+      },
+      {
+       "v": "v002",
+       "original": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/v002.png",
+       "upscale": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/v002@384.png",
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v002/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v002/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v002/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v002/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v002/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v002/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v002/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v002/frame_007.png"
+       ],
+       "animUpscale": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v002/frame_000@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v002/frame_001@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v002/frame_002@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v002/frame_003@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v002/frame_004@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v002/frame_005@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v002/frame_006@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/cherry/anim/wind_sway/v002/frame_007@384.png"
+       ]
+      }
+     ]
+    },
+    {
+     "field": "large_flora",
+     "biome": "grassland",
+     "object": "oak",
+     "drawPx": 192,
+     "hasUpscale": true,
+     "variants": [
+      {
+       "v": "v000",
+       "original": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/v000.png",
+       "upscale": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/v000@384.png",
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v000/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v000/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v000/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v000/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v000/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v000/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v000/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v000/frame_007.png"
+       ],
+       "animUpscale": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v000/frame_000@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v000/frame_001@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v000/frame_002@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v000/frame_003@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v000/frame_004@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v000/frame_005@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v000/frame_006@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v000/frame_007@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v000/frame_008@384.png"
+       ]
+      },
+      {
+       "v": "v001",
+       "original": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/v001.png",
+       "upscale": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/v001@384.png",
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v001/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v001/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v001/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v001/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v001/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v001/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v001/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v001/frame_007.png"
+       ],
+       "animUpscale": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v001/frame_000@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v001/frame_001@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v001/frame_002@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v001/frame_003@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v001/frame_004@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v001/frame_005@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v001/frame_006@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v001/frame_007@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v001/frame_008@384.png"
+       ]
+      },
+      {
+       "v": "v002",
+       "original": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/v002.png",
+       "upscale": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/v002@384.png",
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v002/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v002/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v002/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v002/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v002/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v002/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v002/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v002/frame_007.png"
+       ],
+       "animUpscale": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v002/frame_000@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v002/frame_001@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v002/frame_002@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v002/frame_003@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v002/frame_004@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v002/frame_005@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v002/frame_006@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v002/frame_007@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/oak/anim/wind_sway/v002/frame_008@384.png"
+       ]
+      }
+     ]
+    },
+    {
+     "field": "large_flora",
+     "biome": "grassland",
+     "object": "willow",
+     "drawPx": 192,
+     "hasUpscale": true,
+     "variants": [
+      {
+       "v": "v000",
+       "original": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/v000.png",
+       "upscale": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/v000@384.png",
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v000/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v000/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v000/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v000/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v000/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v000/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v000/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v000/frame_007.png"
+       ],
+       "animUpscale": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v000/frame_000@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v000/frame_001@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v000/frame_002@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v000/frame_003@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v000/frame_004@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v000/frame_005@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v000/frame_006@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v000/frame_007@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v000/frame_008@384.png"
+       ]
+      },
+      {
+       "v": "v001",
+       "original": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/v001.png",
+       "upscale": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/v001@384.png",
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v001/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v001/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v001/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v001/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v001/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v001/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v001/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v001/frame_007.png"
+       ],
+       "animUpscale": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v001/frame_000@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v001/frame_001@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v001/frame_002@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v001/frame_003@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v001/frame_004@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v001/frame_005@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v001/frame_006@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v001/frame_007@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v001/frame_008@384.png"
+       ]
+      },
+      {
+       "v": "v002",
+       "original": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/v002.png",
+       "upscale": "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/v002@384.png",
+       "anim": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v002/frame_000.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v002/frame_001.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v002/frame_002.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v002/frame_003.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v002/frame_004.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v002/frame_005.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v002/frame_006.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v002/frame_007.png"
+       ],
+       "animUpscale": [
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v002/frame_000@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v002/frame_001@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v002/frame_002@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v002/frame_003@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v002/frame_004@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v002/frame_005@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v002/frame_006@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v002/frame_007@384.png",
+        "/assets/pixelab/landscape_v2/micro/large_flora/grassland/willow/anim/wind_sway/v002/frame_008@384.png"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "field": "large_objects",
+   "label": "Large objects",
+   "drawPx": 160,
+   "objects": [
+    {
+     "field": "large_objects",
+     "biome": "grassland",
+     "object": "apple_tree",
+     "drawPx": 160,
+     "hasUpscale": false,
+     "variants": [
+      {
+       "v": "v000",
+       "original": "/assets/pixelab/landscape_v2/micro/large_objects/grassland/apple_tree/lg__grassland__apple_tree__v000.png",
+       "upscale": null,
+       "anim": [],
+       "animUpscale": []
+      },
+      {
+       "v": "v001",
+       "original": "/assets/pixelab/landscape_v2/micro/large_objects/grassland/apple_tree/lg__grassland__apple_tree__v001.png",
+       "upscale": null,
+       "anim": [],
+       "animUpscale": []
+      },
+      {
+       "v": "v002",
+       "original": "/assets/pixelab/landscape_v2/micro/large_objects/grassland/apple_tree/lg__grassland__apple_tree__v002.png",
+       "upscale": null,
+       "anim": [],
+       "animUpscale": []
+      }
+     ]
+    },
+    {
+     "field": "large_objects",
+     "biome": "grassland",
+     "object": "cherry_blossom",
+     "drawPx": 160,
+     "hasUpscale": false,
+     "variants": [
+      {
+       "v": "v000",
+       "original": "/assets/pixelab/landscape_v2/micro/large_objects/grassland/cherry_blossom/lg__grassland__cherry_blossom__v000.png",
+       "upscale": null,
+       "anim": [],
+       "animUpscale": []
+      },
+      {
+       "v": "v001",
+       "original": "/assets/pixelab/landscape_v2/micro/large_objects/grassland/cherry_blossom/lg__grassland__cherry_blossom__v001.png",
+       "upscale": null,
+       "anim": [],
+       "animUpscale": []
+      },
+      {
+       "v": "v002",
+       "original": "/assets/pixelab/landscape_v2/micro/large_objects/grassland/cherry_blossom/lg__grassland__cherry_blossom__v002.png",
+       "upscale": null,
+       "anim": [],
+       "animUpscale": []
+      }
+     ]
+    },
+    {
+     "field": "large_objects",
+     "biome": "grassland",
+     "object": "meadow_oak",
+     "drawPx": 160,
+     "hasUpscale": false,
+     "variants": [
+      {
+       "v": "v000",
+       "original": "/assets/pixelab/landscape_v2/micro/large_objects/grassland/meadow_oak/lg__grassland__meadow_oak__v000.png",
+       "upscale": null,
+       "anim": [],
+       "animUpscale": []
+      },
+      {
+       "v": "v001",
+       "original": "/assets/pixelab/landscape_v2/micro/large_objects/grassland/meadow_oak/lg__grassland__meadow_oak__v001.png",
+       "upscale": null,
+       "anim": [],
+       "animUpscale": []
+      },
+      {
+       "v": "v002",
+       "original": "/assets/pixelab/landscape_v2/micro/large_objects/grassland/meadow_oak/lg__grassland__meadow_oak__v002.png",
+       "upscale": null,
+       "anim": [],
+       "animUpscale": []
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

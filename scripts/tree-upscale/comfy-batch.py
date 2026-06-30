@@ -59,6 +59,7 @@ import argparse
 import json
 import logging
 import os
+import re
 import sys
 import time
 import urllib.parse
@@ -71,6 +72,7 @@ from urllib.request import Request, urlopen
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TOOL_DIR = Path(__file__).resolve().parent
 FLORA_DIR = REPO_ROOT / "assets" / "pixelab" / "landscape_v2" / "micro" / "large_flora"
+FIELDS_FILE = TOOL_DIR / "fields.json"
 GRAPH_FILE = TOOL_DIR / "comfy-graph.json"
 PALETTE_DIR = TOOL_DIR / "palettes"
 DEMO_PALETTE = REPO_ROOT / "tools" / "_repixel_demo" / "palette.png"  # fallback until per-biome palettes land
@@ -102,6 +104,56 @@ OUT_TAG = ""               # optional tag appended to outputs (v###@384<tag>.png
 FORCE = False              # --force: reprocess even if an output already exists
 SRC_PALETTE_COLORS = 64    # per-source palette size: quantize each sprite's OWN colors
 INCLUDE_ANIMS = True       # include anim/ frames; set False with --no-anims for a fast statics-only pass
+
+# ---------------------------------------------------------------------------
+# FIELD CONFIG (fields.json driven). The pipeline used to be hardcoded to F6
+# large_flora; it is now parameterized over any decoration *object* field. These
+# globals are populated by configure_field() in main(). The defaults below
+# reproduce the F6 behavior EXACTLY, so an un-configured import (or --field
+# large_flora) is byte-identical to the original tree pipeline.
+# ---------------------------------------------------------------------------
+FIELD_NAME = "large_flora"           # selected field key in fields.json
+FIELD_ROOT = FLORA_DIR               # corpus root (was the hardcoded FLORA_DIR)
+FIELD_RE = re.compile(r"^v(\d+)$")   # variant-stem regex (file_re); F6 = ^v(\d+)$
+PROMPT_MODE = "legacy_f6"            # "legacy_f6" = built-in tree tables; "template" = field.prompt
+READY_GATE = "f6"                    # "f6" = complete_f6_types gate; "disk" = process what's on disk
+FIELD_PROMPT = None                  # template-mode base prompt with a {obj} slot
+FIELD_OBJECTS = {}                   # template-mode per-object {obj} overrides
+SAMPLE_N = None                      # --sample N: cap to the first N variants per object (None = all)
+DECISIONS_KEYS = None                # --decisions: set of "biome/obj" with mode upscale/blend (None = all)
+
+
+def load_fields() -> dict:
+    """Load the per-field config table (fields.json) sitting next to this script."""
+    with open(FIELDS_FILE, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def configure_field(name: str) -> dict:
+    """Select a field row from fields.json and populate the FIELD_* globals.
+    For 'large_flora' this is a no-op vs the original hardcoded F6 behavior."""
+    global FIELD_NAME, FIELD_ROOT, FIELD_RE, PROMPT_MODE, READY_GATE
+    global FIELD_PROMPT, FIELD_OBJECTS, DENOISE
+    if not FIELDS_FILE.exists():
+        log.error(f"missing field config: {FIELDS_FILE}")
+        sys.exit(1)
+    fields = load_fields()
+    if name not in fields:
+        known = sorted(k for k in fields if not k.startswith("_"))
+        log.error(f"unknown --field '{name}'; known fields: {known}")
+        sys.exit(1)
+    cfg = fields[name]
+    FIELD_NAME = name
+    FIELD_ROOT = (REPO_ROOT / cfg["root"]).resolve()
+    FIELD_RE = re.compile(cfg["file_re"])
+    PROMPT_MODE = cfg.get("prompt_mode", "template")
+    READY_GATE = cfg.get("ready_gate", "disk")
+    FIELD_PROMPT = cfg.get("prompt")
+    FIELD_OBJECTS = cfg.get("objects", {}) or {}
+    # Per-field denoise becomes the new default; an explicit --denoise still wins (applied in main()).
+    if cfg.get("denoise") is not None:
+        DENOISE = float(cfg["denoise"])
+    return cfg
 
 # ---------------------------------------------------------------------------
 # Prompt table — mirrors bulk_generate_f6's PROMPT / BIOME_PROMPTS /
@@ -183,9 +235,12 @@ log = logging.getLogger("comfy-batch")
 # ---------------------------------------------------------------------------
 
 def is_static_source(p: Path) -> bool:
-    """A tree sprite we should upscale: a base/state variant v###.png OR an animation
-    frame anim/wind_sway/v###/frame_###.png — anim frames are just more 192px images,
-    run through the identical pipeline. Excludes already-produced @384 outputs."""
+    """A sprite we should upscale: a base/state variant whose STEM matches the field's
+    file_re (F6 = v###; F2 = sf__<biome>__<obj>__v###; etc.) OR an animation frame
+    anim/<motion>/v###/frame_###.png — anim frames are just more source images, run
+    through the identical pipeline. Excludes already-produced @384 outputs.
+    NOTE: for --field large_flora, FIELD_RE is ^v(\\d+)$ so this is byte-identical to the
+    original `name.startswith('v') and name[1:].isdigit()` test."""
     if p.suffix.lower() != ".png":
         return False
     if "@384" in p.stem:                     # already an @384 output (any tag)
@@ -193,14 +248,26 @@ def is_static_source(p: Path) -> bool:
     name = p.stem
     if name.startswith("frame_") and name[6:].isdigit():
         return INCLUDE_ANIMS                 # anim frame — gated by --no-anims
-    return name.startswith("v") and name[1:].isdigit()
+    return bool(FIELD_RE.match(name))
+
+
+def variant_index(p: Path):
+    """Variant number (the v### index) of a source, or None. Used by --sample to cap to
+    the first N variants per object. Base/state sprites carry the index in their stem
+    (per the field's file_re); anim frames carry it in their parent dir name (always v###)."""
+    name = p.stem
+    if name.startswith("frame_") and name[6:].isdigit():
+        m = re.match(r"^v(\d+)$", p.parent.name)     # .../anim/<motion>/v###/frame_###.png
+        return int(m.group(1)) if m else None
+    m = FIELD_RE.match(name)
+    return int(m.group(1)) if (m and m.groups()) else None
 
 
 def biome_type_of(p: Path):
-    """Recover (biome, type) from a path under large_flora/<biome>/<type>/...
+    """Recover (biome, type) from a path under <field root>/<biome>/<type>/...
     Works for both base (<biome>/<type>/v.png) and state
     (<biome>/<type>/_states/<state>/v.png) sources."""
-    rel = p.relative_to(FLORA_DIR).parts
+    rel = p.relative_to(FIELD_ROOT).parts
     # rel[0]=biome, rel[1]=type, then either v.png or _states/<state>/v.png
     biome = rel[0]
     obj = rel[1]
@@ -218,7 +285,7 @@ def output_path(src: Path) -> Path:
 
 def f6_state():
     """The F6 generator's live state (_f6_state.json), or None if absent/unreadable."""
-    sf = FLORA_DIR / "_f6_state.json"
+    sf = FIELD_ROOT / "_f6_state.json"
     if not sf.exists():
         return None
     try:
@@ -248,9 +315,9 @@ def complete_f6_types():
     (no half-generated anim can end up mixed 192/384); states are static fallbacks so 'present' suffices.
     Self-correcting: as the generator finishes a type's anims on disk, it flips to ready on the next scan."""
     ready = set()
-    if not FLORA_DIR.exists():
+    if not FIELD_ROOT.exists():
         return ready
-    for bd in FLORA_DIR.iterdir():
+    for bd in FIELD_ROOT.iterdir():
         if not bd.is_dir() or bd.name.startswith('_'):
             continue
         for od in bd.iterdir():
@@ -279,12 +346,16 @@ def all_f6_types():
 
 def enumerate_corpus(only_biome=None, only_type=None, ready_only=False):
     """Return a sorted list of source Paths to process, applying filters.
-    Disk-first: globs the real tree on disk. ready_only=True keeps ONLY fully-generated types."""
+    Disk-first: globs the real corpus on disk. ready_only=True keeps ONLY fully-generated
+    types (F6 gate only); --sample caps to the first N variants/object; --decisions keeps
+    only objects marked upscale/blend."""
     out = []
-    if not FLORA_DIR.exists():
+    if not FIELD_ROOT.exists():
         return out
-    ready = complete_f6_types() if ready_only else None
-    for p in FLORA_DIR.rglob("*.png"):       # v###.png (base/state) + frame_###.png (anim); predicate filters
+    # The completeness gate only applies to live-generating F6; disk-static fields process
+    # whatever is present (ready_gate == "disk").
+    ready = complete_f6_types() if (ready_only and READY_GATE == "f6") else None
+    for p in FIELD_ROOT.rglob("*.png"):      # variant PNGs (base/state) + frame_###.png (anim); predicate filters
         if not is_static_source(p):
             continue
         biome, obj = biome_type_of(p)
@@ -292,8 +363,15 @@ def enumerate_corpus(only_biome=None, only_type=None, ready_only=False):
             continue
         if only_type and obj != only_type:
             continue
-        if ready is not None and (biome + '/' + obj) not in ready:
+        key = biome + '/' + obj
+        if ready is not None and key not in ready:
             continue
+        if DECISIONS_KEYS is not None and key not in DECISIONS_KEYS:
+            continue
+        if SAMPLE_N is not None:
+            vi = variant_index(p)
+            if vi is None or vi >= SAMPLE_N:
+                continue
         out.append(p)
     # Process base sprites FIRST, then states, then the (much larger) anim frames — so a full
     # run upgrades the visible trees in ~15 min and the animations fill in after, rather than
@@ -317,13 +395,38 @@ def palette_for(biome: str) -> Path:
 # ---------------------------------------------------------------------------
 
 def build_prompt(biome: str, obj: str, src: Path) -> str:
-    tree_desc = PROMPT_NAME_OVERRIDE.get(obj, obj.replace("_", " "))
+    """Build the positive prompt for a sprite.
+
+    legacy_f6 (F6 large_flora): the original built-in tree tables, UNCHANGED — biome is
+    folded into the {obj} slot (PROMPT_NAME_OVERRIDE + BIOME_PROMPTS), then STATE_PROMPTS
+    appended for _states sprites.
+
+    template (every other field): field.prompt with {obj} = field.objects[obj] override (or
+    the de-underscored object name), then the shared BIOME_PROMPTS modifier appended, then
+    STATE_PROMPTS for _states sprites. Reuses the same biome/state vocab so the detail-add
+    stays on-theme across fields."""
+    if PROMPT_MODE == "legacy_f6":
+        tree_desc = PROMPT_NAME_OVERRIDE.get(obj, obj.replace("_", " "))
+        biome_desc = BIOME_PROMPTS.get(biome, "")
+        full = f"{tree_desc} {biome_desc}".strip()
+        prompt = PROMPT.format(obj=full)
+        # state sprites: append the lifecycle descriptor so detail-add stays on-state
+        if kind_of(src) == "state":
+            state = src.parent.name  # .../_states/<state>/v.png
+            sd = STATE_PROMPTS.get(state)
+            if sd:
+                prompt = f"{prompt}, {sd}"
+        return prompt
+
+    # template mode (field.prompt / field.objects from fields.json)
+    obj_desc = FIELD_OBJECTS.get(obj, obj.replace("_", " "))
+    base = FIELD_PROMPT if FIELD_PROMPT is not None else PROMPT
+    prompt = base.format(obj=obj_desc)
     biome_desc = BIOME_PROMPTS.get(biome, "")
-    full = f"{tree_desc} {biome_desc}".strip()
-    prompt = PROMPT.format(obj=full)
-    # state sprites: append the lifecycle descriptor so detail-add stays on-state
+    if biome_desc:
+        prompt = f"{prompt}, {biome_desc}"
     if kind_of(src) == "state":
-        state = src.parent.name  # .../_states/<state>/v.png
+        state = src.parent.name
         sd = STATE_PROMPTS.get(state)
         if sd:
             prompt = f"{prompt}, {sd}"
@@ -545,7 +648,7 @@ def save_state(state: dict, force=False):
 
 
 def src_key(src: Path) -> str:
-    return str(src.relative_to(FLORA_DIR)).replace("\\", "/")
+    return str(src.relative_to(FIELD_ROOT)).replace("\\", "/")
 
 
 # ---------------------------------------------------------------------------
@@ -723,7 +826,11 @@ def dry_run(only_biome, only_type, ready_only=False):
     print("=" * 64)
     print("DRY RUN - tree-upscale corpus enumeration (no ComfyUI calls)")
     print("=" * 64)
-    print(f"flora dir:        {FLORA_DIR}")
+    print(f"field:            {FIELD_NAME}  (prompt_mode={PROMPT_MODE}, ready_gate={READY_GATE})")
+    print(f"field root:       {FIELD_ROOT}")
+    print(f"file_re:          {FIELD_RE.pattern}"
+          f"{f'   sample<={SAMPLE_N}/obj' if SAMPLE_N is not None else ''}"
+          f"{'   [decisions filter]' if DECISIONS_KEYS is not None else ''}")
     print(f"static sprites:   {len(sources)}  (base={n_base}, states={n_state})")
     print(f"biome/type pairs: {len(by_bt)}")
     print(f"output naming:    v0NN.png -> v0NN{OUT_SUFFIX}.png (next to source)")
@@ -816,8 +923,14 @@ def report(state, only_biome=None, only_type=None):
 
 
 def main():
-    global DENOISE, TILE_STRENGTH, OUT_TAG, FORCE, INCLUDE_ANIMS
-    ap = argparse.ArgumentParser(description="Component E — ComfyUI tree-upscale batch harness")
+    global DENOISE, TILE_STRENGTH, OUT_TAG, FORCE, INCLUDE_ANIMS, SAMPLE_N, DECISIONS_KEYS
+    ap = argparse.ArgumentParser(description="Component E — ComfyUI field-aware upscale batch harness")
+    ap.add_argument("--field", default="large_flora",
+                    help="Field config row in fields.json (default large_flora = original F6 behavior)")
+    ap.add_argument("--sample", type=int, default=None, metavar="N",
+                    help="Cap to the first N variants per object (dashboard sample pass)")
+    ap.add_argument("--decisions", default=None, metavar="PATH",
+                    help="Bulk mode: only process objects whose mode in this decisions JSON is 'upscale'/'blend' (skip 'direct')")
     ap.add_argument("--status", action="store_true", help="Print progress and exit")
     ap.add_argument("--dry-run", action="store_true",
                     help="Enumerate corpus + template ONE asset, no ComfyUI calls")
@@ -835,13 +948,25 @@ def main():
     ap.add_argument("--watch", type=int, default=0, metavar="MIN", help="Loop: process ready types, re-check every MIN min for newly-finished types, until all done (implies --ready). Kick once, walks the whole corpus.")
     args = ap.parse_args()
 
-    if args.denoise is not None:
+    # Select the field FIRST: this sets FIELD_ROOT / FIELD_RE / PROMPT_MODE / READY_GATE and
+    # the per-field default DENOISE. For --field large_flora this reproduces the F6 defaults.
+    configure_field(args.field)
+
+    if args.denoise is not None:     # explicit --denoise wins over the per-field default
         DENOISE = args.denoise
     if args.tile is not None:
         TILE_STRENGTH = args.tile
     OUT_TAG = args.out_tag
     FORCE = args.force
     INCLUDE_ANIMS = not args.no_anims
+    SAMPLE_N = args.sample
+    if args.decisions is not None:
+        dd = json.loads(Path(args.decisions).read_text(encoding="utf-8"))
+        decs = dd.get("decisions", {}) if isinstance(dd, dict) else {}
+        DECISIONS_KEYS = {k for k, v in decs.items()
+                          if isinstance(v, dict) and v.get("mode") in ("upscale", "blend")}
+        log.info(f"--decisions {args.decisions}: {len(DECISIONS_KEYS)} object(s) marked upscale/blend "
+                 f"(direct/other objects skipped)")
 
     if not GRAPH_FILE.exists():
         log.error(f"missing graph template: {GRAPH_FILE}")
