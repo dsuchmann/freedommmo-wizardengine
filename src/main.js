@@ -198,7 +198,7 @@ function update(dt) {
     player.y = 212;
     player.z = 0;
     player.vz = 0;
-    chunks.streamAround(player.x, player.y);
+    chunks.streamAround(player.x, player.y, camera.zoom, window.innerWidth, window.innerHeight);
     provider.initPreload(player.x, player.y, true); // discontinuity: force destination preload
   }
   if (input.wasPressed('p')) {
@@ -308,7 +308,7 @@ function update(dt) {
       simClient.setViewport({ x: px - VP_HALF, y: py - VP_HALF, w: VP_HALF * 2, h: VP_HALF * 2 });
     }
   }
-  chunks.streamAround(player.x, player.y);
+  chunks.streamAround(player.x, player.y, camera.zoom, window.innerWidth, window.innerHeight);
   // Re-run biome preload as the player travels — no-ops until they've moved
   // ~15 chunks from the last preload center (kills sprite pop-in on new biomes)
   if ((frame & 127) === 0) provider.initPreload(player.x, player.y);
@@ -334,5 +334,5 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 
-chunks.streamAround(player.x, player.y);
+chunks.streamAround(player.x, player.y, camera.zoom, window.innerWidth, window.innerHeight);
 requestAnimationFrame(loop);
