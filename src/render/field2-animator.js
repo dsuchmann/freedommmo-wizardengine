@@ -1722,10 +1722,11 @@ function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, we
       _pool.readyCount = ready; _pool.lastRebuildAt = timeMs;
       _startAmortBuild(chunkStore, player, glc, needRX, needRY); // first paint AND warm: both spread
     }
-    if (_gb) {
-      if (atlasReset) { var _sg = 0; while (_gb && _sg++ < 64) _amortStep(performance.now() + 1000); } // sync: no stale-UV frame
-      else _amortStep(performance.now() + AMORT_BUDGET_MS);
-    }
+    // Always AMORTIZE the build (even right after an atlas reset). The earlier synchronous rebuild
+    // (run the whole thing in one frame to avoid a 1-frame stale-UV flash) cost 50-200ms = an f2
+    // stutter spike. With the 16384² atlas + 32px strip bucketing, resets are rare, so a brief flora
+    // flash during the amortized re-pack is the better trade than a frame-long freeze.
+    if (_gb) _amortStep(performance.now() + AMORT_BUDGET_MS);
     var tickRanG = false;
     if (timeMs - _pool.lastTickMs >= 100) { _pool.lastTickMs = timeMs; _poolTick(timeMs, timeSec, glc, tilePxSnapped); tickRanG = true; }
     if (_pool.animUploaded) {
