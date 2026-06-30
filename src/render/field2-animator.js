@@ -1216,7 +1216,13 @@ function _poolRebuild(chunkStore, player, glc, radiusX, radiusY) {
   entries.sort(function (a, b) { return a.sortY - b.sortY; });
 
   var n = entries.length;
-  if (!_pool.mirror || _pool.mirror.length < (n + 1) * SPRITE_FLOATS) {
+  // Reallocate the CPU buffers when the mirror is missing/too-small OR when ANY sibling buffer is absent.
+  // The GPU flora path populates _pool.mirror but NOT these CPU-only buffers (sortY/shadowOf/shadowMirror/
+  // lastRot…), so toggling to the CPU path (window._gpuFlora=false) would otherwise skip this block (mirror
+  // already big enough) and crash writing into a null shadowMirror/sortY. Forcing the full realloc when any
+  // is null rebuilds them all consistently.
+  if (!_pool.mirror || _pool.mirror.length < (n + 1) * SPRITE_FLOATS ||
+      !_pool.shadowMirror || !_pool.sortY || !_pool.shadowOf) {
     _pool.mirror = new Float32Array(Math.max(4096, (n + 1) * SPRITE_FLOATS * 2));
     _pool.sortY = new Float32Array(Math.max(512, n * 2));
     _pool.shadowOf = new Int32Array(Math.max(512, n * 2));
