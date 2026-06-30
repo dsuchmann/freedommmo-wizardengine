@@ -45,8 +45,10 @@ const SCRIPTS = 'scripts/tree-upscale';
 
 const FIELDS = JSON.parse(fs.readFileSync(path.join(HERE, 'fields.json'), 'utf8'));
 const FIELD_KEYS = Object.keys(FIELDS).filter((k) => !k.startsWith('_'));
-// "all bases" sweeps every object field EXCEPT large_flora (F6 — already fully upscaled), in fields.json order.
-const BASE_FIELDS = FIELD_KEYS.filter((k) => k !== 'large_flora');
+// "all bases" sweeps every object field EXCEPT large_flora (F6 — already fully upscaled). Explicit order so
+// F3 (small_scatter) is always included and the sweep runs small→large; filtered to fields actually present.
+const BASE_FIELDS = ['small_flora', 'small_scatter', 'medium_flora', 'medium_objects', 'large_objects']
+  .filter((k) => FIELD_KEYS.includes(k));
 const BIOME_RE = /^[a-z_]+$/;
 const PY = process.env.PYTHON_BIN || 'python';   // interpreter for comfy-batch (overridable for tests/venvs)
 

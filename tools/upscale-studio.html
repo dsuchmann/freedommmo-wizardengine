@@ -51,6 +51,7 @@
 <body>
 <header>
  <h1>Upscale Studio</h1>
+ <label style="color:var(--dim)">biome <select id="biomesel"></select></label>
  <span id="tabs"></span>
  <span class="chip" id="chip">0/0 decided</span>
  <button id="exp">⬇ Export decisions</button>
@@ -75,7 +76,11 @@
 <script type="module">
 const PCT_DEFAULT = 40;            // blend default = original's share (matches apply-mix --pct)
 const SPEED_DEFAULT = 130;         // ms/frame
-const BIOME = 'grassland';
+// 16 review-able LAND biomes (water biomes excluded). The header <select> drives which one we review;
+// BIOME is mutable — every API call + manifest URL reads the CURRENT selection.
+const BIOMES = ['arctic','beach','dense_forest','desert','forest','grassland','hills','mountains',
+                'mystic','savanna','steppe','swamp','taiga','tropical_forest','tundra','volcanic'];
+let BIOME = 'grassland';
 
 // ---- decision store (in memory). store[field]["biome/object"] = {mode,blendPct,overrides,decided} ----
 // overrides: { "v007": {mode, blendPct} }
@@ -322,9 +327,17 @@ document.getElementById('exp').onclick = () => {
 };
 
 // ---- manifest (re)load — rebuilds tabs + rows; preserves the active field on refresh ----
+// Graceful-degrade: a missing/empty manifest (e.g. biome never upscaled, no server to build it) shows a
+// "no data" message instead of throwing, so the biome dropdown still switches without a backend.
 async function loadManifest(preserveField) {
   const want = preserveField || (MANIFEST && curField);
-  MANIFEST = await (await fetch(`upscale-preview.${BIOME}.json?t=${Date.now()}`)).json();
+  const bc = document.getElementById('ctl-biome'); if (bc) bc.textContent = BIOME;
+  let resp;
+  try { resp = await fetch(`upscale-preview.${BIOME}.json?t=${Date.now()}`); } catch { resp = null; }
+  if (!resp || !resp.ok) return showNoData(`no data for "${BIOME}" yet — run the upscaler (or refresh preview) for this biome.`);
+  let data; try { data = await resp.json(); } catch { return showNoData(`upscale-preview.${BIOME}.json is not valid JSON.`); }
+  MANIFEST = data;
+  if (!MANIFEST.fields || !MANIFEST.fields.length) return showNoData(`no upscaled objects for "${BIOME}" yet — run the upscaler for this biome.`);
   const tabs = document.getElementById('tabs'); tabs.innerHTML = '';
   for (const f of MANIFEST.fields) {
     const b = document.createElement('button'); b.className = 'tab'; b.dataset.field = f.field;
@@ -334,6 +347,38 @@ async function loadManifest(preserveField) {
   }
   const fields = MANIFEST.fields.map((f) => f.field);
   renderField(fields.includes(want) ? want : MANIFEST.fields[0].field);
+}
+
+function showNoData(msg) {
+  MANIFEST = { fields: [] };
+  for (const r of rows) r.dispose(); rows.length = 0;
+  document.getElementById('tabs').innerHTML = '';
+  document.getElementById('body').innerHTML = `<div class="row" style="color:var(--dim)">${msg}</div>`;
+  document.getElementById('chip').textContent = '0/0 decided';
+  const cf = document.getElementById('ctl-field'); if (cf) cf.textContent = '—';
+}
+
+// ---- biome selector — populate header <select>, switch biomes without losing other biomes' decisions ----
+function populateBiomeSelect() {
+  const sel = document.getElementById('biomesel');
+  sel.innerHTML = '';
+  for (const b of BIOMES) {
+    const o = document.createElement('option'); o.value = b; o.textContent = b;
+    if (b === BIOME) o.selected = true;
+    sel.appendChild(o);
+  }
+  sel.onchange = () => switchBiome(sel.value);
+}
+
+// Switch the reviewed biome: rebuild that biome's preview manifest on the server (so newly-upscaled @384s show),
+// then (re)load it. The in-memory decision store keys by field + "biome/object", so switching never wipes
+// decisions made for other biomes. Degrades to a plain fetch when there's no server.
+async function switchBiome(biome) {
+  if (!BIOMES.includes(biome)) return;
+  BIOME = biome;
+  const bc = document.getElementById('ctl-biome'); if (bc) bc.textContent = BIOME;
+  if (SERVER.live) await doRegen(false);   // doRegen reloads the manifest on success
+  else await loadManifest();               // no server → just try to fetch a pre-existing manifest
 }
 
 // ========================================================================
@@ -462,6 +507,7 @@ $('btn-regen').onclick = () => doRegen(false);
 $('btn-apply').onclick = doApply;
 
 // ---- boot ----
+populateBiomeSelect();
 await loadManifest();
 const st = await apiStatus();
 setServerUI(!!(st && st.ok));

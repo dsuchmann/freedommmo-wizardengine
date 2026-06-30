@@ -43,8 +43,8 @@ const flagSample = (argv.find((a) => a.startsWith('--sample=')) || '').split('='
 const sampleRaw = process.env.UPSCALE_SAMPLE || flagSample || positional[1];
 const SAMPLE = (sampleRaw != null && sampleRaw !== '') ? parseInt(sampleRaw, 10) : Infinity;
 
-// Tab order for the dashboard (F2, F4, F5, F6, large_objects).
-const FIELD_ORDER = ['small_flora', 'medium_flora', 'medium_objects', 'large_flora', 'large_objects'];
+// Tab order for the dashboard (F2, F3, F4, F5, F6, large_objects).
+const FIELD_ORDER = ['small_flora', 'small_scatter', 'medium_flora', 'medium_objects', 'large_flora', 'large_objects'];
 
 const FIELDS = JSON.parse(fs.readFileSync(path.join(SCRIPT_DIR, 'fields.json'), 'utf8'));
 
