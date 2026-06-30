@@ -9,7 +9,7 @@ export function setF3RemovedKeys(keys) { _f3RemovedKeys = keys instanceof Set ? 
 
 import { WORLD } from '../core/constants.js';
 import { encodeTexel } from './gpu-terrain-index.js';
-import { paintTerrainTile, paintCliffOverlay, getWangSrc } from './worker-tile-painter.js';
+import { paintTerrainTile, paintCliffOverlay, getWangSrc, getCliffSrc } from './worker-tile-painter.js';
 import { cliffLevel } from '../world/terrain-shaper.js';
 import { soilMaterialForBiome, sfVariantsFor, wangAssetName } from './wang-image-list.js';
 import { rand2 } from '../core/random.js';
@@ -1428,7 +1428,8 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
 // Pure: no canvas, no GL, no worker globals — safe to call under plain node.
 //
 // opts.size          chunk dimension in tiles (default WORLD.chunkSize)
-// opts.slotResolver  (asset, level, cornerMask) → integer base slot
+// opts.slotResolver  (wangUrl) → integer base slot (0 if unresolved)
+// opts.cliffResolver (cliffUrl) → integer cliff slot (0 if absent/unresolved)
 // opts.soilResolver  (biome) → integer soil id 0..15
 //
 // Reuses the SAME per-tile classification logic as renderChunkToBitmap:
@@ -1438,9 +1439,10 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
 //   • cornerMask derivation (inlined — same 15-wangEdgeMask relationship)
 //
 export function buildChunkIndex(chunk, opts) {
-  var size         = (opts && opts.size != null) ? opts.size : WORLD.chunkSize;
-  var slotResolver = opts.slotResolver;
-  var soilResolver = opts.soilResolver || function() { return 0; };
+  var size          = (opts && opts.size != null) ? opts.size : WORLD.chunkSize;
+  var slotResolver  = opts.slotResolver;
+  var cliffResolver = opts.cliffResolver;
+  var soilResolver  = opts.soilResolver || function() { return 0; };
 
   var buf = new Uint8Array(size * size * 4);
 
@@ -1461,8 +1463,14 @@ export function buildChunkIndex(chunk, opts) {
       // identical tile that the bitmap draws.
       var src = getWangSrc(tile, variant);
       var baseSlot = src ? (slotResolver(src) | 0) : 0;
+      // Cliff overlay slot — a SECOND tile composited over the base in the shader,
+      // mirroring paintCliffOverlay over paintWangBase. Best-effort: an unresolved
+      // cliff just isn't drawn (matches the bitmap's missing-bmp behaviour); it
+      // never forces the chunk off the GPU path.
+      var cliffSrc  = getCliffSrc(tile);
+      var cliffSlot = (cliffSrc && cliffResolver) ? (cliffResolver(cliffSrc) | 0) : 0;
       var soilId   = opts.soilResolver ? (opts.soilResolver(tile.biome) | 0) : 0;
-      var texel    = encodeTexel(baseSlot, 0, soilId);
+      var texel    = encodeTexel(baseSlot, cliffSlot, soilId);
       buf[off]     = texel[0];
       buf[off + 1] = texel[1];
       buf[off + 2] = texel[2];

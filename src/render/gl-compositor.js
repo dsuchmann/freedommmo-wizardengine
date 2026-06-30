@@ -118,13 +118,24 @@ void main() {
   vec4 texel = texelFetch(uIndex, cell, 0);   // RGBA8 in 0..1
   int R = int(texel.r * 255.0 + 0.5);
   int G = int(texel.g * 255.0 + 0.5);
+  int B = int(texel.b * 255.0 + 0.5);
   int baseSlot = R | ((G & 15) << 8);
   if (baseSlot == 0) { outColor = vec4(0.0); return; }   // empty cell
   int s = baseSlot; if (s >= uSlotUVW) s = 0;
   vec2 uv0 = texelFetch(uSlotUV, ivec2(s, 0), 0).rg;     // tile origin (half-texel inset baked in)
   // tile spans 31 texels (matches WangAtlas du = (32-1)/atlasSize)
   vec2 atlasUv = uv0 + frac * (31.0 / uAtlasSize);
-  outColor = texture(uAtlas, atlasUv);
+  vec4 col = texture(uAtlas, atlasUv);                    // base wang tile (premultiplied)
+  // Cliff overlay — a SECOND atlas tile drawn over the base, exactly as the bitmap
+  // path layers paintCliffOverlay on top of paintWangBase. The (formerly unused)
+  // transitionSlot field carries the cliff slot; 0 = no cliff face here.
+  int cliffSlot = B | (((G >> 4) & 15) << 8);
+  if (cliffSlot != 0 && cliffSlot < uSlotUVW) {
+    vec2 cuv0 = texelFetch(uSlotUV, ivec2(cliffSlot, 0), 0).rg;
+    vec4 cliff = texture(uAtlas, cuv0 + frac * (31.0 / uAtlasSize));
+    col = cliff + col * (1.0 - cliff.a);                  // premultiplied "over"
+  }
+  outColor = col;
 }`;
 
 // --- Stage 2: instanced sprite pipeline (F2 small flora) ---

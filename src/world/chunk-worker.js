@@ -292,6 +292,12 @@ function buildIndexBuffer(chunk) {
         if (!e) { missing = true; return 0; }
         return e.slot;
       },
+      // Cliff is an optional overlay: if its tile isn't in the atlas yet (or 404'd),
+      // resolve to 0 (no cliff this frame) WITHOUT forcing the chunk to the bitmap.
+      cliffResolver: function(src) {
+        var e = wangAtlasMeta.slots[src];
+        return e ? e.slot : 0;
+      },
       soilResolver: function() { return 0; }, // Phase 3 wires real soil ids
     });
     if (missing) return null;
