@@ -792,6 +792,9 @@ const _doorDynCache = new Map(); // "x,y" -> { canvas, sig, w, h }
 const _DOOR_DYN_CAP = 96;
 const _propsDynCache = new Map(); // "x,y,w,h" -> canvas | null — D3 props are STATIC per building; bake once, blit
 const _PROPS_DYN_CAP = 512;
+let _propsBakes = 0;              // per-frame budget so a whole town's one-time props bake spreads over frames
+const _PROPS_BAKE_BUDGET = 4;     // (instead of a 178ms first-frame burst when a town streams in)
+export function bumpBuildingDynamicFrame() { _propsBakes = 0; } // call once per rendered frame
 
 // (Re)bake one building's weathered live door into its OWN canvas (the heavy path — run only on a frame step).
 // Returns the canvas, or null if the door asset isn't loaded yet / nothing opened.
@@ -884,7 +887,8 @@ export function drawBuildingDynamicInto(b, localCamX, localCamY, builtTilePx, cw
       // in-town stutter (~175ms / 'bSprites' in the draw profile).
       const pkey = b.x + ',' + b.y + ',' + cw + ',' + ch;
       let pc = _propsDynCache.get(pkey);
-      if (pc === undefined) {
+      if (pc === undefined && _propsBakes < _PROPS_BAKE_BUDGET) {
+        _propsBakes++;
         let made = null;
         const c = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(cw, ch)
           : (typeof document !== 'undefined') ? document.createElement('canvas') : null;
@@ -902,6 +906,7 @@ export function drawBuildingDynamicInto(b, localCamX, localCamY, builtTilePx, cw
         if (_propsDynCache.size > _PROPS_DYN_CAP) _propsDynCache.clear();
         _propsDynCache.set(pkey, pc);
       }
+      // pc may still be undefined here (over budget this frame) → props pop in within a few frames.
       if (pc) { o.drawImage(pc, 0, 0); drew = true; }
     } catch { /* skip */ }
   }

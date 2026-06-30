@@ -15,7 +15,7 @@ import { drawBuildingShadows, buildBuildingShadowBitmap, updateBuildingHeightMas
 import { updateFloorViewTransform } from './floor-view.js';
 import { drawInteriorFloorWorld, drawInteriorWallsWorld, interiorLiftPx, updateInteriorLift } from './interior-renderer.js';
 import { buildInteriorSceneBitmap } from './interior-gl.js';
-import { buildOccluderBitmap, drawBuildingTextured, buildingBakeState, drawBuildingDynamicInto } from './building-occluder.js';
+import { buildOccluderBitmap, drawBuildingTextured, buildingBakeState, drawBuildingDynamicInto, bumpBuildingDynamicFrame } from './building-occluder.js';
 import { buildDoorLeafBitmap } from './door-leaves.js';
 import { buildBuildingLayerBitmaps } from './building-layer.js';
 import { nearDepthBuildings, renderBuildingSilhouette, tileDepth, DEPTH_SCALE } from './building-depth.js';
@@ -544,6 +544,7 @@ export class CanvasRenderer {
       // drawn LIVE right after each sprite, in the sprite's OWN local frame, at the SAME screen rect — so it can't
       // freeze in the cache yet registers pixel-exactly over the baked walls/closed-door at any zoom.
       bumpSpriteFrame();
+      bumpBuildingDynamicFrame(); // reset the per-frame props-bake budget (spreads a town's first-frame burst)
       const _wantDyn = renderOn('walls') || renderOn('attachments');
       const _dynList = _wantDyn ? [] : null;
       for (const _b of _blds) {
