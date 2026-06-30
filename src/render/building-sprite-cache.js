@@ -40,6 +40,14 @@ const MAX_WARMUP = 900;      // frames an INCOMPLETE bake may keep RE-baking bef
                              // we must re-bake until it's structurally complete (isComplete), else that walls-only
                              // sprite freezes forever (the bug: eviction only fires when size>384, so a small town
                              // never recovers). This cap is the backstop for a building whose assets never finish.
+const REBAKE_INTERVAL = 10;  // frames between re-bakes of a STILL-LOADING (incomplete, sig-unchanged) building.
+                             // Its tiles/roof decode over MANY frames, so re-baking it EVERY frame (each a full
+                             // drawBuildingTextured + getImageData + alphaBBox scan over an ~18-tile canvas) just
+                             // repaints the identical walls-only partial 60×/sec. Walking into a town = N buildings
+                             // doing that at once = the 1-2s freeze. Re-checking every ~10 frames is plenty (assets
+                             // arrive well within that) and cuts the incomplete-bake CPU ~10×. First paint (no hit),
+                             // a completed building (bakes its final sprite immediately), and a sig change (door
+                             // swing) all bypass this throttle.
 
 const _cache = new Map();    // key -> { canvas, ax, ay, w, h, builtTilePx, frame }
 
@@ -161,6 +169,14 @@ export function getBuildingSprite(b, tilePx, renderFn, bakeState) {
   if (hit && hit.complete && hit.sig === liveSig && !(hit.forcedComplete && liveComplete)) {
     hit.frame = _frame; _stat('hits'); return hit;                                            // unchanged → reuse (perf win)
   }
+  // THROTTLE re-bakes of a building that is STILL loading (genuinely incomplete) with an unchanged sig: its
+  // assets decode over many frames, so re-baking it every frame just repaints the identical partial — and N
+  // buildings doing that as you walk into a town is the 1-2s freeze. Re-attempt at most every REBAKE_INTERVAL
+  // frames. A building that has SINCE become renderable (liveComplete) bypasses this so its final, complete
+  // sprite bakes immediately; first paint (no hit) and a door-swing (sig change) also bypass.
+  if (hit && hit.sig === liveSig && !liveComplete && (_frame - (hit.lastBakeFrame || hit.firstFrame || 0)) < REBAKE_INTERVAL) {
+    hit.frame = _frame; return hit;
+  }
   // A miss, an INCOMPLETE bake (still loading), a STALE one (door frame changed), or a warmup-frozen partial
   // whose assets are now ready (upgrade): (re)bake.
   if (_builds >= BUILD_BUDGET) { if (hit) { hit.frame = _frame; return hit; } return null; } // over budget → show last partial / defer
@@ -169,6 +185,7 @@ export function getBuildingSprite(b, tilePx, renderFn, bakeState) {
   _builds++;
   const firstFrame = hit && hit.firstFrame != null ? hit.firstFrame : _frame;
   built.firstFrame = firstFrame;
+  built.lastBakeFrame = _frame;   // throttle clock for incomplete re-bakes (see REBAKE_INTERVAL)
   built.complete = liveComplete;
   built.forcedComplete = false;
   built.sig = liveSig;

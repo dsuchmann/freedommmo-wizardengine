@@ -28,11 +28,16 @@ let _tmp = null, _tx = null;
  *  tall roofs rising above the view). The caller writes each one's depth separately. */
 export function nearDepthBuildings(buildings, camX, camY, tilePx, w, h) {
   if (!buildings || !buildings.length) return [];
+  // PREFETCH RING: include buildings a few tiles BEYOND the viewport (E/W/S) so their sprite bakes while
+  // still OFF-SCREEN and is frozen-complete by the time they scroll into view — kills the "watch the town
+  // bake in as I walk toward it" pop-in. Off-screen sprites draw as GPU-clipped quads (≈free); the real win
+  // is warming the building-sprite cache ahead of visibility. North keeps the larger 16-tile roof margin.
+  const PF = 7 * tilePx;
   const near = [];
   for (const b of buildings) {
     const bb = b.footprint && b.footprint.boundingBox; if (!bb) continue;
     const sx = b.x * tilePx - camX, sy = b.y * tilePx - camY;
-    if (sx + bb.w * tilePx < -tilePx || sy + bb.h * tilePx < -16 * tilePx || sx > w + tilePx || sy > h + tilePx) continue;
+    if (sx + bb.w * tilePx < -PF || sy + bb.h * tilePx < -16 * tilePx || sx > w + PF || sy > h + PF) continue;
     near.push(b);
   }
   return near;
