@@ -21,7 +21,7 @@ var REBUILD_MARGIN = 4; // hysteresis: the pool collects this many extra tiles p
                         // Turns the old per-tile (and per-zoom-step) 71ms rebuild storm
                         // into an occasional rebuild — walking/zooming no longer restitch
                         // the whole instance buffer every frame.
-var GPU_REBUILD_MARGIN = 12; // GPU flora: collect this many tiles BEYOND the viewport so flora is built +
+var GPU_REBUILD_MARGIN = 8; // GPU flora: collect this many tiles BEYOND the viewport so flora is built +
                             // packed (the amortized build takes a few frames) BEFORE the area scrolls into
                             // view = no flora pop-in as you walk/pan. The GPU draws the static buffer for
                             // free regardless of pool size, so a wider margin costs only a slightly larger

@@ -137,9 +137,10 @@ export class ChunkProvider {
   // Called by ChunkStore.streamAround every frame: lets the queue re-sort by
   // CURRENT distance (priorities assigned at request time go stale as the
   // player walks) and tightens the adoption budget while moving.
-  setPlayerFocus(cx, cy, moving) {
+  setPlayerFocus(cx, cy, moving, dirX = 0, dirY = 0) {
     this._playerChunk = { cx, cy };
     this._playerMoving = !!moving;
+    this._playerDir = { x: dirX, y: dirY };
   }
 
   createWorker() {
@@ -279,9 +280,21 @@ export class ChunkProvider {
       // for the duration of this call, so taking jobs in sorted order yields the
       // identical dispatch sequence the per-iteration re-sort produced.
       const pc = this._playerChunk;
+      const dir = this._playerDir || { x: 0, y: 0 };
+      // DIRECTIONAL PRIORITY: chunks AHEAD of the player's movement are generated first, so the limited worker
+      // throughput keeps up with where they're running TO instead of being split evenly around them. score =
+      // chunk-distance MINUS how far the chunk lies along the heading (×AHEAD_WEIGHT). With no movement (dir≈0)
+      // this collapses to the plain nearest-first distance sort.
+      const AHEAD_WEIGHT = 2.0;
+      const score = (j) => {
+        const rx = j.cx - pc.cx, ry = j.cy - pc.cy;
+        const dist = Math.abs(rx) + Math.abs(ry);
+        const ahead = rx * dir.x + ry * dir.y; // >0 = in the direction of travel
+        return dist - Math.max(0, ahead) * AHEAD_WEIGHT;
+      };
       const jobs = [...this.queued.values()].sort((a, b) => {
-        const da = pc ? Math.abs(a.cx - pc.cx) + Math.abs(a.cy - pc.cy) : a.priority;
-        const db = pc ? Math.abs(b.cx - pc.cx) + Math.abs(b.cy - pc.cy) : b.priority;
+        const da = pc ? score(a) : a.priority;
+        const db = pc ? score(b) : b.priority;
         return da - db || a.requestedAt - b.requestedAt;
       });
       let ji = 0;

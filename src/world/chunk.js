@@ -73,9 +73,22 @@ export class ChunkStore {
       const halfChunksY = (viewH / 2) / tilePx / WORLD.chunkSize;
       R = Math.max(WORLD.loadRadius, Math.ceil(Math.max(halfChunksX, halfChunksY)) + STREAM_PREFETCH_CHUNKS);
     }
-    const moved = this._lastStreamPos && (Math.abs(wx - this._lastStreamPos.x) > 0.01 || Math.abs(wy - this._lastStreamPos.y) > 0.01);
+    const dxRaw = this._lastStreamPos ? wx - this._lastStreamPos.x : 0;
+    const dyRaw = this._lastStreamPos ? wy - this._lastStreamPos.y : 0;
+    const moved = Math.abs(dxRaw) > 0.01 || Math.abs(dyRaw) > 0.01;
     this._lastStreamPos = { x: wx, y: wy };
-    this.provider.setPlayerFocus(pcx, pcy, moved);
+    // Smoothed unit movement direction (EMA) — used to bias chunk generation AHEAD of the player so the
+    // limited worker throughput is spent where they're running TO, not split evenly around them (the "I run
+    // ahead of the game and it pops in around me" bug). Smoothed so a one-frame pause doesn't drop the heading.
+    if (moved) {
+      const mag = Math.hypot(dxRaw, dyRaw) || 1;
+      const ux = dxRaw / mag, uy = dyRaw / mag;
+      const d = this._moveDir || { x: 0, y: 0 };
+      d.x += (ux - d.x) * 0.25; d.y += (uy - d.y) * 0.25;
+      this._moveDir = d;
+    }
+    const md = this._moveDir;
+    this.provider.setPlayerFocus(pcx, pcy, moved, md ? md.x : 0, md ? md.y : 0);
     const currentReady = this.getIfReady(pcx, pcy);
     if (currentReady) this.lastPlayerChunk = { cx: pcx, cy: pcy };
 

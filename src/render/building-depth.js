@@ -34,7 +34,7 @@ export function nearDepthBuildings(buildings, camX, camY, tilePx, w, h) {
   // 7-tile ring backfired ONLY because the roof bake was a 1+ second software rasterize; now the roof renders
   // on the GPU (building-occluder) and the re-bake throttle + manifest gate keep each bake cheap, so warming a
   // ring ahead of visibility is a net win. North keeps the larger 16-tile margin for tall roofs.
-  const PF = 5 * tilePx;
+  const PF = 3 * tilePx;
   const near = [];
   for (const b of buildings) {
     const bb = b.footprint && b.footprint.boundingBox; if (!bb) continue;
