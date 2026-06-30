@@ -8,6 +8,7 @@ var _f3RemovedKeys = new Set();
 export function setF3RemovedKeys(keys) { _f3RemovedKeys = keys instanceof Set ? keys : new Set(keys); }
 
 import { WORLD } from '../core/constants.js';
+import { encodeTexel } from './gpu-terrain-index.js';
 import { paintTerrainTile, paintCliffOverlay, getWangSrc } from './worker-tile-painter.js';
 import { cliffLevel } from '../world/terrain-shaper.js';
 import { soilMaterialForBiome, sfVariantsFor, wangAssetName } from './wang-image-list.js';
@@ -1418,4 +1419,109 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
       soilPixels: soilResult.soilPixels, soilMissed: soilResult.missedSoil
     }
   };
+}
+
+// ── GPU index buffer emitter ───────────────────────────────────────────────────
+// Walks chunk tiles and writes one RGBA8 texel per tile into a Uint8Array.
+// Pure: no canvas, no GL, no worker globals — safe to call under plain node.
+//
+// opts.size          chunk dimension in tiles (default WORLD.chunkSize)
+// opts.slotResolver  (asset, level, cornerMask) → integer base slot
+// opts.soilResolver  (biome) → integer soil id 0..15
+//
+// Reuses the SAME per-tile classification logic as renderChunkToBitmap:
+//   • wangAssetName()  (already imported above)
+//   • cliffLevel()     (already imported above)
+//   • elevationVariant thresholds (inlined — maxDelta → wang/wang_25/wang_50/wang_100)
+//   • cornerMask derivation (inlined — same 15-wangEdgeMask relationship)
+//
+export function buildChunkIndex(chunk, opts) {
+  var size         = (opts && opts.size != null) ? opts.size : WORLD.chunkSize;
+  var slotResolver = opts.slotResolver;
+  var soilResolver = opts.soilResolver || function() { return 0; };
+
+  var buf = new Uint8Array(size * size * 4);
+
+  // Extract elevation from a tile — supports both tile.elevation and tile.climate.elevation
+  function getElev(t) {
+    if (!t) return 0;
+    if (t.climate != null) return t.climate.elevation;
+    return t.elevation != null ? t.elevation : 0;
+  }
+
+  // Tile at local (ltx, lty), or fallback when out of chunk bounds
+  function tileLocal(ltx, lty, fallback) {
+    if (ltx < 0 || lty < 0 || ltx >= size || lty >= size) return fallback;
+    return chunk.tiles[lty * size + ltx];
+  }
+
+  for (var ty = 0; ty < size; ty++) {
+    for (var tx = 0; tx < size; tx++) {
+      var tile  = chunk.tiles[ty * size + tx];
+      var biome = tile.biome;
+      var asset = wangAssetName(biome);
+
+      // 2×2 cell neighbors (out-of-chunk falls back to current tile — same as render loop)
+      var nbE  = tileLocal(tx + 1, ty,     tile);
+      var nbS  = tileLocal(tx,     ty + 1, tile);
+      var nbSE = tileLocal(tx + 1, ty + 1, tile);
+
+      // Cliff levels for the four corners of the 2×2 cell
+      var myLvl = cliffLevel(getElev(tile));
+      var eLvl  = cliffLevel(getElev(nbE));
+      var sLvl  = cliffLevel(getElev(nbS));
+      var seLvl = cliffLevel(getElev(nbSE));
+
+      // Wang level — same thresholds as elevationVariant()
+      var maxDelta = Math.max(
+        Math.abs(myLvl - eLvl),
+        Math.abs(myLvl - sLvl),
+        Math.abs(myLvl - seLvl),
+        Math.abs(eLvl  - sLvl),
+        Math.abs(eLvl  - seLvl),
+        Math.abs(sLvl  - seLvl)
+      );
+      var level = maxDelta <= 1 ? 'wang'
+                : maxDelta <= 3 ? 'wang_25'
+                : maxDelta <= 5 ? 'wang_50'
+                : 'wang_100';
+
+      // cornerMask — same derivation as the main render loop's transition block.
+      // When no cross-biome transition exists cornerMask stays 0, matching debugCornerMasks.
+      var cornerMask = 0;
+      var assetE  = wangAssetName(nbE.biome);
+      var assetS  = wangAssetName(nbS.biome);
+      var assetSE = wangAssetName(nbSE.biome);
+      if (assetE !== asset || assetS !== asset || assetSE !== asset) {
+        // Find the first differing neighbor to determine the transition pair direction
+        var myEl     = getElev(tile);
+        var diffBiome = assetE !== asset ? nbE.biome : assetS !== asset ? nbS.biome : nbSE.biome;
+        var diffEl    = assetE !== asset ? getElev(nbE) : assetS !== asset ? getElev(nbS) : getElev(nbSE);
+        var diffAsset = wangAssetName(diffBiome);
+        // from = lower elevation biome; if flat → alphabetical (mirrors transitionPairFor)
+        var fromAsset;
+        if (myEl !== diffEl) {
+          fromAsset = myEl <= diffEl ? asset : diffAsset;
+        } else {
+          fromAsset = [asset, diffAsset].sort()[0];
+        }
+        // Set cornerMask bits for each 2×2 corner whose asset matches fromAsset
+        if (asset    === fromAsset) cornerMask |= 8; // NW (this tile)
+        if (assetE   === fromAsset) cornerMask |= 4; // NE (east)
+        if (assetS   === fromAsset) cornerMask |= 2; // SW (south)
+        if (assetSE  === fromAsset) cornerMask |= 1; // SE
+      }
+
+      var baseSlot = slotResolver(asset, level, cornerMask);
+      var soilId   = soilResolver(biome);
+      var texel    = encodeTexel(baseSlot, 0, soilId);
+      var off      = (ty * size + tx) * 4;
+      buf[off]     = texel[0];
+      buf[off + 1] = texel[1];
+      buf[off + 2] = texel[2];
+      buf[off + 3] = texel[3];
+    }
+  }
+
+  return buf;
 }
