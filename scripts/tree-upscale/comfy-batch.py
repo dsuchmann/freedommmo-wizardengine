@@ -379,8 +379,11 @@ def enumerate_corpus(only_biome=None, only_type=None, ready_only=False):
     for p in FIELD_ROOT.rglob("*.png"):      # variant PNGs (base/state) + frame_###.png (anim); predicate filters
         if not is_static_source(p):
             continue
-        if BASE_ONLY and ("_states" in p.parts or "anim" in p.parts):
-            continue                         # ALL-bases QA pass: states + anims come at apply, for the winners
+        rel = p.relative_to(FIELD_ROOT).parts
+        if rel[0].startswith("_") or (len(rel) > 1 and rel[1].startswith("_")):
+            continue                         # skip staging junk: _downloads/_extracted/_review_staging/_legacy_*/...
+        if BASE_ONLY and len(rel) != 3:
+            continue                         # base = <biome>/<object>/<file>.png exactly (skip _states + ANY anim dir)
         biome, obj = biome_type_of(p)
         if only_biome and biome != only_biome:
             continue
