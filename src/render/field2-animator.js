@@ -1229,6 +1229,17 @@ function _poolRebuild(chunkStore, player, glc, radiusX, radiusY) {
     _pool.lastU0 = new Float32Array(cap);
     _pool.lastV0 = new Float32Array(cap);
   }
+  // The dirty-gate caches above are allocated ONLY when the mirror is (re)allocated. The GPU flora path sets
+  // up _pool.mirror without ever touching these CPU-only caches, so toggling to the CPU path (window._gpuFlora
+  // =false) finds them null → "Cannot set properties of null" at the per-instance seed below. Ensure they
+  // exist + match the mirror's instance capacity before the CPU write loop runs.
+  var _lcap = (_pool.mirror.length / SPRITE_FLOATS) | 0;
+  if (!_pool.lastRot || _pool.lastRot.length < _lcap) {
+    _pool.lastRot = new Float32Array(_lcap);
+    _pool.lastAlpha = new Float32Array(_lcap);
+    _pool.lastU0 = new Float32Array(_lcap);
+    _pool.lastV0 = new Float32Array(_lcap);
+  }
   var gpuFlora = gpuFloraOn();
   // When the GPU will actually draw, skip the CPU resolve/atlas-pack entirely — it's
   // pure waste (the GPU draws the strips) and packing both CPU frames AND strips
