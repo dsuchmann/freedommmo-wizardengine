@@ -175,9 +175,11 @@ function buildRow(obj) {
 
   function curVar() { return obj.variants[st.vi]; }
   function eff() { return effective(rec, curVar().v); }
-  function origFrames() { const v = curVar(); return v.anim.length ? v.anim : [v.original]; }
-  function upFrames() { const v = curVar(); return v.animUpscale.length ? v.animUpscale : (v.upscale ? [v.upscale] : []); }
-  function frameCount() { return origFrames().length; }
+  // Animate ONLY when the upscale has its OWN anim frames to match the original's — otherwise show the BASE
+  // still in both panels. (A sprite's anim can depict a different composition than its base — e.g.
+  // tall_grass_blade's base is one blade but its anim is a full tuft — so animating the original alone next to
+  // a static upscaled BASE falsely reads as "the upscaler used the wrong image".)
+  function animatable() { const v = curVar(); return v.anim.length > 1 && v.animUpscale.length > 1; }
 
   function sizeCanvases() {
     const px = displayPx(st.view, obj.drawPx);
@@ -188,17 +190,24 @@ function buildRow(obj) {
   function redraw() {
     const px = displayPx(st.view, obj.drawPx);
     const v = curVar();
-    const of = origFrames(), uf = upFrames();
-    const fi = st.fi % Math.max(1, of.length);
-    const origImg = getImg(of[fi % of.length], redraw);
-    drawSprite(cvOrig, px, origImg);
     const hasUp = !!(v.upscale || v.animUpscale.length);
     upPending.style.display = hasUp ? 'none' : 'flex';
     blPending.style.display = hasUp ? 'none' : 'flex';
     cvUp.style.display = hasUp ? '' : 'none';
     cvBlend.style.display = hasUp ? '' : 'none';
-    if (hasUp) {
-      const upImg = getImg(uf[fi % uf.length], redraw);
+    // Matched sources: anim-vs-anim in sync only when the upscale has anim frames; else BASE-vs-BASE still.
+    let origSrc, upSrc;
+    if (animatable()) {
+      const n = Math.min(v.anim.length, v.animUpscale.length);
+      const fi = st.fi % n;
+      origSrc = v.anim[fi]; upSrc = v.animUpscale[fi];
+    } else {
+      origSrc = v.original; upSrc = v.upscale;
+    }
+    const origImg = getImg(origSrc, redraw);
+    drawSprite(cvOrig, px, origImg);
+    if (hasUp && upSrc) {
+      const upImg = getImg(upSrc, redraw);
       drawSprite(cvUp, px, upImg);
       drawBlend(cvBlend, px, origImg, upImg, eff().blendPct);
     }
@@ -220,7 +229,7 @@ function buildRow(obj) {
     dot.classList.toggle('on', rec.decided);
   }
 
-  function startTimer() { clearInterval(st.timer); if (st.playing && frameCount() > 1) st.timer = setInterval(() => { st.fi++; redraw(); }, st.speed); q('.play').textContent = st.playing ? '⏸' : '▶'; }
+  function startTimer() { clearInterval(st.timer); if (st.playing && animatable()) st.timer = setInterval(() => { st.fi++; redraw(); }, st.speed); q('.play').textContent = st.playing ? '⏸' : '▶'; }
 
   function fullRefresh() { sizeCanvases(); updateVlbl(); updateDecideUI(); redraw(); startTimer(); }
 

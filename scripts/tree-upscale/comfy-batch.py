@@ -624,17 +624,21 @@ def save_state(state: dict, force=False):
     global _last_save
     if not force and time.time() - _last_save < 5:
         return
-    tmp = STATE_FILE.with_suffix(".json.tmp")
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(state, f, indent=1)
-    # Windows transiently locks STATE_FILE (another reader, AV scan, or a 2nd batch run) -> os.replace
-    # raises PermissionError/WinError 32. State-save is best-effort: outputs are already on disk and a
-    # re-run skips them, so retry briefly and NEVER let a failed save crash the whole batch.
+    tmp = STATE_FILE.with_suffix(f".{os.getpid()}.json.tmp")  # per-PROCESS tmp: two concurrent runs must not share one
+    try:
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(state, f, indent=1)
+    except OSError:
+        return  # couldn't write the tmp — state is a best-effort cache, skip this save
+    # A concurrent comfy-batch run (e.g. an F6 --watch alongside a sample) makes os.replace flaky: STATE_FILE
+    # locked (WinError 32 / PermissionError) OR the tmp consumed by the other process (WinError 2 /
+    # FileNotFoundError). State-save is best-effort — outputs are on disk and a re-run skips them — so catch ANY
+    # OSError, retry briefly, and NEVER let a failed save crash the batch.
     for _ in range(10):
         try:
             os.replace(tmp, STATE_FILE)
             break
-        except PermissionError:
+        except OSError:
             time.sleep(0.3)
     else:
         try:
