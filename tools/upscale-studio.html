@@ -29,6 +29,24 @@
  .hint{color:var(--dim);font-size:11px;margin:8px 16px 0}
  .decided-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#3a4250;margin-left:6px}
  .decided-dot.on{background:var(--good)}
+ /* ---- server control bar ---- */
+ #ctlbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:7px 16px;border-bottom:1px solid var(--line);background:#11141b}
+ #ctlbar.off{opacity:.55}
+ #ctlbar .sep{width:1px;height:20px;background:var(--line);margin:0 2px}
+ #ctlbar input[type=number]{width:52px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:4px 6px;font-size:12px}
+ #ctlbar button.go{border-color:var(--accent);color:var(--accent)}
+ #ctlbar button.apply{border-color:var(--good);color:var(--good)}
+ #ctlbar button:disabled{opacity:.4;cursor:not-allowed}
+ #srvstate{font-size:11px;color:var(--dim)}
+ #srvstate.live{color:var(--good)} #srvstate.dead{color:var(--warn)}
+ /* ---- log panel ---- */
+ #logwrap{border-bottom:1px solid var(--line);background:#0a0c10}
+ #logwrap summary{cursor:pointer;padding:6px 16px;color:var(--dim);font-size:12px;user-select:none;list-style:none}
+ #logwrap summary::-webkit-details-marker{display:none}
+ #logwrap summary:before{content:'▸ ';color:var(--accent)}
+ #logwrap[open] summary:before{content:'▾ '}
+ #logpanel{margin:0;padding:8px 16px;max-height:240px;overflow:auto;font:11px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;color:#b8c2d0;white-space:pre-wrap;word-break:break-word}
+ #logpanel .err{color:var(--warn)} #logpanel .cmd{color:var(--accent)} #logpanel .done{color:var(--good)}
 </style></head>
 <body>
 <header>
@@ -38,7 +56,20 @@
  <button id="exp">⬇ Export decisions</button>
  <span id="status" style="color:#6f6"></span>
 </header>
-<p class="hint">Per object: <b>ORIGINAL</b> (raw PixelLab) · <b>UPSCALE</b> (AI @384) · <b>BLEND</b> (live in-browser mix). Panels draw at the object's true in-game <b>draw size</b> by default — toggle <b>2×</b> / <b>native(384)</b> to judge how detail holds when scaled. Pick <b>Upscale / Blend / Direct</b> per object; the blend slider (= original's share) is live only for Blend. Use <b>◀ ▶</b> to flip sampled variants, and "override just this variant" for an oddball.</p>
+<div id="ctlbar">
+ <span id="srvstate">checking server…</span>
+ <span class="sep"></span>
+ <span style="color:var(--dim)">field <b id="ctl-field">—</b> · biome <b id="ctl-biome">grassland</b></span>
+ <span class="sep"></span>
+ <label style="color:var(--dim)">sample N <input id="ctl-n" type="number" min="1" max="50" value="3"></label>
+ <button id="btn-sample" class="go" title="Sample-upscale the first N variants of every object in this field via ComfyUI">▶ Sample-upscale this field</button>
+ <button id="btn-cancel" title="Stop the running sample job" style="display:none">■ Cancel</button>
+ <span class="sep"></span>
+ <button id="btn-regen" title="Rebuild the preview manifest from disk and reload">↻ Refresh preview</button>
+ <button id="btn-apply" class="apply" title="Apply this field's in-memory decisions on disk (blend/direct/upscale)">✓ Apply decisions</button>
+</div>
+<details id="logwrap"><summary>log / status</summary><pre id="logpanel"></pre></details>
+<p class="hint">Per object: <b>ORIGINAL</b> (raw PixelLab) · <b>UPSCALE</b> (AI @384) · <b>BLEND</b> (live in-browser mix). Panels draw at <b>2×</b> the object's true in-game draw size by default — toggle <b>game</b> / <b>native(384)</b> to judge how detail holds when scaled. Pick <b>Upscale / Blend / Direct</b> per object; the blend slider (= original's share) is live only for Blend. Use <b>◀ ▶</b> to flip sampled variants, and "override just this variant" for an oddball.</p>
 <div id="body"></div>
 
 <script type="module">
@@ -110,7 +141,7 @@ const rows = []; // active row controllers (current field)
 function buildRow(obj) {
   const key = `${obj.biome}/${obj.object}`;
   const rec = recFor(curField, key);
-  const st = { obj, key, rec, vi: 0, view: 'game', playing: true, speed: SPEED_DEFAULT, fi: 0, timer: null };
+  const st = { obj, key, rec, vi: 0, view: '2x', playing: true, speed: SPEED_DEFAULT, fi: 0, timer: null };
 
   const el = document.createElement('div'); el.className = 'row';
   el.innerHTML = `
@@ -118,7 +149,7 @@ function buildRow(obj) {
       <span class="name">${obj.biome} / ${obj.field} / <b>${obj.object}</b><span class="decided-dot"></span></span>
       <span class="vnav"><button class="vprev">◀</button> <span class="vlbl"></span> <button class="vnext">▶</button></span>
       <span class="seg view">
-        <button data-view="game" class="on">game</button><button data-view="2x">2×</button><button data-view="native">native(384)</button>
+        <button data-view="game">game</button><button data-view="2x" class="on">2×</button><button data-view="native">native(384)</button>
       </span>
       <span class="seg anim"><button class="play">⏸</button> <input class="spd" type="range" min="60" max="400" step="10" value="${SPEED_DEFAULT}" title="anim speed"></span>
     </div>
@@ -248,6 +279,7 @@ function renderField(field) {
   const fe = MANIFEST.fields.find((f) => f.field === field);
   for (const obj of fe.objects) { const r = buildRow(obj); rows.push(r); body.appendChild(r.el); }
   for (const b of document.getElementById('tabs').children) b.classList.toggle('on', b.dataset.field === field);
+  const cf = document.getElementById('ctl-field'); if (cf) cf.textContent = field;
   updateChip();
 }
 
@@ -280,14 +312,143 @@ document.getElementById('exp').onclick = () => {
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `upscale-decisions.${curField}.json`; a.click();
 };
 
-// ---- boot ----
-MANIFEST = await (await fetch(`upscale-preview.${BIOME}.json`)).json();
-const tabs = document.getElementById('tabs');
-for (const f of MANIFEST.fields) {
-  const b = document.createElement('button'); b.className = 'tab'; b.dataset.field = f.field;
-  b.textContent = (f.label || f.field);
-  b.onclick = () => renderField(f.field);
-  tabs.appendChild(b);
+// ---- manifest (re)load — rebuilds tabs + rows; preserves the active field on refresh ----
+async function loadManifest(preserveField) {
+  const want = preserveField || (MANIFEST && curField);
+  MANIFEST = await (await fetch(`upscale-preview.${BIOME}.json?t=${Date.now()}`)).json();
+  const tabs = document.getElementById('tabs'); tabs.innerHTML = '';
+  for (const f of MANIFEST.fields) {
+    const b = document.createElement('button'); b.className = 'tab'; b.dataset.field = f.field;
+    b.textContent = (f.label || f.field);
+    b.onclick = () => renderField(f.field);
+    tabs.appendChild(b);
+  }
+  const fields = MANIFEST.fields.map((f) => f.field);
+  renderField(fields.includes(want) ? want : MANIFEST.fields[0].field);
 }
-renderField(MANIFEST.fields[0].field);
+
+// ========================================================================
+// Server control bar — drives upscale-server.mjs. Degrades gracefully to the
+// pure export-only dashboard if /api/status 404s (opened under plain http-server).
+// ========================================================================
+const SERVER = { live: false };
+const $ = (id) => document.getElementById(id);
+function logEl() { return $('logpanel'); }
+function logLine(text, cls) {
+  const p = logEl(); const span = document.createElement('span');
+  if (cls) span.className = cls;
+  span.textContent = text + '\n'; p.appendChild(span); p.scrollTop = p.scrollHeight;
+  $('logwrap').open = true;
+}
+function logClear() { logEl().textContent = ''; }
+function classify(line) {
+  if (/\[(error|spawn error)\]|error|fail|refused|traceback/i.test(line)) return 'err';
+  if (/^\$ |RUN:|would run/.test(line)) return 'cmd';
+  if (/PASS|done:|complete|wrote /i.test(line)) return 'done';
+  return '';
+}
+
+function setServerUI(live) {
+  SERVER.live = live;
+  const s = $('srvstate');
+  s.textContent = live ? '● server live' : '○ no server (export-only)';
+  s.className = live ? 'live' : 'dead';
+  $('ctlbar').classList.toggle('off', !live);
+  for (const id of ['btn-sample', 'btn-regen', 'btn-apply', 'ctl-n']) $(id).disabled = !live;
+}
+
+async function apiStatus() {
+  try {
+    const r = await fetch('/api/status');
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+let sampleRunning = false;
+function setSampleRunning(on) {
+  sampleRunning = on;
+  $('btn-sample').disabled = on || !SERVER.live;
+  $('btn-cancel').style.display = on ? '' : 'none';
+}
+
+// SSE stream of the running sample job's stdout/stderr.
+let evtSrc = null;
+function openLogStream() {
+  if (evtSrc) return;
+  evtSrc = new EventSource('/api/log');
+  evtSrc.onmessage = (e) => {
+    let m; try { m = JSON.parse(e.data); } catch { return; }
+    if (m.type === 'line') logLine(m.line, classify(m.line));
+    else if (m.type === 'start') { setSampleRunning(true); }
+    else if (m.type === 'exit') {
+      logLine(`(sample finished, exit ${m.code})`, m.code === 0 ? 'done' : 'err');
+      onSampleExit(m.code);
+    }
+  };
+  evtSrc.onerror = () => { /* keep retrying; server sets retry: 3000 */ };
+}
+
+async function onSampleExit(code) {
+  setSampleRunning(false);
+  // On success, auto-refresh the manifest so the upscale/blend panels populate without a manual step.
+  if (code === 0) { logLine('auto-refreshing preview…', 'cmd'); await doRegen(true); }
+}
+
+async function doSample() {
+  if (!SERVER.live || sampleRunning) return;
+  const field = curField, biome = BIOME, n = parseInt($('ctl-n').value, 10) || 3;
+  logClear(); logLine(`▶ sample-upscale ${field} / ${biome} (N=${n})`, 'cmd');
+  setSampleRunning(true); openLogStream();
+  try {
+    const r = await fetch('/api/sample', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ field, biome, sample: n }) });
+    const j = await r.json();
+    if (!r.ok) { logLine('sample rejected: ' + (j.error || r.status), 'err'); setSampleRunning(false); }
+  } catch (e) { logLine('sample request failed: ' + e.message, 'err'); setSampleRunning(false); }
+}
+
+async function doCancel() {
+  try { await fetch('/api/sample-cancel', { method: 'POST' }); logLine('cancel requested…', 'cmd'); } catch {}
+}
+
+async function doRegen(quiet) {
+  if (!SERVER.live) return;
+  if (!quiet) { logLine('↻ rebuilding preview manifest…', 'cmd'); $('logwrap').open = true; }
+  try {
+    const r = await fetch('/api/regen', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ biome: BIOME }) });
+    const j = await r.json();
+    if (j.output) for (const ln of j.output.split('\n')) if (ln.trim()) logLine(ln, classify(ln));
+    if (j.ok) { await loadManifest(curField); logLine('preview reloaded ✓', 'done'); }
+    else logLine('regen failed (exit ' + j.code + ')', 'err');
+  } catch (e) { logLine('regen request failed: ' + e.message, 'err'); }
+}
+
+async function doApply() {
+  if (!SERVER.live) return;
+  const payload = exportDecisions(curField);
+  const n = Object.keys(payload.decisions).length;
+  if (!n) { logLine('no decisions to apply for ' + curField + ' (decide some objects first)', 'err'); return; }
+  logLine(`✓ applying ${n} decision(s) for ${curField}…`, 'cmd'); $('logwrap').open = true;
+  try {
+    const r = await fetch('/api/apply', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ field: curField, biome: BIOME, decisions: payload.decisions }) });
+    const j = await r.json();
+    if (j.output) for (const ln of j.output.split('\n')) if (ln.trim()) logLine(ln, classify(ln));
+    if (j.ok) { logLine('apply complete ✓', 'done'); await doRegen(true); }
+    else logLine('apply failed: ' + (j.error || ('exit ' + j.code)), 'err');
+  } catch (e) { logLine('apply request failed: ' + e.message, 'err'); }
+}
+
+$('btn-sample').onclick = doSample;
+$('btn-cancel').onclick = doCancel;
+$('btn-regen').onclick = () => doRegen(false);
+$('btn-apply').onclick = doApply;
+
+// ---- boot ----
+await loadManifest();
+const st = await apiStatus();
+setServerUI(!!(st && st.ok));
+if (st && st.ok) {
+  if (st.sampleRunning) { setSampleRunning(true); openLogStream(); }
+  else openLogStream(); // attach so a later sample streams immediately
+}
 </script></body></html>
