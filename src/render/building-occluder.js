@@ -117,6 +117,10 @@ if (typeof window !== 'undefined') window._windowFit = WINDOW_FIT;
 // Roof engine (the SAME module the worker bakes with) — lazy + guarded so a roof failure never
 // breaks the frame (mirrors roof-overlay.js).
 let _roof = null, _roofLoading = false, _roofFailed = false;
+// Dedicated GPU-accelerated canvas for the roof rasterize (no willReadFrequently → stays on the GPU, so the
+// roof's per-facet sheared drawImage is fast). Reused across all building bakes; the result is blitted into
+// each building's (software, read-back) work canvas. See the drawRoof closure for the full rationale.
+let _roofGpuCv = null, _roofGpuCx = null;
 function ensureRoof() {
   if (_roof || _roofLoading || _roofFailed) return;
   _roofLoading = true;
@@ -744,7 +748,31 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   // Roof respects its OWN layer flag — the procedural roof rides along with the wall path, so without this
   // gate it would draw even when the roof layer is off (leaking an un-tuned, wall-misaligned roof over the
   // walls). With roof off, walls show clean; we align the roof eaves to the walls when the roof layer is on.
-  const drawRoof = () => { if (_roof && renderOn('roof')) { try { _roof.drawRoofForBuilding(ctx, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b), roofFascia: roofFasciaFor(b), gableTex: gableTexFor(b) }); } catch { /* skip roof */ } } };
+  const _roofOpts = () => ({ stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b), roofFascia: roofFasciaFor(b), gableTex: gableTexFor(b) });
+  // Render the roof on a SEPARATE, GPU-ACCELERATED canvas, then blit it (axis-aligned) into the bake ctx.
+  // WHY: the bake work canvas is created with willReadFrequently:true (needed for its one alpha-crop
+  // getImageData), which forces Chrome to render it in SOFTWARE — and the roof's per-facet SHEARED drawImage
+  // is ~22ms each on a software canvas (~50 facets = the 1+ second roof). This roof canvas is NEVER read back,
+  // so it stays on the GPU where a sheared drawImage is ~microseconds. The roof draws transparently
+  // (background:false + noClear, roof-ingame.js:117) so the blit composites over the walls pixel-identically —
+  // FULL texture quality, no resolution cut. Falls back to drawing straight into ctx if the canvas can't be made.
+  const drawRoof = () => {
+    if (!(_roof && renderOn('roof'))) return;
+    const cw = ctx.canvas && ctx.canvas.width, ch = ctx.canvas && ctx.canvas.height;
+    if (!cw || !ch) { try { _roof.drawRoofForBuilding(ctx, b, camX, camY, tilePx, _roofOpts()); } catch { /* skip */ } return; }
+    if (!_roofGpuCv || _roofGpuCv.width < cw || _roofGpuCv.height < ch) {
+      _roofGpuCv = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(cw, ch)
+        : (typeof document !== 'undefined') ? document.createElement('canvas') : null;
+      if (_roofGpuCv) { _roofGpuCv.width = Math.max(cw, _roofGpuCv.width || 0); _roofGpuCv.height = Math.max(ch, _roofGpuCv.height || 0); _roofGpuCx = _roofGpuCv.getContext('2d'); }
+    }
+    if (!_roofGpuCx) { try { _roof.drawRoofForBuilding(ctx, b, camX, camY, tilePx, _roofOpts()); } catch { /* skip */ } return; }
+    try {
+      _roofGpuCx.setTransform(1, 0, 0, 1, 0, 0); _roofGpuCx.globalCompositeOperation = 'source-over';
+      _roofGpuCx.clearRect(0, 0, cw, ch); _roofGpuCx.imageSmoothingEnabled = false;
+      _roof.drawRoofForBuilding(_roofGpuCx, b, camX, camY, tilePx, _roofOpts());
+      ctx.drawImage(_roofGpuCv, 0, 0, cw, ch, 0, 0, cw, ch);
+    } catch { /* skip roof */ }
+  };
   // D3 wall attachments + the door SWING are NO LONGER baked here — they ANIMATE (banner/sign sway, lantern
   // flicker, door open/close), and a baked-in prop/door FREEZES in the cached sprite. They're drawn LIVE each
   // frame as a per-building depth quad (drawBuildingDynamicInto → glc.drawBuildingPropsSprite) AFTER the building

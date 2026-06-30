@@ -40,9 +40,6 @@ const MAX_WARMUP = 900;      // frames an INCOMPLETE bake may keep RE-baking bef
                              // we must re-bake until it's structurally complete (isComplete), else that walls-only
                              // sprite freezes forever (the bug: eviction only fires when size>384, so a small town
                              // never recovers). This cap is the backstop for a building whose assets never finish.
-const BAKE_TILE_CAP = 48;    // max tilePx a building sprite is BAKED at (it scales to the live zoom from there, like
-                             // terrain chunks). The bake cost (roof rasterize + per-pixel damage/growth + getImageData)
-                             // scales with tilePx²; uncapped, a zoomed-in bake (~100px) hit 1+ second per building.
 const REBAKE_INTERVAL = 10;  // frames between re-bakes of a STILL-LOADING (incomplete, sig-unchanged) building.
                              // Its tiles/roof decode over MANY frames, so re-baking it EVERY frame (each a full
                              // drawBuildingTextured + getImageData + alphaBBox scan over an ~18-tile canvas) just
@@ -199,14 +196,9 @@ export function getBuildingSprite(b, tilePx, renderFn, bakeState) {
   // A miss, an INCOMPLETE bake (still loading), a STALE one (door frame changed), or a warmup-frozen partial
   // whose assets are now ready (upgrade): (re)bake.
   if (_builds >= BUILD_BUDGET) { if (hit) { hit.frame = _frame; return hit; } return null; } // over budget → show last partial / defer
-  // CAP THE BAKE RESOLUTION. Every bake pass — the procedural roof rasterize (the ~1100ms worst case), the
-  // per-pixel D1 damage + D2 growth columns, and the getImageData+alphaBBox — scales with the bake canvas area,
-  // i.e. with tilePx². Zoomed in, tilePx hits ~100+ and a single building bake hit 1+ second. Buildings cache &
-  // scale EXACTLY like terrain chunks, so bake at a modest fixed tilePx and let the cached sprite scale up to the
-  // live zoom (a touch soft when zoomed far past the cap — the same tradeoff terrain makes, far better than the
-  // freeze). ~48 ≈ 4-5× fewer pixels than a 100+ zoom → the whole bake drops proportionally.
-  const bakePx = Math.min(tilePx, BAKE_TILE_CAP);
-  const built = buildSprite(b, bakePx, renderFn);
+  const built = buildSprite(b, tilePx, renderFn); // bake at full live resolution — the roof is rendered on a
+                                                  // GPU canvas (see building-occluder drawRoof) so resolution
+                                                  // no longer drives the cost; no quality sacrifice.
   if (!built) { if (hit) { hit.frame = _frame; return hit; } return null; }                  // can't draw yet → keep last partial
   _builds++;
   const firstFrame = hit && hit.firstFrame != null ? hit.firstFrame : _frame;
