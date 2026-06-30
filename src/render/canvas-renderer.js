@@ -352,12 +352,21 @@ export class CanvasRenderer {
       if (!cached) continue;
       if (glScene || glOn) {
         // CSS-pixel scale — full-resolution FBO, same coords as Stage 2
-        var _idx = (typeof window !== 'undefined' && window._gpuTerrain && this._wangAtlasState === 'ready')
-          ? provider.getChunkIndex(cx, cy) : null;
+        var _gtOn = (typeof window !== 'undefined' && window._gpuTerrain && this._wangAtlasState === 'ready');
+        var _idx = _gtOn ? provider.getChunkIndex(cx, cy) : null;
+        // DIAGNOSTIC: prove which path actually drew. Read window._gpuTerrainStats in console:
+        // { tilemap, bitmap, ready, idxNull } — tilemap>0 means the GPU shader path is live.
+        if (typeof window !== 'undefined') {
+          var _gt = window._gpuTerrainStats || (window._gpuTerrainStats = { tilemap: 0, bitmap: 0, ready: false, idxNull: 0 });
+          _gt.ready = this._wangAtlasState === 'ready';
+          if (_gtOn && !_idx) _gt.idxNull++;
+        }
         if (_idx) {
+          if (typeof window !== 'undefined') window._gpuTerrainStats.tilemap++;
           this.glc.uploadChunkIndex(key, _idx);
           this.glc.drawChunkTilemap(key, sx, sy, chunkPx, chunkPx);
         } else {
+          if (typeof window !== 'undefined') window._gpuTerrainStats.bitmap++;
           this.glc.drawChunk(key, cached, sx, sy, chunkPx, chunkPx);
         }
       } else {
