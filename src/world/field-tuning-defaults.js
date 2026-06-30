@@ -25,7 +25,7 @@ export var DEFAULT_FIELD_TUNING = {
       }
     }
   },
-  f3: {},
+  f3: { size: 2.0 }, // small_scatter base scales (~0.32) are too small at 1.0; 2.0 → ~20px, visible ground scatter
   f4: {
     biomes: {
       arctic: {
