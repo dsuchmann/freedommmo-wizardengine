@@ -1,9 +1,6 @@
 // src/render/wang-atlas.js
-// Owns the GL atlas of 32x32 Wang base tiles, keyed (biome-asset, wang level, cornerMask). Pure slot key
-// below is unit-tested; the GL build/upload (a later task) attaches to the WangAtlas class.
-export function wangSlotKey(biomeAsset, level, cornerMask) {
-  return biomeAsset + '|' + level + '|' + (cornerMask & 63);
-}
+// Owns the GL atlas of 32x32 Wang base tiles, keyed by the Wang tile URL string (the same
+// URL that getWangSrc() returns). The GL build/upload attaches to the WangAtlas class.
 
 /**
  * WangAtlas — owns the GL Wang-tile atlas (one RGBA8 texture, default 2048²).
@@ -24,7 +21,7 @@ export class WangAtlas {
     this._shelfY = 1;
     this._shelfH = 0;
 
-    // Slot registry: wangSlotKey → {slot, u0, v0}
+    // Slot registry: Wang URL string → {slot, u0, v0}
     this._slots = new Map();
     this._nextSlot = 1; // slot 0 is RESERVED = empty/none; never assigned
 
@@ -42,12 +39,11 @@ export class WangAtlas {
 
   /**
    * Pack one 32×32 imageBitmap into the atlas and return its integer slot.
-   * Idempotent: the same (biomeAsset, level, cornerMask) always returns the
-   * same slot on subsequent calls without re-uploading.
+   * key is the Wang tile URL string returned by getWangSrc().
+   * Idempotent: the same key always returns the same slot without re-uploading.
    * Returns 0 if the atlas is full (caller should treat as "no tile").
    */
-  add(biomeAsset, level, cornerMask, imageBitmap) {
-    const key = wangSlotKey(biomeAsset, level, cornerMask);
+  add(key, imageBitmap) {
     const existing = this._slots.get(key);
     if (existing) return existing.slot;
 

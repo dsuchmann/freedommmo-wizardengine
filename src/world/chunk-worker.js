@@ -5,7 +5,6 @@ import { clearClaimCaches } from './decoration-claims.js';
 import { ChunkCompiler } from './chunk-compiler.js';
 import { getWangImageURLsForBiomes, getSoilImageURLsForBiomes, getGroundCoverImageURLsForBiomes, getSmallScatterImageURLs } from '../render/wang-image-list.js';
 import { renderChunkToBitmap, setF3RemovedKeys, buildChunkIndex } from '../render/worker-chunk-renderer.js';
-import { wangSlotKey } from '../render/wang-atlas.js';
 import { denoiseBitmap } from '../render/sprite-denoise.js';
 import { getAllFloorTileURLs } from '../render/building-tile-query.js';
 
@@ -282,8 +281,8 @@ function buildIndexBuffer(chunk) {
   if (!gpuTerrain || !wangAtlasMeta) return null;
   try {
     var idx = buildChunkIndex(chunk, {
-      slotResolver: function(asset, level, mask) {
-        var e = wangAtlasMeta.slots[wangSlotKey(asset, level, mask)];
+      slotResolver: function(src) {
+        var e = wangAtlasMeta.slots[src];
         return e ? e.slot : 0;
       },
       soilResolver: function() { return 0; }, // Phase 3 wires real soil ids
