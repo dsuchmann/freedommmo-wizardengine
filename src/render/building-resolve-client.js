@@ -59,9 +59,11 @@ function _ensureWorker() {
   return _worker;
 }
 
-/** True when the worker path should be used (flag on AND the worker hasn't failed to load). */
+/** True when the worker path should be used. DEFAULT ON (verified: buildings/walk-in/overlay/stairs
+ *  all correct off-thread) — set window._buildingWorker=false to force the synchronous fallback.
+ *  Also off if the Worker failed to construct/load (→ synchronous path). */
 export function buildingWorkerEnabled() {
-  return typeof window !== 'undefined' && window._buildingWorker === true && !_failed;
+  return typeof window !== 'undefined' && window._buildingWorker !== false && !_failed;
 }
 
 /** Ask the worker to resolve `key`'s range. Dedupes; only the most-recent pending request survives. */
