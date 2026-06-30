@@ -30,6 +30,8 @@ import { renderOn } from './building-render-flags.js';
 import { drawField2Animations, preloadField2Animations, drawWindWispOverlay, setField2PlayerDraw, setField2PlayerGL } from './field2-animator.js';
 import { findNearbyInteraction, objectReaction, performInteraction } from '../world/interactions.js';
 import { GLCompositor } from './gl-compositor.js';
+import { WangAtlas } from './wang-atlas.js';
+import { getWangImageURLsForBiomes } from './wang-image-list.js';
 import { buildAtmoField } from './atmosphere-pass.js';
 import { drawHumanoidPlayer, playMotion, stopMotion } from './humanoid-player-renderer.js';
 import { drawSpriteCharacter } from './sprite-character-renderer.js';
@@ -238,6 +240,34 @@ export class CanvasRenderer {
     if (this.glc && this.glc.ok) this.glc.resize(window.innerWidth, window.innerHeight, window.devicePixelRatio);
   }
 
+  _ensureWangAtlas(provider) {
+    if (typeof window === 'undefined' || !window._gpuTerrain) return;
+    if (this._wangAtlasState) return; // build started or done already
+    this._wangAtlasState = 'loading';
+    const gl = this.glc && this.glc.gl;
+    if (!gl) { this._wangAtlasState = null; return; } // GL not ready yet, retry next frame
+    const atlas = new WangAtlas(gl);
+    const urls = getWangImageURLsForBiomes(['grassland']);
+    let pending = urls.length;
+    for (const url of urls) {
+      fetch(url)
+        .then(r => r.ok ? r.blob() : null)
+        .then(b => b ? createImageBitmap(b) : null)
+        .then(bmp => { if (bmp) atlas.add(url, bmp); })
+        .catch(() => {}) // 404s / decode fails are fine — skip that tile
+        .finally(() => {
+          if (--pending === 0) {
+            this._wangAtlas = atlas;
+            this.glc.setWangAtlas(atlas.texture(), atlas.serializeMeta());
+            provider.setWangAtlasMeta(atlas.serializeMeta());
+            provider.setGpuTerrain(true);
+            this._wangAtlasState = 'ready';
+            if (typeof window !== 'undefined') window._gpuTerrainReady = true;
+          }
+        });
+    }
+  }
+
   draw(chunkStore, player, lighting, camera, provider, weather) {
     const ctx = this.ctx;
     const _P = (typeof window !== 'undefined') ? (window._drawProf = window._drawProf || {}) : {};
@@ -273,6 +303,8 @@ export class CanvasRenderer {
       ctx.fillStyle = sun.skyColor || '#18262b';
       ctx.fillRect(0, 0, w, h);
     }
+
+    this._ensureWangAtlas(provider);
 
     const camX = player.x * tilePx - w / 2;
     // Interior camera glide: advance the eased per-floor lift, then subtract it from camY so
@@ -320,7 +352,14 @@ export class CanvasRenderer {
       if (!cached) continue;
       if (glScene || glOn) {
         // CSS-pixel scale — full-resolution FBO, same coords as Stage 2
-        this.glc.drawChunk(key, cached, sx, sy, chunkPx, chunkPx);
+        var _idx = (typeof window !== 'undefined' && window._gpuTerrain && this._wangAtlasState === 'ready')
+          ? provider.getChunkIndex(cx, cy) : null;
+        if (_idx) {
+          this.glc.uploadChunkIndex(key, _idx);
+          this.glc.drawChunkTilemap(key, sx, sy, chunkPx, chunkPx);
+        } else {
+          this.glc.drawChunk(key, cached, sx, sy, chunkPx, chunkPx);
+        }
       } else {
         ctx.drawImage(cached, sx, sy, chunkPx, chunkPx);
       }
