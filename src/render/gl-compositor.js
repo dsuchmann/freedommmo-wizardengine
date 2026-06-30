@@ -304,6 +304,9 @@ uniform vec2 uViewport;
 uniform vec3 uCam;       // x,y = screen-px offset, z = px per tile
 uniform float uTime;     // ms
 uniform float uFrameDur; // ms per anim frame
+uniform float uDepthOn;    // 0 = z=0 (legacy, draws over everything); 1 = depth-from-baseline so flora is OCCLUDED behind buildings
+uniform float uDepthRef;   // reference tile Y (screen centre) — must match the building-depth pass
+uniform float uDepthScale; // tiles→depth slope (must match building-depth.js DEPTH_SCALE)
 out vec2 vUV;
 out float vAlpha;
 out vec2 vLocal; // must match SPRITE_FRAG_SRC (shared frag) or the anim program fails to link
@@ -318,7 +321,14 @@ void main() {
   vec2 local = vec2(aUnit.x * sizePx - sizePx * 0.5, aUnit.y * sizePx - sizePx);
   float c = cos(rot), s = sin(rot);
   vec2 px = pivotPx + vec2(local.x * c - local.y * s, local.x * s + local.y * c);
-  gl_Position = vec4(px.x / uViewport.x * 2.0 - 1.0, 1.0 - px.y / uViewport.y * 2.0, 0.0, 1.0);
+  // Depth from the sprite's BASELINE (a0.y, world tiles): larger Y = more south = nearer = smaller depth.
+  // NDC z = 2d-1, matching the building-depth pass + drawPoolSprites exactly so flora occludes correctly.
+  float z = 0.0;
+  if (uDepthOn > 0.5) {
+    float d = clamp(0.5 - (a0.y - uDepthRef) * uDepthScale, 0.0, 1.0);
+    z = d * 2.0 - 1.0;
+  }
+  gl_Position = vec4(px.x / uViewport.x * 2.0 - 1.0, 1.0 - px.y / uViewport.y * 2.0, z, 1.0);
   vec2 uv0 = vec2(a1.x + frameIdx * a1.z, a1.y);
   vUV = uv0 + aUnit * vec2(a1.w, a4.x);
   float fade = (a3.x > 0.0) ? clamp((uTime - a3.x) / 400.0, 0.0, 1.0) : 1.0;
@@ -1596,6 +1606,9 @@ export class GLCompositor {
     this.aUTime = gl.getUniformLocation(prog, 'uTime');
     this.aUFrameDur = gl.getUniformLocation(prog, 'uFrameDur');
     this.aUAtlas = gl.getUniformLocation(prog, 'uAtlas');
+    this.aUDepthOn = gl.getUniformLocation(prog, 'uDepthOn');
+    this.aUDepthRef = gl.getUniformLocation(prog, 'uDepthRef');
+    this.aUDepthScale = gl.getUniformLocation(prog, 'uDepthScale');
     this.animVbo = gl.createBuffer();
     this._animCapBytes = 0;
     var sv = this._buildAnimVao(prog, this.animVbo);
@@ -1704,12 +1717,25 @@ export class GLCompositor {
     gl.uniform1i(this.aUAtlas, 0);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    // Depth-test against the building depth buffer so flora is OCCLUDED by buildings in front of it (the GPU
+    // path previously hardcoded z=0 + no depth test → grass drew over buildings, esp. after teleport). Mirrors
+    // drawPoolSprites: TEST only (depthMask false), so flora's own painter's-order by sortY is unchanged.
+    var _depthOn = !!this._spriteDepth;
+    if (this.aUDepthOn) gl.uniform1f(this.aUDepthOn, _depthOn ? 1 : 0);
+    if (_depthOn) {
+      gl.uniform1f(this.aUDepthRef, this._spriteDepth.refY);
+      gl.uniform1f(this.aUDepthScale, this._spriteDepth.scale);
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthFunc(gl.LEQUAL);
+      gl.depthMask(false);
+    }
     try {
       this._pointAnimAttribs(this.animVbo, this._animLocs, start);
       gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
     } finally {
       this._pointAnimAttribs(this.animVbo, this._animLocs, 0);
       gl.bindVertexArray(null);
+      if (_depthOn) { gl.disable(gl.DEPTH_TEST); gl.depthMask(true); }
     }
     gl.disable(gl.BLEND);
   }
