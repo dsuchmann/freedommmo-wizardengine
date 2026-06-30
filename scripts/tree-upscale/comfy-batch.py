@@ -121,6 +121,7 @@ FIELD_PROMPT = None                  # template-mode base prompt with a {obj} sl
 FIELD_OBJECTS = {}                   # template-mode per-object {obj} overrides
 SAMPLE_N = None                      # --sample N: cap to the first N variants per object (None = all)
 DECISIONS_KEYS = None                # --decisions: set of "biome/obj" with mode upscale/blend (None = all)
+BASE_ONLY = False                    # --base-only: skip _states + anim (fast ALL-bases pass for the QA dashboard)
 
 
 def load_fields() -> dict:
@@ -358,6 +359,8 @@ def enumerate_corpus(only_biome=None, only_type=None, ready_only=False):
     for p in FIELD_ROOT.rglob("*.png"):      # variant PNGs (base/state) + frame_###.png (anim); predicate filters
         if not is_static_source(p):
             continue
+        if BASE_ONLY and ("_states" in p.parts or "anim" in p.parts):
+            continue                         # ALL-bases QA pass: states + anims come at apply, for the winners
         biome, obj = biome_type_of(p)
         if only_biome and biome != only_biome:
             continue
@@ -927,7 +930,7 @@ def report(state, only_biome=None, only_type=None):
 
 
 def main():
-    global DENOISE, TILE_STRENGTH, OUT_TAG, FORCE, INCLUDE_ANIMS, SAMPLE_N, DECISIONS_KEYS
+    global DENOISE, TILE_STRENGTH, OUT_TAG, FORCE, INCLUDE_ANIMS, SAMPLE_N, DECISIONS_KEYS, BASE_ONLY
     ap = argparse.ArgumentParser(description="Component E — ComfyUI field-aware upscale batch harness")
     ap.add_argument("--field", default="large_flora",
                     help="Field config row in fields.json (default large_flora = original F6 behavior)")
@@ -948,6 +951,7 @@ def main():
     ap.add_argument("--force", action="store_true", help="Reprocess even if an output already exists")
     ap.add_argument("--out-tag", default="", help="Append a tag to outputs (v###@384<tag>.png) so settings don't overwrite, e.g. --out-tag -dn30")
     ap.add_argument("--no-anims", action="store_true", help="Skip anim/ frames (fast statics-only pass: base + states)")
+    ap.add_argument("--base-only", action="store_true", help="ONLY base variants — skip _states AND anim/ (fast all-bases pass for the QA dashboard; states+anims come at apply, for the upscale/blend winners)")
     ap.add_argument("--ready", action="store_true", help="Process ONLY types fully generated on disk (base+states+anims per _f6_state.json); skip ones PixelLab is still rendering")
     ap.add_argument("--watch", type=int, default=0, metavar="MIN", help="Loop: process ready types, re-check every MIN min for newly-finished types, until all done (implies --ready). Kick once, walks the whole corpus.")
     args = ap.parse_args()
@@ -963,6 +967,7 @@ def main():
     OUT_TAG = args.out_tag
     FORCE = args.force
     INCLUDE_ANIMS = not args.no_anims
+    BASE_ONLY = args.base_only
     SAMPLE_N = args.sample
     if args.decisions is not None:
         dd = json.loads(Path(args.decisions).read_text(encoding="utf-8"))
