@@ -114,6 +114,10 @@ uniform sampler2D uSoilAtlas; // RGBA8 strip, cell i = soil id i (32px cells)
 uniform sampler2D uSoilConfig;// RGBA32F count x 2 (row0 params, row1 tint)
 uniform int   uSoilCount;     // number of soil ids (atlas/config width)
 uniform float uSoilOn;        // 0 = soil pass disabled
+uniform sampler2D uGcLumAtlas;  // RGBA8 strip, cell i = gc-lum id i (32px cells)
+uniform sampler2D uGcLumConfig; // RGBA32F count x 1: texel[i] = (strength, density, 0, 0)
+uniform int   uGcLumCount;      // number of gc-lum ids
+uniform float uGcLumOn;         // 0 = gc-luminance pass disabled
 out vec4 outColor;
 const float CHUNK = 64.0;
 // Integer bit-hash — stable at ALL world coordinates. The classic
@@ -132,10 +136,11 @@ void main() {
   vec2 t = vUV * CHUNK;            // tile space
   ivec2 cell = ivec2(clamp(floor(t), 0.0, CHUNK - 1.0));
   vec2 frac = fract(t);
-  uvec4 ti = texelFetch(uIndex, cell, 0);     // RGBA16UI: r=baseSlot g=cliffSlot b=soilId
+  uvec4 ti = texelFetch(uIndex, cell, 0);     // RGBA16UI: r=baseSlot g=cliffSlot b=soilId a=gcLumId
   int baseSlot = int(ti.r);
   int cliffSlot = int(ti.g);
   int soilId = int(ti.b);
+  int gcLumId = int(ti.a);
   if (baseSlot == 0) { outColor = vec4(0.0); return; }   // empty cell
   int s = baseSlot; if (s >= uSlotUVW) s = 0;
   vec2 uv0 = texelFetch(uSlotUV, ivec2(s, 0), 0).rg;     // tile origin (half-texel inset baked in)
@@ -175,6 +180,27 @@ void main() {
           srgb = mix(srgb, cfg1.rgb, cfg0.z);                       // tint toward target
         }
         col.rgb = mix(col.rgb, srgb, soil.a * cfg0.y);              // alpha = swatch.a * cfg.alpha
+      }
+    }
+  }
+  // ── gc-luminance pass — ADDITIVE surface modulation, replacing the CPU gc
+  // luminance loop (applyGroundCoverToChunk). Only 11 biomes have gc-luminance
+  // (grassland etc. → gcLumId 0 → skipped). Darkens/lightens the surface where a
+  // jittered gc-sprite sample has alpha, gated by per-pixel density hash.
+  if (uGcLumOn > 0.5 && gcLumId > 0 && gcLumId < uGcLumCount) {
+    vec2 gwp = (uChunkOrigin + vec2(cell)) * 32.0 + frac * 32.0;
+    int gpx = int(floor(gwp.x));
+    int gpy = int(floor(gwp.y));
+    vec4 gcfg = texelFetch(uGcLumConfig, ivec2(gcLumId, 0), 0);  // strength, density
+    float gh = hash01(gpx, gpy, 5u);
+    if (gh <= gcfg.y) {
+      float gjx = hash01(gpx, gpy, 6u);
+      float gjy = hash01(gpx, gpy, 7u);
+      float gu = (float(gcLumId) + fract(frac.x + gjx)) / float(uGcLumCount);
+      vec4 gc = textureLod(uGcLumAtlas, vec2(gu, fract(frac.y + gjy)), 0.0);
+      if (gc.a > 0.03) {
+        float lum = dot(gc.rgb, vec3(0.299, 0.587, 0.114)) - 0.5;  // centered luminance
+        col.rgb = clamp(col.rgb + lum * gcfg.x, 0.0, 1.0);          // additive modulation
       }
     }
   }
@@ -2202,6 +2228,10 @@ export class GLCompositor {
     this._tmUSoilConfig  = gl.getUniformLocation(prog, 'uSoilConfig');
     this._tmUSoilCount   = gl.getUniformLocation(prog, 'uSoilCount');
     this._tmUSoilOn      = gl.getUniformLocation(prog, 'uSoilOn');
+    this._tmUGcLumAtlas  = gl.getUniformLocation(prog, 'uGcLumAtlas');
+    this._tmUGcLumConfig = gl.getUniformLocation(prog, 'uGcLumConfig');
+    this._tmUGcLumCount  = gl.getUniformLocation(prog, 'uGcLumCount');
+    this._tmUGcLumOn     = gl.getUniformLocation(prog, 'uGcLumOn');
     // Own VAO that shares the same unit-quad VBO as the base chunk program
     this._tilemapVao = gl.createVertexArray();
     gl.bindVertexArray(this._tilemapVao);
@@ -2289,6 +2319,20 @@ export class GLCompositor {
       gl.uniform1i(this._tmUSoilAtlas, 3);
       gl.uniform1i(this._tmUSoilConfig, 4);
       gl.uniform1i(this._tmUSoilCount, this._soilCount);
+    }
+
+    // gc-luminance pass — bind the gc-lum swatch atlas (unit 5) + config (unit 6).
+    var _gcLumOn = (this._gcLumSwatchTex && this._gcLumConfigTex) ? 1 : 0;
+    if (this._tmUGcLumOn) gl.uniform1f(this._tmUGcLumOn, _gcLumOn);
+    if (_gcLumOn) {
+      gl.activeTexture(gl.TEXTURE5);
+      gl.bindTexture(gl.TEXTURE_2D, this._gcLumSwatchTex);
+      gl.activeTexture(gl.TEXTURE6);
+      gl.bindTexture(gl.TEXTURE_2D, this._gcLumConfigTex);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.uniform1i(this._tmUGcLumAtlas, 5);
+      gl.uniform1i(this._tmUGcLumConfig, 6);
+      gl.uniform1i(this._tmUGcLumCount, this._gcLumCount);
     }
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
