@@ -166,7 +166,7 @@ var frameCache = new Map();
 var loadingSet = new Set();
 var _denoiseCanvas = null;
 
-// ---- Off-thread denoise worker client (OPT-IN: window._denoiseWorker) ----
+// ---- Off-thread denoise worker client (DEFAULT-ON; kill-switch: window._denoiseWorker = false) ----
 // Moves the synchronous main-thread denoiseImage() cost (5-15ms load spikes) into
 // a Web Worker. DEFAULT OFF — when the flag is falsy the classic new Image() +
 // denoiseImage path runs byte-identical. One lazily-created module worker; requests
@@ -442,7 +442,7 @@ function loadFrame(url, frameCount) {
   // (no main-thread decode/denoise/re-encode). Same frameCache + temporalDenoise
   // bookkeeping as the default path. ImageBitmaps have no .src, so tag _dnKey for
   // atlas keying (call sites already read `img.src || img._dnKey`).
-  if (typeof window !== 'undefined' && window._denoiseWorker) {
+  if (typeof window !== 'undefined' && window._denoiseWorker !== false) {
     denoiseViaWorker(url).then(function(res) {
       if (!res || !res.bitmap) { frameCache.set(url, null); loadingSet.delete(url); return; }
       var bitmap = res.bitmap;
@@ -645,7 +645,7 @@ function startPreload(item) {
   // OPT-IN off-thread path: mirror the default finish/onerror bookkeeping exactly
   // (readiness counters, static-only retry, checkReady/pumpPreloadQueue), but get
   // the cleaned sprite from the worker as an ImageBitmap instead of Image+denoiseImage.
-  if (typeof window !== 'undefined' && window._denoiseWorker) {
+  if (typeof window !== 'undefined' && window._denoiseWorker !== false) {
     denoiseViaWorker(url).then(function(res) {
       if (res && res.bitmap) {
         var bitmap = res.bitmap;
