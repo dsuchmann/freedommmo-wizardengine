@@ -36,15 +36,28 @@ export class ChunkProvider {
     // tree landing AFTER the purge and blocking the real repaint).
     this.tuneGen = 0;
 
+    // Restore the persisted flora-worker flag BEFORE creating workers, so it applies from the
+    // very first compiled chunk. (The chunk streamer runs ~128 tiles ahead; a console-set flag
+    // misses everything already streamed, which made A/B testing misleading.)
+    if (typeof window !== 'undefined' && window._workerFloraDesc === undefined) {
+      try { if (localStorage.getItem('_floraWorker') === '1') window._workerFloraDesc = true; } catch (e) { /* no storage */ }
+    }
+
     if (this.workerSupported) {
       for (let i = 0; i < workerCount; i++) this.createWorker();
     }
 
-    // Runtime enable helper: window._floraWorker(true) sets the flag AND broadcasts to the
-    // already-created workers (they read the flag at create time, so a plain console assignment
-    // wouldn't reach them). window._floraWorker(false) disables. Dev/validation convenience.
+    // Runtime enable helper: window._floraWorker(true) sets + PERSISTS the flag (localStorage,
+    // like gpuTerrain) and broadcasts to the already-created workers (they read the flag at
+    // create time, so a plain console assignment wouldn't reach them). _floraWorker(false)
+    // disables + clears the persistence. Reload after toggling for a clean full-coverage run.
     if (typeof window !== 'undefined') {
-      window._floraWorker = (on = true) => { window._workerFloraDesc = !!on; this.setWorkerFloraDesc(on); return 'workerFloraDesc=' + !!on; };
+      window._floraWorker = (on = true) => {
+        window._workerFloraDesc = !!on;
+        this.setWorkerFloraDesc(on);
+        try { if (on) localStorage.setItem('_floraWorker', '1'); else localStorage.removeItem('_floraWorker'); } catch (e) { /* no storage */ }
+        return 'workerFloraDesc=' + !!on + ' (persisted — reload for full coverage)';
+      };
     }
   }
 
