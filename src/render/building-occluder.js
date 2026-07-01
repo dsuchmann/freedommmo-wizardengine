@@ -758,16 +758,16 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   // FULL texture quality, no resolution cut. Falls back to drawing straight into ctx if the canvas can't be made.
   const drawRoof = () => {
     if (!(_roof && renderOn('roof'))) return;
-    // ESCAPE HATCH: window._skipRoofBake=true skips the (currently ~1.5s) textured
-    // roof render so buildings bake fast and the main thread stops jamming — a
-    // guaranteed unblock while the roof-render cost is being fixed. Buildings show
-    // walls only (no roof) until it's off again. Default off = normal roofs.
-    if (typeof window !== 'undefined' && window._skipRoofBake) return;
     const cw = ctx.canvas && ctx.canvas.width, ch = ctx.canvas && ctx.canvas.height;
     if (!cw || !ch) { try { _roof.drawRoofForBuilding(ctx, b, camX, camY, tilePx, _roofOpts()); } catch { /* skip */ } return; }
     if (!_roofGpuCv || _roofGpuCv.width < cw || _roofGpuCv.height < ch) {
-      _roofGpuCv = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(cw, ch)
-        : (typeof document !== 'undefined') ? document.createElement('canvas') : null;
+      // PREFER a detached DOM <canvas> over OffscreenCanvas: on the MAIN thread Chrome
+      // reliably GPU-accelerates a plain <canvas> 2D context, but main-thread
+      // OffscreenCanvas 2D often falls back to SOFTWARE — which made the roof's per-facet
+      // sheared drawImage cost ~1.5s/building (the town-load main-thread jam). OffscreenCanvas
+      // is only the fallback for a worker/no-DOM context.
+      _roofGpuCv = (typeof document !== 'undefined' && document.createElement) ? document.createElement('canvas')
+        : (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(cw, ch) : null;
       if (_roofGpuCv) { _roofGpuCv.width = Math.max(cw, _roofGpuCv.width || 0); _roofGpuCv.height = Math.max(ch, _roofGpuCv.height || 0); _roofGpuCx = _roofGpuCv.getContext('2d'); }
     }
     if (!_roofGpuCx) { try { _roof.drawRoofForBuilding(ctx, b, camX, camY, tilePx, _roofOpts()); } catch { /* skip */ } return; }
