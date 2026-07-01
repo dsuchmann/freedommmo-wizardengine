@@ -1,0 +1,79 @@
+{
+ "done": {
+  "dense_forest/ancient_oak/_states/burned/v000.png": {
+   "out": "dense_forest/ancient_oak/_states/burned/v000@384_dn40.png",
+   "seed": 1,
+   "attempt": 0
+  },
+  "dense_forest/ancient_oak/_states/dead/v000.png": {
+   "out": "dense_forest/ancient_oak/_states/dead/v000@384.png",
+   "seed": 1,
+   "attempt": 0
+  },
+  "dense_forest/ancient_oak/_states/enchanted/v000.png": {
+   "out": "dense_forest/ancient_oak/_states/enchanted/v000@384.png",
+   "seed": 1,
+   "attempt": 0
+  },
+  "dense_forest/ancient_oak/_states/frozen/v000.png": {
+   "out": "dense_forest/ancient_oak/_states/frozen/v000@384.png",
+   "seed": 1,
+   "attempt": 0
+  },
+  "dense_forest/ancient_oak/_states/seedling/v000.png": {
+   "out": "dense_forest/ancient_oak/_states/seedling/v000@384.png",
+   "seed": 1,
+   "attempt": 0
+  },
+  "dense_forest/ancient_oak/_states/wilting/v000.png": {
+   "out": "dense_forest/ancient_oak/_states/wilting/v000@384.png",
+   "seed": 1,
+   "attempt": 0
+  },
+  "dense_forest/ancient_oak/v000.png": {
+   "out": "dense_forest/ancient_oak/v000@384.png",
+   "seed": 1,
+   "attempt": 0
+  },
+  "dense_forest/ancient_oak/v001.png": {
+   "out": "dense_forest/ancient_oak/v001@384.png",
+   "seed": 1,
+   "attempt": 0
+  },
+  "dense_forest/ancient_oak/v002.png": {
+   "out": "dense_forest/ancient_oak/v002@384.png",
+   "seed": 1,
+   "attempt": 0
+  }
+ },
+ "failed": {
+  "dense_forest/ancient_oak/_states/burned/v000.png": {
+   "reason": "qa_fail_or_error",
+   "attempts": 3
+  },
+  "dense_forest/ancient_oak/_states/dead/v000.png": {
+   "reason": "qa_fail_or_error",
+   "attempts": 3
+  },
+  "dense_forest/ancient_oak/_states/enchanted/v000.png": {
+   "reason": "qa_fail_or_error",
+   "attempts": 3
+  },
+  "dense_forest/ancient_oak/_states/frozen/v000.png": {
+   "reason": "qa_fail_or_error",
+   "attempts": 3
+  },
+  "dense_forest/ancient_oak/_states/seedling/v000.png": {
+   "reason": "qa_fail_or_error",
+   "attempts": 3
+  },
+  "dense_forest/ancient_oak/_states/wilting/v000.png": {
+   "reason": "qa_fail_or_error",
+   "attempts": 3
+  }
+ },
+ "stats": {
+  "produced": 14,
+  "skipped": 7
+ }
+}

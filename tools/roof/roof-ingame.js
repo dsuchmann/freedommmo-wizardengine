@@ -20,7 +20,7 @@ import { drawRoof, makeGameView } from './roof-renderer.js';
 import { makeFeatures as makeRoofFeatures } from './roof-features.js';
 import { resolveRoof } from './roof-rules.js';
 import { resolveConfig } from './roof-config.js';
-import { classifyBiome } from '../../src/world/biomes.js';
+import { classifyBiomeNoStream } from '../../src/world/biomes.js';
 import { WALL_CONFIG } from '../../src/render/wall-config.js';
 
 // shared calibration — the preview's sliders write here; the overlay reads it, so
@@ -74,10 +74,17 @@ export function resolveForBuilding(b, biomeOverride) {
   let e = cache.get(key);
   if (e) return e;
   const fp = b.footprint;
-  // classifyBiome returns {id, definition, climate} in-game; the preview passes a bare
-  // string. Normalize to the biome id STRING — else resolveRoof/getBiomeGroundTexture
+  // classifyBiomeNoStream returns {id, definition, climate} in-game; the preview passes a
+  // bare string. Normalize to the biome id STRING — else resolveRoof/getBiomeGroundTexture
   // get an object key, silently fall back to the default profile + miss the texture.
-  const biomeRaw = biomeOverride || classifyBiome(b.x, b.y);
+  // NoStream: the roof only needs the LAND biome id. The full classifyBiome() runs the
+  // hydrology streamAt() trace, whose FIRST call in a fresh region costs ~1.95s (a ~289-cell
+  // neighbourhood × up-to-600-step stream walks × ~47 noise evals each) — the town-load
+  // freeze. Stream is an additive water layer with no roof profile, so the id is identical
+  // for every non-on-channel tile; a building literally on a channel now gets its real land
+  // biome roof instead of a grassland fallback (strictly better). Measured 1950ms→7ms on the
+  // roof-resolve path. (2026-07-01) See [[project_roof_bake_jam_rootcause]].
+  const biomeRaw = biomeOverride || classifyBiomeNoStream(b.x, b.y);
   const biome = (biomeRaw && biomeRaw.id) || biomeRaw;
   const typeId = fp.typeId || 'house';
   const pattern = inferPattern(fp);
@@ -99,9 +106,13 @@ export function resolveForBuilding(b, biomeOverride) {
   // terminates at the wall edge on the sides, and ALLOW a small SOUTH (front) overhang so the roof reads
   // as a real eave hanging over the front. Kept small via overhangDroop so it laps the wall-plate without
   // hiding the door/window below.
-  R.geom.noSouthOverhang = false;       // small front eave over the south wall top
+  R.geom.noSouthOverhang = true;        // NO south overhang — the roof/gable terminates AT the wall's south
+                                        // edge (the terminal wall top), not extending south OVER the wall. The
+                                        // small front eave drooped over the wall top (user 2026-06-26). Was false.
   R.geom.noEastWestOverhang = true;     // flush E/W eaves (no extra-tile flare on the sides)
-  R.geom.overhangDroop = 0.30;          // a touch more droop so the small front eave reads as an overhang
+  R.geom.overhangDroop = 0;             // eave/gable TERMINATES at the wall top (h=0), no droop below — was 0.30,
+                                        // which lapped 0.3 tiles BELOW the wall top and overlapped the south wall
+                                        // (user 2026-06-26: the gable must start at the wall's terminal edge).
   const grid = buildRoofGrid(R.sections, R.geom);
   // shift the heightmap so the perimeter EAVE sits at h=0 (the lifted wall-top plane),
   // so the roof's back edge is flush with the north wall top, not floating above it.
@@ -184,6 +195,9 @@ export function drawRoofForBuilding(ctx, b, camX, camY, tilePx, opts = {}) {
   // eave trim: the authored roof_fascia.png bitmap (from the occluder via the FROZEN
   // opts). Null in the preview (no fascia) → drawSkirt falls back to fasciaColor.
   e.renderCfg.roofFascia = opts.roofFascia || null;
+  // Per-wall-material GABLE tile — skins the south gable / E/W rake bridge in drawSkirt (the wall carried up
+  // into the roof→wall triangle). Null in the preview / before load → drawSkirt's solid-fill fallback.
+  e.renderCfg.gableTex = opts.gableTex || null;
   drawRoof(ctx, e.grid, e.material, features, e.renderCfg, view);
   return e;
 }

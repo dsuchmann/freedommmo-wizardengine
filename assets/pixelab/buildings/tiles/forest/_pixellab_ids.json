@@ -1,0 +1,78 @@
+{
+  "_doc": "Durable ledger of PixelLab object IDs for the forest tile-corpus (5th/6th biome). Slugs are the EXISTING building-materials.json slugs (already wired) — no registry edit. Vocab in docs/superpowers/specs/2026-06-24-forest-tile-corpus-manifest.md. de-magenta+solidify every tile; record ids in the SAME batch.",
+  "base_project": "0f1031f5-9eee-4df4-996f-0a4114148eba",
+  "materials": {
+    "log_cabin": {
+      "base": "a603fcc1-7191-4cd9-8747-3026c74ad102",
+      "ground_window": "48f8f321-2240-4b76-b4a0-490005a3d0be",
+      "ground_door": "8e5b29d5-2fdf-4b69-9b67-ac890ad67ef3",
+      "ground_left_corner": "34507020-3935-4bf3-b25b-1dbff27c7da9",
+      "gable": "36cea563-b13e-40b6-b8d9-12db5450007e",
+      "anim_door_group": "4df41b36-3431-43ce-abd3-ba88b3ce3301",
+      "anim_window_group": "4b3e7bee-2bee-42a4-9b50-958456d7f5e2"
+    },
+    "hewn_plank": {
+      "base": "40ea4673-e992-4cbf-a7c8-6fe7168b4602",
+      "ground_window": "821d2f56-e206-43a3-b287-ba48d15760f0",
+      "ground_door": "f6989b8d-23a6-4c70-8587-d85fb41324af",
+      "ground_left_corner": "80cddd75-d0c9-47db-9814-5b172c927601",
+      "gable": "6acdd9c9-ffe7-4169-a87e-68f99063c52f",
+      "anim_door_group": "27f3626e-435b-4975-8dfb-167063f218bf",
+      "anim_window_group": "65e27e54-6f9b-4b94-82c1-7d969d5eb6e5"
+    },
+    "timber_frame_daub": {
+      "base": "66b83909-1d49-4b14-a632-db1437f0f085",
+      "ground_window": "2d840917-6371-4cbd-ad75-001ff30b16b0",
+      "ground_door": "cebc2ea4-b0e2-4cce-a80e-7e543134bf7b",
+      "ground_left_corner": "f68310bf-0bdf-49c2-82a1-3d767c3fa2ca",
+      "_corner_rerolled_dark_edge": "f68310bf-0bdf-49c2-82a1-3d767c3fa2ca (2026-06-25: corner edge 83% black → mid-brown oak post, qa-edges ok)",
+      "gable": "4f7bd1a4-3248-4608-be84-e706d3082ac4",
+      "anim_door_group": "05c2e764-189f-43e7-98aa-d22a5fe7913b",
+      "anim_window_group": "bbf20cb2-6ea0-4b95-8051-38863516a715",
+      "_base_rerolled_windowgrid": true
+    },
+    "bark_slab": {
+      "base": "771564c3-c071-4681-9ff7-c6bfc102eaa2",
+      "ground_window": "7b18e9e7-ee6c-4c5a-8ae4-51f0e0f4ad78",
+      "ground_door": "9ba91f26-0979-43e4-b893-4be7766d2c62",
+      "ground_left_corner": "2bd0ffd6-9db5-41ae-b720-1906e013bd5f",
+      "gable": "568267ba-5d89-446d-ba14-49346fb8e8f2",
+      "anim_door_group": "d54a8ef6-12f4-46d3-bdac-b9cb03c4290f",
+      "anim_window_group": "84c77fd6-d1e6-44f5-bdf0-50fa3b7bf42e"
+    }
+  },
+  "roofs": {
+    "bark_shingle": {
+      "v000": "9844f8e9-afbb-430f-9193-731d952fef54",
+      "v001": "9844f8e9-afbb-430f-9193-731d952fef54",
+      "v002": "9844f8e9-afbb-430f-9193-731d952fef54",
+      "v003": "9844f8e9-afbb-430f-9193-731d952fef54",
+      "fascia": "",
+      "tileset": "9844f8e9-afbb-430f-9193-731d952fef54"
+    },
+    "wood_shake": {
+      "v000": "2b2cd5c6-71d5-4d32-8129-e0ffa83eda8f",
+      "v001": "2b2cd5c6-71d5-4d32-8129-e0ffa83eda8f",
+      "v002": "2b2cd5c6-71d5-4d32-8129-e0ffa83eda8f",
+      "v003": "2b2cd5c6-71d5-4d32-8129-e0ffa83eda8f",
+      "fascia": "",
+      "tileset": "2b2cd5c6-71d5-4d32-8129-e0ffa83eda8f"
+    },
+    "forest_thatch": {
+      "v000": "7f35291a-322a-4422-9308-a78ccc37af2a",
+      "v001": "7f35291a-322a-4422-9308-a78ccc37af2a",
+      "v002": "7f35291a-322a-4422-9308-a78ccc37af2a",
+      "v003": "7f35291a-322a-4422-9308-a78ccc37af2a",
+      "fascia": "",
+      "tileset": "7f35291a-322a-4422-9308-a78ccc37af2a"
+    },
+    "moss_sod": {
+      "v000": "bf9a6467-18ba-4301-916b-69cd00986043",
+      "v001": "bf9a6467-18ba-4301-916b-69cd00986043",
+      "v002": "bf9a6467-18ba-4301-916b-69cd00986043",
+      "v003": "bf9a6467-18ba-4301-916b-69cd00986043",
+      "fascia": "",
+      "tileset": "bf9a6467-18ba-4301-916b-69cd00986043"
+    }
+  }
+}

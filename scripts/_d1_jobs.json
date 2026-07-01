@@ -1,0 +1,13 @@
+{
+ "_note": "D1 sprite-chip generation jobs (the destructible/damage half). biome -> object -> {group, px}. group = create_1_direction_object review-pack id; download via `node scripts/d3-download.mjs scripts/_d1_jobs.json` → dressing/<biome>/<object>/base__vN.png. Grassland PILOT first; burst other biomes after it proves out. daub_fill_patch is procedural (no generation).",
+ "grassland": {
+  "d1_plank_gap": {
+   "group": "f08ec970-d365-439a-b74c-946b1a53891f",
+   "px": 64
+  },
+  "d1_board_patch": {
+   "group": "9f9c41c5-3016-4147-bb65-7fd79fdf8024",
+   "px": 64
+  }
+ }
+}

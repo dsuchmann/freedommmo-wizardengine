@@ -58,14 +58,14 @@
   "anims": {}
  },
  "fringed_shop_canopy": {
-  "base": "5cfb9e7e-bff3-4fef-a3bb-3becc6685ee9",
+  "base": "c1df4d4e-722a-421b-a8b4-cc0b36236140",
   "px": 128,
   "variants": 4,
   "states": {},
   "anims": {}
  },
  "cloth_market_awning": {
-  "base": "517fd3b6-808d-4484-944f-0ca1aae7b92b",
+  "base": "853162b9-bdad-4732-85c3-2b64d9436b96",
   "px": 128,
   "variants": 4,
   "states": {},

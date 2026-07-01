@@ -9,40 +9,34 @@ import { clearBorderLines } from './sprite-denoise.js';
 import { floorDiv } from '../world/chunk.js';
 import { SPRITE_FLOATS, ANIM_SPRITE_FLOATS } from './gl-compositor.js';
 import { getAtmosphere } from '../world/biome-atmosphere.js';
-import { isClaimedAt, f4Placements, f4SpriteUrl, f4AnimUrlBase, f5Placements, f5SpriteUrl, f5AnimUrlBase, f6Placements, f6SpriteUrl, f6AnimUrlBase } from '../world/decoration-claims.js';
-import { tuneSize, tuneBiomeDensity, tuneObjDensity, tuneAnimEnabled, tuneStateWeights, rollWeighted,
-  F2_STATE_ORDER, F2_STATE_DEFAULTS } from '../world/field-tuning.js';
+import { f4SpriteUrl } from '../world/decoration-claims.js';
 import { coalesceDirty, lowerBound } from './sprite-pool-util.js';
+import { upscaleUrl } from '../world/upscale-manifest.js';
+import { buildTileDescriptor } from '../world/flora-descriptor.js';
+import { decodeTileFlora } from '../world/flora-desc-codec.js';
 
-var ANIM_RADIUS = 40; // tiles around player — large enough to cover full screen at any zoom
+var ANIM_RADIUS = 100; // HARD CAP on the flora half-window (bounds cold-build cost at extreme zoom-out;
+                       // kept <= the chunk stream radius). The REAL radius is (visibleTiles + COVERAGE_MARGIN),
+                       // so coverage scales WITH zoom — zoom out → bigger radius loaded beyond the camera.
+                       // (Was 40, which capped coverage at ~48 tiles and let the flora edge show on screen
+                       // when zoomed out — the user-reported "I see it load in" bug. 2026-07-01.)
+var COVERAGE_MARGIN = 20; // GPU flora: build this many tiles BEYOND the visible edge so loading always
+                          // happens OFF-SCREEN and is never seen. Draw is free regardless of pool size, so the
+                          // only cost of a wider margin is a slightly larger amortized build (see adaptive budget).
 var REBUILD_MARGIN = 4; // hysteresis: the pool collects this many extra tiles past the
                         // viewport and only rebuilds once the player has moved this far.
                         // Turns the old per-tile (and per-zoom-step) 71ms rebuild storm
                         // into an occasional rebuild — walking/zooming no longer restitch
                         // the whole instance buffer every frame.
-var GPU_REBUILD_MARGIN = 6; // GPU flora: a SMALL bump over the CPU margin. With the CPU
-                            // resolve skipped, each rebuild is light, so keep the pool
-                            // small (less frame-loading + a sub-frame rebuild that won't
-                            // drop a frame) rather than big-and-rare.
+var GPU_REBUILD_MARGIN = 8; // GPU flora: collect this many tiles BEYOND the viewport so flora is built +
+                            // packed (the amortized build takes a few frames) BEFORE the area scrolls into
+                            // view = no flora pop-in as you walk/pan. The GPU draws the static buffer for
+                            // free regardless of pool size, so a wider margin costs only a slightly larger
+                            // (still amortized) rebuild — cheap insurance against pop-in. Was 6.
 var FADE_INNER = 34; // fully opaque inside this radius
 var FRAME_COUNT = 9;
 var FRAME_DURATION = 120; // ms per frame
 var CYCLE_DURATION = FRAME_COUNT * FRAME_DURATION; // ms per full cycle
-
-// Objects that should NEVER sway — rigid/mineral/crystal types
-var RIGID_OBJECTS = {
-  'ice_needle': true,
-  'crystal_sprout': true,
-  'hardy_lichen': true,
-  'rock_cress': true,
-  'alpine_tuft': true,
-  'low_berry_bush': true,
-  'bracket_fungus': true,
-  'dry_tuft': true,
-  'sparse_weed': true,
-  'cold_moss_tuft': true,
-  'ice_moss': true,
-};
 
 // biome/object combos that have lifecycle state sprites on disk
 // (states/{seedling,wilting,dead}/v000.png) — others use transform-only states
@@ -166,9 +160,63 @@ function samplePlayerPush(wx, wy, playerX, playerY, playerVX, playerVY) {
 }
 
 // Cache: url → Image (denoised)
+// Decoded F2/F4/F5/F6 sprite + anim frames keyed by URL. Plain Map — the working set is the CURRENT area's
+// ~20k sprites; any size/budget cap or trim-on-teleport just forces a catastrophic re-decode of all of them
+// (the permanent-<20fps regression). Per-biome growth is bounded in practice by the finite asset corpus.
 var frameCache = new Map();
 var loadingSet = new Set();
 var _denoiseCanvas = null;
+
+// ---- Off-thread denoise worker client (DEFAULT-ON; kill-switch: window._denoiseWorker = false) ----
+// Moves the synchronous main-thread denoiseImage() cost (5-15ms load spikes) into
+// a Web Worker. DEFAULT OFF — when the flag is falsy the classic new Image() +
+// denoiseImage path runs byte-identical. One lazily-created module worker; requests
+// are keyed by an incrementing id and resolved by url. Concurrency is bounded so a
+// preload burst doesn't flood the worker's message queue.
+var _dnWorker = null;
+var _dnSeq = 0;
+var _dnResolvers = new Map(); // id -> resolve fn
+var _dnQueue = [];            // {id, url} waiting for a concurrency slot
+var _dnInFlight = 0;
+var DN_MAX_CONCURRENT = 24;
+
+function _ensureDnWorker() {
+  if (_dnWorker) return _dnWorker;
+  _dnWorker = new Worker(new URL('./denoise-worker.js?v=dn1', import.meta.url), { type: 'module' });
+  _dnWorker.onmessage = function(ev) {
+    var d = ev.data;
+    var resolve = _dnResolvers.get(d.id);
+    if (resolve) {
+      _dnResolvers.delete(d.id);
+      resolve(d.ok ? { bitmap: d.bitmap, changed: d.changed } : null);
+    }
+    _dnInFlight--;
+    _dnPump();
+  };
+  _dnWorker.onerror = function() { /* individual jobs still time out via null; keep worker alive */ };
+  return _dnWorker;
+}
+
+function _dnPump() {
+  var w = _ensureDnWorker();
+  while (_dnInFlight < DN_MAX_CONCURRENT && _dnQueue.length > 0) {
+    var job = _dnQueue.shift();
+    _dnInFlight++;
+    w.postMessage(job);
+  }
+}
+
+// Denoise a sprite off-thread. Resolves with { bitmap, changed } on success (the
+// bitmap is ALWAYS usable — the cleaned one if changed, else the source), or null
+// on fetch/decode error (caller mirrors the classic onerror path).
+function denoiseViaWorker(url) {
+  return new Promise(function(resolve) {
+    var id = ++_dnSeq;
+    _dnResolvers.set(id, resolve);
+    _dnQueue.push({ id: id, url: url });
+    _dnPump();
+  });
+}
 
 // Key out a solid gray generation-background square (PixelLab artifact on many
 // anim frames/variants). Finds the dominant low-saturation gray color among
@@ -236,6 +284,7 @@ function denoiseImage(img, url) {
   var w = img.naturalWidth || img.width;
   var h = img.naturalHeight || img.height;
   if (w < 3 || h < 3) return img;
+  var _dn0 = performance.now(); // DIAG (window._f2diag.denoiseMs): main-thread decode/scan/re-encode cost
   if (!_denoiseCanvas) _denoiseCanvas = document.createElement('canvas');
   _denoiseCanvas.width = w;
   _denoiseCanvas.height = h;
@@ -303,11 +352,11 @@ function denoiseImage(img, url) {
       }
     }
   }
-  if (!changed) return img;
-  ctx.putImageData(imageData, 0, 0);
-  var cleaned = new Image();
-  cleaned.src = _denoiseCanvas.toDataURL();
-  return cleaned;
+  var _result;
+  if (!changed) _result = img;
+  else { ctx.putImageData(imageData, 0, 0); var cleaned = new Image(); cleaned.src = _denoiseCanvas.toDataURL(); _result = cleaned; }
+  if (typeof window !== 'undefined') { var _dd = window._f2diag || (window._f2diag = { builds: 0, denoiseMs: 0, denoiseN: 0 }); _dd.denoiseMs += performance.now() - _dn0; _dd.denoiseN++; } // DIAG
+  return _result;
 }
 
 // Temporal denoise: after all frames of an animation are loaded, compare each
@@ -373,6 +422,7 @@ function temporalDenoise(animKey) {
 }
 
 function loadFrame(url, frameCount) {
+  url = upscaleUrl(url); // F6 anim: load the @384 frame when one exists (else the 192 source unchanged)
   if (frameCache.has(url)) return frameCache.get(url);
   if (loadingSet.has(url)) return null;
   loadingSet.add(url);
@@ -387,6 +437,26 @@ function loadFrame(url, frameCount) {
       urls.push(animKey + 'frame_' + String(fi).padStart(3, '0') + '.png');
     }
     _temporalSets.set(animKey, { urls: urls, loaded: 0, total: fcnt });
+  }
+
+  // OPT-IN off-thread path: denoise in the worker, store the cleaned ImageBitmap
+  // (no main-thread decode/denoise/re-encode). Same frameCache + temporalDenoise
+  // bookkeeping as the default path. ImageBitmaps have no .src, so tag _dnKey for
+  // atlas keying (call sites already read `img.src || img._dnKey`).
+  if (typeof window !== 'undefined' && window._denoiseWorker !== false) {
+    denoiseViaWorker(url).then(function(res) {
+      if (!res || !res.bitmap) { frameCache.set(url, null); loadingSet.delete(url); return; }
+      var bitmap = res.bitmap;
+      bitmap._dnKey = url;
+      if (!animKey) bitmap._f2At = performance.now(); // late static/state arrival fades in
+      frameCache.set(url, bitmap);
+      loadingSet.delete(url);
+      if (animKey) {
+        var set = _temporalSets.get(animKey);
+        if (set) { set.loaded++; temporalDenoise(animKey); }
+      }
+    });
+    return null;
   }
 
   var img = new Image();
@@ -424,7 +494,7 @@ function loadFrame(url, frameCount) {
 // halving) keeps silhouettes readable. Keyed by native img + scale bucket.
 // Upscale / near-native stays nearest-neighbor (crisp pixel art).
 var DOWNSCALE_BUCKETS = [0.5, 0.33, 0.25];
-var _downCache = new Map(); // (img.src + '@' + bucket) -> canvas
+var _downCache = new Map(); // (img.src + '@' + bucket) -> canvas — plain Map (see frameCache note above)
 
 // Throttle NEW (cache-miss) downscales per frame. Walking ~4 tiles rebuilds the F2
 // pool and downscales a strip of ~200 new sprites at once (stepwise canvas halving) —
@@ -439,10 +509,11 @@ function scaledFrame(img, destPx, frameId) {
   var bucket = DOWNSCALE_BUCKETS[0];
   for (var i = 1; i < DOWNSCALE_BUCKETS.length; i++)
     if (ratio <= DOWNSCALE_BUCKETS[i]) bucket = DOWNSCALE_BUCKETS[i];
-  // All frames from loadFrame are Image elements with .src (either original or
-  // dataURL from denoiseImage/temporalDenoise) — no canvas returns, so img.src
-  // is always a non-empty string; no empty-key collision risk.
-  var key = img.src + '@' + bucket;
+  // Frames from loadFrame are Image elements with .src (original or dataURL from
+  // denoiseImage/temporalDenoise), OR — on the opt-in worker path — ImageBitmaps
+  // that have NO .src (we tag them _dnKey = url). Fall back to _dnKey so bitmaps
+  // key uniquely instead of all colliding on `undefined@bucket`.
+  var key = (img.src || img._dnKey) + '@' + bucket;
   var hit = _downCache.get(key);
   if (hit) return hit;
   // Cache miss = the expensive path. Throttle to DOWNSCALE_BUDGET per frame so a
@@ -499,6 +570,7 @@ export function preloadField2Animations(biomes) {
     if (!objects) continue;
     for (var oi = 0; oi < objects.length; oi++) {
       var wl = sfVariantsFor(biomes[b], objects[oi]);
+      if (Array.isArray(wl) && wl.length === 0) continue; // fully culled → skip entirely
       var animWl = sfAnimVariantsFor(biomes[b], objects[oi]); // null = full coverage
       var variantCount = wl ? wl.length : SF_VARIANT_COUNT;
       for (var v = 0; v < variantCount; v++) {
@@ -571,6 +643,43 @@ function pumpPreloadQueue() {
 function startPreload(item) {
   _activePreloads++;
   var url = item.url;
+  // OPT-IN off-thread path: mirror the default finish/onerror bookkeeping exactly
+  // (readiness counters, static-only retry, checkReady/pumpPreloadQueue), but get
+  // the cleaned sprite from the worker as an ImageBitmap instead of Image+denoiseImage.
+  if (typeof window !== 'undefined' && window._denoiseWorker !== false) {
+    denoiseViaWorker(url).then(function(res) {
+      if (res && res.bitmap) {
+        var bitmap = res.bitmap;
+        bitmap._dnKey = url;
+        if (item.isStatic) bitmap._f2At = performance.now(); // fade in late arrivals
+        frameCache.set(url, bitmap);
+        loadingSet.delete(url);
+        _activePreloads--;
+        _f2Loaded++;
+        if (item.isStatic) _f2StaticLoaded++;
+        checkReady();
+        pumpPreloadQueue();
+        return;
+      }
+      // Failure — same policy as img.onerror below.
+      _activePreloads--;
+      item.attempts++;
+      if (item.isStatic && item.attempts < MAX_PRELOAD_ATTEMPTS) {
+        setTimeout(function() {
+          (item.isStatic ? _staticQueue : _preloadQueue).push(item);
+          pumpPreloadQueue();
+        }, 500 * item.attempts);
+      } else {
+        frameCache.set(url, null);
+        loadingSet.delete(url);
+        _f2Loaded++;
+        if (item.isStatic) _f2StaticLoaded++;
+        checkReady();
+      }
+      pumpPreloadQueue();
+    });
+    return;
+  }
   var img = new Image();
   img.src = url;
   img.onload = function() {
@@ -591,7 +700,12 @@ function startPreload(item) {
   img.onerror = function() {
     _activePreloads--;
     item.attempts++;
-    if (item.attempts < MAX_PRELOAD_ATTEMPTS) {
+    // Only STATIC sprites retry (they gate readiness, and a failure there is usually transient browser
+    // resource-exhaustion under the 48-wide preload). ANIM frames are non-critical (the static still
+    // renders) and a 404 is PERMANENT — a variant with a static but no wind_sway anim. Retrying those 3x
+    // with delays is the rolling "flash-reload" storm as the player walks into new biomes; null-cache
+    // them immediately on first failure instead.
+    if (item.isStatic && item.attempts < MAX_PRELOAD_ATTEMPTS) {
       // Transient failure (browser resource exhaustion) — retry after a delay
       setTimeout(function() {
         (item.isStatic ? _staticQueue : _preloadQueue).push(item);
@@ -637,313 +751,6 @@ export function clearF2TileDescriptors() {
   clearF2Pool();
 }
 // Legacy _instArray/_shadowArray removed — the persistent pool uses its own mirrors.
-
-var _ctiStore = null, _ctiFn = null;
-function _claimTileInfo(chunkStore) {
-  if (_ctiStore === chunkStore && _ctiFn) return _ctiFn;
-  _ctiStore = chunkStore;
-  _ctiFn = function (wx, wy) {
-    var t = chunkStore.tileAt(wx, wy);
-    return t ? { biome: t.biome, transition: !!t.transitionPair } : null;
-  };
-  return _ctiFn;
-}
-
-function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
-  // Returns { desc, cacheable }; desc === null means nothing on this tile.
-  var cacheable = true;
-
-  // Skip tiles near any edge — biome transitions OR elevation changes
-  var myElev = tile.climate ? tile.climate.elevation : 0.5;
-  var isNearEdge = false;
-  for (var edy = -2; edy <= 2 && !isNearEdge; edy++) {
-    for (var edx = -2; edx <= 2 && !isNearEdge; edx++) {
-      if (edx === 0 && edy === 0) continue;
-      var nwx = wx + edx, nwy = wy + edy;
-      // chunkStore.tileAt() falls back to the OLD player chunk for a not-yet-ready destination
-      // chunk, returning a WRONG neighbour biome that reads as a false edge and gets cached as
-      // desc=null forever (flora never appears there after a teleport). Only trust a neighbour
-      // whose chunk is actually ready; if it isn't, skip it and mark the tile not-cacheable so
-      // it is re-evaluated once that chunk streams in.
-      if (!chunkStore.getIfReady(floorDiv(nwx, WORLD.chunkSize), floorDiv(nwy, WORLD.chunkSize))) { cacheable = false; continue; }
-      var nbTile = chunkStore.tileAt(nwx, nwy);
-      if (!nbTile) { cacheable = false; continue; }
-      if (nbTile.biome !== tile.biome) { isNearEdge = true; break; }
-      var nbElev = nbTile.climate ? nbTile.climate.elevation : 0.5;
-      if (Math.abs(Math.floor(myElev * 10) - Math.floor(nbElev * 10)) >= 1) { isNearEdge = true; break; }
-    }
-  }
-  if (isNearEdge) return { desc: null, cacheable: cacheable };
-
-  // ---- Field 4 medium flora (deterministic, claim-registered) ----
-  var f4Blades = [];
-  var f4pls = f4Placements(wx, wy, _claimTileInfo(chunkStore));
-  for (var fi = 0; fi < f4pls.length; fi++) {
-    var fp = f4pls[fi];
-    f4Blades.push({
-      bi: 90 + fi, // distinct trigger-key space from F2 blades
-      // Cached for sim override URL construction at draw time
-      _f4Name: fp.name, _f4Biome: fp.biome, _f4Variant: fp.variant,
-      stateUrl: fp.state ? f4SpriteUrl(fp) : null,
-      animUrlBase: (!fp.state && fp.hasAnim
-        && tuneAnimEnabled('f4', fp.biome, fp.name, 'wind_sway')) ? f4AnimUrlBase(fp) : null,
-      staticUrl: fp.state ? f4SpriteUrl(fp) : f4SpriteUrl({ name: fp.name, biome: fp.biome, variant: fp.variant, state: null }),
-      isRigid: false,
-      lifeScale: fp.sizeTiles,         // 64px -> 2 tiles, 80px -> 2.5 tiles
-      lifeSway: 0.35,                  // big plants sway less than grass
-      baseAngle: 0,
-      offUX: fp.ux - 0.5,
-      offUY: fp.uy - 0.5,
-      sortYOff: fp.uy + fp.sizeTiles * 0.30,  // sort by sprite base, not centre
-      ambientPeriod: 6000 + rand2(wx, wy, 9710) * 9000,
-      ambientPhase: rand2(wx, wy, 9711) * 9000,
-      startDelay: rand2(wx, wy, 9712) * 300,
-      loopCount: 4,
-      restFrame: Math.floor(rand2(wx, wy, 9713) * FRAME_COUNT)
-    });
-  }
-
-  // ---- Field 5 medium objects (static, y-sorted with F2/F4/player) ----
-  var f5pls = f5Placements(wx, wy, _claimTileInfo(chunkStore));
-  for (var gi = 0; gi < f5pls.length; gi++) {
-    var gp = f5pls[gi];
-    f4Blades.push({
-      bi: 80 + gi, // distinct trigger-key space from F2 (0-19) and F4 (90+)
-      stateUrl: null,
-      // No F5 anim frames exist on disk yet; the tuner gate is honored here
-      // so playback lights up when art lands + catalog regenerates.
-      animUrlBase: (gp.hasAnim && !gp.state
-        && tuneAnimEnabled('f5', gp.biome, gp.name, 'wind_sway'))
-        ? f5AnimUrlBase(gp)
-        : null,
-      staticUrl: f5SpriteUrl(gp),
-      isRigid: true,                       // objects never sway-rotate
-      lifeScale: gp.sizeTiles,             // 96px @ 1.0 -> 3 tiles
-      lifeSway: 0,
-      baseAngle: 0,
-      offUX: gp.ux - 0.5,
-      offUY: gp.uy - 0.5,
-      // Sort at the sprite's visual base: bottom edge (uy - 0.5 + sizeTiles*0.5)
-      // minus a FIXED 0.1-tile ground-contact inset. A proportional inset
-      // (0.1*sizeTiles) drifts the anchor up toward mid-sprite as objects grow —
-      // big sprites are exactly where base-accurate sorting matters most.
-      // At sizeTiles=3 this equals the old 0.30 formula (no resort churn);
-      // at 6 tiles it sits at the trunk base instead of 0.7 tiles above it.
-      sortYOff: gp.uy + gp.sizeTiles * 0.5 - 0.6,
-      ambientPeriod: 0,
-      ambientPhase: 0,
-      startDelay: 0,
-      loopCount: 0,
-      restFrame: 0
-    });
-  }
-
-  // ---- Field 6 large flora (trees; y-sorted with F2/F4/F5/player) ----
-  var f6pls = f6Placements(wx, wy, _claimTileInfo(chunkStore));
-  for (var hi = 0; hi < f6pls.length; hi++) {
-    var hp = f6pls[hi];
-    f4Blades.push({
-      bi: 60 + hi, // distinct trigger-key space (F2 0-19, F5 80+, F4 90+)
-      stateUrl: null,
-      animUrlBase: (hp.hasAnim && !hp.state
-        && tuneAnimEnabled('f6', hp.biome, hp.name, 'wind_sway'))
-        ? f6AnimUrlBase(hp) : null,
-      staticUrl: f6SpriteUrl(hp),
-      isRigid: true,                        // trunk never sway-rotates; wind lives in the frames
-      frameCount: 8,                        // W2 tree anims are 8 frames (F2/F4/F5 use the 9-frame default)
-      lifeScale: hp.sizeTiles,              // 192px @ 1.0 -> 6 tiles
-      lifeSway: 0,
-      baseAngle: 0,
-      offUX: hp.ux - 0.5,
-      offUY: hp.uy - 0.5,
-      // Sort at the visual base: bottom edge minus a FIXED 0.1-tile ground-
-      // contact inset (same formula as F5). The old 0.30 proportional form
-      // drifted the anchor ~0.7 tiles above the trunk base at 6 tiles —
-      // nearby F5 logs drew in front of trees they stood behind.
-      sortYOff: hp.uy + hp.sizeTiles * 0.5 - 0.6,
-      // Same ambient/trigger treatment as F4 wind-sway blades (fresh salts):
-      // trees sway in periodic gusts and settle back to restFrame.
-      ambientPeriod: 6000 + rand2(wx, wy, 9837) * 9000,
-      ambientPhase: rand2(wx, wy, 9838) * 9000,
-      startDelay: rand2(wx, wy, 9839) * 300,
-      loopCount: 4,
-      restFrame: Math.floor(rand2(wx, wy, 9838) * 8) // 8-frame anims
-    });
-  }
-
-  // Density driven by biome + tile fertility/vegetation
-  var vegDensity = tile.layers && tile.layers[6] ? tile.layers[6].vegetationDensity : 0.5;
-  var fertility = tile.layers && tile.layers[6] ? tile.layers[6].fertility : 0.5;
-  var bladeCountOverride = -1;
-  if (vegDensity < 0.08 && fertility < 0.10) {
-    if (!f4Blades.length) return { desc: null, cacheable: cacheable };
-    bladeCountOverride = 0;
-  }
-
-  var biome = tile.biome;
-  var baseDensity = 4;
-  var tileChance = 1.0;
-  if (biome === 'grassland') baseDensity = 7;
-  else if (biome === 'forest' || biome === 'tropical_forest') baseDensity = 6;
-  else if (biome === 'dense_forest') baseDensity = 8;
-  else if (biome === 'savanna' || biome === 'steppe') baseDensity = 5;
-  else if (biome === 'swamp') baseDensity = 5;
-  else if (biome === 'taiga') baseDensity = 7;
-  else if (biome === 'volcanic') { baseDensity = 1; tileChance = 0.20; }
-  else if (biome === 'mountains') { baseDensity = 1; tileChance = 0.10; }
-  else if (biome === 'arctic') { baseDensity = 1; tileChance = 0.075; }
-  else if (biome === 'tundra') { baseDensity = 1; tileChance = 0.30; }
-  else if (biome === 'desert') { baseDensity = 1; tileChance = 0.35; }
-  else if (biome === 'beach') { baseDensity = 1; tileChance = 0.175; }
-
-  // F2 biome density tuning: sparse biomes (tileChance<1) scale the tile
-  // chance; dense biomes scale the blade count. Default 1.0 = no change.
-  var f2bd = tuneBiomeDensity('f2', biome);
-  if (f2bd !== 1) {
-    if (tileChance < 1.0) tileChance = Math.min(1, tileChance * f2bd);
-    else baseDensity = Math.max(0, Math.round(baseDensity * f2bd));
-  }
-
-  if (tileChance < 1.0 && rand2(wx, wy, 6999) > tileChance) {
-    if (!f4Blades.length) return { desc: null, cacheable: cacheable };
-    bladeCountOverride = 0;
-  }
-
-  var bladeCount = bladeCountOverride === 0 ? 0 : baseDensity + Math.floor(fertility * 3);
-  var blades = [];
-
-  for (var bi = 0; bi < bladeCount; bi++) {
-    var isAccent = bi >= baseDensity;
-    if (isAccent) {
-      var accentCoverage = 0.30 + fertility * 0.40;
-      if (rand2(wx, wy, 7000 + bi) > accentCoverage) continue;
-    }
-
-    var speciesRoll = rand2(wx, wy, 7010 + bi * 100);
-    var oi;
-    if (objects.length === 1) {
-      oi = 0;
-    } else if (!isAccent) {
-      oi = speciesRoll < 0.95 ? 0 : (objects.length > 2 && speciesRoll > 0.98 ? 2 : 1);
-    } else {
-      if (objects.length === 2) oi = speciesRoll < 0.40 ? 0 : 1;
-      else { if (speciesRoll < 0.25) oi = 0; else if (speciesRoll < 0.65) oi = 1; else oi = 2; }
-    }
-    var objName = objects[oi];
-    if (objName === 'cold_moss_tuft' && rand2(wx, wy, 7036 + bi) > 0.15) {
-      oi = 0;
-      objName = objects[0];
-    }
-
-    // Object-level density: <1 culls this blade (NEW salt 7400+bi)
-    var f2od = tuneObjDensity('f2', biome, objName);
-    if (f2od < 1 && rand2(wx, wy, 7400 + bi) > f2od) continue;
-
-    var variantWl = sfVariantsFor(biome, objName);
-    var variantIdx = variantWl
-      ? variantWl[pickIndex(rand2(wx, wy, 7035 + bi), variantWl.length)]
-      : pickIndex(rand2(wx, wy, 7035 + bi), SF_VARIANT_COUNT);
-    var vStr = variantIdx < 10 ? '00' + variantIdx : (variantIdx < 100 ? '0' + variantIdx : '' + variantIdx);
-
-    // Lifecycle via the tunable state-weight resolver. Defaults reproduce the
-    // historical 15/55/20/10 split exactly (same salt, same thresholds).
-    var lifecycleState = rollWeighted(
-      tuneStateWeights('f2', biome, objName, F2_STATE_DEFAULTS),
-      F2_STATE_ORDER, rand2(wx, wy, 7100 + bi));
-
-    var lifeScale = 1.0;
-    var lifeAngle = 0;
-    var lifeSway = 1.0;
-    if (lifecycleState === 'seedling') {
-      lifeScale = 0.45 + rand2(wx, wy, 7101 + bi) * 0.15;
-      lifeSway = 0.3;
-    } else if (lifecycleState === 'wilting') {
-      lifeScale = 0.85 + rand2(wx, wy, 7102 + bi) * 0.1;
-      lifeAngle = (0.2 + rand2(wx, wy, 7103 + bi) * 0.3) * (rand2(wx, wy, 7104 + bi) > 0.5 ? 1 : -1);
-      lifeSway = 0.5;
-    } else if (lifecycleState === 'dead') {
-      lifeScale = 0.6 + rand2(wx, wy, 7106 + bi) * 0.2;
-      lifeAngle = (0.4 + rand2(wx, wy, 7107 + bi) * 0.4) * (rand2(wx, wy, 7108 + bi) > 0.5 ? 1 : -1);
-      lifeSway = 0;
-    }
-
-    // Size tuning folds into lifecycle scale (NEW salts 7600+bi*4..+2)
-    lifeScale *= tuneSize('f2', biome, objName, variantIdx, wx, wy, 7600 + bi * 4);
-
-    // Ambient self-trigger (~7% of sprites animate on their own)
-    var ambient = rand2(wx, wy, 7080 + bi) < 0.07;
-    var ambientPeriod = 0;
-    var ambientPhase = 0;
-    if (ambient) {
-      ambientPeriod = 4000 + rand2(wx, wy, 7081 + bi) * 8000;
-      ambientPhase = rand2(wx, wy, 7082 + bi) * ambientPeriod;
-    }
-
-    var loopRoll = rand2(wx, wy, 7090 + bi);
-    var loopCount = loopRoll < 0.05 ? 8 : loopRoll < 0.10 ? 7 : loopRoll < 0.40 ? 6 : loopRoll < 0.70 ? 5 : 4;
-
-    // NOTE on rigidity: per long-standing (accidental but desired) behavior,
-    // rigid objects DO play their wind_sway frames when available — rigidity
-    // only zeroes the sway *rotation*, never the frame animation.
-    var animWl = sfAnimVariantsFor(biome, objName);
-    var animAvail = (!animWl || animWl.indexOf(variantIdx) !== -1)
-      && tuneAnimEnabled('f2', biome, objName, 'wind_sway');
-
-    var offUX = (rand2(wx, wy, 7030 + bi) - 0.5) * 1.1;
-    var offUY = (rand2(wx, wy, 7031 + bi) - 0.5) * 1.1;
-
-    // F3+ claim test: blade root in world art px (root sits ~0.35 tile
-    // below sprite center). Claimed cell -> the blade never existed.
-    var rootPx = (wx + 0.5 + offUX) * 32;
-    var rootPy = (wy + 0.5 + offUY) * 32 + 0.35 * 32;
-    if (isClaimedAt(rootPx, rootPy, _claimTileInfo(chunkStore))) continue;
-
-    blades.push({
-      bi: bi,
-      stateUrl: lifecycleState !== 'normal' && STATE_SPRITES[biome + '/' + objName]
-        ? SF_BASE_PATH + biome + '/' + objName + '/states/' + lifecycleState + '/v000.png'
-        : null,
-      animUrlBase: animAvail ? SF_BASE_PATH + biome + '/' + objName + '/anim/wind_sway/v' + vStr + '/' : null,
-      staticUrl: SF_BASE_PATH + biome + '/' + objName + '/sf__' + biome + '__' + objName + '__v' + vStr + '.png',
-      isRigid: RIGID_OBJECTS[objName] || false,
-      lifeScale: lifeScale,
-      lifeSway: lifeSway,
-      baseAngle: (rand2(wx, wy, 7040 + bi) - 0.5) * 0.35 + lifeAngle,
-      offUX: offUX,
-      offUY: offUY,
-      sortYOff: 0.5 + (rand2(wx, wy, 7031 + bi) - 0.5) * 0.5,
-      ambientPeriod: ambientPeriod,
-      ambientPhase: ambientPhase,
-      startDelay: rand2(wx, wy, 7095 + bi) * 300,
-      loopCount: loopCount,
-      restFrame: Math.floor(rand2(wx, wy, 7096 + bi) * FRAME_COUNT)
-    });
-  }
-
-  // Rare static decor objects (e.g., tundra fish piles, snow sculptures).
-  // Same claim-cull as regular blades: decor inside an F3/F4/F5 footprint
-  // never existed (root = tile center + offset, drawn 1 tile @ sortY +0.5).
-  var extra = null;
-  var extraObjs = SF_EXTRA_OBJECTS[biome];
-  if (extraObjs && rand2(wx, wy, 7300) < 0.012) {
-    var exOffUX = (rand2(wx, wy, 7302) - 0.5) * 0.6;
-    var exOffUY = (rand2(wx, wy, 7303) - 0.5) * 0.6;
-    var exRootPx = (wx + 0.5 + exOffUX) * 32;
-    var exRootPy = (wy + 0.5 + exOffUY) * 32 + 0.35 * 32;
-    if (!isClaimedAt(exRootPx, exRootPy, _claimTileInfo(chunkStore))) {
-      extra = {
-        url: extraObjs[pickIndex(rand2(wx, wy, 7301), extraObjs.length)],
-        offUX: exOffUX,
-        offUY: exOffUY
-      };
-    }
-  }
-
-  for (var fbi = 0; fbi < f4Blades.length; fbi++) blades.push(f4Blades[fbi]);
-
-  if (blades.length === 0 && !extra) return { desc: null, cacheable: cacheable };
-  return { desc: { blades: blades, extra: extra }, cacheable: cacheable };
-}
 
 // 400ms fade-in for late-arriving images — kills pop-in. Mutates img._f2At
 // to 0 once fully faded so the check short-circuits afterwards.
@@ -994,16 +801,21 @@ export function clearF2Pool() {
 
 // === GPU-driven flora (Phase 2): static-instance buffer build ===
 // When on, the rebuild packs each sprite's animation frames as an atlas STRIP and
-// writes a static 20-float instance; the GPU shader animates it from uTime. Toggled
-// live via window._gpuFlora so it can be A/B'd against the CPU path.
-// On = window._gpuFlora === true (session) OR localStorage 'gpuFlora'='1' (persists
-// across reloads, so the flag isn't lost on refresh). window._gpuFlora === false
-// force-disables either way.
+// writes a static 20-float instance; the GPU shader animates it from uTime — so the
+// per-frame CPU cost is ZERO and the only work (the rebuild) is AMORTIZED across frames.
+// This is the production path; the CPU path below is "Legacy" and runs _poolRebuild
+// SYNCHRONOUSLY (~25ms) on every margin crossing + a per-frame per-sprite loop = the
+// walking stutter. DEFAULT ON (2026-06-29) — every call site also requires glc.animOk,
+// so a context without WebGL2 instancing falls back to the CPU path automatically.
+// Escape hatch: window._gpuFlora === false (session) OR localStorage 'gpuFlora'='0'
+// force the legacy CPU path. window._gpuFlora === true forces GPU even if animOk is
+// flaky. Anything else (the default) = GPU on.
 function gpuFloraOn() {
   if (typeof window === 'undefined') return false;
   if (window._gpuFlora === true) return true;
   if (window._gpuFlora === false) return false;
-  try { return window.localStorage && localStorage.getItem('gpuFlora') === '1'; } catch (e) { return false; }
+  try { if (window.localStorage && localStorage.getItem('gpuFlora') === '0') return false; } catch (e) {}
+  return true; // DEFAULT ON — the amortized, zero-per-frame-cost path
 }
 
 // Resolve a sprite's frame strip (cached per url-set + size). Returns
@@ -1012,6 +824,15 @@ var _stripCache = new Map();
 var _stripAtlasGen = -1; // atlas reset relocates strips -> drop the cache + re-pack
 function clearStripCache() { _stripCache.clear(); }
 function _resolveStrip(bl, simState, drawSizePx, glc, extraUrl) {
+  // Quantize the atlas resolution into coarse buckets. drawSizePx only sets the
+  // TEXEL resolution of the packed frames — the DISPLAY size comes from sizeTiles +
+  // camera zoom per-instance, never from this. But per-instance size jitter made
+  // Math.round(drawSizePx) nearly unique, so the SAME species packed a separate full
+  // frame-strip for every plant → the atlas filled with thousands of near-duplicate
+  // strips and thrashed (reset → atlasGen++ → repack → refill, every frame = the
+  // walking flash-reload). Snapping to 32px buckets collapses those duplicates into a
+  // handful of shared strips with no visible change.
+  drawSizePx = Math.max(32, Math.round(drawSizePx / 32) * 32);
   var urls = null;
   if (!bl) { if (extraUrl) urls = [extraUrl]; else return null; } // extra decor: 1-frame static
   if (bl && simState && simState !== 'REMOVED') {
@@ -1066,7 +887,7 @@ function _patchGpuAnim(glc) {
     // TIME-BUDGETED: packing a strip is texSubImage2D x frameCount. When a big batch of
     // frames finishes loading at once, packing them ALL in one tick froze the frame for
     // ~1s. Cap the work per tick; deferred strips retry next tick so the fill spreads.
-    var still = [], pend = _pool.animPending, deadline = performance.now() + 4, p = 0;
+    var still = [], pend = _pool.animPending, deadline = performance.now() + 2, p = 0;
     for (; p < pend.length; p++) {
       if (performance.now() >= deadline) break;
       var pi = pend[p], pm = _pool.meta[pi];
@@ -1145,7 +966,7 @@ function _poolRebuild(chunkStore, player, glc, radiusX, radiusY) {
         var built = buildTileDescriptor(chunkStore, tile, objects, wx, wy);
         desc = built.desc;
         if (built.cacheable) {
-          if (_tileDescCache.size >= MAX_TILE_DESC_CACHE) _tileDescCache.clear();
+          if (_tileDescCache.size >= MAX_TILE_DESC_CACHE) _tileDescCache.delete(_tileDescCache.keys().next().value);
           _tileDescCache.set(tkey, desc);
         }
       }
@@ -1186,7 +1007,13 @@ function _poolRebuild(chunkStore, player, glc, radiusX, radiusY) {
   entries.sort(function (a, b) { return a.sortY - b.sortY; });
 
   var n = entries.length;
-  if (!_pool.mirror || _pool.mirror.length < (n + 1) * SPRITE_FLOATS) {
+  // Reallocate the CPU buffers when the mirror is missing/too-small OR when ANY sibling buffer is absent.
+  // The GPU flora path populates _pool.mirror but NOT these CPU-only buffers (sortY/shadowOf/shadowMirror/
+  // lastRot…), so toggling to the CPU path (window._gpuFlora=false) would otherwise skip this block (mirror
+  // already big enough) and crash writing into a null shadowMirror/sortY. Forcing the full realloc when any
+  // is null rebuilds them all consistently.
+  if (!_pool.mirror || _pool.mirror.length < (n + 1) * SPRITE_FLOATS ||
+      !_pool.shadowMirror || !_pool.sortY || !_pool.shadowOf) {
     _pool.mirror = new Float32Array(Math.max(4096, (n + 1) * SPRITE_FLOATS * 2));
     _pool.sortY = new Float32Array(Math.max(512, n * 2));
     _pool.shadowOf = new Int32Array(Math.max(512, n * 2));
@@ -1199,12 +1026,30 @@ function _poolRebuild(chunkStore, player, glc, radiusX, radiusY) {
     _pool.lastU0 = new Float32Array(cap);
     _pool.lastV0 = new Float32Array(cap);
   }
+  // The dirty-gate caches above are allocated ONLY when the mirror is (re)allocated. The GPU flora path sets
+  // up _pool.mirror without ever touching these CPU-only caches, so toggling to the CPU path (window._gpuFlora
+  // =false) finds them null → "Cannot set properties of null" at the per-instance seed below. Ensure they
+  // exist + match the mirror's instance capacity before the CPU write loop runs.
+  var _lcap = (_pool.mirror.length / SPRITE_FLOATS) | 0;
+  if (!_pool.lastRot || _pool.lastRot.length < _lcap) {
+    _pool.lastRot = new Float32Array(_lcap);
+    _pool.lastAlpha = new Float32Array(_lcap);
+    _pool.lastU0 = new Float32Array(_lcap);
+    _pool.lastV0 = new Float32Array(_lcap);
+  }
   var gpuFlora = gpuFloraOn();
   // When the GPU will actually draw, skip the CPU resolve/atlas-pack entirely — it's
   // pure waste (the GPU draws the strips) and packing both CPU frames AND strips
   // overflows the atlas (thrash). Keeps worldX/Y in the mirror for the player split.
   var gpuSkip = gpuFlora && glc.animOk;
   if (gpuFlora) {
+    // PROACTIVE COMPACTION: the atlas never evicts individual sprites, so walking leaves a
+    // trail of off-screen strips that eventually fills it and forces an overflow reset MID-DRAW
+    // — which repacks over many ticks and looks like everything reloading. If the atlas is
+    // getting full, reset it HERE, before this rebuild re-packs: the now-visible (already-loaded)
+    // strips repack inline in this single pass, the trail is dropped, and nothing reloads on
+    // screen. 0.65 leaves headroom so the fresh visible set fits without immediately refilling.
+    if (glc.resetAtlas && glc.atlasFillRatio && glc.atlasFillRatio() > 0.65) glc.resetAtlas();
     if (glc.atlasGen !== _stripAtlasGen) { clearStripCache(); _stripAtlasGen = glc.atlasGen; }
     if (!_pool.animMirror || _pool.animMirror.length < (n + 1) * ANIM_SPRITE_FLOATS)
       _pool.animMirror = new Float32Array(Math.max(4096, (n + 1) * ANIM_SPRITE_FLOATS * 2));
@@ -1468,7 +1313,12 @@ function _poolTick(timeMs, timeSec, glc, tilePxSnapped) {
 // the CURRENT static buffer every frame for free, build the NEXT pool incrementally
 // across frames into staging buffers, then swap — no single frame ever freezes.
 var _gb = null;          // active build state (null = idle)
-var AMORT_BUDGET_MS = 8; // build work per frame; leaves headroom in a 16ms frame for the draw
+// Build work per frame while new chunks stream in. The build is double-buffered (the GPU keeps
+// drawing the committed pool), so a SMALLER budget never blanks flora — it just fills in over a
+// few more frames. 8ms blew the 144fps frame budget (6.9ms) all by itself = the walk-into-chunks
+// stutter/skip; 3ms keeps the build + draw inside a 144fps frame and stays comfortable at 60fps.
+var AMORT_BUDGET_MS = 3; // FLOOR for the amortized flora build budget per frame (see _amortBudget below).
+var _lastPoolWall = 0;   // wall-clock ms of the previous _poolFrame, for adaptive-budget frame-time sensing.
 
 function _startAmortBuild(chunkStore, player, glc, radiusX, radiusY) {
   var px = Math.floor(player.x), py = Math.floor(player.y);
@@ -1478,6 +1328,8 @@ function _startAmortBuild(chunkStore, player, glc, radiusX, radiusY) {
     maxR: maxR, fadeStart: maxR - 6, centerX: px, centerY: py,
     phase: 'collect', wy: py - radiusY, wx: px - radiusX, entries: [], tiles: [],
     n: 0, idx: 0, shCount: 0,
+    _cMs: 0, _wMs: 0, _desc: 0, _t0all: performance.now(), // DIAG (window._f2diag): CPU-vs-IO split
+
     animMirror: null, animShadowMirror: null, mirror: null, meta: [], sortY: null, shadowOf: null, animPending: [],
   };
 }
@@ -1485,6 +1337,25 @@ function _startAmortBuild(chunkStore, player, glc, radiusX, radiusY) {
 // One TILE of the collection scan (mirror of _poolRebuild's inner body). Per-tile so
 // the build can yield mid-row — buildTileDescriptor for an uncached tile is ~0.5ms and
 // a full row of new tiles would otherwise overshoot the frame budget.
+// PARITY PROBE (dev, window._floraDescParity): prove the worker-shipped descriptor is byte-
+// identical to a FRESH main-thread build. Only compares when all 8 Moore-ring neighbor chunks
+// are ready, so the main build is fully resolved (not a frontier-provisional value that will
+// converge later) — otherwise it skips. Counts matches in window._floraDescParityOK.n and logs
+// mismatches into window._floraDescMismatch (n + up to 8 samples). Zero cost when the flag is off.
+function _floraDescParityCheck(chunkStore, tile, objects, wx, wy, cx, cy, workerDesc) {
+  for (var dy = -1; dy <= 1; dy++)
+    for (var dx = -1; dx <= 1; dx++)
+      if (!chunkStore.getIfReady(cx + dx, cy + dy)) return; // frontier — can't compare converged yet
+  var main = buildTileDescriptor(chunkStore, tile, objects, wx, wy).desc;
+  var a = JSON.stringify(main == null ? null : main);
+  var b = JSON.stringify(workerDesc == null ? null : workerDesc);
+  if (a === b) { (window._floraDescParityOK || (window._floraDescParityOK = { n: 0 })).n++; return; }
+  var m = window._floraDescMismatch || (window._floraDescMismatch = { n: 0, samples: [] });
+  m.n++;
+  if (m.samples.length < 8) m.samples.push({ at: wx + ',' + wy, main: a && a.slice(0, 400), worker: b && b.slice(0, 400) });
+  if (m.n <= 20 || m.n % 200 === 0) console.log('[floraParity] MISMATCH #' + m.n + ' @' + wx + ',' + wy + ' (ok=' + ((window._floraDescParityOK && window._floraDescParityOK.n) || 0) + ')');
+}
+
 function _collectTileGpu(g, wx, wy) {
   var px = g.px, py = g.py, maxR = g.maxR, fadeStart = g.fadeStart, chunkStore = g.chunkStore;
   var cx = floorDiv(wx, WORLD.chunkSize), cy = floorDiv(wy, WORLD.chunkSize);
@@ -1499,10 +1370,21 @@ function _collectTileGpu(g, wx, wy) {
   if (tile.transitionPair) return;
   var tkey = wx + ',' + wy, desc;
   if (_tileDescCache.has(tkey)) desc = _tileDescCache.get(tkey);
-  else {
+  else if (typeof window !== 'undefined' && window._workerFloraDesc && chunk.floraBytes) {
+    // OFF-THREAD path: the chunk worker already computed this tile's descriptor (byte-identical
+    // placement, fully resolved against compiled neighbors) and shipped it in a transferred buffer.
+    // Decode it (cheap: ~one JSON.parse of a few-KB string) instead of running the ~0.25ms/tile
+    // main-thread build — that build IS the walk-stutter "collect". Cache the decode so subsequent
+    // rebuilds are a Map lookup. Worker descs are always fully-resolved → always cacheable.
+    desc = decodeTileFlora(chunk.floraBytes, chunk.floraOffsets, ty * WORLD.chunkSize + tx);
+    if (window._floraDescParity) _floraDescParityCheck(chunkStore, tile, objects, wx, wy, cx, cy, desc);
+    if (_tileDescCache.size >= MAX_TILE_DESC_CACHE) _tileDescCache.delete(_tileDescCache.keys().next().value);
+    _tileDescCache.set(tkey, desc);
+  } else {
     var built = buildTileDescriptor(chunkStore, tile, objects, wx, wy);
     desc = built.desc;
-    if (built.cacheable) { if (_tileDescCache.size >= MAX_TILE_DESC_CACHE) _tileDescCache.clear(); _tileDescCache.set(tkey, desc); }
+    g._desc++; // DIAG: count cold buildTileDescriptor calls (the O(R^4) claim-scan CPU cost)
+    if (built.cacheable) { if (_tileDescCache.size >= MAX_TILE_DESC_CACHE) _tileDescCache.delete(_tileDescCache.keys().next().value); _tileDescCache.set(tkey, desc); }
   }
   if (!desc) return;
   var dist = Math.max(Math.abs(wx - px), Math.abs(wy - py));
@@ -1550,6 +1432,7 @@ function _amortStep(deadline) {
   var g = _gb; if (!g) return;
   var _t0 = performance.now();
   if (g.phase === 'collect') {
+    var _pc0 = performance.now(); // DIAG
     var stop = false;
     while (g.wy <= g.py + g.radiusY && !stop) {
       while (g.wx <= g.px + g.radiusX) {
@@ -1569,10 +1452,13 @@ function _amortStep(deadline) {
       g.shadowOf = new Int32Array(Math.max(512, g.n));
       g.phase = 'write';
     }
+    g._cMs += performance.now() - _pc0; // DIAG
   }
   if (g.phase === 'write') {
+    var _pw0 = performance.now(); // DIAG
     while (g.idx < g.n) { _writeSpriteGpu(g, g.idx); g.idx++; if (performance.now() >= deadline) break; }
     if (g.idx >= g.n) g.phase = 'commit';
+    g._wMs += performance.now() - _pw0; // DIAG
   }
   if (g.phase === 'commit') {
     var glc = g.glc;
@@ -1585,7 +1471,22 @@ function _amortStep(deadline) {
       _pool.animN = g.n; _pool.animShadowN = g.shCount; _pool.n = g.n; _pool.shadowN = g.shCount;
       _pool.animPending = g.animPending; _pool.animUploaded = true;
       _f2Stats.rebuilds++; _f2Stats.lastRebuildMs = 0;
-      if (typeof window !== 'undefined') window._f2PoolN = g.n;
+      if (typeof window !== 'undefined') {
+        window._f2PoolN = g.n;
+        // DIAG (window._f2diag): resolve CPU-vs-IO for the F2-F6 pop-in. collectMs = main-thread
+        // buildTileDescriptor/claim-scan CPU; writeMs = strip resolve/pack CPU; descBuilds = cold
+        // tiles this build; animPending = sprites built but frames still LOADING (the I/O tail);
+        // denoiseMs/N accumulate from denoiseImage (main-thread decode). wallMs = build start->commit.
+        var _d = window._f2diag || (window._f2diag = { builds: 0, denoiseMs: 0, denoiseN: 0 });
+        _d.builds++;
+        _d.lastCollectMs = Math.round(g._cMs); _d.lastWriteMs = Math.round(g._wMs);
+        _d.lastDescBuilds = g._desc; _d.lastN = g.n; _d.lastAnimPending = g.animPending.length;
+        _d.lastWallMs = Math.round(performance.now() - g._t0all);
+        if (g._desc > 200 || g._cMs + g._wMs > 50) {
+          console.log('[f2diag] collect=' + _d.lastCollectMs + 'ms write=' + _d.lastWriteMs + 'ms descBuilds=' + g._desc +
+            ' n=' + g.n + ' animPending=' + g.animPending.length + ' wall=' + _d.lastWallMs + 'ms denoise=' + Math.round(_d.denoiseMs) + 'ms/' + _d.denoiseN);
+        }
+      }
     }
     _gb = null;
   }
@@ -1629,6 +1530,18 @@ function _drawGpuFlora(player, w, h, chunkGrid, timeMs, sun, glc, tilePxSnapped)
 }
 
 function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, weather, sun, glc) {
+  // ADAPTIVE BUILD BUDGET: spend a fraction of the ACTUAL frame time on the amortized flora build,
+  // instead of a flat 3ms. At 144fps (~6.9ms frame) this stays ~2.8ms (frame-safe, ~unchanged); at
+  // 60fps (~16.6ms frame) it rises to ~7ms, using the idle headroom so the leading edge keeps up with
+  // walking. It never exceeds ~45% of the real frame, so it cannot blow the frame budget — this is what
+  // lets the (now zoom-scaled, wider) radius fill BEFORE the player reaches it. window._floraBudgetFrac
+  // (default 0.45) + window._floraBudgetCap (default 9ms) tune it live.
+  var _wallNow = performance.now();
+  var _frameDt = _lastPoolWall ? (_wallNow - _lastPoolWall) : 16;
+  _lastPoolWall = _wallNow;
+  var _bf = (typeof window !== 'undefined' && window._floraBudgetFrac) || 0.30;
+  var _bc = (typeof window !== 'undefined' && window._floraBudgetCap) || 6;
+  var _amortBudget = Math.max(AMORT_BUDGET_MS, Math.min(_bc, _frameDt * _bf));
   var tilePxSnapped = chunkGrid.chunkPx / WORLD.chunkSize;
   var visibleTilesX = Math.ceil(w / tilePxSnapped / 2) + 2;
   var visibleTilesY = Math.ceil(h / tilePxSnapped / 2) + 2;
@@ -1640,9 +1553,15 @@ function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, we
   // wider margin and rebuild far less often — the rebuild (every REBUILD_MARGIN
   // tiles) is the only remaining hitch. CPU path keeps the tight margin (its
   // per-frame loop scales with pool size).
-  var rebuildMargin = (gpuFloraOn() && glc && glc.animOk) ? GPU_REBUILD_MARGIN : REBUILD_MARGIN;
-  var needRX = Math.min(ANIM_RADIUS, visibleTilesX) + rebuildMargin;
-  var needRY = Math.min(ANIM_RADIUS, visibleTilesY) + rebuildMargin;
+  var _isGpuFlora = gpuFloraOn() && glc && glc.animOk;
+  var rebuildMargin = _isGpuFlora ? GPU_REBUILD_MARGIN : REBUILD_MARGIN;
+  // Radius = visibleTiles + coverage, so it SCALES WITH ZOOM (zoom out → wider load radius). GPU path
+  // uses the big off-screen COVERAGE_MARGIN (draw is free); the legacy CPU path keeps a tight margin +
+  // low cap because its per-frame cost scales with pool size.
+  var _cov = _isGpuFlora ? COVERAGE_MARGIN : rebuildMargin;
+  var _cap = _isGpuFlora ? ANIM_RADIUS : 40;
+  var needRX = Math.min(_cap, visibleTilesX + _cov);
+  var needRY = Math.min(_cap, visibleTilesY + _cov);
   var px = Math.floor(player.x);
   var py = Math.floor(player.y);
   var timeSec = timeMs * 0.001;
@@ -1668,13 +1587,30 @@ function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, we
   // AMORTIZED across frames (build the next pool into staging buffers while the GPU
   // keeps drawing the current one, then swap) so no single frame freezes.
   if (gpuFloraOn() && glc.animOk) {
-    if ((!_pool.animUploaded || moved || grew || newChunks) && !_gb) {
+    // ATLAS RESETS must be invisible. The sprite atlas is shared between the committed
+    // (currently-drawn) pool and any in-flight build, and it never evicts individual sprites —
+    // so walking accumulates a trail until it overflows and resets, which relocates every sprite
+    // and leaves the drawn pool's UVs (and our _stripCache) stale. That stale gap is the on-screen
+    // "everything reloads" the user sees. Two parts:
+    //  1) PROACTIVE: once the atlas is mostly full, compact it ourselves at a frame boundary
+    //     (only when no build is in flight, so we never reset out from under an in-flight pack).
+    //  2) On ANY reset (ours, or an overflow triggered by another atlas consumer), drop the stale
+    //     strip cache + any in-flight build and rebuild SYNCHRONOUSLY this frame, so the pool we
+    //     draw has correct UVs. Trades a rare one-frame hitch for never showing a multi-tick reload.
+    if (!_gb && glc.atlasFillRatio && glc.atlasFillRatio() > 0.92) glc.resetAtlas();
+    var atlasReset = glc.atlasGen !== _stripAtlasGen;
+    if (atlasReset) { clearStripCache(); _stripAtlasGen = glc.atlasGen; _gb = null; }
+    if ((atlasReset || !_pool.animUploaded || moved || grew || newChunks) && !_gb) {
       _pool.key = 'built'; _pool.centerX = px; _pool.centerY = py;
       _pool.radiusX = needRX; _pool.radiusY = needRY;
       _pool.readyCount = ready; _pool.lastRebuildAt = timeMs;
       _startAmortBuild(chunkStore, player, glc, needRX, needRY); // first paint AND warm: both spread
     }
-    if (_gb) _amortStep(performance.now() + AMORT_BUDGET_MS);
+    // Always AMORTIZE the build (even right after an atlas reset). The earlier synchronous rebuild
+    // (run the whole thing in one frame to avoid a 1-frame stale-UV flash) cost 50-200ms = an f2
+    // stutter spike. With the 16384² atlas + 32px strip bucketing, resets are rare, so a brief flora
+    // flash during the amortized re-pack is the better trade than a frame-long freeze.
+    if (_gb) _amortStep(performance.now() + _amortBudget);
     var tickRanG = false;
     if (timeMs - _pool.lastTickMs >= 100) { _pool.lastTickMs = timeMs; _poolTick(timeMs, timeSec, glc, tilePxSnapped); tickRanG = true; }
     if (_pool.animUploaded) {
@@ -1922,11 +1858,12 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
   ctx.save();
   ctx.imageSmoothingEnabled = false;
 
-  // Clamp animation radius to visible screen to avoid off-screen work
+  // Clamp animation radius to visible screen to avoid off-screen work. Legacy CPU path: keep the tight
+  // 40 cap (this per-frame loop's cost scales with radius; the zoom-scaled ANIM_RADIUS=100 is GPU-only).
   var visibleTilesX = Math.ceil(w / tilePxSnapped / 2) + 2;
   var visibleTilesY = Math.ceil(h / tilePxSnapped / 2) + 2;
-  var radiusX = Math.min(ANIM_RADIUS, visibleTilesX);
-  var radiusY = Math.min(ANIM_RADIUS, visibleTilesY);
+  var radiusX = Math.min(40, visibleTilesX);
+  var radiusY = Math.min(40, visibleTilesY);
 
   for (var wy = py - radiusY; wy <= py + radiusY; wy++) {
     for (var wx = px - radiusX; wx <= px + radiusX; wx++) {
@@ -1953,7 +1890,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         var built = buildTileDescriptor(chunkStore, tile, objects, wx, wy);
         desc = built.desc;
         if (built.cacheable) {
-          if (_tileDescCache.size >= MAX_TILE_DESC_CACHE) _tileDescCache.clear();
+          if (_tileDescCache.size >= MAX_TILE_DESC_CACHE) _tileDescCache.delete(_tileDescCache.keys().next().value);
           _tileDescCache.set(tkey, desc);
         }
       }

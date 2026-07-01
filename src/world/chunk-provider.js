@@ -2,8 +2,8 @@ import { getWorldSeed } from '../core/world-seed.js';
 import { chunkKey } from './chunk.js';
 import { ChunkCompiler } from './chunk-compiler.js';
 import { sampleRegionalMapChunk } from './regional-map.js';
-import { preloadLargeObjectSprites } from '../render/large-object-renderer.js';
 import { preloadField2Animations } from '../render/field2-animator.js';
+import { fireSceneDiscontinuity } from '../core/scene-teardown.js';
 
 export class ChunkProvider {
   constructor({ workerCount = Math.max(2, Math.min(6, (navigator.hardwareConcurrency ?? 8) - 2)) } = {}) {
@@ -12,6 +12,10 @@ export class ChunkProvider {
     this.pending = new Map();
     this.queued = new Map();
     this.completed = [];
+    // Parallel key index for O(1) membership tests (has()/request()); kept in
+    // exact sync with `completed` at every push/shift/splice site below so the
+    // visible result is identical to the old `completed.some(...)` scan.
+    this.completedKeys = new Set();
     this.assembling = new Map();
     this.bitmaps = new Map();
     this.workers = [];
@@ -24,6 +28,7 @@ export class ChunkProvider {
     this._playerMoving = false;
     this.pumpScheduled = false;
     this.wangDebug = new Map();
+    this.indexes = new Map();
     this.workersReady = 0;
     // Field-tuning generation. Bumped on every F3-affecting tuning change;
     // workers stamp painted bitmaps with the gen they painted under, and
@@ -31,8 +36,28 @@ export class ChunkProvider {
     // tree landing AFTER the purge and blocking the real repaint).
     this.tuneGen = 0;
 
+    // Restore the persisted flora-worker flag BEFORE creating workers, so it applies from the
+    // very first compiled chunk. (The chunk streamer runs ~128 tiles ahead; a console-set flag
+    // misses everything already streamed, which made A/B testing misleading.)
+    if (typeof window !== 'undefined' && window._workerFloraDesc === undefined) {
+      try { if (localStorage.getItem('_floraWorker') === '1') window._workerFloraDesc = true; } catch (e) { /* no storage */ }
+    }
+
     if (this.workerSupported) {
       for (let i = 0; i < workerCount; i++) this.createWorker();
+    }
+
+    // Runtime enable helper: window._floraWorker(true) sets + PERSISTS the flag (localStorage,
+    // like gpuTerrain) and broadcasts to the already-created workers (they read the flag at
+    // create time, so a plain console assignment wouldn't reach them). _floraWorker(false)
+    // disables + clears the persistence. Reload after toggling for a clean full-coverage run.
+    if (typeof window !== 'undefined') {
+      window._floraWorker = (on = true) => {
+        window._workerFloraDesc = !!on;
+        this.setWorkerFloraDesc(on);
+        try { if (on) localStorage.setItem('_floraWorker', '1'); else localStorage.removeItem('_floraWorker'); } catch (e) { /* no storage */ }
+        return 'workerFloraDesc=' + !!on + ' (persisted — reload for full coverage)';
+      };
     }
   }
 
@@ -48,6 +73,14 @@ export class ChunkProvider {
     // tick happens to clear the guard — sometimes never, if the jump landed within 15 chunks.
     if (!force && this._lastPreload && Math.max(Math.abs(pcx - this._lastPreload.cx), Math.abs(pcy - this._lastPreload.cy)) < 15) return;
     this._lastPreload = { cx: pcx, cy: pcy };
+    // A forced preload is a teleport/fast-travel DISCONTINUITY: fire the teardown bus so every
+    // per-biome cache (GL textures, decoded-image caches, …) drops its now-offscreen old-biome
+    // entries at once, instead of leaking them until a slow age-based sweep (the 3-4fps cause).
+    if (force) {
+      fireSceneDiscontinuity({ x: wx, y: wy });
+      this.wangDebug.clear();                                    // unbounded debug map — drop old-biome entries
+      this.indexes.clear();                                      // GPU index buffers — evict alongside wangDebug
+    }
     const biomeSet = new Set();
     // Sample a grid around the player — sparse sampling is fine, just need biome variety
     const sampleRadius = 30;
@@ -59,6 +92,10 @@ export class ChunkProvider {
       }
     }
     const biomes = [...biomeSet];
+    // Remember the wide biome set so the GPU-terrain atlas loader (canvas-renderer
+    // _ensureWangAtlas) can grow the Wang atlas to cover every biome the player is
+    // near — not just the bootstrap grassland set.
+    this._activeBiomes = biomes;
     // Tight "core" set: the biomes actually around the player right now. Workers
     // gate their first paint on this small set (see chunk-worker preloadBiomes)
     // so the world appears in seconds instead of blocking on all 21 biomes' wang
@@ -126,16 +163,17 @@ export class ChunkProvider {
   // Called by ChunkStore.streamAround every frame: lets the queue re-sort by
   // CURRENT distance (priorities assigned at request time go stale as the
   // player walks) and tightens the adoption budget while moving.
-  setPlayerFocus(cx, cy, moving) {
+  setPlayerFocus(cx, cy, moving, dirX = 0, dirY = 0) {
     this._playerChunk = { cx, cy };
     this._playerMoving = !!moving;
+    this._playerDir = { x: dirX, y: dirY };
   }
 
   createWorker() {
     try {
       // Cache-bust: append timestamp so browser reloads worker modules on code changes
       const workerUrl = new URL('./chunk-worker.js', import.meta.url);
-      workerUrl.searchParams.set('v', '20260619f-roof-overhang-nodroop');
+      workerUrl.searchParams.set('v', '20260619f-roof-overhang-nodroop-gputiles9-gclumid');
       const worker = new Worker(workerUrl, { type: 'module' });
       worker._imagesReady = false;
       worker.onmessage = event => {
@@ -166,19 +204,52 @@ export class ChunkProvider {
           if (msg.gen != null && msg.gen !== this.tuneGen) {
             // Painted under an old tuning tree — drop the bitmap (chunk stays
             // bitmap-less so pumpQueue repaints it under the current tree)
-            msg.bitmap.close();
+            if (msg.bitmap) msg.bitmap.close();
           } else {
-            const old = this.bitmaps.get(bitmapKey);
-            if (old) old.close();
-            this.bitmaps.set(bitmapKey, msg.bitmap);
+            // msg.bitmap is null on the P4 GPU path (chunk renders via its index;
+            // no bitmap was baked). Store the index; leave the bitmap slot empty.
+            if (msg.bitmap) {
+              const old = this.bitmaps.get(bitmapKey);
+              if (old) old.close();
+              this.bitmaps.set(bitmapKey, msg.bitmap);
+            }
             if (msg.wangDebug) this.wangDebug.set(bitmapKey, msg.wangDebug);
+            if (msg.index) this.indexes.set(bitmapKey, new Uint16Array(msg.index));
           }
           // chunkPainted replaces chunkDone — finalize assembly
           const partial = this.assembling.get(key);
           this.assembling.delete(key);
           this.pending.delete(key);
-          if (partial) this.completed.push({ key, chunk: { cx: partial.cx, cy: partial.cy, tiles: partial.tiles, renderTiles: partial.renderTiles, objects: partial.objects } });
+          if (partial) {
+            const finalizedChunk = { cx: partial.cx, cy: partial.cy, tiles: partial.tiles, renderTiles: partial.renderTiles, objects: partial.objects };
+            // Attach flora descriptors that arrived BEFORE this chunk finalized (rare — the
+            // worker posts chunkFlora after chunkPainted on the same worker, so ordering is
+            // preserved; this is the defensive path for any reorder). No-op when flora off.
+            this._attachPendingFlora(key, finalizedChunk);
+            this.completed.push({ key, chunk: finalizedChunk });
+            this.completedKeys.add(key);
+          }
           this.schedulePump();
+        } else if (msg.type === 'chunkFlora') {
+          // Off-thread flora descriptors (worker computed them when window._workerFloraDesc is
+          // set). Attach the transferred buffers to the already-finalized chunk (the common
+          // case — chunkFlora is posted right after chunkPainted), or stash them to attach on
+          // finalize. Discard on gen mismatch (mirror the bitmap gen check above).
+          if (msg.gen != null && msg.gen !== this.tuneGen) {
+            // painted under an old tuning tree — drop; the chunk recompiles under the new tree
+          } else {
+            const bytes = new Uint8Array(msg.floraBytes);
+            const offsets = new Uint32Array(msg.floraOffsets);
+            const chunk = this._findAssembledChunk(key);
+            if (chunk) {
+              chunk.floraBytes = bytes;
+              chunk.floraOffsets = offsets;
+            } else {
+              if (!this._pendingFlora) this._pendingFlora = new Map();
+              if (this._pendingFlora.size > 256) this._pendingFlora.clear(); // bounded safety valve
+              this._pendingFlora.set(key, { bytes, offsets, gen: msg.gen });
+            }
+          }
         } else if (msg.type === 'repaintNeedsTiles') {
           // Worker evicted this chunk's tiles from its neighbor cache — resend them
           const chunk = this.ready.get(msg.key);
@@ -199,17 +270,19 @@ export class ChunkProvider {
             if (old) old.close();
             this.bitmaps.set(bitmapKey, msg.bitmap);
             if (msg.wangDebug) this.wangDebug.set(bitmapKey, msg.wangDebug);
+            if (msg.index) this.indexes.set(bitmapKey, new Uint16Array(msg.index));
           }
         } else if (msg.type === 'chunkDone') {
           // Legacy fallback — shouldn't fire with new worker but handle gracefully
           const partial = this.assembling.get(key);
           this.assembling.delete(key);
           this.pending.delete(key);
-          if (partial) this.completed.push({ key, chunk: { cx: partial.cx, cy: partial.cy, tiles: partial.tiles, renderTiles: partial.renderTiles, objects: partial.objects } });
+          if (partial) { this.completed.push({ key, chunk: { cx: partial.cx, cy: partial.cy, tiles: partial.tiles, renderTiles: partial.renderTiles, objects: partial.objects } }); this.completedKeys.add(key); }
           this.schedulePump();
         } else if (msg.chunk) {
           this.pending.delete(key);
           this.completed.push({ key, chunk: msg.chunk });
+          this.completedKeys.add(key);
           this.schedulePump();
         }
       };
@@ -217,6 +290,13 @@ export class ChunkProvider {
         this.workerSupported = false;
       };
       this.workers.push(worker);
+      // Replay GPU-terrain state to this worker in case it was created after
+      // setWangAtlasMeta / setGpuTerrain were already broadcast to earlier workers.
+      if (this._wangAtlasMeta) worker.postMessage({ type: 'setWangAtlasMeta', meta: this._wangAtlasMeta });
+      if (this._gpuTerrain) worker.postMessage({ type: 'setGpuTerrain', on: true });
+      // Off-thread flora descriptors are OFF by default: enable per worker ONLY when the main
+      // thread opt-in flag is set. Unset → nothing posted → worker stays byte-identical.
+      if (typeof window !== 'undefined' && window._workerFloraDesc) worker.postMessage({ type: 'setFloraDesc', enabled: true });
     } catch {
       this.workerSupported = false;
     }
@@ -224,12 +304,12 @@ export class ChunkProvider {
 
   has(cx, cy) {
     const key = chunkKey(cx, cy);
-    return this.ready.has(key) || this.pending.has(key) || this.queued.has(key) || this.assembling.has(key) || this.completed.some(item => item.key === key);
+    return this.ready.has(key) || this.pending.has(key) || this.queued.has(key) || this.assembling.has(key) || this.completedKeys.has(key);
   }
 
   request(cx, cy, priority = 0) {
     const key = chunkKey(cx, cy);
-    if (this.ready.has(key) || this.pending.has(key) || this.queued.has(key) || this.assembling.has(key) || this.completed.some(item => item.key === key)) return;
+    if (this.ready.has(key) || this.pending.has(key) || this.queued.has(key) || this.assembling.has(key) || this.completedKeys.has(key)) return;
 
     if (!this.workerSupported || this.workers.length === 0) {
       this.ready.set(key, this.compiler.compile(cx, cy));
@@ -255,20 +335,38 @@ export class ChunkProvider {
     let adopted = 0;
     while (this.completed.length > 0 && (adopted === 0 || performance.now() - t0 < budget)) {
       const { key, chunk } = this.completed.shift();
+      this.completedKeys.delete(key);
       this.ready.set(key, chunk);
       adopted++;
     }
 
     const readyWorkers = this.workers.filter(w => w._imagesReady);
-    if (readyWorkers.length > 0) {
-      while (this.pending.size < this.maxActive && this.queued.size > 0) {
-        const pc = this._playerChunk;
-        const jobs = [...this.queued.values()].sort((a, b) => {
-          const da = pc ? Math.abs(a.cx - pc.cx) + Math.abs(a.cy - pc.cy) : a.priority;
-          const db = pc ? Math.abs(b.cx - pc.cx) + Math.abs(b.cy - pc.cy) : b.priority;
-          return da - db || a.requestedAt - b.requestedAt;
-        });
-        const job = jobs[0];
+    if (readyWorkers.length > 0 && this.pending.size < this.maxActive && this.queued.size > 0) {
+      // Sort the queue ONCE per pump (was re-sorted on every dispatched job).
+      // The sort key (player chunk + per-job priority/requestedAt) is invariant
+      // for the duration of this call, so taking jobs in sorted order yields the
+      // identical dispatch sequence the per-iteration re-sort produced.
+      const pc = this._playerChunk;
+      const dir = this._playerDir || { x: 0, y: 0 };
+      // DIRECTIONAL PRIORITY: chunks AHEAD of the player's movement are generated first, so the limited worker
+      // throughput keeps up with where they're running TO instead of being split evenly around them. score =
+      // chunk-distance MINUS how far the chunk lies along the heading (×AHEAD_WEIGHT). With no movement (dir≈0)
+      // this collapses to the plain nearest-first distance sort.
+      const AHEAD_WEIGHT = 2.0;
+      const score = (j) => {
+        const rx = j.cx - pc.cx, ry = j.cy - pc.cy;
+        const dist = Math.abs(rx) + Math.abs(ry);
+        const ahead = rx * dir.x + ry * dir.y; // >0 = in the direction of travel
+        return dist - Math.max(0, ahead) * AHEAD_WEIGHT;
+      };
+      const jobs = [...this.queued.values()].sort((a, b) => {
+        const da = pc ? score(a) : a.priority;
+        const db = pc ? score(b) : b.priority;
+        return da - db || a.requestedAt - b.requestedAt;
+      });
+      let ji = 0;
+      while (this.pending.size < this.maxActive && ji < jobs.length) {
+        const job = jobs[ji++];
         this.queued.delete(job.key);
         this.pending.set(job.key, job);
         const worker = readyWorkers[this.nextWorker++ % readyWorkers.length];
@@ -294,12 +392,59 @@ export class ChunkProvider {
     if (this.completed.length > 0 || this.queued.size > 0) this.schedulePump();
   }
 
+  // Find an already-finalized chunk object by key — in `ready`, or still waiting in
+  // `completed`. Used to attach flora descriptors that arrive on a separate message
+  // right after chunkPainted. Returns the chunk object (mutable) or null.
+  _findAssembledChunk(key) {
+    if (this.ready.has(key)) return this.ready.get(key);
+    for (const c of this.completed) if (c.key === key) return c.chunk;
+    return null;
+  }
+
+  // Attach flora buffers that arrived before this chunk finalized (gen-checked).
+  _attachPendingFlora(key, chunk) {
+    if (!this._pendingFlora) return;
+    const pf = this._pendingFlora.get(key);
+    if (!pf) return;
+    this._pendingFlora.delete(key);
+    if (pf.gen == null || pf.gen === this.tuneGen) {
+      chunk.floraBytes = pf.bytes;
+      chunk.floraOffsets = pf.offsets;
+    }
+  }
+
+  // Broadcast the flora-desc gate to every existing worker. Call after flipping
+  // window._workerFloraDesc at runtime; workers created later pick it up in createWorker.
+  setWorkerFloraDesc(on) {
+    for (const worker of this.workers) worker.postMessage({ type: 'setFloraDesc', enabled: !!on });
+  }
+
   getBitmap(cx, cy) {
     return this.bitmaps.get(cx + ',' + cy) ?? null;
   }
 
   getWangDebug(cx, cy) {
     return this.wangDebug.get(cx + ',' + cy) ?? null;
+  }
+
+  getChunkIndex(cx, cy) {
+    return this.indexes.get(cx + ',' + cy) || null;
+  }
+
+  // The wide biome set sampled around the player by the most recent initPreload.
+  // The GPU-terrain atlas loader grows the Wang atlas to cover these biomes.
+  getActiveBiomes() {
+    return this._activeBiomes || null;
+  }
+
+  setGpuTerrain(on) {
+    this._gpuTerrain = !!on;
+    for (const worker of this.workers) worker.postMessage({ type: 'setGpuTerrain', on: !!on });
+  }
+
+  setWangAtlasMeta(meta) {
+    this._wangAtlasMeta = meta;
+    for (const worker of this.workers) worker.postMessage({ type: 'setWangAtlasMeta', meta });
   }
 
   getReady(cx, cy) {
@@ -316,6 +461,7 @@ export class ChunkProvider {
       const idx = this.completed.findIndex(item => item.key === key);
       if (idx >= 0) {
         const [item] = this.completed.splice(idx, 1);
+        this.completedKeys.delete(key);
         this.ready.set(key, item.chunk);
       } else {
         this.ready.set(key, this.compiler.compile(cx, cy));
@@ -344,8 +490,10 @@ export class ChunkProvider {
     const bitmapKey = cx + ',' + cy;
     const bmp = this.bitmaps.get(bitmapKey);
     if (bmp) { bmp.close(); this.bitmaps.delete(bitmapKey); }
+    this.indexes.delete(bitmapKey); // GPU index is now load-bearing (P4) — evict with the chunk
     const idx = this.completed.findIndex(item => item.key === key);
     if (idx >= 0) this.completed.splice(idx, 1);
+    this.completedKeys.delete(key);
   }
 
   stats() {

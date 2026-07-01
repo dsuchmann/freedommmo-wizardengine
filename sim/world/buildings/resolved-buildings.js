@@ -178,6 +178,29 @@ function settlementCandidates(seed, s) {
   return out;
 }
 
+// ── Amortized warm-up (keeps the render thread responsive) ───────────────────────────────
+// layoutSettlement is ~tens-to-hundreds of ms for a COLD settlement, and one macro-cell crossing
+// can pull many cold settlements into range at once (measured: 19 settlements = 1.9s in a single
+// synchronous frame). Expose the resolve's settlement list + a per-settlement warm so the caller
+// can spread the cold layouts across frames (warming a few per frame while still drawing the
+// PREVIOUS resolved set), instead of paying the whole range's cold cost in one frame.
+export function settlementsInResolveRange(seed, mx0, my0, mx1, my1) {
+  const R = NEIGHBOR_RING_R;
+  return suppressBySpacing(discoverSettlementsInMacroRange(seed, mx0 - R, my0 - R, mx1 + R, my1 + R));
+}
+function _candKey(seed, s) { return `${seed}:${s.x},${s.y}:${s.tier}:${s.race}:${s.biome}`; }
+// A ruined settlement contributes no standing buildings (skipped in the resolve), so it never needs
+// a layout — treat it as already warm so the warm-up loop doesn't block waiting on it.
+export function isSettlementWarm(seed, s) {
+  if (s.state === 'ruined' || s.tier === 'ruins') return true;
+  return _candidateMemo.has(_candKey(seed, s));
+}
+// Compute + memoize one settlement's candidates (this is the expensive cold layoutSettlement call).
+export function warmSettlement(seed, s) {
+  if (s.state === 'ruined' || s.tier === 'ruins') return;
+  settlementCandidates(seed, s);
+}
+
 /**
  * Resolve every building whose tiles intersect the requested macro range
  * [mx0..mx1]x[my0..my1]. De-overlap is computed over the range PADDED by the

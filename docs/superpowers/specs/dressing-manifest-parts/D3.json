@@ -304,7 +304,7 @@
           "scale": { "nativePx": 64, "worldSizeW": 1, "worldSizeH": 1, "fit": "span" },
           "variants": { "count": 6, "drivenBy": "style" },
           "states": ["base", "weathered", "broken"],
-          "anim": ["static"],
+          "anim": ["wind_sway"],
           "interact": null,
           "destructible": { "breakable": true, "broken_state": "broken", "debris": ["wood_plank", "soil_spill", "potsherd"] },
           "light": null,
@@ -312,7 +312,7 @@
           "attach": null,
           "coverage": null,
           "biomeSkins": "content season states reskin the planted flora to the biome's bloom catalog (grassland=wildflowers, savanna=dry grasses, tropical_forest=orchids, desert=succulents, arctic/tundra=snow_capped or empty default, mystic=glowing blossoms with faint emissive, volcanic=ash-tolerant red blooms, swamp=mossy/fern). Box timber host follows biome wood family. snow_capped is the climate-default winter/cold-biome content state.",
-          "notes": "content.axis=season (the seasonal/yield axis, orthogonal to box wear): blooming/full_green/empty/withered/snow_capped track season + maintenance, NOT damage. NO interact (you don't operate a flower box). NO wind_sway on the box itself — it is a rigid sill-mounted vessel; any flora-sway is the planted flora's own anim, not the box's."
+          "notes": "content.axis=season (the seasonal/yield axis, orthogonal to box wear): blooming/full_green/empty/withered/snow_capped track season + maintenance, NOT damage. NO interact (you don't operate a flower box). wind_sway = a SUBTLE foliage sway (user 2026-06-24): the planted blooms/foliage move in the wind while the box itself stays rigidly planted — applied because the box carries living content."
         },
         {
           "id": "terracotta_wall_planter",
@@ -322,7 +322,7 @@
           "scale": { "nativePx": 64, "worldSizeW": 1, "worldSizeH": 1, "fit": "fixed" },
           "variants": { "count": 5, "drivenBy": "style" },
           "states": ["base", "weathered", "cracked", "broken"],
-          "anim": ["static"],
+          "anim": ["wind_sway"],
           "interact": null,
           "destructible": { "breakable": true, "broken_state": "broken", "debris": ["potsherd", "soil_spill"] },
           "light": null,
@@ -542,7 +542,7 @@
           "scale": { "nativePx": 64, "worldSizeW": 1, "worldSizeH": 1, "fit": "fixed" },
           "variants": { "count": 6, "drivenBy": "style" },
           "states": ["base", "withered", "dried"],
-          "anim": ["static"],
+          "anim": ["wind_sway"],
           "interact": null,
           "destructible": null,
           "light": null,
@@ -550,7 +550,7 @@
           "attach": null,
           "coverage": null,
           "biomeSkins": "Foliage reskins to the biome bloom/flora catalog (grassland=wheat-and-wildflower, forest=evergreen, desert=dried-grass-and-succulent, tropical=palm-and-orchid, arctic/tundra=snow_frosted default, mystic=glowing-bloom wreath with faint emissive, volcanic=ash-resilient red). snow_frosted is the cold-biome climate-default content state.",
-          "notes": "content.axis=season (fresh/blooming/dried/snow_frosted) — a seasonal living-foliage axis, orthogonal to nothing else here. Mounted FLAT on the door leaf (not suspended/dangling) → static, NO wind_sway. Not destructible (foliage withers via content states, not a break delta)."
+          "notes": "content.axis=season (fresh/blooming/dried/snow_frosted) — a seasonal living-foliage axis. Mounted FLAT on the door leaf; wind_sway = a SUBTLE foliage sway (user 2026-06-24) on the living blooms/greenery while the mount stays put — applied because it carries living content. Not destructible (foliage withers via content states, not a break delta)."
         },
         {
           "id": "festoon_garland",

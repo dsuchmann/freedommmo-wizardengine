@@ -24,6 +24,10 @@ export const BUILDING_RENDER = {
   walls: true,      // ON — exterior mirror-tiled tile-corpus walls (fieldstone pilot is round-2 complete)
   roof: true,       // ON — procedural roof, flows through the per-object depth pass (renderBuildingSilhouette)
   weathering: true, // ON — D0 dressing: procedural ground-grime + tonal weathering on south wall columns
+  damage: true,     // ON — D1 dressing: procedural structural decay (wetness-driven rot/runnels/rust + freeze-thaw; age-driven cracks/dry-rot honestly absent until a sim age source, preview via window._damage.age)
+  growth: true,     // ON — D2 dressing: procedural surface growth (lichen crust on stone + wetness-driven moss; cushions/weeds/fungus are a later slice)
+  vines: true,      // ON — D2 PLACED vines: climbing-plant spline kit (root/segment/fork/leaf) baked before-roof; per-biome plant skin, selective ~15% of buildings
+  attachments: true,// ON — D3 dressing: wall-attachment props (pilot: candle lantern at beside_door sockets)
   shadow: true,     // ground shadows (building-shadow) — the MASK still builds, only pixels gated
   occlusion: false, // depth-occlusion A/B pass (building-depth) — player see-through
   doors: false,     // swinging door-leaf overlay (door-leaves)

@@ -1,6 +1,7 @@
 // Wang tile image URL list — shared between main thread and workers.
 // No DOM dependencies. Pure data.
 import { SS_BIOME_OBJECTS, SS_BASE_PATH as SS_BASE_PATH_DC, SS_VARIANT_COUNT as SS_VARIANT_COUNT_DC, f3StateUrls, ssAllowedVariants } from '../world/decoration-claims.js';
+import { SF_CATALOG } from '../world/sf-catalog.js';
 
 var WANG_SUFFIX = '__v000.png';
 var TRANSITIONS_BASE = '/assets/pixelab/landscape_v2/transitions/';
@@ -172,6 +173,80 @@ var SOIL_MATERIALS = {
 var SOIL_BASE_PATH = '/assets/pixelab/landscape_v2/micro/soil/';
 var SOIL_VARIANT_COUNT = 64;
 
+// Stable per-biome soil id (1-based; 0 = no soil). The GPU soil pass uses this id
+// to index the soil-swatch atlas + per-biome config texture (see gl-compositor
+// setSoilAtlas). Order is fixed (SOIL_MATERIALS insertion order) so ids never shift
+// between sessions. Biomes that share a soil MATERIAL still get distinct ids
+// (same swatch art, own config).
+var SOIL_IDS = {};
+(function () {
+  var i = 1;
+  for (var biome in SOIL_MATERIALS) { SOIL_IDS[biome] = i++; }
+})();
+export { SOIL_IDS };
+export function soilIdForBiome(biome) {
+  return SOIL_IDS[biome] || 0;
+}
+
+// Per-biome F0 soil rendering params — shared by the worker bitmap path
+// (applySoilFieldToChunk) and the main-thread GPU soil-config texture loader.
+// { density, alpha, blobMin, blobMax, tint:[r,g,b]|null, tintStrength }
+export var SOIL_BIOME_CONFIG = {
+  forest:           { density: 0.96, alpha: 0.70, blobMin: 4, blobMax: 6, tint: null },
+  dense_forest:     { density: 0.97, alpha: 0.75, blobMin: 4, blobMax: 6, tint: null },
+  tropical_forest:  { density: 0.96, alpha: 0.70, blobMin: 4, blobMax: 6, tint: null },
+  taiga:            { density: 0.95, alpha: 0.65, blobMin: 4, blobMax: 6, tint: null },
+  grassland:        { density: 0.94, alpha: 0.60, blobMin: 4, blobMax: 6, tint: null },
+  savanna:          { density: 0.93, alpha: 0.55, blobMin: 3, blobMax: 5, tint: null },
+  steppe:           { density: 0.92, alpha: 0.55, blobMin: 3, blobMax: 5, tint: null },
+  desert:           { density: 0.96, alpha: 0.50, blobMin: 3, blobMax: 4, tint: null },
+  beach:            { density: 0.98, alpha: 0.50, blobMin: 3, blobMax: 4, tint: [245, 235, 200], tintStrength: 0.45 },
+  swamp:            { density: 0.97, alpha: 0.80, blobMin: 5, blobMax: 7, tint: null },
+  hills:            { density: 0.94, alpha: 0.60, blobMin: 4, blobMax: 7, tint: null },
+  mountains:        { density: 0.92, alpha: 0.55, blobMin: 5, blobMax: 8, tint: null },
+  volcanic:         { density: 0.90, alpha: 0.60, blobMin: 4, blobMax: 6, tint: null },
+  tundra:           { density: 0.97, alpha: 0.75, blobMin: 4, blobMax: 6, tint: null },
+  arctic:           { density: 0.88, alpha: 0.50, blobMin: 3, blobMax: 5, tint: null },
+  mystic:           { density: 0.95, alpha: 0.65, blobMin: 4, blobMax: 6, tint: null },
+  ocean:            { density: 0.96, alpha: 0.50, blobMin: 4, blobMax: 6, tint: null },
+  deep_ocean:       { density: 0.95, alpha: 0.45, blobMin: 3, blobMax: 5, tint: null },
+  shallow_water:    { density: 0.98, alpha: 0.50, blobMin: 4, blobMax: 6, tint: null },
+  river:            { density: 0.96, alpha: 0.50, blobMin: 4, blobMax: 6, tint: null },
+  lake:             { density: 0.96, alpha: 0.50, blobMin: 4, blobMax: 6, tint: null },
+};
+export var SOIL_DEFAULT_CONFIG = { density: 0.94, alpha: 0.65, blobMin: 4, blobMax: 6, tint: null };
+
+// Ground-cover LUMINANCE objects (the `mode:'luminance'` entries in the worker's
+// GC_BIOME_OBJECTS) — a per-biome surface-modulation swatch for the GPU gc-luminance
+// pass. Only these 11 biomes have gc-luminance; the rest (incl. grassland) have all-
+// sprite ground cover. First object per biome — water biomes' subtle 2nd luminance
+// layer is dropped (v1 simplification). { obj, strength, density }.
+export var GC_LUM = {
+  beach:         { obj: 'wet_sand',           strength: 0.20, density: 0.85 },
+  dense_forest:  { obj: 'dark_leaf_mat',      strength: 0.28, density: 0.85 },
+  taiga:         { obj: 'frost_pine_needles', strength: 0.20, density: 0.70 },
+  desert:        { obj: 'sand_ripple',        strength: 0.18, density: 0.75 },
+  mountains:     { obj: 'lichen_crust',       strength: 0.18, density: 0.60 },
+  arctic:        { obj: 'frost_pattern',      strength: 0.18, density: 0.65 },
+  shallow_water: { obj: 'ripple_pattern',     strength: 0.15, density: 0.75 },
+  ocean:         { obj: 'wave_foam',          strength: 0.15, density: 0.70 },
+  deep_ocean:    { obj: 'dark_current',       strength: 0.10, density: 0.60 },
+  river:         { obj: 'flow_streaks',       strength: 0.15, density: 0.70 },
+  lake:          { obj: 'soft_ripple',        strength: 0.12, density: 0.65 },
+};
+// Stable per-biome gc-luminance id (1-based; 0 = no gc-luminance). Indexes the gc-lum
+// swatch atlas + config texture, like SOIL_IDS.
+var GC_LUM_IDS = {};
+(function () { var i = 1; for (var b in GC_LUM) { GC_LUM_IDS[b] = i++; } })();
+export { GC_LUM_IDS };
+export function gcLumIdForBiome(biome) { return GC_LUM_IDS[biome] || 0; }
+// gc sprite base path + the representative swatch URL for a biome's gc-luminance object.
+export function gcLumSwatchURL(biome) {
+  var e = GC_LUM[biome];
+  if (!e) return null;
+  return '/assets/pixelab/landscape_v2/micro/ground_cover/' + biome + '/' + e.obj + '/gc__' + biome + '__' + e.obj + '__v000.png';
+}
+
 export function getSoilImageURLs() {
   var urls = [];
   var seenMaterials = new Set();
@@ -284,7 +359,7 @@ var SF_BIOME_OBJECTS_LIST = {
   taiga: ['frost_grass', 'low_juniper', 'cold_moss_tuft'],
   tropical_forest: ['broad_fern', 'orchid_sprout', 'vine_tendril'],
   tundra: ['tundra_grass', 'low_berry_bush', 'ice_moss'],
-  volcanic: ['heat_sprout', 'lava_fern'],
+  volcanic: ['heat_sprout', 'lava_fern', 'ash_grass'],
 };
 var SF_BASE_PATH = '/assets/pixelab/landscape_v2/micro/small_flora/';
 var SF_VARIANT_COUNT = 64;
@@ -363,6 +438,13 @@ var SF_EXTRA_OBJECTS = {
 export { SF_BIOME_OBJECTS_LIST, SF_BASE_PATH, SF_VARIANT_COUNT, SF_VARIANT_WHITELIST, SF_EXTRA_OBJECTS };
 
 export function sfVariantsFor(biome, objName) {
+  // Prefer catalog vmap (disk-derived, curation-filtered) over hand-curated whitelist.
+  var catBiome = SF_CATALOG[biome];
+  if (catBiome) {
+    for (var ci = 0; ci < catBiome.length; ci++) {
+      if (catBiome[ci].name === objName) return catBiome[ci].vmap;
+    }
+  }
   return SF_VARIANT_WHITELIST[biome + '/' + objName] || null;
 }
 

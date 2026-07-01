@@ -1,0 +1,76 @@
+{
+  "_doc": "arctic tile-corpus ledger. Slugs from building-materials.json (identity TILE_MATERIALS, no registry edit). Vocab: docs/superpowers/specs/2026-06-24-arctic-tile-corpus-manifest.md.",
+  "base_project": "0f1031f5-9eee-4df4-996f-0a4114148eba",
+  "materials": {
+    "ice_block": {
+      "base": "bea5107c-37e6-45f2-bf8b-22cafc9163f6",
+      "ground_window": "edf61c64-7846-40fc-9ee1-687abf5613bc",
+      "ground_door": "08bd838e-cf13-44b2-badf-c69a242a1958",
+      "ground_left_corner": "5f349d8f-7a6b-4cff-8f52-1d3a39a9eaa8",
+      "gable": "2f578624-b8e9-4a7d-9a4d-15ab328d8ee9",
+      "window_anim": "code:glow-pulse",
+      "door_anim": "code:door-swing"
+    },
+    "packed_snow": {
+      "base": "b413b4ea-6f72-4fe5-92e2-007d8a646489",
+      "ground_window": "6dbcab4a-5bb8-4103-9d9b-4112c08e56e8",
+      "ground_door": "8a0c480e-f885-44e7-affd-9addb7bd6249",
+      "ground_left_corner": "02466364-79c2-43cd-bc97-1e49e3b032b6",
+      "gable": "fc9fbebc-3671-4ac6-b2b9-1773cc8eaef0"
+    },
+    "driftwood_hide": {
+      "base": "9af7b42b-6b5c-4f61-95c9-a81762964ceb",
+      "ground_window": "0b2ac99b-730a-4161-845b-580aa9e3050d",
+      "ground_door": "da4199a4-1038-40e5-94b7-d3922e93c066",
+      "ground_left_corner": "671af8b5-97f5-4b4b-8458-cbd989e5e70c",
+      "gable": "cd3e34f6-bdf3-4760-9471-4cfad564262a",
+      "window_anim": "code:glow-pulse",
+      "door_anim": "code:door-swing"
+    },
+    "frozen_timber": {
+      "base": "789eac17-451f-4a8c-8198-e672858bb716",
+      "ground_window": "62ec5b62-2bfc-4ff3-9c9d-67f9351ce6f3",
+      "ground_door": "bfd1528f-38ce-4f9b-ad38-a0d0e8e7d3e9",
+      "ground_left_corner": "475f6380-ab32-409c-94c8-3b89df050529",
+      "gable": "e558e6a4-099a-4c0b-987f-5c29ce01c19b",
+      "window_anim": "code:glow-pulse",
+      "door_anim": "code:door-swing"
+    }
+  },
+  "roofs": {
+    "ice_dome": {
+      "tileset": "1da7a616-0dc2-4f9a-b761-67c9f979ea5e",
+      "seed": 71001,
+      "v000": "1da7a616-0dc2-4f9a-b761-67c9f979ea5e#1",
+      "v001": "1da7a616-0dc2-4f9a-b761-67c9f979ea5e#2",
+      "v002": "1da7a616-0dc2-4f9a-b761-67c9f979ea5e#4",
+      "v003": "1da7a616-0dc2-4f9a-b761-67c9f979ea5e#6"
+    },
+    "snow_block_roof": {
+      "tileset": "5b7c798d-3667-428c-a67b-3caab7b56d36",
+      "seed": 71002,
+      "v000": "5b7c798d-3667-428c-a67b-3caab7b56d36#0",
+      "v001": "5b7c798d-3667-428c-a67b-3caab7b56d36#1",
+      "v002": "5b7c798d-3667-428c-a67b-3caab7b56d36#2",
+      "v003": "5b7c798d-3667-428c-a67b-3caab7b56d36#3",
+      "_note": "10-11% raw holes (within tolerance) → solidify-filled to 0%"
+    },
+    "hide_driftwood_roof": {
+      "tileset": "635eda64-cbb5-45be-a6cd-1e499eee924a",
+      "seed": 71003,
+      "v000": "635eda64-cbb5-45be-a6cd-1e499eee924a#0",
+      "v001": "635eda64-cbb5-45be-a6cd-1e499eee924a#3",
+      "v002": "635eda64-cbb5-45be-a6cd-1e499eee924a#4",
+      "v003": "635eda64-cbb5-45be-a6cd-1e499eee924a#7"
+    },
+    "frosted_shingle": {
+      "tileset": "c6244887-2aed-40bc-83f8-44f5e415fba2",
+      "seed": 71004,
+      "v000": "c6244887-2aed-40bc-83f8-44f5e415fba2#0",
+      "v001": "c6244887-2aed-40bc-83f8-44f5e415fba2#2",
+      "v002": "c6244887-2aed-40bc-83f8-44f5e415fba2#4",
+      "v003": "c6244887-2aed-40bc-83f8-44f5e415fba2#6",
+      "_note": "prompt reframed as a packed FIELD of rectangular shingle panels (seams→shallow grooves) to dodge the SEAM-RIB gotcha; all 16 came back 100% full-bleed, 0% holes"
+    }
+  }
+}

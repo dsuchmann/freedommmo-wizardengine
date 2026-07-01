@@ -46,6 +46,25 @@ const VARIANT_CAP = {
   'tropical_forest/bird_of_paradise': 48,
 };
 
+// Per-species on-screen size in WORLD TILES for folded large_objects (sprites are small-native, so size by
+// tiles not px). Recovered from the retired large-object-renderer.js. Unmapped species default to LO_DEFAULT_TILES.
+const LO_OBJECT_TILES = {
+  ancient_oak: 5, gnarled_elm: 5, strangler_fig: 5, oak: 5, spirit_tree: 5,
+  banyan: 5, jungle_tree: 5, coconut_palm: 5, cypress: 5, spruce: 5,
+  birch: 4, maple: 4, cherry_blossom: 4, meadow_oak: 4, beach_palm: 4,
+  date_palm: 4, frost_cedar: 4, snow_pine: 4, dead_willow: 4, crystal_tree: 4,
+  apple_tree: 4, baobab: 5, mangrove: 4, frozen_tree: 4,
+  rowan: 4, scots_pine: 4, cliff_pine: 4, mountain_ash: 4, coastal_pine: 4,
+  acacia: 4, thorny_acacia: 4, dead_tree: 4, charred_tree: 4,
+  frost_willow: 4, saguaro: 3, aether_pillar: 3, ice_crystal_spire: 3,
+  crystal_ice_tower: 4, stunted_pine: 3,
+  standing_stone: 3, stone_monolith: 3, rock_spire: 3, ice_pillar: 3,
+  obsidian_spike: 3, sandstone_arch: 3, twisted_shrub: 3,
+  driftwood: 2, magma_vent: 2,
+};
+const LO_DEFAULT_TILES = 4;
+
+const F4_OMIT = omitSetMap(loadCuration('f4')); // "biome/object" -> Set(omitted variant indices)
 const catalog = {};
 for (const biome of fs.readdirSync(FLORA)) {
   const bdir = path.join(FLORA, biome);
@@ -60,15 +79,25 @@ for (const biome of fs.readdirSync(FLORA)) {
       .filter(f => parseInt(f.match(/__v(\d{3})\.png$/)[1], 10) < cap)
       .sort();
     if (!bases.length) continue;
-    const size = pngWidth(path.join(odir, bases[0]));
-    // state pool: union of variant indices across all state dirs
+    // Curation: drop omitted variants (non-destructive — files stay on disk).
+    const omit = F4_OMIT.get(biome + '/' + obj) || new Set();
+    const survEntries = bases
+      .map(f => ({ f, idx: parseInt(f.match(/__v(\d{3})\.png$/)[1], 10) }))
+      .filter(({ idx }) => !omit.has(idx));
+    if (!survEntries.length) continue;
+    const survBases = survEntries.map(e => e.f);
+    const vmap = survEntries.map(e => e.idx);
+    const vmapSet = new Set(vmap);
+    const size = pngWidth(path.join(odir, survBases[0]));
+    // state pool: union of variant indices across all state dirs, intersected with vmap
+    // so omitted variants can never be selected via a state pick either.
     const pool = new Set();
     for (const st of fs.readdirSync(path.join(odir, '_states'))) {
       const sdir = path.join(odir, '_states', st);
       if (!fs.statSync(sdir).isDirectory()) continue;
       for (const f of fs.readdirSync(sdir)) {
         const m = f.match(/__v(\d{3})\.png$/);
-        if (m && parseInt(m[1], 10) < cap) pool.add(parseInt(m[1], 10));
+        if (m && parseInt(m[1], 10) < cap && vmapSet.has(parseInt(m[1], 10))) pool.add(parseInt(m[1], 10));
       }
     }
     // anim variants: v dirs under anim/wind_sway with >= 9 frames
@@ -84,7 +113,8 @@ for (const biome of fs.readdirSync(FLORA)) {
     }
     (catalog[biome] = catalog[biome] || []).push({
       name: obj, size,
-      variants: bases.length,
+      variants: survBases.length,
+      vmap,
       statePool: [...pool].sort((a, b) => a - b),
       anims: anims.sort((a, b) => a - b),
     });
@@ -102,6 +132,7 @@ console.log(`wrote ${OUT}: ${nTypes} types, ${nAnims} animated variants`);
 const OBJECTS = path.join(ROOT, 'assets/pixelab/landscape_v2/micro/medium_objects');
 const MO_OUT = path.join(ROOT, 'src/world/mo-catalog.js');
 
+const F5_OMIT = omitSetMap(loadCuration('f5')); // "biome/object" -> Set(omitted variant indices)
 const moCatalog = {};
 for (const biome of fs.readdirSync(OBJECTS)) {
   const bdir = path.join(OBJECTS, biome);
@@ -113,8 +144,17 @@ for (const biome of fs.readdirSync(OBJECTS)) {
       .filter(f => /^mo__.*__v\d{3}\.png$/.test(f))
       .sort();
     if (!bases.length) continue;
-    const size = pngWidth(path.join(odir, bases[0]));
+    // Curation: drop omitted variants (non-destructive — files stay on disk).
+    const omit = F5_OMIT.get(biome + '/' + obj) || new Set();
+    const survEntries = bases
+      .map(f => ({ f, idx: parseInt(f.match(/__v(\d{3})\.png$/)[1], 10) }))
+      .filter(({ idx }) => !omit.has(idx));
+    if (!survEntries.length) continue;
+    const survBases = survEntries.map(e => e.f);
+    const vmap = survEntries.map(e => e.idx);
+    const size = pngWidth(path.join(odir, survBases[0]));
     // per-state variant lists: _states/<name> -> sorted variant indices on disk
+    // (original indices; omitted indices can never be selected because vmap excludes them)
     const states = {};
     const sroot = path.join(odir, '_states');
     if (fs.existsSync(sroot)) {
@@ -140,12 +180,14 @@ for (const biome of fs.readdirSync(OBJECTS)) {
         if (frames.length >= 9) anims.push(parseInt(m[1], 10));
       }
     }
-    const trims = trimsFor(odir, bases);
+    // trims/sil aligned to survBases (positional, parallel to vmap).
+    const trims = trimsFor(odir, survBases);
     (moCatalog[biome] = moCatalog[biome] || []).push({
       name: obj, size,
-      variants: bases.length,
+      variants: survBases.length,
+      vmap,
       trims,
-      sil: silsFor(odir, bases, trims),
+      sil: silsFor(odir, survBases, trims),
       states,
       anims: anims.sort((a, b) => a - b),
     });
@@ -220,13 +262,128 @@ if (fs.existsSync(LARGE)) {
         sil: silsFor(odir, survBases, trims),
         states,
         anims: anims.sort((a, b) => a - b),
+        source: { dir: 'large_flora', file: 'plain' },
       });
     }
   }
 }
+
+// ---- large_objects folded into F6 (source-tagged; static, no states/anims yet) ----
+const LOBJ = path.join(ROOT, 'assets/pixelab/landscape_v2/micro/large_objects');
+const LOBJ_OMIT = omitSetMap(loadCuration('large_objects'));
+if (fs.existsSync(LOBJ)) {
+  for (const biome of fs.readdirSync(LOBJ).sort()) {
+    const bdir = path.join(LOBJ, biome);
+    let st; try { st = fs.statSync(bdir); } catch { continue; }
+    if (!st.isDirectory() || biome.startsWith('_')) continue;
+    const existing = new Set((lgCatalog[biome] || []).map((e) => e.name)); // 8 overlaps prefer large_flora
+    for (const obj of fs.readdirSync(bdir).sort()) {
+      const odir = path.join(bdir, obj);
+      let os; try { os = fs.statSync(odir); } catch { continue; }
+      if (!os.isDirectory() || existing.has(obj)) continue;
+      const re = /^lg__.*__v(\d{3})\.png$/; // 3-digit to match the padded size-probe path below
+      const present = fs.readdirSync(odir)
+        .map((f) => { const m = f.match(re); return m ? parseInt(m[1], 10) : null; })
+        .filter((v) => v !== null).sort((a, b) => a - b);
+      if (!present.length) continue;
+      const omit = LOBJ_OMIT.get(biome + '/' + obj) || new Set();
+      const vmap = present.filter((v) => !omit.has(v));
+      if (!vmap.length) continue; // fully omitted -> dropped
+      const size = pngWidth(path.join(odir, `lg__${biome}__${obj}__v${String(vmap[0]).padStart(3, '0')}.png`));
+      (lgCatalog[biome] = lgCatalog[biome] || []).push({
+        name: obj, size, variants: vmap.length, vmap,
+        tileSize: LO_OBJECT_TILES[obj] || LO_DEFAULT_TILES,
+        states: {}, anims: [], trims: null, sil: null,
+        source: { dir: 'large_objects', file: 'lg_prefixed', biome },
+      });
+    }
+  }
+}
+
 let lgTypes = 0;
 for (const b in lgCatalog) lgTypes += lgCatalog[b].length;
 fs.writeFileSync(LG_OUT, '// AUTO-GENERATED by scripts/gen-mf-catalog.mjs — do not edit.\n' +
   '// Regenerate as the W2 tree burst lands variants/states/anims on disk.\n' +
   'export var LG_CATALOG = ' + JSON.stringify(lgCatalog, null, 1) + ';\n');
 console.log(`wrote ${LG_OUT}: ${lgTypes} types`);
+
+// ---- F2 small flora -> src/world/sf-catalog.js ----
+const SF_SMALL = path.join(ROOT, 'assets/pixelab/landscape_v2/micro/small_flora');
+const SF_OUT = path.join(ROOT, 'src/world/sf-catalog.js');
+
+const F2_OMIT = omitSetMap(loadCuration('f2')); // "biome/object" -> Set(omitted variant indices)
+const sfCatalog = {};
+if (fs.existsSync(SF_SMALL)) {
+  for (const biome of fs.readdirSync(SF_SMALL).sort()) {
+    if (biome.startsWith('_')) continue;
+    const bdir = path.join(SF_SMALL, biome);
+    let bst; try { bst = fs.statSync(bdir); } catch { continue; }
+    if (!bst.isDirectory()) continue;
+    for (const obj of fs.readdirSync(bdir).sort()) {
+      const odir = path.join(bdir, obj);
+      let ost; try { ost = fs.statSync(odir); } catch { continue; }
+      if (!ost.isDirectory()) continue;
+      const re = /^sf__.*__v(\d{3})\.png$/;
+      const present = fs.readdirSync(odir)
+        .map(f => { const m = f.match(re); return m ? parseInt(m[1], 10) : null; })
+        .filter(v => v !== null)
+        .sort((a, b) => a - b);
+      if (!present.length) continue;
+      const omit = F2_OMIT.get(biome + '/' + obj) || new Set();
+      const vmap = present.filter(v => !omit.has(v));
+      // Do NOT drop fully-omitted species — emit with empty vmap so the renderer
+      // can distinguish "no catalog entry" (null → full fallback) from
+      // "fully culled" ([] → render nothing). Species with no base sprites on
+      // disk were already skipped above (present.length check).
+      (sfCatalog[biome] = sfCatalog[biome] || []).push({ name: obj, vmap });
+    }
+  }
+}
+
+let sfTypes = 0;
+for (const b in sfCatalog) sfTypes += sfCatalog[b].length;
+fs.writeFileSync(SF_OUT, '// AUTO-GENERATED by scripts/gen-mf-catalog.mjs — do not edit.\n' +
+  '// Regenerate whenever _f2_curation.json changes or new sprites land on disk.\n' +
+  'export var SF_CATALOG = ' + JSON.stringify(sfCatalog, null, 1) + ';\n');
+console.log(`wrote ${SF_OUT}: ${sfTypes} types`);
+
+// ---- F3 small scatter -> src/world/ss-catalog.js ----
+const SS_SMALL = path.join(ROOT, 'assets/pixelab/landscape_v2/micro/small_scatter');
+const SS_OUT = path.join(ROOT, 'src/world/ss-catalog.js');
+
+const F3_OMIT = omitSetMap(loadCuration('f3')); // "biome/object" -> Set(omitted variant indices)
+const ssCatalog = {};
+if (fs.existsSync(SS_SMALL)) {
+  for (const biome of fs.readdirSync(SS_SMALL).sort()) {
+    if (biome.startsWith('_')) continue;
+    const bdir = path.join(SS_SMALL, biome);
+    let bst; try { bst = fs.statSync(bdir); } catch { continue; }
+    if (!bst.isDirectory()) continue;
+    for (const obj of fs.readdirSync(bdir).sort()) {
+      if (obj.startsWith('_')) continue;
+      const odir = path.join(bdir, obj);
+      let ost; try { ost = fs.statSync(odir); } catch { continue; }
+      if (!ost.isDirectory()) continue;
+      const re = /^ss__.*__v(\d+)\.png$/;
+      const present = fs.readdirSync(odir)
+        .map(f => { const m = f.match(re); return m ? parseInt(m[1], 10) : null; })
+        .filter(v => v !== null)
+        .sort((a, b) => a - b);
+      if (!present.length) continue;
+      const omit = F3_OMIT.get(biome + '/' + obj) || new Set();
+      const vmap = present.filter(v => !omit.has(v));
+      // Do NOT drop fully-omitted species — emit with empty vmap so the renderer
+      // can distinguish "no catalog entry" (null → full fallback) from
+      // "fully culled" ([] → render nothing). Species with no base sprites on
+      // disk were already skipped above (present.length check).
+      (ssCatalog[biome] = ssCatalog[biome] || []).push({ name: obj, vmap });
+    }
+  }
+}
+
+let ssTypes = 0;
+for (const b in ssCatalog) ssTypes += ssCatalog[b].length;
+fs.writeFileSync(SS_OUT, '// AUTO-GENERATED by scripts/gen-mf-catalog.mjs — do not edit.\n' +
+  '// Regenerate whenever _f3_curation.json changes or new sprites land on disk.\n' +
+  'export var SS_CATALOG = ' + JSON.stringify(ssCatalog, null, 1) + ';\n');
+console.log(`wrote ${SS_OUT}: ${ssTypes} types`);

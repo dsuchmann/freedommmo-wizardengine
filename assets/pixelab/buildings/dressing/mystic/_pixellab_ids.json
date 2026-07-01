@@ -91,5 +91,33 @@
   "variants": 4,
   "states": {},
   "anims": {}
+ },
+ "vine_segment": {
+  "base": "71fd6a45-53c1-434c-abbb-ee56e594fdae",
+  "px": 64,
+  "variants": 4,
+  "states": {},
+  "anims": {}
+ },
+ "vine_root_base": {
+  "base": "dbeecf6f-7ba5-4cc4-a996-ec5a641aa6e2",
+  "px": 64,
+  "variants": 4,
+  "states": {},
+  "anims": {}
+ },
+ "vine_fork": {
+  "base": "5c4fd371-32b8-41f5-9d28-1b3c3f2d9aec",
+  "px": 64,
+  "variants": 4,
+  "states": {},
+  "anims": {}
+ },
+ "vine_leaf_cluster": {
+  "base": "3d4c2991-1f74-49ea-b490-620b14739f1a",
+  "px": 64,
+  "variants": 4,
+  "states": {},
+  "anims": {}
  }
 }

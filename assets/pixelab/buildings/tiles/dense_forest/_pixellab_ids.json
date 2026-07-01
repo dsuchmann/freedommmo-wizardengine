@@ -1,0 +1,74 @@
+{
+  "_doc": "dense_forest tile-corpus ledger. Slugs from building-materials.json (identity TILE_MATERIALS, no registry edit). Vocab: docs/superpowers/specs/2026-06-24-dense_forest-tile-corpus-manifest.md.",
+  "base_project": "0f1031f5-9eee-4df4-996f-0a4114148eba",
+  "materials": {
+    "mossy_timber": {
+      "base": "3bc4bd87-cb16-49d2-819a-871d81ff0147",
+      "ground_window": "b25cc1ba-af5b-4f53-88d5-07fd22806abb",
+      "ground_door": "959eb0f2-2d90-4ded-92bd-cb9bf5e30b2f",
+      "ground_left_corner": "33b940ea-90e6-495a-9981-0213571f4a9b",
+      "gable": "b43d45e7-c98b-4517-8d68-04cddf60a2e2",
+      "window_anim": "64771d90-a11f-410e-9eb5-cd63ebfffad8"
+    },
+    "dark_stained_log": {
+      "base": "cb6bb704-be54-4327-b952-fcfce2c55838",
+      "ground_window": "a1641d2c-593d-42a8-be50-6aa2df3d65e3",
+      "ground_door": "c0cec296-28db-44ec-9d68-67c7dba634e7",
+      "ground_left_corner": "1df8a470-ed8f-48ef-9f51-863431e80103",
+      "gable": "b311de23-0fa6-41c4-b164-ee31274b50df",
+      "window_anim": "d4aa93df-01d5-4bf5-8f75-43a91692fb5d"
+    },
+    "root_and_earth": {
+      "base": "bf59c390-78cf-4fba-afb7-1c816bf8d9b0",
+      "ground_window": "e66e8662-427b-454f-929e-68acaf7032cd",
+      "ground_door": "3e424da8-d0ee-47d6-8744-4f3d0dc03ca5",
+      "ground_left_corner": "70847e4a-0eac-42e4-9cc8-79b632be93c4",
+      "gable": "56d9b441-6333-43b6-a77b-223fabedb474",
+      "window_anim": "2777a505-756e-4d20-b351-a959ab2e9554",
+      "window_anim_group": "b920b471-9f93-4288-9fd7-c26ce98f0808"
+    },
+    "deep_bark_plank": {
+      "base": "00e38a04-32e0-44c0-9fdd-dd53e4b340a4",
+      "ground_window": "5a792f30-a2ef-4778-ae8f-a5447ee99af5",
+      "ground_door": "46e10e6b-0bb9-43b1-b47a-bb128d767b84",
+      "ground_left_corner": "314e0034-47ce-4d5a-88e9-b61122dc82e1",
+      "gable": "2a4cb3fb-33bb-4dd3-8ef3-46fef8df0176",
+      "window_anim": "20a628fb-a74e-4ef8-958c-2e44309a0351",
+      "window_anim_group": "49e6f04f-77b8-4ddc-9bea-7da019fe416d"
+    }
+  },
+  "roofs": {
+    "moss_shingle": {
+      "tileset": "53f35c28-ba45-4266-9ca2-75ea5a3db17e",
+      "seed": 730101,
+      "v000": "53f35c28-ba45-4266-9ca2-75ea5a3db17e#tile_0",
+      "v001": "53f35c28-ba45-4266-9ca2-75ea5a3db17e#tile_1",
+      "v002": "53f35c28-ba45-4266-9ca2-75ea5a3db17e#tile_2",
+      "v003": "53f35c28-ba45-4266-9ca2-75ea5a3db17e#tile_3"
+    },
+    "dark_slate": {
+      "tileset": "b1038e3f-149c-4989-a6ed-7ad7a4f2e896",
+      "seed": 730202,
+      "v000": "b1038e3f-149c-4989-a6ed-7ad7a4f2e896#tile_0",
+      "v001": "b1038e3f-149c-4989-a6ed-7ad7a4f2e896#tile_1",
+      "v002": "b1038e3f-149c-4989-a6ed-7ad7a4f2e896#tile_2",
+      "v003": "b1038e3f-149c-4989-a6ed-7ad7a4f2e896#tile_3"
+    },
+    "fern_thatch": {
+      "tileset": "cc23cbd8-50ec-413d-a3d3-46fe8ecaec53",
+      "seed": 730303,
+      "v000": "cc23cbd8-50ec-413d-a3d3-46fe8ecaec53#tile_0",
+      "v001": "cc23cbd8-50ec-413d-a3d3-46fe8ecaec53#tile_1",
+      "v002": "cc23cbd8-50ec-413d-a3d3-46fe8ecaec53#tile_2",
+      "v003": "cc23cbd8-50ec-413d-a3d3-46fe8ecaec53#tile_3"
+    },
+    "deep_moss_sod": {
+      "tileset": "41fee2d8-61e8-478e-84c1-e8b1daf8e966",
+      "seed": 730404,
+      "v000": "41fee2d8-61e8-478e-84c1-e8b1daf8e966#tile_4",
+      "v001": "41fee2d8-61e8-478e-84c1-e8b1daf8e966#tile_10",
+      "v002": "41fee2d8-61e8-478e-84c1-e8b1daf8e966#tile_12",
+      "v003": "41fee2d8-61e8-478e-84c1-e8b1daf8e966#tile_13"
+    }
+  }
+}

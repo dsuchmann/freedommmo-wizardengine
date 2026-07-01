@@ -16,6 +16,10 @@
   "label": "F2 small flora"
  },
  {
+  "id": "f3",
+  "label": "F3 small scatter"
+ },
+ {
   "id": "large_objects",
   "label": "Large objects"
  },

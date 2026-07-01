@@ -19,9 +19,17 @@ import { getWallImg } from './building-renderer.js';
 import { buildingFloors } from './building-shadow.js';
 import { queryBuildingTile } from './building-tile-query.js';
 import { wallAssetDir, wallPieceFile, roofAssetDir, roofTextureFile, ROOF_FASCIA_FILE } from '../../sim/world/buildings/building-material-registry.js';
-import { drawBuildingTiles, isTiledBuilding } from './building-tiles.js';
+import { drawBuildingTiles, isTiledBuilding, materialOf, tileImagesReady, drawDoorsLive, doorSwingSig } from './building-tiles.js';
 import { renderOn } from './building-render-flags.js';
 import { paintWeatheredColumn } from './dressing/d0-weathering.js';
+import { paintDamagedColumn } from './dressing/d1-damage.js';
+import { drawD1Chips } from './dressing/d1-chips.js';
+import { paintGrowthColumn, isStoneSlug } from './dressing/d2-growth.js';
+import { isWaterTile } from '../../sim/world/buildings/terrain-suitability.js';
+import { drawD3Props, drawBakedAwnings } from './dressing/d3-props.js';
+import { drawVinePass } from './dressing/vine-render.js';
+import { onSceneDiscontinuity } from '../core/scene-teardown.js';
+import { buildingAssetExists } from './building-asset-index.js';
 
 // Source rect of the E/W side-face cap. The grassland edge_ew strip is a 32x128 quoin/side-cap;
 // sample its LEFT quoin column (x=0..16) as the true vertical corner post (`isQuoinStrip`) — drawing
@@ -109,10 +117,41 @@ if (typeof window !== 'undefined') window._windowFit = WINDOW_FIT;
 // Roof engine (the SAME module the worker bakes with) — lazy + guarded so a roof failure never
 // breaks the frame (mirrors roof-overlay.js).
 let _roof = null, _roofLoading = false, _roofFailed = false;
+// Dedicated GPU-accelerated canvas for the roof rasterize (no willReadFrequently → stays on the GPU, so the
+// roof's per-facet sheared drawImage is fast). Reused across all building bakes; the result is blitted into
+// each building's (software, read-back) work canvas. See the drawRoof closure for the full rationale.
+let _roofGpuCv = null, _roofGpuCx = null;
 function ensureRoof() {
   if (_roof || _roofLoading || _roofFailed) return;
   _roofLoading = true;
   import('../../tools/roof/roof-ingame.js').then(m => { _roof = m; }).catch(() => { _roofFailed = true; }).finally(() => { _roofLoading = false; });
+}
+
+// Bake-state for the building sprite cache: { complete, sig }. complete = is the TEXTURED silhouette fully
+// renderable RIGHT NOW (all wall/aperture tiles loaded AND the roof engine loaded)? The cache re-bakes until
+// complete so it never FREEZES a half-loaded (walls-only / no-roof) sprite — tiles + the roof module load async,
+// so the first drawable frame is walls-only and that must NOT be the permanent bake. sig is '' for now (Step 1:
+// the door + props are baked FROZEN — no per-frame re-bake yet). Kicks ensureRoof so the roof starts loading.
+export function buildingBakeState(b) {
+  let complete = true;
+  try {
+    if (isTiledBuilding(b)) {
+      if (!tileImagesReady(b)) complete = false;
+      else if (renderOn('roof')) {
+        ensureRoof();
+        if (!_roof) complete = false;                            // roof ENGINE still loading → bake again later
+        else if (b.roofSlug && !roofTexFor(b)) complete = false; // roof TEXTURE still loading → else it bakes a flat
+                                                                 // procedural base colour ("green roof") and freezes
+      }
+    } else {
+      complete = !!getWallImg('south_base'); // legacy wall path needs the stone_brick fallback loaded
+    }
+    // NOTE: do NOT compute buildVineSplines() here. buildingBakeState runs EVERY FRAME for EVERY building (it's
+    // the cache's validity check), so any non-trivial work here is a per-frame CPU cost on the hot path (2026-06-26
+    // perf bug: a vine gate here dropped a town to 20fps). The vine art (small, on disk) decodes well within the
+    // multi-frame window the tiles+roof completeness already provides, so a separate vine wait isn't worth it.
+  } catch { complete = true; } // never block forever on a predicate error
+  return { complete, sig: '' };
 }
 
 // Lazy biome roof-texture cache so the re-drawn roof gets the SAME ground-skin the worker bakes
@@ -123,7 +162,12 @@ const _tex = new Map();
 const _imageCache = {
   get(url) {
     let im = _tex.get(url);
-    if (!im) { im = new Image(); im.src = url; _tex.set(url, im); }
+    if (im !== undefined) return (im && im.complete && im.naturalWidth) ? im : null;
+    // Manifest gate: never request a roof/fascia/gable/tile asset that was never generated (partial biomes:
+    // forest/taiga/swamp/...). Caching null also lets roofTexFor's variant fall-through skip absent v004-v007
+    // instantly instead of firing a 404 per building — and the bake reaches `complete` without that wait.
+    if (!buildingAssetExists(url)) { _tex.set(url, null); return null; }
+    im = new Image(); im.src = url; _tex.set(url, im);
     return (im.complete && im.naturalWidth) ? im : null;
   },
 };
@@ -137,7 +181,11 @@ function roofTexFor(b) {
   // Rotate roof_top variants per building (deterministic by footprint position) so a town shows VARIETY instead
   // of one repeated tile. .get lazy-loads each variant; try the hashed one first, then fall through to whatever
   // variants exist (v000 base) so a slug with fewer variants still renders.
-  const NV = 8; // roof_top__v000..v007 — desert uses a biome-wide curated pool (mud + sandstone-slabs), all slugs share it
+  // Biome-wide curated roof-pool size (every roofSlug shares the same pool; rotate this many per building for town
+  // variety). desert = 8 (mud + sandstone-slabs); mystic = 48 (geode + amethyst + silver-thatch, slate excluded —
+  // user-curated 2026-06-24). Default 8. The fall-through loop still renders slugs with fewer variants on disk.
+  const ROOF_NV = { desert: 8, mystic: 48 };
+  const NV = ROOF_NV[b.biome] || 8; // roof_top__v000..v0(NV-1)
   const h = Math.abs((((b.x | 0) * 73856093) ^ ((b.y | 0) * 19349663)) >>> 0) % NV;
   for (let k = 0; k < NV; k++) { const img = _imageCache.get(dir + roofTextureFile((h + k) % NV)); if (img) return img; }
   return null;
@@ -145,6 +193,15 @@ function roofTexFor(b) {
 // Per-material eave/rake trim board (ROOF lane draws it on the skirt; degrades to procedural fasciaColor if absent).
 function roofFasciaFor(b) {
   return (b && b.biome && b.roofSlug) ? _imageCache.get(roofAssetDir(b.biome, b.roofSlug) + ROOF_FASCIA_FILE) : null;
+}
+// Per-WALL-MATERIAL gable tile (the wall carried up into the south roof→wall triangle). Keyed on the building's
+// WALL material (materialOf) from the tiles corpus — NOT the roof material. Null until the image lazy-loads or for
+// non-tiled biomes → drawSkirt falls back to the procedural solid fill. Shares the one-frame-lazy _imageCache.
+const TILE_GABLE_ROOT = '/assets/pixelab/buildings/tiles/';
+function gableTexFor(b) {
+  if (!(b && b.biome)) return null;
+  const mat = materialOf(b);
+  return mat ? _imageCache.get(TILE_GABLE_ROOT + b.biome + '/' + mat + '/gable__v0.png') : null;
 }
 
 // Empty-tile gap to the building NORTH of us — mirrors the worker's roof clamp so the re-drawn
@@ -253,6 +310,33 @@ function occludes(b, px, py) {
   return true;
 }
 
+// Per-building memoised floor-occupancy Set (keys "lx,ly" of every footprint tile). The footprint
+// sections are STATIC building geometry, so the identical Set was being rebuilt every frame in
+// drawWalls + all three dressing passes (5 O(n²) rebuilds/building/frame). Cache it on the building,
+// invalidated by the sections-array IDENTITY (a regenerated footprint swaps the array reference →
+// rebuild). The Set is only ever read (.has) by callers, never mutated, so sharing is safe.
+function floorSetFor(b) {
+  const fp = b && b.footprint;
+  const sections = (fp && fp.sections) || [];
+  if (b._floorSetCache && b._floorSetSrc === sections) return b._floorSetCache;
+  const set = new Set();
+  for (const s of sections) for (let dy = 0; dy < s.h; dy++) for (let dx = 0; dx < s.w; dx++) set.add((s.x0 + dx) + ',' + (s.y0 + dy));
+  b._floorSetCache = set;
+  b._floorSetSrc = sections;
+  return set;
+}
+// Per-building memoised door Set (keys "lx,ly"). doors are static footprint geometry; same identity-
+// keyed cache + read-only-share rationale as floorSetFor.
+function doorSetFor(b) {
+  const fp = b && b.footprint;
+  const doors = (fp && fp.doors) || [];
+  if (b._doorSetCache && b._doorSetSrc === doors) return b._doorSetCache;
+  const set = new Set(doors.map(d => d.x + ',' + d.y));
+  b._doorSetCache = set;
+  b._doorSetSrc = doors;
+  return set;
+}
+
 // Re-draw ONE building's walls EXACTLY as the worker bakes them (worker-chunk-renderer.js wall
 // post-pass): legacy strips use the full `(0,0,W,128)` crop (isotropic — matches building-renderer.js;
 // no vertical stretch), boundary-derived tile extents (no seams), same WALL_CONFIG offsets, STACKED
@@ -267,9 +351,8 @@ export function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
   const stories = buildingFloors(b);
   const fp = b.footprint, sections = fp.sections || [];
   const tsy = (wy) => Math.round(wy * tilePx - camY);
-  const floorSet = new Set();
-  for (const s of sections) for (let dy = 0; dy < s.h; dy++) for (let dx = 0; dx < s.w; dx++) floorSet.add((s.x0 + dx) + ',' + (s.y0 + dy));
-  const doorSet = new Set((fp.doors || []).map(d => d.x + ',' + d.y));
+  const floorSet = floorSetFor(b);
+  const doorSet = doorSetFor(b);
 
   // Grassland wall pieces are now 32x128 STRUCTURED STRIPS (cap+body+foundation baked in) and the
   // wide pieces (south_doorway/window) are 64x128 — both drop straight into the isotropic per-32px
@@ -477,7 +560,7 @@ export function drawWalls(ctx, b, camX, camY, tilePx, w, h) {
 // D0 WEATHERING post-pass — tint each exposed SOUTH perimeter wall COLUMN with procedural ground grime +
 // tonal variation. Mechanism A: painted into the silhouette ctx, so it rides the GL present pass (lighting/
 // CRT/day-night) — never a 2D overlay. Walks the same south-perimeter columns as the cob-foundation pass.
-function drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h) {
+function drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h, colSet) {
   if (!renderOn('weathering')) return;
   const fp = b && b.footprint, sections = (fp && fp.sections) || [];
   if (!sections.length) return;
@@ -485,9 +568,9 @@ function drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h) {
   const wH = Math.round(tilePx * WALL_CONFIG.wallHeight);
   const WY = WALL_CONFIG.wallYOffset;
   const stories = buildingFloors(b);
+  const material = materialOf(b); // pass to the weathering pass so pale woven/thatch walls get gentler grime
   const tsy = (wy) => Math.round(wy * tilePx - camY);
-  const floorSet = new Set();
-  for (const s of sections) for (let dy = 0; dy < s.h; dy++) for (let dx = 0; dx < s.w; dx++) floorSet.add((s.x0 + dx) + ',' + (s.y0 + dy));
+  const floorSet = floorSetFor(b);
   for (const s of sections) {
     const lr = s.y0 + s.h - 1, fbY = b.y + s.y0 + s.h;
     for (let dx = 0; dx < s.w; dx++) {
@@ -498,7 +581,100 @@ function drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h) {
       const colTop = groundTop - (stories - 1) * wH;
       const colH = stories * wH;
       if (ex.dx + ex.dw < 0 || ex.dx > w || colTop + colH < 0 || colTop > h) continue;
-      paintWeatheredColumn(ctx, { dx: ex.dx, top: colTop, dw: ex.dw, colH }, { wx: b.x + lx, wy: fbY });
+      if (colSet && !colSet.has(lx)) continue; // door-only repaint: grime just the door's columns (caller passes a colSet)
+      paintWeatheredColumn(ctx, { dx: ex.dx, top: colTop, dw: ex.dw, colH, tilePx }, { wx: b.x + lx, wy: fbY }, { material });
+    }
+  }
+}
+
+// Honest water-proximity for a building, cached on the building (terrain never changes): the Chebyshev
+// distance to the nearest basin-water tile (river/lake/coast) within a small radius, mapped to [0,1]
+// (1 = water immediately adjacent). Buildings are filtered OFF water but can sit beside it, so this is a
+// real hydrology signal → a waterfront building rots/runnels in ANY biome. 0 when no water is near or the
+// classifier is unavailable (honest absence → biome-climate wetness only).
+const WATER_PROX_R = 10;
+function buildingWaterProximity(b) {
+  if (b._d1WaterProx !== undefined) return b._d1WaterProx;
+  let prox = 0;
+  try {
+    const bb = b && b.footprint && b.footprint.boundingBox;
+    if (bb) {
+      const x0 = b.x, y0 = b.y, x1 = b.x + bb.w - 1, y1 = b.y + bb.h - 1;
+      let found = 0;
+      for (let r = 1; r <= WATER_PROX_R && !found; r++) {
+        for (let x = x0 - r; x <= x1 + r && !found; x++) if (isWaterTile(x, y0 - r) || isWaterTile(x, y1 + r)) found = r;
+        for (let y = y0 - r; y <= y1 + r && !found; y++) if (isWaterTile(x0 - r, y) || isWaterTile(x1 + r, y)) found = r;
+      }
+      if (found) prox = 1 - (found - 1) / WATER_PROX_R; // adjacent → 1.0, at the radius edge → ~0.1
+    }
+  } catch { prox = 0; } // classifier not available client-side → no water signal (honest)
+  b._d1WaterProx = prox;
+  return prox;
+}
+
+// D1 DAMAGE post-pass — paint procedural structural decay (cracks/flaking/rot/runnels/rust) over the
+// SAME south-perimeter wall columns as weathering, AFTER it (damage rides on top of grime). Mechanism A:
+// into the silhouette ctx → GL present pass, never a 2D overlay. Drivers are honest: wetness derives from
+// the building's biome AND its real water-proximity (waterfront buildings rot/runnel in any biome); a
+// per-building disrepair baseline drives cracks/flaking; age is honestly absent (tuner-preview only).
+function drawDamagePass(ctx, b, camX, camY, tilePx, w, h, colSet) {
+  if (!renderOn('damage')) return;
+  const fp = b && b.footprint, sections = (fp && fp.sections) || [];
+  if (!sections.length) return;
+  const t = Math.round(tilePx);
+  const wH = Math.round(tilePx * WALL_CONFIG.wallHeight);
+  const WY = WALL_CONFIG.wallYOffset;
+  const stories = buildingFloors(b);
+  const material = materialOf(b);
+  const waterProximity = buildingWaterProximity(b);
+  const tsy = (wy) => Math.round(wy * tilePx - camY);
+  const floorSet = floorSetFor(b);
+  for (const s of sections) {
+    const fbY = b.y + s.y0 + s.h;
+    for (let dx = 0; dx < s.w; dx++) {
+      const lx = s.x0 + dx;
+      if (floorSet.has(lx + ',' + (s.y0 + s.h))) continue; // south neighbour inside → not a south face
+      const ex = tileExtent(b.x + lx, tilePx, camX, 1);
+      const groundTop = tsy(fbY) - wH + Math.round(t * WY);
+      const colTop = groundTop - (stories - 1) * wH;
+      const colH = stories * wH;
+      if (ex.dx + ex.dw < 0 || ex.dx > w || colTop + colH < 0 || colTop > h) continue;
+      if (colSet && !colSet.has(lx)) continue; // door-only repaint: damage just the door's columns
+      paintDamagedColumn(ctx, { dx: ex.dx, top: colTop, dw: ex.dw, colH, tilePx },
+        { wx: b.x + lx, wy: fbY }, { biome: b.biome, bx: b.x | 0, by: b.y | 0, material, waterProximity });
+    }
+  }
+}
+
+// D2 SURFACE-GROWTH post-pass — paint procedural moss + lichen over the SAME south-perimeter wall columns,
+// AFTER weathering+damage (growth colonises the aged surface). Mechanism A → GL present pass. Honest drivers:
+// lichen = stable per-surface random + mild wetness, boosted on stone hosts; moss = wetness (biome + water
+// proximity), bottom-weighted, lush only in wet biomes (the sunny south face stays modest).
+function drawGrowthPass(ctx, b, camX, camY, tilePx, w, h, colSet) {
+  if (!renderOn('growth')) return;
+  const fp = b && b.footprint, sections = (fp && fp.sections) || [];
+  if (!sections.length) return;
+  const t = Math.round(tilePx);
+  const wH = Math.round(tilePx * WALL_CONFIG.wallHeight);
+  const WY = WALL_CONFIG.wallYOffset;
+  const stories = buildingFloors(b);
+  const stone = isStoneSlug(materialOf(b) || b.wallSlug || '');
+  const waterProximity = buildingWaterProximity(b);
+  const tsy = (wy) => Math.round(wy * tilePx - camY);
+  const floorSet = floorSetFor(b);
+  for (const s of sections) {
+    const fbY = b.y + s.y0 + s.h;
+    for (let dx = 0; dx < s.w; dx++) {
+      const lx = s.x0 + dx;
+      if (floorSet.has(lx + ',' + (s.y0 + s.h))) continue; // south neighbour inside → not a south face
+      const ex = tileExtent(b.x + lx, tilePx, camX, 1);
+      const groundTop = tsy(fbY) - wH + Math.round(t * WY);
+      const colTop = groundTop - (stories - 1) * wH;
+      const colH = stories * wH;
+      if (ex.dx + ex.dw < 0 || ex.dx > w || colTop + colH < 0 || colTop > h) continue;
+      if (colSet && !colSet.has(lx)) continue; // door-only repaint: growth just the door's columns
+      paintGrowthColumn(ctx, { dx: ex.dx, top: colTop, dw: ex.dw, colH, tilePx },
+        { wx: b.x + lx, wy: fbY }, { biome: b.biome, bx: b.x | 0, by: b.y | 0, stone, waterProximity });
     }
   }
 }
@@ -530,7 +706,7 @@ export function buildOccluderBitmap(buildings, camX, camY, tilePx, w, h, playerS
   occ.sort((a, b) => (a.y + a.footprint.boundingBox.h) - (b.y + b.footprint.boundingBox.h));
   for (const b of occ) {
     drawWalls(o, b, camX, camY, tilePx, w, h);
-    if (_roof && renderOn('roof')) { try { _roof.drawRoofForBuilding(o, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b), roofFascia: roofFasciaFor(b) }); } catch { /* skip roof */ } }
+    if (_roof && renderOn('roof')) { try { _roof.drawRoofForBuilding(o, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b), roofFascia: roofFasciaFor(b), gableTex: gableTexFor(b) }); } catch { /* skip roof */ } }
   }
 
   // DEPTH GUARD: only the building ABOVE the player's feet occludes the player. The building's
@@ -572,8 +748,92 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   // Roof respects its OWN layer flag — the procedural roof rides along with the wall path, so without this
   // gate it would draw even when the roof layer is off (leaking an un-tuned, wall-misaligned roof over the
   // walls). With roof off, walls show clean; we align the roof eaves to the walls when the roof layer is on.
-  const drawRoof = () => { if (_roof && renderOn('roof')) { try { _roof.drawRoofForBuilding(ctx, b, camX, camY, tilePx, { stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b), roofFascia: roofFasciaFor(b) }); } catch { /* skip roof */ } } };
-  if (drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h)) { if (b) b._wallPath = 'tiles'; drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h); drawRoof(); return true; }
+  const _roofOpts = () => ({ stories: buildingFloors(b), northGapTiles: northGapTiles(b), imageCache: _imageCache, roofTexture: roofTexFor(b), roofFascia: roofFasciaFor(b), gableTex: gableTexFor(b) });
+  // Render the roof on a SEPARATE, GPU-ACCELERATED canvas, then blit it (axis-aligned) into the bake ctx.
+  // WHY: the bake work canvas is created with willReadFrequently:true (needed for its one alpha-crop
+  // getImageData), which forces Chrome to render it in SOFTWARE — and the roof's per-facet SHEARED drawImage
+  // is ~22ms each on a software canvas (~50 facets = the 1+ second roof). This roof canvas is NEVER read back,
+  // so it stays on the GPU where a sheared drawImage is ~microseconds. The roof draws transparently
+  // (background:false + noClear, roof-ingame.js:117) so the blit composites over the walls pixel-identically —
+  // FULL texture quality, no resolution cut. Falls back to drawing straight into ctx if the canvas can't be made.
+  const drawRoof = () => {
+    if (!(_roof && renderOn('roof'))) return;
+    const cw = ctx.canvas && ctx.canvas.width, ch = ctx.canvas && ctx.canvas.height;
+    if (!cw || !ch) { try { _roof.drawRoofForBuilding(ctx, b, camX, camY, tilePx, _roofOpts()); } catch { /* skip */ } return; }
+    if (!_roofGpuCv || _roofGpuCv.width < cw || _roofGpuCv.height < ch) {
+      // PREFER a detached DOM <canvas> over OffscreenCanvas: on the MAIN thread Chrome
+      // reliably GPU-accelerates a plain <canvas> 2D context, but main-thread
+      // OffscreenCanvas 2D often falls back to SOFTWARE — which made the roof's per-facet
+      // sheared drawImage cost ~1.5s/building (the town-load main-thread jam). OffscreenCanvas
+      // is only the fallback for a worker/no-DOM context.
+      _roofGpuCv = (typeof document !== 'undefined' && document.createElement) ? document.createElement('canvas')
+        : (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(cw, ch) : null;
+      if (_roofGpuCv) { _roofGpuCv.width = Math.max(cw, _roofGpuCv.width || 0); _roofGpuCv.height = Math.max(ch, _roofGpuCv.height || 0); _roofGpuCx = _roofGpuCv.getContext('2d'); }
+    }
+    if (!_roofGpuCx) { try { _roof.drawRoofForBuilding(ctx, b, camX, camY, tilePx, _roofOpts()); } catch { /* skip */ } return; }
+    try {
+      _roofGpuCx.setTransform(1, 0, 0, 1, 0, 0); _roofGpuCx.globalCompositeOperation = 'source-over';
+      _roofGpuCx.clearRect(0, 0, cw, ch); _roofGpuCx.imageSmoothingEnabled = false;
+      // DIAG: split the roof cost into RENDER (per-tile sheared drawImage) vs BLIT
+      // (GPU→software readback onto the willReadFrequently bake canvas). Read
+      // window._roofProf in console after a laggy town to see which is software-bound.
+      var _rt0 = (typeof performance !== 'undefined') ? performance.now() : 0;
+      _roof.drawRoofForBuilding(_roofGpuCx, b, camX, camY, tilePx, _roofOpts());
+      var _rt1 = (typeof performance !== 'undefined') ? performance.now() : 0;
+      ctx.drawImage(_roofGpuCv, 0, 0, cw, ch, 0, 0, cw, ch);
+      var _rt2 = (typeof performance !== 'undefined') ? performance.now() : 0;
+      if (typeof window !== 'undefined') {
+        var _rp = window._roofProf || (window._roofProf = { render: 0, blit: 0, n: 0, maxRender: 0, maxBlit: 0 });
+        var _rr = _rt1 - _rt0, _rb = _rt2 - _rt1;
+        _rp.render += _rr; _rp.blit += _rb; _rp.n++;
+        if (_rr > _rp.maxRender) _rp.maxRender = _rr;
+        if (_rb > _rp.maxBlit) _rp.maxBlit = _rb;
+        // Log the split when a roof is slow so ANY shared console log pinpoints the
+        // hotspot: render = per-facet sheared drawImage (software?), blit = GPU→software
+        // readback onto the willReadFrequently bake canvas. cw×ch = roof canvas size.
+        if (_rr + _rb > 200) console.log('[roofSplit] render=' + Math.round(_rr) + 'ms blit=' + Math.round(_rb) + 'ms cw=' + cw + ' ch=' + ch);
+      }
+    } catch { /* skip roof */ }
+  };
+  // D3 wall attachments + the door SWING are NO LONGER baked here — they ANIMATE (banner/sign sway, lantern
+  // flicker, door open/close), and a baked-in prop/door FREEZES in the cached sprite. They're drawn LIVE each
+  // frame as a per-building depth quad (drawBuildingDynamicInto → glc.drawBuildingPropsSprite) AFTER the building
+  // sprites — see canvas-renderer. The bake holds the CLOSED door (so the wall is complete) + static walls/roof.
+  // The roof now terminates at the wall top (no south overhang), so wall-mounted props sit cleanly under it.
+  // D1 sprite-chips (plank gaps / patches) — gated with the rest of D1 damage; before the roof like the walls.
+  const drawChips = () => { if (renderOn('damage')) { try { drawD1Chips(ctx, b, camX, camY, tilePx, w, h); } catch { /* skip chips */ } } };
+  // D2 PLACED vines climb the wall — baked here (BEFORE the roof) so the eave occludes the top and the static
+  // stem rides the cached sprite. Painted after the D2 coverage growth so ivy sits over moss/lichen.
+  const drawVines = () => { if (renderOn('vines')) { try { drawVinePass(ctx, b, camX, camY, tilePx, w, h); } catch { /* skip vines */ } } };
+  // D3 awnings bake BEFORE the roof (like vines) so the eave overhangs the door-head canopy and it projects out
+  // from UNDERNEATH the roof, not over it (user 2026-06-27). All OTHER props stay on the live dynamic overlay.
+  const drawAwnings = () => { if (renderOn('attachments')) { try { drawBakedAwnings(ctx, b, camX, camY, tilePx, w, h); } catch { /* skip awnings */ } } };
+  // BAKE SUB-TIMING (diagnostic): a single forest building bake measured ~450ms (window._drawProf.bSpr). Record
+  // the slowest building's per-pass breakdown into window._bbWorst so we can see WHICH pass eats it. ~free
+  // (one perf.now per pass on the one-time bake). Read window._bbWorst in console after walking.
+  const _T = (typeof performance !== 'undefined') ? () => performance.now() : () => 0;
+  let _t = _T();
+  const _tiled = drawBuildingTiles(ctx, b, camX, camY, tilePx, w, h);
+  if (_tiled) {
+    if (b) b._wallPath = 'tiles';
+    const _sub = { tiles: _T() - _t };
+    _t = _T(); drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h); _sub.weather = _T() - _t;
+    _t = _T(); drawDamagePass(ctx, b, camX, camY, tilePx, w, h);   _sub.damage = _T() - _t;
+    _t = _T(); drawGrowthPass(ctx, b, camX, camY, tilePx, w, h);   _sub.growth = _T() - _t;
+    _t = _T(); drawChips();   _sub.chips = _T() - _t;
+    _t = _T(); drawVines();   _sub.vines = _T() - _t;
+    _t = _T(); drawAwnings(); _sub.awnings = _T() - _t;
+    _t = _T(); drawRoof();    _sub.roof = _T() - _t;
+    _sub.total = _sub.tiles + _sub.weather + _sub.damage + _sub.growth + _sub.chips + _sub.vines + _sub.awnings + _sub.roof;
+    if (typeof window !== 'undefined' && _sub.total > ((window._bbWorst && window._bbWorst.total) || 0)) {
+      _sub.biome = b && b.biome; _sub.material = (b && b.footprint && (b.footprint.material || (b.footprint.tier))) || null;
+      _sub.bbw = b && b.footprint && b.footprint.boundingBox && b.footprint.boundingBox.w;
+      _sub.bbh = b && b.footprint && b.footprint.boundingBox && b.footprint.boundingBox.h;
+      window._bbWorst = _sub;
+      try { console.log('[bbWorst]', JSON.stringify(_sub)); } catch (e) {}
+    }
+    return true;
+  }
   // A grassland TILE-CORPUS building whose tiles aren't loaded yet must NOT fall to the legacy
   // strip path — drawWalls would stamp a stone_brick 32px strip STRETCHED over the footprint (the
   // melted/stretched single-building artifact). Stay invisible this frame; it flips to mirror-tiled
@@ -583,6 +843,154 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   if (b) b._wallPath = 'legacy';
   drawWalls(ctx, b, camX, camY, tilePx, w, h);
   drawWeatheringPass(ctx, b, camX, camY, tilePx, w, h);
+  drawDamagePass(ctx, b, camX, camY, tilePx, w, h);
+  drawGrowthPass(ctx, b, camX, camY, tilePx, w, h);
+  drawChips();
+  drawVines();
+  drawAwnings();
   drawRoof();
   return true;
+}
+
+// LIVE DYNAMIC BUILDING LAYER — the parts that ANIMATE and so can't live in the frozen cached sprite: the door
+// SWING (proximity) + the D3 props (banner/sign sway, lantern flicker; both time-driven). CRITICAL: this renders
+// in the cached sprite's OWN cropped local frame at the sprite's `builtTilePx` (localCam = b.{x,y}*builtTilePx −
+// {ax,ay}, canvas = the sprite's {w,h}). The caller then draws the returned canvas at the EXACT same screen rect
+// as the sprite quad (destX, destY, w·sc, h·sc). So the live open door registers PIXEL-EXACTLY over the baked
+// closed door at ANY zoom — drawing at the live tilePx instead let the baked door peek at the door's top/bottom
+// once zoom ≠ bake-zoom (the NEAREST scale tradeoff). Returns the shared scratch canvas (re-specified per
+// building; upload it before the next call) or null when nothing dynamic this frame.
+let _bpCv = null, _bpCx = null;
+let _dmCv = null, _dmCx = null; // door-silhouette mask: weather the LIVE door swing to match the baked closed door
+// Per-building cache of the WEATHERED LIVE-DOOR layer, keyed by the building anchor + its door-swing sig.
+// Re-dressing the door (3 per-pixel weathering/damage/growth passes over the WHOLE façade) is the expensive
+// part of the dynamic layer; it's DETERMINISTIC and changes ONLY when a door's discrete frame index steps
+// (~8 times across an approach), so bake it once per (building, sig) and reuse it every frame the player holds
+// position — instead of repainting the façade at 60Hz, which collapsed FPS to <20 whenever a door was open.
+// Props (banner sway / lantern flicker) stay per-frame; they're cheap. Only OPEN-door buildings are ever
+// stored, so it stays tiny; a crude cap-clear bounds it as the player roams a town.
+const _doorDynCache = new Map(); // "x,y" -> { canvas, sig, w, h }
+const _DOOR_DYN_CAP = 96;
+const _propsDynCache = new Map(); // "x,y,w,h" -> canvas | null — D3 props are STATIC per building; bake once, blit
+const _PROPS_DYN_CAP = 512;
+let _propsBakes = 0;              // per-frame budget so a whole town's one-time props bake spreads over frames
+const _PROPS_BAKE_BUDGET = 4;     // (instead of a 178ms first-frame burst when a town streams in)
+export function bumpBuildingDynamicFrame() { _propsBakes = 0; } // call once per rendered frame
+
+// (Re)bake one building's weathered live door into its OWN canvas (the heavy path — run only on a frame step).
+// Returns the canvas, or null if the door asset isn't loaded yet / nothing opened.
+function _renderWeatheredDoor(b, localCamX, localCamY, builtTilePx, cw, ch) {
+  const dc = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(cw, ch)
+    : (typeof document !== 'undefined') ? document.createElement('canvas') : null;
+  if (!dc) return null;
+  if (dc.width !== cw || dc.height !== ch) { dc.width = cw; dc.height = ch; }
+  const o = dc.getContext('2d'); if (!o) return null;
+  o.setTransform(1, 0, 0, 1, 0, 0); o.globalCompositeOperation = 'source-over';
+  o.clearRect(0, 0, cw, ch); o.imageSmoothingEnabled = false;
+  if (!drawDoorsLive(o, b, localCamX, localCamY, builtTilePx, cw, ch)) return null; // asset not loaded → baked closed door shows
+  // The baked CLOSED door carries the building's D0/D1/D2 dressing (drawBuildingTextured runs weathering/damage/
+  // growth before caching). The live swing is drawn fresh, so without this it would lose that grime and visibly
+  // "lighten" the instant it opens. Re-run the SAME passes in the SAME local frame, then mask back to the door
+  // silhouette so ONLY the door is tinted. (This is the cost we now amortise across the held-open frames.)
+  if (renderOn('weathering') || renderOn('damage') || renderOn('growth')) {
+    try {
+      if (!_dmCv) { _dmCv = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(cw, ch) : (typeof document !== 'undefined') ? document.createElement('canvas') : null; if (_dmCv) _dmCx = _dmCv.getContext('2d'); }
+      if (_dmCv && _dmCx) {
+        if (_dmCv.width !== cw || _dmCv.height !== ch) { _dmCv.width = cw; _dmCv.height = ch; }
+        _dmCx.setTransform(1, 0, 0, 1, 0, 0); _dmCx.globalCompositeOperation = 'source-over';
+        _dmCx.clearRect(0, 0, cw, ch); _dmCx.drawImage(dc, 0, 0); // snapshot the door-only silhouette
+        // Only the door's columns can survive the silhouette mask, so grime ONLY those — running the full-façade
+        // coverage here (~85ms on a big building) is what tanked FPS while a door was open. A fixed ~6-column span
+        // around each door over-covers any door width (the mask trims the rest), so the rebuild cost is CONSTANT
+        // (door columns) instead of scaling with building width.
+        let colSet = null;
+        const doors = b.footprint && b.footprint.doors;
+        if (doors && doors.length) { colSet = new Set(); for (const d of doors) { const x0 = d.x | 0; for (let lx = x0 - 2; lx <= x0 + 3; lx++) colSet.add(lx); } }
+        drawWeatheringPass(o, b, localCamX, localCamY, builtTilePx, cw, ch, colSet);
+        drawDamagePass(o, b, localCamX, localCamY, builtTilePx, cw, ch, colSet);
+        drawGrowthPass(o, b, localCamX, localCamY, builtTilePx, cw, ch, colSet);
+        o.save(); o.globalCompositeOperation = 'destination-in'; o.drawImage(_dmCv, 0, 0); o.restore();
+      }
+    } catch { /* dressing the live door is best-effort */ }
+  }
+  return dc;
+}
+
+export function drawBuildingDynamicInto(b, localCamX, localCamY, builtTilePx, cw, ch) {
+  const wantWalls = renderOn('walls'), wantProps = renderOn('attachments');
+  if ((!wantWalls && !wantProps) || !b || !b.footprint) return null;
+  if (!(cw > 0) || !(ch > 0) || cw > 8192 || ch > 8192) return null;
+  // FAST EARLY-OUT for fully-static buildings (door shut + props already known empty): skip ALL canvas
+  // work (resize/clear/composite) entirely. This is the common case in a town — most buildings aren't
+  // at the player's door. The props cache resolves to `null` after the one-time first-frame bake below;
+  // until then we fall through and do the full path once to populate it.
+  const _doorSig = wantWalls ? doorSwingSig(b) : '';
+  if (!_doorSig && (!wantProps || _propsDynCache.get(b.x + ',' + b.y + ',' + cw + ',' + ch) === null)) return null;
+  if (!_bpCv) {
+    _bpCv = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(cw, ch)
+      : (typeof document !== 'undefined') ? document.createElement('canvas') : null;
+    if (!_bpCv) return null;
+    _bpCx = _bpCv.getContext('2d');
+  }
+  if (_bpCv.width !== cw || _bpCv.height !== ch) { _bpCv.width = cw; _bpCv.height = ch; } // resize also clears
+  const o = _bpCx; if (!o) return null;
+  o.setTransform(1, 0, 0, 1, 0, 0); o.globalCompositeOperation = 'source-over';
+  o.clearRect(0, 0, cw, ch); o.imageSmoothingEnabled = false;
+  // Render in the sprite's local frame (same camera + builtTilePx the bake used) so draws land exactly where the
+  // baked sprite has them — the open door covers the baked closed door, props sit on the same wall pixels.
+  let drew = false;
+  if (wantWalls) {
+    try {
+      const sig = _doorSig; // '' while every door is shut → the baked closed door already shows it
+      if (sig) {
+        const key = b.x + ',' + b.y;
+        let entry = _doorDynCache.get(key);
+        if (!entry || entry.sig !== sig || entry.w !== cw || entry.h !== ch) {
+          const dc = _renderWeatheredDoor(b, localCamX, localCamY, builtTilePx, cw, ch); // heavy — only on a frame step
+          entry = dc ? { canvas: dc, sig, w: cw, h: ch } : null;
+          if (entry) {
+            if (_doorDynCache.size > _DOOR_DYN_CAP) _doorDynCache.clear(); // crude bound (only open-door blds stored)
+            _doorDynCache.set(key, entry);
+          } else {
+            _doorDynCache.delete(key);
+          }
+        }
+        if (entry) { o.drawImage(entry.canvas, 0, 0); drew = true; } // reuse the cached weathered door (the perf win)
+      }
+    } catch { /* skip */ }
+  }
+  if (wantProps) {
+    try {
+      // D3 props are STATIC + deterministic per building (no time/animation in drawD3Props), and the
+      // local camera frame is constant per baked building — so rasterize ONCE into a building-local
+      // canvas (with a one-time emptiness check so prop-less buildings cache `null` and cost nothing)
+      // and just blit it each frame. Re-rasterizing every near building EVERY frame was the sustained
+      // in-town stutter (~175ms / 'bSprites' in the draw profile).
+      const pkey = b.x + ',' + b.y + ',' + cw + ',' + ch;
+      let pc = _propsDynCache.get(pkey);
+      if (pc === undefined && _propsBakes < _PROPS_BAKE_BUDGET) {
+        _propsBakes++;
+        let made = null;
+        const c = (typeof OffscreenCanvas !== 'undefined') ? new OffscreenCanvas(cw, ch)
+          : (typeof document !== 'undefined') ? document.createElement('canvas') : null;
+        if (c) {
+          c.width = cw; c.height = ch;
+          const cx = c.getContext('2d', { willReadFrequently: true });
+          if (cx) {
+            cx.imageSmoothingEnabled = false;
+            try { drawD3Props(cx, b, localCamX, localCamY, builtTilePx, cw, ch, 'all'); } catch { /* skip */ }
+            const id = cx.getImageData(0, 0, cw, ch).data;
+            for (let i = 3; i < id.length; i += 4) { if (id[i] !== 0) { made = c; break; } } // any opaque pixel → keep
+          }
+        }
+        pc = made;
+        if (_propsDynCache.size > _PROPS_DYN_CAP) _propsDynCache.clear();
+        _propsDynCache.set(pkey, pc);
+      }
+      // pc may still be undefined here (over budget this frame) → props pop in within a few frames.
+      if (pc) { o.drawImage(pc, 0, 0); drew = true; }
+    } catch { /* skip */ }
+  }
+  if (!drew) return null; // nothing dynamic this frame (door closed, props off) → skip the quad
+  return _bpCv;
 }

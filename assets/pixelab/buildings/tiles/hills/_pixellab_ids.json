@@ -1,0 +1,85 @@
+{
+  "_doc": "hills tile-corpus ledger. Slugs from building-materials.json (identity TILE_MATERIALS, no registry edit). Vocab: docs/superpowers/specs/2026-06-24-hills-tile-corpus-manifest.md.",
+  "base_project": "0f1031f5-9eee-4df4-996f-0a4114148eba",
+  "materials": {
+    "drystone": {
+      "base": "d05cb0c1-f63c-4b04-9810-bb8e4d9b4630",
+      "ground_window": "b7e99f81-f117-4912-92e4-32191a3d7e8b",
+      "ground_door": "2c461038-5567-4ab2-9acc-304a05570aef",
+      "ground_left_corner": "1af4fa67-20a0-4558-b09b-e5e79eed54b4",
+      "anim_door_group": "2a16b99f-4568-41e2-97bf-44057a39ba3e",
+      "anim_door_inner": "699bce7b-018d-42a7-a608-a62904e82352",
+      "anim_window_group": "4a155cd2-a65b-414a-ac90-81212336ce05",
+      "anim_window_inner": "b00a6b37-812e-4593-9ba3-0369e840caff",
+      "gable": "8035de5b-8ef9-42b8-aae1-78baca08679e"
+    },
+    "limewashed_cottage": {
+      "base": "8a757b26-fcd0-4363-8e44-77604eda5820",
+      "ground_window": "a1811136-1636-4ed5-8cb5-a864442b7320",
+      "ground_door": "fef2bb68-510b-4354-a816-b9c4eb6d3292",
+      "ground_left_corner": "b82c4e60-4259-4f97-8a8f-153e68456420",
+      "_corner_rerolled_dark_edge": "b82c4e60-4259-4f97-8a8f-153e68456420 (2026-06-25: corner edge 79% black → cool mid-grey dressed-stone quoin, qa-edges ok)",
+      "anim_door_group": "878c5555-e90d-4456-96f6-0c6df8fd2187",
+      "anim_door_inner": "01923242-b4d0-4a2b-9f41-f66c6dc6a907",
+      "anim_window_group": "0519b53f-a88d-4de1-9fe9-55f82d26722c",
+      "anim_window_inner": "a1f4ebc7-f035-457c-afa9-a6702970d71c",
+      "gable": "a3c7fcf2-8b89-4f8d-9381-01bab33f00ad"
+    },
+    "hillstone_block": {
+      "base": "ec293183-893d-4c07-9fb2-634a713a60b9",
+      "ground_window": "cc2bfe2e-7121-4fd4-a848-75878a8ce638",
+      "ground_door": "46afc54e-43ad-4046-8809-735f6dda8e39",
+      "ground_left_corner": "8c0cceca-9e38-4dc1-8c9f-d3e66d2f0cfa",
+      "anim_door_group": "6573c1eb-6acf-4857-8eb8-9dddfd375043",
+      "anim_door_inner": "480a3210-6f1a-4e33-bdea-6ac0e2148bc9",
+      "anim_window_group": "8d177984-3aa4-48c7-b734-82740095f0d7",
+      "anim_window_inner": "2c6eded2-7a73-47ec-b7cd-c448de94dc90",
+      "gable": "27030435-452e-42da-b5ee-4aa43b615597"
+    },
+    "slate_hung": {
+      "base": "7812d691-68dd-4e20-b23b-588f7fb69695",
+      "ground_window": "8998e531-640c-411b-be24-f9a93d72e62d",
+      "ground_door": "38a9eb81-a1e5-446b-9ee1-57e7bdc0c0ff",
+      "ground_left_corner": "b44a4156-0cce-4535-99e6-b95e42b7b775",
+      "anim_door_group": "f9f1638f-9741-47cc-acdd-42dbc0f7fb5b",
+      "anim_door_inner": "cac32eb8-7fa7-4434-b2df-b75e746f8328",
+      "anim_window_group": "b4db0387-def9-4311-b54a-10564e990ca2",
+      "anim_window_inner": "788df077-965a-49ed-bcf1-9b6307e6c728",
+      "gable": "98d964a5-34d4-4955-b720-cd20fafad5d2"
+    }
+  },
+  "roofs": {
+    "slate": {
+      "tileset": "78e2b8e1-fbaa-477b-a7cd-1d003a205c10",
+      "seed": 71001,
+      "v000": "78e2b8e1-fbaa-477b-a7cd-1d003a205c10#tile_4",
+      "v001": "78e2b8e1-fbaa-477b-a7cd-1d003a205c10#tile_5",
+      "v002": "78e2b8e1-fbaa-477b-a7cd-1d003a205c10#tile_6",
+      "v003": "78e2b8e1-fbaa-477b-a7cd-1d003a205c10#tile_7"
+    },
+    "stone_flag": {
+      "tileset": "1e0e1db4-1cbb-4e51-b858-c7aa97a3013d",
+      "seed": 71002,
+      "v000": "1e0e1db4-1cbb-4e51-b858-c7aa97a3013d#tile_0",
+      "v001": "1e0e1db4-1cbb-4e51-b858-c7aa97a3013d#tile_1",
+      "v002": "1e0e1db4-1cbb-4e51-b858-c7aa97a3013d#tile_2",
+      "v003": "1e0e1db4-1cbb-4e51-b858-c7aa97a3013d#tile_3"
+    },
+    "limewashed_slate": {
+      "tileset": "30ee0401-be5a-41c0-80f8-fe31d27c4343",
+      "seed": 71003,
+      "v000": "30ee0401-be5a-41c0-80f8-fe31d27c4343#tile_0",
+      "v001": "30ee0401-be5a-41c0-80f8-fe31d27c4343#tile_1",
+      "v002": "30ee0401-be5a-41c0-80f8-fe31d27c4343#tile_2",
+      "v003": "30ee0401-be5a-41c0-80f8-fe31d27c4343#tile_3"
+    },
+    "wood_shake": {
+      "tileset": "8b408fa9-2f69-49b3-a51b-077a21da81fe",
+      "seed": 71004,
+      "v000": "8b408fa9-2f69-49b3-a51b-077a21da81fe#tile_0",
+      "v001": "8b408fa9-2f69-49b3-a51b-077a21da81fe#tile_1",
+      "v002": "8b408fa9-2f69-49b3-a51b-077a21da81fe#tile_2",
+      "v003": "8b408fa9-2f69-49b3-a51b-077a21da81fe#tile_3"
+    }
+  }
+}

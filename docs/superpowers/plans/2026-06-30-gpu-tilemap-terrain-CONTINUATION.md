@@ -1,0 +1,62 @@
+# GPU Tilemap Terrain — Continuation / Handoff (read this first to resume)
+
+**Updated:** 2026-06-30. Supersedes the phasing in `2026-06-30-gpu-tilemap-terrain.md` (that plan's `(biome,level,cornerMask)` key + "transition = shader blend" model were REPLACED during implementation — see "Key realizations" below). Design rationale: `docs/superpowers/specs/2026-06-30-gpu-tilemap-terrain-design.md`. Memory: `[[project_gpu_tilemap_terrain]]`.
+
+## P2 COMPLETE (2026-06-30, commits on building-facade-blocks)
+The base terrain layer (Wang base + cliff overlays) now renders fully on the GPU for **every biome the player encounters**, world-wide — not just grassland.
+- `566d8e970` **P2a — incremental all-biome atlas growth.** `_ensureWangAtlas` is now a persistent per-frame no-op that grows the Wang atlas one biome-batch at a time, driven by `provider.getActiveBiomes()` (the wide initPreload sample). Re-publishes the grown texture+meta to compositor+workers; slots are append-only so existing chunk indexes stay valid. Worker `buildIndexBuffer` returns null when any visible BASE tile isn't in the atlas yet → that chunk draws the still-correct bitmap (never atlas holes) and re-emits a complete index on its next repaint. `WangAtlas.hasKey()` skips refetch.
+- `45fd414ea` **P2b — cliff overlays.** `getCliffSrc(tile)` is the pure cliff-tile URL, now shared by `paintCliffOverlay` (bitmap) and `buildChunkIndex` (GPU) so both pick the identical tile. The cliff slot rides in the texel's (previously unused) `transitionSlot` field; the shader does a premultiplied "over" composite of the cliff tile on the base. Cliff resolver is best-effort (unloaded cliff just isn't drawn, never forces bitmap fallback).
+- `d653cf915` **atlas → 4096²** (~15k tiles, ~64MB VRAM) so the append-only atlas never overflows across a long multi-biome session.
+- Worker `?v=` now `…-gputiles3-cliff`.
+- **NOT yet browser-verified by the user.** Verify: `window._gpuTerrain=true`, wait `_gpuTerrainReady`, walk ACROSS biome borders + past cliffs/elevation steps; `_gpuTerrainStats.tilemap` should keep climbing in non-grassland biomes (was grassland-only before). Cliffs should appear on the GPU path identical to `_gpuTerrain=false`.
+
+## One-paragraph status
+The terrain pop-in + idle-GPU root cause: each chunk is CPU-rasterized to a **~2048² = 16.8 MB bitmap** (Canvas2D), uploaded at **~131 ms each, throttled `CHUNK_UPLOAD_BUDGET=2`/frame** — so walking outruns the pipeline and the GPU just blits pre-made images. The fix: render terrain on the GPU from a **Wang-tile atlas + a ~16 KB per-chunk index map** in a fragment shader. **Phase 1 is BUILT, MERGED (branch `building-facade-blocks`, flag-gated `window._gpuTerrain`, default OFF), and PROVEN in-browser**: `window._gpuTerrainStats = {tilemap:10879, bitmap:12452, ready:true}` — the shader drew 10,879 chunk-draws of real terrain. **The pop-in is NOT fixed yet** — see "Why pop-in isn't fixed."
+
+## What exists & works (Phase 1, all committed on building-facade-blocks)
+Commit chain: `035ec4e0`(codec) → `cbe90c07`/`b697ff99`(atlas) → `58218daf`(emitter) → `1a830a27`(plumbing) → `128a584c`(shader) → `a2ceecb9`(URL-key reconciliation) → `ac81fb50`(loader+draw switch) → `b38577bf`(stats diag) → merge `95440c85`.
+
+- `src/render/gpu-terrain-index.js` — `encodeTexel(baseSlot,transitionSlot,soilId)`/`decodeTexel` → RGBA8 (R=baseSlot.lo8, G=baseSlot.hi4|transSlot.hi4<<4, B=transSlot.lo8, A=soilId). Unit-tested.
+- `src/render/wang-atlas.js` — `class WangAtlas(gl, atlasSize=2048)`: `add(urlKey, imageBitmap)→slot` (URL-keyed, idempotent, shelf-packed 33px cells, slot 0 reserved=empty, returns 0 when full), `slotUV(slot)`, `texture()`, `serializeMeta()→{cell,atlasSize,slots:{[url]:{slot,u0,v0}}}`. (Mirrors gl-compositor `atlasStrip`.)
+- `src/render/worker-chunk-renderer.js` — `buildChunkIndex(chunk,{size,slotResolver,soilResolver})→Uint8Array`: per tile calls **`getWangSrc(tile, variant)`** (the SAME fn the bitmap painter uses) + `elevationVariant(tile)` (+ self-transition→wang_25 special-case), resolves the URL → slot. `encodeTexel(slot,0,soilId)`. `elevationVariant` now exported. Runs AFTER `renderChunkToBitmap` so tiles are already classified (`transitionPair`/`wangEdgeMask`).
+- `src/world/chunk-worker.js` — handles `setWangAtlasMeta`/`setGpuTerrain`; when on+meta, attaches transferable `index` to `chunkPainted`/`chunkRepainted`. Worker cache-bust `?v=…-gputiles1`.
+- `src/world/chunk-provider.js` — `this.indexes` Map, `getChunkIndex(cx,cy)`, `setWangAtlasMeta(meta)`+`setGpuTerrain(on)` (broadcast + replay to new workers), evict indexes in `initPreload(force)`.
+- `src/render/gl-compositor.js` — `setWangAtlas(tex,meta)` (builds RG32F slot→UV table texture), `uploadChunkIndex(key,buf)` (per-key 64² RGBA8 tex, no throttle), `drawChunkTilemap(key,sx,sy,dw,dh)` (TILEMAP_FRAG_SRC samples atlas per-pixel; restores base program after; co-evicts in `_sweep`/`purgeOffscreen`).
+- `src/render/canvas-renderer.js` — `_ensureWangAtlas(provider)` (lazy once-only: fetch+`createImageBitmap` all `getWangImageURLsForBiomes(['grassland'])`, `atlas.add`, then `setWangAtlas`+`setWangAtlasMeta`+`setGpuTerrain(true)`+`window._gpuTerrainReady=true`); draw switch at the chunk loop (`drawChunkTilemap` when `_gpuTerrain && _wangAtlasState==='ready' && getChunkIndex` else `drawChunk`) + `window._gpuTerrainStats` counter.
+
+**Test it:** hard-refresh → `window._gpuTerrain=true` → wait `window._gpuTerrainReady===true` → walk → read `window._gpuTerrainStats`. Dev-server caches JS 1h (no -c-1) → use DevTools "Disable cache" / incognito.
+
+## KEY REALIZATIONS (these change the remaining plan — do not re-derive)
+1. **Tile identity = the Wang URL from `getWangSrc(tile, variant)`** (`src/render/worker-tile-painter.js`). It returns `…/transitions/<pair-dir>/<variant>/<dir>__wang_<mask>__v000.png` (or null). The index emitter AND the atlas both key on this URL, so the GPU picks the IDENTICAL tile the bitmap draws. Do NOT reinvent cornerMask.
+2. **Transitions are FREE** — a biome border tile is just a single PRE-BLENDED Wang PNG that `getWangSrc` already returns. So there is NO separate "transition blend" shader pass (the design's Phase 2 was wrong). The index's `transitionSlot` field is currently unused and can be removed. "Transitions" reduces to: make sure the atlas has the transition/all-biome tiles loaded.
+3. **WHY POP-IN ISN'T FIXED:** the worker STILL rasterizes + uploads the 16.8 MB bitmap every chunk (both paths run; the draw just *prefers* tilemap when an index exists). The `CHUNK_UPLOAD_BUDGET=2` throttle + the 131 ms uploads are still happening. **The pop-in only dies when we STOP making the bitmap (Phase 4).** That requires the GPU path to FULLY replace it.
+4. **The bitmap bakes MORE than wang base.** `renderChunkToBitmap` layers: (a) **wang base** `paintTerrainTile`→`paintWangBase`→`getWangSrc` [DONE on GPU], (b) **F0 soil** `applySoilFieldToChunk` (per-pixel procedural blobs, per-biome density/alpha/tint, transition-blended), (c) **cliff overlay** `paintCliffOverlay` (a SECOND wang tile where elevation steps — `CLIFF_CORNER_TO_WANG`, `BIOME_CLIFF` dirs), (d) **ground cover** (gc__ sprites scattered), (e) **small flora** (sf__ sprites scattered). (b)–(e) are MISSING from the GPU path = why GPU terrain looks barer. To delete the bitmap, all of (b)–(e) must render on the GPU (or move to existing sprite-field systems).
+
+## Remaining plan (REVISED)
+**P2 — all-biome + cliff coverage. ✅ DONE (see "P2 COMPLETE" above).**
+
+**P3a — index widen + F0 soil. IMPLEMENTED 2026-06-30 (Tasks 1–7), AWAITING USER BROWSER GATE (Task 8).** Plan: `docs/superpowers/plans/2026-06-30-gpu-terrain-p3a-soil.md`. Commits `18d94df3c`→`c2d24f3d3`: index texel widened RGBA8→RGBA16UI (codec+emitter+upload+usampler2D decode, unit-tested green); per-biome soil ids + real soilResolver; soil-swatch atlas (1 v000 swatch/biome) + RGBA32F per-biome config texture (`_ensureSoilAtlas`); soil fragment pass (GPU-hash density gate + jittered swatch sample + tint + alpha over base+cliff). Worker `?v=…-gputiles6-soilcfg`. SOIL_BIOME_CONFIG relocated to shared wang-image-list.js. **VERIFY (Task 8):** `_gpuTerrain=true`, wait `_gpuSoilReady`, walk; soil grain should appear on the GPU path ~equivalent to `_gpuTerrain=false` (NOT pixel-identical — GPU hash differs by design). Check desert/beach (tint), swamp (high alpha), forest. v1 uses single-material-per-tile soil (no transition A/B split — spec §5). NEXT after gate: P3b (gc-luminance, same scaffolding) → P3c (gc+F3 sprite fields) → P4 (delete bitmap).
+
+**P3 — soil + ground-cover + F3 small-scatter on GPU (THE hard part). SPEC WRITTEN:** `docs/superpowers/specs/2026-06-30-gpu-terrain-detail-fields-design.md` (read it first). Key corrections it makes: F2 small-flora is ALREADY on GPU (the baked sprite field is F3 small-scatter, not F2); P3a requires widening the index texel RGBA8→RGBA16UI before soil (12-bit slot ceiling); soil & gc-luminance are procedural fragment-shader passes, gc-sprites & F3-scatter are GPU sprite fields reusing field2-animator. Sub-phases P3a (index widen + soil) → P3b (gc-lum) → P3c (gc+F3 sprite engine) → P4 (delete bitmap).
+Concrete surface (from worker-chunk-renderer.js, investigated 2026-06-30):
+- **F0 soil** = `applySoilFieldToChunk` (line ~232). Per-PIXEL: extracts 32×32 RGBA from soil variant PNGs into `soilPixelCache`, then blends per pixel with a density/transition mask (`soilMaterialForBiome(biome)` → material dir; transition-blended between biomeA/biomeB per corner). This is the genuinely hard part — it's procedural per-pixel, not a tile lookup. GPU approach: pack each soil material's swatch(es) into an atlas (or a 2nd array texture) + reproduce the density/hash/blend mask in the tilemap fragment shader; the texel's `soilId` (A channel) already reserves the per-tile material id (`soilResolver` is currently stubbed to 0 in chunk-worker.js — wire it). Parity gate = screenshot vs bitmap.
+- **Ground cover (gc)** = scatter at line ~697 (`GC_BASE_PATH … gc__`). **Small flora (sf)** = scatter at line ~895 (`SF_BASE_PATH … sf__`). Both are SCATTERED SPRITES baked into the bitmap — they belong as GPU sprite-FIELDS (like F2 flora's instanced `drawAnimSprites` path), NOT in the tilemap shader. Likely a static-sprite variant of field2-animator's instancing.
+- Decompose: **P3a soil-in-shader** (unblocks the most bitmap detail), **P3b gc+sf as GPU sprite fields**. Each is a real design effort — brainstorm → spec → plan before coding. Do NOT wing it (no-mock rule).
+
+**Strategic note for P4:** the bitmap can only be deleted once P3 reaches parity, OR we accept barer terrain. The pop-in fix (P4) is gated on P3 — that's the real remaining challenge, and it's a design problem, not a mechanical one.
+
+**P4 — kill the bitmap + the throttle (the actual pop-in fix).**
+- Once P2+P3 reach parity: stop the worker calling `renderChunkToBitmap` when `gpuTerrain` (drop the 16.8 MB path), remove `CHUNK_UPLOAD_BUDGET` throttling for terrain, flip `window._gpuTerrain` default-ON (keep `=false` fallback one release). Verify: run at full speed across biomes → no pop-in, GPU active. Then `superpowers:finishing-a-development-branch`.
+
+## Gotchas / conventions
+- Commit by EXPLICIT file name (shared index, parallel sessions). The working tree has OTHER sessions' uncommitted asset/script changes — DO NOT `git add -A` or touch them.
+- Worker code change → bump `?v=` in `chunk-provider.js createWorker` or the browser serves stale worker.
+- Dev server caches JS 1h (no -c-1) → DevTools "Disable cache"/incognito to load edits.
+- The legacy CPU flora path was bit-rotted (null buffers); fixed this session, but GPU flora is the production path.
+- GPU flora now depth-occludes behind buildings (fixed this session in `drawAnimSprites` — `uDepthOn/uDepthRef/uDepthScale`, z=2d-1 from baseline). Flora SHADOWS (`drawAnimShadows`) still don't depth-test — fix similarly if shadow-over-building appears.
+
+## Dev hooks
+`window._gpuTerrain` (flag), `window._gpuTerrainReady`, `window._gpuTerrainStats` {tilemap,bitmap,ready,idxNull}. `window._gpuFlora` (flora path), `window._drawProf`, `window._gpuTerrainStats`.
+
+## Resume command
+"continue the GPU terrain phases" → P2 is DONE; the next step is **P3, which needs a brainstorm/spec first** (start with P3a soil-in-shader — biggest detail win). Continue on `building-facade-blocks`. Before starting P3, it's worth a user browser-verify of P2 (walk across biome borders + cliffs with `_gpuTerrain=true`).

@@ -84,12 +84,20 @@ runs AFTER walls / BEFORE roof, painting into the silhouette canvas that is then
 → inherits the shared lighting / day-night / CRT present pass (honours the CLAUDE.md GL rule).
 **Flags:** `window._buildingRender.weathering` (default **on**); live tuner `window._weathering` (`.strength .grimeFrac .grimeMax .toneMax .bands .enabled`).
 **Tests:** `test/d0-weathering.test.mjs` — 5 passing.
-**OPEN QUESTION (user, 2026-06-23):** the effect is **perceptually too faint** at default tuning (toneMax 0.18 soft-light is
-barely visible; the user "couldn't perceive the weathering"). It is **not a bug** — a deliberately conservative prototype.
-Resume options: (a) **calibrate** — raise `toneMax`/`grimeMax`, try overlay/hardlight blend; (b) **redesign toward
-directional cues** — vertical water-run streaks from sills/eaves (the design defers "water-stain streaks + wetness gating"),
-not just horizontal grime bands; (c) wire **wetness** as the coverage scalar (★ available) for legible per-building variation.
-Decide this with the user before sinking time — they may prefer to move to D3 and revisit D0 calibration later.
+**UPDATE (2026-06-24): mechanism REDESIGNED + in-game tuner shipped (not yet committed).** The original pilot was both faint
+AND read as **vertical bands** — it filled each wall COLUMN with one uniform tone + horizontal grime bands, so there was no
+spatial variation *within* a column. Rewrote the paint path to a **world-locked 2D procedural noise field**: two seamless
+tileable noise textures (broad TONE soft-light/overlay over the whole wall + finer earth GRIME multiply), sampled across the
+surface via `ctx.translate`-phased `createPattern` fills (pan-stable, continuous across columns/buildings), with a smooth
+vertical falloff gradient (`destination-in` on a reused stamp canvas) for bottom-weighting — organic scatter, no stripes.
+Pure helpers `weatheringCoverage` / `grimeProfile` / `tileFbm` are exported + tested; `paintWeatheredColumn(ctx, {dx,top,dw,colH,tilePx}, {wx,wy})`
+now needs `tilePx` (passed from `drawWeatheringPass`). 9/9 tests pass incl. a real-`@napi-rs/canvas` test asserting per-row
+X-variance (proves a 2D field, not bands). **Tuner:** `src/dev/weathering-tuner.js` (toggle `]`, wired in `main.js`) — DOM
+slider panel that mutates `window._weathering` live (building layer repaints each frame, no cache), blend-mode dropdowns +
+grime colour, **freeze-noon A/B**, **copy-config** (emits a paste-ready `DEFAULTS` literal), localStorage-persisted, reset.
+Config knobs: `enabled, strength, grimeFrac (all-over spread), grimeMax, toneMax, grimeColor, toneBlend, grimeBlend` (dropped
+`bands`). **NEXT:** user tunes in-game → hands back the optimal config → bake into `DEFAULTS` and commit. Then proceed to D3
+(or revisit wiring **wetness** ★ as the coverage scalar for per-building variation).
 
 ## 7. NEXT — the decision point (from PLAN §7 bottom)
 1. **D3 wall attachments (sockets)** — the first PixelLab dressing field. Proves the whole socket pipeline: socket

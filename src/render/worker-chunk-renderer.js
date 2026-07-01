@@ -8,9 +8,10 @@ var _f3RemovedKeys = new Set();
 export function setF3RemovedKeys(keys) { _f3RemovedKeys = keys instanceof Set ? keys : new Set(keys); }
 
 import { WORLD } from '../core/constants.js';
-import { paintTerrainTile, paintCliffOverlay, getWangSrc } from './worker-tile-painter.js';
+import { encodeTexel } from './gpu-terrain-index.js';
+import { paintTerrainTile, paintCliffOverlay, getWangSrc, getCliffSrc } from './worker-tile-painter.js';
 import { cliffLevel } from '../world/terrain-shaper.js';
-import { soilMaterialForBiome, sfVariantsFor, wangAssetName } from './wang-image-list.js';
+import { soilMaterialForBiome, sfVariantsFor, wangAssetName, SOIL_BIOME_CONFIG, SOIL_DEFAULT_CONFIG } from './wang-image-list.js';
 import { rand2 } from '../core/random.js';
 import { SS_BIOME_OBJECTS, f3Placements, f3SpriteUrl } from '../world/decoration-claims.js';
 import { queryBuildingTile, queryBuildingWall, isBuildingClaimed, floorTileUrl, wallTileUrl, wallSpriteSrc, getBuildingsNearChunk } from './building-tile-query.js';
@@ -50,11 +51,13 @@ function transitionPairFor(a, b, elevA, elevB) {
   return { from: lower, to: upper, dir: wangAssetName(lower) + '_to_' + wangAssetName(upper) };
 }
 
-function elevationVariant(tile) {
-  var myLevel = cliffLevel(tile.climate.elevation);
-  var eLevel = cliffLevel(tile._elE != null ? tile._elE : tile.climate.elevation);
-  var sLevel = cliffLevel(tile._elS != null ? tile._elS : tile.climate.elevation);
-  var seLevel = cliffLevel(tile._elSE != null ? tile._elSE : tile.climate.elevation);
+export function elevationVariant(tile) {
+  // Defensive: support tiles with or without a climate sub-object
+  var base = (tile.climate != null) ? tile.climate.elevation : (tile.elevation != null ? tile.elevation : 0);
+  var myLevel = cliffLevel(base);
+  var eLevel = cliffLevel(tile._elE != null ? tile._elE : base);
+  var sLevel = cliffLevel(tile._elS != null ? tile._elS : base);
+  var seLevel = cliffLevel(tile._elSE != null ? tile._elSE : base);
   var maxDelta = Math.max(
     Math.abs(myLevel - eLevel),
     Math.abs(myLevel - sLevel),
@@ -71,34 +74,9 @@ function elevationVariant(tile) {
 
 var SOIL_BASE_PATH = '/assets/pixelab/landscape_v2/micro/soil/';
 var SOIL_VARIANT_COUNT = 64;
-
-// Per-biome field 0 rendering parameters
-var SOIL_BIOME_CONFIG = {
-  // { density, alpha, blobMin, blobMax, tint: [r,g,b] or null }
-  // tint shifts pixel color toward target (0-255 RGB), blended at tintStrength (0-1)
-  forest:           { density: 0.96, alpha: 0.70, blobMin: 4, blobMax: 6, tint: null },
-  dense_forest:     { density: 0.97, alpha: 0.75, blobMin: 4, blobMax: 6, tint: null },
-  tropical_forest:  { density: 0.96, alpha: 0.70, blobMin: 4, blobMax: 6, tint: null },
-  taiga:            { density: 0.95, alpha: 0.65, blobMin: 4, blobMax: 6, tint: null },
-  grassland:        { density: 0.94, alpha: 0.60, blobMin: 4, blobMax: 6, tint: null },
-  savanna:          { density: 0.93, alpha: 0.55, blobMin: 3, blobMax: 5, tint: null },
-  steppe:           { density: 0.92, alpha: 0.55, blobMin: 3, blobMax: 5, tint: null },
-  desert:           { density: 0.96, alpha: 0.50, blobMin: 3, blobMax: 4, tint: null },
-  beach:            { density: 0.98, alpha: 0.50, blobMin: 3, blobMax: 4, tint: [245, 235, 200], tintStrength: 0.45 },
-  swamp:            { density: 0.97, alpha: 0.80, blobMin: 5, blobMax: 7, tint: null },
-  hills:            { density: 0.94, alpha: 0.60, blobMin: 4, blobMax: 7, tint: null },
-  mountains:        { density: 0.92, alpha: 0.55, blobMin: 5, blobMax: 8, tint: null },
-  volcanic:         { density: 0.90, alpha: 0.60, blobMin: 4, blobMax: 6, tint: null },
-  tundra:           { density: 0.97, alpha: 0.75, blobMin: 4, blobMax: 6, tint: null },
-  arctic:           { density: 0.88, alpha: 0.50, blobMin: 3, blobMax: 5, tint: null },
-  mystic:           { density: 0.95, alpha: 0.65, blobMin: 4, blobMax: 6, tint: null },
-  ocean:            { density: 0.96, alpha: 0.50, blobMin: 4, blobMax: 6, tint: null },
-  deep_ocean:       { density: 0.95, alpha: 0.45, blobMin: 3, blobMax: 5, tint: null },
-  shallow_water:    { density: 0.98, alpha: 0.50, blobMin: 4, blobMax: 6, tint: null },
-  river:            { density: 0.96, alpha: 0.50, blobMin: 4, blobMax: 6, tint: null },
-  lake:             { density: 0.96, alpha: 0.50, blobMin: 4, blobMax: 6, tint: null },
-};
-var SOIL_DEFAULT_CONFIG = { density: 0.94, alpha: 0.65, blobMin: 4, blobMax: 6, tint: null };
+// SOIL_BIOME_CONFIG / SOIL_DEFAULT_CONFIG moved to the shared wang-image-list.js
+// module (imported above) so the main-thread GPU soil-config loader can read them
+// without importing this worker-only renderer.
 
 // Cache for extracted pixel data from soil blob ImageBitmaps.
 // Key: URL, Value: Uint8ClampedArray (32*32*4 RGBA)
@@ -508,9 +486,21 @@ function computeShoreDistanceMap(chunk, chunkSize) {
   return dist;
 }
 
+// Cache of prepared luminance blobs keyed by biome/object/coords/count.
+// The result is fully deterministic per (biome, objName, wx, wy, count) once the
+// source sprites are decoded (variant selection uses rand2 on fixed coords and
+// getSoilPixels is itself cached), so it only needs computing ONCE instead of on
+// every chunk repaint. Only COMPLETE sets (all `count` blobs extracted) are
+// cached; a partial set (images still loading) is left uncached so a later
+// repaint can re-attempt and fill it.
+var _lumBlobCache = new Map();
+
 // Precompute luminance arrays from ground cover sprites.
 // Returns array of { lum: Float32Array(1024), alpha: Uint8ClampedArray(1024) }
 function prepareLuminanceBlobs(biome, objName, wx, wy, imageCache, count) {
+  var cacheKey = biome + '/' + objName + '/' + wx + '/' + wy + '/' + count;
+  var cachedBlobs = _lumBlobCache.get(cacheKey);
+  if (cachedBlobs) return cachedBlobs;
   var blobs = [];
   for (var b = 0; b < count; b++) {
     var v = Math.floor(rand2(wx, wy, 7030 + b) * GC_VARIANT_COUNT);
@@ -528,6 +518,9 @@ function prepareLuminanceBlobs(biome, objName, wx, wy, imageCache, count) {
     }
     blobs.push({ lum: lum, alpha: alpha });
   }
+  // Only memoize once the full set was extracted (all sprites decoded). A partial
+  // set means images are still loading — leave it uncached so a repaint retries.
+  if (blobs.length === count) _lumBlobCache.set(cacheKey, blobs);
   return blobs;
 }
 
@@ -969,30 +962,75 @@ function applySmallScatterToChunk(ctx, chunk, tileSize, chunkSize, imageCache, m
   return missed;
 }
 
+// Persistent per-worker render scratch — avoids allocating a full-chunk
+// OffscreenCanvas + a dozen tile-count diagnostic arrays on EVERY chunk render.
+// renderChunkToBitmap runs synchronously start-to-finish (single worker thread,
+// no awaits) and transferToImageBitmap() resets the canvas to transparent black
+// on exit, so a single shared canvas is safe to reuse. The debug arrays are
+// fully overwritten every render (one entry per tile) and postMessage
+// structured-clones them (`wangDebug`) before the next render can run, so
+// recycling them cannot leak stale data to consumers.
+var _renderCanvas = null;
+var _renderCtx = null;
+var _renderCanvasSize = 0;
+var _dbgTileCount = 0;
+var _dbgMasks, _dbgSuccesses, _dbgSrcs, _dbgBiomes, _dbgNeighbors, _dbgTransitionDirs,
+    _dbgTransitionSides, _dbgCornerMasks, _dbgVariants, _dbgCliffLevels,
+    _dbgInteriorUsed, _dbgCliffOverlay;
+var _occupancyBuf = null; // persistent decoration-field occupancy grid
+
 // Render a chunk to an OffscreenCanvas and return an ImageBitmap.
 // neighbors: Map<"cx,cy", tileArray> — cached tiles from adjacent chunks
 // imageCache: Map<url, ImageBitmap> — preloaded wang tile bitmaps
 // sun: { height, ambient, ... }
-export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
+export function renderChunkToBitmap(chunk, neighbors, sun, imageCache, opts) {
   var chunkSize = WORLD.chunkSize;
   var tileSize = WORLD.tileSize;
   var canvasSize = chunkSize * tileSize;
-  var offscreen = new OffscreenCanvas(canvasSize, canvasSize);
-  var ctx = offscreen.getContext('2d', { alpha: true });
+  if (!_renderCanvas || _renderCanvasSize !== canvasSize) {
+    _renderCanvas = new OffscreenCanvas(canvasSize, canvasSize);
+    _renderCtx = _renderCanvas.getContext('2d', { alpha: true });
+    _renderCanvasSize = canvasSize;
+  }
+  var offscreen = _renderCanvas;
+  var ctx = _renderCtx;
+  // Reset any context state that could have leaked from a prior render and clear
+  // the surface. transferToImageBitmap() already clears on exit, but be defensive
+  // so output is byte-identical to the previous fresh-canvas-per-render path.
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = 1.0;
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.filter = 'none';
+  ctx.clearRect(0, 0, canvasSize, canvasSize);
   var tileCount = chunkSize * chunkSize;
-  var debugMasks = new Array(tileCount);
-  var debugSuccesses = new Array(tileCount);
-  var debugSrcs = new Array(tileCount);
-  var debugBiomes = new Array(tileCount);
+  if (_dbgTileCount !== tileCount) {
+    _dbgMasks = new Array(tileCount);
+    _dbgSuccesses = new Array(tileCount);
+    _dbgSrcs = new Array(tileCount);
+    _dbgBiomes = new Array(tileCount);
+    _dbgNeighbors = new Array(tileCount);
+    _dbgTransitionDirs = new Array(tileCount);
+    _dbgTransitionSides = new Array(tileCount);
+    _dbgCornerMasks = new Array(tileCount);
+    _dbgVariants = new Array(tileCount);
+    _dbgCliffLevels = new Array(tileCount);
+    _dbgInteriorUsed = new Array(tileCount);
+    _dbgCliffOverlay = new Array(tileCount);
+    _dbgTileCount = tileCount;
+  }
+  var debugMasks = _dbgMasks;
+  var debugSuccesses = _dbgSuccesses;
+  var debugSrcs = _dbgSrcs;
+  var debugBiomes = _dbgBiomes;
   // 8-layer diagnostic arrays
-  var debugNeighbors = new Array(tileCount);
-  var debugTransitionDirs = new Array(tileCount);
-  var debugTransitionSides = new Array(tileCount);
-  var debugCornerMasks = new Array(tileCount);
-  var debugVariants = new Array(tileCount);
-  var debugCliffLevels = new Array(tileCount);
-  var debugInteriorUsed = new Array(tileCount);
-  var debugCliffOverlay = new Array(tileCount);
+  var debugNeighbors = _dbgNeighbors;
+  var debugTransitionDirs = _dbgTransitionDirs;
+  var debugTransitionSides = _dbgTransitionSides;
+  var debugCornerMasks = _dbgCornerMasks;
+  var debugVariants = _dbgVariants;
+  var debugCliffLevels = _dbgCliffLevels;
+  var debugInteriorUsed = _dbgInteriorUsed;
+  var debugCliffOverlay = _dbgCliffOverlay;
   var floorMissing = 0;  // building floor images not yet in cache
 
   var tileAt = function(wx, wy) {
@@ -1297,7 +1335,15 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
   var cellsPerTile = 4;
   var cellPx = tileSize / cellsPerTile; // 8px per cell
   var gridW = chunkSize * cellsPerTile; // 256
-  var occupancy = new Uint8Array(gridW * gridW); // 0 = free, 1 = occupied
+  // Reuse a persistent occupancy grid across renders (zeroed on reuse) instead of
+  // allocating an 8KB Uint8Array every chunk render.
+  var occSize = gridW * gridW;
+  if (!_occupancyBuf || _occupancyBuf.length !== occSize) {
+    _occupancyBuf = new Uint8Array(occSize);
+  } else {
+    _occupancyBuf.fill(0);
+  }
+  var occupancy = _occupancyBuf; // 0 = free, 1 = occupied
 
   // Apply decoration fields in order — each field reads+writes the occupancy grid
   // DEBUG: check if soil images are in cache
@@ -1313,11 +1359,19 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
     imageCache.forEach(function(v, k) { if (k.includes('/soil/') && soilKeys.length < 5) soilKeys.push(k); });
     console.log('[SOIL DEBUG] actual soil keys:', soilKeys);
   }
-  var soilResult = applySoilFieldToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache);
+  // GPU-terrain renders F0 soil in the tilemap fragment shader, so the per-pixel
+  // CPU soil bake here is 100% redundant when gpuTerrain is on. Skipping it removes
+  // the single most expensive part of chunk production (a full-canvas getImageData/
+  // putImageData + ~4M-pixel blend) — directly speeding up streaming/pop-in. The
+  // bitmap is then a soil-less fallback only used until a chunk's GPU index arrives.
+  var skipSoil = !!(opts && opts.skipSoil);
+  var soilResult = skipSoil
+    ? { anySoil: false, missedSoil: false, soilPixels: 0 }
+    : applySoilFieldToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache);
   var hasSoil = soilResult.anySoil;
   // Diagnostic: a land chunk that painted few/no soil pixels indicates the soil
   // loop is skipping everything (not a missing-image problem)
-  if (soilResult.soilPixels < 10000 && !soilResult.missedSoil) {
+  if (!skipSoil && soilResult.soilPixels < 10000 && !soilResult.missedSoil) {
     console.log('[SOIL LOW] chunk', chunk.cx + ',' + chunk.cy, 'painted only', soilResult.soilPixels, 'soil pixels (anySoil=' + soilResult.anySoil + ')');
   }
   applyGroundCoverToChunk(ctx, chunk, canvasSize, tileSize, chunkSize, imageCache, occupancy, cellsPerTile, cellPx, gridW);
@@ -1350,4 +1404,63 @@ export function renderChunkToBitmap(chunk, neighbors, sun, imageCache) {
       soilPixels: soilResult.soilPixels, soilMissed: soilResult.missedSoil
     }
   };
+}
+
+// ── GPU index buffer emitter ───────────────────────────────────────────────────
+// Walks chunk tiles and writes one RGBA8 texel per tile into a Uint8Array.
+// Pure: no canvas, no GL, no worker globals — safe to call under plain node.
+//
+// opts.size          chunk dimension in tiles (default WORLD.chunkSize)
+// opts.slotResolver  (wangUrl) → integer base slot (0 if unresolved)
+// opts.cliffResolver (cliffUrl) → integer cliff slot (0 if absent/unresolved)
+// opts.soilResolver  (biome) → integer soil id 0..15
+//
+// Reuses the SAME per-tile classification logic as renderChunkToBitmap:
+//   • wangAssetName()  (already imported above)
+//   • cliffLevel()     (already imported above)
+//   • elevationVariant thresholds (inlined — maxDelta → wang/wang_25/wang_50/wang_100)
+//   • cornerMask derivation (inlined — same 15-wangEdgeMask relationship)
+//
+export function buildChunkIndex(chunk, opts) {
+  var size          = (opts && opts.size != null) ? opts.size : WORLD.chunkSize;
+  var slotResolver  = opts.slotResolver;
+  var cliffResolver = opts.cliffResolver;
+  var soilResolver  = opts.soilResolver || function() { return 0; };
+
+  var buf = new Uint16Array(size * size * 4);
+
+  for (var ty = 0; ty < size; ty++) {
+    for (var tx = 0; tx < size; tx++) {
+      var off = (ty * size + tx) * 4;
+      var tile = chunk.tiles[ty * size + tx];
+      if (!tile) {
+        buf[off] = buf[off + 1] = buf[off + 2] = buf[off + 3] = 0;
+        continue;
+      }
+      // Use the SAME variant logic as renderChunkToBitmap (lines ~1219-1224)
+      var variant = elevationVariant(tile);
+      if (tile.transitionPair && tile.transitionPair.from === tile.transitionPair.to && variant === 'wang') {
+        variant = 'wang_25';
+      }
+      // Use the SAME getWangSrc as the bitmap painter so the GPU index selects the
+      // identical tile that the bitmap draws.
+      var src = getWangSrc(tile, variant);
+      var baseSlot = src ? (slotResolver(src) | 0) : 0;
+      // Cliff overlay slot — a SECOND tile composited over the base in the shader,
+      // mirroring paintCliffOverlay over paintWangBase. Best-effort: an unresolved
+      // cliff just isn't drawn (matches the bitmap's missing-bmp behaviour); it
+      // never forces the chunk off the GPU path.
+      var cliffSrc  = getCliffSrc(tile);
+      var cliffSlot = (cliffSrc && cliffResolver) ? (cliffResolver(cliffSrc) | 0) : 0;
+      var soilId   = opts.soilResolver ? (opts.soilResolver(tile.biome) | 0) : 0;
+      var gcLumId  = opts.gcLumResolver ? (opts.gcLumResolver(tile.biome) | 0) : 0;
+      var texel    = encodeTexel(baseSlot, cliffSlot, soilId, gcLumId);
+      buf[off]     = texel[0];
+      buf[off + 1] = texel[1];
+      buf[off + 2] = texel[2];
+      buf[off + 3] = texel[3];
+    }
+  }
+
+  return buf;
 }

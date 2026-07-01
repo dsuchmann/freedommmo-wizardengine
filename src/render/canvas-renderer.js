@@ -15,23 +15,43 @@ import { drawBuildingShadows, buildBuildingShadowBitmap, updateBuildingHeightMas
 import { updateFloorViewTransform } from './floor-view.js';
 import { drawInteriorFloorWorld, drawInteriorWallsWorld, interiorLiftPx, updateInteriorLift } from './interior-renderer.js';
 import { buildInteriorSceneBitmap } from './interior-gl.js';
-import { buildOccluderBitmap } from './building-occluder.js';
+import { buildOccluderBitmap, drawBuildingTextured, buildingBakeState, drawBuildingDynamicInto, bumpBuildingDynamicFrame } from './building-occluder.js';
 import { buildDoorLeafBitmap } from './door-leaves.js';
 import { buildBuildingLayerBitmaps } from './building-layer.js';
 import { nearDepthBuildings, renderBuildingSilhouette, tileDepth, DEPTH_SCALE } from './building-depth.js';
+import { getBuildingSprite, spriteKey, bumpSpriteFrame } from './building-sprite-cache.js';
+import { buildSocketOverlayBitmap } from './dressing/socket-overlay.js';
+import { buildVineOverlayBitmap } from './dressing/vine-overlay.js';
 import { isInside } from './active-interior.js';
 import { initWallTuner, drawWallTuner } from './wall-tuner.js';
 import { drawWaterWaveOverlay, preloadSeaweedAnimations, buildWaveField } from './water-wave-overlay.js';
 import { drawRoofs } from './roof-overlay.js';
 import { renderOn } from './building-render-flags.js';
-import { drawLargeObjects, preloadLargeObjectSprites, setPlayerDrawFn } from './large-object-renderer.js';
 import { drawField2Animations, preloadField2Animations, drawWindWispOverlay, setField2PlayerDraw, setField2PlayerGL } from './field2-animator.js';
 import { findNearbyInteraction, objectReaction, performInteraction } from '../world/interactions.js';
 import { GLCompositor } from './gl-compositor.js';
+import { WangAtlas } from './wang-atlas.js';
+import { getWangImageURLsForBiomes, SOIL_IDS, soilMaterialForBiome, SOIL_BIOME_CONFIG, GC_LUM, GC_LUM_IDS, gcLumSwatchURL } from './wang-image-list.js';
 import { buildAtmoField } from './atmosphere-pass.js';
 import { drawHumanoidPlayer, playMotion, stopMotion } from './humanoid-player-renderer.js';
 import { drawSpriteCharacter } from './sprite-character-renderer.js';
 if (typeof window !== 'undefined') { window.playMotion = playMotion; window.stopMotion = stopMotion; }
+
+// GPU-terrain opt-in flag persistence. The GPU terrain path (Wang atlas + tilemap
+// shader: soil, gc-luminance, no-bitmap pop-in fix) is still behind window._gpuTerrain
+// because it isn't at visual parity yet (ground-cover sprites + F3 scatter aren't on
+// the GPU path — the ground reads barer) and the atlas adds a first-paint dependency.
+// It stays opt-in until parity + stability, then becomes the default. Meanwhile: read
+// the persisted choice at startup and expose gpuTerrain(true/false) so testers set it
+// ONCE instead of re-typing it after every hard refresh.
+if (typeof window !== 'undefined') {
+  try { if (window.localStorage && localStorage.getItem('_gpuTerrain') === 'on') window._gpuTerrain = true; } catch (e) {}
+  window.gpuTerrain = function (on) {
+    window._gpuTerrain = (on !== false);
+    try { if (window.localStorage) localStorage.setItem('_gpuTerrain', on !== false ? 'on' : 'off'); } catch (e) {}
+    return window._gpuTerrain;
+  };
+}
 
 function drawPrecipitation(ctx, w, h, precip, wind, time, tint) {
   if (precip.type === 'none' || precip.intensity < 0.01) return;
@@ -236,8 +256,229 @@ export class CanvasRenderer {
     if (this.glc && this.glc.ok) this.glc.resize(window.innerWidth, window.innerHeight, window.devicePixelRatio);
   }
 
+  // Build + GROW the GPU-terrain Wang atlas. The atlas is persistent and grows
+  // incrementally to cover every biome the player nears (provider.getActiveBiomes),
+  // so GPU terrain works world-wide — not just the grassland bootstrap. Called
+  // every frame; cheap no-op once the atlas already covers the present biomes.
+  _ensureWangAtlas(provider) {
+    if (typeof window === 'undefined' || !window._gpuTerrain) return;
+    const gl = this.glc && this.glc.gl;
+    if (!gl) return; // GL not ready yet, retry next frame
+
+    // Lazily create the persistent atlas + per-biome load bookkeeping.
+    if (!this._wangAtlas) {
+      // 2048² (~3.8k 32px tiles) — kept under the index texel's 12-bit slot ceiling
+      // (4095). Growing past this REQUIRES widening the index texel first (see the
+      // detail-fields spec); a larger atlas would silently truncate slots > 4095.
+      // When the atlas fills, chunks needing un-packed tiles fall back to the bitmap
+      // (graceful), never corrupt.
+      this._wangAtlas = new WangAtlas(gl, 2048);
+      this._atlasBiomesLoaded = new Set(); // biomes whose URLs are loaded/loading
+      this._wangAtlasState = this._wangAtlasState || null;
+    }
+    if (this._atlasGrowing) return; // one growth batch at a time
+
+    // Which biomes does the player need right now? Bootstrap with grassland until
+    // the first initPreload has sampled the surrounding biomes.
+    let biomes = provider.getActiveBiomes() || [];
+    if (!biomes.length) biomes = ['grassland'];
+    const fresh = biomes.filter(b => !this._atlasBiomesLoaded.has(b));
+    if (!fresh.length) return; // atlas already covers everything present
+
+    if (this._wangAtlasState == null) this._wangAtlasState = 'loading';
+    fresh.forEach(b => this._atlasBiomesLoaded.add(b));
+    this._growAtlas(provider);
+  }
+
+  // Build the soil-swatch atlas + per-biome config texture for the GPU F0 pass.
+  // Loads ONE representative swatch (v000) per biome soil material — ~21 fetches,
+  // so it loads in one shot (no incremental growth). Idempotent. The config texture
+  // is filled synchronously; the swatch cells stream in as their PNGs decode.
+  _ensureSoilAtlas(provider) {
+    if (typeof window === 'undefined' || !window._gpuTerrain) return;
+    if (this._soilState) return;
+    const gl = this.glc && this.glc.gl;
+    if (!gl) return;
+    this._soilState = 'loading';
+
+    const ids = SOIL_IDS;                 // biome → 1..N
+    let maxId = 0;
+    for (const b in ids) if (ids[b] > maxId) maxId = ids[b];
+    const count = maxId + 1;              // include reserved id 0
+    const cellW = 32;
+
+    // Config texture (RGBA32F, count x 2) — filled synchronously from SOIL_BIOME_CONFIG.
+    const cfgData = new Float32Array(count * 2 * 4);
+    for (const b in ids) {
+      const id = ids[b];
+      const c = SOIL_BIOME_CONFIG[b] || {};
+      const density = (c.density != null) ? c.density : 0.94;
+      const alpha = (c.alpha != null) ? c.alpha : 0.65;
+      const tint = c.tint || null;
+      const tintStrength = (c.tintStrength != null) ? c.tintStrength : 0.3;
+      cfgData[(0 * count + id) * 4 + 0] = density;
+      cfgData[(0 * count + id) * 4 + 1] = alpha;
+      cfgData[(0 * count + id) * 4 + 2] = tint ? tintStrength : 0.0;
+      cfgData[(0 * count + id) * 4 + 3] = tint ? 1.0 : 0.0;
+      cfgData[(1 * count + id) * 4 + 0] = tint ? tint[0] / 255 : 0;
+      cfgData[(1 * count + id) * 4 + 1] = tint ? tint[1] / 255 : 0;
+      cfgData[(1 * count + id) * 4 + 2] = tint ? tint[2] / 255 : 0;
+      cfgData[(1 * count + id) * 4 + 3] = 0;
+    }
+    const configTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, configTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, count, 2, 0, gl.RGBA, gl.FLOAT, cfgData);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+
+    // Swatch atlas (RGBA8, count*32 x 32) — allocated now, cells filled async.
+    const swatchTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, swatchTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, count * cellW, cellW, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);  // jittered sample wraps within a cell
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+
+    this.glc.setSoilAtlas(swatchTex, configTex, count);
+    this._soilState = 'ready';
+    if (typeof window !== 'undefined') window._gpuSoilReady = true;
+
+    // Fetch each biome's representative swatch (soil__<material>__v000.png) into cell[id].
+    const SOIL_BASE = '/assets/pixelab/landscape_v2/micro/soil/';
+    for (const b in ids) {
+      const id = ids[b];
+      const mat = soilMaterialForBiome(b);
+      const url = SOIL_BASE + mat + '/soil__' + mat + '__v000.png';
+      fetch(url)
+        .then(r => r.ok ? r.blob() : null)
+        .then(bl => bl ? createImageBitmap(bl) : null)
+        .then(bmp => {
+          if (!bmp) return;
+          gl.bindTexture(gl.TEXTURE_2D, swatchTex);
+          gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+          gl.texSubImage2D(gl.TEXTURE_2D, 0, id * cellW, 0, gl.RGBA, gl.UNSIGNED_BYTE, bmp);
+          gl.bindTexture(gl.TEXTURE_2D, null);
+        })
+        .catch(() => {}); // missing soil PNG → that cell stays transparent (honest absence)
+    }
+  }
+
+  // Build the gc-luminance swatch atlas + config texture for the GPU gc-luminance pass.
+  // Mirrors _ensureSoilAtlas: one representative gc sprite per luminance biome (11 total;
+  // grassland etc. have none → id 0 → shader skips). Idempotent.
+  _ensureGcLumAtlas(provider) {
+    if (typeof window === 'undefined' || !window._gpuTerrain) return;
+    if (this._gcLumState) return;
+    const gl = this.glc && this.glc.gl;
+    if (!gl) return;
+    this._gcLumState = 'loading';
+
+    const ids = GC_LUM_IDS;               // biome → 1..N (only 11 luminance biomes)
+    let maxId = 0;
+    for (const b in ids) if (ids[b] > maxId) maxId = ids[b];
+    const count = maxId + 1;              // include reserved id 0
+    const cellW = 32;
+
+    // Config texture (RGBA32F, count x 1) — texel[id] = (strength, density, 0, 0).
+    const cfgData = new Float32Array(count * 4);
+    for (const b in ids) {
+      const id = ids[b];
+      const c = GC_LUM[b] || {};
+      cfgData[id * 4 + 0] = (c.strength != null) ? c.strength : 0.18;
+      cfgData[id * 4 + 1] = (c.density != null) ? c.density : 0.75;
+    }
+    const configTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, configTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, count, 1, 0, gl.RGBA, gl.FLOAT, cfgData);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+
+    const swatchTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, swatchTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, count * cellW, cellW, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+
+    this.glc.setGcLumAtlas(swatchTex, configTex, count);
+    this._gcLumState = 'ready';
+    if (typeof window !== 'undefined') window._gpuGcLumReady = true;
+
+    for (const b in ids) {
+      const id = ids[b];
+      const url = gcLumSwatchURL(b);
+      if (!url) continue;
+      fetch(url)
+        .then(r => r.ok ? r.blob() : null)
+        .then(bl => bl ? createImageBitmap(bl) : null)
+        .then(bmp => {
+          if (!bmp) return;
+          gl.bindTexture(gl.TEXTURE_2D, swatchTex);
+          gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+          gl.texSubImage2D(gl.TEXTURE_2D, 0, id * cellW, 0, gl.RGBA, gl.UNSIGNED_BYTE, bmp);
+          gl.bindTexture(gl.TEXTURE_2D, null);
+        })
+        .catch(() => {}); // missing gc PNG → cell stays transparent (honest absence)
+    }
+  }
+
+  // Fetch every Wang URL for the union of loaded biomes (so border-transition
+  // tiles between any two present biomes are covered), skipping URLs already in
+  // the atlas, then re-publish the grown atlas + meta to the compositor + workers.
+  _growAtlas(provider) {
+    const atlas = this._wangAtlas;
+    // Remember URLs that 404 / fail to decode so repeated biome-growths (as the
+    // player roams and new biomes join the atlas) don't re-request them every time.
+    // getWangImageURLsForBiomes generates ALL biome-pair URLs, most of which don't
+    // exist on disk; without this they'd be re-fetched on each growth. Successful
+    // tiles are already skipped via atlas.hasKey().
+    const miss = this._atlasMissing || (this._atlasMissing = new Set());
+    const allBiomes = [...this._atlasBiomesLoaded];
+    const urls = getWangImageURLsForBiomes(allBiomes).filter(u => !atlas.hasKey(u) && !miss.has(u));
+    if (!urls.length) { this._publishAtlas(provider); return; }
+    this._atlasGrowing = true;
+    let pending = urls.length;
+    for (const url of urls) {
+      fetch(url)
+        .then(r => r.ok ? r.blob() : null)
+        .then(b => b ? createImageBitmap(b) : null)
+        .then(bmp => { if (bmp) atlas.add(url, bmp); else miss.add(url); })
+        .catch(() => { miss.add(url); }) // 404s / decode fails — remember, never retry
+        .finally(() => {
+          if (--pending === 0) this._publishAtlas(provider);
+        });
+    }
+  }
+
+  // Hand the grown atlas texture + slot→UV meta to the compositor and broadcast
+  // the meta to the workers so they resolve newly-added biome tiles. Slots are
+  // append-only, so existing chunk indexes stay valid across growth.
+  _publishAtlas(provider) {
+    const atlas = this._wangAtlas;
+    const meta = atlas.serializeMeta();
+    this.glc.setWangAtlas(atlas.texture(), meta);
+    provider.setWangAtlasMeta(meta);
+    if (this._wangAtlasState !== 'ready') {
+      provider.setGpuTerrain(true);
+      this._wangAtlasState = 'ready';
+      if (typeof window !== 'undefined') window._gpuTerrainReady = true;
+    }
+    this._atlasGrowing = false;
+  }
+
   draw(chunkStore, player, lighting, camera, provider, weather) {
     const ctx = this.ctx;
+    const _P = (typeof window !== 'undefined') ? (window._drawProf = window._drawProf || {}) : {};
     ctx.imageSmoothingEnabled = false;
     const w = window.innerWidth;
     const h = window.innerHeight;
@@ -270,6 +511,10 @@ export class CanvasRenderer {
       ctx.fillStyle = sun.skyColor || '#18262b';
       ctx.fillRect(0, 0, w, h);
     }
+
+    this._ensureWangAtlas(provider);
+    this._ensureSoilAtlas(provider);
+    this._ensureGcLumAtlas(provider);
 
     const camX = player.x * tilePx - w / 2;
     // Interior camera glide: advance the eased per-floor lift, then subtract it from camY so
@@ -307,17 +552,37 @@ export class CanvasRenderer {
     // building, not under it. (Per-chunk sort can't fix a cross-chunk inversion; the
     // distance sort let the closer/north chunk win.) Covers the 2D + GL blit loop.
     chunkJobs.sort((a, b) => (a.cy - b.cy) || (a.cx - b.cx));
+    const _Tt = performance.now();
     for (const job of chunkJobs) {
       const { cx, cy, chunk } = job;
       const key = `${cx},${cy}`;
       const cached = this.chunkRenderCache.get(chunk, provider);
       const sx = baseSX + (cx - minCX) * chunkPx;
       const sy = baseSY + (cy - minCY) * chunkPx;
-      if (!cached) continue;
+      // GPU terrain index (base+cliff+soil rendered by the tilemap shader). A P4
+      // GPU chunk has an index but NO bitmap, so resolve the index first and only
+      // skip the chunk when it has NEITHER a bitmap nor an index to draw from.
+      var _gtOn = (typeof window !== 'undefined' && window._gpuTerrain && this._wangAtlasState === 'ready');
+      var _idx = _gtOn ? provider.getChunkIndex(cx, cy) : null;
+      if (!cached && !_idx) continue;
       if (glScene || glOn) {
         // CSS-pixel scale — full-resolution FBO, same coords as Stage 2
-        this.glc.drawChunk(key, cached, sx, sy, chunkPx, chunkPx);
-      } else {
+        // DIAGNOSTIC: prove which path actually drew. Read window._gpuTerrainStats in console:
+        // { tilemap, bitmap, ready, idxNull } — tilemap>0 means the GPU shader path is live.
+        if (typeof window !== 'undefined') {
+          var _gt = window._gpuTerrainStats || (window._gpuTerrainStats = { tilemap: 0, bitmap: 0, ready: false, idxNull: 0 });
+          _gt.ready = this._wangAtlasState === 'ready';
+          if (_gtOn && !_idx) _gt.idxNull++;
+        }
+        if (_idx) {
+          if (typeof window !== 'undefined') window._gpuTerrainStats.tilemap++;
+          this.glc.uploadChunkIndex(key, _idx);
+          this.glc.drawChunkTilemap(key, cx, cy, sx, sy, chunkPx, chunkPx);
+        } else {
+          if (typeof window !== 'undefined') window._gpuTerrainStats.bitmap++;
+          this.glc.drawChunk(key, cached, sx, sy, chunkPx, chunkPx);
+        }
+      } else if (cached) {
         ctx.drawImage(cached, sx, sy, chunkPx, chunkPx);
       }
       // Feed worker wang debug data into the debug overlay system
@@ -325,6 +590,9 @@ export class CanvasRenderer {
       if (wd && !getDebugWangData(key)) setDebugWangData(key, wd);
       visibleChunks.push({ cx, cy, key, sx, sy, dw: chunkPx, dh: chunkPx });
     }
+    _P.terrain = Math.round(performance.now() - _Tt);
+    const _Tm = performance.now();
+    _P.bShadow = 0; _P.bSprites = 0; // sub-timers within mid (set below when those passes run)
 
     // (glc.endFrame() runs at the end of draw() — F2 sprite instances still
     // need to land on the GL canvas after terrain.)
@@ -510,10 +778,12 @@ export class CanvasRenderer {
     // billboard composites OVER (and occludes) its own shadow. Blits COLOR only (no depth); the next pass
     // (drawBuildingColorDepth) draws the opaque walls over it. The 2D drawBuildingShadows path is the !glScene fallback.
     if (glScene && !_inside && renderOn('shadow') && (typeof window === 'undefined' || window._buildingShadows !== false) && sun && sun.isDaytime) {
+      const _Tsh = performance.now();
       try {
         const _shadowBmp = buildBuildingShadowBitmap(nearDepthBuildings(getCachedBuildings(), camX, camY, tilePx, w, h), camX, camY, tilePx, w, h, sun);
         if (_shadowBmp) this.glc.drawSceneOverlayBitmap(_shadowBmp);
       } catch (e) { /* best-effort */ }
+      _P.bShadow = Math.round(performance.now() - _Tsh);
     }
 
     // UNIFIED PER-OBJECT BUILDING COLOUR+DEPTH (#12 fix — DEFAULT; opt out with window._buildingDepthColor
@@ -523,24 +793,72 @@ export class CanvasRenderer {
     // behind→in-front-of smoothly with NO whole-building flip (no pop), and the see-through ghost keys on
     // the real depth test. Runs BEFORE the sprite batch.
     if (!_inside && glScene && renderOn('walls') && typeof window !== 'undefined' && window._buildingDepthColor !== false) {
+      const _Tsp = performance.now();
       const _refY = (camY + h / 2) / tilePx;
       const _blds = nearDepthBuildings(getCachedBuildings(), camX, camY, tilePx, w, h)
         .slice().sort((a, b) => (a.y + a.footprint.boundingBox.h) - (b.y + b.footprint.boundingBox.h)); // farthest-first
       let _wrote2 = false;
+      // CACHED building-local sprite (baked ONCE per building, re-baked only until its tiles+roof finish loading,
+      // then frozen) instead of rebuilding + re-uploading a full-screen silhouette per building per frame (the
+      // ~336ms draw). The sprite is baked at _spr.builtTilePx; SCALE the GL quad to the live tilePx (like terrain
+      // chunks) so a zoom is a free quad-resize, not a re-bake. The DYNAMIC layer (door swing + animated props) is
+      // drawn LIVE right after each sprite, in the sprite's OWN local frame, at the SAME screen rect — so it can't
+      // freeze in the cache yet registers pixel-exactly over the baked walls/closed-door at any zoom.
+      bumpSpriteFrame();
+      bumpBuildingDynamicFrame(); // reset the per-frame props-bake budget (spreads a town's first-frame burst)
+      const _wantDyn = renderOn('walls') || renderOn('attachments');
+      const _dynList = _wantDyn ? [] : null;
       for (const _b of _blds) {
-        const _sil = renderBuildingSilhouette(_b, camX, camY, tilePx, w, h);
-        if (!_sil) continue;
+        const _spr = getBuildingSprite(_b, tilePx, drawBuildingTextured, buildingBakeState);
+        if (!_spr) continue;
+        const _sc = tilePx / _spr.builtTilePx;
         const _z = tileDepth(_b.y + _b.footprint.boundingBox.h, _refY) * 2 - 1;
-        this.glc.drawBuildingColorDepth(_sil, _z);
+        const _dx = Math.round(_b.x * tilePx - camX - _spr.ax * _sc);
+        const _dy = Math.round(_b.y * tilePx - camY - _spr.ay * _sc);
+        this.glc.drawBuildingSprite(spriteKey(_b), _spr.canvas, _dx, _dy, _spr.w * _sc, _spr.h * _sc, _z);
+        if (_dynList) _dynList.push({ b: _b, spr: _spr, dx: _dx, dy: _dy, sc: _sc, z: _z });
         _wrote2 = true;
+      }
+      // LIVE DYNAMIC LAYER — door swing + animated props, in a SECOND pass AFTER every sprite has written its
+      // depth, so a NEARER building's roof (now in the depth buffer) OCCLUDES a farther building's door/props.
+      // Each is rendered in its sprite's cropped local frame at _spr.builtTilePx (localCam = b*builtTilePx −
+      // {ax,ay}) and drawn at the IDENTICAL quad rect with LEQUAL depth → it overlays the baked sprite EXACTLY
+      // (the open door covers the baked closed door at any zoom). The bake holds the CLOSED door + static walls/roof.
+      if (_dynList) for (const _d of _dynList) {
+        try {
+          const _dyn = drawBuildingDynamicInto(_d.b, _d.b.x * _d.spr.builtTilePx - _d.spr.ax, _d.b.y * _d.spr.builtTilePx - _d.spr.ay, _d.spr.builtTilePx, _d.spr.w, _d.spr.h);
+          if (_dyn) this.glc.drawBuildingPropsSprite(_dyn, _d.dx, _d.dy, _d.spr.w * _d.sc, _d.spr.h * _d.sc, _d.z);
+        } catch (e) { /* best-effort */ }
       }
       if (_wrote2) {
         const _see = (typeof window._depthSeeStrength === 'number') ? window._depthSeeStrength : 0.45;
         this.glc.setSpriteDepth(_refY, DEPTH_SCALE, _see);
         _depthActive = true;
       }
+      _P.bSprites = Math.round(performance.now() - _Tsp);
     }
 
+    // D-STACK PLACEMENT OVERLAY (debug, off by default): highlight every façade socket where a wall
+    // attachment would anchor, routed through GL (drawSceneOverlayBitmap) so the markers composite WITH
+    // the scene like the walls — proves the addressing before any D3 art. Toggle window._socketOverlay.enabled.
+    if (glScene && !_inside && typeof window !== 'undefined' && window._socketOverlay && window._socketOverlay.enabled) {
+      try {
+        const _sock = buildSocketOverlayBitmap(nearDepthBuildings(getCachedBuildings(), camX, camY, tilePx, w, h), camX, camY, tilePx, w, h);
+        if (_sock) this.glc.drawSceneOverlayBitmap(_sock);
+      } catch (e) { /* best-effort */ }
+    }
+
+    // D2 VINE PLACEMENT overlay (debug, off by default): the climbing-vine SPLINE paths (root → stem → leaves),
+    // routed through GL so they sit on the walls — proves the vine addressing before any ivy art. Toggle
+    // window._vineOverlay.enabled (window._vineOverlay.rootChance=1 to root a vine on every bare strip).
+    if (glScene && !_inside && typeof window !== 'undefined' && window._vineOverlay && window._vineOverlay.enabled) {
+      try {
+        const _vine = buildVineOverlayBitmap(nearDepthBuildings(getCachedBuildings(), camX, camY, tilePx, w, h), camX, camY, tilePx, w, h);
+        if (_vine) this.glc.drawSceneOverlayBitmap(_vine);
+      } catch (e) { /* best-effort */ }
+    }
+
+    _P.mid = Math.round(performance.now() - _Tm);
     // === FIELD 2: ANIMATED WIND SWAY ===
     // Skip F2 when civilization overlay is active or zoomed far out —
     // thousands of animated sprites kill FPS at low zoom.
@@ -548,8 +866,11 @@ export class CanvasRenderer {
     if (!civOverlay && camera.zoom > 0.7) {
       const chunkArtPx = WORLD.chunkSize * ts;
       const f2Grid = { baseSX, baseSY, minCX, minCY, chunkPx };
+      const _f2t = performance.now();
       drawField2Animations(ctx, chunkStore, player, camera, w, h, f2Grid, performance.now(), weather, sun, glOn ? this.glc : null);
+      if (typeof window !== 'undefined') (window._drawProf = window._drawProf || {}).f2 = performance.now() - _f2t;
     }
+    const _Tpost = performance.now(); // everything from here to presentScene was previously uninstrumented
     if (_depthActive) this.glc.clearSpriteDepth(); // player drawn; stop depth-testing subsequent pool draws
 
     // Building walls: rendered in chunk pipeline via shared wall-draw.js.
@@ -594,6 +915,7 @@ export class CanvasRenderer {
       // seams — the field spans the whole viewport).
       // Wave/atmosphere fields: tile origins in CSS-pixel texel space.
       // camX/camY are CSS-pixel camera coords; tilePx = tileSize * zoom.
+      const _Tf = performance.now();
       const tile0X = Math.floor(camX / tilePx);
       const tile0Y = Math.floor(camY / tilePx);
       const tilesW = Math.ceil(w / tilePx) + 4;
@@ -626,6 +948,8 @@ export class CanvasRenderer {
         playerY: player.y * tilePx,
         playerLight: 1,
       });
+      _P.fields = Math.round(performance.now() - _Tf);
+      const _To = performance.now();
       // GL-native building→player occlusion: a building IN FRONT of the player (baked into the
       // chunk below the sprite batch) would wrongly draw under them. Build an overlay bitmap of
       // those buildings with a see-through hole around the player and blit it into the scene FBO
@@ -656,7 +980,11 @@ export class CanvasRenderer {
       // Unconditional call site — must be explicitly gated by the master switch.
       const _dl = renderOn('doors') ? buildDoorLeafBitmap(getCachedBuildings(), camX, camY, tilePx, w, h, player) : null;
       if (_dl) this.glc.drawSceneOverlayBitmap(_dl);
+      _P.overlays = Math.round(performance.now() - _To);
+      _P.post = Math.round(performance.now() - _Tpost);
+      const _Tp = performance.now();
       this.glc.presentScene(w, h, camera.zoom, fracX, fracY);
+      _P.present = Math.round(performance.now() - _Tp);
     }
     if (glOn) this.glc.endFrame();
 

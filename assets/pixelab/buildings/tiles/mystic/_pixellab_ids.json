@@ -1,0 +1,16 @@
+{
+  "_doc": "Durable ledger of PixelLab object IDs for the MYSTIC tile-corpus pilot (3rd biome). Vocabulary authored by the mystic-biome-design workflow 2026-06-24 → docs/superpowers/specs/2026-06-24-mystic-tile-corpus-manifest.md. Every wall state is a create_object_state of its material's `base` (OBJECT); gables + roofs are create_tiles_pro (TILES). Record ids here in the same batch you generate. base_project prefix = 0f1031f5-9eee-4df4-996f-0a4114148eba.",
+  "base_project": "0f1031f5-9eee-4df4-996f-0a4114148eba",
+  "materials": {
+    "moonstone":        { "base": "bc94f7b4-6ac4-4858-87fb-5d0d24a31a1b", "ground_window": "4e16e914-1d3a-45aa-a8db-5d39f1994c7f", "ground_door": "b0a35f43-331b-42f7-8004-453858916b5e", "ground_left_corner": "6d5e9d37-d2ed-43e1-9033-8c5184557419", "gable": "7736c501-5e2f-4b29-aa84-188370903fc2", "window_anim": "CODE glow-pulse", "door_anim_group": "ef01a767-aaa2-4085-975b-743349e52c17", "_regen": "v7 marble-matched value (renders at 5% holes; pale near-white v1/v3/v5 alpha-matted to 57-90% mud); v6 content-policy-blocked; v4 stalled; de-magenta.mjs strips PixelLab magenta key pixels", "_v1_blownout": "49e4cc23-626f-4277-88cd-d931adbe46b1" },
+    "starlit_marble":   { "base": "ddb251e7-878a-4636-bb71-b48fe7432182", "ground_window": "a2b38025-6fc6-47d3-8922-46a8cd1e7139", "ground_door": "bbd92f83-4c2b-452c-925a-92cdb363418f", "ground_left_corner": "f4c82764-5490-409a-a37a-328c1b307855", "gable": "fb56a36e-4c8a-4d49-9ac2-71e60acbd500", "_window_v1_dissolved": "a4f3e08b-55da-4e6e-8f77-2d0b44d49d70", "_gable_v1_dense": "cfbacfee-09ad-4ca5-8fed-13bf524f3206" },
+    "amethyst_ashlar":  { "base": "d1f45f76-6ac1-4608-bfbd-34cc3f9cba19", "ground_window": "3e499aab-66d6-426e-b7f4-915f7b61bf6f", "ground_door": "806bb731-10f8-404f-b223-e717dc4a77a2", "ground_left_corner": "7aaa1f6c-4092-4936-9c83-b7a763efe43d", "gable": "dc932dba-ea99-479f-8d83-0e5bf37c8bd3" },
+    "wardweave_lattice":{ "base": "91615462-3883-4862-8a05-6497e009ac55", "ground_window": "0a80364e-47c0-4408-b6fd-15219e8f215f", "ground_door": "e2ad4c7f-2085-417d-bb70-67e123af3400", "ground_left_corner": "83bab16e-7723-4920-a0a8-4e062ddd51dc", "gable": "382fec8f-d717-4701-ad5e-f5badec664c5", "door_anim_pending": "f4021bfb-952b-4b40-aff9-86be3055bfe7", "_base_v1_seethrough_rejected": "ae393d3d-2ed9-4a03-88e2-cbe428653566" }
+  },
+  "roofs": {
+    "moonstone_slate":    { "v000": "", "v001": "", "v002": "", "v003": "", "fascia": "" },
+    "geode_scale":        { "v000": "", "v001": "", "v002": "", "v003": "", "fascia": "" },
+    "amethyst_facet_slab":{ "v000": "", "v001": "", "v002": "", "v003": "", "fascia": "" },
+    "silver_thatch":      { "v000": "", "v001": "", "v002": "", "v003": "", "fascia": "" }
+  }
+}

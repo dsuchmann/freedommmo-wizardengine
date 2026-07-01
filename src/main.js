@@ -60,7 +60,9 @@ const compositor = new RuntimeCompositor(defaultAssetCatalog);
 const renderer = new CanvasRenderer(canvas, stats, compositor);
 window._dbgRenderer = renderer;
 window._dbgChunkStore = chunks;
+let _clearClaimCaches = null; // captured from the async import below; called on teleport discontinuity
 import('./world/decoration-claims.js').then(function (m) {
+  _clearClaimCaches = m.clearClaimCaches;
   window._claims = {
     mask: function (wx, wy) { return Array.from(m.getClaimMask(wx, wy, function (x, y) {
       var t = window._dbgChunkStore && window._dbgChunkStore.tileAt(x, y);
@@ -90,12 +92,21 @@ import('./world/biome-atmosphere.js').then(m => {
     get(biome) { return m.BIOME_ATMOSPHERE[biome]; },
   };
 });
-import('./dev/field-tuner.js').then(m => m.initFieldTuner()); // field tuner (key `)
+// Unified Dev HUD (key `): one panel, tabbed. Tools register themselves as tabs.
+import('./dev/dev-hud.js').then(m => {
+  m.initDevHUD();
+  import('./dev/dev-overlays-tab.js').then(o => o.registerOverlaysTab()); // Overlays/flags checklist
+  import('./dev/field-tuner.js').then(f => f.initFieldTuner());           // "Fields" tab (+ applies field tuning)
+  import('./dev/weathering-tuner.js').then(w => w.initWeatheringTuner()); // "Weathering" tab
+  import('./dev/damage-tuner.js').then(d => d.initDamageTuner());         // "Damage" tab (D1)
+  import('./dev/growth-tuner.js').then(g => g.initGrowthTuner());         // "Growth" tab (D2)
+});
 const weather = new WeatherSystem(lighting);
 const overmap = new OvermapController(overmapCanvas, player, chunks);
 const camera = new Camera();
 window._camera = camera; // test/dev hook: set zoom via manualZoom
 const perf = new PerformanceMonitor();
+window._perf = perf; // dev hook: read fps / updateMs / drawMs split live from the console
 
 // ---- Sim process connection (honest-absence: no-sim path changes ZERO behaviour) ----
 const simWorldState = new SimWorldState();
@@ -187,7 +198,7 @@ function update(dt) {
     player.y = 212;
     player.z = 0;
     player.vz = 0;
-    chunks.streamAround(player.x, player.y);
+    chunks.streamAround(player.x, player.y, camera.zoom, window.innerWidth, window.innerHeight);
     provider.initPreload(player.x, player.y, true); // discontinuity: force destination preload
   }
   if (input.wasPressed('p')) {
@@ -297,7 +308,7 @@ function update(dt) {
       simClient.setViewport({ x: px - VP_HALF, y: py - VP_HALF, w: VP_HALF * 2, h: VP_HALF * 2 });
     }
   }
-  chunks.streamAround(player.x, player.y);
+  chunks.streamAround(player.x, player.y, camera.zoom, window.innerWidth, window.innerHeight);
   // Re-run biome preload as the player travels — no-ops until they've moved
   // ~15 chunks from the last preload center (kills sprite pop-in on new biomes)
   if ((frame & 127) === 0) provider.initPreload(player.x, player.y);
@@ -323,5 +334,5 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 
-chunks.streamAround(player.x, player.y);
+chunks.streamAround(player.x, player.y, camera.zoom, window.innerWidth, window.innerHeight);
 requestAnimationFrame(loop);

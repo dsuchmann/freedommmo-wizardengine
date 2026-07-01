@@ -1,0 +1,103 @@
+{
+ "_note": "Per-field config for the generalized @384 upscale pipeline + upscale-studio dashboard. Roots are repo-relative POSIX. draw_px is the in-game draw size used by the dashboard's 'game' view (PROVISIONAL = seeded from PixelLab gen sizes; refine from decoration-claims). prompt_mode 'legacy_f6' = use comfy-batch's built-in tree prompt tables unchanged; 'template' = use this entry's prompt + per-object overrides. ready_gate 'f6' = the live-gen completeness gate; 'disk' = static corpus, process whatever is on disk.",
+ "large_flora": {
+  "label": "F6 large flora",
+  "root": "assets/pixelab/landscape_v2/micro/large_flora",
+  "file_re": "^v(\\d+)$",
+  "draw_px": 192,
+  "kinds": ["base", "states", "anim"],
+  "transparent": true,
+  "denoise": 0.40,
+  "prompt_mode": "legacy_f6",
+  "ready_gate": "f6"
+ },
+ "small_flora": {
+  "label": "F2 small flora",
+  "root": "assets/pixelab/landscape_v2/micro/small_flora",
+  "file_re": "^sf__.*__v(\\d+)$",
+  "draw_px": 32,
+  "kinds": ["base", "anim"],
+  "transparent": true,
+  "denoise": 0.38,
+  "prompt_mode": "template",
+  "ready_gate": "disk",
+  "prompt": "top-down pixel art {obj}, crisp clean pixel-art shading, detailed leaf and stem texture, delicate petals, rich saturated colors, high fantasy game asset, sharp blocky pixels, no anti-aliasing",
+  "objects": {
+   "dandelion_stem": "small dandelion plant, yellow flower and toothed green leaves",
+   "tall_grass_blade": "tuft of tall slender green grass blades",
+   "wild_herb": "small leafy wild herb plant, soft green foliage"
+  }
+ },
+ "medium_flora": {
+  "label": "F4 medium flora",
+  "root": "assets/pixelab/landscape_v2/micro/medium_flora",
+  "file_re": "^mf__.*__v(\\d+)$",
+  "draw_px": 64,
+  "kinds": ["base", "states", "anim"],
+  "transparent": true,
+  "denoise": 0.38,
+  "prompt_mode": "template",
+  "ready_gate": "disk",
+  "prompt": "top-down pixel art {obj}, crisp clean pixel-art shading, detailed petals and leaves, rich saturated colors, high fantasy game asset, sharp blocky pixels, no anti-aliasing",
+  "objects": {
+   "cornflower": "cluster of blue cornflowers with thin green stems",
+   "daisy_cluster": "cluster of white daisies with yellow centers",
+   "wild_lavender": "sprig of purple wild lavender flowers"
+  }
+ },
+ "medium_objects": {
+  "label": "F5 medium objects",
+  "root": "assets/pixelab/landscape_v2/micro/medium_objects",
+  "file_re": "^mo__.*__v(\\d+)$",
+  "draw_px": 96,
+  "kinds": ["base", "states"],
+  "transparent": true,
+  "denoise": 0.28,
+  "prompt_mode": "template",
+  "ready_gate": "disk",
+  "prompt": "top-down pixel art {obj}, crisp clean pixel-art shading, detailed surface texture, rich natural colors, high fantasy game asset, sharp blocky pixels, no anti-aliasing",
+  "objects": {
+   "fence_post": "weathered wooden fence post, visible wood grain",
+   "field_boulder": "grey granite boulder with patches of moss",
+   "hay_bale": "round dry golden straw hay bale"
+  }
+ },
+ "large_objects": {
+  "label": "Large objects",
+  "root": "assets/pixelab/landscape_v2/micro/large_objects",
+  "file_re": "^lg__.*__v(\\d+)$",
+  "draw_px": 160,
+  "kinds": ["base"],
+  "transparent": true,
+  "denoise": 0.40,
+  "prompt_mode": "template",
+  "ready_gate": "disk",
+  "prompt": "high fantasy pixel art of a single {obj}, crisp clean pixel-art shading, detailed bark foliage and surface texture, rich saturated colors, sharp blocky pixels, no anti-aliasing",
+  "objects": {
+   "apple_tree": "apple tree with a rounded green canopy and red fruit",
+   "cherry_blossom": "flowering cherry tree with a pink-white blossom canopy",
+   "meadow_oak": "broad spreading meadow oak tree with full green canopy"
+  }
+ },
+ "small_scatter": {
+  "label": "F3 small scatter",
+  "root": "assets/pixelab/landscape_v2/micro/small_scatter",
+  "file_re": "^ss__.*__v(\\d+)$",
+  "draw_px": 32,
+  "kinds": ["base"],
+  "transparent": true,
+  "denoise": 0.35,
+  "prompt_mode": "template",
+  "ready_gate": "disk",
+  "skip_biomes": ["ocean", "deep_ocean", "lake", "river", "shallow_water"],
+  "prompt": "top-down pixel art of a single small {obj}, crisp clean pixel-art shading, detailed surface texture, rich natural colors, high fantasy game asset, sharp blocky pixels, no anti-aliasing",
+  "objects": {
+   "field_stone": "small grey field stone with subtle moss",
+   "seashell": "small spiral seashell, pale ridged surface",
+   "bleached_bone": "small bleached white bone fragment",
+   "mushroom_cluster": "small cluster of forest mushrooms with rounded caps",
+   "pine_cone": "small brown pine cone with layered scales",
+   "obsidian_shard": "small glassy black obsidian shard"
+  }
+ }
+}

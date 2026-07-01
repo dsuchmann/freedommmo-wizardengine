@@ -1,0 +1,242 @@
+{
+  "mountains": {
+    "window_anim": "shutters",
+    "materials": [
+      "granite_ashlar",
+      "stacked_slate",
+      "timber_rubble",
+      "dwarven_cut_stone"
+    ],
+    "roofs": [
+      "slate_shingle",
+      "patina_copper",
+      "cedar_shake",
+      "lead_seam"
+    ]
+  },
+  "hills": {
+    "window_anim": "shutters",
+    "materials": [
+      "drystone",
+      "hillstone_block",
+      "limewashed_cottage",
+      "slate_hung"
+    ],
+    "roofs": [
+      "slate",
+      "stone_flag",
+      "limewashed_slate",
+      "wood_shake"
+    ]
+  },
+  "taiga": {
+    "window_anim": "shutters",
+    "materials": [
+      "stacked_log",
+      "pine_plank",
+      "pitch_sealed_timber",
+      "log_and_daub"
+    ],
+    "roofs": [
+      "sod_turf",
+      "cedar_shake",
+      "pine_plank_roof",
+      "tarred_shingle"
+    ]
+  },
+  "dense_forest": {
+    "window_anim": "shutters",
+    "materials": [
+      "mossy_timber",
+      "dark_stained_log",
+      "root_and_earth",
+      "deep_bark_plank"
+    ],
+    "roofs": [
+      "moss_shingle",
+      "dark_slate",
+      "fern_thatch",
+      "deep_moss_sod"
+    ]
+  },
+  "savanna": {
+    "window_anim": "shutters",
+    "materials": [
+      "ochre_adobe",
+      "mud_brick_coursed",
+      "thorn_wattle",
+      "woven_grass_panel"
+    ],
+    "roofs": [
+      "golden_thatch",
+      "thorn_branch_lattice",
+      "baked_clay_tile",
+      "palm_frond_thatch"
+    ]
+  },
+  "steppe": {
+    "window_anim": "shutters",
+    "materials": [
+      "rammed_earth",
+      "dry_brick",
+      "felt_frame",
+      "sod_brick"
+    ],
+    "roofs": [
+      "felt",
+      "sod_roof",
+      "reed_thatch",
+      "earth_mud"
+    ]
+  },
+  "tundra": {
+    "window_anim": "glow",
+    "materials": [
+      "turf_block",
+      "whalebone_hide",
+      "stacked_stone",
+      "peat_block"
+    ],
+    "roofs": [
+      "turf_roof",
+      "hide_lashed",
+      "stone_slab",
+      "peat_thatch"
+    ]
+  },
+  "arctic": {
+    "window_anim": "glow",
+    "materials": [
+      "ice_block",
+      "packed_snow",
+      "driftwood_hide",
+      "frozen_timber"
+    ],
+    "roofs": [
+      "ice_dome",
+      "snow_block_roof",
+      "hide_driftwood_roof",
+      "frosted_shingle"
+    ]
+  },
+  "tropical_forest": {
+    "window_anim": "shutters",
+    "materials": [
+      "bamboo",
+      "woven_palm",
+      "hardwood_plank",
+      "raised_stilt"
+    ],
+    "roofs": [
+      "palm_thatch",
+      "banana_leaf",
+      "split_bamboo",
+      "fired_clay_pantile"
+    ]
+  },
+  "swamp": {
+    "window_anim": "shutters",
+    "materials": [
+      "weathered_plank",
+      "mangrove_log",
+      "mud_reed_daub",
+      "mossy_stilt_frame"
+    ],
+    "roofs": [
+      "mossy_shingle",
+      "reed_thatch_wet",
+      "bark_sheet_roof",
+      "tarred_plank_roof"
+    ]
+  },
+  "beach": {
+    "window_anim": "shutters",
+    "materials": [
+      "coral_block",
+      "shell_tabby",
+      "bleached_plank",
+      "palm_thatch_panel"
+    ],
+    "roofs": [
+      "palm_thatch",
+      "coral_tile",
+      "driftwood_shingle",
+      "shell_scallop"
+    ]
+  },
+  "river": {
+    "window_anim": "shutters",
+    "materials": [
+      "river_stone_daub",
+      "tarred_plank",
+      "wattle_daub_frame",
+      "mossy_millstone"
+    ],
+    "roofs": [
+      "thatch",
+      "wood_shingle",
+      "slate",
+      "moss_clay_tile"
+    ]
+  },
+  "lake": {
+    "window_anim": "shutters",
+    "materials": [
+      "log_cabin",
+      "cedar_board_batten",
+      "lake_fieldstone",
+      "stilt_piling"
+    ],
+    "roofs": [
+      "cedar_shake",
+      "birch_bark",
+      "sod_turf",
+      "log_pole"
+    ]
+  },
+  "shallow_water": {
+    "window_anim": "shutters",
+    "materials": [
+      "driftwood_patchwork",
+      "woven_reed_panel",
+      "weathered_boardwalk_plank",
+      "wattle_shell_daub"
+    ],
+    "roofs": [
+      "reed_thatch",
+      "driftwood_shingle",
+      "palm_frond_thatch",
+      "kelp_shingle"
+    ]
+  },
+  "ocean": {
+    "window_anim": "shutters",
+    "materials": [
+      "tarred_timber_stilt",
+      "rope_lashed_log",
+      "net_draped_plank",
+      "weathered_shiplap"
+    ],
+    "roofs": [
+      "weathered_cedar_shake",
+      "tarpaper_batten",
+      "overlapped_sheet_metal",
+      "sail_canvas_awning"
+    ]
+  },
+  "deep_ocean": {
+    "window_anim": "glow",
+    "materials": [
+      "barnacled_piling",
+      "riveted_iron_plate",
+      "tarred_clinker_hull",
+      "whalebone_frame"
+    ],
+    "roofs": [
+      "tarred_shingle",
+      "copper_standing_seam",
+      "lashed_plank_deck",
+      "oiled_canvas_tarp"
+    ]
+  }
+}

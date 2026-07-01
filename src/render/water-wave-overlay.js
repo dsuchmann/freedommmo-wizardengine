@@ -16,6 +16,9 @@ const seaweedFrames = new Map();
 let seaweedLoaded = false;
 
 export function preloadSeaweedAnimations() {
+  // Reset the load gate up front so a re-preload re-arms it correctly instead of
+  // leaking a stale `true` from a previous load (no-op on the normal single call).
+  seaweedLoaded = false;
   let remaining = SEAWEED_VARIANTS * SEAWEED_FRAMES;
   let loaded = 0;
   let failed = 0;
@@ -196,13 +199,31 @@ let waveCanvas = null;
 let waveCtx = null;
 
 function getWaveCanvas(size) {
-  if (!waveCanvas || waveCanvas.width !== size) {
+  // Reuse one persistent canvas element (and its 2D context) across frames;
+  // only resize its backing store when the requested size changes. Resizing
+  // an existing canvas releases the old GPU backing instead of orphaning a
+  // whole new <canvas>/context pair each time the visible region size varies.
+  if (!waveCanvas) {
     waveCanvas = document.createElement('canvas');
-    waveCanvas.width = size;
-    waveCanvas.height = size;
     waveCtx = waveCanvas.getContext('2d', { willReadFrequently: true });
   }
+  if (waveCanvas.width !== size || waveCanvas.height !== size) {
+    waveCanvas.width = size;
+    waveCanvas.height = size;
+  }
   return { canvas: waveCanvas, ctx: waveCtx };
+}
+
+// Reusable ImageData scratch buffer for the wave + foam tile grids. Both grids
+// are exactly visW×visH and every pixel is fully overwritten each use (the wave
+// loop writes neutral-or-wave for every tile; the foam loop zeroes every tile
+// first), so a single recycled buffer is safe and avoids a per-chunk alloc.
+let _imgDataPool = null;
+function getPooledImageData(c, w, h) {
+  if (!_imgDataPool || _imgDataPool.width !== w || _imgDataPool.height !== h) {
+    _imgDataPool = c.createImageData(w, h);
+  }
+  return _imgDataPool;
 }
 
 // Compute distance-to-land for each water tile in a chunk.
@@ -284,8 +305,15 @@ export function drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, 
     }
     if (!hasWater) continue;
 
-    // Compute distance-to-land for water tiles (used for seaweed + foam placement)
-    const landDist = computeLandDistanceMap(chunk, cs);
+    // Compute distance-to-land for water tiles (used for seaweed + foam placement).
+    // Purely a function of chunk.tiles[].biome / transitionPair, which never change
+    // after chunk generation — so memoize it on the chunk instead of recomputing
+    // the two-pass distance sweep every frame.
+    let landDist = chunk._landDist;
+    if (!landDist) {
+      landDist = computeLandDistanceMap(chunk, cs);
+      chunk._landDist = landDist;
+    }
     // Summed-area table of water tiles → O(1) neighbourhood water fraction, so
     // foam can tell an open coast from a 1-tile channel and dim the channel.
     const _satN = (cs + 1) * (cs + 1);
@@ -299,7 +327,7 @@ export function drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, 
     // over a transparent backdrop would paint opaque gray squares.
     // Restored as a GPU post pass in stage 4 of the GPU migration.
     if (!glMode) {
-    const imgData = wctx.createImageData(visW, visH);
+    const imgData = getPooledImageData(wctx, visW, visH);
     const pixels = imgData.data;
 
     for (let ty = tMinY; ty < tMaxY; ty++) {
@@ -409,7 +437,7 @@ export function drawWaterWaveOverlay(ctx, visibleChunks, chunkStore, tilePx, w, 
       const fWidth    = window._foamWidth    ?? FOAM_DEFAULTS.width;
       const fOpenMin  = window._foamOpenMin  ?? FOAM_DEFAULTS.openMin;
 
-      const foamData = wctx.createImageData(visW, visH);
+      const foamData = getPooledImageData(wctx, visW, visH);
       const foamPx = foamData.data;
       let hasFoam = false;
 

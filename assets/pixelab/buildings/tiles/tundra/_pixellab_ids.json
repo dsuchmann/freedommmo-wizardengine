@@ -1,0 +1,74 @@
+{
+  "_doc": "tundra tile-corpus ledger. Slugs from building-materials.json (identity TILE_MATERIALS, no registry edit). Vocab: docs/superpowers/specs/2026-06-24-tundra-tile-corpus-manifest.md.",
+  "base_project": "0f1031f5-9eee-4df4-996f-0a4114148eba",
+  "materials": {
+    "turf_block": {
+      "base": "25aa277b-c298-47c9-b98a-3a92ea86753f",
+      "ground_window": "ebc6ffc4-7fbd-40ab-b691-0aad4aff2fb4",
+      "ground_door": "6cac5b12-7ed8-4793-8623-cd02b2a70780",
+      "ground_left_corner": "ca77c00e-75e1-4c49-9ecc-194b77e3eb53",
+      "gable": "405410f4-addb-4584-b967-1d8c33fb6506",
+      "window_anim": "code:glow-pulse"
+    },
+    "whalebone_hide": {
+      "base": "4a1e67c1-2fa1-4659-8a92-14a5b3ab1dcd",
+      "ground_window": "eef7bbb9-6a18-4f54-b737-c8ec0cb89f1f",
+      "ground_door": "59f38bb6-946b-49f2-92fd-797f61678397",
+      "ground_left_corner": "1305e408-1154-4eb7-b956-ad8e1a1b2eba",
+      "gable": "5b9b529e-9a51-4d97-a4d0-195f0276f424",
+      "window_anim": "code:glow-pulse"
+    },
+    "stacked_stone": {
+      "base": "48ea1a61-4db6-46b7-918d-3b0525e278aa",
+      "ground_window": "59b512f9-cc53-4f98-ac35-bf1b403ffe3f",
+      "ground_door": "260dc273-31c4-4fe1-a704-05140df999e7",
+      "ground_left_corner": "05c4a68b-bc19-4385-abc4-0768aada8c7e",
+      "gable": "78e6182a-cef5-409c-b6bd-5690d8bb4d66",
+      "window_anim": "code:glow-pulse"
+    },
+    "peat_block": {
+      "base": "32927d1f-7934-4132-bf5b-3e734c663129",
+      "ground_window": "4003f6ac-86e5-47af-a206-246a8051f341",
+      "ground_door": "74185530-7a5a-4c04-9acc-7d67a1184869",
+      "ground_left_corner": "5fca8405-1b8e-45ea-a25d-d81080b37e95",
+      "_corner_note": "2026-06-25 re-rolled corner to fix 54%-black outer edge; gen put the END on the RIGHT, saved as ground_right_corner and flip-h'd to ground_left_corner; upper corners derive-upper'd. qa-edges tundra now ok.",
+      "gable": "6a41f966-cd07-4c49-84fb-5900bfcdf579",
+      "window_anim": "code:glow-pulse"
+    }
+  },
+  "roofs": {
+    "_roof_doc": "create_tiles_pro (segmentation, square_topdown, top-down, 64px). tileset = one id of 16 variants; v000-v003 = picked source tile indices, solidified to 64x64 full-bleed (0% holes). hide_lashed prompt reframed as a PACKED PANEL FIELD (not floating seam-strips) per the seam-rib gotcha.",
+    "turf_roof": {
+      "tileset": "3e70e80d-5ceb-4323-99d0-f574ff350a30",
+      "seed": 71001,
+      "v000": "3e70e80d-5ceb-4323-99d0-f574ff350a30#tile_8",
+      "v001": "3e70e80d-5ceb-4323-99d0-f574ff350a30#tile_9",
+      "v002": "3e70e80d-5ceb-4323-99d0-f574ff350a30#tile_10",
+      "v003": "3e70e80d-5ceb-4323-99d0-f574ff350a30#tile_11"
+    },
+    "hide_lashed": {
+      "tileset": "32788575-7869-4c25-81e4-c2a161039b38",
+      "seed": 71002,
+      "v000": "32788575-7869-4c25-81e4-c2a161039b38#tile_0",
+      "v001": "32788575-7869-4c25-81e4-c2a161039b38#tile_1",
+      "v002": "32788575-7869-4c25-81e4-c2a161039b38#tile_2",
+      "v003": "32788575-7869-4c25-81e4-c2a161039b38#tile_3"
+    },
+    "stone_slab": {
+      "tileset": "3130ce5c-0b76-4030-9466-393545042542",
+      "seed": 71003,
+      "v000": "3130ce5c-0b76-4030-9466-393545042542#tile_0",
+      "v001": "3130ce5c-0b76-4030-9466-393545042542#tile_1",
+      "v002": "3130ce5c-0b76-4030-9466-393545042542#tile_2",
+      "v003": "3130ce5c-0b76-4030-9466-393545042542#tile_3"
+    },
+    "peat_thatch": {
+      "tileset": "4fd616a1-919b-4ade-972f-570867a8964b",
+      "seed": 71004,
+      "v000": "4fd616a1-919b-4ade-972f-570867a8964b#tile_0",
+      "v001": "4fd616a1-919b-4ade-972f-570867a8964b#tile_1",
+      "v002": "4fd616a1-919b-4ade-972f-570867a8964b#tile_2",
+      "v003": "4fd616a1-919b-4ade-972f-570867a8964b#tile_3"
+    }
+  }
+}

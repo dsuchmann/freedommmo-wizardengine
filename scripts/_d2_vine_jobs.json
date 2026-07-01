@@ -1,0 +1,113 @@
+{
+ "_note": "D2 climbing-plant (vine) kit \u00e2\u20ac\u201d in-flight generation tracker. biome -> piece -> {group, px}. The KIT pieces (vine_segment / vine_root_base / vine_fork / vine_leaf_cluster) are biome-INVARIANT in structure; the per-biome SKIN varies the PLANT (grassland=ivy, desert=desert creeper, tropical=liana, arctic=frost-killed vine, ...). group = create_1_direction_object review-pack id; download to dressing/<biome>/<piece>/base__vN.png via scripts/d3-download.mjs scripts/_d2_vine_jobs.json.",
+ "grassland": {
+  "vine_segment": {
+   "group": "e028a6be-bfc9-4b07-ac10-ce16e8df9dd7",
+   "px": 64
+  },
+  "vine_root_base": {
+   "group": "b9286e60-8637-4a95-9c96-4d2696784d6b",
+   "px": 64
+  },
+  "vine_fork": {
+   "group": "f235b899-b388-4295-b165-b2df449c738e",
+   "px": 64
+  }
+ },
+ "mystic": {
+  "vine_segment": {
+   "group": "4558dea6-ee63-44ee-9c79-ea2d062f9adb",
+   "px": 64
+  },
+  "vine_root_base": {
+   "group": "bbbb0b29-88ef-430f-877c-b1f0caac46d9",
+   "px": 64
+  },
+  "vine_fork": {
+   "group": "cea494e5-5701-415f-833b-9492ccf644a8",
+   "px": 64
+  },
+  "vine_leaf_cluster": {
+   "group": "5e6844f0-1f0e-49d4-8e02-57e8d1cd85e6",
+   "px": 64
+  }
+ },
+ "volcanic": {
+  "vine_segment": {
+   "group": "384fca5f-e6ba-44ab-9e0b-62a739351bbc",
+   "px": 64
+  },
+  "vine_root_base": {
+   "group": "986df12b-e57f-4793-88fb-417d13e622a5",
+   "px": 64
+  },
+  "vine_fork": {
+   "group": "3ee20dd2-5098-4795-96a4-5a57e12166a5",
+   "px": 64
+  },
+  "vine_leaf_cluster": {
+   "group": "af618fed-2ff6-4fa6-96b9-c64c78642e72",
+   "px": 64
+  }
+ },
+ "mountains": {
+  "vine_segment": {
+   "group": "f3844be8-10a7-4599-8b3e-21f1841efb88",
+   "px": 64
+  },
+  "vine_root_base": {
+   "group": "acd4d09c-662a-42fc-bc12-72ecd9b823b5",
+   "px": 64
+  },
+  "vine_fork": {
+   "group": "684800b0-6403-4963-97d3-835c02e38b4a",
+   "px": 64
+  },
+  "vine_leaf_cluster": {
+   "group": "071eb490-8810-47e8-bbf6-a90d9b18fb58",
+   "px": 64
+  }
+ },
+ "desert": {
+  "vine_segment": {
+   "group": "ef319298-fd9c-42e7-beb7-3a3a135047df",
+   "px": 64
+  },
+  "vine_root_base": {
+   "group": "844c06eb-e7fb-4091-844d-7abd5465bd0d",
+   "px": 64
+  },
+  "vine_fork": {
+   "group": "9527e904-d7f5-4909-830e-6cde48df620e",
+   "px": 64
+  },
+  "vine_leaf_cluster": {
+   "group": "f6a670b6-88a9-4589-bcf2-3f3cd39fa076",
+   "px": 64
+  }
+ },
+ "tropical_forest": {
+  "vine_segment": {
+   "group": "0ff7583f-6eb5-4e7f-925a-5010eaf60db0",
+   "px": 64
+  },
+  "vine_root_base": {
+   "group": "4625e2f0-55ba-44aa-b591-190c947788fb",
+   "px": 64
+  },
+  "vine_fork": {
+   "group": "fa0432de-1abb-458e-8a6f-4ee612980d2b",
+   "px": 64
+  },
+  "vine_leaf_cluster": {
+   "group": "8d3a7c70-c122-4a1c-be38-168b4b493382",
+   "px": 64
+  }
+ },
+ "_textures": {
+  "desert_sand": {
+   "group": "884ae611-9a7f-4065-bf90-74d2afd6ee02",
+   "frame": 2
+  }
+ }
+}

@@ -71,8 +71,12 @@ export function resolveScale(v) {
 /** Above-ground floor count for a building (defensive — the lazy node/payload may be absent). */
 export function buildingFloors(b) {
   try {
-    const agf = b && b.footprint && b.footprint.node && b.footprint.node.payload
-      && b.footprint.node.payload.aboveGroundFloors;
+    // Worker-resolved buildings carry a plain `aboveGroundFloors` (the functional node is dropped
+    // crossing postMessage); fall back to the node payload for the synchronous path.
+    const fp = b && b.footprint;
+    const plain = fp && fp.aboveGroundFloors;
+    if (plain && plain > 0) return Math.min(plain | 0, MAX_FLOORS);
+    const agf = fp && fp.node && fp.node.payload && fp.node.payload.aboveGroundFloors;
     if (agf && agf > 0) return Math.min(agf | 0, MAX_FLOORS);
   } catch (e) { /* honest absence -> single story */ }
   return 1;
@@ -117,11 +121,15 @@ export function buildingShadowHull(b, sun, tilePx, camX, camY, scale) {
 // uses (worker-chunk-renderer.js:1352-1469) — so this aligns by construction, not by copying it.
 
 function floorSetOf(fp) {
+  // Footprint sections are static per building, so the membership Set is too. Cache it on the
+  // footprint object instead of rebuilding (O(area)) every frame in the drapeRects hot path.
+  if (fp._floorSetCache) return fp._floorSetCache;
   const s = new Set();
   for (const sec of fp.sections)
     for (let dy = 0; dy < sec.h; dy++)
       for (let dx = 0; dx < sec.w; dx++)
         s.add((sec.x0 + dx) + ',' + (sec.y0 + dy));
+  fp._floorSetCache = s;
   return s;
 }
 
@@ -258,9 +266,20 @@ export function buildingSilhouetteRect(b, tilePx, camX, camY) {
  * Per-frame screen-space height grid: each cell = storeys of the TALLEST building silhouette over
  * that pixel (0 = open ground). Pure. Shape carries the transform it was built under (stale-guard).
  */
+let _maskBuf = null, _maskBufLen = -1;
 export function buildHeightMask(buildings, camX, camY, tilePx, w, h, cell = HEIGHT_MASK_CELL) {
   const cols = Math.max(1, Math.ceil(w / cell)), rows = Math.max(1, Math.ceil(h / cell));
-  const data = new Uint8Array(cols * rows);
+  const len = cols * rows;
+  // Reuse the module-level grid buffer across frames; the content is fully recomputed below, so
+  // we only reallocate when the cell-grid dimensions change (else zero the existing buffer).
+  let data;
+  if (_maskBuf && _maskBufLen === len) {
+    data = _maskBuf;
+    data.fill(0);
+  } else {
+    data = _maskBuf = new Uint8Array(len);
+    _maskBufLen = len;
+  }
   for (const b of buildings || []) {
     if (!b || !b.footprint || !b.footprint.boundingBox) continue;
     const r = buildingSilhouetteRect(b, tilePx, camX, camY);

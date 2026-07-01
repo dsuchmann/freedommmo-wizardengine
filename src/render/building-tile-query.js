@@ -9,7 +9,6 @@ import { macroCellPeoples } from '../../sim/chronicle/races.js';
 import { regionChronicle, settlementState, chronicleTier } from '../../sim/chronicle/chronicle.js';
 import { layoutSettlement } from '../../sim/world/buildings/layout.js';
 import { resolveBuildingsInRange } from '../../sim/world/buildings/resolved-buildings.js';
-import { classifyBiome } from '../world/biomes.js';
 import { getWorldSeed } from '../core/world-seed.js';
 
 var MACRO = 4;

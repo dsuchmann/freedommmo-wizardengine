@@ -1,0 +1,72 @@
+{
+  "_doc": "steppe tile-corpus ledger. Slugs from building-materials.json (identity TILE_MATERIALS, no registry edit). Vocab: docs/superpowers/specs/2026-06-24-steppe-tile-corpus-manifest.md.",
+  "base_project": "0f1031f5-9eee-4df4-996f-0a4114148eba",
+  "materials": {
+    "rammed_earth": {
+      "base": "f4fe6257-7182-4697-94d7-ef7c503e51f5",
+      "ground_window": "f3a2de78-e3c5-4443-b9b2-6496e099e3f6",
+      "ground_door": "56efd12e-297f-4d80-bd91-1e57e2f454a3",
+      "ground_left_corner": "c5816133-937f-478d-a501-00da40b4a566",
+      "gable": "120e1fb3-d25c-4cae-9948-8f2db5ca0ce0",
+      "window_anim": "6df28dd5-3811-4e0d-8170-c7d858337982",
+      "window_anim_inner": "5c8d2753-32aa-4082-9a36-3dd692ae2699"
+    },
+    "felt_frame": {
+      "base": "f7c8760f-d97c-4aa2-ba05-7d2779873d1c",
+      "ground_window": "2eb21c79-7b99-41f2-8eb5-dd67deeb2de5",
+      "ground_door": "9522c07e-ae30-4748-b951-34015fa4fbbf",
+      "ground_left_corner": "57c6b2cf-1f12-4e09-925b-7e308f39f3cb",
+      "gable": "90d9737d-eb72-4723-812c-a0599d273715",
+      "window_anim": "2eb21c79-7b99-41f2-8eb5-dd67deeb2de5"
+    },
+    "sod_brick": {
+      "base": "355488e9-a614-45ce-b633-5ab2d3411c3a",
+      "ground_window": "8c4b2656-c64b-4903-881d-0649ef79c2b0",
+      "ground_door": "0c05e166-915d-4425-812f-0e56baf6d22e",
+      "ground_left_corner": "62543718-b665-43f5-9fde-85fa040a8b97",
+      "gable": "17802d41-7aa0-4866-9189-d4c429672744",
+      "window_anim": "8c4b2656-c64b-4903-881d-0649ef79c2b0",
+      "window_anim_inner": "0995fe42-f4d1-42dc-8fc4-a768829600bb"
+    },
+    "dry_brick": {
+      "base": "a33c3663-5150-4a1e-b2ad-0c7cc197d8be",
+      "ground_window": "dc9f9b9a-a576-4592-b2d2-001ab6107d34",
+      "ground_door": "ecbda23f-99b7-4445-a0a0-986f249fb17c",
+      "ground_left_corner": "aebe589d-7c2c-499b-948b-044f5ee0251b",
+      "gable": "4b3d5a63-071c-4ce9-a1ec-1510667079c3",
+      "window_anim": "dc9f9b9a-a576-4592-b2d2-001ab6107d34",
+      "window_anim_inner": "844ca354-7f07-46df-a349-1216d3c3107d"
+    }
+  },
+  "roofs": {
+    "felt": {
+      "tileset": "c5524cdb-17ae-4747-907c-3dd461cdd792",
+      "v000": "c5524cdb-17ae-4747-907c-3dd461cdd792:tile_0",
+      "v001": "c5524cdb-17ae-4747-907c-3dd461cdd792:tile_1",
+      "v002": "c5524cdb-17ae-4747-907c-3dd461cdd792:tile_2",
+      "v003": "c5524cdb-17ae-4747-907c-3dd461cdd792:tile_3"
+    },
+    "sod_roof": {
+      "tileset": "e01ab310-0ead-4f3a-8876-eddee1e36f8b",
+      "v000": "e01ab310-0ead-4f3a-8876-eddee1e36f8b:tile_0",
+      "v001": "e01ab310-0ead-4f3a-8876-eddee1e36f8b:tile_1",
+      "v002": "e01ab310-0ead-4f3a-8876-eddee1e36f8b:tile_2",
+      "v003": "e01ab310-0ead-4f3a-8876-eddee1e36f8b:tile_3"
+    },
+    "reed_thatch": {
+      "tileset": "891a37e1-3bda-4561-bb35-7d10c14cc828",
+      "v000": "891a37e1-3bda-4561-bb35-7d10c14cc828:tile_0",
+      "v001": "891a37e1-3bda-4561-bb35-7d10c14cc828:tile_1",
+      "v002": "891a37e1-3bda-4561-bb35-7d10c14cc828:tile_2",
+      "v003": "891a37e1-3bda-4561-bb35-7d10c14cc828:tile_3"
+    },
+    "earth_mud": {
+      "tileset": "029f7884-5518-4c7a-9e63-ece0213a2932",
+      "reroll_note": "seam-rib gotcha: seed 71004 (parapet+beam-ridges+cracks) mapped to floating strips (medianFill 17%); reframed as a packed rectangular clay-panel FIELD with grooves, seed 71044 -> medianFill 100%",
+      "v000": "029f7884-5518-4c7a-9e63-ece0213a2932:tile_0",
+      "v001": "029f7884-5518-4c7a-9e63-ece0213a2932:tile_1",
+      "v002": "029f7884-5518-4c7a-9e63-ece0213a2932:tile_2",
+      "v003": "029f7884-5518-4c7a-9e63-ece0213a2932:tile_3"
+    }
+  }
+}

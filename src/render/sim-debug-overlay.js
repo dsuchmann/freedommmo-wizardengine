@@ -10,7 +10,7 @@ import { REGION } from '../../sim/lod/aggregate.js';
 import { worldEpochs } from '../../sim/chronicle/epochs.js';
 import { macroCellPeoples } from '../../sim/chronicle/races.js';
 import { regionChronicle, settlementState, chronicleTier } from '../../sim/chronicle/chronicle.js';
-import { classifyBiome } from '../world/biomes.js';
+import { classifyBiomeNoStream } from '../world/biomes.js';
 import { rand } from '../../sim/kernel/rng.js';
 import { getWorldSeed } from '../core/world-seed.js';
 import { discoverSettlementsInMacroRange, suppressBySpacing } from '../../sim/world/buildings/settlement-discovery.js';
@@ -41,6 +41,7 @@ function discoverSettlements(camX, camY, w, h, tilePx) {
 
 let _discoveredCache = { key: '', settlements: [] };
 let _resolvedBldCache = { key: '', buildings: [] }; // resolved building set, cached by macro-range (resolve is expensive)
+const _connGrid = new Map(); // reused spatial grid for settlement-connection pairing (avoids O(n²) scan)
 
 // ── Floor tile images ──────────────────────────────────────────────
 const FLOOR_TILES = {};  // material -> HTMLImageElement
@@ -93,9 +94,11 @@ export function collectDebugDrawables(sim) {
   return out;
 }
 
+const _accumHave = new Set(); // reused across calls to avoid per-call Set + map() allocation
 export function accumulateEvents(seen, batch) {
-  const have = new Set(seen.map(e => e.id));
-  for (const e of batch ?? []) if (!have.has(e.id)) seen.push(e);
+  _accumHave.clear();
+  for (const e of seen) _accumHave.add(e.id);
+  for (const e of batch ?? []) if (!_accumHave.has(e.id)) seen.push(e);
   if (seen.length > EVENT_CAP) seen.splice(0, seen.length - EVENT_CAP);
   return seen;
 }
@@ -146,21 +149,43 @@ export function drawSimDebugOverlay(ctx, camX, camY, tilePx, w, h) {
   if (allSettlements.length > 1) {
     ctx.lineWidth = Math.max(2, tilePx * 0.15);
     ctx.setLineDash([]);
+    // Spatial-grid the settlements (cell size = the connection distance threshold) so each
+    // settlement only compares against the 3×3 neighbour cells — which provably contain every
+    // Manhattan-≤CONNECT_DIST candidate — instead of the full O(n²) pair scan. The dist check
+    // below stays the final filter, and each unordered pair is still drawn exactly once (j > i).
+    const CONNECT_DIST = 100;
+    _connGrid.clear();
+    for (let i = 0; i < allSettlements.length; i++) {
+      const a = allSettlements[i];
+      const gk = Math.floor(a.x / CONNECT_DIST) + ',' + Math.floor(a.y / CONNECT_DIST);
+      let cell = _connGrid.get(gk);
+      if (!cell) { cell = []; _connGrid.set(gk, cell); }
+      cell.push(i);
+    }
     for (let i = 0; i < allSettlements.length; i++) {
       const a = allSettlements[i];
       if (a.state === 'ruined') continue;
-      for (let j = i + 1; j < allSettlements.length; j++) {
-        const b = allSettlements[j];
-        if (b.state === 'ruined') continue;
-        const dist = Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
-        if (dist > 100) continue; // only draw nearby connections
-        const ax = Math.floor(a.x * tilePx - camX), ay = Math.floor(a.y * tilePx - camY);
-        const bx = Math.floor(b.x * tilePx - camX), by = Math.floor(b.y * tilePx - camY);
-        ctx.strokeStyle = 'rgba(160,140,100,0.35)';
-        ctx.beginPath();
-        ctx.moveTo(ax, ay);
-        ctx.lineTo(bx, by);
-        ctx.stroke();
+      const gx = Math.floor(a.x / CONNECT_DIST), gy = Math.floor(a.y / CONNECT_DIST);
+      for (let cy = gy - 1; cy <= gy + 1; cy++) {
+        for (let cx = gx - 1; cx <= gx + 1; cx++) {
+          const cell = _connGrid.get(cx + ',' + cy);
+          if (!cell) continue;
+          for (let n = 0; n < cell.length; n++) {
+            const j = cell[n];
+            if (j <= i) continue; // draw each unordered pair once (a is always the lower index)
+            const b = allSettlements[j];
+            if (b.state === 'ruined') continue;
+            const dist = Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+            if (dist > CONNECT_DIST) continue; // only draw nearby connections
+            const ax = Math.floor(a.x * tilePx - camX), ay = Math.floor(a.y * tilePx - camY);
+            const bx = Math.floor(b.x * tilePx - camX), by = Math.floor(b.y * tilePx - camY);
+            ctx.strokeStyle = 'rgba(160,140,100,0.35)';
+            ctx.beginPath();
+            ctx.moveTo(ax, ay);
+            ctx.lineTo(bx, by);
+            ctx.stroke();
+          }
+        }
       }
     }
   }
@@ -633,7 +658,7 @@ function findSettlementOfTier(targetTier, camX, camY, tilePx) {
         const mk = `${mx},${my}`;
         const cx = mx * MACRO_TILES + Math.floor(MACRO_TILES / 2);
         const cy = my * MACRO_TILES + Math.floor(MACRO_TILES / 2);
-        const biome = classifyBiome(cx, cy);
+        const biome = classifyBiomeNoStream(cx, cy); // debug tier-scan needs only biome.id/.climate; avoids the ~1950ms cold streamAt trace
         const peoples = macroCellPeoples(getWorldSeed(), mk, epochs, biome);
         const chronicle = regionChronicle(getWorldSeed(), mk, peoples, biome.climate);
         const state = settlementState(chronicle);

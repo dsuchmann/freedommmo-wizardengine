@@ -1,5 +1,9 @@
 import { WORLD } from '../core/constants.js';
 
+// Extra chunks streamed BEYOND the viewport so terrain/flora/buildings are ready just outside the camera's
+// view (no pop-in as you pan). 1 chunk = 64 tiles of lead — generous; bump if fast pans still show edges.
+const STREAM_PREFETCH_CHUNKS = 1;
+
 export function floorDiv(value, divisor = WORLD.chunkSize) {
   return Math.floor(value / divisor);
 }
@@ -53,34 +57,71 @@ export class ChunkStore {
     return this.chunks.get(key) ?? null;
   }
 
-  streamAround(wx, wy) {
+  // zoom/viewW/viewH are optional: when given (the live camera zoom + canvas CSS size), the load radius
+  // GROWS to cover the actual viewport plus a prefetch ring, so content is always streamed JUST outside what
+  // the camera can see — zoom out (more world visible) → bigger radius automatically. Falls back to the fixed
+  // WORLD.loadRadius when they're absent (init calls).
+  streamAround(wx, wy, zoom, viewW, viewH) {
     const pcx = floorDiv(wx, WORLD.chunkSize);
     const pcy = floorDiv(wy, WORLD.chunkSize);
-    const moved = this._lastStreamPos && (Math.abs(wx - this._lastStreamPos.x) > 0.01 || Math.abs(wy - this._lastStreamPos.y) > 0.01);
+    // Chunks the half-viewport spans at this zoom, + a 1-chunk prefetch ring. tilePx = tileSize*zoom shrinks
+    // when zoomed out, so the same screen covers MORE tiles → more chunks → a larger radius, dynamically.
+    let R = WORLD.loadRadius;
+    if (zoom && viewW && viewH) {
+      const tilePx = WORLD.tileSize * zoom;
+      const halfChunksX = (viewW / 2) / tilePx / WORLD.chunkSize;
+      const halfChunksY = (viewH / 2) / tilePx / WORLD.chunkSize;
+      R = Math.max(WORLD.loadRadius, Math.ceil(Math.max(halfChunksX, halfChunksY)) + STREAM_PREFETCH_CHUNKS);
+    }
+    const dxRaw = this._lastStreamPos ? wx - this._lastStreamPos.x : 0;
+    const dyRaw = this._lastStreamPos ? wy - this._lastStreamPos.y : 0;
+    const moved = Math.abs(dxRaw) > 0.01 || Math.abs(dyRaw) > 0.01;
     this._lastStreamPos = { x: wx, y: wy };
-    this.provider.setPlayerFocus(pcx, pcy, moved);
+    // Smoothed unit movement direction (EMA) — used to bias chunk generation AHEAD of the player so the
+    // limited worker throughput is spent where they're running TO, not split evenly around them (the "I run
+    // ahead of the game and it pops in around me" bug). Smoothed so a one-frame pause doesn't drop the heading.
+    if (moved) {
+      const mag = Math.hypot(dxRaw, dyRaw) || 1;
+      const ux = dxRaw / mag, uy = dyRaw / mag;
+      const d = this._moveDir || { x: 0, y: 0 };
+      d.x += (ux - d.x) * 0.25; d.y += (uy - d.y) * 0.25;
+      this._moveDir = d;
+    }
+    const md = this._moveDir;
+    this.provider.setPlayerFocus(pcx, pcy, moved, md ? md.x : 0, md ? md.y : 0);
     const currentReady = this.getIfReady(pcx, pcy);
     if (currentReady) this.lastPlayerChunk = { cx: pcx, cy: pcy };
 
-    const jobs = [];
-    const addJobsAround = (ccx, ccy, extraPriority = 0) => {
-      for (let cy = ccy - WORLD.loadRadius; cy <= ccy + WORLD.loadRadius; cy++) {
-        for (let cx = ccx - WORLD.loadRadius; cx <= ccx + WORLD.loadRadius; cx++) {
-          jobs.push({ cx, cy, d: Math.abs(cx - ccx) + Math.abs(cy - ccy) + extraPriority });
-        }
-      }
-    };
-    addJobsAround(pcx, pcy, 0);
-    // Predictive prefetch: when near a chunk edge, start streaming the next
-    // chunk neighborhood before the player crosses the boundary.
+    // The job list (and its distance sort) is fully determined by the player
+    // chunk (pcx,pcy) and the local-in-chunk position (lx,ly). Memoize the
+    // built+sorted array on those determinants so we skip the rebuild and the
+    // per-frame sort while the player stays on the same tile within a chunk.
     const lx = ((Math.floor(wx) % WORLD.chunkSize) + WORLD.chunkSize) % WORLD.chunkSize;
     const ly = ((Math.floor(wy) % WORLD.chunkSize) + WORLD.chunkSize) % WORLD.chunkSize;
-    const margin = Math.max(24, Math.floor(WORLD.chunkSize * 0.50));
-    if (lx < margin) addJobsAround(pcx - 1, pcy, 3);
-    if (lx >= WORLD.chunkSize - margin) addJobsAround(pcx + 1, pcy, 3);
-    if (ly < margin) addJobsAround(pcx, pcy - 1, 3);
-    if (ly >= WORLD.chunkSize - margin) addJobsAround(pcx, pcy + 1, 3);
-    jobs.sort((a, b) => a.d - b.d);
+    let jobs;
+    const jobCache = this._jobsCache;
+    if (jobCache && jobCache.pcx === pcx && jobCache.pcy === pcy && jobCache.lx === lx && jobCache.ly === ly && jobCache.R === R) {
+      jobs = jobCache.jobs;
+    } else {
+      jobs = [];
+      const addJobsAround = (ccx, ccy, extraPriority = 0) => {
+        for (let cy = ccy - R; cy <= ccy + R; cy++) {
+          for (let cx = ccx - R; cx <= ccx + R; cx++) {
+            jobs.push({ cx, cy, d: Math.abs(cx - ccx) + Math.abs(cy - ccy) + extraPriority });
+          }
+        }
+      };
+      addJobsAround(pcx, pcy, 0);
+      // Predictive prefetch: when near a chunk edge, start streaming the next
+      // chunk neighborhood before the player crosses the boundary.
+      const margin = Math.max(24, Math.floor(WORLD.chunkSize * 0.50));
+      if (lx < margin) addJobsAround(pcx - 1, pcy, 3);
+      if (lx >= WORLD.chunkSize - margin) addJobsAround(pcx + 1, pcy, 3);
+      if (ly < margin) addJobsAround(pcx, pcy - 1, 3);
+      if (ly >= WORLD.chunkSize - margin) addJobsAround(pcx, pcy + 1, 3);
+      jobs.sort((a, b) => a.d - b.d);
+      this._jobsCache = { pcx, pcy, lx, ly, R, jobs };
+    }
     const seenJobs = new Set();
     for (const job of jobs) {
       const key = chunkKey(job.cx, job.cy);
@@ -91,7 +132,7 @@ export class ChunkStore {
       else this.provider.request(job.cx, job.cy, job.d);
     }
 
-    const maxDistance = WORLD.loadRadius + WORLD.unloadPadding;
+    const maxDistance = R + WORLD.unloadPadding;
     for (const [key, chunk] of this.chunks) {
       if (Math.abs(chunk.cx - pcx) > maxDistance || Math.abs(chunk.cy - pcy) > maxDistance) {
         this.chunks.delete(key);

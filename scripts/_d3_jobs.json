@@ -1,0 +1,597 @@
+{
+ "_note": "D3 all-biomes scale-out in-flight job tracker. biome -> prop -> {group, px}. group = create_1_direction_object review-pack id; promote candidates via select_object_frames, download to dressing/<biome>/<prop>/base__vN.png.",
+ "desert": {
+  "iron_candle_lantern": {
+   "group": "9629ef61-2072-4989-a50b-fa8918b1620a",
+   "px": 64
+  },
+  "wall_oil_lamp": {
+   "group": "d75a72ce-6bee-48e6-b172-e8a7e3f04b97",
+   "px": 64
+  },
+  "timber_flower_box": {
+   "group": "2accf089-dc9e-4aa6-8eb0-60fb0ffe6e6b",
+   "px": 64
+  },
+  "swinging_trade_sign": {
+   "group": "e2a9c88f-03ed-48c7-9258-b9f8e35dd6d5",
+   "px": 96
+  },
+  "heraldic_banner": {
+   "group": "2063541e-2ab9-459e-807b-1a92c354eed6",
+   "px": 128
+  },
+  "projecting_board_sign": {
+   "group": "64c191ec-b8c3-41f9-b6ea-d1a15980419a",
+   "px": 96
+  },
+  "wrought_iron_silhouette_sign": {
+   "group": "8ed682c0-7ff7-4e3b-81d3-b4871b1f7a4e",
+   "px": 96
+  },
+  "cloth_market_awning": {
+   "group": "f6979617-5cd7-48e9-8120-3b5d4081b0a8",
+   "px": 128
+  },
+  "wood_slat_awning": {
+   "group": "3c1ad97a-b589-4e31-a852-f3cb84483891",
+   "px": 128
+  },
+  "fringed_shop_canopy": {
+   "group": "04448a08-509d-4ffe-826a-0bbd6f0830b1",
+   "px": 128
+  },
+  "strung_festival_lights": {
+   "group": "72b0c99f-331f-484a-84e0-b7553e08aa47",
+   "px": 64
+  },
+  "triangle_bunting": {
+   "group": "b893e7c9-e4df-46a3-a18e-0f0ce94fa30c",
+   "px": 64
+  },
+  "festoon_garland": {
+   "group": "dcdc272b-6e2c-4dbb-ba91-3ad09a410163",
+   "px": 64
+  }
+ },
+ "mystic": {
+  "iron_candle_lantern": {
+   "group": "c5908a95-69b0-44af-b6e1-be55982ef8d5",
+   "px": 64
+  },
+  "wall_oil_lamp": {
+   "group": "fc5e6901-881c-4697-98bd-59eba46b7134",
+   "px": 64
+  },
+  "timber_flower_box": {
+   "group": "14f7fa44-8ba3-40b9-9644-72f30b087b1c",
+   "px": 64
+  },
+  "swinging_trade_sign": {
+   "group": "7d4d13a9-6b24-45ac-9c63-07d8497ecfe5",
+   "px": 96
+  },
+  "heraldic_banner": {
+   "group": "3a69f4e8-dc88-4be3-849f-90fa20d77766",
+   "px": 128
+  },
+  "projecting_board_sign": {
+   "group": "7fa7451b-4bee-4584-849c-c4616a4bb2a7",
+   "px": 96
+  },
+  "wrought_iron_silhouette_sign": {
+   "group": "18969ae3-0c59-465b-9fcd-13aafb2bb734",
+   "px": 96
+  },
+  "cloth_market_awning": {
+   "group": "6d15be9e-9bd7-45a2-9394-dd5ca44ba609",
+   "px": 128
+  },
+  "wood_slat_awning": {
+   "group": "3f67dda8-b5f9-4daa-970b-a5003d988bbf",
+   "px": 128
+  },
+  "fringed_shop_canopy": {
+   "group": "97e8ce0f-5f51-43ec-a017-b06c87f6a7be",
+   "px": 128
+  },
+  "strung_festival_lights": {
+   "group": "4b98642e-6ccf-4b8d-b648-cd4599241e6c",
+   "px": 64
+  },
+  "triangle_bunting": {
+   "group": "e22f2186-5e0d-423b-8051-324bdea0d73b",
+   "px": 64
+  },
+  "festoon_garland": {
+   "group": "79af4b8a-65bc-4942-87cf-470b69484393",
+   "px": 64
+  }
+ },
+ "dense_forest": {
+  "iron_candle_lantern": {
+   "group": "b8dbac67-7485-4313-9c85-673081756c87",
+   "px": 64
+  },
+  "wall_oil_lamp": {
+   "group": "61285b26-1b5c-4449-b0bd-aec2daa6ba84",
+   "px": 64
+  },
+  "timber_flower_box": {
+   "group": "6531daa8-3a0f-4270-bb33-db31169618f7",
+   "px": 64
+  },
+  "swinging_trade_sign": {
+   "group": "016d3929-3634-49c9-9df9-dac07ef5b3ea",
+   "px": 96
+  },
+  "heraldic_banner": {
+   "group": "deca6c5c-984b-4bdc-90a9-73fd6b775deb",
+   "px": 128
+  },
+  "projecting_board_sign": {
+   "group": "23f9b738-2865-4357-8aa4-512499ae928d",
+   "px": 96
+  },
+  "wrought_iron_silhouette_sign": {
+   "group": "9332f3e2-0fb5-4349-991b-41593b8c4b91",
+   "px": 96
+  },
+  "cloth_market_awning": {
+   "group": "b85464a4-7c25-4e17-806f-67e0ceacae16",
+   "px": 128
+  },
+  "wood_slat_awning": {
+   "group": "bc0c6ea3-5c34-44ed-9efe-105603d34aae",
+   "px": 128
+  },
+  "fringed_shop_canopy": {
+   "group": "0e126222-e71e-42d5-8a24-5939f33c5409",
+   "px": 128
+  },
+  "strung_festival_lights": {
+   "group": "3075a251-460c-4ee8-a02a-ae6fa0c88a1b",
+   "px": 64
+  },
+  "triangle_bunting": {
+   "group": "87cb3bdc-e455-42a5-bd23-85585d501239",
+   "px": 64
+  },
+  "festoon_garland": {
+   "group": "1207ebad-39bb-4f6c-8447-fe573cdbb1d7",
+   "px": 64
+  }
+ },
+ "forest": {
+  "iron_candle_lantern": {
+   "group": "f9b18392-f9f7-4d76-8b68-0731b743eeb3",
+   "px": 64
+  },
+  "wall_oil_lamp": {
+   "group": "8401ca45-1d1b-4aa3-93b7-93a89047f137",
+   "px": 64
+  },
+  "timber_flower_box": {
+   "group": "90b85900-0884-43da-bce3-d64e2995dbfb",
+   "px": 64
+  },
+  "swinging_trade_sign": {
+   "group": "1599bf65-d29f-4e59-b261-caa8c9dee8cf",
+   "px": 96
+  },
+  "heraldic_banner": {
+   "group": "84b91dd4-0c9a-4792-94f3-713967c3645e",
+   "px": 128
+  },
+  "projecting_board_sign": {
+   "group": "27c90d03-b2e5-490e-9ee9-9e27f49ccf06",
+   "px": 96
+  },
+  "wrought_iron_silhouette_sign": {
+   "group": "5a1089b6-08b9-4cb1-a6a7-297ee6887992",
+   "px": 96
+  },
+  "cloth_market_awning": {
+   "group": "ec3df80a-2de1-445e-b401-a251d3194e34",
+   "px": 128
+  },
+  "wood_slat_awning": {
+   "group": "0c8433b7-c576-44e6-ac94-36050c44412b",
+   "px": 128
+  },
+  "fringed_shop_canopy": {
+   "group": "010c3307-c7d0-4053-8dc3-89c08f08dd7a",
+   "px": 128
+  },
+  "strung_festival_lights": {
+   "group": "77e32304-21e9-4a83-bcd5-93038ea1e986",
+   "px": 64
+  },
+  "triangle_bunting": {
+   "group": "24cd1677-f5b9-4adc-9b91-fdaffd08dd25",
+   "px": 64
+  },
+  "festoon_garland": {
+   "group": "bb7da8ea-320c-44a3-9e8e-bcf40d809370",
+   "px": 64
+  }
+ },
+ "hills": {
+  "iron_candle_lantern": {
+   "group": "666ab3ad-27a7-4327-b319-808bfd148ccd",
+   "px": 64
+  },
+  "wall_oil_lamp": {
+   "group": "f16cb664-0f27-4e38-ae56-4f11866d11d6",
+   "px": 64
+  },
+  "swinging_trade_sign": {
+   "group": "4ad3cf90-bb15-4a54-95e7-c26d0d670bcf",
+   "px": 96
+  },
+  "heraldic_banner": {
+   "group": "ab211938-38dc-4d1e-ae4c-394f8cea0d9f",
+   "px": 128
+  },
+  "timber_flower_box": {
+   "group": "19043375-7cf9-4603-8fd2-c091279d07cf",
+   "px": 64
+  },
+  "projecting_board_sign": {
+   "group": "b8b3b750-67d1-43c1-96bd-bf0114032711",
+   "px": 96
+  },
+  "wrought_iron_silhouette_sign": {
+   "group": "a8b1774a-ec2c-421e-9d96-62706a3c12e8",
+   "px": 96
+  },
+  "cloth_market_awning": {
+   "group": "a056da6a-ceda-4c16-b438-6c47a79fd4a0",
+   "px": 128
+  },
+  "wood_slat_awning": {
+   "group": "543bf4dd-e357-46bd-8bb9-20410faa005c",
+   "px": 128
+  },
+  "fringed_shop_canopy": {
+   "group": "938698f9-b365-4f4c-b751-a2aacc99c24d",
+   "px": 128
+  },
+  "strung_festival_lights": {
+   "group": "a5d10317-71f7-4f51-a967-91a6838bc416",
+   "px": 64
+  },
+  "triangle_bunting": {
+   "group": "92f25d01-b6ac-4080-ab4a-79d63742b00f",
+   "px": 64
+  },
+  "festoon_garland": {
+   "group": "7b2c6d43-ad38-46f0-b981-d6ac6411d5cd",
+   "px": 64
+  }
+ },
+ "mountains": {
+  "iron_candle_lantern": {
+   "group": "6b3d586b-1e69-4ea5-aa60-a218fbc8ea8f",
+   "px": 64
+  },
+  "wall_oil_lamp": {
+   "group": "0b52bb88-32eb-48e1-886f-4ab85e0acfa7",
+   "px": 64
+  },
+  "timber_flower_box": {
+   "group": "998c54a7-c73e-4863-b67d-cc071469ea6e",
+   "px": 64
+  },
+  "swinging_trade_sign": {
+   "group": "d3de5dd2-5667-4140-822c-6a734b11aece",
+   "px": 96
+  },
+  "heraldic_banner": {
+   "group": "a561d03c-a3dc-494a-93f4-39df395992fc",
+   "px": 128
+  },
+  "projecting_board_sign": {
+   "group": "6034bf7b-a6c4-4057-91aa-d929a1014622",
+   "px": 96
+  },
+  "wrought_iron_silhouette_sign": {
+   "group": "d9f75c3b-a61e-42e2-9362-f05f73cff9c3",
+   "px": 96
+  },
+  "cloth_market_awning": {
+   "group": "3d82df5b-ab3f-4542-b3c8-94dc322b3358",
+   "px": 128
+  },
+  "wood_slat_awning": {
+   "group": "3581781d-0f2f-4215-86ea-02b4cdeaa814",
+   "px": 128
+  },
+  "fringed_shop_canopy": {
+   "group": "e8796965-03de-4872-93a3-acd0f44058c2",
+   "px": 128
+  },
+  "strung_festival_lights": {
+   "group": "3c10b9a0-6571-422a-9bac-a6bff26e3110",
+   "px": 64
+  },
+  "triangle_bunting": {
+   "group": "69f01afc-c799-4e5b-b5c2-4168f3c1a3ea",
+   "px": 64
+  },
+  "festoon_garland": {
+   "group": "1dfa0b17-8597-41ec-a66a-68560131c465",
+   "px": 64
+  }
+ },
+ "savanna": {
+  "iron_candle_lantern": {
+   "group": "ae4003fd-193d-4716-a801-139f0152cf39",
+   "px": 64
+  },
+  "wall_oil_lamp": {
+   "group": "081f7f12-c1b2-4690-88c6-b3e16c91ce4e",
+   "px": 64
+  },
+  "timber_flower_box": {
+   "group": "b446cd8f-5e3c-422b-a4f2-058052628078",
+   "px": 64
+  },
+  "swinging_trade_sign": {
+   "group": "1dfb9e1f-f3db-4cd3-bf33-f669503eef8f",
+   "px": 96
+  },
+  "heraldic_banner": {
+   "group": "c2199030-b62a-4618-a078-96a33bd36dee",
+   "px": 128
+  },
+  "projecting_board_sign": {
+   "group": "0d3c644c-6400-46c4-8ce1-fcb20ad5c066",
+   "px": 96
+  },
+  "wrought_iron_silhouette_sign": {
+   "group": "1cf34ee6-c202-47a8-bf81-91161c13303e",
+   "px": 96
+  },
+  "cloth_market_awning": {
+   "group": "a2bbe81a-4953-4176-af8a-2711b2d2b49c",
+   "px": 128
+  },
+  "wood_slat_awning": {
+   "group": "7ff0a3bd-c37b-4ef5-90b7-7614cf1638d9",
+   "px": 128
+  },
+  "fringed_shop_canopy": {
+   "group": "395b9f4f-538e-46e6-b006-61c2b7559bcd",
+   "px": 128
+  },
+  "strung_festival_lights": {
+   "group": "11c89a98-7d97-4249-b42c-70c6b4cec93d",
+   "px": 64
+  },
+  "triangle_bunting": {
+   "group": "8789e377-0953-4c10-8e26-da09ac6640cf",
+   "px": 64
+  },
+  "festoon_garland": {
+   "group": "9aa2eaca-f2e1-4ec8-ba83-e5848f11e751",
+   "px": 64
+  }
+ },
+ "steppe": {
+  "iron_candle_lantern": {
+   "group": "1203d486-9f6b-4626-a446-c90507f347d8",
+   "px": 64
+  },
+  "wall_oil_lamp": {
+   "group": "4eb0f360-f0e0-49b6-8c7d-eaac1fda8922",
+   "px": 64
+  },
+  "timber_flower_box": {
+   "group": "0cd6c9a2-05b4-4a07-98aa-1672527a7657",
+   "px": 64
+  },
+  "swinging_trade_sign": {
+   "group": "783d3ec5-d7ab-4230-9b0b-0dbc5b0592b1",
+   "px": 96
+  },
+  "heraldic_banner": {
+   "group": "2339ec2b-e773-4c28-adbe-f46c3e9daf92",
+   "px": 128
+  },
+  "projecting_board_sign": {
+   "group": "a8aa2b56-7fc1-443a-9cbd-e151c0be51fc",
+   "px": 96
+  },
+  "wrought_iron_silhouette_sign": {
+   "group": "8471cad4-e063-4ff5-b442-a936a577d027",
+   "px": 96
+  },
+  "cloth_market_awning": {
+   "group": "853162b9-bdad-4732-85c3-2b64d9436b96",
+   "px": 128
+  },
+  "wood_slat_awning": {
+   "group": "a8348e30-7109-46a0-b567-8d5842c4685c",
+   "px": 128
+  },
+  "fringed_shop_canopy": {
+   "group": "c1df4d4e-722a-421b-a8b4-cc0b36236140",
+   "px": 128
+  },
+  "strung_festival_lights": {
+   "group": "628cbad0-d566-4e2a-88f3-eb9242de55a7",
+   "px": 64
+  },
+  "triangle_bunting": {
+   "group": "1157e73d-7f02-47c6-8f16-e10f20468be1",
+   "px": 64
+  },
+  "festoon_garland": {
+   "group": "25b6091f-56f8-426c-bd03-5d92b9f8ab1a",
+   "px": 64
+  }
+ },
+ "taiga": {
+  "iron_candle_lantern": {
+   "group": "4d86a5d3-fbea-4ee0-ad1f-52d8e63ca2b5",
+   "px": 64
+  },
+  "wall_oil_lamp": {
+   "group": "5171ec47-a206-48c4-8ee6-e49c85961b4f",
+   "px": 64
+  },
+  "timber_flower_box": {
+   "group": "e404fb42-d766-44fd-b146-da4e397a341f",
+   "px": 64
+  },
+  "swinging_trade_sign": {
+   "group": "a2c0aac8-ee14-4cf1-a600-ed8df175e87d",
+   "px": 96
+  },
+  "heraldic_banner": {
+   "group": "f5f62590-4630-4121-a515-d835a7db83ee",
+   "px": 128
+  },
+  "projecting_board_sign": {
+   "group": "a8feef2c-021f-4cfc-a949-4870a31058a2",
+   "px": 96
+  },
+  "wrought_iron_silhouette_sign": {
+   "group": "ce8dc30c-c225-4e19-915b-5f152f533f2b",
+   "px": 96
+  },
+  "cloth_market_awning": {
+   "group": "29979b35-df4c-4f7d-a0e9-b4b4f9bf1f53",
+   "px": 128
+  },
+  "wood_slat_awning": {
+   "group": "74a28f55-ce71-4122-a56a-949f8c1ef4b2",
+   "px": 128
+  },
+  "fringed_shop_canopy": {
+   "group": "bbda3520-d5f1-4e07-8bd0-f62e8a0c7d83",
+   "px": 128
+  },
+  "strung_festival_lights": {
+   "group": "7a87815f-616f-4870-a18f-c5b7e8d5bb58",
+   "px": 64
+  },
+  "triangle_bunting": {
+   "group": "85d20e3e-4910-49b2-b519-9c32b965d359",
+   "px": 64
+  },
+  "festoon_garland": {
+   "group": "b0faa332-1a95-42b0-bff5-37a75ed9c141",
+   "px": 64
+  }
+ },
+ "tundra": {
+  "iron_candle_lantern": {
+   "group": "38bd1e27-9b45-4856-a0fe-d81c7206a033",
+   "px": 64
+  },
+  "wall_oil_lamp": {
+   "group": "56c41453-d77e-43f8-b144-9f4a5d729f08",
+   "px": 64
+  },
+  "timber_flower_box": {
+   "group": "2483c03f-8b08-4c08-8a5c-549a8a7fee5e",
+   "px": 64
+  },
+  "swinging_trade_sign": {
+   "group": "d0a852e9-71b6-46f7-9233-ffd8a3c826ab",
+   "px": 96
+  },
+  "heraldic_banner": {
+   "group": "1135d0e1-11b8-4c10-aa96-84744b63432c",
+   "px": 128
+  },
+  "projecting_board_sign": {
+   "group": "ae6754a5-fc79-432e-a24b-cf87afd1999f",
+   "px": 96
+  },
+  "wrought_iron_silhouette_sign": {
+   "group": "4d43f314-231e-4a1f-a808-e3a7071cd360",
+   "px": 96
+  },
+  "cloth_market_awning": {
+   "group": "f0ff1982-5791-4d30-bbad-6d6a0e6be65f",
+   "px": 128
+  },
+  "wood_slat_awning": {
+   "group": "cbc4eb6f-20b9-4523-9e32-7e93a65e0eb0",
+   "px": 128
+  },
+  "fringed_shop_canopy": {
+   "group": "3c12987e-f36d-4bb2-8e13-dcf9fdaca00c",
+   "px": 128
+  },
+  "strung_festival_lights": {
+   "group": "df9db4ff-cf37-485f-9a30-0e42b2efcc35",
+   "px": 64
+  },
+  "triangle_bunting": {
+   "group": "5a0a6db3-33e3-4b2d-9098-da387bfc08b1",
+   "px": 64
+  },
+  "festoon_garland": {
+   "group": "0fb3f0e3-991f-4a4e-b1ed-9466c04845a6",
+   "px": 64
+  }
+ },
+ "volcanic": {
+  "iron_candle_lantern": {
+   "group": "d491d5cb-349e-4cc4-b010-f7f36f76f7ef",
+   "px": 64
+  },
+  "wall_oil_lamp": {
+   "group": "90a4680f-4671-43ac-91fe-9cdfe4a33c57",
+   "px": 64
+  },
+  "timber_flower_box": {
+   "group": "9c86bfae-0716-45c2-a52e-a96f782abb53",
+   "px": 64
+  },
+  "swinging_trade_sign": {
+   "group": "d84240e1-cb66-4e1b-ac31-0786562923e5",
+   "px": 96
+  },
+  "heraldic_banner": {
+   "group": "1a5418e6-53f2-441e-9ea8-d1f56f41e420",
+   "px": 128
+  },
+  "projecting_board_sign": {
+   "group": "bb6b1458-41ce-4864-9ac3-9c28602206b0",
+   "px": 96
+  },
+  "wrought_iron_silhouette_sign": {
+   "group": "ae0386ce-60ac-4c89-b23b-72cfb93eb695",
+   "px": 96
+  },
+  "cloth_market_awning": {
+   "group": "a336990b-6544-450b-ae92-e4d5854b4074",
+   "px": 128
+  },
+  "wood_slat_awning": {
+   "group": "5d882104-f513-405b-b33a-c39a3c14b4b1",
+   "px": 128
+  },
+  "fringed_shop_canopy": {
+   "group": "481e352f-f994-457a-8581-22d717f518d0",
+   "px": 128
+  },
+  "strung_festival_lights": {
+   "group": "14219911-ba09-40f1-83dd-8a33e6ef152a",
+   "px": 64
+  },
+  "triangle_bunting": {
+   "group": "61efcfa8-cf6d-440b-9960-4b53f2d2ce25",
+   "px": 64
+  },
+  "festoon_garland": {
+   "group": "a6ac95cf-a2f4-41ab-a71f-6fdc04ce2f9f",
+   "px": 64
+  }
+ }
+}

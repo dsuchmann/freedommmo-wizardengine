@@ -108,24 +108,34 @@ function cornerCliffLevel(elevation, biome) {
   return cliffLevel(elevation);
 }
 
-export function paintCliffOverlay(ctx, tile, sx, sy, size, sun, imageCache) {
-  if (WATER_BIOMES[tile.biome]) return;
-  var myEl = tile.climate.elevation;
+// Pure cliff-tile identity: the Wang URL of the cliff face overlaid on this tile,
+// or null if no cliff. The single source of truth shared by the bitmap painter
+// (paintCliffOverlay) and the GPU index emitter (buildChunkIndex) so both pick the
+// identical tile. Defensive about a missing climate sub-object (node/headless).
+export function getCliffSrc(tile) {
+  if (WATER_BIOMES[tile.biome]) return null;
+  var myEl = (tile.climate != null) ? tile.climate.elevation : (tile.elevation != null ? tile.elevation : null);
+  if (myEl == null) return null;
   var nwLevel = cornerCliffLevel(myEl, tile.biome);
   var neLevel = cornerCliffLevel(tile._elE != null ? tile._elE : myEl, tile.neighborE || tile.biome);
   var swLevel = cornerCliffLevel(tile._elS != null ? tile._elS : myEl, tile.neighborS || tile.biome);
   var seLevel = cornerCliffLevel(tile._elSE != null ? tile._elSE : myEl, tile.neighborSE || tile.biome);
-  if (nwLevel === neLevel && nwLevel === swLevel && nwLevel === seLevel) return;
+  if (nwLevel === neLevel && nwLevel === swLevel && nwLevel === seLevel) return null;
   var minLevel = Math.min(nwLevel, neLevel, swLevel, seLevel);
   var cornerMask = 0;
   if (nwLevel === minLevel) cornerMask |= 8;
   if (neLevel === minLevel) cornerMask |= 4;
   if (swLevel === minLevel) cornerMask |= 2;
   if (seLevel === minLevel) cornerMask |= 1;
-  if (cornerMask === 0 || cornerMask === 15) return;
+  if (cornerMask === 0 || cornerMask === 15) return null;
   var wangIndex = CLIFF_CORNER_TO_WANG[cornerMask];
   var cliffDir = BIOME_CLIFF[tile.biome] || 'cliff_overlay';
-  var src = TRANSITIONS_BASE + cliffDir + '/wang/' + cliffDir + '__wang_' + wangIndex + WANG_SUFFIX;
+  return TRANSITIONS_BASE + cliffDir + '/wang/' + cliffDir + '__wang_' + wangIndex + WANG_SUFFIX;
+}
+
+export function paintCliffOverlay(ctx, tile, sx, sy, size, sun, imageCache) {
+  var src = getCliffSrc(tile);
+  if (!src) return;
   var bmp = imageCache.get(src);
   if (!bmp) return;
   ctx.drawImage(bmp, 0, 0, 32, 32, sx, sy, size, size);

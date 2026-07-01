@@ -9,10 +9,10 @@ import { REGION } from '../../sim/lod/aggregate.js';
 import { worldEpochs } from '../../sim/chronicle/epochs.js';
 import { macroCellPeoples } from '../../sim/chronicle/races.js';
 import { regionChronicle, settlementState, chronicleTier } from '../../sim/chronicle/chronicle.js';
-import { classifyBiome } from '../world/biomes.js';
 import { rand } from '../../sim/kernel/rng.js';
 import { setArchitectureClaim } from '../world/decoration-claims.js';
-import { resolveBuildingsInRange } from '../../sim/world/buildings/resolved-buildings.js';
+import { resolveBuildingsInRange, settlementsInResolveRange, isSettlementWarm, warmSettlement } from '../../sim/world/buildings/resolved-buildings.js';
+import { buildingWorkerEnabled, requestResolve, latestBuildings, latestKey } from './building-resolve-client.js';
 import { getWorldSeed } from '../core/world-seed.js';
 import { WALL_CONFIG } from './wall-config.js';
 
@@ -104,16 +104,23 @@ export function updateBuildingClaims(camX, camY, tilePx, w, h) {
   ensureFloorImages();
   // Buildings live in world/tile space — which ones exist is independent of zoom.
   // resolveBuildingsInRange() is a pure f(seed, macro-range), so key the cache on
-  // the visible MACRO-CELL range, NOT on tilePx. Previously `Math.floor(tilePx*10)`
-  // changed every frame of a zoom gesture, re-resolving the whole (expensive)
-  // building set every frame — the dominant zoom-out stall. Now it re-resolves
-  // only when the visible macro range actually changes (a macro-boundary crossing).
+  // the visible MACRO-CELL range, NOT on tilePx (zoom must not re-resolve).
   const margin = MACRO_TILES * tilePx * 2;
   const mx0 = Math.floor(Math.floor((camX - margin) / tilePx) / MACRO_TILES);
   const my0 = Math.floor(Math.floor((camY - margin) / tilePx) / MACRO_TILES);
   const mx1 = Math.ceil(Math.ceil((camX + w + margin) / tilePx) / MACRO_TILES);
   const my1 = Math.ceil(Math.ceil((camY + h + margin) / tilePx) / MACRO_TILES);
   const cacheKey = `${mx0},${my0},${mx1},${my1}`;
+  if (buildingWorkerEnabled()) {
+    // OFF-THREAD path (window._buildingWorker): ask the worker to resolve this range and serve the
+    // latest set it has returned. The render thread never blocks — it keeps drawing the previous set
+    // until the new one lands (brief, like terrain chunk streaming). The worker sets the architecture
+    // claim on reply. First load / teleport shows no buildings for a few frames, then they stream in.
+    requestResolve(getWorldSeed(), mx0, my0, mx1, my1, cacheKey);
+    const wb = latestBuildings();
+    if (wb && latestKey()) _cache = { key: latestKey(), buildings: wb };
+    return;
+  }
   if (_cache.key !== cacheKey) {
     _cache = { key: cacheKey, buildings: discoverBuildings(camX, camY, w, h, tilePx) };
   }

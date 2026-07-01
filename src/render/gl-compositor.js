@@ -9,6 +9,8 @@
 // Quad placement uses the exact same CSS-pixel sx/sy/chunkPx math as the 2D
 // path, so the two modes are pixel-comparable with the A/B toggle (G key).
 
+import { onSceneDiscontinuity } from '../core/scene-teardown.js';
+
 var VERT_SRC = `#version 300 es
 precision highp float;
 in vec2 aUnit;            // unit quad corner (0..1)
@@ -91,6 +93,118 @@ void main() {
   vec4 texel = texture(uTex, vUV);
   if (texel.a < 0.5) discard;   // outside the building silhouette → leave depth far
   outColor = texel;             // premultiplied colour (uploaded with UNPACK_PREMULTIPLY_ALPHA)
+}`;
+
+// GPU Wang-tile terrain: index-map sampler. Each 64×64 RGBA8 texel stores two 12-bit
+// atlas slot indices (base + transition) encoded by gpu-terrain-index.js::encodeTexel.
+// This phase decodes only baseSlot, looks up its (u0,v0) in the RG32F slot-UV table,
+// then samples the atlas at (u0 + frac * 31/atlasSize) where 31 texels = the tile
+// without its 1-px gutter. vUV (0..1) comes from the shared VERT_SRC vertex shader.
+var TILEMAP_FRAG_SRC = `#version 300 es
+precision highp float;
+precision highp int;
+in vec2 vUV;
+uniform highp usampler2D uIndex;    // 64x64 RGBA16UI index map
+uniform sampler2D uAtlas;    // wang tile atlas
+uniform sampler2D uSlotUV;   // RG32F, width=uSlotUVW, height 1: texel[slot] = (u0,v0)
+uniform int   uSlotUVW;
+uniform float uAtlasSize;
+uniform vec2  uChunkOrigin;   // chunk's world-tile origin (cx*64, cy*64)
+uniform sampler2D uSoilAtlas; // RGBA8 strip, cell i = soil id i (32px cells)
+uniform sampler2D uSoilConfig;// RGBA32F count x 2 (row0 params, row1 tint)
+uniform int   uSoilCount;     // number of soil ids (atlas/config width)
+uniform float uSoilOn;        // 0 = soil pass disabled
+uniform sampler2D uGcLumAtlas;  // RGBA8 strip, cell i = gc-lum id i (32px cells)
+uniform sampler2D uGcLumConfig; // RGBA32F count x 1: texel[i] = (strength, density, 0, 0)
+uniform int   uGcLumCount;      // number of gc-lum ids
+uniform float uGcLumOn;         // 0 = gc-luminance pass disabled
+out vec4 outColor;
+const float CHUNK = 64.0;
+// Integer bit-hash — stable at ALL world coordinates. The classic
+// fract(sin(dot(p,k))) hash degenerates at large p: sin() loses float precision,
+// the "noise" becomes tile-periodic and the soil swatch tiles into a visible grid.
+// This maps two integer world-pixel coords + a salt → a well-distributed [0,1).
+uint uhash(uint x) {
+  x ^= x >> 16u; x *= 0x7feb352du; x ^= x >> 15u; x *= 0x846ca68bu; x ^= x >> 16u;
+  return x;
+}
+float hash01(int px, int py, uint salt) {
+  uint h = uhash(uint(px) ^ uhash(uint(py) * 2654435761u + salt));
+  return float(h & 0x00ffffffu) / float(0x01000000u);
+}
+void main() {
+  vec2 t = vUV * CHUNK;            // tile space
+  ivec2 cell = ivec2(clamp(floor(t), 0.0, CHUNK - 1.0));
+  vec2 frac = fract(t);
+  uvec4 ti = texelFetch(uIndex, cell, 0);     // RGBA16UI: r=baseSlot g=cliffSlot b=soilId a=gcLumId
+  int baseSlot = int(ti.r);
+  int cliffSlot = int(ti.g);
+  int soilId = int(ti.b);
+  int gcLumId = int(ti.a);
+  if (baseSlot == 0) { outColor = vec4(0.0); return; }   // empty cell
+  int s = baseSlot; if (s >= uSlotUVW) s = 0;
+  vec2 uv0 = texelFetch(uSlotUV, ivec2(s, 0), 0).rg;     // tile origin (half-texel inset baked in)
+  // tile spans 31 texels (matches WangAtlas du = (32-1)/atlasSize)
+  vec2 atlasUv = uv0 + frac * (31.0 / uAtlasSize);
+  vec4 col = texture(uAtlas, atlasUv);                    // base wang tile (premultiplied)
+  // Cliff overlay — a SECOND atlas tile drawn over the base, exactly as the bitmap
+  // path layers paintCliffOverlay on top of paintWangBase. cliffSlot 0 = no cliff.
+  if (cliffSlot != 0 && cliffSlot < uSlotUVW) {
+    vec2 cuv0 = texelFetch(uSlotUV, ivec2(cliffSlot, 0), 0).rg;
+    vec4 cliff = texture(uAtlas, cuv0 + frac * (31.0 / uAtlasSize));
+    col = cliff + col * (1.0 - cliff.a);                  // premultiplied "over"
+  }
+  // ── F0 soil pass — procedural per-pixel, replacing applySoilFieldToChunk ──
+  if (uSoilOn > 0.5 && soilId > 0 && soilId < uSoilCount) {
+    // World pixel coords (32 px per tile): origin tiles → tile cell → frac → px.
+    vec2 wp = (uChunkOrigin + vec2(cell)) * 32.0 + frac * 32.0;
+    int ipx = int(floor(wp.x));
+    int ipy = int(floor(wp.y));
+    // Per-pixel hash in [0,1) — integer bit-hash, stable at all world coords. (We
+    // replace the bitmap, so an equivalent distribution is the bar, not identity.)
+    float h = hash01(ipx, ipy, 0u);
+    vec4 cfg0 = texelFetch(uSoilConfig, ivec2(soilId, 0), 0);  // density, alpha, tintStrength, hasTint
+    if (h <= cfg0.x) {
+      // Jittered sample within this id's 32px swatch cell — breaks the source
+      // sprite's diagonal patterns (CPU does this via random blob sampling).
+      float jx = hash01(ipx, ipy, 1u);
+      float jy = hash01(ipx, ipy, 2u);
+      float cellU = fract(frac.x + jx);
+      float cellV = fract(frac.y + jy);
+      float u = (float(soilId) + cellU) / float(uSoilCount);
+      vec4 soil = textureLod(uSoilAtlas, vec2(u, cellV), 0.0); // non-mip; safe in branch
+      if (soil.a > 0.0) {
+        vec3 srgb = soil.rgb;
+        if (cfg0.w > 0.5) {
+          vec4 cfg1 = texelFetch(uSoilConfig, ivec2(soilId, 1), 0); // tint rgb (0..1)
+          srgb = mix(srgb, cfg1.rgb, cfg0.z);                       // tint toward target
+        }
+        col.rgb = mix(col.rgb, srgb, soil.a * cfg0.y);              // alpha = swatch.a * cfg.alpha
+      }
+    }
+  }
+  // ── gc-luminance pass — ADDITIVE surface modulation, replacing the CPU gc
+  // luminance loop (applyGroundCoverToChunk). Only 11 biomes have gc-luminance
+  // (grassland etc. → gcLumId 0 → skipped). Darkens/lightens the surface where a
+  // jittered gc-sprite sample has alpha, gated by per-pixel density hash.
+  if (uGcLumOn > 0.5 && gcLumId > 0 && gcLumId < uGcLumCount) {
+    vec2 gwp = (uChunkOrigin + vec2(cell)) * 32.0 + frac * 32.0;
+    int gpx = int(floor(gwp.x));
+    int gpy = int(floor(gwp.y));
+    vec4 gcfg = texelFetch(uGcLumConfig, ivec2(gcLumId, 0), 0);  // strength, density
+    float gh = hash01(gpx, gpy, 5u);
+    if (gh <= gcfg.y) {
+      float gjx = hash01(gpx, gpy, 6u);
+      float gjy = hash01(gpx, gpy, 7u);
+      float gu = (float(gcLumId) + fract(frac.x + gjx)) / float(uGcLumCount);
+      vec4 gc = textureLod(uGcLumAtlas, vec2(gu, fract(frac.y + gjy)), 0.0);
+      if (gc.a > 0.03) {
+        float lum = dot(gc.rgb, vec3(0.299, 0.587, 0.114)) - 0.5;  // centered luminance
+        col.rgb = clamp(col.rgb + lum * gcfg.x, 0.0, 1.0);          // additive modulation
+      }
+    }
+  }
+  outColor = col;
 }`;
 
 // --- Stage 2: instanced sprite pipeline (F2 small flora) ---
@@ -270,6 +384,9 @@ uniform vec2 uViewport;
 uniform vec3 uCam;       // x,y = screen-px offset, z = px per tile
 uniform float uTime;     // ms
 uniform float uFrameDur; // ms per anim frame
+uniform float uDepthOn;    // 0 = z=0 (legacy, draws over everything); 1 = depth-from-baseline so flora is OCCLUDED behind buildings
+uniform float uDepthRef;   // reference tile Y (screen centre) — must match the building-depth pass
+uniform float uDepthScale; // tiles→depth slope (must match building-depth.js DEPTH_SCALE)
 out vec2 vUV;
 out float vAlpha;
 out vec2 vLocal; // must match SPRITE_FRAG_SRC (shared frag) or the anim program fails to link
@@ -284,7 +401,14 @@ void main() {
   vec2 local = vec2(aUnit.x * sizePx - sizePx * 0.5, aUnit.y * sizePx - sizePx);
   float c = cos(rot), s = sin(rot);
   vec2 px = pivotPx + vec2(local.x * c - local.y * s, local.x * s + local.y * c);
-  gl_Position = vec4(px.x / uViewport.x * 2.0 - 1.0, 1.0 - px.y / uViewport.y * 2.0, 0.0, 1.0);
+  // Depth from the sprite's BASELINE (a0.y, world tiles): larger Y = more south = nearer = smaller depth.
+  // NDC z = 2d-1, matching the building-depth pass + drawPoolSprites exactly so flora occludes correctly.
+  float z = 0.0;
+  if (uDepthOn > 0.5) {
+    float d = clamp(0.5 - (a0.y - uDepthRef) * uDepthScale, 0.0, 1.0);
+    z = d * 2.0 - 1.0;
+  }
+  gl_Position = vec4(px.x / uViewport.x * 2.0 - 1.0, 1.0 - px.y / uViewport.y * 2.0, z, 1.0);
   vec2 uv0 = vec2(a1.x + frameIdx * a1.z, a1.y);
   vUV = uv0 + aUnit * vec2(a1.w, a4.x);
   float fade = (a3.x > 0.0) ? clamp((uTime - a3.x) / 400.0, 0.0, 1.0) : 1.0;
@@ -553,9 +677,12 @@ void main() {
   outColor = vec4(c, 1.0);
 }`;
 
-// Evict chunk textures not drawn for this many frames.
-var EVICT_AFTER_FRAMES = 600;
-var SWEEP_INTERVAL = 256;
+// Evict chunk textures not drawn for this many frames. Tightened from 600/256: the old ~14s
+// retention (600 frames + a sweep only every 256) let rapid biome teleports pile up 300-500MB of
+// stale chunk VRAM before anything freed -> 3-4fps. The discontinuity purge (purgeOffscreen, fired
+// on every far teleport) is the real fix for teleports; these are the gradual-walking backstop.
+var EVICT_AFTER_FRAMES = 240;
+var SWEEP_INTERVAL = 120;
 // Max NEW chunk-bitmap texImage2D uploads per frame. Spreads the boundary-crossing
 // burst (up to ~6 workers finishing at once) across frames to kill walk stutter.
 var CHUNK_UPLOAD_BUDGET = 2;
@@ -605,6 +732,10 @@ export class GLCompositor {
     }
     this.gl = gl;
     this.textures = new Map(); // 'cx,cy' -> { tex, bmp, lastUsed }
+    // Far teleport = discontinuity: free this biome's chunk/building textures + reset the sprite
+    // atlas at once (purgeOffscreen), instead of waiting ~14s for the lastUsed sweep — that wait is
+    // what let rapid teleports accumulate stale VRAM and collapse fps to 3-4.
+    onSceneDiscontinuity((info) => this.purgeOffscreen(info));
     this.crt = true;      // subtle CRT scanlines + grille (C key toggles)
     this.frame = 0;
     this._lastSkyCss = null;
@@ -1260,6 +1391,145 @@ export class GLCompositor {
     gl.bindVertexArray(null);
   }
 
+  // CACHED building sprite → colour+depth. Same depth-write semantics as drawBuildingColorDepth, but the bitmap
+  // is a SMALL building-local image uploaded ONCE per `key` (texImage2D only on a miss / bitmap swap) and drawn
+  // each frame as a building-sized quad at (sx,sy,dw,dh). Fixes the ~336ms per-frame full-screen repaint+upload.
+  drawBuildingSprite(key, bitmap, sx, sy, dw, dh, depthZ) {
+    if (!this.ok || !this.sceneActive || !bitmap || this.colorDepthOk === false) return;
+    var gl = this.gl;
+    if (!this.colorDepthProgram) {
+      var prog = this._buildProgram(DEPTHWRITE_VERT_SRC, COLORDEPTH_FRAG_SRC);
+      if (!prog) { this.colorDepthOk = false; return; }
+      this.colorDepthProgram = prog;
+      this.cdUViewport = gl.getUniformLocation(prog, 'uViewport');
+      this.cdUPos = gl.getUniformLocation(prog, 'uPos');
+      this.cdUSize = gl.getUniformLocation(prog, 'uSize');
+      this.cdUTex = gl.getUniformLocation(prog, 'uTex');
+      this.cdUDepthZ = gl.getUniformLocation(prog, 'uDepthZ');
+      this.colorDepthVao = gl.createVertexArray();
+      gl.bindVertexArray(this.colorDepthVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.unitVbo);
+      var cloc = gl.getAttribLocation(prog, 'aUnit');
+      gl.enableVertexAttribArray(cloc);
+      gl.vertexAttribPointer(cloc, 2, gl.FLOAT, false, 0, 0);
+      gl.bindVertexArray(null);
+      this._colorDepthTex = gl.createTexture();
+    }
+    // Per-key texture cache: upload the small building bitmap once; bind & reuse every later frame.
+    if (!this.bldTextures) this.bldTextures = new Map();
+    var entry = this.bldTextures.get(key);
+    if (!entry || entry.bmp !== bitmap) {
+      var tex = entry ? entry.tex : gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      entry = { tex: tex, bmp: bitmap, lastUsed: this.frame };
+      this.bldTextures.set(key, entry);
+    } else {
+      entry.lastUsed = this.frame;
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.sceneFbo);
+    gl.viewport(0, 0, this._artW, this._artH);
+    gl.useProgram(this.colorDepthProgram);
+    gl.bindVertexArray(this.colorDepthVao);
+    gl.uniform2f(this.cdUViewport, this._artW, this._artH);
+    gl.uniform2f(this.cdUPos, sx, sy);
+    gl.uniform2f(this.cdUSize, dw, dh);
+    gl.uniform1f(this.cdUDepthZ, depthZ);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, entry.tex);
+    gl.uniform1i(this.cdUTex, 0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LESS);        // nearer building (smaller z) wins where silhouettes overlap
+    gl.depthMask(true);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.colorMask(true, true, true, true);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.disable(gl.BLEND);
+    gl.depthFunc(gl.LEQUAL);
+    gl.disable(gl.DEPTH_TEST);
+    gl.depthMask(true);
+    gl.bindVertexArray(null);
+  }
+
+  // LIVE D3 PROPS quad — same depth-writing program as drawBuildingSprite, for the per-building props bitmap
+  // rebuilt EVERY frame (banner sway / lantern flicker animate). Two differences vs the cached-sprite path:
+  // (1) ALWAYS re-upload (the bitmap changes each frame), and (2) depthFunc LEQUAL + depthMask FALSE so props
+  // pass OVER their OWN building's wall (equal building-z) yet stay OCCLUDED by a NEARER building's silhouette
+  // (smaller z already in the depth buffer) — fixing a back-building's props drawing over a front-building's
+  // roof. Props only TEST depth, never WRITE it. One shared texture, re-specified per building per frame.
+  drawBuildingPropsSprite(bitmap, sx, sy, dw, dh, depthZ) {
+    if (!this.ok || !this.sceneActive || !bitmap || this.colorDepthOk === false) return;
+    var gl = this.gl;
+    if (!this.colorDepthProgram) {
+      var prog = this._buildProgram(DEPTHWRITE_VERT_SRC, COLORDEPTH_FRAG_SRC);
+      if (!prog) { this.colorDepthOk = false; return; }
+      this.colorDepthProgram = prog;
+      this.cdUViewport = gl.getUniformLocation(prog, 'uViewport');
+      this.cdUPos = gl.getUniformLocation(prog, 'uPos');
+      this.cdUSize = gl.getUniformLocation(prog, 'uSize');
+      this.cdUTex = gl.getUniformLocation(prog, 'uTex');
+      this.cdUDepthZ = gl.getUniformLocation(prog, 'uDepthZ');
+      this.colorDepthVao = gl.createVertexArray();
+      gl.bindVertexArray(this.colorDepthVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.unitVbo);
+      var cloc = gl.getAttribLocation(prog, 'aUnit');
+      gl.enableVertexAttribArray(cloc);
+      gl.vertexAttribPointer(cloc, 2, gl.FLOAT, false, 0, 0);
+      gl.bindVertexArray(null);
+      this._colorDepthTex = gl.createTexture();
+    }
+    if (!this._propTex) this._propTex = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this._propTex);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, bitmap);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.sceneFbo);
+    gl.viewport(0, 0, this._artW, this._artH);
+    gl.useProgram(this.colorDepthProgram);
+    gl.bindVertexArray(this.colorDepthVao);
+    gl.uniform2f(this.cdUViewport, this._artW, this._artH);
+    gl.uniform2f(this.cdUPos, sx, sy);
+    gl.uniform2f(this.cdUSize, dw, dh);
+    gl.uniform1f(this.cdUDepthZ, depthZ);
+    gl.uniform1i(this.cdUTex, 0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);     // pass over own building (equal z); occluded by a nearer building (smaller z)
+    gl.depthMask(false);         // props TEST depth but never WRITE it
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.colorMask(true, true, true, true);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.disable(gl.BLEND);
+    gl.depthFunc(gl.LEQUAL);
+    gl.disable(gl.DEPTH_TEST);
+    gl.depthMask(true);
+    gl.bindVertexArray(null);
+  }
+
+  // Evict building-sprite textures unused for a while (LRU). Called from _sweep alongside chunk eviction.
+  _evictBuildingTextures(maxAgeFrames) {
+    if (!this.bldTextures) return;
+    var gl = this.gl;
+    for (var [key, entry] of this.bldTextures) {
+      if (this.frame - entry.lastUsed > maxAgeFrames) {
+        gl.deleteTexture(entry.tex);
+        this.bldTextures.delete(key);
+      }
+    }
+  }
+
   // --- Stage 2: sprite atlas + instanced rendering ---
 
   _initSprites() {
@@ -1275,13 +1545,25 @@ export class GLCompositor {
     this.sUDepthScale = gl.getUniformLocation(prog, 'uDepthScale');
     this.sUSeeThrough = gl.getUniformLocation(prog, 'uSeeThrough');
 
-    // Runtime shelf-packed sprite atlas. With F2 (32px), F4 (64px), F5
-    // (96px), and F6 (192px) sprites sharing one atlas, 4096² overflows
-    // in dense forests. 8192² gives 4× headroom with negligible VRAM cost.
-    this.atlasSize = Math.min(8192, gl.getParameter(gl.MAX_TEXTURE_SIZE));
+    // Runtime shelf-packed sprite atlas. With F2 (32px), F4 (64px), F5 (96px),
+    // F6 (192px) AND F6 upscaled trees (up to 384px) sharing one atlas, even 8192²
+    // overflows in dense tree biomes (arctic/forest), which forced repeated mid-walk
+    // resets (the on-screen reload). Prefer 16384² — 4× the area — so a realistic
+    // visible set never overflows; the atlas never evicts, so capacity IS the budget.
+    // Allocation is GL-error-checked: if the driver can't back the larger texture we
+    // fall back to 8192² (the compaction + sync-rebuild path still hides the rare reset).
+    var maxTex = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+    this.atlasSize = Math.min(16384, maxTex);
     this.atlasTex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, this.atlasTex);
+    while (gl.getError() !== gl.NO_ERROR) {} // drain stale errors before probing the alloc
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, this.atlasSize, this.atlasSize, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    if (gl.getError() !== gl.NO_ERROR && this.atlasSize > 8192) {
+      console.warn('[GL] sprite atlas ' + this.atlasSize + '² alloc failed — falling back to 8192²');
+      this.atlasSize = 8192;
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, this.atlasSize, this.atlasSize, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    }
+    console.log('[GL] sprite atlas: ' + this.atlasSize + '² (max ' + maxTex + ')');
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -1404,6 +1686,9 @@ export class GLCompositor {
     this.aUTime = gl.getUniformLocation(prog, 'uTime');
     this.aUFrameDur = gl.getUniformLocation(prog, 'uFrameDur');
     this.aUAtlas = gl.getUniformLocation(prog, 'uAtlas');
+    this.aUDepthOn = gl.getUniformLocation(prog, 'uDepthOn');
+    this.aUDepthRef = gl.getUniformLocation(prog, 'uDepthRef');
+    this.aUDepthScale = gl.getUniformLocation(prog, 'uDepthScale');
     this.animVbo = gl.createBuffer();
     this._animCapBytes = 0;
     var sv = this._buildAnimVao(prog, this.animVbo);
@@ -1512,12 +1797,25 @@ export class GLCompositor {
     gl.uniform1i(this.aUAtlas, 0);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    // Depth-test against the building depth buffer so flora is OCCLUDED by buildings in front of it (the GPU
+    // path previously hardcoded z=0 + no depth test → grass drew over buildings, esp. after teleport). Mirrors
+    // drawPoolSprites: TEST only (depthMask false), so flora's own painter's-order by sortY is unchanged.
+    var _depthOn = !!this._spriteDepth;
+    if (this.aUDepthOn) gl.uniform1f(this.aUDepthOn, _depthOn ? 1 : 0);
+    if (_depthOn) {
+      gl.uniform1f(this.aUDepthRef, this._spriteDepth.refY);
+      gl.uniform1f(this.aUDepthScale, this._spriteDepth.scale);
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthFunc(gl.LEQUAL);
+      gl.depthMask(false);
+    }
     try {
       this._pointAnimAttribs(this.animVbo, this._animLocs, start);
       gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
     } finally {
       this._pointAnimAttribs(this.animVbo, this._animLocs, 0);
       gl.bindVertexArray(null);
+      if (_depthOn) { gl.disable(gl.DEPTH_TEST); gl.depthMask(true); }
     }
     gl.disable(gl.BLEND);
   }
@@ -1848,6 +2146,213 @@ export class GLCompositor {
     gl.disable(gl.BLEND);
   }
 
+  // --- GPU Wang-tile terrain compositor methods ---
+
+  // Register the fully-built WangAtlas texture + its serialized meta (from atlas.serializeMeta()).
+  // Builds a 1-row RG32F lookup texture so the tilemap fragment shader can resolve a slot integer
+  // to (u0,v0) atlas UV in one texelFetch. Call once after the atlas is fully populated (or again
+  // if new tiles are added — it rebuilds the lookup table each time).
+  setWangAtlas(tex, meta) {
+    if (!this.ok) return;
+    var gl = this.gl;
+    this._wangAtlasTex = tex;
+    this._wangAtlasSize = meta.atlasSize;
+
+    // Find the largest slot index across all registered tiles
+    var maxSlot = 0;
+    for (var val of Object.values(meta.slots)) { if (val.slot > maxSlot) maxSlot = val.slot; }
+    var w = maxSlot + 1;
+
+    // Fill a Float32Array: index slot*2 = u0, slot*2+1 = v0; slot 0 stays 0,0 (RESERVED=empty)
+    var data = new Float32Array(w * 2);
+    for (var val of Object.values(meta.slots)) {
+      data[val.slot * 2]     = val.u0;
+      data[val.slot * 2 + 1] = val.v0;
+    }
+
+    // Upload as RG32F 1-row texture (texelFetch-able in WebGL2 without extension)
+    if (!this._slotUVTex) this._slotUVTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, this._slotUVTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG32F, w, 1, 0, gl.RG, gl.FLOAT, data);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    this._slotUVW = w;
+
+    // Lazily build the tilemap program now that we know the atlas exists
+    if (!this._tilemapProgram) this._buildTilemapProgram();
+  }
+
+  // Soil lookup textures for the GPU F0 pass.
+  //   swatchTex : RGBA8, width = count*32, height = 32. Cell i (origin x=i*32) is
+  //               soil id i's 32x32 representative swatch.
+  //   configTex : RGBA32F, width = count, height = 2. Row 0 texel[i] =
+  //               (density, alpha, tintStrength, hasTint); row 1 texel[i] = (tintR,tintG,tintB,0)
+  //               with tint in 0..1. Index by soil id i.
+  //   count     : number of soil ids + 1 (id 0 reserved/empty) = atlas/config width.
+  setSoilAtlas(swatchTex, configTex, count) {
+    this._soilSwatchTex = swatchTex;
+    this._soilConfigTex = configTex;
+    this._soilCount = count | 0;
+    this._soilCellW = 32;
+  }
+
+  // Ground-cover LUMINANCE lookup textures for the GPU gc-luminance pass.
+  //   swatchTex : RGBA8, width = count*32, height = 32. Cell i = gc-lum id i's 32x32
+  //               representative gc sprite (its luminance drives an additive modulation).
+  //   configTex : RGBA32F, width = count, height = 1. texel[i] = (strength, density, 0, 0).
+  //   count     : number of gc-lum ids + 1 (id 0 reserved/none) = atlas/config width.
+  setGcLumAtlas(swatchTex, configTex, count) {
+    this._gcLumSwatchTex = swatchTex;
+    this._gcLumConfigTex = configTex;
+    this._gcLumCount = count | 0;
+  }
+
+  _buildTilemapProgram() {
+    var gl = this.gl;
+    var prog = this._buildProgram(VERT_SRC, TILEMAP_FRAG_SRC);
+    if (!prog) { this._tilemapOk = false; return; }
+    this._tilemapProgram = prog;
+    this._tmUViewport = gl.getUniformLocation(prog, 'uViewport');
+    this._tmUPos      = gl.getUniformLocation(prog, 'uPos');
+    this._tmUSize     = gl.getUniformLocation(prog, 'uSize');
+    this._tmUIndex    = gl.getUniformLocation(prog, 'uIndex');
+    this._tmUAtlas    = gl.getUniformLocation(prog, 'uAtlas');
+    this._tmUSlotUV   = gl.getUniformLocation(prog, 'uSlotUV');
+    this._tmUSlotUVW  = gl.getUniformLocation(prog, 'uSlotUVW');
+    this._tmUAtlasSize = gl.getUniformLocation(prog, 'uAtlasSize');
+    this._tmUChunkOrigin = gl.getUniformLocation(prog, 'uChunkOrigin');
+    this._tmUSoilAtlas   = gl.getUniformLocation(prog, 'uSoilAtlas');
+    this._tmUSoilConfig  = gl.getUniformLocation(prog, 'uSoilConfig');
+    this._tmUSoilCount   = gl.getUniformLocation(prog, 'uSoilCount');
+    this._tmUSoilOn      = gl.getUniformLocation(prog, 'uSoilOn');
+    this._tmUGcLumAtlas  = gl.getUniformLocation(prog, 'uGcLumAtlas');
+    this._tmUGcLumConfig = gl.getUniformLocation(prog, 'uGcLumConfig');
+    this._tmUGcLumCount  = gl.getUniformLocation(prog, 'uGcLumCount');
+    this._tmUGcLumOn     = gl.getUniformLocation(prog, 'uGcLumOn');
+    // Own VAO that shares the same unit-quad VBO as the base chunk program
+    this._tilemapVao = gl.createVertexArray();
+    gl.bindVertexArray(this._tilemapVao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.unitVbo);
+    var loc = gl.getAttribLocation(prog, 'aUnit');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    gl.bindVertexArray(null);
+  }
+
+  // Upload (or refresh) the 64×64 RGBA8 index map for a chunk. buf is a Uint8Array
+  // of length 64*64*4 produced by encodeTexel in gpu-terrain-index.js. No upload
+  // budget/throttle: the index map is only 16 KB (vs ~16 MB for a chunk bitmap).
+  uploadChunkIndex(key, buf) {
+    if (!this.ok) return;
+    var gl = this.gl;
+    if (!this._chunkIndexTex) this._chunkIndexTex = new Map();
+    if (!this._chunkIndexBuf) this._chunkIndexBuf = new Map();
+    var tex = this._chunkIndexTex.get(key);
+    // Skip the re-upload when this exact index buffer was already uploaded for this
+    // key. The draw loop calls this EVERY frame per visible chunk, but the index is a
+    // fresh Uint16Array only when the chunk repaints (never mutated in place), so
+    // reference-equality safely detects "unchanged" — avoids a per-frame texSubImage2D
+    // of every visible chunk's index on the GPU-terrain path.
+    if (tex && this._chunkIndexBuf.get(key) === buf) return;
+    if (!tex) {
+      tex = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16UI, 64, 64, 0, gl.RGBA_INTEGER, gl.UNSIGNED_SHORT, null);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      this._chunkIndexTex.set(key, tex);
+    } else {
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+    }
+    // Integer texture: format RGBA_INTEGER + type UNSIGNED_SHORT, buf is a Uint16Array.
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 64, 64, gl.RGBA_INTEGER, gl.UNSIGNED_SHORT, buf);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    this._chunkIndexBuf.set(key, buf);
+  }
+
+  // Draw a chunk quad by sampling the Wang tile atlas via the index map — the GPU
+  // tilemap path. Placement (sx/sy/dw/dh) is identical to drawChunk; the scene FBO
+  // and viewport are re-bound to match drawSceneOverlayBitmap's defensive pattern.
+  // Falls back (returns early) if atlas/slot-UV/index textures are not ready so the
+  // caller can fall through to the bitmap drawChunk path. Restores the base chunk
+  // program + VAO after drawing so drawChunk can be called interleaved.
+  drawChunkTilemap(key, cx, cy, sx, sy, dw, dh) {
+    if (!this.ok || !this._wangAtlasTex || !this._slotUVTex) return;
+    if (!this._chunkIndexTex) return;
+    var indexTex = this._chunkIndexTex.get(key);
+    if (!indexTex) return;
+    if (!this._tilemapProgram || this._tilemapOk === false) return;
+
+    var gl = this.gl;
+    // Bind scene FBO + viewport (defensive re-bind, mirrors drawSceneOverlayBitmap)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.sceneFbo);
+    gl.viewport(0, 0, this._artW, this._artH);
+    gl.useProgram(this._tilemapProgram);
+    gl.bindVertexArray(this._tilemapVao);
+
+    // Texture unit 0 = per-chunk index map, unit 1 = wang atlas, unit 2 = slot-UV table
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, indexTex);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this._wangAtlasTex);
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this._slotUVTex);
+    gl.activeTexture(gl.TEXTURE0); // restore unit 0 as active (convention)
+
+    gl.uniform2f(this._tmUViewport, this._artW, this._artH);
+    gl.uniform2f(this._tmUPos,      sx, sy);
+    gl.uniform2f(this._tmUSize,     dw, dh);
+    gl.uniform1i(this._tmUIndex,    0);
+    gl.uniform1i(this._tmUAtlas,    1);
+    gl.uniform1i(this._tmUSlotUV,   2);
+    gl.uniform1i(this._tmUSlotUVW,  this._slotUVW);
+    gl.uniform1f(this._tmUAtlasSize, this._wangAtlasSize);
+
+    // F0 soil pass — bind the soil swatch atlas (unit 3) + config (unit 4) and
+    // the chunk's world-tile origin. uSoilOn=0 when the soil textures aren't ready.
+    if (this._tmUChunkOrigin) gl.uniform2f(this._tmUChunkOrigin, cx * 64, cy * 64);
+    var _soilOn = (this._soilSwatchTex && this._soilConfigTex) ? 1 : 0;
+    if (this._tmUSoilOn) gl.uniform1f(this._tmUSoilOn, _soilOn);
+    if (_soilOn) {
+      gl.activeTexture(gl.TEXTURE3);
+      gl.bindTexture(gl.TEXTURE_2D, this._soilSwatchTex);
+      gl.activeTexture(gl.TEXTURE4);
+      gl.bindTexture(gl.TEXTURE_2D, this._soilConfigTex);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.uniform1i(this._tmUSoilAtlas, 3);
+      gl.uniform1i(this._tmUSoilConfig, 4);
+      gl.uniform1i(this._tmUSoilCount, this._soilCount);
+    }
+
+    // gc-luminance pass — bind the gc-lum swatch atlas (unit 5) + config (unit 6).
+    var _gcLumOn = (this._gcLumSwatchTex && this._gcLumConfigTex) ? 1 : 0;
+    if (this._tmUGcLumOn) gl.uniform1f(this._tmUGcLumOn, _gcLumOn);
+    if (_gcLumOn) {
+      gl.activeTexture(gl.TEXTURE5);
+      gl.bindTexture(gl.TEXTURE_2D, this._gcLumSwatchTex);
+      gl.activeTexture(gl.TEXTURE6);
+      gl.bindTexture(gl.TEXTURE_2D, this._gcLumConfigTex);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.uniform1i(this._tmUGcLumAtlas, 5);
+      gl.uniform1i(this._tmUGcLumConfig, 6);
+      gl.uniform1i(this._tmUGcLumCount, this._gcLumCount);
+    }
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+    // Restore base chunk pipeline so subsequent drawChunk calls continue to work
+    gl.useProgram(this.program);
+    gl.bindVertexArray(this.vao);
+    gl.uniform2f(this.uViewport, this._artW, this._artH);
+    gl.uniform1i(this.uTex, 0);
+    gl.activeTexture(gl.TEXTURE0);
+  }
+
   endFrame() {
     if (!this.ok) return;
     this.frame++;
@@ -1860,8 +2365,59 @@ export class GLCompositor {
       if (this.frame - entry.lastUsed > EVICT_AFTER_FRAMES) {
         gl.deleteTexture(entry.tex);
         this.textures.delete(key);
+        // Evict the GPU index texture for this chunk at the same time
+        if (this._chunkIndexTex) { var it = this._chunkIndexTex.get(key); if (it) { gl.deleteTexture(it); this._chunkIndexTex.delete(key); } }
+        if (this._chunkIndexBuf) this._chunkIndexBuf.delete(key);
       }
     }
+    this._evictBuildingTextures(EVICT_AFTER_FRAMES);
+  }
+
+  // Reclaim the entire sprite-atlas working set (mirrors the atlas-full path). atlasGen++ also
+  // invalidates field2's _stripCache memo; sprites repack lazily from whatever is actually drawn next.
+  resetAtlas() {
+    this._lastAtlasReset = this.frame;
+    this.atlasGen++;
+    if (this.atlasRects) this.atlasRects.clear();
+    this._shelfX = 1;
+    this._shelfY = this._playerRegion ? this._playerRegion.y + this._playerRegion.h + 2 : 1;
+    this._shelfH = 0;
+  }
+
+  // Fraction of the atlas height consumed by packed shelves (0..1). The atlas never
+  // evicts individual sprites, so walking accumulates a trail of off-screen sprites until
+  // it fills and resets mid-draw — which reloads on screen. Callers use this to compact
+  // PROACTIVELY at a rebuild boundary (resetAtlas before re-packing) so the now-visible set
+  // repacks fresh inline in one pass instead of overflowing mid-frame.
+  atlasFillRatio() {
+    if (!this.ok || !this.atlasSize) return 0;
+    return this._shelfY / this.atlasSize;
+  }
+
+  // Discontinuity teardown (registered on the scene-teardown bus). After a far teleport the cached
+  // chunk + building textures are stale; the destination biome re-uploads what it needs. Keep only
+  // chunk textures NEAR the destination (so short/overlapping teleports don't re-upload), free the
+  // rest + all building textures + reset the atlas — so rapid teleports can't accumulate stale VRAM.
+  purgeOffscreen(info) {
+    if (!this.ok) return 0;
+    var gl = this.gl, freed = 0;
+    var hasDest = info && typeof info.x === 'number';
+    var dcx = hasDest ? Math.floor(info.x / 64) : 0, dcy = hasDest ? Math.floor(info.y / 64) : 0;
+    var KEEP = 8; // chunks: keep a margin around the destination, evict everything farther
+    for (var [key, entry] of this.textures) {
+      var keep = false;
+      if (hasDest) { var p = key.split(','); if (Math.abs((+p[0]) - dcx) <= KEEP && Math.abs((+p[1]) - dcy) <= KEEP) keep = true; }
+      if (!keep) { gl.deleteTexture(entry.tex); this.textures.delete(key); freed++;
+        if (this._chunkIndexTex) { var ci = this._chunkIndexTex.get(key); if (ci) { gl.deleteTexture(ci); this._chunkIndexTex.delete(key); } }
+        if (this._chunkIndexBuf) this._chunkIndexBuf.delete(key);
+      }
+    }
+    if (this.bldTextures) { for (var [, e2] of this.bldTextures) { gl.deleteTexture(e2.tex); freed++; } this.bldTextures.clear(); }
+    // INTENTIONALLY NOT resetting the sprite atlas here. resetAtlas() bumped atlasGen → forced a full
+    // re-pack of every visible F2 sprite (SPRITE_PACK_BUDGET=32/frame ≈ 1.5s = the post-teleport stutter).
+    // The atlas is a fixed-size texture (no leak); stale old-biome sprites are reclaimed lazily by its own
+    // overflow reset when it actually fills. Freeing the big per-chunk textures above is the real VRAM win.
+    return freed;
   }
 
   stats() {

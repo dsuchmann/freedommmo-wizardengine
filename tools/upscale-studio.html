@@ -1,0 +1,518 @@
+<!doctype html><html><head><meta charset="utf8"><title>Upscale Studio — original / upscale / blend @ draw scale</title>
+<style>
+ :root{--bg:#0c0e13;--panel:#161a22;--line:#262b37;--ink:#e8eaf0;--dim:#9aa3b4;--accent:#7cc4ff;--good:#7ee0a0;--warn:#e6b450}
+ body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.4 ui-sans-serif,system-ui,sans-serif}
+ header{position:sticky;top:0;z-index:10;background:#0c0e13f2;border-bottom:1px solid var(--line);padding:9px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+ h1{font-size:14px;margin:0;color:#fc8}
+ button,select{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:5px 9px;font-size:12px;cursor:pointer}
+ .tab{padding:4px 10px} .tab.on{border-color:var(--accent);color:var(--accent)}
+ .chip{color:var(--good);font-variant:tabular-nums}
+ .row{border-top:1px solid var(--line);padding:14px 16px}
+ .rhead{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+ .rhead .name{font-size:13px;color:var(--accent)}
+ .rhead .vnav{display:flex;gap:4px;align-items:center;color:var(--dim);font-variant:tabular-nums}
+ .seg button{padding:3px 9px} .seg button.on{border-color:var(--accent);color:var(--accent)}
+ .panels{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+ .panel{text-align:center}
+ .panel h3{margin:0 0 2px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#8b97a6}
+ .panel.blend h3{color:var(--good)}
+ .panel .nat{font-size:10px;color:#5d6b7a;margin:0 0 5px;font-variant:tabular-nums}
+ .stage{background:conic-gradient(#1b2129 0 25%,#161b22 0 50%,#1b2129 0 75%,#161b22 0) 0 0/22px 22px;border-radius:4px;display:flex;align-items:center;justify-content:center}
+ canvas{image-rendering:pixelated;display:block}
+ .pending{color:#6b7686;font-size:11px;font-style:italic;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px}
+ .decide{min-width:240px;display:flex;flex-direction:column;gap:6px;padding-top:14px}
+ .decide label{cursor:pointer;user-select:none}
+ .modes label{margin-right:10px}
+ .blendctl{display:flex;align-items:center;gap:8px;color:var(--dim)}
+ .blendctl.off{opacity:.4;pointer-events:none}
+ .ovr{color:var(--warn);font-size:12px}
+ .hint{color:var(--dim);font-size:11px;margin:8px 16px 0}
+ .decided-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#3a4250;margin-left:6px}
+ .decided-dot.on{background:var(--good)}
+ /* ---- server control bar ---- */
+ #ctlbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:7px 16px;border-bottom:1px solid var(--line);background:#11141b}
+ #ctlbar.off{opacity:.55}
+ #ctlbar .sep{width:1px;height:20px;background:var(--line);margin:0 2px}
+ #ctlbar input[type=number]{width:52px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:4px 6px;font-size:12px}
+ #ctlbar button.go{border-color:var(--accent);color:var(--accent)}
+ #ctlbar button.apply{border-color:var(--good);color:var(--good)}
+ #ctlbar button:disabled{opacity:.4;cursor:not-allowed}
+ #srvstate{font-size:11px;color:var(--dim)}
+ #srvstate.live{color:var(--good)} #srvstate.dead{color:var(--warn)}
+ /* ---- log panel ---- */
+ #logwrap{border-bottom:1px solid var(--line);background:#0a0c10}
+ #logwrap summary{cursor:pointer;padding:6px 16px;color:var(--dim);font-size:12px;user-select:none;list-style:none}
+ #logwrap summary::-webkit-details-marker{display:none}
+ #logwrap summary:before{content:'▸ ';color:var(--accent)}
+ #logwrap[open] summary:before{content:'▾ '}
+ #logpanel{margin:0;padding:8px 16px;max-height:240px;overflow:auto;font:11px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;color:#b8c2d0;white-space:pre-wrap;word-break:break-word}
+ #logpanel .err{color:var(--warn)} #logpanel .cmd{color:var(--accent)} #logpanel .done{color:var(--good)}
+</style></head>
+<body>
+<header>
+ <h1>Upscale Studio</h1>
+ <label style="color:var(--dim)">biome <select id="biomesel"></select></label>
+ <span id="tabs"></span>
+ <span class="chip" id="chip">0/0 decided</span>
+ <button id="exp">⬇ Export decisions</button>
+ <span id="status" style="color:#6f6"></span>
+</header>
+<div id="ctlbar">
+ <span id="srvstate">checking server…</span>
+ <span class="sep"></span>
+ <span style="color:var(--dim)">field <b id="ctl-field">—</b> · biome <b id="ctl-biome">grassland</b></span>
+ <span class="sep"></span>
+ <button id="btn-bases" class="go" title="Upscale ALL base variants of every object in THIS field (base-only) via ComfyUI">▶ Upscale bases (this field)</button>
+ <button id="btn-all" class="go" title="Upscale ALL base variants across ALL fields (small/medium flora, medium/large objects) for this biome — one long job">▶ Upscale ALL bases (all fields)</button>
+ <button id="btn-cancel" title="Stop the running job" style="display:none">■ Cancel</button>
+ <span class="sep"></span>
+ <button id="btn-regen" title="Rebuild the preview manifest from disk and reload">↻ Refresh preview</button>
+ <button id="btn-apply" class="apply" title="Generate + apply the winners' full sets on disk (upscale = full states+anims, blend = mix, direct = quarantine)">✓ Apply decisions</button>
+</div>
+<details id="logwrap"><summary>log / status</summary><pre id="logpanel"></pre></details>
+<p class="hint">Per object: <b>ORIGINAL</b> (raw PixelLab) · <b>UPSCALE</b> (AI @384) · <b>BLEND</b> (live in-browser mix). Panels draw at <b>2×</b> the object's true in-game draw size by default — toggle <b>game</b> / <b>native(384)</b> to judge how detail holds when scaled. Pick <b>Upscale / Blend / Direct</b> per object; the blend slider (= original's share) is live only for Blend. Use <b>◀ ▶</b> to flip through <b>all</b> variants, and "override just this variant" for an oddball.</p>
+<div id="body"></div>
+
+<script type="module">
+const PCT_DEFAULT = 40;            // blend default = original's share (matches apply-mix --pct)
+const SPEED_DEFAULT = 130;         // ms/frame
+// 16 review-able LAND biomes (water biomes excluded). The header <select> drives which one we review;
+// BIOME is mutable — every API call + manifest URL reads the CURRENT selection.
+const BIOMES = ['arctic','beach','dense_forest','desert','forest','grassland','hills','mountains',
+                'mystic','savanna','steppe','swamp','taiga','tropical_forest','tundra','volcanic'];
+let BIOME = 'grassland';
+
+// ---- decision store (in memory). store[field]["biome/object"] = {mode,blendPct,overrides,decided} ----
+// overrides: { "v007": {mode, blendPct} }
+const store = {};
+function recFor(field, key) {
+  store[field] = store[field] || {};
+  if (!store[field][key]) store[field][key] = { mode: null, blendPct: PCT_DEFAULT, overrides: {}, decided: false };
+  return store[field][key];
+}
+// effective mode/pct for a given variant (override beats object)
+function effective(rec, vKey) {
+  const ov = rec.overrides[vKey];
+  return {
+    mode: (ov && ov.mode) || rec.mode || 'upscale',
+    blendPct: ov && ov.mode === 'blend' ? ov.blendPct : (rec.mode === 'blend' ? rec.blendPct : (ov ? ov.blendPct : rec.blendPct)),
+  };
+}
+
+// ---- image cache (redraw the owning row once an image loads) ----
+const imgCache = new Map();
+function getImg(src, onload) {
+  if (!src) return null;
+  let im = imgCache.get(src);
+  if (!im) { im = new Image(); im.src = src; im._ready = false; im.onload = () => { im._ready = true; im._cb && im._cb(); }; imgCache.set(src, im); }
+  if (onload) im._cb = onload;
+  return im;
+}
+
+// ---- blend composite: upscale over nearest original at pct, re-clipped to upscale alpha ----
+function drawBlend(cv, px, origImg, upImg, pct) {
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0, 0, px, px);
+  if (!upImg || !upImg._ready) return;
+  ctx.imageSmoothingEnabled = false;
+  // original (nearest-scaled) full alpha
+  if (origImg && origImg._ready) ctx.drawImage(origImg, 0, 0, px, px);
+  // upscale on top with alpha = its share (1 - original's share)
+  ctx.globalAlpha = Math.max(0, Math.min(1, (100 - pct) / 100));
+  ctx.drawImage(upImg, 0, 0, px, px);
+  ctx.globalAlpha = 1;
+  // re-clip to the upscale's silhouette
+  ctx.globalCompositeOperation = 'destination-in';
+  ctx.drawImage(upImg, 0, 0, px, px);
+  ctx.globalCompositeOperation = 'source-over';
+}
+function drawSprite(cv, px, img) {
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0, 0, px, px);
+  if (img && img._ready) { ctx.imageSmoothingEnabled = false; ctx.drawImage(img, 0, 0, px, px); }
+}
+
+// ---- per-object row ----
+const VIEWS = { game: null, '2x': null, native: 384 }; // game/2x resolve from drawPx
+function displayPx(view, drawPx) {
+  if (view === 'native') return 384;
+  if (view === '2x') return drawPx * 2;
+  return drawPx;
+}
+
+let MANIFEST = null, curField = null;
+const rows = []; // active row controllers (current field)
+
+function buildRow(obj) {
+  const key = `${obj.biome}/${obj.object}`;
+  const rec = recFor(curField, key);
+  const st = { obj, key, rec, vi: 0, view: '2x', playing: true, speed: SPEED_DEFAULT, fi: 0, timer: null };
+
+  const el = document.createElement('div'); el.className = 'row';
+  el.innerHTML = `
+    <div class="rhead">
+      <span class="name">${obj.biome} / ${obj.field} / <b>${obj.object}</b><span class="decided-dot"></span></span>
+      <span class="vnav"><button class="vprev">◀</button> <span class="vlbl"></span> <button class="vnext">▶</button></span>
+      <span class="seg view">
+        <button data-view="game">game</button><button data-view="2x" class="on">2×</button><button data-view="native">native(384)</button>
+      </span>
+      <span class="seg anim"><button class="play">⏸</button> <input class="spd" type="range" min="60" max="400" step="10" value="${SPEED_DEFAULT}" title="anim speed"></span>
+    </div>
+    <div class="panels">
+      <div class="panel"><h3>original</h3><div class="nat orignat"></div><div class="stage"><canvas class="cv-orig"></canvas></div></div>
+      <div class="panel"><h3>upscale</h3><div class="nat">384px AI</div><div class="stage"><canvas class="cv-up"></canvas><div class="pending up-pending" style="display:none">sample<br>pending</div></div></div>
+      <div class="panel blend"><h3>blend</h3><div class="nat">384px mix</div><div class="stage"><canvas class="cv-blend"></canvas><div class="pending bl-pending" style="display:none">sample<br>pending</div></div></div>
+      <div class="decide">
+        <div class="modes">Decision:
+          <label><input type="radio" name="m-${key}" value="upscale"> Upscale</label>
+          <label><input type="radio" name="m-${key}" value="blend"> Blend</label>
+          <label><input type="radio" name="m-${key}" value="direct"> Direct</label>
+        </div>
+        <div class="blendctl"><span>original</span><input class="bslider" type="range" min="0" max="100" value="${rec.blendPct}"><span>upscale</span><span class="bpct" style="min-width:34px;color:var(--ink)">${rec.blendPct}%</span></div>
+        <label class="ovr"><input type="checkbox" class="ovrchk"> override just this variant</label>
+      </div>
+    </div>`;
+
+  const q = (s) => el.querySelector(s);
+  const cvOrig = q('.cv-orig'), cvUp = q('.cv-up'), cvBlend = q('.cv-blend');
+  const upPending = q('.up-pending'), blPending = q('.bl-pending');
+  const dot = q('.decided-dot');
+
+  function curVar() { return obj.variants[st.vi]; }
+  function eff() { return effective(rec, curVar().v); }
+  // Animate ONLY when the upscale has its OWN anim frames to match the original's — otherwise show the BASE
+  // still in both panels. (A sprite's anim can depict a different composition than its base — e.g.
+  // tall_grass_blade's base is one blade but its anim is a full tuft — so animating the original alone next to
+  // a static upscaled BASE falsely reads as "the upscaler used the wrong image".)
+  function animatable() { const v = curVar(); return v.anim.length > 1 && v.animUpscale.length > 1; }
+
+  function sizeCanvases() {
+    const px = displayPx(st.view, obj.drawPx);
+    for (const cv of [cvOrig, cvUp, cvBlend]) { cv.width = px; cv.height = px; cv.style.width = px + 'px'; cv.style.height = px + 'px'; }
+    q('.orignat').textContent = `${obj.drawPx}px draw`;
+  }
+
+  function redraw() {
+    const px = displayPx(st.view, obj.drawPx);
+    const v = curVar();
+    const hasUp = !!(v.upscale || v.animUpscale.length);
+    upPending.style.display = hasUp ? 'none' : 'flex';
+    blPending.style.display = hasUp ? 'none' : 'flex';
+    cvUp.style.display = hasUp ? '' : 'none';
+    cvBlend.style.display = hasUp ? '' : 'none';
+    // Matched sources: anim-vs-anim in sync only when the upscale has anim frames; else BASE-vs-BASE still.
+    let origSrc, upSrc;
+    if (animatable()) {
+      const n = Math.min(v.anim.length, v.animUpscale.length);
+      const fi = st.fi % n;
+      origSrc = v.anim[fi]; upSrc = v.animUpscale[fi];
+    } else {
+      origSrc = v.original; upSrc = v.upscale;
+    }
+    const origImg = getImg(origSrc, redraw);
+    drawSprite(cvOrig, px, origImg);
+    if (hasUp && upSrc) {
+      const upImg = getImg(upSrc, redraw);
+      drawSprite(cvUp, px, upImg);
+      drawBlend(cvBlend, px, origImg, upImg, eff().blendPct);
+    }
+  }
+
+  function updateVlbl() { q('.vlbl').textContent = `${curVar().v} (${st.vi + 1}/${obj.variants.length})`; }
+  function updateDecideUI() {
+    const e = eff();
+    // radios reflect object-level mode (default upscale shown but not "decided" until clicked)
+    const shownMode = rec.mode || (obj.hasUpscale ? 'upscale' : 'direct');
+    for (const r of el.querySelectorAll(`input[name="m-${key}"]`)) r.checked = (r.value === shownMode);
+    const ovActive = !!rec.overrides[curVar().v];
+    q('.ovrchk').checked = ovActive;
+    const effMode = e.mode;
+    const slider = q('.bslider'), bctl = q('.blendctl');
+    const pctVal = ovActive ? (rec.overrides[curVar().v].blendPct ?? rec.blendPct) : rec.blendPct;
+    slider.value = pctVal; q('.bpct').textContent = pctVal + '%';
+    bctl.classList.toggle('off', effMode !== 'blend');
+    dot.classList.toggle('on', rec.decided);
+  }
+
+  function startTimer() { clearInterval(st.timer); if (st.playing && animatable()) st.timer = setInterval(() => { st.fi++; redraw(); }, st.speed); q('.play').textContent = st.playing ? '⏸' : '▶'; }
+
+  function fullRefresh() { sizeCanvases(); updateVlbl(); updateDecideUI(); redraw(); startTimer(); }
+
+  // ---- wiring ----
+  q('.vprev').onclick = () => { st.vi = (st.vi - 1 + obj.variants.length) % obj.variants.length; st.fi = 0; fullRefresh(); };
+  q('.vnext').onclick = () => { st.vi = (st.vi + 1) % obj.variants.length; st.fi = 0; fullRefresh(); };
+  for (const b of el.querySelectorAll('.view button')) b.onclick = () => {
+    st.view = b.dataset.view; for (const x of el.querySelectorAll('.view button')) x.classList.toggle('on', x === b); sizeCanvases(); redraw();
+  };
+  q('.play').onclick = () => { st.playing = !st.playing; startTimer(); };
+  q('.spd').oninput = (e) => { st.speed = +e.target.value; startTimer(); };
+
+  for (const r of el.querySelectorAll(`input[name="m-${key}"]`)) r.onchange = () => {
+    const ovActive = q('.ovrchk').checked;
+    if (ovActive) { rec.overrides[curVar().v] = rec.overrides[curVar().v] || { mode: rec.mode || 'upscale', blendPct: rec.blendPct }; rec.overrides[curVar().v].mode = r.value; }
+    else { rec.mode = r.value; }
+    rec.decided = true; markChanged(); updateDecideUI(); redraw();
+  };
+  q('.bslider').oninput = (e) => {
+    const pct = +e.target.value; q('.bpct').textContent = pct + '%';
+    const ovActive = q('.ovrchk').checked;
+    if (ovActive) { rec.overrides[curVar().v] = rec.overrides[curVar().v] || { mode: rec.mode || 'upscale', blendPct: rec.blendPct }; rec.overrides[curVar().v].blendPct = pct; }
+    else { rec.blendPct = pct; }
+    redraw();
+  };
+  q('.ovrchk').onchange = (e) => {
+    const v = curVar().v;
+    if (e.target.checked) { rec.overrides[v] = { mode: rec.mode || (obj.hasUpscale ? 'upscale' : 'direct'), blendPct: rec.blendPct }; }
+    else { delete rec.overrides[v]; }
+    rec.decided = true; markChanged(); updateDecideUI(); redraw();
+  };
+
+  st.el = el; st.fullRefresh = fullRefresh; st.dispose = () => clearInterval(st.timer);
+  fullRefresh();
+  return st;
+}
+
+function markChanged() { updateChip(); status('edited'); }
+function status(t) { document.getElementById('status').textContent = t; }
+
+function updateChip() {
+  let decided = 0, total = 0;
+  for (const f of MANIFEST.fields) for (const o of f.objects) {
+    total++;
+    const r = store[f.field] && store[f.field][`${o.biome}/${o.object}`];
+    if (r && r.decided) decided++;
+  }
+  document.getElementById('chip').textContent = `${decided}/${total} decided`;
+}
+
+function renderField(field) {
+  curField = field;
+  for (const r of rows) r.dispose();
+  rows.length = 0;
+  const body = document.getElementById('body'); body.innerHTML = '';
+  const fe = MANIFEST.fields.find((f) => f.field === field);
+  for (const obj of fe.objects) { const r = buildRow(obj); rows.push(r); body.appendChild(r.el); }
+  for (const b of document.getElementById('tabs').children) b.classList.toggle('on', b.dataset.field === field);
+  const cf = document.getElementById('ctl-field'); if (cf) cf.textContent = field;
+  updateChip();
+}
+
+// ---- export (§3 schema): { field, decisions: { "biome/object": {mode, blendPct?, overrides?} } } ----
+function exportDecisions(field) {
+  field = field || curField;
+  const decisions = {};
+  const fs_ = store[field] || {};
+  for (const [key, r] of Object.entries(fs_)) {
+    if (!r.decided && !Object.keys(r.overrides).length) continue;
+    const d = { mode: r.mode || 'upscale' };
+    if (d.mode === 'blend') d.blendPct = r.blendPct;
+    const ov = {};
+    for (const [vk, o] of Object.entries(r.overrides)) {
+      const e = { mode: o.mode || 'upscale' };
+      if (e.mode === 'blend') e.blendPct = o.blendPct;
+      ov[vk] = e;
+    }
+    if (Object.keys(ov).length) d.overrides = ov;
+    decisions[key] = d;
+  }
+  return { field, biome: BIOME, savedAt: new Date().toISOString(), decisions };
+}
+window.__exportDecisions = exportDecisions; // probe hook
+window.__store = store;
+
+document.getElementById('exp').onclick = () => {
+  const payload = exportDecisions(curField);
+  const blob = new Blob([JSON.stringify(payload, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `upscale-decisions.${curField}.json`; a.click();
+};
+
+// ---- manifest (re)load — rebuilds tabs + rows; preserves the active field on refresh ----
+// Graceful-degrade: a missing/empty manifest (e.g. biome never upscaled, no server to build it) shows a
+// "no data" message instead of throwing, so the biome dropdown still switches without a backend.
+async function loadManifest(preserveField) {
+  const want = preserveField || (MANIFEST && curField);
+  const bc = document.getElementById('ctl-biome'); if (bc) bc.textContent = BIOME;
+  let resp;
+  try { resp = await fetch(`upscale-preview.${BIOME}.json?t=${Date.now()}`); } catch { resp = null; }
+  if (!resp || !resp.ok) return showNoData(`no data for "${BIOME}" yet — run the upscaler (or refresh preview) for this biome.`);
+  let data; try { data = await resp.json(); } catch { return showNoData(`upscale-preview.${BIOME}.json is not valid JSON.`); }
+  MANIFEST = data;
+  if (!MANIFEST.fields || !MANIFEST.fields.length) return showNoData(`no upscaled objects for "${BIOME}" yet — run the upscaler for this biome.`);
+  const tabs = document.getElementById('tabs'); tabs.innerHTML = '';
+  for (const f of MANIFEST.fields) {
+    const b = document.createElement('button'); b.className = 'tab'; b.dataset.field = f.field;
+    b.textContent = (f.label || f.field);
+    b.onclick = () => renderField(f.field);
+    tabs.appendChild(b);
+  }
+  const fields = MANIFEST.fields.map((f) => f.field);
+  renderField(fields.includes(want) ? want : MANIFEST.fields[0].field);
+}
+
+function showNoData(msg) {
+  MANIFEST = { fields: [] };
+  for (const r of rows) r.dispose(); rows.length = 0;
+  document.getElementById('tabs').innerHTML = '';
+  document.getElementById('body').innerHTML = `<div class="row" style="color:var(--dim)">${msg}</div>`;
+  document.getElementById('chip').textContent = '0/0 decided';
+  const cf = document.getElementById('ctl-field'); if (cf) cf.textContent = '—';
+}
+
+// ---- biome selector — populate header <select>, switch biomes without losing other biomes' decisions ----
+function populateBiomeSelect() {
+  const sel = document.getElementById('biomesel');
+  sel.innerHTML = '';
+  for (const b of BIOMES) {
+    const o = document.createElement('option'); o.value = b; o.textContent = b;
+    if (b === BIOME) o.selected = true;
+    sel.appendChild(o);
+  }
+  sel.onchange = () => switchBiome(sel.value);
+}
+
+// Switch the reviewed biome: rebuild that biome's preview manifest on the server (so newly-upscaled @384s show),
+// then (re)load it. The in-memory decision store keys by field + "biome/object", so switching never wipes
+// decisions made for other biomes. Degrades to a plain fetch when there's no server.
+async function switchBiome(biome) {
+  if (!BIOMES.includes(biome)) return;
+  BIOME = biome;
+  const bc = document.getElementById('ctl-biome'); if (bc) bc.textContent = BIOME;
+  if (SERVER.live) await doRegen(false);   // doRegen reloads the manifest on success
+  else await loadManifest();               // no server → just try to fetch a pre-existing manifest
+}
+
+// ========================================================================
+// Server control bar — drives upscale-server.mjs. Degrades gracefully to the
+// pure export-only dashboard if /api/status 404s (opened under plain http-server).
+// ========================================================================
+const SERVER = { live: false };
+const $ = (id) => document.getElementById(id);
+function logEl() { return $('logpanel'); }
+function logLine(text, cls) {
+  const p = logEl(); const span = document.createElement('span');
+  if (cls) span.className = cls;
+  span.textContent = text + '\n'; p.appendChild(span); p.scrollTop = p.scrollHeight;
+  $('logwrap').open = true;
+}
+function logClear() { logEl().textContent = ''; }
+function classify(line) {
+  if (/\[(error|spawn error)\]|error|fail|refused|traceback/i.test(line)) return 'err';
+  if (/^\$ |RUN:|would run/.test(line)) return 'cmd';
+  if (/PASS|done:|complete|wrote /i.test(line)) return 'done';
+  return '';
+}
+
+function setServerUI(live) {
+  SERVER.live = live;
+  const s = $('srvstate');
+  s.textContent = live ? '● server live' : '○ no server (export-only)';
+  s.className = live ? 'live' : 'dead';
+  $('ctlbar').classList.toggle('off', !live);
+  for (const id of ['btn-bases', 'btn-all', 'btn-regen', 'btn-apply']) $(id).disabled = !live;
+}
+
+async function apiStatus() {
+  try {
+    const r = await fetch('/api/status');
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+let jobRunning = false;
+function setJobRunning(on) {
+  jobRunning = on;
+  for (const id of ['btn-bases', 'btn-all', 'btn-apply', 'btn-regen']) $(id).disabled = on || !SERVER.live;
+  $('btn-cancel').style.display = on ? '' : 'none';
+}
+
+// SSE stream of the running job's stdout/stderr (one job at a time — bases / all / apply).
+let evtSrc = null;
+function openLogStream() {
+  if (evtSrc) return;
+  evtSrc = new EventSource('/api/log');
+  evtSrc.onmessage = (e) => {
+    let m; try { m = JSON.parse(e.data); } catch { return; }
+    if (m.type === 'line') logLine(m.line, classify(m.line));
+    else if (m.type === 'start') { setJobRunning(true); }
+    else if (m.type === 'exit') {
+      logLine(`(job finished, exit ${m.code})`, m.code === 0 ? 'done' : 'err');
+      onJobExit(m.code);
+    }
+  };
+  evtSrc.onerror = () => { /* keep retrying; server sets retry: 3000 */ };
+}
+
+async function onJobExit(code) {
+  setJobRunning(false);
+  // The job already regenerated the manifest on the server; reload it so the panels reflect new @384s.
+  logLine('auto-refreshing preview…', 'cmd');
+  await doRegen(true);
+}
+
+// kick a streamed job (bases / all / apply); the SSE stream handles live log + completion refresh.
+async function postJob(url, body, label) {
+  if (!SERVER.live || jobRunning) return;
+  setJobRunning(true); openLogStream();
+  try {
+    const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const j = await r.json();
+    if (!r.ok) { logLine(`${label} rejected: ` + (j.error || r.status), 'err'); setJobRunning(false); }
+  } catch (e) { logLine(`${label} request failed: ` + e.message, 'err'); setJobRunning(false); }
+}
+
+async function doUpscaleBases() {
+  if (!SERVER.live || jobRunning) return;
+  logClear(); logLine(`▶ upscale bases — ${curField} / ${BIOME} (all base variants)`, 'cmd');
+  await postJob('/api/upscale-bases', { field: curField, biome: BIOME }, 'upscale-bases');
+}
+
+async function doUpscaleAll() {
+  if (!SERVER.live || jobRunning) return;
+  logClear(); logLine(`▶ upscale ALL bases (all fields) — ${BIOME}`, 'cmd');
+  await postJob('/api/upscale-all', { biome: BIOME }, 'upscale-all');
+}
+
+async function doCancel() {
+  try { await fetch('/api/job-cancel', { method: 'POST' }); logLine('cancel requested…', 'cmd'); } catch {}
+}
+
+async function doRegen(quiet) {
+  if (!SERVER.live) return;
+  if (!quiet) { logLine('↻ rebuilding preview manifest…', 'cmd'); $('logwrap').open = true; }
+  try {
+    const r = await fetch('/api/regen', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ biome: BIOME }) });
+    const j = await r.json();
+    if (j.output) for (const ln of j.output.split('\n')) if (ln.trim()) logLine(ln, classify(ln));
+    if (j.ok) { await loadManifest(curField); logLine('preview reloaded ✓', 'done'); }
+    else logLine('regen failed (exit ' + j.code + ')', 'err');
+  } catch (e) { logLine('regen request failed: ' + e.message, 'err'); }
+}
+
+async function doApply() {
+  if (!SERVER.live || jobRunning) return;
+  const payload = exportDecisions(curField);
+  const n = Object.keys(payload.decisions).length;
+  if (!n) { logLine('no decisions to apply for ' + curField + ' (decide some objects first)', 'err'); return; }
+  // Apply now GENERATES the winners' full sets (states + anims) — a long GPU job — so it streams like the rest.
+  logLine(`✓ applying ${n} decision(s) for ${curField} — generating winners' full sets (long GPU job)…`, 'cmd');
+  $('logwrap').open = true;
+  await postJob('/api/apply', { field: curField, biome: BIOME, decisions: payload.decisions }, 'apply');
+}
+
+$('btn-bases').onclick = doUpscaleBases;
+$('btn-all').onclick = doUpscaleAll;
+$('btn-cancel').onclick = doCancel;
+$('btn-regen').onclick = () => doRegen(false);
+$('btn-apply').onclick = doApply;
+
+// ---- boot ----
+populateBiomeSelect();
+await loadManifest();
+const st = await apiStatus();
+setServerUI(!!(st && st.ok));
+if (st && st.ok) {
+  if (st.jobRunning) { setJobRunning(true); openLogStream(); }
+  else openLogStream(); // attach so a later job streams immediately
+}
+</script></body></html>
