@@ -230,5 +230,26 @@
   "variants": 4,
   "states": {},
   "anims": {}
+ },
+ "vine_segment": {
+  "base": "e028a6be-bfc9-4b07-ac10-ce16e8df9dd7",
+  "px": 64,
+  "variants": 4,
+  "states": {},
+  "anims": {}
+ },
+ "vine_root_base": {
+  "base": "b9286e60-8637-4a95-9c96-4d2696784d6b",
+  "px": 64,
+  "variants": 4,
+  "states": {},
+  "anims": {}
+ },
+ "vine_fork": {
+  "base": "f235b899-b388-4295-b165-b2df449c738e",
+  "px": 64,
+  "variants": 4,
+  "states": {},
+  "anims": {}
  }
 }
