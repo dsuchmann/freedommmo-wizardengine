@@ -13,6 +13,7 @@ import { f4SpriteUrl } from '../world/decoration-claims.js';
 import { coalesceDirty, lowerBound } from './sprite-pool-util.js';
 import { upscaleUrl } from '../world/upscale-manifest.js';
 import { buildTileDescriptor } from '../world/flora-descriptor.js';
+import { decodeTileFlora } from '../world/flora-desc-codec.js';
 
 var ANIM_RADIUS = 100; // HARD CAP on the flora half-window (bounds cold-build cost at extreme zoom-out;
                        // kept <= the chunk stream radius). The REAL radius is (visibleTiles + COVERAGE_MARGIN),
@@ -1336,6 +1337,25 @@ function _startAmortBuild(chunkStore, player, glc, radiusX, radiusY) {
 // One TILE of the collection scan (mirror of _poolRebuild's inner body). Per-tile so
 // the build can yield mid-row — buildTileDescriptor for an uncached tile is ~0.5ms and
 // a full row of new tiles would otherwise overshoot the frame budget.
+// PARITY PROBE (dev, window._floraDescParity): prove the worker-shipped descriptor is byte-
+// identical to a FRESH main-thread build. Only compares when all 8 Moore-ring neighbor chunks
+// are ready, so the main build is fully resolved (not a frontier-provisional value that will
+// converge later) — otherwise it skips. Counts matches in window._floraDescParityOK.n and logs
+// mismatches into window._floraDescMismatch (n + up to 8 samples). Zero cost when the flag is off.
+function _floraDescParityCheck(chunkStore, tile, objects, wx, wy, cx, cy, workerDesc) {
+  for (var dy = -1; dy <= 1; dy++)
+    for (var dx = -1; dx <= 1; dx++)
+      if (!chunkStore.getIfReady(cx + dx, cy + dy)) return; // frontier — can't compare converged yet
+  var main = buildTileDescriptor(chunkStore, tile, objects, wx, wy).desc;
+  var a = JSON.stringify(main == null ? null : main);
+  var b = JSON.stringify(workerDesc == null ? null : workerDesc);
+  if (a === b) { (window._floraDescParityOK || (window._floraDescParityOK = { n: 0 })).n++; return; }
+  var m = window._floraDescMismatch || (window._floraDescMismatch = { n: 0, samples: [] });
+  m.n++;
+  if (m.samples.length < 8) m.samples.push({ at: wx + ',' + wy, main: a && a.slice(0, 400), worker: b && b.slice(0, 400) });
+  if (m.n <= 20 || m.n % 200 === 0) console.log('[floraParity] MISMATCH #' + m.n + ' @' + wx + ',' + wy + ' (ok=' + ((window._floraDescParityOK && window._floraDescParityOK.n) || 0) + ')');
+}
+
 function _collectTileGpu(g, wx, wy) {
   var px = g.px, py = g.py, maxR = g.maxR, fadeStart = g.fadeStart, chunkStore = g.chunkStore;
   var cx = floorDiv(wx, WORLD.chunkSize), cy = floorDiv(wy, WORLD.chunkSize);
@@ -1350,7 +1370,17 @@ function _collectTileGpu(g, wx, wy) {
   if (tile.transitionPair) return;
   var tkey = wx + ',' + wy, desc;
   if (_tileDescCache.has(tkey)) desc = _tileDescCache.get(tkey);
-  else {
+  else if (typeof window !== 'undefined' && window._workerFloraDesc && chunk.floraBytes) {
+    // OFF-THREAD path: the chunk worker already computed this tile's descriptor (byte-identical
+    // placement, fully resolved against compiled neighbors) and shipped it in a transferred buffer.
+    // Decode it (cheap: ~one JSON.parse of a few-KB string) instead of running the ~0.25ms/tile
+    // main-thread build — that build IS the walk-stutter "collect". Cache the decode so subsequent
+    // rebuilds are a Map lookup. Worker descs are always fully-resolved → always cacheable.
+    desc = decodeTileFlora(chunk.floraBytes, chunk.floraOffsets, ty * WORLD.chunkSize + tx);
+    if (window._floraDescParity) _floraDescParityCheck(chunkStore, tile, objects, wx, wy, cx, cy, desc);
+    if (_tileDescCache.size >= MAX_TILE_DESC_CACHE) _tileDescCache.delete(_tileDescCache.keys().next().value);
+    _tileDescCache.set(tkey, desc);
+  } else {
     var built = buildTileDescriptor(chunkStore, tile, objects, wx, wy);
     desc = built.desc;
     g._desc++; // DIAG: count cold buildTileDescriptor calls (the O(R^4) claim-scan CPU cost)

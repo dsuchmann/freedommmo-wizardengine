@@ -1,12 +1,18 @@
 import { setWorldSeed } from '../core/world-seed.js';
 import { WORLD } from '../core/constants.js';
 import { setFieldTuning } from './field-tuning.js';
-import { clearClaimCaches } from './decoration-claims.js';
+import { clearClaimCaches, setArchitectureClaim } from './decoration-claims.js';
 import { ChunkCompiler } from './chunk-compiler.js';
-import { getWangImageURLsForBiomes, getSoilImageURLsForBiomes, getGroundCoverImageURLsForBiomes, getSmallScatterImageURLs, soilIdForBiome, gcLumIdForBiome } from '../render/wang-image-list.js';
+import { getWangImageURLsForBiomes, getSoilImageURLsForBiomes, getGroundCoverImageURLsForBiomes, getSmallScatterImageURLs, soilIdForBiome, gcLumIdForBiome, SF_BIOME_OBJECTS_LIST } from '../render/wang-image-list.js';
 import { renderChunkToBitmap, setF3RemovedKeys, buildChunkIndex } from '../render/worker-chunk-renderer.js';
 import { denoiseBitmap } from '../render/sprite-denoise.js';
 import { getAllFloorTileURLs } from '../render/building-tile-query.js';
+import { floorDiv } from './chunk.js';
+// Off-thread flora descriptor build (gated OFF by default — see floraDescEnabled below).
+import { buildTileDescriptor } from './flora-descriptor.js';
+import { encodeChunkFlora } from './flora-desc-codec.js';
+import { resolveBuildingsInRange } from '../../sim/world/buildings/resolved-buildings.js';
+import { MACRO_TILES } from '../../sim/world/buildings/settlement-discovery.js';
 
 var compiler = new ChunkCompiler();
 var SLICE_ROWS = 8;
@@ -24,6 +30,12 @@ var tuneGen = 0;
 // GPU terrain: slot metadata broadcast from the main thread; null until set.
 var wangAtlasMeta = null;
 var gpuTerrain = false;
+
+// Off-thread per-chunk flora descriptors — OFF by default. The main thread flips this
+// per worker (setFloraDesc message) only when window._workerFloraDesc is set. When false
+// the worker behaves EXACTLY as before: no flora computed, no chunkFlora message, and the
+// terrain/paint path is byte-identical (arch claim stays ()=>false, as it is today).
+var floraDescEnabled = false;
 
 // URLs matching these patterns get denoised at load time
 function shouldDenoise(url) {
@@ -306,8 +318,86 @@ function buildIndexBuffer(chunk) {
   } catch (e) { return null; }
 }
 
+// Compute a per-tile flora descriptor for every tile in a freshly-compiled chunk.
+// GATED: only called when floraDescEnabled. Returns an array of desc objects (or null per
+// tile), indexed by local tile index ty*chunkSize+tx — ready for encodeChunkFlora.
+//
+// DETERMINISM (must be byte-identical to the main thread's field2-animator build):
+//  1. transitionPair — the tiles fed here (this chunk + freshly-compiled neighbors) have
+//     transitionPair === undefined, because ONLY renderChunkToBitmap sets it and we run
+//     BEFORE it. That mirrors the main thread, whose tiles are the pre-render slice clones.
+//     We never set/hoist transitionPair.
+//  2. Arch (building) claim — set from resolveBuildingsInRange().claimTiles over this chunk's
+//     macro range padded ±1 macro (claim rings crossing into neighbors resolve). De-overlap in
+//     resolveBuildingsInRange is range-independent, so the claim for any tile in this chunk is
+//     identical to the main thread's. Reset to ()=>false before returning so the subsequent
+//     renderChunkToBitmap runs with the SAME ()=>false claim it uses when flora is disabled.
+//  3. chunkStore shim — a neighbor-backed view: getIfReady/tileAt resolve THIS chunk directly
+//     and any neighbor by compiling it on demand (pure f(seed,cx,cy); the scan reach ≤17 tiles
+//     < chunkSize=64, so only the immediate Moore ring is ever touched). getIfReady always
+//     returns a compiled chunk, so the worker builds the fully-resolved "all neighbors present"
+//     descriptor — the value the main thread converges to and caches once its neighbors stream in.
+//  4. Same world seed the compile ran under (passed in; already set via setWorldSeed).
+function computeChunkFloraDescs(cx, cy, chunk, seed) {
+  var CS = WORLD.chunkSize;
+
+  // Neighbor cache local to this build: freshly compiled chunks, PRE-render (never passed to
+  // renderChunkToBitmap), so their transitionPair stays undefined. compiler.compile returns a
+  // brand-new object each call, so these are distinct from any chunk that later gets rendered.
+  var nbCache = new Map(); // "ncx,ncy" -> compiled chunk
+  function chunkAt(ncx, ncy) {
+    if (ncx === cx && ncy === cy) return chunk;
+    var k = ncx + ',' + ncy;
+    var c = nbCache.get(k);
+    if (!c) { c = compiler.compile(ncx, ncy); nbCache.set(k, c); }
+    return c;
+  }
+  var shim = {
+    getIfReady: function(ncx, ncy) { return chunkAt(ncx, ncy); },
+    tileAt: function(wx, wy) {
+      var ncx = floorDiv(wx, CS), ncy = floorDiv(wy, CS);
+      var c = chunkAt(ncx, ncy);
+      return c.tiles[(wy - ncy * CS) * CS + (wx - ncx * CS)];
+    }
+  };
+
+  // Building claim over this chunk's macro range, padded ±1 macro. Mirrors the producer
+  // pattern in building-renderer.js: setArchitectureClaim((wx,wy)=>claimTiles.has(wx+','+wy)).
+  var x0 = cx * CS, y0 = cy * CS;
+  var mx0 = Math.floor(x0 / MACRO_TILES) - 1, mx1 = Math.floor((x0 + CS - 1) / MACRO_TILES) + 1;
+  var my0 = Math.floor(y0 / MACRO_TILES) - 1, my1 = Math.floor((y0 + CS - 1) / MACRO_TILES) + 1;
+  var claimTiles = resolveBuildingsInRange(seed, mx0, my0, mx1, my1).claimTiles;
+  setArchitectureClaim(function(wx, wy) { return claimTiles.has(wx + ',' + wy); });
+
+  var N = CS * CS;
+  var descs = new Array(N);
+  for (var ty = 0; ty < CS; ty++) {
+    for (var tx = 0; tx < CS; tx++) {
+      var i = ty * CS + tx;
+      var tile = chunk.tiles[i];
+      var objects = tile ? SF_BIOME_OBJECTS_LIST[tile.biome] : null;
+      if (objects && objects.length) {
+        descs[i] = buildTileDescriptor(shim, tile, objects, cx * CS + tx, cy * CS + ty).desc;
+      } else {
+        descs[i] = null;
+      }
+    }
+  }
+
+  // Reset arch claim so renderChunkToBitmap (which runs AFTER this, in the .then) sees the
+  // exact ()=>false claim it always sees when flora desc is disabled — default path untouched.
+  setArchitectureClaim(function() { return false; });
+
+  return descs;
+}
+
 self.onmessage = function(event) {
   var data = event.data;
+
+  if (data.type === 'setFloraDesc') {
+    floraDescEnabled = !!data.enabled;
+    return;
+  }
 
   if (data.type === 'setFieldTuning') {
     setFieldTuning(data.tuning);
@@ -385,6 +475,18 @@ self.onmessage = function(event) {
     neighborCache.set(cacheKey, chunk.tiles);
     evictNeighborCache();
 
+    // Per-chunk flora descriptors (OFF by default). MUST be computed HERE — after
+    // compiler.compile + the tile-slice posts, but BEFORE renderChunkToBitmap sets
+    // transitionPair — so buildTileDescriptor sees tiles byte-identical to the main
+    // thread's pre-render slice clones. The transferable ENCODE is deferred to
+    // postFloraDesc() (below), which runs AFTER the chunkPainted post so the terrain
+    // bitmap is never delayed by the serialize. Stamp the gen captured NOW (the tuning
+    // the descs were built under) — not at post time, so a mid-flight tuning change is
+    // correctly discarded by the provider's gen check instead of masquerading as current.
+    var floraDescs = null;
+    var floraGen = tuneGen;
+    if (floraDescEnabled) floraDescs = computeChunkFloraDescs(cx, cy, chunk, data.seed);
+
     // Hot-load this chunk's biome tilesets on demand, THEN paint — so the chunk
     // renders complete the first time without an eager all-biome preload. The
     // tile-slice data above was already posted synchronously, so the main thread
@@ -393,6 +495,16 @@ self.onmessage = function(event) {
     ensureChunkBiomes(cx, cy, chunk.tiles).then(function() {
       var sun = { height: 0.5, ambient: 0.85 };
       var idxBuf = buildIndexBuffer(chunk);
+
+      // Ship the pre-computed flora descriptors AFTER the terrain (chunkPainted) post, so the
+      // encode never delays the bitmap. No-op when flora desc is disabled (floraDescs === null).
+      function postFloraDesc() {
+        if (!floraDescs) return;
+        var enc = encodeChunkFlora(floraDescs, WORLD.chunkSize * WORLD.chunkSize);
+        self.postMessage({ type: 'chunkFlora', key: key, cx: cx, cy: cy, gen: floraGen,
+          floraBytes: enc.bytes.buffer, floraOffsets: enc.offsets.buffer },
+          [enc.bytes.buffer, enc.offsets.buffer]);
+      }
       // P4 — GPU terrain: a chunk with a COMPLETE index renders entirely via the
       // tilemap shader (base + cliff + soil); its bitmap would never be drawn. So
       // skip the ~16.8MB bitmap bake ENTIRELY — it is the streaming bottleneck that
@@ -402,6 +514,7 @@ self.onmessage = function(event) {
       // until P3c moves them to GL sprite fields — same as before this change.)
       if (gpuTerrain && idxBuf) {
         self.postMessage({ type: 'chunkPainted', key: key, cx: cx, cy: cy, gen: tuneGen, bitmap: null, index: idxBuf }, [idxBuf]);
+        postFloraDesc();
         return;
       }
 
@@ -416,6 +529,7 @@ self.onmessage = function(event) {
       }
       // Transfer bitmap (and optional GPU index buffer) to main thread (zero-copy)
       self.postMessage({ type: 'chunkPainted', key: key, cx: cx, cy: cy, gen: tuneGen, bitmap: result.bitmap, wangDebug: result.debug, index: idxBuf }, idxBuf ? [result.bitmap, idxBuf] : [result.bitmap]);
+      postFloraDesc();
     });
   } else if (data.type === 'repaintChunk') {
     if (!imagesReady) return;

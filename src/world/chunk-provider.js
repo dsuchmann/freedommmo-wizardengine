@@ -39,6 +39,13 @@ export class ChunkProvider {
     if (this.workerSupported) {
       for (let i = 0; i < workerCount; i++) this.createWorker();
     }
+
+    // Runtime enable helper: window._floraWorker(true) sets the flag AND broadcasts to the
+    // already-created workers (they read the flag at create time, so a plain console assignment
+    // wouldn't reach them). window._floraWorker(false) disables. Dev/validation convenience.
+    if (typeof window !== 'undefined') {
+      window._floraWorker = (on = true) => { window._workerFloraDesc = !!on; this.setWorkerFloraDesc(on); return 'workerFloraDesc=' + !!on; };
+    }
   }
 
   // Sample biomes in a radius around a world position and tell workers to preload those tiles.
@@ -200,8 +207,36 @@ export class ChunkProvider {
           const partial = this.assembling.get(key);
           this.assembling.delete(key);
           this.pending.delete(key);
-          if (partial) { this.completed.push({ key, chunk: { cx: partial.cx, cy: partial.cy, tiles: partial.tiles, renderTiles: partial.renderTiles, objects: partial.objects } }); this.completedKeys.add(key); }
+          if (partial) {
+            const finalizedChunk = { cx: partial.cx, cy: partial.cy, tiles: partial.tiles, renderTiles: partial.renderTiles, objects: partial.objects };
+            // Attach flora descriptors that arrived BEFORE this chunk finalized (rare — the
+            // worker posts chunkFlora after chunkPainted on the same worker, so ordering is
+            // preserved; this is the defensive path for any reorder). No-op when flora off.
+            this._attachPendingFlora(key, finalizedChunk);
+            this.completed.push({ key, chunk: finalizedChunk });
+            this.completedKeys.add(key);
+          }
           this.schedulePump();
+        } else if (msg.type === 'chunkFlora') {
+          // Off-thread flora descriptors (worker computed them when window._workerFloraDesc is
+          // set). Attach the transferred buffers to the already-finalized chunk (the common
+          // case — chunkFlora is posted right after chunkPainted), or stash them to attach on
+          // finalize. Discard on gen mismatch (mirror the bitmap gen check above).
+          if (msg.gen != null && msg.gen !== this.tuneGen) {
+            // painted under an old tuning tree — drop; the chunk recompiles under the new tree
+          } else {
+            const bytes = new Uint8Array(msg.floraBytes);
+            const offsets = new Uint32Array(msg.floraOffsets);
+            const chunk = this._findAssembledChunk(key);
+            if (chunk) {
+              chunk.floraBytes = bytes;
+              chunk.floraOffsets = offsets;
+            } else {
+              if (!this._pendingFlora) this._pendingFlora = new Map();
+              if (this._pendingFlora.size > 256) this._pendingFlora.clear(); // bounded safety valve
+              this._pendingFlora.set(key, { bytes, offsets, gen: msg.gen });
+            }
+          }
         } else if (msg.type === 'repaintNeedsTiles') {
           // Worker evicted this chunk's tiles from its neighbor cache — resend them
           const chunk = this.ready.get(msg.key);
@@ -246,6 +281,9 @@ export class ChunkProvider {
       // setWangAtlasMeta / setGpuTerrain were already broadcast to earlier workers.
       if (this._wangAtlasMeta) worker.postMessage({ type: 'setWangAtlasMeta', meta: this._wangAtlasMeta });
       if (this._gpuTerrain) worker.postMessage({ type: 'setGpuTerrain', on: true });
+      // Off-thread flora descriptors are OFF by default: enable per worker ONLY when the main
+      // thread opt-in flag is set. Unset → nothing posted → worker stays byte-identical.
+      if (typeof window !== 'undefined' && window._workerFloraDesc) worker.postMessage({ type: 'setFloraDesc', enabled: true });
     } catch {
       this.workerSupported = false;
     }
@@ -339,6 +377,33 @@ export class ChunkProvider {
     }
 
     if (this.completed.length > 0 || this.queued.size > 0) this.schedulePump();
+  }
+
+  // Find an already-finalized chunk object by key — in `ready`, or still waiting in
+  // `completed`. Used to attach flora descriptors that arrive on a separate message
+  // right after chunkPainted. Returns the chunk object (mutable) or null.
+  _findAssembledChunk(key) {
+    if (this.ready.has(key)) return this.ready.get(key);
+    for (const c of this.completed) if (c.key === key) return c.chunk;
+    return null;
+  }
+
+  // Attach flora buffers that arrived before this chunk finalized (gen-checked).
+  _attachPendingFlora(key, chunk) {
+    if (!this._pendingFlora) return;
+    const pf = this._pendingFlora.get(key);
+    if (!pf) return;
+    this._pendingFlora.delete(key);
+    if (pf.gen == null || pf.gen === this.tuneGen) {
+      chunk.floraBytes = pf.bytes;
+      chunk.floraOffsets = pf.offsets;
+    }
+  }
+
+  // Broadcast the flora-desc gate to every existing worker. Call after flipping
+  // window._workerFloraDesc at runtime; workers created later pick it up in createWorker.
+  setWorkerFloraDesc(on) {
+    for (const worker of this.workers) worker.postMessage({ type: 'setFloraDesc', enabled: !!on });
   }
 
   getBitmap(cx, cy) {
