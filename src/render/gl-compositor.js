@@ -2249,7 +2249,14 @@ export class GLCompositor {
     if (!this.ok) return;
     var gl = this.gl;
     if (!this._chunkIndexTex) this._chunkIndexTex = new Map();
+    if (!this._chunkIndexBuf) this._chunkIndexBuf = new Map();
     var tex = this._chunkIndexTex.get(key);
+    // Skip the re-upload when this exact index buffer was already uploaded for this
+    // key. The draw loop calls this EVERY frame per visible chunk, but the index is a
+    // fresh Uint16Array only when the chunk repaints (never mutated in place), so
+    // reference-equality safely detects "unchanged" — avoids a per-frame texSubImage2D
+    // of every visible chunk's index on the GPU-terrain path.
+    if (tex && this._chunkIndexBuf.get(key) === buf) return;
     if (!tex) {
       tex = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -2265,6 +2272,7 @@ export class GLCompositor {
     // Integer texture: format RGBA_INTEGER + type UNSIGNED_SHORT, buf is a Uint16Array.
     gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 64, 64, gl.RGBA_INTEGER, gl.UNSIGNED_SHORT, buf);
     gl.bindTexture(gl.TEXTURE_2D, null);
+    this._chunkIndexBuf.set(key, buf);
   }
 
   // Draw a chunk quad by sampling the Wang tile atlas via the index map — the GPU
@@ -2359,6 +2367,7 @@ export class GLCompositor {
         this.textures.delete(key);
         // Evict the GPU index texture for this chunk at the same time
         if (this._chunkIndexTex) { var it = this._chunkIndexTex.get(key); if (it) { gl.deleteTexture(it); this._chunkIndexTex.delete(key); } }
+        if (this._chunkIndexBuf) this._chunkIndexBuf.delete(key);
       }
     }
     this._evictBuildingTextures(EVICT_AFTER_FRAMES);
@@ -2400,6 +2409,7 @@ export class GLCompositor {
       if (hasDest) { var p = key.split(','); if (Math.abs((+p[0]) - dcx) <= KEEP && Math.abs((+p[1]) - dcy) <= KEEP) keep = true; }
       if (!keep) { gl.deleteTexture(entry.tex); this.textures.delete(key); freed++;
         if (this._chunkIndexTex) { var ci = this._chunkIndexTex.get(key); if (ci) { gl.deleteTexture(ci); this._chunkIndexTex.delete(key); } }
+        if (this._chunkIndexBuf) this._chunkIndexBuf.delete(key);
       }
     }
     if (this.bldTextures) { for (var [, e2] of this.bldTextures) { gl.deleteTexture(e2.tex); freed++; } this.bldTextures.clear(); }
