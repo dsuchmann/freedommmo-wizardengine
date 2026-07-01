@@ -788,6 +788,10 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
         _rp.render += _rr; _rp.blit += _rb; _rp.n++;
         if (_rr > _rp.maxRender) _rp.maxRender = _rr;
         if (_rb > _rp.maxBlit) _rp.maxBlit = _rb;
+        // Log the split when a roof is slow so ANY shared console log pinpoints the
+        // hotspot: render = per-facet sheared drawImage (software?), blit = GPU→software
+        // readback onto the willReadFrequently bake canvas. cw×ch = roof canvas size.
+        if (_rr + _rb > 200) console.log('[roofSplit] render=' + Math.round(_rr) + 'ms blit=' + Math.round(_rb) + 'ms cw=' + cw + ' ch=' + ch);
       }
     } catch { /* skip roof */ }
   };
