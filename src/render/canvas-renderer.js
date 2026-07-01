@@ -37,6 +37,22 @@ import { drawHumanoidPlayer, playMotion, stopMotion } from './humanoid-player-re
 import { drawSpriteCharacter } from './sprite-character-renderer.js';
 if (typeof window !== 'undefined') { window.playMotion = playMotion; window.stopMotion = stopMotion; }
 
+// GPU-terrain opt-in flag persistence. The GPU terrain path (Wang atlas + tilemap
+// shader: soil, gc-luminance, no-bitmap pop-in fix) is still behind window._gpuTerrain
+// because it isn't at visual parity yet (ground-cover sprites + F3 scatter aren't on
+// the GPU path — the ground reads barer) and the atlas adds a first-paint dependency.
+// It stays opt-in until parity + stability, then becomes the default. Meanwhile: read
+// the persisted choice at startup and expose gpuTerrain(true/false) so testers set it
+// ONCE instead of re-typing it after every hard refresh.
+if (typeof window !== 'undefined') {
+  try { if (window.localStorage && localStorage.getItem('_gpuTerrain') === 'on') window._gpuTerrain = true; } catch (e) {}
+  window.gpuTerrain = function (on) {
+    window._gpuTerrain = (on !== false);
+    try { if (window.localStorage) localStorage.setItem('_gpuTerrain', on !== false ? 'on' : 'off'); } catch (e) {}
+    return window._gpuTerrain;
+  };
+}
+
 function drawPrecipitation(ctx, w, h, precip, wind, time, tint) {
   if (precip.type === 'none' || precip.intensity < 0.01) return;
   var tr = tint ? tint.r : 1, tg = tint ? tint.g : 1, tb = tint ? tint.b : 1;
