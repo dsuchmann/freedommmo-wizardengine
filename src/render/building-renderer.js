@@ -9,7 +9,6 @@ import { REGION } from '../../sim/lod/aggregate.js';
 import { worldEpochs } from '../../sim/chronicle/epochs.js';
 import { macroCellPeoples } from '../../sim/chronicle/races.js';
 import { regionChronicle, settlementState, chronicleTier } from '../../sim/chronicle/chronicle.js';
-import { classifyBiome } from '../world/biomes.js';
 import { rand } from '../../sim/kernel/rng.js';
 import { setArchitectureClaim } from '../world/decoration-claims.js';
 import { resolveBuildingsInRange, settlementsInResolveRange, isSettlementWarm, warmSettlement } from '../../sim/world/buildings/resolved-buildings.js';

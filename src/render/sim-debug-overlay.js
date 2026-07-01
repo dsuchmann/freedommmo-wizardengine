@@ -10,7 +10,7 @@ import { REGION } from '../../sim/lod/aggregate.js';
 import { worldEpochs } from '../../sim/chronicle/epochs.js';
 import { macroCellPeoples } from '../../sim/chronicle/races.js';
 import { regionChronicle, settlementState, chronicleTier } from '../../sim/chronicle/chronicle.js';
-import { classifyBiome } from '../world/biomes.js';
+import { classifyBiomeNoStream } from '../world/biomes.js';
 import { rand } from '../../sim/kernel/rng.js';
 import { getWorldSeed } from '../core/world-seed.js';
 import { discoverSettlementsInMacroRange, suppressBySpacing } from '../../sim/world/buildings/settlement-discovery.js';
@@ -658,7 +658,7 @@ function findSettlementOfTier(targetTier, camX, camY, tilePx) {
         const mk = `${mx},${my}`;
         const cx = mx * MACRO_TILES + Math.floor(MACRO_TILES / 2);
         const cy = my * MACRO_TILES + Math.floor(MACRO_TILES / 2);
-        const biome = classifyBiome(cx, cy);
+        const biome = classifyBiomeNoStream(cx, cy); // debug tier-scan needs only biome.id/.climate; avoids the ~1950ms cold streamAt trace
         const peoples = macroCellPeoples(getWorldSeed(), mk, epochs, biome);
         const chronicle = regionChronicle(getWorldSeed(), mk, peoples, biome.climate);
         const state = settlementState(chronicle);
