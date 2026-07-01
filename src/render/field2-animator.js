@@ -166,6 +166,57 @@ var frameCache = new Map();
 var loadingSet = new Set();
 var _denoiseCanvas = null;
 
+// ---- Off-thread denoise worker client (OPT-IN: window._denoiseWorker) ----
+// Moves the synchronous main-thread denoiseImage() cost (5-15ms load spikes) into
+// a Web Worker. DEFAULT OFF — when the flag is falsy the classic new Image() +
+// denoiseImage path runs byte-identical. One lazily-created module worker; requests
+// are keyed by an incrementing id and resolved by url. Concurrency is bounded so a
+// preload burst doesn't flood the worker's message queue.
+var _dnWorker = null;
+var _dnSeq = 0;
+var _dnResolvers = new Map(); // id -> resolve fn
+var _dnQueue = [];            // {id, url} waiting for a concurrency slot
+var _dnInFlight = 0;
+var DN_MAX_CONCURRENT = 24;
+
+function _ensureDnWorker() {
+  if (_dnWorker) return _dnWorker;
+  _dnWorker = new Worker(new URL('./denoise-worker.js?v=dn1', import.meta.url), { type: 'module' });
+  _dnWorker.onmessage = function(ev) {
+    var d = ev.data;
+    var resolve = _dnResolvers.get(d.id);
+    if (resolve) {
+      _dnResolvers.delete(d.id);
+      resolve(d.ok ? { bitmap: d.bitmap, changed: d.changed } : null);
+    }
+    _dnInFlight--;
+    _dnPump();
+  };
+  _dnWorker.onerror = function() { /* individual jobs still time out via null; keep worker alive */ };
+  return _dnWorker;
+}
+
+function _dnPump() {
+  var w = _ensureDnWorker();
+  while (_dnInFlight < DN_MAX_CONCURRENT && _dnQueue.length > 0) {
+    var job = _dnQueue.shift();
+    _dnInFlight++;
+    w.postMessage(job);
+  }
+}
+
+// Denoise a sprite off-thread. Resolves with { bitmap, changed } on success (the
+// bitmap is ALWAYS usable — the cleaned one if changed, else the source), or null
+// on fetch/decode error (caller mirrors the classic onerror path).
+function denoiseViaWorker(url) {
+  return new Promise(function(resolve) {
+    var id = ++_dnSeq;
+    _dnResolvers.set(id, resolve);
+    _dnQueue.push({ id: id, url: url });
+    _dnPump();
+  });
+}
+
 // Key out a solid gray generation-background square (PixelLab artifact on many
 // anim frames/variants). Finds the dominant low-saturation gray color among
 // opaque pixels; if it covers a large area (a box, not natural texture), clears
@@ -387,6 +438,26 @@ function loadFrame(url, frameCount) {
     _temporalSets.set(animKey, { urls: urls, loaded: 0, total: fcnt });
   }
 
+  // OPT-IN off-thread path: denoise in the worker, store the cleaned ImageBitmap
+  // (no main-thread decode/denoise/re-encode). Same frameCache + temporalDenoise
+  // bookkeeping as the default path. ImageBitmaps have no .src, so tag _dnKey for
+  // atlas keying (call sites already read `img.src || img._dnKey`).
+  if (typeof window !== 'undefined' && window._denoiseWorker) {
+    denoiseViaWorker(url).then(function(res) {
+      if (!res || !res.bitmap) { frameCache.set(url, null); loadingSet.delete(url); return; }
+      var bitmap = res.bitmap;
+      bitmap._dnKey = url;
+      if (!animKey) bitmap._f2At = performance.now(); // late static/state arrival fades in
+      frameCache.set(url, bitmap);
+      loadingSet.delete(url);
+      if (animKey) {
+        var set = _temporalSets.get(animKey);
+        if (set) { set.loaded++; temporalDenoise(animKey); }
+      }
+    });
+    return null;
+  }
+
   var img = new Image();
   img.src = url;
   img.onload = function() {
@@ -437,10 +508,11 @@ function scaledFrame(img, destPx, frameId) {
   var bucket = DOWNSCALE_BUCKETS[0];
   for (var i = 1; i < DOWNSCALE_BUCKETS.length; i++)
     if (ratio <= DOWNSCALE_BUCKETS[i]) bucket = DOWNSCALE_BUCKETS[i];
-  // All frames from loadFrame are Image elements with .src (either original or
-  // dataURL from denoiseImage/temporalDenoise) — no canvas returns, so img.src
-  // is always a non-empty string; no empty-key collision risk.
-  var key = img.src + '@' + bucket;
+  // Frames from loadFrame are Image elements with .src (original or dataURL from
+  // denoiseImage/temporalDenoise), OR — on the opt-in worker path — ImageBitmaps
+  // that have NO .src (we tag them _dnKey = url). Fall back to _dnKey so bitmaps
+  // key uniquely instead of all colliding on `undefined@bucket`.
+  var key = (img.src || img._dnKey) + '@' + bucket;
   var hit = _downCache.get(key);
   if (hit) return hit;
   // Cache miss = the expensive path. Throttle to DOWNSCALE_BUDGET per frame so a
@@ -570,6 +642,43 @@ function pumpPreloadQueue() {
 function startPreload(item) {
   _activePreloads++;
   var url = item.url;
+  // OPT-IN off-thread path: mirror the default finish/onerror bookkeeping exactly
+  // (readiness counters, static-only retry, checkReady/pumpPreloadQueue), but get
+  // the cleaned sprite from the worker as an ImageBitmap instead of Image+denoiseImage.
+  if (typeof window !== 'undefined' && window._denoiseWorker) {
+    denoiseViaWorker(url).then(function(res) {
+      if (res && res.bitmap) {
+        var bitmap = res.bitmap;
+        bitmap._dnKey = url;
+        if (item.isStatic) bitmap._f2At = performance.now(); // fade in late arrivals
+        frameCache.set(url, bitmap);
+        loadingSet.delete(url);
+        _activePreloads--;
+        _f2Loaded++;
+        if (item.isStatic) _f2StaticLoaded++;
+        checkReady();
+        pumpPreloadQueue();
+        return;
+      }
+      // Failure — same policy as img.onerror below.
+      _activePreloads--;
+      item.attempts++;
+      if (item.isStatic && item.attempts < MAX_PRELOAD_ATTEMPTS) {
+        setTimeout(function() {
+          (item.isStatic ? _staticQueue : _preloadQueue).push(item);
+          pumpPreloadQueue();
+        }, 500 * item.attempts);
+      } else {
+        frameCache.set(url, null);
+        loadingSet.delete(url);
+        _f2Loaded++;
+        if (item.isStatic) _f2StaticLoaded++;
+        checkReady();
+      }
+      pumpPreloadQueue();
+    });
+    return;
+  }
   var img = new Image();
   img.src = url;
   img.onload = function() {
