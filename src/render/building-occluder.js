@@ -769,8 +769,21 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
     try {
       _roofGpuCx.setTransform(1, 0, 0, 1, 0, 0); _roofGpuCx.globalCompositeOperation = 'source-over';
       _roofGpuCx.clearRect(0, 0, cw, ch); _roofGpuCx.imageSmoothingEnabled = false;
+      // DIAG: split the roof cost into RENDER (per-tile sheared drawImage) vs BLIT
+      // (GPU→software readback onto the willReadFrequently bake canvas). Read
+      // window._roofProf in console after a laggy town to see which is software-bound.
+      var _rt0 = (typeof performance !== 'undefined') ? performance.now() : 0;
       _roof.drawRoofForBuilding(_roofGpuCx, b, camX, camY, tilePx, _roofOpts());
+      var _rt1 = (typeof performance !== 'undefined') ? performance.now() : 0;
       ctx.drawImage(_roofGpuCv, 0, 0, cw, ch, 0, 0, cw, ch);
+      var _rt2 = (typeof performance !== 'undefined') ? performance.now() : 0;
+      if (typeof window !== 'undefined') {
+        var _rp = window._roofProf || (window._roofProf = { render: 0, blit: 0, n: 0, maxRender: 0, maxBlit: 0 });
+        var _rr = _rt1 - _rt0, _rb = _rt2 - _rt1;
+        _rp.render += _rr; _rp.blit += _rb; _rp.n++;
+        if (_rr > _rp.maxRender) _rp.maxRender = _rr;
+        if (_rb > _rp.maxBlit) _rp.maxBlit = _rb;
+      }
     } catch { /* skip roof */ }
   };
   // D3 wall attachments + the door SWING are NO LONGER baked here — they ANIMATE (banner/sign sway, lantern
