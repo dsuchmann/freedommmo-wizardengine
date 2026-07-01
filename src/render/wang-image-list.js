@@ -216,6 +216,37 @@ export var SOIL_BIOME_CONFIG = {
 };
 export var SOIL_DEFAULT_CONFIG = { density: 0.94, alpha: 0.65, blobMin: 4, blobMax: 6, tint: null };
 
+// Ground-cover LUMINANCE objects (the `mode:'luminance'` entries in the worker's
+// GC_BIOME_OBJECTS) — a per-biome surface-modulation swatch for the GPU gc-luminance
+// pass. Only these 11 biomes have gc-luminance; the rest (incl. grassland) have all-
+// sprite ground cover. First object per biome — water biomes' subtle 2nd luminance
+// layer is dropped (v1 simplification). { obj, strength, density }.
+export var GC_LUM = {
+  beach:         { obj: 'wet_sand',           strength: 0.20, density: 0.85 },
+  dense_forest:  { obj: 'dark_leaf_mat',      strength: 0.28, density: 0.85 },
+  taiga:         { obj: 'frost_pine_needles', strength: 0.20, density: 0.70 },
+  desert:        { obj: 'sand_ripple',        strength: 0.18, density: 0.75 },
+  mountains:     { obj: 'lichen_crust',       strength: 0.18, density: 0.60 },
+  arctic:        { obj: 'frost_pattern',      strength: 0.18, density: 0.65 },
+  shallow_water: { obj: 'ripple_pattern',     strength: 0.15, density: 0.75 },
+  ocean:         { obj: 'wave_foam',          strength: 0.15, density: 0.70 },
+  deep_ocean:    { obj: 'dark_current',       strength: 0.10, density: 0.60 },
+  river:         { obj: 'flow_streaks',       strength: 0.15, density: 0.70 },
+  lake:          { obj: 'soft_ripple',        strength: 0.12, density: 0.65 },
+};
+// Stable per-biome gc-luminance id (1-based; 0 = no gc-luminance). Indexes the gc-lum
+// swatch atlas + config texture, like SOIL_IDS.
+var GC_LUM_IDS = {};
+(function () { var i = 1; for (var b in GC_LUM) { GC_LUM_IDS[b] = i++; } })();
+export { GC_LUM_IDS };
+export function gcLumIdForBiome(biome) { return GC_LUM_IDS[biome] || 0; }
+// gc sprite base path + the representative swatch URL for a biome's gc-luminance object.
+export function gcLumSwatchURL(biome) {
+  var e = GC_LUM[biome];
+  if (!e) return null;
+  return '/assets/pixelab/landscape_v2/micro/ground_cover/' + biome + '/' + e.obj + '/gc__' + biome + '__' + e.obj + '__v000.png';
+}
+
 export function getSoilImageURLs() {
   var urls = [];
   var seenMaterials = new Set();
