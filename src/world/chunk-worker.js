@@ -391,17 +391,29 @@ self.onmessage = function(event) {
     // the (usually-cached) biome load.
     ensureChunkBiomes(cx, cy, chunk.tiles).then(function() {
       var sun = { height: 0.5, ambient: 0.85 };
-      var result = renderChunkToBitmap(chunk, neighborCache, sun, imageCache, { skipSoil: gpuTerrain });
+      var idxBuf = buildIndexBuffer(chunk);
+      // P4 — GPU terrain: a chunk with a COMPLETE index renders entirely via the
+      // tilemap shader (base + cliff + soil); its bitmap would never be drawn. So
+      // skip the ~16.8MB bitmap bake ENTIRELY — it is the streaming bottleneck that
+      // caused walk/run pop-in (the worker couldn't paint chunks as fast as you
+      // move). The chunk is render-ready on the ~32KB index alone. (Ground-cover +
+      // F3 scatter, both baked only into the bitmap, are absent on the GPU path
+      // until P3c moves them to GL sprite fields — same as before this change.)
+      if (gpuTerrain && idxBuf) {
+        self.postMessage({ type: 'chunkPainted', key: key, cx: cx, cy: cy, gen: tuneGen, bitmap: null, index: idxBuf }, [idxBuf]);
+        return;
+      }
 
+      // Fallback (no complete index — atlas still loading, or GPU terrain off):
+      // paint the bitmap so the chunk can draw via drawChunk until a GPU index covers it.
+      var result = renderChunkToBitmap(chunk, neighborCache, sun, imageCache, { skipSoil: gpuTerrain });
       // With wang/soil hot-loaded above, needsRepaint now only flags async
       // resources (roof engine, building floors) — a few bounded retries, not a storm.
       if (result.needsRepaint) {
         chunksNeedingRepaint.push({ key: key, cx: cx, cy: cy, attempts: 0 });
         scheduleRepaintPass();
       }
-
       // Transfer bitmap (and optional GPU index buffer) to main thread (zero-copy)
-      var idxBuf = buildIndexBuffer(chunk);
       self.postMessage({ type: 'chunkPainted', key: key, cx: cx, cy: cy, gen: tuneGen, bitmap: result.bitmap, wangDebug: result.debug, index: idxBuf }, idxBuf ? [result.bitmap, idxBuf] : [result.bitmap]);
     });
   } else if (data.type === 'repaintChunk') {

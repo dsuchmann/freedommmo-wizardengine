@@ -472,11 +472,14 @@ export class CanvasRenderer {
       const cached = this.chunkRenderCache.get(chunk, provider);
       const sx = baseSX + (cx - minCX) * chunkPx;
       const sy = baseSY + (cy - minCY) * chunkPx;
-      if (!cached) continue;
+      // GPU terrain index (base+cliff+soil rendered by the tilemap shader). A P4
+      // GPU chunk has an index but NO bitmap, so resolve the index first and only
+      // skip the chunk when it has NEITHER a bitmap nor an index to draw from.
+      var _gtOn = (typeof window !== 'undefined' && window._gpuTerrain && this._wangAtlasState === 'ready');
+      var _idx = _gtOn ? provider.getChunkIndex(cx, cy) : null;
+      if (!cached && !_idx) continue;
       if (glScene || glOn) {
         // CSS-pixel scale — full-resolution FBO, same coords as Stage 2
-        var _gtOn = (typeof window !== 'undefined' && window._gpuTerrain && this._wangAtlasState === 'ready');
-        var _idx = _gtOn ? provider.getChunkIndex(cx, cy) : null;
         // DIAGNOSTIC: prove which path actually drew. Read window._gpuTerrainStats in console:
         // { tilemap, bitmap, ready, idxNull } — tilemap>0 means the GPU shader path is live.
         if (typeof window !== 'undefined') {
@@ -492,7 +495,7 @@ export class CanvasRenderer {
           if (typeof window !== 'undefined') window._gpuTerrainStats.bitmap++;
           this.glc.drawChunk(key, cached, sx, sy, chunkPx, chunkPx);
         }
-      } else {
+      } else if (cached) {
         ctx.drawImage(cached, sx, sy, chunkPx, chunkPx);
       }
       // Feed worker wang debug data into the debug overlay system

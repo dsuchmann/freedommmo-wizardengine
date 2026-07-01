@@ -153,7 +153,7 @@ export class ChunkProvider {
     try {
       // Cache-bust: append timestamp so browser reloads worker modules on code changes
       const workerUrl = new URL('./chunk-worker.js', import.meta.url);
-      workerUrl.searchParams.set('v', '20260619f-roof-overhang-nodroop-gputiles7-soilskip');
+      workerUrl.searchParams.set('v', '20260619f-roof-overhang-nodroop-gputiles8-p4nobitmap');
       const worker = new Worker(workerUrl, { type: 'module' });
       worker._imagesReady = false;
       worker.onmessage = event => {
@@ -184,11 +184,15 @@ export class ChunkProvider {
           if (msg.gen != null && msg.gen !== this.tuneGen) {
             // Painted under an old tuning tree — drop the bitmap (chunk stays
             // bitmap-less so pumpQueue repaints it under the current tree)
-            msg.bitmap.close();
+            if (msg.bitmap) msg.bitmap.close();
           } else {
-            const old = this.bitmaps.get(bitmapKey);
-            if (old) old.close();
-            this.bitmaps.set(bitmapKey, msg.bitmap);
+            // msg.bitmap is null on the P4 GPU path (chunk renders via its index;
+            // no bitmap was baked). Store the index; leave the bitmap slot empty.
+            if (msg.bitmap) {
+              const old = this.bitmaps.get(bitmapKey);
+              if (old) old.close();
+              this.bitmaps.set(bitmapKey, msg.bitmap);
+            }
             if (msg.wangDebug) this.wangDebug.set(bitmapKey, msg.wangDebug);
             if (msg.index) this.indexes.set(bitmapKey, new Uint16Array(msg.index));
           }
@@ -408,6 +412,7 @@ export class ChunkProvider {
     const bitmapKey = cx + ',' + cy;
     const bmp = this.bitmaps.get(bitmapKey);
     if (bmp) { bmp.close(); this.bitmaps.delete(bitmapKey); }
+    this.indexes.delete(bitmapKey); // GPU index is now load-bearing (P4) — evict with the chunk
     const idx = this.completed.findIndex(item => item.key === key);
     if (idx >= 0) this.completed.splice(idx, 1);
     this.completedKeys.delete(key);
