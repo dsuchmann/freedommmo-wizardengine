@@ -758,6 +758,11 @@ export function drawBuildingTextured(ctx, b, camX, camY, tilePx, w, h) {
   // FULL texture quality, no resolution cut. Falls back to drawing straight into ctx if the canvas can't be made.
   const drawRoof = () => {
     if (!(_roof && renderOn('roof'))) return;
+    // ESCAPE HATCH: window._skipRoofBake=true skips the (currently ~1.5s) textured
+    // roof render so buildings bake fast and the main thread stops jamming — a
+    // guaranteed unblock while the roof-render cost is being fixed. Buildings show
+    // walls only (no roof) until it's off again. Default off = normal roofs.
+    if (typeof window !== 'undefined' && window._skipRoofBake) return;
     const cw = ctx.canvas && ctx.canvas.width, ch = ctx.canvas && ctx.canvas.height;
     if (!cw || !ch) { try { _roof.drawRoofForBuilding(ctx, b, camX, camY, tilePx, _roofOpts()); } catch { /* skip */ } return; }
     if (!_roofGpuCv || _roofGpuCv.width < cw || _roofGpuCv.height < ch) {
