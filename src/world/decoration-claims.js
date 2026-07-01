@@ -865,6 +865,19 @@ export function f6Placements(wx, wy, tileInfo) {
   var objD = tuneObjDensity('f6', t.biome, obj.name);
   if (objD < 1 && rand2(wx, wy, 9834) > objD) return cachePut(_f6Cache, key, EMPTY);
 
+  // F6 objects are LARGE (canopy/trunk span several tiles), so unlike 1-tile F2
+  // flora the root-only transition check (line above) isn't enough — a tree rooted
+  // one tile in from a biome border still straddles the wang-edge transition tiles.
+  // Keep a 1-tile buffer: skip if the root OR any of the 8 neighbours is a transition
+  // (wang-edge) tile, so trees sit cleanly inside a biome, matching the F2 rule.
+  for (var _ny = -1; _ny <= 1; _ny++) {
+    for (var _nx = -1; _nx <= 1; _nx++) {
+      if (_nx === 0 && _ny === 0) continue;
+      var _nt = tileInfo(wx + _nx, wy + _ny);
+      if (_nt && _nt.transition) return cachePut(_f6Cache, key, EMPTY);
+    }
+  }
+
   var st = rollWeighted(
     tuneStateWeights('f6', t.biome, obj.name, F6_STATE_DEFAULTS),
     F6_STATE_ORDER, rand2(wx, wy, 9835));
