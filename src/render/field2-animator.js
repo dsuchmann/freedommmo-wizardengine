@@ -1727,8 +1727,8 @@ function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, we
   var _wallNow = performance.now();
   var _frameDt = _lastPoolWall ? (_wallNow - _lastPoolWall) : 16;
   _lastPoolWall = _wallNow;
-  var _bf = (typeof window !== 'undefined' && window._floraBudgetFrac) || 0.45;
-  var _bc = (typeof window !== 'undefined' && window._floraBudgetCap) || 9;
+  var _bf = (typeof window !== 'undefined' && window._floraBudgetFrac) || 0.30;
+  var _bc = (typeof window !== 'undefined' && window._floraBudgetCap) || 6;
   var _amortBudget = Math.max(AMORT_BUDGET_MS, Math.min(_bc, _frameDt * _bf));
   var tilePxSnapped = chunkGrid.chunkPx / WORLD.chunkSize;
   var visibleTilesX = Math.ceil(w / tilePxSnapped / 2) + 2;
