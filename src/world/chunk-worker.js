@@ -338,19 +338,33 @@ function buildIndexBuffer(chunk) {
 //     returns a compiled chunk, so the worker builds the fully-resolved "all neighbors present"
 //     descriptor — the value the main thread converges to and caches once its neighbors stream in.
 //  4. Same world seed the compile ran under (passed in; already set via setWorldSeed).
+// MODULE-LEVEL, seed-scoped, LRU-bounded cache of PRE-render compiled neighbor chunks used ONLY
+// by the flora-desc build. Walking builds flora for adjacent chunks that share neighbors, so a
+// per-build cache (the old code) recompiled ~8 neighbors PER chunk = the perf killer. Persisting
+// them means each chunk usually adds only 1-3 new compiles. These chunks are NEVER passed to
+// renderChunkToBitmap, so their transitionPair stays undefined (matches the main-thread pre-
+// render view). compiler.compile is deterministic f(seed), so a seed-keyed cache is always valid.
+var _floraNbCache = new Map(); // "seed,ncx,ncy" -> compiled chunk
+var FLORA_NB_MAX = 96;
+function _floraNeighbor(seed, ncx, ncy) {
+  var k = seed + ',' + ncx + ',' + ncy;
+  var c = _floraNbCache.get(k);
+  if (!c) {
+    c = compiler.compile(ncx, ncy);
+    if (_floraNbCache.size >= FLORA_NB_MAX) _floraNbCache.delete(_floraNbCache.keys().next().value);
+    _floraNbCache.set(k, c);
+  }
+  return c;
+}
+
 function computeChunkFloraDescs(cx, cy, chunk, seed) {
   var CS = WORLD.chunkSize;
 
-  // Neighbor cache local to this build: freshly compiled chunks, PRE-render (never passed to
-  // renderChunkToBitmap), so their transitionPair stays undefined. compiler.compile returns a
-  // brand-new object each call, so these are distinct from any chunk that later gets rendered.
-  var nbCache = new Map(); // "ncx,ncy" -> compiled chunk
+  // Neighbor lookup: the CENTER chunk is the passed (soon-rendered) one; neighbors come from the
+  // module-level pre-render LRU cache (_floraNeighbor) so a walk reuses them across builds.
   function chunkAt(ncx, ncy) {
     if (ncx === cx && ncy === cy) return chunk;
-    var k = ncx + ',' + ncy;
-    var c = nbCache.get(k);
-    if (!c) { c = compiler.compile(ncx, ncy); nbCache.set(k, c); }
-    return c;
+    return _floraNeighbor(seed, ncx, ncy);
   }
   var shim = {
     getIfReady: function(ncx, ncy) { return chunkAt(ncx, ncy); },
