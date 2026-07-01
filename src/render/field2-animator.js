@@ -757,7 +757,6 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
     // @384 detail upscale (tree-upscale pipeline): if this sprite has one, load it and draw at 2x
     // (384px native = 12 tiles, full detail). Falls back to the 192 source -> no change for other trees.
     var _f6url = f6SpriteUrl(hp), _f6up = upscaleUrl(_f6url), _f6big = _f6up !== _f6url;
-    var _f6size = hp.sizeTiles * (_f6big ? 2 : 1); // effective DRAWN size (upscaled trees draw at 2x)
     f4Blades.push({
       bi: 60 + hi, // distinct trigger-key space (F2 0-19, F5 80+, F4 90+)
       stateUrl: null,
@@ -767,17 +766,16 @@ function buildTileDescriptor(chunkStore, tile, objects, wx, wy) {
       staticUrl: _f6up,                     // @384 upscale when present, else the 192 source
       isRigid: true,                        // trunk never sway-rotates; wind lives in the frames
       frameCount: 8,                        // W2 tree anims are 8 frames (F2/F4/F5 use the 9-frame default)
-      lifeScale: _f6size,                   // upscaled -> 2x so the 384 detail actually shows
+      lifeScale: hp.sizeTiles * (_f6big ? 2 : 1), // upscaled -> 2x so the 384 detail actually shows
       lifeSway: 0,
       baseAngle: 0,
       offUX: hp.ux - 0.5,
       offUY: hp.uy - 0.5,
-      // Sort at the visual base: bottom edge minus a FIXED 0.6-tile ground-contact
-      // inset. MUST use the DRAWN size (_f6size), not hp.sizeTiles — the sprite's
-      // pivot/bottom is placed at lifeScale*0.5 (worldPivotY), so an UPSCALED tree
-      // (2x) whose sortY used the un-doubled sizeTiles sorted ~sizeTiles/2 tiles too
-      // far NORTH of its real base, letting F2 blades draw IN FRONT of the tree.
-      sortYOff: hp.uy + _f6size * 0.5 - 0.6,
+      // Sort at the visual base: bottom edge minus a FIXED 0.1-tile ground-
+      // contact inset (same formula as F5). The old 0.30 proportional form
+      // drifted the anchor ~0.7 tiles above the trunk base at 6 tiles —
+      // nearby F5 logs drew in front of trees they stood behind.
+      sortYOff: hp.uy + hp.sizeTiles * 0.5 - 0.6,
       // Same ambient/trigger treatment as F4 wind-sway blades (fresh salts):
       // trees sway in periodic gusts and settle back to restFrame.
       ambientPeriod: 6000 + rand2(wx, wy, 9837) * 9000,
