@@ -153,7 +153,7 @@ export class ChunkProvider {
     try {
       // Cache-bust: append timestamp so browser reloads worker modules on code changes
       const workerUrl = new URL('./chunk-worker.js', import.meta.url);
-      workerUrl.searchParams.set('v', '20260619f-roof-overhang-nodroop-gputiles8-p4nobitmap');
+      workerUrl.searchParams.set('v', '20260619f-roof-overhang-nodroop-gputiles9-gclumid');
       const worker = new Worker(workerUrl, { type: 'module' });
       worker._imagesReady = false;
       worker.onmessage = event => {

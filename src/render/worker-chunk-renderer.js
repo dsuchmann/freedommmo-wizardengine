@@ -1453,7 +1453,8 @@ export function buildChunkIndex(chunk, opts) {
       var cliffSrc  = getCliffSrc(tile);
       var cliffSlot = (cliffSrc && cliffResolver) ? (cliffResolver(cliffSrc) | 0) : 0;
       var soilId   = opts.soilResolver ? (opts.soilResolver(tile.biome) | 0) : 0;
-      var texel    = encodeTexel(baseSlot, cliffSlot, soilId);
+      var gcLumId  = opts.gcLumResolver ? (opts.gcLumResolver(tile.biome) | 0) : 0;
+      var texel    = encodeTexel(baseSlot, cliffSlot, soilId, gcLumId);
       buf[off]     = texel[0];
       buf[off + 1] = texel[1];
       buf[off + 2] = texel[2];

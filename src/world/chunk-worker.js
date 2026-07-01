@@ -3,7 +3,7 @@ import { WORLD } from '../core/constants.js';
 import { setFieldTuning } from './field-tuning.js';
 import { clearClaimCaches } from './decoration-claims.js';
 import { ChunkCompiler } from './chunk-compiler.js';
-import { getWangImageURLsForBiomes, getSoilImageURLsForBiomes, getGroundCoverImageURLsForBiomes, getSmallScatterImageURLs, soilIdForBiome } from '../render/wang-image-list.js';
+import { getWangImageURLsForBiomes, getSoilImageURLsForBiomes, getGroundCoverImageURLsForBiomes, getSmallScatterImageURLs, soilIdForBiome, gcLumIdForBiome } from '../render/wang-image-list.js';
 import { renderChunkToBitmap, setF3RemovedKeys, buildChunkIndex } from '../render/worker-chunk-renderer.js';
 import { denoiseBitmap } from '../render/sprite-denoise.js';
 import { getAllFloorTileURLs } from '../render/building-tile-query.js';
@@ -299,6 +299,7 @@ function buildIndexBuffer(chunk) {
         return e ? e.slot : 0;
       },
       soilResolver: function(biome) { return soilIdForBiome(biome); }, // GPU soil pass id
+      gcLumResolver: function(biome) { return gcLumIdForBiome(biome); }, // GPU gc-luminance pass id
     });
     if (missing) return null;
     return idx.buffer; // transferable ArrayBuffer
