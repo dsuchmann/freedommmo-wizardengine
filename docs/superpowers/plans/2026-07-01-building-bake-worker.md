@@ -122,6 +122,11 @@ console.log('RAW', JSON.stringify(res));
 await b.close();
 ```
 
+> **RESULT (2026-07-01, ran headless / real GPU):** `A(DOM): 48.7ms   B(main-Offscreen): 3.1ms   C(worker-Offscreen): 2.9ms`.
+> Two conclusions:
+> 1. **Worker OffscreenCanvas 2D is NOT software** — it is 2.9ms, *faster* than the DOM canvas. The code's premise (`building-occluder.js:764-768`, "main-thread OffscreenCanvas 2D often falls back to SOFTWARE") does not hold on this GPU. The worker-move carries **no** software penalty. ✅ green-lit on that axis.
+> 2. **BUT the 2000ms roof is NOT the sheared draws.** 216 sheared `drawImage`s at the real 1374×1998 canvas = 3–48ms, yet the real roof render is 2000ms *in the same headless harness*. So a worker-move would relocate a cost whose true source is still unidentified. **Before building the worker, instrument `drawRoof` internals to find where the 2000ms actually goes** (skirt loop vs main loop vs a specific per-tile op). The fix may be far cheaper than this whole plan. This plan stays valid (off-thread kills the jam regardless) but is now GATED on that instrumentation confirming the worker is the right lever.
+
 - [ ] **Step 2: Run it**
 
 Run: `timeout 90 node scripts/bench-offscreen-roof.mjs`
