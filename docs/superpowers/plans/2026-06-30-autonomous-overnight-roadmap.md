@@ -26,10 +26,10 @@
   - [x] Step 1 `9a074b424`: texel A channel = gcLumId (encode/decode + test).
   - [x] Step 2 `563d0b40b`: `GC_LUM`/`GC_LUM_IDS`/`gcLumIdForBiome`/`gcLumSwatchURL` in wang-image-list.js (11 luminance biomes; grassland none) + test.
   - [x] Step 3 `73931c12f`: buildChunkIndex emits gcLumId via worker gcLumResolver; ?v=gputiles9.
-  - [ ] Step 4 (GL, mirror `_ensureSoilAtlas`/`setSoilAtlas` in canvas-renderer/gl-compositor): `_ensureGcLumAtlas` — load each GC_LUM biome's `gcLumSwatchURL` into a strip atlas (cell=gcLumId) + a config tex (strength,density per id); `setGcLumAtlas(swatchTex, configTex, count)`.
-  - [ ] Step 5 (GL shader): in TILEMAP_FRAG_SRC after the soil pass, read `soilId`/`gcLumId` from the texel (A already decoded), and if `gcLumId>0`: density-hash gate (reuse the integer hash) → jittered `textureLod` sample of the gc swatch cell → if `soil.a>0` add luminance: `float l = dot(gcCol.rgb, vec3(0.299,0.587,0.114)) - 0.5; col.rgb += l * strength;`. Uniforms `uGcLumAtlas/uGcLumConfig/uGcLumCount/uGcLumOn` + bind units 5/6 in drawChunkTilemap. NOTE the texel decode currently reads r/g/b only — add `int gcLumId = int(ti.a);`.
-  - [ ] Step 6: skip the CPU gc-luminance branch in the worker (worker-chunk-renderer applyGroundCoverToChunk luminance loop) when gpuTerrain — like the soil-skip (pass `skipGcLum` via opts, gated on gpuTerrain at the chunk-worker call sites). Grassland unaffected (no lum obj → id 0 → shader skips).
-  - GATE: gpuTerrain on, walk into beach/desert/dense_forest/water — subtle surface luminance mottling ~matches `_gpuTerrain=false`. Flag-gated; grassland unchanged.
+  - [x] Step 4 `8d16bb61a`: `_ensureGcLumAtlas` + `setGcLumAtlas` (swatch strip + strength/density config). Dev hook `window._gpuGcLumReady`.
+  - [x] Step 5 `d100a655a`: shader decodes `gcLumId=int(ti.a)`; additive gc-luminance pass after soil (density gate + jittered swatch sample + `col.rgb += (lum-0.5)*strength` clamped); uniforms + unit 5/6 binding.
+  - [x] Step 6 — **NOT NEEDED: P4 already skips the whole bitmap for GPU-indexed chunks**, so the CPU gc-luminance never runs for them (no double-draw). Non-indexed fallback chunks keep bitmap gc-luminance (correct). **B1 COMPLETE.**
+  - GATE (user, when back): gpuTerrain on, walk into beach/desert/dense_forest/mountains/arctic/water — subtle surface luminance mottling should ~match `_gpuTerrain=false`. Flag-gated; grassland unchanged (no gc-luminance). All gpu-terrain unit tests green.
 
 Spec: `docs/superpowers/specs/2026-06-30-gpu-terrain-detail-fields-design.md`. P2 (all-biome atlas + cliffs) + P3a (index widen + F0 soil) DONE + soil verified good by user. Remaining:
 - [ ] **B1. P3b — ground-cover LUMINANCE on GPU.** Same fragment-shader pattern as soil: gc-lum swatch atlas + a lum id in the texel's A channel + an additive-luminance pass in TILEMAP_FRAG_SRC. Then skip the CPU gc-luminance in the worker when gpuTerrain (like the soil-skip).
