@@ -2173,6 +2173,17 @@ export class GLCompositor {
     this._soilCellW = 32;
   }
 
+  // Ground-cover LUMINANCE lookup textures for the GPU gc-luminance pass.
+  //   swatchTex : RGBA8, width = count*32, height = 32. Cell i = gc-lum id i's 32x32
+  //               representative gc sprite (its luminance drives an additive modulation).
+  //   configTex : RGBA32F, width = count, height = 1. texel[i] = (strength, density, 0, 0).
+  //   count     : number of gc-lum ids + 1 (id 0 reserved/none) = atlas/config width.
+  setGcLumAtlas(swatchTex, configTex, count) {
+    this._gcLumSwatchTex = swatchTex;
+    this._gcLumConfigTex = configTex;
+    this._gcLumCount = count | 0;
+  }
+
   _buildTilemapProgram() {
     var gl = this.gl;
     var prog = this._buildProgram(VERT_SRC, TILEMAP_FRAG_SRC);

@@ -31,7 +31,7 @@ import { drawField2Animations, preloadField2Animations, drawWindWispOverlay, set
 import { findNearbyInteraction, objectReaction, performInteraction } from '../world/interactions.js';
 import { GLCompositor } from './gl-compositor.js';
 import { WangAtlas } from './wang-atlas.js';
-import { getWangImageURLsForBiomes, SOIL_IDS, soilMaterialForBiome, SOIL_BIOME_CONFIG } from './wang-image-list.js';
+import { getWangImageURLsForBiomes, SOIL_IDS, soilMaterialForBiome, SOIL_BIOME_CONFIG, GC_LUM, GC_LUM_IDS, gcLumSwatchURL } from './wang-image-list.js';
 import { buildAtmoField } from './atmosphere-pass.js';
 import { drawHumanoidPlayer, playMotion, stopMotion } from './humanoid-player-renderer.js';
 import { drawSpriteCharacter } from './sprite-character-renderer.js';
@@ -352,6 +352,70 @@ export class CanvasRenderer {
     }
   }
 
+  // Build the gc-luminance swatch atlas + config texture for the GPU gc-luminance pass.
+  // Mirrors _ensureSoilAtlas: one representative gc sprite per luminance biome (11 total;
+  // grassland etc. have none → id 0 → shader skips). Idempotent.
+  _ensureGcLumAtlas(provider) {
+    if (typeof window === 'undefined' || !window._gpuTerrain) return;
+    if (this._gcLumState) return;
+    const gl = this.glc && this.glc.gl;
+    if (!gl) return;
+    this._gcLumState = 'loading';
+
+    const ids = GC_LUM_IDS;               // biome → 1..N (only 11 luminance biomes)
+    let maxId = 0;
+    for (const b in ids) if (ids[b] > maxId) maxId = ids[b];
+    const count = maxId + 1;              // include reserved id 0
+    const cellW = 32;
+
+    // Config texture (RGBA32F, count x 1) — texel[id] = (strength, density, 0, 0).
+    const cfgData = new Float32Array(count * 4);
+    for (const b in ids) {
+      const id = ids[b];
+      const c = GC_LUM[b] || {};
+      cfgData[id * 4 + 0] = (c.strength != null) ? c.strength : 0.18;
+      cfgData[id * 4 + 1] = (c.density != null) ? c.density : 0.75;
+    }
+    const configTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, configTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, count, 1, 0, gl.RGBA, gl.FLOAT, cfgData);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+
+    const swatchTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, swatchTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, count * cellW, cellW, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+
+    this.glc.setGcLumAtlas(swatchTex, configTex, count);
+    this._gcLumState = 'ready';
+    if (typeof window !== 'undefined') window._gpuGcLumReady = true;
+
+    for (const b in ids) {
+      const id = ids[b];
+      const url = gcLumSwatchURL(b);
+      if (!url) continue;
+      fetch(url)
+        .then(r => r.ok ? r.blob() : null)
+        .then(bl => bl ? createImageBitmap(bl) : null)
+        .then(bmp => {
+          if (!bmp) return;
+          gl.bindTexture(gl.TEXTURE_2D, swatchTex);
+          gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+          gl.texSubImage2D(gl.TEXTURE_2D, 0, id * cellW, 0, gl.RGBA, gl.UNSIGNED_BYTE, bmp);
+          gl.bindTexture(gl.TEXTURE_2D, null);
+        })
+        .catch(() => {}); // missing gc PNG → cell stays transparent (honest absence)
+    }
+  }
+
   // Fetch every Wang URL for the union of loaded biomes (so border-transition
   // tiles between any two present biomes are covered), skipping URLs already in
   // the atlas, then re-publish the grown atlas + meta to the compositor + workers.
@@ -428,6 +492,7 @@ export class CanvasRenderer {
 
     this._ensureWangAtlas(provider);
     this._ensureSoilAtlas(provider);
+    this._ensureGcLumAtlas(provider);
 
     const camX = player.x * tilePx - w / 2;
     // Interior camera glide: advance the eased per-floor lift, then subtract it from camY so
