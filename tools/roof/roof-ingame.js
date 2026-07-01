@@ -20,7 +20,7 @@ import { drawRoof, makeGameView } from './roof-renderer.js';
 import { makeFeatures as makeRoofFeatures } from './roof-features.js';
 import { resolveRoof } from './roof-rules.js';
 import { resolveConfig } from './roof-config.js';
-import { classifyBiome } from '../../src/world/biomes.js';
+import { classifyBiomeNoStream } from '../../src/world/biomes.js';
 import { WALL_CONFIG } from '../../src/render/wall-config.js';
 
 // shared calibration — the preview's sliders write here; the overlay reads it, so
@@ -74,10 +74,17 @@ export function resolveForBuilding(b, biomeOverride) {
   let e = cache.get(key);
   if (e) return e;
   const fp = b.footprint;
-  // classifyBiome returns {id, definition, climate} in-game; the preview passes a bare
-  // string. Normalize to the biome id STRING — else resolveRoof/getBiomeGroundTexture
+  // classifyBiomeNoStream returns {id, definition, climate} in-game; the preview passes a
+  // bare string. Normalize to the biome id STRING — else resolveRoof/getBiomeGroundTexture
   // get an object key, silently fall back to the default profile + miss the texture.
-  const biomeRaw = biomeOverride || classifyBiome(b.x, b.y);
+  // NoStream: the roof only needs the LAND biome id. The full classifyBiome() runs the
+  // hydrology streamAt() trace, whose FIRST call in a fresh region costs ~1.95s (a ~289-cell
+  // neighbourhood × up-to-600-step stream walks × ~47 noise evals each) — the town-load
+  // freeze. Stream is an additive water layer with no roof profile, so the id is identical
+  // for every non-on-channel tile; a building literally on a channel now gets its real land
+  // biome roof instead of a grassland fallback (strictly better). Measured 1950ms→7ms on the
+  // roof-resolve path. (2026-07-01) See [[project_roof_bake_jam_rootcause]].
+  const biomeRaw = biomeOverride || classifyBiomeNoStream(b.x, b.y);
   const biome = (biomeRaw && biomeRaw.id) || biomeRaw;
   const typeId = fp.typeId || 'house';
   const pattern = inferPattern(fp);
