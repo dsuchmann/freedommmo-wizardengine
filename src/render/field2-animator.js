@@ -241,6 +241,7 @@ function denoiseImage(img, url) {
   var w = img.naturalWidth || img.width;
   var h = img.naturalHeight || img.height;
   if (w < 3 || h < 3) return img;
+  var _dn0 = performance.now(); // DIAG (window._f2diag.denoiseMs): main-thread decode/scan/re-encode cost
   if (!_denoiseCanvas) _denoiseCanvas = document.createElement('canvas');
   _denoiseCanvas.width = w;
   _denoiseCanvas.height = h;
@@ -308,11 +309,11 @@ function denoiseImage(img, url) {
       }
     }
   }
-  if (!changed) return img;
-  ctx.putImageData(imageData, 0, 0);
-  var cleaned = new Image();
-  cleaned.src = _denoiseCanvas.toDataURL();
-  return cleaned;
+  var _result;
+  if (!changed) _result = img;
+  else { ctx.putImageData(imageData, 0, 0); var cleaned = new Image(); cleaned.src = _denoiseCanvas.toDataURL(); _result = cleaned; }
+  if (typeof window !== 'undefined') { var _dd = window._f2diag || (window._f2diag = { builds: 0, denoiseMs: 0, denoiseN: 0 }); _dd.denoiseMs += performance.now() - _dn0; _dd.denoiseN++; } // DIAG
+  return _result;
 }
 
 // Temporal denoise: after all frames of an animation are loaded, compare each
@@ -1536,6 +1537,8 @@ function _startAmortBuild(chunkStore, player, glc, radiusX, radiusY) {
     maxR: maxR, fadeStart: maxR - 6, centerX: px, centerY: py,
     phase: 'collect', wy: py - radiusY, wx: px - radiusX, entries: [], tiles: [],
     n: 0, idx: 0, shCount: 0,
+    _cMs: 0, _wMs: 0, _desc: 0, _t0all: performance.now(), // DIAG (window._f2diag): CPU-vs-IO split
+
     animMirror: null, animShadowMirror: null, mirror: null, meta: [], sortY: null, shadowOf: null, animPending: [],
   };
 }
@@ -1560,6 +1563,7 @@ function _collectTileGpu(g, wx, wy) {
   else {
     var built = buildTileDescriptor(chunkStore, tile, objects, wx, wy);
     desc = built.desc;
+    g._desc++; // DIAG: count cold buildTileDescriptor calls (the O(R^4) claim-scan CPU cost)
     if (built.cacheable) { if (_tileDescCache.size >= MAX_TILE_DESC_CACHE) _tileDescCache.delete(_tileDescCache.keys().next().value); _tileDescCache.set(tkey, desc); }
   }
   if (!desc) return;
@@ -1608,6 +1612,7 @@ function _amortStep(deadline) {
   var g = _gb; if (!g) return;
   var _t0 = performance.now();
   if (g.phase === 'collect') {
+    var _pc0 = performance.now(); // DIAG
     var stop = false;
     while (g.wy <= g.py + g.radiusY && !stop) {
       while (g.wx <= g.px + g.radiusX) {
@@ -1627,10 +1632,13 @@ function _amortStep(deadline) {
       g.shadowOf = new Int32Array(Math.max(512, g.n));
       g.phase = 'write';
     }
+    g._cMs += performance.now() - _pc0; // DIAG
   }
   if (g.phase === 'write') {
+    var _pw0 = performance.now(); // DIAG
     while (g.idx < g.n) { _writeSpriteGpu(g, g.idx); g.idx++; if (performance.now() >= deadline) break; }
     if (g.idx >= g.n) g.phase = 'commit';
+    g._wMs += performance.now() - _pw0; // DIAG
   }
   if (g.phase === 'commit') {
     var glc = g.glc;
@@ -1643,7 +1651,22 @@ function _amortStep(deadline) {
       _pool.animN = g.n; _pool.animShadowN = g.shCount; _pool.n = g.n; _pool.shadowN = g.shCount;
       _pool.animPending = g.animPending; _pool.animUploaded = true;
       _f2Stats.rebuilds++; _f2Stats.lastRebuildMs = 0;
-      if (typeof window !== 'undefined') window._f2PoolN = g.n;
+      if (typeof window !== 'undefined') {
+        window._f2PoolN = g.n;
+        // DIAG (window._f2diag): resolve CPU-vs-IO for the F2-F6 pop-in. collectMs = main-thread
+        // buildTileDescriptor/claim-scan CPU; writeMs = strip resolve/pack CPU; descBuilds = cold
+        // tiles this build; animPending = sprites built but frames still LOADING (the I/O tail);
+        // denoiseMs/N accumulate from denoiseImage (main-thread decode). wallMs = build start->commit.
+        var _d = window._f2diag || (window._f2diag = { builds: 0, denoiseMs: 0, denoiseN: 0 });
+        _d.builds++;
+        _d.lastCollectMs = Math.round(g._cMs); _d.lastWriteMs = Math.round(g._wMs);
+        _d.lastDescBuilds = g._desc; _d.lastN = g.n; _d.lastAnimPending = g.animPending.length;
+        _d.lastWallMs = Math.round(performance.now() - g._t0all);
+        if (g._desc > 200 || g._cMs + g._wMs > 50) {
+          console.log('[f2diag] collect=' + _d.lastCollectMs + 'ms write=' + _d.lastWriteMs + 'ms descBuilds=' + g._desc +
+            ' n=' + g.n + ' animPending=' + g.animPending.length + ' wall=' + _d.lastWallMs + 'ms denoise=' + Math.round(_d.denoiseMs) + 'ms/' + _d.denoiseN);
+        }
+      }
     }
     _gb = null;
   }
