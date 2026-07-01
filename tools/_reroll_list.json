@@ -1,0 +1,639 @@
+[
+ {
+  "biome": "beach",
+  "species": "driftwood_tree",
+  "v": 32,
+  "mode": "baked_landscape",
+  "note": "Profile palm is fine but it sits on a painted green grassy island/mound with fallen leaves at the base — scenery well beyond a tiny root nub."
+ },
+ {
+  "biome": "beach",
+  "species": "palm_tree",
+  "v": 25,
+  "mode": "baked_landscape",
+  "note": "Otherwise-clean palm but painted on an oval green grass ground patch at the base, larger than a root nub."
+ },
+ {
+  "biome": "beach",
+  "species": "palm_tree",
+  "v": 27,
+  "mode": "baked_landscape",
+  "note": "Good profile palm but base sits on a painted oval grass island/disc with scattered pebbles — baked ground."
+ },
+ {
+  "biome": "beach",
+  "species": "palm_tree",
+  "v": 32,
+  "mode": "baked_landscape",
+  "note": "Palm has a painted grassy ground patch with shrubs/foliage clustered at the trunk base, beyond a tiny nub."
+ },
+ {
+  "biome": "beach",
+  "species": "palm_tree",
+  "v": 33,
+  "mode": "baked_landscape",
+  "note": "Palm planted on a distinct square/rectangular green grass tile platform under the trunk — baked ground patch."
+ },
+ {
+  "biome": "dense_forest",
+  "species": "ancient_oak",
+  "v": 64,
+  "mode": "baked_landscape",
+  "note": "Tree sits on a painted oval grass/dirt mound disc beneath the roots, not clean transparency."
+ },
+ {
+  "biome": "dense_forest",
+  "species": "ancient_oak",
+  "v": 67,
+  "mode": "baked_landscape",
+  "note": "Painted oval grass ground platform under the trunk."
+ },
+ {
+  "biome": "dense_forest",
+  "species": "ancient_oak",
+  "v": 69,
+  "mode": "baked_landscape",
+  "note": "Tree on a painted square/blocky green grass platform tile."
+ },
+ {
+  "biome": "dense_forest",
+  "species": "ancient_oak",
+  "v": 70,
+  "mode": "baked_landscape",
+  "note": "Painted oval grass mound disc rendered under the tree."
+ },
+ {
+  "biome": "dense_forest",
+  "species": "hollow_elm",
+  "v": 64,
+  "mode": "baked_landscape",
+  "note": "Tree planted on a painted square isometric grass platform tile."
+ },
+ {
+  "biome": "dense_forest",
+  "species": "hollow_elm",
+  "v": 68,
+  "mode": "baked_landscape",
+  "note": "Painted oval grass ground disc/mound beneath the roots."
+ },
+ {
+  "biome": "dense_forest",
+  "species": "hollow_elm",
+  "v": 71,
+  "mode": "baked_landscape",
+  "note": "Painted oval grass mound disc under the trunk."
+ },
+ {
+  "biome": "dense_forest",
+  "species": "yew",
+  "v": 69,
+  "mode": "baked_landscape",
+  "note": "Tree on a painted square/diamond isometric grass platform tile."
+ },
+ {
+  "biome": "desert",
+  "species": "date_palm",
+  "v": 36,
+  "mode": "baked_landscape",
+  "note": "Distinct painted tan sand mound/disc beneath the trunk -- a filled elliptical ground patch extending well beyond a tiny root nub. Tree itself is fine; only the baked ground band fails."
+ },
+ {
+  "biome": "forest",
+  "species": "apple",
+  "v": 63,
+  "mode": "baked_landscape",
+  "note": "Profile tree is good, but it sits on a painted oval grass+dirt ground disc with a raised mound — clearly wider than the roots, not a tiny nub."
+ },
+ {
+  "biome": "forest",
+  "species": "apple",
+  "v": 65,
+  "mode": "baked_landscape",
+  "note": "Good profile tree on a green grass oval platform with fallen apples painted on the ground beneath it."
+ },
+ {
+  "biome": "forest",
+  "species": "apple",
+  "v": 71,
+  "mode": "baked_landscape",
+  "note": "Profile tree sits on a distinct green grass oval disc wider than the trunk/roots — a ground platform, not a root nub."
+ },
+ {
+  "biome": "forest",
+  "species": "apple",
+  "v": 75,
+  "mode": "baked_landscape",
+  "note": "Profile tree on a clear green grass oval base disc beneath the trunk."
+ },
+ {
+  "biome": "forest",
+  "species": "beech",
+  "v": 67,
+  "mode": "baked_landscape",
+  "note": "Good full profile tree but resting on a painted green grass oval ground disc wider than the root spread."
+ },
+ {
+  "biome": "forest",
+  "species": "beech",
+  "v": 76,
+  "mode": "baked_landscape",
+  "note": "Profile tree sits on a defined green grass oval platform under the trunk."
+ },
+ {
+  "biome": "forest",
+  "species": "birch",
+  "v": 66,
+  "mode": "baked_landscape",
+  "note": "Tall birch profile is fine, but trunk stands on a clear green grass ellipse base distinctly wider than the roots."
+ },
+ {
+  "biome": "forest",
+  "species": "birch",
+  "v": 69,
+  "mode": "baked_landscape",
+  "note": "Birch profile good; sits on a painted green grass oval ground disc beyond a tiny root nub."
+ },
+ {
+  "biome": "forest",
+  "species": "birch",
+  "v": 70,
+  "mode": "baked_landscape",
+  "note": "Birch profile good; green grass oval platform under the trunk, wider than the roots."
+ },
+ {
+  "biome": "forest",
+  "species": "oak",
+  "v": 67,
+  "mode": "baked_landscape",
+  "note": "Strong oak profile, but it rests on a painted green grass mound/disc with a defined edge — a ground patch, not a nub."
+ },
+ {
+  "biome": "forest",
+  "species": "oak",
+  "v": 69,
+  "mode": "baked_landscape",
+  "note": "Oak profile is good but planted on a near-square isometric grass ground tile/patch — the most pronounced baked-ground of the batch."
+ },
+ {
+  "biome": "grassland",
+  "species": "apple",
+  "v": 67,
+  "mode": "baked_landscape",
+  "note": "Tree itself is a fine isolated profile with trunk+height, but it stands on a painted green grassy mound/disc at the base with scattered fallen apples on it - ground band well beyond a tiny root nub."
+ },
+ {
+  "biome": "grassland",
+  "species": "oak",
+  "v": 65,
+  "mode": "baked_landscape",
+  "note": "Isolated oak with trunk+height, but base sits on a painted patch of grassy ground with grass tufts - baked ground beyond a root nub."
+ },
+ {
+  "biome": "grassland",
+  "species": "oak",
+  "v": 66,
+  "mode": "baked_landscape",
+  "note": "Isolated oak with trunk+height, but planted on a painted square isometric grass ground tile (green patch with flecks) under the roots."
+ },
+ {
+  "biome": "grassland",
+  "species": "oak",
+  "v": 69,
+  "mode": "baked_landscape",
+  "note": "Isolated oak with trunk+height, but base rests on a painted grassy mound with grass tufts - ground scenery beyond a tiny root nub."
+ },
+ {
+  "biome": "hills",
+  "species": "field_oak",
+  "v": 36,
+  "mode": "baked_landscape",
+  "note": "Tree sits on a defined raised grassy mound with a beveled lighter-green rim and flower speckles -- a painted ground pad, not a flat trunk-base nub."
+ },
+ {
+  "biome": "hills",
+  "species": "field_oak",
+  "v": 37,
+  "mode": "baked_landscape",
+  "note": "Tree on a distinct isometric grass-topped ground tile/slab with visible 3D soil side walls -- a chunk of terrain."
+ },
+ {
+  "biome": "hills",
+  "species": "field_oak",
+  "v": 39,
+  "mode": "baked_landscape",
+  "note": "Tree planted on a full isometric dirt+grass cube/platform (grass top, soil sides, scattered flowers) -- blatant baked terrain block."
+ },
+ {
+  "biome": "hills",
+  "species": "hawthorn",
+  "v": 27,
+  "mode": "baked_landscape",
+  "note": "Tree on an oval grassy mound with a raised beveled rim and scattered fallen fruit -- a painted ground pad beyond a root nub."
+ },
+ {
+  "biome": "hills",
+  "species": "hawthorn",
+  "v": 29,
+  "mode": "baked_landscape",
+  "note": "Tree on a square isometric grass-topped ground tile with visible dirt side walls and exposed-root soil patch -- terrain slab."
+ },
+ {
+  "biome": "hills",
+  "species": "hawthorn",
+  "v": 30,
+  "mode": "baked_landscape",
+  "note": "Tree on a distinct isometric grass platform/slab with beveled dirt edges and fallen fruit on the surface -- baked terrain tile."
+ },
+ {
+  "biome": "hills",
+  "species": "hawthorn",
+  "v": 34,
+  "mode": "baked_landscape",
+  "note": "Red-canopy tree on an oval grass mound with a defined raised rim and flower detail -- painted ground pad, not a tiny nub."
+ },
+ {
+  "biome": "hills",
+  "species": "hawthorn",
+  "v": 43,
+  "mode": "baked_landscape",
+  "note": "Tree on a large oval grass ground disc with a winding dirt PATH crossing it -- painted landscape scenery (path), clear baked ground."
+ },
+ {
+  "biome": "hills",
+  "species": "fringed_shop_canopy",
+  "v": 4,
+  "mode": "other",
+  "note": "State JSON marks this regen done (newIndex 4, tries 2) but no file exists on disk -- the species dir hills/fringed_shop_canopy/ is entirely absent. Missing/unusable; needs re-generation."
+ },
+ {
+  "biome": "mountains",
+  "species": "pine",
+  "v": 68,
+  "mode": "baked_landscape",
+  "note": "Green grass/ground patch painted at the trunk base, beyond a tiny root nub. Tree itself is a clean side-profile pine."
+ },
+ {
+  "biome": "mountains",
+  "species": "pine",
+  "v": 71,
+  "mode": "baked_landscape",
+  "note": "Distinct green grassy mound painted under the trunk. Otherwise an isolated profile pine with visible trunk and height."
+ },
+ {
+  "biome": "mountains",
+  "species": "pine",
+  "v": 75,
+  "mode": "baked_landscape",
+  "note": "Green grassy oval/ground patch painted at the base. Tree is a proper side-profile conifer but ground band exceeds a tiny root nub."
+ },
+ {
+  "biome": "mystic",
+  "species": "crystal_tree",
+  "v": 25,
+  "mode": "baked_landscape",
+  "note": "Tree profile is fine but sits on a painted circular base/platform disc with patterning under the roots, well beyond a tiny root nub."
+ },
+ {
+  "biome": "mystic",
+  "species": "crystal_tree",
+  "v": 26,
+  "mode": "baked_landscape",
+  "note": "Good side profile but on a painted oval ground disc with scattered snow/dot scenery at the base."
+ },
+ {
+  "biome": "mystic",
+  "species": "crystal_tree",
+  "v": 27,
+  "mode": "baked_landscape",
+  "note": "Tree on a painted elliptical platform/ground disc with sparkle scatter beyond the root nub."
+ },
+ {
+  "biome": "mystic",
+  "species": "glowing_ancient",
+  "v": 23,
+  "mode": "baked_landscape",
+  "note": "Side profile tree on a painted teal ground disc with scattered glow dots under the roots."
+ },
+ {
+  "biome": "mystic",
+  "species": "glowing_ancient",
+  "v": 26,
+  "mode": "baked_landscape",
+  "note": "Tree on a painted green grassy ground disc/mound, a full ground band rather than a root nub."
+ },
+ {
+  "biome": "mystic",
+  "species": "glowing_ancient",
+  "v": 28,
+  "mode": "baked_landscape",
+  "note": "Tree on a painted green grassy ground disc with tufts and rocks beyond the roots."
+ },
+ {
+  "biome": "mystic",
+  "species": "glowing_ancient",
+  "v": 29,
+  "mode": "baked_landscape",
+  "note": "Tree on a painted green ground disc/platform with grass tufts under the trunk."
+ },
+ {
+  "biome": "savanna",
+  "species": "baobab",
+  "v": 17,
+  "mode": "baked_landscape",
+  "note": "Tree sits on a painted square isometric grassy ground/diorama tile (transparent corners around it), not a tree on clean transparency."
+ },
+ {
+  "biome": "savanna",
+  "species": "baobab",
+  "v": 18,
+  "mode": "baked_landscape",
+  "note": "Sits on a painted square isometric ground platform tile; clearly a diorama base, not a tiny root nub."
+ },
+ {
+  "biome": "savanna",
+  "species": "baobab",
+  "v": 19,
+  "mode": "baked_landscape",
+  "note": "Defined elliptical green grass mound/ground disc painted under the trunk, well beyond a tiny root nub."
+ },
+ {
+  "biome": "savanna",
+  "species": "baobab",
+  "v": 21,
+  "mode": "baked_landscape",
+  "note": "Painted elliptical grassy ground mound at the base extending past the trunk footprint; more than a root nub."
+ },
+ {
+  "biome": "savanna",
+  "species": "baobab",
+  "v": 22,
+  "mode": "baked_landscape",
+  "note": "Sits on a painted square isometric sandy ground tile with scattered pebbles/plants; diorama base scenery."
+ },
+ {
+  "biome": "savanna",
+  "species": "baobab",
+  "v": 24,
+  "mode": "baked_landscape",
+  "note": "Full painted grassy ground disc/mound the tree stands on; clear landscape base, not a nub."
+ },
+ {
+  "biome": "savanna",
+  "species": "baobab",
+  "v": 25,
+  "mode": "baked_landscape",
+  "note": "Painted oval ground disc (grass + tan dirt) under the tree; baked landscape base beyond a tiny root nub."
+ },
+ {
+  "biome": "steppe",
+  "species": "lone_elm",
+  "v": 24,
+  "mode": "baked_landscape",
+  "note": "Profile tree is correct, but it sits on a painted green grassy ground disc/mound with grass tufts -- scenery well beyond a tiny root nub."
+ },
+ {
+  "biome": "steppe",
+  "species": "lone_elm",
+  "v": 27,
+  "mode": "baked_landscape",
+  "note": "Side-profile tree planted on a painted green ground ellipse/disc under the roots."
+ },
+ {
+  "biome": "steppe",
+  "species": "lone_elm",
+  "v": 28,
+  "mode": "baked_landscape",
+  "note": "Painted green grassy ground disc with pebbles beneath the trunk."
+ },
+ {
+  "biome": "steppe",
+  "species": "lone_elm",
+  "v": 29,
+  "mode": "baked_landscape",
+  "note": "Tree set on a painted green ground disc base."
+ },
+ {
+  "biome": "steppe",
+  "species": "lone_elm",
+  "v": 30,
+  "mode": "baked_landscape",
+  "note": "Small painted green grassy ground ellipse under the roots."
+ },
+ {
+  "biome": "steppe",
+  "species": "lone_elm",
+  "v": 32,
+  "mode": "baked_landscape",
+  "note": "Painted green ground disc/platform beneath the trunk."
+ },
+ {
+  "biome": "steppe",
+  "species": "wind_oak",
+  "v": 24,
+  "mode": "baked_landscape",
+  "note": "Good windswept profile, but planted on a painted green grassy ground disc."
+ },
+ {
+  "biome": "steppe",
+  "species": "wind_oak",
+  "v": 29,
+  "mode": "baked_landscape",
+  "note": "Painted scattered ground band of leaf-litter/logs/debris at the base -- more than a tiny root nub."
+ },
+ {
+  "biome": "tropical_forest",
+  "species": "kapok",
+  "v": 17,
+  "mode": "baked_landscape",
+  "note": "Proper profile tree with visible trunk, but it sits on a painted square green ground/grass tile that fills the bottom of the frame - a clear baked ground patch well beyond a tiny root nub. Re-roll to get clean transparency under the trunk."
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 24,
+  "mode": "baked_landscape",
+  "note": "Painted stone/paved ground disc with grass under the tree; full scenery base beyond a root nub."
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 25,
+  "mode": "baked_landscape",
+  "note": "Painted square grass ground tile under the trunk."
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 26,
+  "mode": "baked_landscape",
+  "note": "Painted isometric grass ground tile with little flowers at the base."
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 27,
+  "mode": "baked_landscape",
+  "note": "Painted oval ground patch with scattered pebbles/stones under the roots."
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 28,
+  "mode": "baked_landscape",
+  "note": "Painted green ground patch with rocks at the base."
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 29,
+  "mode": "baked_landscape",
+  "note": "Distinct green ground oval under the roots, larger than a tiny root nub (milder but still a painted base)."
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 32,
+  "mode": "baked_landscape",
+  "note": "Painted oval grass ground disc under the tree."
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 34,
+  "mode": "baked_landscape",
+  "note": "Painted green grass ground oval under the trunk."
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 35,
+  "mode": "baked_landscape",
+  "note": "Painted ground oval with scattered red berries/flowers."
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 36,
+  "mode": "baked_landscape",
+  "note": "Painted ground oval with scattered white flowers/pebbles."
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 37,
+  "mode": "baked_landscape",
+  "note": "Painted green grass square/patch under the tree."
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 38,
+  "mode": "baked_landscape",
+  "note": "Painted soil+grass ground mound/disc under the roots."
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 39,
+  "mode": "baked_landscape",
+  "note": "Painted grass/pebble ground oval under the tree."
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 40,
+  "mode": "baked_landscape",
+  "note": "Painted green ground oval with scattered dots/flowers."
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 41,
+  "mode": "baked_landscape",
+  "note": "Painted isometric grass cube/ground block (soil + grass top) under the tree."
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 42,
+  "mode": "baked_landscape",
+  "note": "Painted isometric grass ground tile with rocks/pebbles."
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 43,
+  "mode": "baked_landscape",
+  "note": "Painted circular raised planter/grass disc with a brown rim under the tree."
+ },
+ {
+  "biome": "tundra",
+  "species": "krummholz_pine",
+  "v": 24,
+  "mode": "baked_landscape",
+  "note": "Distinct green ground oval under the roots, larger than a tiny root nub (milder but still a painted base)."
+ },
+ {
+  "biome": "volcanic",
+  "species": "charred_trunk",
+  "v": 29,
+  "mode": "baked_landscape",
+  "note": "Tree sits on a distinct elliptical blue-grey painted ground disc with lava cracks; platform extends well beyond a root nub."
+ },
+ {
+  "biome": "volcanic",
+  "species": "charred_trunk",
+  "v": 30,
+  "mode": "baked_landscape",
+  "note": "Painted oval ground mound/disc under the roots with lava bursts; scenery base, not a tiny root nub."
+ },
+ {
+  "biome": "volcanic",
+  "species": "lava_palm",
+  "v": 23,
+  "mode": "baked_landscape",
+  "note": "Wide flat horizontal flame/fire band painted across the bottom as ground scenery, extending far beyond the trunk footprint."
+ },
+ {
+  "biome": "volcanic",
+  "species": "lava_palm",
+  "v": 25,
+  "mode": "baked_landscape",
+  "note": "Palm planted on an elliptical tan/green painted ground platform; clear ground disc beyond root nub."
+ },
+ {
+  "biome": "volcanic",
+  "species": "lava_palm",
+  "v": 26,
+  "mode": "baked_landscape",
+  "note": "Painted ground clump of green grass tufts and grey stones surrounding the base; scenery beyond a root nub."
+ },
+ {
+  "biome": "volcanic",
+  "species": "lava_palm",
+  "v": 27,
+  "mode": "baked_landscape",
+  "note": "Dark elliptical painted ground disc with a fire ring sitting on top; full ground platform."
+ },
+ {
+  "biome": "volcanic",
+  "species": "lava_palm",
+  "v": 28,
+  "mode": "baked_landscape",
+  "note": "Purple/dark elliptical painted ground disc with scattered colored pebbles and flowers; ground platform."
+ },
+ {
+  "biome": "volcanic",
+  "species": "lava_palm",
+  "v": 29,
+  "mode": "baked_landscape",
+  "note": "Dark elliptical painted ground disc with a fire ring on top; ground platform beyond root nub."
+ },
+ {
+  "biome": "volcanic",
+  "species": "lava_palm",
+  "v": 30,
+  "mode": "baked_landscape",
+  "note": "Blue-grey elliptical painted ground platform with a central lava burst; clear ground disc."
+ }
+]

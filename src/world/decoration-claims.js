@@ -825,6 +825,7 @@ export function f5AnimUrlBase(p) {
 }
 
 // Map a [0,1) roll to a pool POSITION, then through the species vmap to the real on-disk filename index.
+// vmap decouples pool position from filename so omitted (culled) variants are simply absent from vmap.
 // Returns { pos, variant }: pos indexes into positional arrays (trims/sil); variant is the original file index.
 // obj.variants >= 1 is a catalog invariant (an object with no usable variants is never cataloged).
 export function pickF5Variant(obj, r) {

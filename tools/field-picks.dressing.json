@@ -1,0 +1,87 @@
+{
+ "field": "dressing",
+ "savedAt": "2026-06-26T01:18:28.926Z",
+ "decisions": {
+  "desert/fringed_shop_canopy": {
+   "omit": [
+    0,
+    1
+   ],
+   "tags": {},
+   "notes": {}
+  },
+  "desert/wood_slat_awning": {
+   "omit": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "tags": {},
+   "notes": {}
+  },
+  "grassland/louvred_shutter": {
+   "omit": [
+    0,
+    1
+   ],
+   "tags": {},
+   "notes": {}
+  },
+  "grassland/wood_slat_awning": {
+   "omit": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "tags": {},
+   "notes": {}
+  },
+  "hills/fringed_shop_canopy": {
+   "omit": [
+    0,
+    1
+   ],
+   "tags": {},
+   "notes": {}
+  },
+  "mountains/fringed_shop_canopy": {
+   "omit": [
+    0
+   ],
+   "tags": {},
+   "notes": {}
+  },
+  "mountains/wood_slat_awning": {
+   "omit": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "tags": {},
+   "notes": {}
+  },
+  "steppe/triangle_bunting": {
+   "omit": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "tags": {},
+   "notes": {}
+  },
+  "steppe/wood_slat_awning": {
+   "omit": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "tags": {},
+   "notes": {}
+  }
+ }
+}

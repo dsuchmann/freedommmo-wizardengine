@@ -8,7 +8,8 @@
   "candidates_per_call": 1,
   "create_calls": 64,
   "output_root": "assets/pixelab/landscape_v2/micro/large_flora",
-  "prompt_template": "top-down high fantasy pixel art {desc}, jaw-dropping beauty, hyper-detailed, rich saturated colors, Final Fantasy aesthetic, alpha-transparent background, detailed shading, large tree sprite seen from above with visible trunk and full canopy",
+  "prompt_template": "high fantasy pixel art of a single {desc}, Final Fantasy aesthetic, hyper-detailed, rich saturated colors, detailed shading, one isolated specimen tree, side profile view, the trunk rises from the bottom and the full height and side silhouette are visible from base to crown; the roots meet the bottom against FULLY TRANSPARENT pixels — absolutely NO ground disc, grass mound, dirt platform, base pad, soil patch, terrain tile, or ground block under or around the base; pure transparency on all four sides; no other plants or scenery; not a top-down overhead view; not a flat radial canopy disc; not a square texture tile; not multiple trees",
+  "prompt_template_note": "2026-06-25: replaced the original 'top-down ... seen from above' template that instructed the dominant failure modes. Per-biome tuning sentences live in docs/superpowers/specs/2026-06-25-f6-regen-eval-and-prompts.md and are appended at regen time.",
   "archetypes": [
     { "name": "oak",          "desc": "mighty oak tree with broad gnarled trunk and sprawling green canopy", "biomes": ["forest", "grassland"], "fruit": false },
     { "name": "birch",        "desc": "slender white-barked birch tree with light airy foliage",             "biomes": ["forest", "taiga"],     "fruit": false },

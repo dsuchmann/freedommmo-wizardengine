@@ -92,10 +92,10 @@ export const DRESSING_ALLOWED = {
   3
  ],
  "desert/fringed_shop_canopy": [
-  0,
-  1,
   2,
-  3
+  3,
+  5,
+  6
  ],
  "desert/heraldic_banner": [
   0,
@@ -161,10 +161,10 @@ export const DRESSING_ALLOWED = {
   3
  ],
  "desert/wood_slat_awning": [
-  0,
-  1,
-  2,
-  3
+  4,
+  5,
+  6,
+  7
  ],
  "desert/wrought_iron_silhouette_sign": [
   0,
@@ -333,8 +333,8 @@ export const DRESSING_ALLOWED = {
   2
  ],
  "grassland/louvred_shutter": [
-  0,
-  1
+  2,
+  3
  ],
  "grassland/projecting_board_sign": [
   0,
@@ -404,10 +404,8 @@ export const DRESSING_ALLOWED = {
   2
  ],
  "grassland/wood_slat_awning": [
-  0,
-  1,
-  2,
-  3
+  5,
+  6
  ],
  "grassland/wrought_iron_bracket": [
   0,
@@ -434,10 +432,9 @@ export const DRESSING_ALLOWED = {
   3
  ],
  "hills/fringed_shop_canopy": [
-  0,
-  1,
   2,
-  3
+  3,
+  4
  ],
  "hills/heraldic_banner": [
   0,
@@ -512,10 +509,10 @@ export const DRESSING_ALLOWED = {
   3
  ],
  "mountains/fringed_shop_canopy": [
-  0,
   1,
   2,
-  3
+  3,
+  4
  ],
  "mountains/heraldic_banner": [
   0,
@@ -578,10 +575,10 @@ export const DRESSING_ALLOWED = {
   3
  ],
  "mountains/wood_slat_awning": [
-  0,
-  1,
-  2,
-  3
+  4,
+  5,
+  6,
+  7
  ],
  "mountains/wrought_iron_silhouette_sign": [
   0,
@@ -812,10 +809,8 @@ export const DRESSING_ALLOWED = {
   3
  ],
  "steppe/triangle_bunting": [
-  0,
-  1,
-  2,
-  3
+  4,
+  6
  ],
  "steppe/wall_oil_lamp": [
   0,
@@ -824,10 +819,9 @@ export const DRESSING_ALLOWED = {
   3
  ],
  "steppe/wood_slat_awning": [
-  0,
-  1,
-  2,
-  3
+  4,
+  5,
+  7
  ],
  "steppe/wrought_iron_silhouette_sign": [
   0,

@@ -35,3 +35,6 @@ __pycache__/
 /*.jpg
 /gl-console.txt
 /fv-capture-*.txt
+# tree-upscale scratch: blend dashboard renders + pre-mix @384 backups (regenerable, never committed)
+/tools/_blend_preview/
+/tools/_premix/

@@ -173,9 +173,13 @@ export class ChunkProvider {
     try {
       // Cache-bust: append timestamp so browser reloads worker modules on code changes
       const workerUrl = new URL('./chunk-worker.js', import.meta.url);
-      workerUrl.searchParams.set('v', '20260619f-roof-overhang-nodroop-gputiles9-gclumid');
+      workerUrl.searchParams.set('v', '20260701a-floradesc-deferred');
       const worker = new Worker(workerUrl, { type: 'module' });
       worker._imagesReady = false;
+      // Surface worker failures: an uncaught throw in the worker's onmessage silently kills that
+      // chunk job (pending piles up, ready never grows — reads as "world stopped loading" with no
+      // error anywhere). Log it so the failure mode is visible in the console/logs.
+      worker.onerror = (e) => { console.error('[chunk-worker ERROR]', e.message || e, e.filename ? e.filename + ':' + e.lineno : ''); };
       worker.onmessage = event => {
         const msg = event.data;
         if (msg.type === 'imagesReady') {

@@ -1,0 +1,329 @@
+{
+ "field": "dressing",
+ "omits": {
+  "desert/fringed_shop_canopy": [
+   0,
+   1
+  ],
+  "desert/wood_slat_awning": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "grassland/louvred_shutter": [
+   0,
+   1
+  ],
+  "grassland/wood_slat_awning": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "hills/fringed_shop_canopy": [
+   0,
+   1
+  ],
+  "mountains/fringed_shop_canopy": [
+   0
+  ],
+  "mountains/wood_slat_awning": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "steppe/triangle_bunting": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "steppe/wood_slat_awning": [
+   0,
+   1,
+   2,
+   3
+  ]
+ },
+ "history": [
+  {
+   "appliedAt": "2026-06-26T01:21:17.102Z",
+   "decisions": {
+    "desert/fringed_shop_canopy": {
+     "omit": [
+      0,
+      1
+     ],
+     "tags": {},
+     "notes": {}
+    },
+    "desert/wood_slat_awning": {
+     "omit": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "tags": {},
+     "notes": {}
+    },
+    "grassland/louvred_shutter": {
+     "omit": [
+      0,
+      1
+     ],
+     "tags": {},
+     "notes": {}
+    },
+    "grassland/wood_slat_awning": {
+     "omit": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "tags": {},
+     "notes": {}
+    },
+    "hills/fringed_shop_canopy": {
+     "omit": [
+      0,
+      1
+     ],
+     "tags": {},
+     "notes": {}
+    },
+    "mountains/fringed_shop_canopy": {
+     "omit": [
+      0
+     ],
+     "tags": {},
+     "notes": {}
+    },
+    "mountains/wood_slat_awning": {
+     "omit": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "tags": {},
+     "notes": {}
+    },
+    "steppe/triangle_bunting": {
+     "omit": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "tags": {},
+     "notes": {}
+    },
+    "steppe/wood_slat_awning": {
+     "omit": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "tags": {},
+     "notes": {}
+    }
+   }
+  }
+ ],
+ "regenWorklist": [
+  {
+   "biome": "desert",
+   "species": "fringed_shop_canopy",
+   "replaces": 0,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "desert",
+   "species": "fringed_shop_canopy",
+   "replaces": 1,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "desert",
+   "species": "wood_slat_awning",
+   "replaces": 0,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "desert",
+   "species": "wood_slat_awning",
+   "replaces": 1,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "desert",
+   "species": "wood_slat_awning",
+   "replaces": 2,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "desert",
+   "species": "wood_slat_awning",
+   "replaces": 3,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "grassland",
+   "species": "louvred_shutter",
+   "replaces": 0,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "grassland",
+   "species": "louvred_shutter",
+   "replaces": 1,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "grassland",
+   "species": "wood_slat_awning",
+   "replaces": 0,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "grassland",
+   "species": "wood_slat_awning",
+   "replaces": 1,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "grassland",
+   "species": "wood_slat_awning",
+   "replaces": 2,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "grassland",
+   "species": "wood_slat_awning",
+   "replaces": 3,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "hills",
+   "species": "fringed_shop_canopy",
+   "replaces": 0,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "hills",
+   "species": "fringed_shop_canopy",
+   "replaces": 1,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mountains",
+   "species": "fringed_shop_canopy",
+   "replaces": 0,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mountains",
+   "species": "wood_slat_awning",
+   "replaces": 0,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mountains",
+   "species": "wood_slat_awning",
+   "replaces": 1,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mountains",
+   "species": "wood_slat_awning",
+   "replaces": 2,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "mountains",
+   "species": "wood_slat_awning",
+   "replaces": 3,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "steppe",
+   "species": "triangle_bunting",
+   "replaces": 0,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "steppe",
+   "species": "triangle_bunting",
+   "replaces": 1,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "steppe",
+   "species": "triangle_bunting",
+   "replaces": 2,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "steppe",
+   "species": "triangle_bunting",
+   "replaces": 3,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "steppe",
+   "species": "wood_slat_awning",
+   "replaces": 0,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "steppe",
+   "species": "wood_slat_awning",
+   "replaces": 1,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "steppe",
+   "species": "wood_slat_awning",
+   "replaces": 2,
+   "reason": "unspecified",
+   "note": ""
+  },
+  {
+   "biome": "steppe",
+   "species": "wood_slat_awning",
+   "replaces": 3,
+   "reason": "unspecified",
+   "note": ""
+  }
+ ]
+}

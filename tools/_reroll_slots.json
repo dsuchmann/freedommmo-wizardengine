@@ -1,0 +1,457 @@
+[
+ {
+  "biome": "beach",
+  "species": "driftwood_tree",
+  "v": 45
+ },
+ {
+  "biome": "beach",
+  "species": "palm_tree",
+  "v": 43
+ },
+ {
+  "biome": "beach",
+  "species": "palm_tree",
+  "v": 44
+ },
+ {
+  "biome": "beach",
+  "species": "palm_tree",
+  "v": 45
+ },
+ {
+  "biome": "beach",
+  "species": "palm_tree",
+  "v": 46
+ },
+ {
+  "biome": "dense_forest",
+  "species": "ancient_oak",
+  "v": 72
+ },
+ {
+  "biome": "dense_forest",
+  "species": "ancient_oak",
+  "v": 73
+ },
+ {
+  "biome": "dense_forest",
+  "species": "ancient_oak",
+  "v": 74
+ },
+ {
+  "biome": "dense_forest",
+  "species": "ancient_oak",
+  "v": 75
+ },
+ {
+  "biome": "dense_forest",
+  "species": "hollow_elm",
+  "v": 74
+ },
+ {
+  "biome": "dense_forest",
+  "species": "hollow_elm",
+  "v": 75
+ },
+ {
+  "biome": "dense_forest",
+  "species": "hollow_elm",
+  "v": 76
+ },
+ {
+  "biome": "dense_forest",
+  "species": "yew",
+  "v": 71
+ },
+ {
+  "biome": "desert",
+  "species": "date_palm",
+  "v": 40
+ },
+ {
+  "biome": "forest",
+  "species": "apple",
+  "v": 76
+ },
+ {
+  "biome": "forest",
+  "species": "apple",
+  "v": 77
+ },
+ {
+  "biome": "forest",
+  "species": "apple",
+  "v": 78
+ },
+ {
+  "biome": "forest",
+  "species": "apple",
+  "v": 79
+ },
+ {
+  "biome": "forest",
+  "species": "beech",
+  "v": 77
+ },
+ {
+  "biome": "forest",
+  "species": "beech",
+  "v": 78
+ },
+ {
+  "biome": "forest",
+  "species": "birch",
+  "v": 71
+ },
+ {
+  "biome": "forest",
+  "species": "birch",
+  "v": 72
+ },
+ {
+  "biome": "forest",
+  "species": "birch",
+  "v": 73
+ },
+ {
+  "biome": "forest",
+  "species": "oak",
+  "v": 71
+ },
+ {
+  "biome": "forest",
+  "species": "oak",
+  "v": 72
+ },
+ {
+  "biome": "grassland",
+  "species": "apple",
+  "v": 68
+ },
+ {
+  "biome": "grassland",
+  "species": "oak",
+  "v": 70
+ },
+ {
+  "biome": "grassland",
+  "species": "oak",
+  "v": 71
+ },
+ {
+  "biome": "grassland",
+  "species": "oak",
+  "v": 72
+ },
+ {
+  "biome": "hills",
+  "species": "field_oak",
+  "v": 43
+ },
+ {
+  "biome": "hills",
+  "species": "field_oak",
+  "v": 44
+ },
+ {
+  "biome": "hills",
+  "species": "field_oak",
+  "v": 45
+ },
+ {
+  "biome": "hills",
+  "species": "hawthorn",
+  "v": 44
+ },
+ {
+  "biome": "hills",
+  "species": "hawthorn",
+  "v": 45
+ },
+ {
+  "biome": "hills",
+  "species": "hawthorn",
+  "v": 46
+ },
+ {
+  "biome": "hills",
+  "species": "hawthorn",
+  "v": 47
+ },
+ {
+  "biome": "hills",
+  "species": "hawthorn",
+  "v": 48
+ },
+ {
+  "biome": "mountains",
+  "species": "pine",
+  "v": 80
+ },
+ {
+  "biome": "mountains",
+  "species": "pine",
+  "v": 81
+ },
+ {
+  "biome": "mountains",
+  "species": "pine",
+  "v": 82
+ },
+ {
+  "biome": "mystic",
+  "species": "crystal_tree",
+  "v": 29
+ },
+ {
+  "biome": "mystic",
+  "species": "crystal_tree",
+  "v": 30
+ },
+ {
+  "biome": "mystic",
+  "species": "crystal_tree",
+  "v": 31
+ },
+ {
+  "biome": "mystic",
+  "species": "glowing_ancient",
+  "v": 30
+ },
+ {
+  "biome": "mystic",
+  "species": "glowing_ancient",
+  "v": 31
+ },
+ {
+  "biome": "mystic",
+  "species": "glowing_ancient",
+  "v": 32
+ },
+ {
+  "biome": "mystic",
+  "species": "glowing_ancient",
+  "v": 33
+ },
+ {
+  "biome": "savanna",
+  "species": "baobab",
+  "v": 26
+ },
+ {
+  "biome": "savanna",
+  "species": "baobab",
+  "v": 27
+ },
+ {
+  "biome": "savanna",
+  "species": "baobab",
+  "v": 28
+ },
+ {
+  "biome": "savanna",
+  "species": "baobab",
+  "v": 29
+ },
+ {
+  "biome": "savanna",
+  "species": "baobab",
+  "v": 30
+ },
+ {
+  "biome": "savanna",
+  "species": "baobab",
+  "v": 31
+ },
+ {
+  "biome": "savanna",
+  "species": "baobab",
+  "v": 32
+ },
+ {
+  "biome": "steppe",
+  "species": "lone_elm",
+  "v": 34
+ },
+ {
+  "biome": "steppe",
+  "species": "lone_elm",
+  "v": 35
+ },
+ {
+  "biome": "steppe",
+  "species": "lone_elm",
+  "v": 36
+ },
+ {
+  "biome": "steppe",
+  "species": "lone_elm",
+  "v": 37
+ },
+ {
+  "biome": "steppe",
+  "species": "lone_elm",
+  "v": 38
+ },
+ {
+  "biome": "steppe",
+  "species": "lone_elm",
+  "v": 39
+ },
+ {
+  "biome": "steppe",
+  "species": "wind_oak",
+  "v": 30
+ },
+ {
+  "biome": "steppe",
+  "species": "wind_oak",
+  "v": 31
+ },
+ {
+  "biome": "tropical_forest",
+  "species": "kapok",
+  "v": 22
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 44
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 45
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 46
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 47
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 48
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 49
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 50
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 51
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 52
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 53
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 54
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 55
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 56
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 57
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 58
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 59
+ },
+ {
+  "biome": "tundra",
+  "species": "dwarf_willow",
+  "v": 60
+ },
+ {
+  "biome": "tundra",
+  "species": "krummholz_pine",
+  "v": 25
+ },
+ {
+  "biome": "volcanic",
+  "species": "charred_trunk",
+  "v": 31
+ },
+ {
+  "biome": "volcanic",
+  "species": "charred_trunk",
+  "v": 32
+ },
+ {
+  "biome": "volcanic",
+  "species": "lava_palm",
+  "v": 32
+ },
+ {
+  "biome": "volcanic",
+  "species": "lava_palm",
+  "v": 33
+ },
+ {
+  "biome": "volcanic",
+  "species": "lava_palm",
+  "v": 34
+ },
+ {
+  "biome": "volcanic",
+  "species": "lava_palm",
+  "v": 35
+ },
+ {
+  "biome": "volcanic",
+  "species": "lava_palm",
+  "v": 36
+ },
+ {
+  "biome": "volcanic",
+  "species": "lava_palm",
+  "v": 37
+ },
+ {
+  "biome": "volcanic",
+  "species": "lava_palm",
+  "v": 38
+ },
+ {
+  "biome": "hills",
+  "species": "fringed_shop_canopy",
+  "v": 0
+ }
+]
