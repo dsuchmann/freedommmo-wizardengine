@@ -30,11 +30,16 @@ const HEAD_TILES = 18;
 const SIDE_TILES = 2;        // east/west + south slack for eave overhang and shadows
 const MAX_SPRITES = 384;     // LRU cap — small per-building textures, bounded memory
 const EVICT_AFTER = 600;     // frames a sprite may go unused before eviction (~10s @60fps)
-const BUILD_BUDGET = 3;      // max NEW building bakes per frame (same idea as terrain's CHUNK_UPLOAD_BUDGET):
+const BUILD_BUDGET = 1;      // max NEW building bakes per frame (same idea as terrain's CHUNK_UPLOAD_BUDGET):
                              // when many buildings enter view at once (fast-travel, zoom, walking into a
                              // town) they bake over a few frames instead of one freeze. Over-budget ones
                              // return null (not drawn this frame) and bake next frame — a 1-frame pop-in,
                              // exactly like terrain chunks.
+                             // NOTE: a single LARGE building's bake is currently 1.3-2.8s (roof + dressing;
+                             // see building-occluder [bbWorst]), so 3/frame stacked into 4-8s frozen frames
+                             // when entering a taiga/swamp settlement. Capped at 1 so the load stays
+                             // RESPONSIVE (one hitch per baking frame, real frames between) — a stopgap
+                             // until the per-building bake cost itself is cut (the actual fix).
 const MAX_WARMUP = 900;      // frames an INCOMPLETE bake may keep RE-baking before it's frozen as-is (~15s @60fps).
                              // A building's tiles + roof load async, so the FIRST drawable frame is walls-only;
                              // we must re-bake until it's structurally complete (isComplete), else that walls-only
