@@ -16,6 +16,10 @@ import path from 'node:path';
 const matDir = process.argv[2];
 const N = +(process.argv[3] || 9);
 const hinge = (process.argv[4] || 'left');
+// Optional explicit door rect as fractions of the tile: --rect x0,y0,x1,y1 (0..1). When the diff/warm/geometric
+// auto-locate picks the wrong spot (e.g. a door-state re-gen that repaints the whole wall, so the strong-diff
+// spreads everywhere and the grow walks off the real door), pass the measured frame box to force the location.
+const rectArg = (() => { const i = process.argv.indexOf('--rect'); return i >= 0 ? process.argv[i + 1] : null; })();
 const Dp = `${matDir}/ground_door__v0.png`, Pp = `${matDir}/ground_plain__v0.png`;
 if (!fs.existsSync(Dp)) { console.error('no ground_door at', Dp); process.exit(3); }
 
@@ -74,6 +78,12 @@ if (bad(minX, maxX, minY, maxY)) {
     minX = W * 0.32; maxX = W * 0.68; minY = H * 0.13; maxY = H * 0.95;
     console.error('door-swing: diff+warm degenerate → geometric centred door rect');
   }
+}
+// explicit-rect override wins over any auto-located rect
+if (rectArg) {
+  const [fx0, fy0, fx1, fy1] = rectArg.split(',').map(Number);
+  minX = W * fx0; minY = H * fy0; maxX = W * fx1; maxY = H * fy1;
+  console.error(`door-swing: explicit --rect ${rectArg} → ${Math.round(maxX - minX)}x${Math.round(maxY - minY)}`);
 }
 // isolate the swinging LEAF: drop the thin static frame/trim ring around the opening
 const bw = maxX - minX, bh = maxY - minY;

@@ -3,58 +3,73 @@
   "base_project": "0f1031f5-9eee-4df4-996f-0a4114148eba",
   "materials": {
     "weathered_plank": {
-      "base": "",
-      "ground_window": "",
-      "ground_door": "",
-      "ground_left_corner": "",
-      "gable": ""
+      "base": "05baeb02-8107-43d2-a6f0-d21117ddf3c8",
+      "ground_window": "f0462ee6-54f9-4a0d-9fc6-9655e0b3a3dc",
+      "ground_door": "286186a7-9dde-4e10-abd8-86cb4826d0e4",
+      "ground_left_corner": "c9a1ce37-62e2-48a9-aee2-55da2954519e",
+      "gable": "94e3a968-7421-4837-8dff-5fa30a32e404",
+      "window_anim": "4df1d226-987d-4eee-ac7c-5cb3089e6bb5"
     },
     "mangrove_log": {
-      "base": "",
-      "ground_window": "",
-      "ground_door": "",
-      "ground_left_corner": "",
-      "gable": ""
+      "base": "20df7958-d55c-4038-9a91-b93c23114d37",
+      "ground_window": "44816866-0a87-4a18-bca7-36b4494cbe63",
+      "ground_door": "0bcace44-eabe-40e3-9833-5b21d9c344c7",
+      "ground_left_corner": "743ca67e-d020-47ca-a16f-0e39bfb70a12",
+      "gable": "7e2d0a52-6ce6-4435-959b-299d11cd26cf",
+      "window_anim": "06430280-0af2-4496-9217-5fd288d9db03"
     },
     "mud_reed_daub": {
-      "base": "",
-      "ground_window": "",
-      "ground_door": "",
-      "ground_left_corner": "",
-      "gable": ""
+      "base": "f6f4ac5e-bd40-477d-865a-9b77e6703d42",
+      "ground_window": "123ee6c1-6e8c-4eec-8b49-1bd0b55f08d8",
+      "ground_door": "ff0bb14c-5119-495f-ad1c-c7ba23d4fcdf",
+      "ground_left_corner": "5f2cbb1f-5f80-4ca6-a3cf-ca3c4123a99c",
+      "gable": "da56bd03-9b49-425e-a0fa-01bd5db6b4e9",
+      "window_anim": "c4e6102e-8001-4ec1-94e5-8b40a8a36b2b",
+      "_note": "states alpha-matted on edit (40-54% holes x3 rerolls); shipped via composite of raw PixelLab subject over the clean 0%-holes base, then solidify. window_anim = inner anim id (group 250b64a7)."
     },
     "mossy_stilt_frame": {
-      "base": "",
-      "ground_window": "",
-      "ground_door": "",
-      "ground_left_corner": "",
-      "gable": ""
+      "base": "0b6c779f-41db-4bd0-9009-d138ef85ad83",
+      "ground_window": "060c2ee0-4425-4a79-92c5-b3f2e7db7705",
+      "ground_door": "1a5f6b77-bec0-497a-9115-5afc0a00c591",
+      "ground_left_corner": "a533d1a9-fb07-4829-8f26-2dec7d7225c8",
+      "gable": "ee9f9554-4e87-4f33-8c89-6e53c91071a9",
+      "window_anim": "13cac014-2c3e-4030-9dcf-9bc5970e2696"
     }
   },
   "roofs": {
+    "_note": "Each roof slug = ONE create_tiles_pro tileset (segmentation, square_topdown, top-down, tile_size 64). The 4 distinct+cleanest of 16 candidates were solidified + placed as roof_top__v000..v003.png. value = '<tilesetId>:<rawTileIndex>'.",
     "mossy_shingle": {
-      "v000": "",
-      "v001": "",
-      "v002": "",
-      "v003": ""
+      "tileset": "8f8c7799-452d-48d2-9a3b-b21ce123dd1e",
+      "seed": 71001,
+      "v000": "8f8c7799-452d-48d2-9a3b-b21ce123dd1e:13",
+      "v001": "8f8c7799-452d-48d2-9a3b-b21ce123dd1e:15",
+      "v002": "8f8c7799-452d-48d2-9a3b-b21ce123dd1e:9",
+      "v003": "8f8c7799-452d-48d2-9a3b-b21ce123dd1e:11"
     },
     "reed_thatch_wet": {
-      "v000": "",
-      "v001": "",
-      "v002": "",
-      "v003": ""
+      "tileset": "a91f8670-8ab6-42bb-9af4-96274e9d6623",
+      "seed": 71002,
+      "v000": "a91f8670-8ab6-42bb-9af4-96274e9d6623:0",
+      "v001": "a91f8670-8ab6-42bb-9af4-96274e9d6623:1",
+      "v002": "a91f8670-8ab6-42bb-9af4-96274e9d6623:2",
+      "v003": "a91f8670-8ab6-42bb-9af4-96274e9d6623:3"
     },
     "bark_sheet_roof": {
-      "v000": "",
-      "v001": "",
-      "v002": "",
-      "v003": ""
+      "tileset": "07c55c06-715b-4c1d-8c5b-f0610ecea3aa",
+      "seed": 71003,
+      "v000": "07c55c06-715b-4c1d-8c5b-f0610ecea3aa:5",
+      "v001": "07c55c06-715b-4c1d-8c5b-f0610ecea3aa:6",
+      "v002": "07c55c06-715b-4c1d-8c5b-f0610ecea3aa:10",
+      "v003": "07c55c06-715b-4c1d-8c5b-f0610ecea3aa:14"
     },
     "tarred_plank_roof": {
-      "v000": "",
-      "v001": "",
-      "v002": "",
-      "v003": ""
+      "tileset": "2d0a9c17-14d0-418d-bcac-9bd830ca1a23",
+      "seed": 71004,
+      "_note": "prompt reframed as a packed FIELD of rectangular planks (battens demoted to shallow grooves) to dodge the seam-rib floating-strip failure; returned 0% holes full-bleed, no re-roll needed.",
+      "v000": "2d0a9c17-14d0-418d-bcac-9bd830ca1a23:0",
+      "v001": "2d0a9c17-14d0-418d-bcac-9bd830ca1a23:1",
+      "v002": "2d0a9c17-14d0-418d-bcac-9bd830ca1a23:2",
+      "v003": "2d0a9c17-14d0-418d-bcac-9bd830ca1a23:3"
     }
   }
 }

@@ -44,7 +44,7 @@
   "anims": {}
  },
  "wood_slat_awning": {
-  "base": "0c8433b7-c576-44e6-ac94-36050c44412b",
+  "base": "13139413-a026-4b13-b9cf-35a913117fc8",
   "px": 128,
   "variants": 4,
   "states": {},
@@ -65,7 +65,7 @@
   "anims": {}
  },
  "cloth_market_awning": {
-  "base": "ec3df80a-2de1-445e-b401-a251d3194e34",
+  "base": "5a8cf167-78ce-4f15-92a7-5da4f6ec7924",
   "px": 128,
   "variants": 4,
   "states": {},

@@ -1,6 +1,6 @@
 {
  "_field": "D3",
- "_note": "Dressing prop PixelLab object ids (DISK is source of truth; see docs/superpowers/specs/2026-06-24-d3-generation-manifest.md). base = create_1_direction_object; variants vN = select_object_frames spreads on disk as base__vN.png (only a subset of obj ids recorded here — disk has the full set). The 4 animated props (lantern/lamp/sign/banner) carry per-variant anims at anim/vN/; `anims.vN` records that variant's [object_id, animation_id]. Other props are static. states = honest-absence (no age/damage driver yet).",
+ "_note": "Dressing prop PixelLab object ids (DISK is source of truth; see docs/superpowers/specs/2026-06-24-d3-generation-manifest.md). base = create_1_direction_object; variants vN = select_object_frames spreads on disk as base__vN.png (only a subset of obj ids recorded here \u00e2\u20ac\u201d disk has the full set). The 4 animated props (lantern/lamp/sign/banner) carry per-variant anims at anim/vN/; `anims.vN` records that variant's [object_id, animation_id]. Other props are static. states = honest-absence (no age/damage driver yet).",
  "iron_candle_lantern": {
   "base": "fcd02090-c3a7-48d3-8a7d-0e6ee924a297",
   "variants": {

@@ -1,6 +1,7 @@
 // Unified dev tuner for decoration fields. Field tabs come from
 // src/dev/field-registry.js — adding a field there adds its tab here.
-// Toggle with backtick (`). Tree: field tabs -> current biome -> object rows.
+// Lives as the "Fields" tab of the Dev HUD (press ` , then pick the tab).
+// Tree: field tabs -> current biome -> object rows.
 // Clicking the expand arrow (▸) on an object opens a side panel to the left
 // of the main panel showing that object's state-weight rows and variant rows.
 // Size + density combine multiplicatively (see src/world/field-tuning.js).
@@ -12,6 +13,7 @@ import { setFieldTuning } from '../world/field-tuning.js';
 import { clearClaimCaches } from '../world/decoration-claims.js';
 import { clearF2TileDescriptors } from '../render/field2-animator.js';
 import { FIELD_REGISTRY, regFor, emptyTree } from './field-registry.js';
+import { registerDevTool, openTab } from './dev-hud.js';
 
 var LS_KEY = 'fieldTuning';
 
@@ -359,22 +361,25 @@ function rebuild() {
   }
 }
 
-function buildPanel() {
-  panel = el('div',
-    'position:fixed;top:48px;right:8px;z-index:9999;background:rgba(10,14,24,0.92);' +
-    'color:#cfe0ff;font:12px monospace;padding:8px 10px;border:1px solid #3a4a6a;' +
-    'border-radius:6px;max-height:calc(100vh - 64px);display:flex;flex-direction:column;width:360px');
-  var tabs = el('div', 'display:flex;gap:4px;margin-bottom:6px');
+// Mount the field tuner into the Dev HUD body (the shell scrolls; we don't add our own scroll). The
+// per-object side panel still pops out as its own fixed element to the left of the HUD.
+function mountFieldTuner(container) {
+  panel = container; // rebuild()'s `if (!panel) return` guard keys off this
+  var tabs = el('div', 'display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap');
   FIELD_REGISTRY.forEach(function (reg) {
     var b = el('button', 'font:12px monospace;cursor:pointer;flex:1', reg.id.toUpperCase());
     b.onclick = function () { activeField = reg.id; rebuild(); };
     tabs.appendChild(b);
   });
-  panel.appendChild(tabs);
-  body = el('div', 'overflow-y:auto;flex:1;min-height:0');
-  panel.appendChild(body);
-  document.body.appendChild(panel);
+  container.appendChild(tabs);
+  body = el('div', '');
+  container.appendChild(body);
   rebuild();
+}
+
+// Leaving the Fields tab: stash the side panel (it's a separate fixed element on document.body).
+function unmountFieldTuner() {
+  if (sidePanel) sidePanel.style.display = 'none';
 }
 
 export function initFieldTuner() {
@@ -401,13 +406,8 @@ export function initFieldTuner() {
 
   window._fieldTuning = { tree: function () { return TREE; }, set: function (t) { TREE = emptyTree(); FIELD_REGISTRY.forEach(function (r) { if (t && t[r.id]) TREE[r.id] = t[r.id]; }); apply(repaintFieldId() || activeField); }, apply: apply };
   window._fieldRegistry = FIELD_REGISTRY.map(function (r) { return r.id; });
+  window._fieldTunerToggle = function () { openTab('fields'); };
 
-  window.addEventListener('keydown', function (e) {
-    if (e.key !== '`' || e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
-    if (!panel) { buildPanel(); return; }
-    var hidden = panel.style.display === 'none';
-    panel.style.display = hidden ? '' : 'none';
-    if (!hidden && sidePanel) sidePanel.style.display = 'none';
-    if (hidden) rebuild(); // refresh biome on reopen
-  });
+  // Register as the Dev HUD "Fields" tab (the old ` key now opens the HUD shell, which owns the tabs).
+  registerDevTool({ id: 'fields', label: 'Fields', order: 20, mount: mountFieldTuner, unmount: unmountFieldTuner });
 }

@@ -357,6 +357,57 @@ function _floraNeighbor(seed, ncx, ncy) {
   return c;
 }
 
+// DEFERRED low-priority flora queue. Computing descs synchronously inside compileChunk starved
+// chunk production at cold start (settlement resolve + up-to-9 compiles per chunk → measured
+// 1 ready chunk in 30s, terrain collapse). Instead each compiled chunk enqueues a job; the pump
+// runs ONE job per setTimeout(0) tick, so any pending compileChunk MESSAGES preempt it between
+// jobs — terrain strictly wins, flora fills in behind (the chunk frontier is ~128 tiles ahead,
+// so even seconds of lag are invisible), and the main thread falls back to building descs for
+// any tile whose flora hasn't arrived. The job recompiles its center via _floraNeighbor (pre-
+// render, LRU-cached) rather than retaining the live chunk: renderChunkToBitmap MUTATES the
+// live tiles (sets transitionPair), and the main thread's placement sees the PRE-render slices —
+// a fresh pre-render compile keeps worker output byte-identical.
+var _floraQueue = [];        // {key, cx, cy, seed, gen}
+var _floraPumpScheduled = false;
+var FLORA_QUEUE_MAX = 64;    // drop-oldest beyond this; main thread falls back for dropped chunks
+
+// Building-claim cache: consecutive chunks share most of their padded macro range while walking,
+// and resolveBuildingsInRange (settlement layout) is the expensive part of a flora job.
+var _floraClaimCache = new Map(); // "seed,mx0,my0,mx1,my1" -> claimTiles Set
+var FLORA_CLAIM_MAX = 12;
+function _floraClaimTiles(seed, mx0, my0, mx1, my1) {
+  var k = seed + ',' + mx0 + ',' + my0 + ',' + mx1 + ',' + my1;
+  var v = _floraClaimCache.get(k);
+  if (!v) {
+    v = resolveBuildingsInRange(seed, mx0, my0, mx1, my1).claimTiles;
+    if (_floraClaimCache.size >= FLORA_CLAIM_MAX) _floraClaimCache.delete(_floraClaimCache.keys().next().value);
+    _floraClaimCache.set(k, v);
+  }
+  return v;
+}
+
+function _scheduleFloraPump() {
+  if (_floraPumpScheduled) return;
+  _floraPumpScheduled = true;
+  setTimeout(_floraPump, 0); // macrotask: pending chunk messages run first
+}
+function _floraPump() {
+  _floraPumpScheduled = false;
+  var job = _floraQueue.shift();
+  if (!job) return;
+  if (floraDescEnabled && job.gen === tuneGen) { // stale-gen jobs just drop (provider would discard anyway)
+    try {
+      var center = _floraNeighbor(job.seed, job.cx, job.cy);
+      var descs = computeChunkFloraDescs(job.cx, job.cy, center, job.seed);
+      var enc = encodeChunkFlora(descs, WORLD.chunkSize * WORLD.chunkSize);
+      self.postMessage({ type: 'chunkFlora', key: job.key, cx: job.cx, cy: job.cy, gen: job.gen,
+        floraBytes: enc.bytes.buffer, floraOffsets: enc.offsets.buffer },
+        [enc.bytes.buffer, enc.offsets.buffer]);
+    } catch (e) { /* main thread falls back to building this chunk's descs itself */ }
+  }
+  if (_floraQueue.length) _scheduleFloraPump();
+}
+
 function computeChunkFloraDescs(cx, cy, chunk, seed) {
   var CS = WORLD.chunkSize;
 
@@ -380,7 +431,7 @@ function computeChunkFloraDescs(cx, cy, chunk, seed) {
   var x0 = cx * CS, y0 = cy * CS;
   var mx0 = Math.floor(x0 / MACRO_TILES) - 1, mx1 = Math.floor((x0 + CS - 1) / MACRO_TILES) + 1;
   var my0 = Math.floor(y0 / MACRO_TILES) - 1, my1 = Math.floor((y0 + CS - 1) / MACRO_TILES) + 1;
-  var claimTiles = resolveBuildingsInRange(seed, mx0, my0, mx1, my1).claimTiles;
+  var claimTiles = _floraClaimTiles(seed, mx0, my0, mx1, my1);
   setArchitectureClaim(function(wx, wy) { return claimTiles.has(wx + ',' + wy); });
 
   var N = CS * CS;
@@ -489,17 +540,15 @@ self.onmessage = function(event) {
     neighborCache.set(cacheKey, chunk.tiles);
     evictNeighborCache();
 
-    // Per-chunk flora descriptors (OFF by default). MUST be computed HERE — after
-    // compiler.compile + the tile-slice posts, but BEFORE renderChunkToBitmap sets
-    // transitionPair — so buildTileDescriptor sees tiles byte-identical to the main
-    // thread's pre-render slice clones. The transferable ENCODE is deferred to
-    // postFloraDesc() (below), which runs AFTER the chunkPainted post so the terrain
-    // bitmap is never delayed by the serialize. Stamp the gen captured NOW (the tuning
-    // the descs were built under) — not at post time, so a mid-flight tuning change is
-    // correctly discarded by the provider's gen check instead of masquerading as current.
-    var floraDescs = null;
-    var floraGen = tuneGen;
-    if (floraDescEnabled) floraDescs = computeChunkFloraDescs(cx, cy, chunk, data.seed);
+    // Per-chunk flora descriptors (OFF by default): ENQUEUE a deferred low-priority job
+    // instead of computing here — the synchronous compute starved chunk production (see
+    // _floraQueue above). The job stamps the CURRENT tuneGen so a mid-flight tuning change
+    // is dropped by the pump/provider gen checks instead of masquerading as current.
+    if (floraDescEnabled) {
+      _floraQueue.push({ key: key, cx: cx, cy: cy, seed: data.seed, gen: tuneGen });
+      if (_floraQueue.length > FLORA_QUEUE_MAX) _floraQueue.shift();
+      _scheduleFloraPump();
+    }
 
     // Hot-load this chunk's biome tilesets on demand, THEN paint — so the chunk
     // renders complete the first time without an eager all-biome preload. The
@@ -510,15 +559,6 @@ self.onmessage = function(event) {
       var sun = { height: 0.5, ambient: 0.85 };
       var idxBuf = buildIndexBuffer(chunk);
 
-      // Ship the pre-computed flora descriptors AFTER the terrain (chunkPainted) post, so the
-      // encode never delays the bitmap. No-op when flora desc is disabled (floraDescs === null).
-      function postFloraDesc() {
-        if (!floraDescs) return;
-        var enc = encodeChunkFlora(floraDescs, WORLD.chunkSize * WORLD.chunkSize);
-        self.postMessage({ type: 'chunkFlora', key: key, cx: cx, cy: cy, gen: floraGen,
-          floraBytes: enc.bytes.buffer, floraOffsets: enc.offsets.buffer },
-          [enc.bytes.buffer, enc.offsets.buffer]);
-      }
       // P4 — GPU terrain: a chunk with a COMPLETE index renders entirely via the
       // tilemap shader (base + cliff + soil); its bitmap would never be drawn. So
       // skip the ~16.8MB bitmap bake ENTIRELY — it is the streaming bottleneck that
@@ -528,7 +568,6 @@ self.onmessage = function(event) {
       // until P3c moves them to GL sprite fields — same as before this change.)
       if (gpuTerrain && idxBuf) {
         self.postMessage({ type: 'chunkPainted', key: key, cx: cx, cy: cy, gen: tuneGen, bitmap: null, index: idxBuf }, [idxBuf]);
-        postFloraDesc();
         return;
       }
 
@@ -543,7 +582,6 @@ self.onmessage = function(event) {
       }
       // Transfer bitmap (and optional GPU index buffer) to main thread (zero-copy)
       self.postMessage({ type: 'chunkPainted', key: key, cx: cx, cy: cy, gen: tuneGen, bitmap: result.bitmap, wangDebug: result.debug, index: idxBuf }, idxBuf ? [result.bitmap, idxBuf] : [result.bitmap]);
-      postFloraDesc();
     });
   } else if (data.type === 'repaintChunk') {
     if (!imagesReady) return;
