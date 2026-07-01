@@ -1175,7 +1175,7 @@ function _poolRebuild(chunkStore, player, glc, radiusX, radiusY) {
         var built = buildTileDescriptor(chunkStore, tile, objects, wx, wy);
         desc = built.desc;
         if (built.cacheable) {
-          if (_tileDescCache.size >= MAX_TILE_DESC_CACHE) _tileDescCache.clear();
+          if (_tileDescCache.size >= MAX_TILE_DESC_CACHE) _tileDescCache.delete(_tileDescCache.keys().next().value);
           _tileDescCache.set(tkey, desc);
         }
       }
@@ -1560,7 +1560,7 @@ function _collectTileGpu(g, wx, wy) {
   else {
     var built = buildTileDescriptor(chunkStore, tile, objects, wx, wy);
     desc = built.desc;
-    if (built.cacheable) { if (_tileDescCache.size >= MAX_TILE_DESC_CACHE) _tileDescCache.clear(); _tileDescCache.set(tkey, desc); }
+    if (built.cacheable) { if (_tileDescCache.size >= MAX_TILE_DESC_CACHE) _tileDescCache.delete(_tileDescCache.keys().next().value); _tileDescCache.set(tkey, desc); }
   }
   if (!desc) return;
   var dist = Math.max(Math.abs(wx - px), Math.abs(wy - py));
@@ -2028,7 +2028,7 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
         var built = buildTileDescriptor(chunkStore, tile, objects, wx, wy);
         desc = built.desc;
         if (built.cacheable) {
-          if (_tileDescCache.size >= MAX_TILE_DESC_CACHE) _tileDescCache.clear();
+          if (_tileDescCache.size >= MAX_TILE_DESC_CACHE) _tileDescCache.delete(_tileDescCache.keys().next().value);
           _tileDescCache.set(tkey, desc);
         }
       }

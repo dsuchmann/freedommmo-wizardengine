@@ -439,7 +439,7 @@ export function claimScanRadius() {
 }
 
 function cachePut(map, key, val) {
-  if (map.size >= MAX_CACHE) map.clear(); // deterministic — safe to drop wholesale
+  if (map.size >= MAX_CACHE) map.delete(map.keys().next().value); // single-oldest (FIFO) eviction keeps the working set warm; deterministic recompute → output unaffected, only re-cold cost avoided on long walks/back-tracking
   map.set(key, val);
   return val;
 }
