@@ -15,7 +15,14 @@ import { tuneSize, tuneBiomeDensity, tuneObjDensity, tuneAnimEnabled, tuneStateW
 import { coalesceDirty, lowerBound } from './sprite-pool-util.js';
 import { upscaleUrl } from '../world/upscale-manifest.js';
 
-var ANIM_RADIUS = 40; // tiles around player — large enough to cover full screen at any zoom
+var ANIM_RADIUS = 100; // HARD CAP on the flora half-window (bounds cold-build cost at extreme zoom-out;
+                       // kept <= the chunk stream radius). The REAL radius is (visibleTiles + COVERAGE_MARGIN),
+                       // so coverage scales WITH zoom — zoom out → bigger radius loaded beyond the camera.
+                       // (Was 40, which capped coverage at ~48 tiles and let the flora edge show on screen
+                       // when zoomed out — the user-reported "I see it load in" bug. 2026-07-01.)
+var COVERAGE_MARGIN = 20; // GPU flora: build this many tiles BEYOND the visible edge so loading always
+                          // happens OFF-SCREEN and is never seen. Draw is free regardless of pool size, so the
+                          // only cost of a wider margin is a slightly larger amortized build (see adaptive budget).
 var REBUILD_MARGIN = 4; // hysteresis: the pool collects this many extra tiles past the
                         // viewport and only rebuilds once the player has moved this far.
                         // Turns the old per-tile (and per-zoom-step) 71ms rebuild storm
@@ -1527,7 +1534,8 @@ var _gb = null;          // active build state (null = idle)
 // drawing the committed pool), so a SMALLER budget never blanks flora — it just fills in over a
 // few more frames. 8ms blew the 144fps frame budget (6.9ms) all by itself = the walk-into-chunks
 // stutter/skip; 3ms keeps the build + draw inside a 144fps frame and stays comfortable at 60fps.
-var AMORT_BUDGET_MS = 3;
+var AMORT_BUDGET_MS = 3; // FLOOR for the amortized flora build budget per frame (see _amortBudget below).
+var _lastPoolWall = 0;   // wall-clock ms of the previous _poolFrame, for adaptive-budget frame-time sensing.
 
 function _startAmortBuild(chunkStore, player, glc, radiusX, radiusY) {
   var px = Math.floor(player.x), py = Math.floor(player.y);
@@ -1710,6 +1718,18 @@ function _drawGpuFlora(player, w, h, chunkGrid, timeMs, sun, glc, tilePxSnapped)
 }
 
 function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, weather, sun, glc) {
+  // ADAPTIVE BUILD BUDGET: spend a fraction of the ACTUAL frame time on the amortized flora build,
+  // instead of a flat 3ms. At 144fps (~6.9ms frame) this stays ~2.8ms (frame-safe, ~unchanged); at
+  // 60fps (~16.6ms frame) it rises to ~7ms, using the idle headroom so the leading edge keeps up with
+  // walking. It never exceeds ~45% of the real frame, so it cannot blow the frame budget — this is what
+  // lets the (now zoom-scaled, wider) radius fill BEFORE the player reaches it. window._floraBudgetFrac
+  // (default 0.45) + window._floraBudgetCap (default 9ms) tune it live.
+  var _wallNow = performance.now();
+  var _frameDt = _lastPoolWall ? (_wallNow - _lastPoolWall) : 16;
+  _lastPoolWall = _wallNow;
+  var _bf = (typeof window !== 'undefined' && window._floraBudgetFrac) || 0.45;
+  var _bc = (typeof window !== 'undefined' && window._floraBudgetCap) || 9;
+  var _amortBudget = Math.max(AMORT_BUDGET_MS, Math.min(_bc, _frameDt * _bf));
   var tilePxSnapped = chunkGrid.chunkPx / WORLD.chunkSize;
   var visibleTilesX = Math.ceil(w / tilePxSnapped / 2) + 2;
   var visibleTilesY = Math.ceil(h / tilePxSnapped / 2) + 2;
@@ -1721,9 +1741,15 @@ function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, we
   // wider margin and rebuild far less often — the rebuild (every REBUILD_MARGIN
   // tiles) is the only remaining hitch. CPU path keeps the tight margin (its
   // per-frame loop scales with pool size).
-  var rebuildMargin = (gpuFloraOn() && glc && glc.animOk) ? GPU_REBUILD_MARGIN : REBUILD_MARGIN;
-  var needRX = Math.min(ANIM_RADIUS, visibleTilesX) + rebuildMargin;
-  var needRY = Math.min(ANIM_RADIUS, visibleTilesY) + rebuildMargin;
+  var _isGpuFlora = gpuFloraOn() && glc && glc.animOk;
+  var rebuildMargin = _isGpuFlora ? GPU_REBUILD_MARGIN : REBUILD_MARGIN;
+  // Radius = visibleTiles + coverage, so it SCALES WITH ZOOM (zoom out → wider load radius). GPU path
+  // uses the big off-screen COVERAGE_MARGIN (draw is free); the legacy CPU path keeps a tight margin +
+  // low cap because its per-frame cost scales with pool size.
+  var _cov = _isGpuFlora ? COVERAGE_MARGIN : rebuildMargin;
+  var _cap = _isGpuFlora ? ANIM_RADIUS : 40;
+  var needRX = Math.min(_cap, visibleTilesX + _cov);
+  var needRY = Math.min(_cap, visibleTilesY + _cov);
   var px = Math.floor(player.x);
   var py = Math.floor(player.y);
   var timeSec = timeMs * 0.001;
@@ -1772,7 +1798,7 @@ function _poolFrame(ctx, chunkStore, player, camera, w, h, chunkGrid, timeMs, we
     // (run the whole thing in one frame to avoid a 1-frame stale-UV flash) cost 50-200ms = an f2
     // stutter spike. With the 16384² atlas + 32px strip bucketing, resets are rare, so a brief flora
     // flash during the amortized re-pack is the better trade than a frame-long freeze.
-    if (_gb) _amortStep(performance.now() + AMORT_BUDGET_MS);
+    if (_gb) _amortStep(performance.now() + _amortBudget);
     var tickRanG = false;
     if (timeMs - _pool.lastTickMs >= 100) { _pool.lastTickMs = timeMs; _poolTick(timeMs, timeSec, glc, tilePxSnapped); tickRanG = true; }
     if (_pool.animUploaded) {
@@ -2020,11 +2046,12 @@ export function drawField2Animations(ctx, chunkStore, player, camera, w, h, chun
   ctx.save();
   ctx.imageSmoothingEnabled = false;
 
-  // Clamp animation radius to visible screen to avoid off-screen work
+  // Clamp animation radius to visible screen to avoid off-screen work. Legacy CPU path: keep the tight
+  // 40 cap (this per-frame loop's cost scales with radius; the zoom-scaled ANIM_RADIUS=100 is GPU-only).
   var visibleTilesX = Math.ceil(w / tilePxSnapped / 2) + 2;
   var visibleTilesY = Math.ceil(h / tilePxSnapped / 2) + 2;
-  var radiusX = Math.min(ANIM_RADIUS, visibleTilesX);
-  var radiusY = Math.min(ANIM_RADIUS, visibleTilesY);
+  var radiusX = Math.min(40, visibleTilesX);
+  var radiusY = Math.min(40, visibleTilesY);
 
   for (var wy = py - radiusY; wy <= py + radiusY; wy++) {
     for (var wx = px - radiusX; wx <= px + radiusX; wx++) {
