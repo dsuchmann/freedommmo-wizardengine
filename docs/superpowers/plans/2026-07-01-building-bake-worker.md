@@ -1,5 +1,7 @@
 # Building-Bake Worker Implementation Plan
 
+> **⚠️ SUPERSEDED (2026-07-01) — targets the wrong cost.** The Task 1 benchmark + follow-up instrumentation proved the ~2000ms town-load "roof jam" is NOT the bake drawing (the whole draw is ~32ms) — it is a one-time cold hydrology `streamAt` trace (~1950ms) triggered by the first `classifyBiome`-with-stream call in a region. The roof-resolve trigger is fixed (`classifyBiomeNoStream`, committed); the remaining trigger is `northGapTiles`→`resolveBuildingsInRange`. The real fix is pre-warming the main-thread hydrology cache, NOT moving the bake to a worker. Keep this doc as reference for the (valid but unneeded-for-this-pain) worker architecture and for the Task 1 benchmark result. See `memory/project_roof_bake_jam_rootcause.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Move the building sprite bake off the main thread into a Web Worker (OffscreenCanvas) so a single large building's ~1.3–2.8 s bake never freezes loading.
