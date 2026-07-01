@@ -437,8 +437,14 @@ export class CanvasRenderer {
   // the atlas, then re-publish the grown atlas + meta to the compositor + workers.
   _growAtlas(provider) {
     const atlas = this._wangAtlas;
+    // Remember URLs that 404 / fail to decode so repeated biome-growths (as the
+    // player roams and new biomes join the atlas) don't re-request them every time.
+    // getWangImageURLsForBiomes generates ALL biome-pair URLs, most of which don't
+    // exist on disk; without this they'd be re-fetched on each growth. Successful
+    // tiles are already skipped via atlas.hasKey().
+    const miss = this._atlasMissing || (this._atlasMissing = new Set());
     const allBiomes = [...this._atlasBiomesLoaded];
-    const urls = getWangImageURLsForBiomes(allBiomes).filter(u => !atlas.hasKey(u));
+    const urls = getWangImageURLsForBiomes(allBiomes).filter(u => !atlas.hasKey(u) && !miss.has(u));
     if (!urls.length) { this._publishAtlas(provider); return; }
     this._atlasGrowing = true;
     let pending = urls.length;
@@ -446,8 +452,8 @@ export class CanvasRenderer {
       fetch(url)
         .then(r => r.ok ? r.blob() : null)
         .then(b => b ? createImageBitmap(b) : null)
-        .then(bmp => { if (bmp) atlas.add(url, bmp); })
-        .catch(() => {}) // 404s / decode fails are fine — skip that tile
+        .then(bmp => { if (bmp) atlas.add(url, bmp); else miss.add(url); })
+        .catch(() => { miss.add(url); }) // 404s / decode fails — remember, never retry
         .finally(() => {
           if (--pending === 0) this._publishAtlas(provider);
         });
